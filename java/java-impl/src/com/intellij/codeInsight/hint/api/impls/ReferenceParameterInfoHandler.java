@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +31,6 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
   @Override
   public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
     return null;
-  }
-
-  @Override
-  public Object[] getParametersForDocumentation(final PsiTypeParameter p, final ParameterInfoContext context) {
-    return new Object[] {p};
   }
 
   @Override
@@ -84,23 +78,12 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
   }
 
   @Override
-  @NotNull
-  public String getParameterCloseChars() {
-    return ",>";
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
-  }
-
-  @Override
   public void updateUI(PsiTypeParameter o, @NotNull ParameterInfoUIContext context) {
     updateTypeParameter(o, context);
   }
 
   private static void updateTypeParameter(PsiTypeParameter typeParameter, ParameterInfoUIContext context) {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(typeParameter.getName());
     int highlightEndOffset = buffer.length();
     buffer.append(" extends ");

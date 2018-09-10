@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.HelpID;
@@ -34,11 +19,13 @@ import java.awt.event.MouseEvent;
  */
 public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog");
+
   public ConvertToInstanceMethodDialog(final PsiMethod method, final Object[] variables) {
     super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME);
     init();
   }
 
+  @Override
   protected void doAction() {
     final Object targetVariable = myList.getSelectedValue();
     LOG.assertTrue(targetVariable != null);
@@ -49,10 +36,12 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     invokeRefactoring(processor);
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.CONVERT_TO_INSTANCE_METHOD);
+  @Override
+  protected String getHelpId() {
+    return HelpID.CONVERT_TO_INSTANCE_METHOD;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     final JLabel label = new JLabel(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));

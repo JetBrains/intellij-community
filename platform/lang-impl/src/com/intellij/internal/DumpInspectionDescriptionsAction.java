@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -49,7 +50,7 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
     final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
 
@@ -134,15 +135,9 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   private static boolean doDump(final File file, final Processor processor) {
-    try {
-      final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-      try {
-        processor.process(writer);
-        return true;
-      }
-      finally {
-        writer.close();
-      }
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+      processor.process(writer);
+      return true;
     }
     catch (Exception e) {
       LOG.error(e);

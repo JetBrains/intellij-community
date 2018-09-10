@@ -36,7 +36,7 @@ import java.util.*;
 
 public class UsedIconsListingAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
     final MultiMap<String, PsiExpression> calls = new MultiMap<>();

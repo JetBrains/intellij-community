@@ -77,13 +77,13 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
     return super.handleElementRename(newElementName);
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (myType instanceof PyImportedModuleType) {
       return element.equals(PyUtil.turnInitIntoDir(resolve()));
     }

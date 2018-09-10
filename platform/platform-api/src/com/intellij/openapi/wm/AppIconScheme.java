@@ -27,30 +27,36 @@ public class AppIconScheme {
   public interface Progress {
 
     static final Progress TESTS = new Progress() {
+      @Override
       public Color getOkColor() {
         return TESTS_OK_COLOR;
       }
 
+      @Override
       public Color getErrorColor() {
         return ERROR_COLOR;
       }
     };
 
     static final Progress BUILD = new Progress() {
+      @Override
       public Color getOkColor() {
         return BUILD_OK_COLOR;
       }
 
+      @Override
       public Color getErrorColor() {
         return ERROR_COLOR;
       }
     };
 
     static final Progress INDEXING = new Progress() {
+      @Override
       public Color getOkColor() {
         return INDEXING_OK_COLOR;
       }
 
+      @Override
       public Color getErrorColor() {
         return ERROR_COLOR;
       }

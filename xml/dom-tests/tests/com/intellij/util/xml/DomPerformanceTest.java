@@ -54,7 +54,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     child.addChildElement().addBarComposite().setValue("ssss");
     child.addBarChild().getChild2().getAttr().setValue("234178956023");
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 80000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    PlatformTestUtil.startPerformanceTest("creating", 80_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       for (int i = 0; i < 239; i++) {
         element.addChildElement().copyFrom(child);
       }
@@ -62,7 +62,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("visiting", 450, new ThrowableRunnable() {
       @Override
       public void run() {
         newElement.acceptChildren(new DomElementVisitor() {

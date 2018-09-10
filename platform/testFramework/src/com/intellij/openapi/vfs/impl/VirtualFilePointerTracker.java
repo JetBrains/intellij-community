@@ -55,6 +55,7 @@ public class VirtualFilePointerTracker {
 
   private synchronized void storePointers() {
     if (isTracking) {
+      isTracking = false;
       throw new IllegalStateException("Previous test did not call assertPointersAreDisposed() - see 'Caused by:' for its stacktrace", trace);
     }
     trace = new Throwable();
@@ -103,7 +104,7 @@ public class VirtualFilePointerTracker {
     }
   }
 
-  private static void addAllPointersTo(@NotNull Collection<VirtualFilePointerImpl> pointers) {
+  private static void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> pointers) {
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).addAllPointersTo(pointers);
   }
 }

@@ -21,15 +21,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.Document;
 import javax.swing.text.NumberFormatter;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 
@@ -94,7 +91,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         final Document document = textField.getDocument();
         document.addDocumentListener(new DocumentAdapter() {
             @Override
-            public void textChanged(DocumentEvent e) {
+            public void textChanged(@NotNull DocumentEvent e) {
                 try {
                     textField.commitEdit();
                     setPropertyValue(owner, property,

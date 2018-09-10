@@ -78,11 +78,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
 
   private void updateFileTypeList() {
     FileType[] types = myTempFileTypes.toArray(FileType.EMPTY_ARRAY);
-    Arrays.sort(types, (o1, o2) -> {
-      FileType fileType1 = (FileType)o1;
-      FileType fileType2 = (FileType)o2;
-      return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
-    });
+    Arrays.sort(types, (o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
     myRecognizedFileType.setFileTypes(types);
   }
 
@@ -399,14 +395,14 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
         })
         .setEditActionUpdater(new AnActionButtonUpdater() {
           @Override
-          public boolean isEnabled(AnActionEvent e) {
+          public boolean isEnabled(@NotNull AnActionEvent e) {
             final FileType fileType = getSelectedFileType();
             return canBeModified(fileType);
           }
         })
         .setRemoveActionUpdater(new AnActionButtonUpdater() {
           @Override
-          public boolean isEnabled(AnActionEvent e) {
+          public boolean isEnabled(@NotNull AnActionEvent e) {
             return canBeModified(getSelectedFileType());
           }
         })
@@ -637,7 +633,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     private final T myFileType;
     private final SettingsEditor<T> myEditor;
 
-    public TypeEditor(Component parent, T fileType, final String title) {
+    TypeEditor(Component parent, T fileType, final String title) {
       super(parent, false);
       myFileType = fileType;
       myEditor = fileType.getEditor();

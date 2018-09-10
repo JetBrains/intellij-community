@@ -152,7 +152,7 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public GraphicsConfiguration getDeviceConfiguration() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override

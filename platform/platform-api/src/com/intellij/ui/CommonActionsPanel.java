@@ -199,7 +199,7 @@ public class CommonActionsPanel extends JPanel {
   private static void registerDeleteHook(final MyActionButton removeButton) {
     new AnAction("Delete Hook") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         removeButton.actionPerformed(e);
       }
 
@@ -209,7 +209,7 @@ public class CommonActionsPanel extends JPanel {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final JComponent contextComponent = removeButton.getContextComponent();
         if (contextComponent instanceof JTable && ((JTable)contextComponent).isEditing()) {
           e.getPresentation().setEnabled(false);
@@ -262,7 +262,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myButton.performAction(myListener);
     }
 
@@ -272,7 +272,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     @Override
-    public void updateButton(AnActionEvent e) {
+    public void updateButton(@NotNull AnActionEvent e) {
       super.updateButton(e);
       if (!e.getPresentation().isEnabled()) return;
 

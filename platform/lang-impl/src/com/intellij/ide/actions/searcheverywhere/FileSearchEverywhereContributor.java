@@ -1,30 +1,35 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.actions.GotoFileAction;
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
+import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class FileSearchEverywhereContributor implements SearchEverywhereContributor {
-  @NotNull
-  @Override
-  public String getSearchProviderId() {
-    return getClass().getSimpleName();
+public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<FileType> {
+
+  public FileSearchEverywhereContributor(Project project) {
+    super(project);
   }
 
   @NotNull
@@ -44,35 +49,7 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
   }
 
   @Override
-  public boolean showInFindResults() {
-    return true;
-  }
-
-  @Override
-  public ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    ChooseByNameModel mdl = createModel(project);
-
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);
-    List<Object> items = new ArrayList<>();
-    boolean[] hasMore = {false}; //todo builder for  ContributorSearchResult #UX-1
-    popup.getProvider().filterElements(popup, pattern, everywhere,
-                                       progressIndicator, o -> {
-
-        if (o != null && !items.contains(o)) {
-          if (elementsLimit >= 0 && items.size() >= elementsLimit) {
-            hasMore[0] = true;
-            return false;
-          }
-          items.add(o);
-        }
-        return true;
-      });
-
-    return new ContributorSearchResult(items, hasMore[0]);
-  }
-
-  @NotNull
-  private GotoFileModel createModel(Project project) {
+  protected FilteringGotoByModel<FileType> createModel(Project project) {
     return new GotoFileModel(project){
       @Override
       public boolean isSlashlessMatchingEnabled() {
@@ -82,17 +59,51 @@ public class FileSearchEverywhereContributor implements SearchEverywhereContribu
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
-    return createModel(project).getListCellRenderer();
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
+    if (selected instanceof PsiFile) {
+      VirtualFile file = ((PsiFile)selected).getVirtualFile();
+      if (file != null) {
+        Pair<Integer, Integer> pos = getLineAndColumn(searchText);
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
+        descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
+        if (descriptor.canNavigate()) {
+          descriptor.navigate(true);
+          return true;
+        }
+      }
+    }
+
+    return super.processSelectedItem(selected, modifiers, searchText);
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers) {
-    //todo maybe another elements types
-    if (selected instanceof PsiElement) {
-      NavigationUtil.activateFileWithPsiElement((PsiElement) selected, (modifiers & InputEvent.SHIFT_MASK) != 0);
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+    if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
+      return element;
     }
 
-    return true;
+    return super.getDataForItem(element, dataId);
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory<FileType> {
+    @NotNull
+    @Override
+    public SearchEverywhereContributor<FileType> createContributor(AnActionEvent initEvent) {
+      return new FileSearchEverywhereContributor(initEvent.getProject());
+    }
+
+    @Nullable
+    @Override
+    public SearchEverywhereContributorFilter<FileType> createFilter(AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      if (project == null) {
+        return null;
+      }
+
+      List<FileType> items = Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
+                                   .sorted(GotoFileAction.FileTypeComparator.INSTANCE)
+                                   .collect(Collectors.toList());
+      return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileType::getName, FileType::getIcon);
+    }
   }
 }

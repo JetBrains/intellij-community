@@ -99,7 +99,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         restorePopupBehavior();
       }
     });
@@ -135,13 +135,13 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     ToggleAction toggleAutoUpdateAction = new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),
                                            AllIcons.General.AutoscrollFromSource) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(),
                                                             getAutoUpdateDefault());
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state, getAutoUpdateDefault());
         restartAutoUpdate(state);
       }
@@ -153,7 +153,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected AnAction createRestorePopupAction() {
     return new AnAction("Open as Popup", getRestorePopupDescription(), AllIcons.General.Pin_tab) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         restorePopupBehavior();
       }
     };

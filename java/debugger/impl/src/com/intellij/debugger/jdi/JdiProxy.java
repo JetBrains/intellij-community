@@ -37,6 +37,7 @@ public abstract class JdiProxy {
    * @deprecated for testing only
    * @return
    */
+  @Deprecated
   public boolean isValid() {
     return myTimeStamp == myTimer.getCurrentTime();
   }

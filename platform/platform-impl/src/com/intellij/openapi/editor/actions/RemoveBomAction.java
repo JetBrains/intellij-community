@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -46,10 +47,10 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     if (files == null || files.length == 0) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
@@ -69,11 +70,12 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     }
 
     e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     e.getPresentation().setDescription("Remove byte order mark from "+fromWhere);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     if (files == null) {
       return;
@@ -124,7 +126,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     return result;
   }
 
-  private static void getFilesWithBom(@NotNull VirtualFile root, @NotNull final List<VirtualFile> result) {
+  private static void getFilesWithBom(@NotNull VirtualFile root, @NotNull final List<? super VirtualFile> result) {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

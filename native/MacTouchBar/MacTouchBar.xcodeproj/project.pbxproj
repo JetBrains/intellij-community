@@ -1,0 +1,304 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		598F525237306E4D3B8A2900 /* TouchBar.h in Headers */ = {isa = PBXBuildFile; fileRef = 598F5B22A91678A71EE4491F /* TouchBar.h */; };
+		598F54A7F6FED03CB444C146 /* ScrubberItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = 598F5CBC425D28C130AC94FE /* ScrubberItemView.h */; };
+		598F55E9E228B2409B03C284 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 598F53B3BC479D68ECB64BC9 /* Utils.m */; };
+		598F57D8C273D2116054A3FA /* Button.m in Sources */ = {isa = PBXBuildFile; fileRef = 598F5DD626ED21BA79946AB7 /* Button.m */; };
+		598F5A5979667C1B0C9918D9 /* Scrubber.m in Sources */ = {isa = PBXBuildFile; fileRef = 598F5B3A1B073873267B716D /* Scrubber.m */; };
+		598F5B195CB9382504D47A61 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 598F516357CE6715C1864F72 /* Utils.h */; };
+		598F5C4CA4AB36808F75FBC3 /* TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 598F5F9A87B09F525027531C /* TouchBar.m */; };
+		598F5CAB483C55F406BD8F00 /* JTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 598F5D64D66F1067328D768F /* JTypes.h */; };
+		598F5FB60DDFE40FC979618C /* ScrubberItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = 598F5B353C4743E6E42C4F8B /* ScrubberItemView.m */; };
+		598F5FF6CBF04F82FF47D67F /* Popover.m in Sources */ = {isa = PBXBuildFile; fileRef = 598F555E5BB3F9610AE63AFD /* Popover.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		598F516357CE6715C1864F72 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
+		598F53B3BC479D68ECB64BC9 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utils.m; sourceTree = "<group>"; };
+		598F555E5BB3F9610AE63AFD /* Popover.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Popover.m; sourceTree = "<group>"; };
+		598F5B22A91678A71EE4491F /* TouchBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TouchBar.h; sourceTree = "<group>"; };
+		598F5B353C4743E6E42C4F8B /* ScrubberItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScrubberItemView.m; sourceTree = "<group>"; };
+		598F5B3A1B073873267B716D /* Scrubber.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Scrubber.m; sourceTree = "<group>"; };
+		598F5CBC425D28C130AC94FE /* ScrubberItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScrubberItemView.h; sourceTree = "<group>"; };
+		598F5D64D66F1067328D768F /* JTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JTypes.h; sourceTree = "<group>"; };
+		598F5DD626ED21BA79946AB7 /* Button.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Button.m; sourceTree = "<group>"; };
+		598F5F9A87B09F525027531C /* TouchBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TouchBar.m; sourceTree = "<group>"; };
+		598F5FE929ACF0979D7BCD78 /* libMacTouchBar.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libMacTouchBar.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		598F53495FB8CFC9DA134A3A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		598F56E800A362185F61FE19 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				598F5FE929ACF0979D7BCD78 /* libMacTouchBar.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		598F5AC0C8F930CAF8944359 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				598F5F9A87B09F525027531C /* TouchBar.m */,
+				598F5B353C4743E6E42C4F8B /* ScrubberItemView.m */,
+				598F5CBC425D28C130AC94FE /* ScrubberItemView.h */,
+				598F5B3A1B073873267B716D /* Scrubber.m */,
+				598F5DD626ED21BA79946AB7 /* Button.m */,
+				598F555E5BB3F9610AE63AFD /* Popover.m */,
+				598F53B3BC479D68ECB64BC9 /* Utils.m */,
+				598F516357CE6715C1864F72 /* Utils.h */,
+				598F5D64D66F1067328D768F /* JTypes.h */,
+				598F5B22A91678A71EE4491F /* TouchBar.h */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		598F5FCFCB6188327818C4D2 = {
+			isa = PBXGroup;
+			children = (
+				598F56E800A362185F61FE19 /* Products */,
+				598F5AC0C8F930CAF8944359 /* src */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		598F5E9A6810798EADD86B68 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				598F54A7F6FED03CB444C146 /* ScrubberItemView.h in Headers */,
+				598F5B195CB9382504D47A61 /* Utils.h in Headers */,
+				598F5CAB483C55F406BD8F00 /* JTypes.h in Headers */,
+				598F525237306E4D3B8A2900 /* TouchBar.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		598F577CE6323BED1B45254E /* MacTouchBar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 598F520D6FBB126BA5B95F28 /* Build configuration list for PBXNativeTarget "MacTouchBar" */;
+			buildPhases = (
+				598F5F70326CEA592BD6CC82 /* Sources */,
+				598F53495FB8CFC9DA134A3A /* Frameworks */,
+				598F5E9A6810798EADD86B68 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacTouchBar;
+			productName = MacTouchBar;
+			productReference = 598F5FE929ACF0979D7BCD78 /* libMacTouchBar.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		598F5118DF5E14ADAD1AA66F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				ORGANIZATIONNAME = jetbrains;
+			};
+			buildConfigurationList = 598F54B39EE5879BCA7F935D /* Build configuration list for PBXProject "MacTouchBar" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 598F5FCFCB6188327818C4D2;
+			productRefGroup = 598F56E800A362185F61FE19 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				598F577CE6323BED1B45254E /* MacTouchBar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		598F5F70326CEA592BD6CC82 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				598F5C4CA4AB36808F75FBC3 /* TouchBar.m in Sources */,
+				598F5FB60DDFE40FC979618C /* ScrubberItemView.m in Sources */,
+				598F5A5979667C1B0C9918D9 /* Scrubber.m in Sources */,
+				598F57D8C273D2116054A3FA /* Button.m in Sources */,
+				598F5FF6CBF04F82FF47D67F /* Popover.m in Sources */,
+				598F55E9E228B2409B03C284 /* Utils.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		598F50271FC9973E4E1165A6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		598F519739E4CD4981ED13F0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		598F51ADB473ACE3C19A46E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		598F52426799760C1F9DE10A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		598F520D6FBB126BA5B95F28 /* Build configuration list for PBXNativeTarget "MacTouchBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				598F51ADB473ACE3C19A46E8 /* Debug */,
+				598F52426799760C1F9DE10A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		598F54B39EE5879BCA7F935D /* Build configuration list for PBXProject "MacTouchBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				598F50271FC9973E4E1165A6 /* Debug */,
+				598F519739E4CD4981ED13F0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 598F5118DF5E14ADAD1AA66F /* Project object */;
+}

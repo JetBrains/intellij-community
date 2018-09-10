@@ -40,6 +40,7 @@ public interface ExternalSourceDirectorySet extends Serializable {
   /**
    * @deprecated use {@link #getGradleOutputDirs()}
    */
+  @Deprecated
   @NotNull
   File getGradleOutputDir();
 

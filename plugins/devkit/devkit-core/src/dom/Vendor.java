@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.spellchecker.xml.NoSpellchecking;
@@ -26,48 +22,29 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Vendor extends DomElement {
 
-	/**
-	 * Returns the value of the simple content.
-	 * @return the value of the simple content.
-	 */
-	@NotNull
-        @NoSpellchecking
-	String getValue();
-	/**
-	 * Sets the value of the simple content.
-	 * @param value the new value to set
-	 */
-	void setValue(String value);
+  @NotNull
+  @NoSpellchecking
+  String getValue();
+
+  void setValue(String value);
 
 
-	/**
-	 * Returns the value of the email child.
-	 * Attribute email
-	 * @return the value of the email child.
-	 */
-	@NotNull
-        @NoSpellchecking
-	GenericAttributeValue<String> getEmail();
+  @NotNull
+  @NoSpellchecking
+  GenericAttributeValue<String> getEmail();
 
 
-	/**
-	 * Returns the value of the url child.
-	 * Attribute url
-	 * @return the value of the url child.
-	 */
-	@NotNull
-        @NoSpellchecking
-	GenericAttributeValue<String> getUrl();
+  @NotNull
+  @NoSpellchecking
+  GenericAttributeValue<String> getUrl();
 
 
-	/**
-	 * @deprecated not used anymore
-	 */
-	@SuppressWarnings("DeprecatedIsStillUsed")
-	@NotNull
-        @NoSpellchecking
-	@Deprecated
-	GenericAttributeValue<String> getLogo();
-
-
+  /**
+   * @deprecated not used anymore
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @NotNull
+  @NoSpellchecking
+  @Deprecated
+  GenericAttributeValue<String> getLogo();
 }

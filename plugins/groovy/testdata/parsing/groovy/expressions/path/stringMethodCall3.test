@@ -3,7 +3,7 @@
 Groovy script
   Method call
     Reference expression
-      PsiElement(string)(''dg'')
+      PsiElement(single quoted string)(''dg'')
     Arguments
       <empty list>
     Closable block

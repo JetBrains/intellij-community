@@ -144,6 +144,12 @@ public abstract class TestUtils {
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
   }
 
+  /**
+   * Reads input file which consists at least of two sections separated with "-----" line
+   * @param filePath file to read
+   * @return a list of sections read from the file
+   * @throws RuntimeException if any IO problem occurs
+   */
   public static List<String> readInput(String filePath) {
     String content;
     try {
@@ -173,7 +179,7 @@ public abstract class TestUtils {
     input.add(content);
 
     Assert.assertTrue("No data found in source file", input.size() > 0);
-    Assert.assertNotNull("Test output points to null", input.size() > 1);
+    Assert.assertTrue("Test output points to null", input.size() > 1);
 
     return input;
   }
@@ -211,8 +217,33 @@ public abstract class TestUtils {
     }
 
     if (missedVariants.size() > 0) {
-      Assert.assertTrue("Some completion variants are missed " + missedVariants, false);
+      Assert.fail("Some completion variants are missed " + missedVariants);
     }
+  }
+
+  public static void checkCompletionType(JavaCodeInsightTestFixture fixture, String lookupString, String expectedTypeCanonicalText) {
+    LookupElement[] lookupElements = fixture.completeBasic();
+    PsiType type = null;
+
+    for (LookupElement lookupElement : lookupElements) {
+      if (lookupElement.getLookupString().equals(lookupString)) {
+        PsiElement element = lookupElement.getPsiElement();
+        if (element instanceof PsiField) {
+          type = ((PsiField)element).getType();
+          break;
+        }
+        if (element instanceof PsiMethod) {
+          type = ((PsiMethod)element).getReturnType();
+          break;
+        }
+      }
+    }
+
+    if (type == null) {
+      Assert.fail("No field or method called '" + lookupString + "' found in completion lookup elements");
+    }
+
+    Assert.assertEquals(expectedTypeCanonicalText, type.getCanonicalText());
   }
 
   public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {

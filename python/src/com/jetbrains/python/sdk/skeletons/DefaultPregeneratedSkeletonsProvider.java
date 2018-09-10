@@ -155,7 +155,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
   private static class ArchivedSkeletons implements PyPregeneratedSkeletons {
     private final VirtualFile myArchiveRoot;
 
-    public ArchivedSkeletons(VirtualFile archiveRoot) {
+    ArchivedSkeletons(VirtualFile archiveRoot) {
       myArchiveRoot = archiveRoot;
     }
 

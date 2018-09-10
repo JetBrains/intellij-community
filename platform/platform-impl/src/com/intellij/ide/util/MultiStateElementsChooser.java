@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +25,11 @@ import java.util.List;
 
 public class MultiStateElementsChooser<T, S> extends JPanel implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   private final MarkStateDescriptor<T, S> myMarkStateDescriptor;
-  private JBTable myTable = null;
-  private MyTableModel myTableModel = null;
+  private final JBTable myTable;
+  private final MyTableModel myTableModel;
   private boolean myColorUnmarkedElements = true;
   private final List<ElementsMarkStateListener<T, S>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<>();
+  private final Map<T, ElementProperties> myElementToPropertiesMap = new HashMap<>();
   private final Map<T, Boolean> myDisabledMap = new HashMap<>();
 
   public interface ElementsMarkStateListener<T, S> {
@@ -87,7 +72,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myMarkStateDescriptor = markStateDescriptor;
 
     myTableModel = new MyTableModel(elementsCanBeMarked);
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(JBUI.emptySize());
     myTable.setTableHeader(null);
@@ -100,7 +85,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
     if (elementsCanBeMarked) {
       TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK_COLUM_INDEX);
-      TableUtil.setupCheckboxColumn(checkMarkColumn);
+      TableUtil.setupCheckboxColumn(checkMarkColumn, 0);
       TableCellRenderer checkMarkRenderer = myMarkStateDescriptor.getMarkRenderer();
       if (checkMarkRenderer == null) {
         checkMarkRenderer = new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class));
@@ -226,10 +211,6 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     }
   }
 
-  public boolean isColorUnmarkedElements() {
-    return myColorUnmarkedElements;
-  }
-
   public void setColorUnmarkedElements(boolean colorUnmarkedElements) {
     myColorUnmarkedElements = colorUnmarkedElements;
   }
@@ -348,7 +329,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myElementToPropertiesMap.put(element, properties);
   }
 
-  public void setElements(List<T> elements, S markState) {
+  public void setElements(List<? extends T> elements, S markState) {
     myTableModel.clear();
     myTableModel.addElements(elements, markState);
   }
@@ -398,7 +379,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     return rows;
   }
 
-  public void markElements(Collection<T> elements, S markState) {
+  public void markElements(Collection<? extends T> elements, S markState) {
     myTableModel.setMarkState(getElementsRows(elements), markState);
   }
 
@@ -473,7 +454,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     public final int ELEMENT_COLUMN_INDEX;
     private final boolean myElementsCanBeMarked;
 
-    public MyTableModel(final boolean elementsCanBeMarked) {
+    MyTableModel(final boolean elementsCanBeMarked) {
       myElementsCanBeMarked = elementsCanBeMarked;
       if (elementsCanBeMarked) {
         CHECK_MARK_COLUM_INDEX = 0;
@@ -485,7 +466,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       }
     }
 
-    public void sort(Comparator<T> comparator) {
+    public void sort(Comparator<? super T> comparator) {
       Collections.sort(myElements, comparator);
       fireTableDataChanged();
     }
@@ -506,7 +487,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       fireTableRowsInserted(row, row);
     }
 
-    private void addElements(@Nullable List<T> elements, S markState) {
+    private void addElements(@Nullable List<? extends T> elements, S markState) {
       if (elements == null || elements.isEmpty()) {
         return;
       }
@@ -539,17 +520,6 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
     public void removeAllElements() {
       myElements.clear();
-      fireTableDataChanged();
-    }
-
-    public void removeRows(int[] rows) {
-      final List<T> toRemove = new ArrayList<>();
-      for (int row : rows) {
-        final T element = myElements.get(row);
-        toRemove.add(element);
-        myMarkedMap.remove(element);
-      }
-      myElements.removeAll(toRemove);
       fireTableDataChanged();
     }
 
@@ -636,6 +606,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       if (!isEnabled() || columnIndex != CHECK_MARK_COLUM_INDEX) {
         return false;
       }
+      @SuppressWarnings("unchecked")
       final T o = (T)getValueAt(rowIndex, ELEMENT_COLUMN_INDEX);
       return myDisabledMap.get(o) == null;
     }
@@ -692,7 +663,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   private class CheckMarkColumnCellRenderer implements TableCellRenderer {
     private final TableCellRenderer myDelegate;
 
-    public CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
+    CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;
     }
 

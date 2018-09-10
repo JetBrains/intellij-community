@@ -27,17 +27,17 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author lambdamix
  */
 public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
-  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private static final String PACKAGE_PATH = Test01.class.getPackage().getName().replace('.', '/');
+
   private JavaPsiFacade myJavaPsiFacade;
   private ProjectBytecodeAnalysis myBytecodeAnalysisService;
   private MessageDigest myMessageDigest;
-
 
   @Override
   protected void setUp() throws Exception {
@@ -82,13 +82,10 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testLeakingParametersAnalysis() throws IOException {
-    checkLeakingParameters(LeakingParametersData.class);
-  }
-
-  private static void checkLeakingParameters(Class<?> jClass) throws IOException {
-    final HashMap<Member, boolean[]> map = new HashMap<>();
+    final Map<Member, boolean[]> map = new HashMap<>();
 
     // collecting leakedParameters
+    final Class<LeakingParametersData> jClass = LeakingParametersData.class;
     final ClassReader classReader = new ClassReader(jClass.getResourceAsStream("/" + jClass.getName().replace('.', '/') + ".class"));
     classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
@@ -146,7 +143,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
       // contracts
       PsiAnnotation expectedContract = AnnotationUtil.findAnnotation(method, ExpectContract.class.getName());
-      PsiAnnotation actualContract = myBytecodeAnalysisService.findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+      PsiAnnotation actualContract = myBytecodeAnalysisService.findInferredAnnotation(method, Contract.class.getName());
 
       String expectedText = getContractText(expectedContract);
       String inferredText = getContractText(actualContract);

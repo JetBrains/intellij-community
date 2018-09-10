@@ -23,18 +23,11 @@ import java.awt.*;
 
 @SuppressWarnings("UseJBColor")
 public interface FileStatus {
-  /**
-   * @deprecated Use {@link FileStatus#getColor} instead
-   */
-  @Deprecated Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
-  @Deprecated Color COLOR_NOT_CHANGED_RECURSIVE = new Color(138, 164, 200);
-  @Deprecated Color COLOR_NOT_CHANGED_IMMEDIATE = new Color(50, 100, 180);
   @Deprecated Color COLOR_MERGE = new Color(117, 3, 220);
   @Deprecated Color COLOR_MODIFIED = new Color(0, 50, 160);
   @Deprecated Color COLOR_MISSING = Gray._97;
   @Deprecated Color COLOR_ADDED = new Color(10, 119, 0);
   @Deprecated Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
-  @Deprecated Color COLOR_HIJACKED = Color.ORANGE.darker();
   @Deprecated Color COLOR_SWITCHED = new Color(8, 151, 143);
   @Deprecated Color COLOR_UNKNOWN = new Color(153, 51, 0);
 

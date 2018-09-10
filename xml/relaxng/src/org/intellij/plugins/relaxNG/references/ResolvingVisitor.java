@@ -41,7 +41,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   private final ProcessingContext myProcessingContext;
   private XmlNamedElementPattern myIncludePattern;
 
-  public ResolvingVisitor(XmlAttributeValuePattern pattern, ProcessingContext context) {
+  ResolvingVisitor(XmlAttributeValuePattern pattern, ProcessingContext context) {
     myPattern = pattern;
     myProcessingContext = context;
 

@@ -47,6 +47,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
   public static final String REFACTORING_NAME = PropertiesBundle.message("inline.property.refactoring");
   public static final String REFACTORING_ID = "refactoring.inline.property";
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL)) {
       PsiReference[] references = element.getParent().getReferences();
@@ -55,6 +56,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     return element instanceof IProperty;
   }
 
+  @Override
   public void inlineElement(final Project project, Editor editor, PsiElement psiElement) {
     if (!(psiElement instanceof IProperty)) return;
 
@@ -62,7 +64,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final String propertyValue = property.getValue();
     if (propertyValue == null) return;
 
-    final List<PsiElement> occurrences = Collections.synchronizedList(ContainerUtil.<PsiElement>newArrayList());
+    final List<PsiElement> occurrences = Collections.synchronizedList(ContainerUtil.newArrayList());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiElement.getContainingFile());
     boolean result = ReferencesSearch.search(psiElement).forEach(

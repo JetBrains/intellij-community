@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -116,7 +114,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
-        isInsideAnnotationName(position)) {
+        isInsideAnnotationName(position) ||
+        psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
@@ -140,10 +139,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      return ElementClassFilter.CLASS;
-    }
-
-    if (psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
       return ElementClassFilter.CLASS;
     }
 
@@ -317,7 +312,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<LookupElement> result) {
+  private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<? super LookupElement> result) {
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
       session.flushBatchItems();
       SmartCastProvider.addCastVariants(parameters, session.getMatcher(), element -> {
@@ -599,7 +594,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
+          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
@@ -779,39 +774,32 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
 
-      if (context.getCompletionType() == CompletionType.BASIC) {
-        if (PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset() - 1, PsiReferenceParameterList.class, false) != null) {
-          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
-          return;
-        }
-
-        if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
-          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
-          return;
-        }
-
-        PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
-        if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-          if (JavaSmartCompletionContributor.AFTER_NEW.accepts(ref)) {
-            final PsiReferenceParameterList paramList = ref.getParameterList();
-            if (paramList != null && paramList.getTextLength() > 0) {
-              context.getOffsetMap().addOffset(ConstructorInsertHandler.PARAM_LIST_START, paramList.getTextRange().getStartOffset());
-              context.getOffsetMap().addOffset(ConstructorInsertHandler.PARAM_LIST_END, paramList.getTextRange().getEndOffset());
-            }
-          }
-
-          return;
-        }
-
-        final PsiElement element = file.findElementAt(context.getStartOffset());
-
-        if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
-          return;
-        }
-
-        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
+      String dummyIdentifier = customizeDummyIdentifier(context, file);
+      if (dummyIdentifier != null) {
+        context.setDummyIdentifier(dummyIdentifier);
       }
     }
+  }
+
+  @Nullable
+  private static String customizeDummyIdentifier(@NotNull CompletionInitializationContext context, PsiFile file) {
+    if (context.getCompletionType() != CompletionType.BASIC) return null;
+
+    int offset = context.getStartOffset();
+    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiReferenceParameterList.class, false) != null) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+    }
+
+    if (semicolonNeeded(context.getEditor(), file, offset)) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";";
+    }
+
+    PsiElement leaf = file.findElementAt(offset);
+    if (leaf instanceof PsiIdentifier || leaf instanceof PsiKeyword) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+    }
+
+    return null;
   }
 
   public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
@@ -956,12 +944,12 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
-    public IndentingDecorator(LookupElement delegate) {
+    IndentingDecorator(LookupElement delegate) {
       super(delegate);
     }
 
     @Override
-    public void handleInsert(InsertionContext context) {
+    public void handleInsert(@NotNull InsertionContext context) {
       super.handleInsert(context);
       Project project = context.getProject();
       Document document = context.getDocument();
@@ -974,7 +962,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static class SearchScopeFilter implements ElementFilter {
     private final GlobalSearchScope myScope;
 
-    public SearchScopeFilter(GlobalSearchScope scope) {
+    SearchScopeFilter(GlobalSearchScope scope) {
       myScope = scope;
     }
 

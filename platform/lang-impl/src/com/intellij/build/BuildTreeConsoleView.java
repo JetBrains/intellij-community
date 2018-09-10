@@ -35,11 +35,11 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +54,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -79,8 +81,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final String myWorkingDir;
   private volatile int myTimeColumnWidth;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
-  private final TransferToEDTQueue<Runnable> myLaterInvocator =
-    TransferToEDTQueue.createRunnableMerger("BuildTreeConsoleView later invocator");
+  private final MergingUpdateQueue myLaterInvocator = new MergingUpdateQueue("BuildTreeConsoleView later invocator", 100, true, null, this);
 
   public BuildTreeConsoleView(Project project, BuildDescriptor buildDescriptor) {
     myProject = project;
@@ -136,6 +137,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     EditSourceOnEnterKeyHandler.install(treeTable, null);
 
     TreeTableTree tree = treeTable.getTree();
+    treeTable.addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        treeTable.setSelectionBackground(UIUtil.getTreeSelectionBackground(true));
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        treeTable.setSelectionBackground(UIUtil.getTreeSelectionBackground(false));
+      }
+    });
     final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
     tree.setCellRenderer(new TreeCellRenderer() {
       @Override
@@ -306,7 +318,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartEvent || event instanceof MessageEvent) {
@@ -389,7 +401,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof FinishBuildEvent) {
       String aHint = event.getHint();
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
-      aHint = aHint == null ? "  at " + time : aHint + "  at " + time;
+      aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
       updateTimeColumnWidth(myTimeColumnWidth);
       if (myDetailsHandler.myExecutionNode == null) {
@@ -425,7 +437,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         myBuilder.queueUpdateFrom(node, false, true);
       }
     };
-    myLaterInvocator.offerIfAbsent(update);
+    myLaterInvocator.queue(update);
   }
 
   private ExecutionNode createMessageParentNodes(MessageEvent messageEvent, ExecutionNode parentNode) {
@@ -567,7 +579,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.build.tool.window";
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
@@ -603,7 +615,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     private final ConsoleView myConsole;
     private final JPanel myPanel;
 
-    public DetailsHandler(Project project,
+    DetailsHandler(Project project,
                           TreeTableTree tree,
                           ThreeComponentsSplitter threeComponentsSplitter) {
       myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();

@@ -28,8 +28,6 @@ fun secondColumnSmallerPanel(): JPanel {
 
   val titleTextField = JTextField()
 
-  val descriptionTextArea = JTextArea()
-
   val panel = panel {
     row("Base fork:") {
       JComboBox<String>(arrayOf())(growX, CCFlags.pushX)
@@ -41,7 +39,7 @@ fun secondColumnSmallerPanel(): JPanel {
     }
     row("Title:") { titleTextField() }
     row("Description:") {
-      scrollPane(descriptionTextArea)
+      scrollPane(JTextArea())
     }
   }
 
@@ -66,6 +64,15 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
     row("Button:") { button("label", growX) {} }
+  }
+}
+
+@Suppress("unused")
+fun visualPaddingsPanelOnlyLabeledScrollPane(): JPanel {
+  return panel {
+    row("Description:") {
+      scrollPane(JTextArea())
+    }
   }
 }
 
@@ -109,6 +116,18 @@ fun visualPaddingsPanel(): JPanel {
   }
 }
 
+fun fieldWithGear(): JPanel {
+  return panel {
+    row("Database:") {
+      JTextField()()
+      gearButton()
+    }
+    row("Master Password:") {
+      JBPasswordField()()
+    }
+  }
+}
+
 fun alignFieldsInTheNestedGrid(): JPanel {
   return panel {
     buttonGroup {
@@ -116,7 +135,7 @@ fun alignFieldsInTheNestedGrid(): JPanel {
         RadioButton("In KeePass")()
         row("Database:") {
           JTextField()()
-            gearButton()
+          gearButton()
         }
         row("Master Password:") {
           JBPasswordField()(comment = "Stored using weak encryption.")
@@ -153,6 +172,19 @@ fun cellPanel(): JPanel {
   }
 }
 
+fun commentAndPanel(): JPanel {
+  return panel {
+    row("Repository:") {
+      cell {
+        checkBox("Auto Sync", comment = "Use File -> Settings Repository... to configure")
+      }
+    }
+    row {
+      panel("Foo", JScrollPane(JTextArea()))
+    }
+  }
+}
+
 fun createLafTestPanel(): JPanel {
   val spacing = createIntelliJSpacingConfiguration()
   val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
@@ -174,7 +206,10 @@ fun createLafTestPanel(): JPanel {
 }
 
 fun withVerticalButtons(): JPanel {
-  return panel(LCFlags.disableMagic) {
+  return panel {
+    row {
+      label("<html>Merging branch <b>foo</b> into <b>bar</b>")
+    }
     row {
       scrollPane(JTextArea(), pushX)
 

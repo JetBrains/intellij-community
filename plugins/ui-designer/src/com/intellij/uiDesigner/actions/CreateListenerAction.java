@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -71,7 +57,8 @@ import java.util.List;
 public class CreateListenerAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateListenerAction");
 
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  @Override
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     final DefaultActionGroup actionGroup = prepareActionGroup(selection);
     final JComponent selectedComponent = selection.get(0).getDelegee();
     final DataContext context = DataManager.getInstance().getDataContext(selectedComponent);
@@ -82,7 +69,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     FormEditingUtil.showPopupUnderComponent(popup, selection.get(0));
   }
 
-  private DefaultActionGroup prepareActionGroup(final List<RadComponent> selection) {
+  private DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final EventSetDescriptor[] eventSetDescriptors;
     try {
@@ -103,11 +90,11 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     e.getPresentation().setEnabled(canCreateListener(selection));
   }
 
-  private static boolean canCreateListener(final ArrayList<RadComponent> selection) {
+  private static boolean canCreateListener(final ArrayList<? extends RadComponent> selection) {
     if (selection.size() == 0) return false;
     final RadRootContainer root = (RadRootContainer)FormEditingUtil.getRoot(selection.get(0));
     if (root.getClassToBind() == null) return false;
@@ -120,18 +107,19 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private class MyCreateListenerAction extends AnAction {
-    private final List<RadComponent> mySelection;
+    private final List<? extends RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
     @NonNls private static final String LISTENER_SUFFIX = "Listener";
     @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
 
-    public MyCreateListenerAction(final List<RadComponent> selection, EventSetDescriptor descriptor) {
+    MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
       super(descriptor.getListenerType().getSimpleName());
       mySelection = selection;
       myDescriptor = descriptor;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CommandProcessor.getInstance().executeCommand(
         mySelection.get(0).getProject(),
         () -> ApplicationManager.getApplication().runWriteAction(() -> createListener()), UIDesignerBundle.message("create.listener.command"), null
@@ -220,6 +208,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         final FileEditor[] fileEditors =
           virtualFile != null ? FileEditorManager.getInstance(myClass.getProject()).openFile(virtualFile, true, true) : null;
         IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
+          @Override
           public void run() {
             final PsiElement anonymousClassStatement = ptr.getElement();
             if (anonymousClassStatement == null) {

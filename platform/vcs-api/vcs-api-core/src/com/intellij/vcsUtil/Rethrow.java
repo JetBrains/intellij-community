@@ -22,6 +22,7 @@ import com.intellij.util.ExceptionUtil;
  *
  * @deprecated use {@link ExceptionUtil} instead
  */
+@Deprecated
 public class Rethrow {
   private Rethrow() {
   }
@@ -29,6 +30,7 @@ public class Rethrow {
   /**
    * @deprecated use {@link ExceptionUtil#rethrowAllAsUnchecked(Throwable)} instead
    */
+  @Deprecated
   public static void reThrowRuntime(final Throwable t) {
     ExceptionUtil.rethrowAllAsUnchecked(t);
   }

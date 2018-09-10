@@ -21,16 +21,17 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 public class OpenShelfSettings extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     ShowSettingsUtil.getInstance().showSettingsDialog(project, new ShelfProjectConfigurable(project).getDisplayName());
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
 }

@@ -59,6 +59,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     myCompilerOutputPath = acceptParameter(compilerOutputPath);
   }
 
+  @Override
   public List<Pair<String,String>> getSourcePaths() {
     if (mySourcePaths == null) {
       final List<Pair<String, String>> paths = new ArrayList<>();
@@ -70,10 +71,12 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     return mySourcePaths;
   }
 
+  @Override
   public void setSourcePaths(List<Pair<String,String>> sourcePaths) {
     mySourcePaths = sourcePaths != null ? new ArrayList<>(sourcePaths) : null;
   }
 
+  @Override
   public void addSourcePath(Pair<String,String> sourcePathInfo) {
     if (mySourcePaths == null) {
       mySourcePaths = new ArrayList<>();
@@ -81,6 +84,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     mySourcePaths.add(sourcePathInfo);
   }
 
+  @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -96,6 +100,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     return StdModuleTypes.JAVA.modifySettingsStep(settingsStep, this);
   }
 
+  @Override
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setExcludeOutput(true);

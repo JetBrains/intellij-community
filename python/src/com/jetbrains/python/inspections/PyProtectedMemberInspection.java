@@ -58,7 +58,7 @@ public class PyProtectedMemberInspection extends PyInspection {
 
 
   private class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -106,7 +106,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     private void checkReference(@NotNull final PyReferenceExpression node, @NotNull final PyExpression qualifier) {
       final String name = node.getName();
       final List<LocalQuickFix> quickFixes = new ArrayList<>();
-      quickFixes.add(new PyRenameElementQuickFix());
+      quickFixes.add(new PyRenameElementQuickFix(node));
 
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PsiReference reference = node.getReference(getResolveContext());

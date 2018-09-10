@@ -38,11 +38,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ToggleMethodBreakpointAction extends AnAction {
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     boolean toEnable = getPlace(event) != null;
 
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
@@ -54,7 +56,8 @@ public class ToggleMethodBreakpointAction extends AnAction {
   }
 
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;

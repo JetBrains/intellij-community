@@ -34,14 +34,19 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
+  @Override
   public PsiClass findSourceElement(@NotNull PsiElement element) {
     return TestIntegrationUtils.findOuterClass(element);
   }
 
+  @Override
   @NotNull
   public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
@@ -63,17 +68,10 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithWeights, false);
   }
 
-  /**
-   * @deprecated {@link JavaTestFinder#getSearchScope(com.intellij.psi.PsiElement, boolean)}
-   */
-  protected GlobalSearchScope getSearchScope(PsiElement element) {
-    return getSearchScope(element, true);
-  }
-
   protected GlobalSearchScope getSearchScope(PsiElement element, boolean dependencies) {
     final Module module = getModule(element);
     if (module != null) {
-      return dependencies ? GlobalSearchScope.moduleWithDependenciesScope(module) 
+      return dependencies ? GlobalSearchScope.moduleWithDependenciesScope(module)
                           : GlobalSearchScope.moduleWithDependentsScope(module);
     }
     else {
@@ -82,7 +80,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   protected boolean isTestSubjectClass(PsiClass klass) {
-    if (klass.isAnnotationType() || 
+    if (klass.isAnnotationType() ||
         TestFrameworks.getInstance().isTestClass(klass) ||
         !klass.isPhysical()) {
       return false;
@@ -90,6 +88,7 @@ public class JavaTestFinder implements TestFinder {
     return true;
   }
 
+  @Override
   @NotNull
   public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
@@ -137,6 +136,7 @@ public class JavaTestFinder implements TestFinder {
     return file == null ? null : index.getModuleForFile(file);
   }
 
+  @Override
   public boolean isTest(@NotNull PsiElement element) {
     return TestIntegrationUtils.isTest(element);
   }

@@ -31,10 +31,10 @@ abstract class BaseCommitExecutorAction : DumbAwareAction() {
 
   protected abstract val executorId: String
 
-  protected fun getCommitDialog(e: AnActionEvent) = Refreshable.PANEL_KEY.getData(e.dataContext) as? CommitChangeListDialog
+  protected fun getCommitDialog(e: AnActionEvent): CommitChangeListDialog? = Refreshable.PANEL_KEY.getData(e.dataContext) as? CommitChangeListDialog
 
-  protected fun getCommitExecutor(dialog: CommitChangeListDialog?) = dialog?.executors?.find { it.id == executorId }
+  protected fun getCommitExecutor(dialog: CommitChangeListDialog?): CommitExecutor? = dialog?.executors?.find { it.id == executorId }
 
-  protected fun isEnabled(dialog: CheckinProjectPanel, executor: CommitExecutor) =
+  protected fun isEnabled(dialog: CheckinProjectPanel, executor: CommitExecutor): Boolean =
     dialog.hasDiffs() || (executor is CommitExecutorBase && !executor.areChangesRequired())
 }

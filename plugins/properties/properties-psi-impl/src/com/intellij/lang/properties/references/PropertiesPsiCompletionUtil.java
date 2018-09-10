@@ -4,7 +4,6 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -29,6 +28,7 @@ public class PropertiesPsiCompletionUtil {
 
   static Set<Object> getPropertiesKeys(final PropertyReferenceBase propertyReference) {
     final Set<Object> variants = new THashSet<>(new TObjectHashingStrategy<Object>() {
+      @Override
       public int computeHashCode(final Object object) {
         if (object instanceof IProperty) {
           final String key = ((IProperty)object).getKey();
@@ -39,6 +39,7 @@ public class PropertiesPsiCompletionUtil {
         }
       }
 
+      @Override
       public boolean equals(final Object o1, final Object o2) {
         return o1 instanceof IProperty && o2 instanceof IProperty &&
                Comparing.equal(((IProperty)o1).getKey(), ((IProperty)o2).getKey(), true);

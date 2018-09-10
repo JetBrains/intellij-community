@@ -24,7 +24,10 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
-    String lineSeparator = file == null ? null : LoadTextUtil.detectLineSeparator(file, true);
+    if (file == null) {
+      return WidgetState.HIDDEN;
+    }
+    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
     String toolTipText;
     String panelText;
     if (lineSeparator != null) {
@@ -33,7 +36,7 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     }
     else {
       toolTipText = "No line separator";
-      panelText = file != null ? "n/a" : "";
+      panelText = "n/a";
     }
 
     return new WidgetState(toolTipText, panelText, lineSeparator != null);

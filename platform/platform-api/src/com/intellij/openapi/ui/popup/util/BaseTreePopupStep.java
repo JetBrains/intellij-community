@@ -36,46 +36,57 @@ public class BaseTreePopupStep<T> extends BaseStep<T> implements TreePopupStep<T
     myProject = project;
   }
 
+  @Override
   public AbstractTreeStructure getStructure() {
     return myStructure;
   }
 
+  @Override
   public boolean isRootVisible() {
     return false;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public String getTitle() {
     return myTitle;
   }
 
+  @Override
   public boolean isSelectable(T node, T userData) {
     return true;
   }
 
+  @Override
   public boolean hasSubstep(T selectedValue) {
     return false;
   }
 
+  @Override
   public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
     return FINAL_CHOICE;
   }
 
+  @Override
   public void canceled() {
   }
 
+  @Override
   public String getTextFor(T value) {
     return value.toString();
   }
 
+  @Override
   @NotNull
   public List<T> getValues() {
     return Collections.emptyList();
   }
 
+  @Override
   public boolean isSpeedSearchEnabled() {
     return true;
   }

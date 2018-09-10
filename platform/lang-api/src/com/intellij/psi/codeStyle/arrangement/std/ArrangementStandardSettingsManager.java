@@ -222,7 +222,7 @@ public class ArrangementStandardSettingsManager {
     return token.getRepresentationValue();
   }
   
-  public List<ArrangementSettingsToken> sort(@NotNull Collection<ArrangementSettingsToken> tokens) {
+  public List<ArrangementSettingsToken> sort(@NotNull Collection<? extends ArrangementSettingsToken> tokens) {
     List<ArrangementSettingsToken> result = ContainerUtilRt.newArrayList(tokens);
     Collections.sort(result, myComparator);
     return result;

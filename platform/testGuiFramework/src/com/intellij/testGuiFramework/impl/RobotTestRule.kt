@@ -16,25 +16,14 @@
 package com.intellij.testGuiFramework.impl
 
 import org.fest.swing.core.Robot
-import org.fest.swing.core.SmartWaitRobot
 import org.junit.rules.ExternalResource
 
 class RobotTestRule: ExternalResource() {
 
-  private var myRobot: Robot? = null
-
-  override fun before() {
-    myRobot = SmartWaitRobot() // acquires ScreenLock
-//    myRobot!!.settings().delayBetweenEvents(30)
-  }
-
   override fun after() {
-    myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
+    GuiRobotHolder.releaseRobot()
   }
 
-  fun getRobot(): Robot {
-    myRobot ?: before()
-    return myRobot ?: throw Exception("Robot initialization error!")
-  }
+  fun getRobot(): Robot = GuiRobotHolder.robot
 
 }

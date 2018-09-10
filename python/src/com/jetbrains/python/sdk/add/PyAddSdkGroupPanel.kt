@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
@@ -33,8 +34,8 @@ class PyAddSdkGroupPanel(name: String,
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,
                          defaultPanel: PyAddSdkPanel) : PyAddSdkPanel() {
-  override val panelName = name
-  override val icon = panelIcon
+  override val panelName: String = name
+  override val icon: Icon = panelIcon
   var selectedPanel: PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()
 
@@ -55,12 +56,12 @@ class PyAddSdkGroupPanel(name: String,
     add(contentPanel, BorderLayout.NORTH)
   }
 
-  override fun validateAll() = panels.filter { it.isEnabled }.flatMap { it.validateAll() }
+  override fun validateAll(): List<ValidationInfo> = panels.filter { it.isEnabled }.flatMap { it.validateAll() }
 
   override val sdk: Sdk?
     get() = selectedPanel.sdk
 
-  override fun getOrCreateSdk() = selectedPanel.getOrCreateSdk()
+  override fun getOrCreateSdk(): Sdk? = selectedPanel.getOrCreateSdk()
 
   override fun addChangeListener(listener: Runnable) {
     changeListeners += listener

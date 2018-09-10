@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,13 @@ public final class Match {
 
   public PsiElement getMatchEnd() {
     return myMatchEnd;
+  }
+
+  public PsiElement[] getMatchElements() {
+    return StreamEx.iterate(myMatchStart,
+                            Objects::nonNull,
+                            element -> element != myMatchEnd ? element.getNextSibling() : null)
+                   .toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -229,7 +237,7 @@ public final class Match {
     return element;
   }
 
-  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable) throws IncorrectOperationException {
+  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable, @Nullable PsiType returnType) throws IncorrectOperationException {
     PsiStatement statement = null;
     if (outputVariable != null) {
       ReturnValue returnValue = getOutputVariableValue(outputVariable);
@@ -237,10 +245,10 @@ public final class Match {
         returnValue = new FieldReturnValue((PsiField)outputVariable);
       }
       if (returnValue == null) return null;
-      statement = returnValue.createReplacement(extractedMethod, methodCallExpression);
+      statement = returnValue.createReplacement(extractedMethod, methodCallExpression, returnType);
     }
     else if (getReturnValue() != null) {
-      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression);
+      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression, returnType);
     }
     if (statement == null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
@@ -263,12 +271,16 @@ public final class Match {
   }
 
   public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
+    return replace(extractedMethod, methodCallExpression, outputVariable, null);
+  }
+
+  public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable, @Nullable PsiType returnType) throws IncorrectOperationException {
     declareLocalVariables();
     if (getMatchStart() == getMatchEnd() && getMatchStart() instanceof PsiExpression) {
       return replaceWithExpression(methodCallExpression);
     }
     else {
-      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable);
+      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable, returnType);
     }
   }
 
@@ -420,6 +432,10 @@ public final class Match {
 
   public boolean putExtractedParameter(@NotNull ExtractableExpressionPart patternPart, @NotNull ExtractableExpressionPart candidatePart) {
     return ExtractedParameter.match(patternPart, candidatePart, myExtractedParameters);
+  }
+
+  public void addExtractedParameter(@NotNull ExtractedParameter parameter) {
+    myExtractedParameters.add(parameter);
   }
 
   @NotNull

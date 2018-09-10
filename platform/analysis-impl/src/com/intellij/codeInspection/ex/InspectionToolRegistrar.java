@@ -49,7 +49,6 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
 
     myInspectionComponentsLoaded = true;
     Set<InspectionToolProvider> providers = new THashSet<>();
-    //noinspection deprecation
     providers.addAll((((ComponentManagerImpl)ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
     ContainerUtil.addAll(providers, InspectionToolProvider.EXTENSION_POINT_NAME.getExtensions());
     List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();

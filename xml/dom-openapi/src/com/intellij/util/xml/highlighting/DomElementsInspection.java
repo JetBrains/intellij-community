@@ -73,7 +73,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   @SuppressWarnings({"MethodMayBeStatic"})
-  protected void checkChildren(final DomElement element, Consumer<DomElement> visitor) {
+  protected void checkChildren(final DomElement element, Consumer<? super DomElement> visitor) {
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {

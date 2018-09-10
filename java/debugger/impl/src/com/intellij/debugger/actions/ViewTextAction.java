@@ -101,7 +101,7 @@ public class ViewTextAction extends XFetchValueActionBase {
       myTextViewer = new TextViewer(initialValue, project, myStringNode == null);
       myTextViewer.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent e) {
+        public void documentChanged(@NotNull DocumentEvent e) {
           if (e.getNewLength() + e.getOldLength() > 0) {
             getOKAction().setEnabled(true);
           }

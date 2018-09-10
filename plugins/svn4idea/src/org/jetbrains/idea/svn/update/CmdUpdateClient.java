@@ -23,10 +23,6 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
   private boolean myIgnoreExternals;
 
   @Override
-  public void setUpdateLocksOnDemand(boolean locksOnDemand) {
-  }
-
-  @Override
   public void setEventHandler(ProgressTracker dispatcher) {
     myDispatcher = dispatcher;
   }

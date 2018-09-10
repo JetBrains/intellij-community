@@ -24,6 +24,7 @@ import javax.swing.*;
  *
  * @deprecated useless, go for {@link ColoredListCellRenderer} directly
  */
+@Deprecated
 public abstract class ColoredListCellRendererWrapper<T> extends ColoredListCellRenderer {
   @Override
   protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {

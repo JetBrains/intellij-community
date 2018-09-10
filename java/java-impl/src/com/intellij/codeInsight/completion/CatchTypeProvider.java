@@ -41,7 +41,7 @@ class CatchTypeProvider extends CompletionProvider<CompletionParameters> {
 
   @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                final ProcessingContext context,
+                                @NotNull final ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiTryStatement.class);
     final PsiCodeBlock tryBlock = tryStatement == null ? null : tryStatement.getTryBlock();

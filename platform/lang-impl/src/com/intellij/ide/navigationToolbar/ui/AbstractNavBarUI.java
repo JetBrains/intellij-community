@@ -69,11 +69,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   @Override
-  public boolean isDrawMacShadow(boolean selected, boolean focused) {
-    return false;
-  }
-
-  @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
     final boolean floating = navbar.isInFloatingMode();
     boolean toolbarVisible = UISettings.getInstance().getShowMainToolbar();

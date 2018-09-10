@@ -138,12 +138,12 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
     private final Object myValue;
     private final Type myType;
 
-    public MyValue(Object value, String type) {
+    MyValue(Object value, String type) {
       myValue = value;
       myType = new ObjectType(type);
     }
 
-    public MyValue(Object value, int type) {
+    MyValue(Object value, int type) {
       myValue = value;
       myType = mapType(type);
     }
@@ -243,14 +243,16 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
   private static class MyDummyElement extends StyleElement {
     private final StyleElement myElement;
 
-    public MyDummyElement(StyleElement element) {
+    MyDummyElement(StyleElement element) {
       myElement = element;
       substituteFor(element);
     }
 
+    @Override
     public void prepareAttributes() throws TransformerConfigurationException {
     }
 
+    @Override
     public void process(Context context) throws TransformerException {
     }
 

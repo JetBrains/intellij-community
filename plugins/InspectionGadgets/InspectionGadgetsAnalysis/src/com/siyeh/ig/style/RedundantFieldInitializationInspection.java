@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -92,10 +93,9 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
       if (initializer == null) {
         return;
       }
-      final String text = initializer.getText();
       final PsiType type = field.getType();
       if (PsiType.BOOLEAN.equals(type)) {
-        if (onlyWarnOnNull || !PsiKeyword.FALSE.equals(text)) {
+        if (onlyWarnOnNull || !ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(initializer), false)) {
           return;
         }
       }

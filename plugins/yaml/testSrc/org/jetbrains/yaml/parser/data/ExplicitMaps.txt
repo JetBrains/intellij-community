@@ -37,9 +37,9 @@ YAML file
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('two')
-  PsiWhiteSpace(' ')
-  PsiComment(comment)('# block value')
-  PsiElement(Eol)('\n')
+          PsiWhiteSpace(' ')
+          PsiComment(comment)('# block value')
+      PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
@@ -105,7 +105,7 @@ YAML file
       PsiElement(,)(',')
       PsiElement(Eol)('\n')
       PsiElement(})('}')
-  PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
@@ -116,7 +116,8 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('sun:')
+            PsiElement(scalar key)('sun')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('yellow↓')
@@ -130,7 +131,8 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('earth:')
+                PsiElement(scalar key)('earth')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('blue↓')
@@ -140,11 +142,12 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('moon:')
+                PsiElement(scalar key)('moon')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('white↓')
-  PsiElement(Eol)('\n')
+      PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
@@ -155,14 +158,16 @@ YAML file
       YAML key value
         PsiElement(?)('?')
         PsiWhiteSpace(' ')
-        PsiElement(scalar key)('explicit:')
+        PsiElement(scalar key)('explicit')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('entry')
       PsiElement(,)(',')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('implicit:')
+        PsiElement(scalar key)('implicit')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('entry')

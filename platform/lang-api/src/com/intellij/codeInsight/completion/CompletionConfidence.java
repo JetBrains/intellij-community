@@ -28,6 +28,7 @@ public abstract class CompletionConfidence {
   /**
    * @deprecated not used anymore, only the user controls whether the lookup will be focused
    */
+  @Deprecated
   @NotNull
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) { 
     return ThreeState.UNSURE; 

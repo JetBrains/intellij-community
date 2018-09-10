@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CodeInsightAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       Editor editor = getEditor(e.getDataContext(), project, false);
@@ -74,7 +74,7 @@ public abstract class CodeInsightAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
     Project project = e.getProject();

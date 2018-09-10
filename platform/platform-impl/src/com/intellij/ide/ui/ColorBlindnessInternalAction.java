@@ -41,7 +41,7 @@ import java.io.File;
  */
 public class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();
   }
 
@@ -164,7 +164,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
   private static final class FilterItem {
     private final ImageFilter myFilter;
 
-    public FilterItem(ImageFilter filter) {
+    FilterItem(ImageFilter filter) {
       myFilter = filter;
     }
 

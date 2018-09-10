@@ -48,12 +48,13 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static class RendererAction extends ToggleAction {
     private final NodeRenderer myNodeRenderer;
 
-    public RendererAction(NodeRenderer nodeRenderer) {
+    RendererAction(NodeRenderer nodeRenderer) {
       super(nodeRenderer.getName());
       myNodeRenderer = nodeRenderer;
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
       List<JavaValue> values = getSelectedValues(e);
       if (values.isEmpty()) {
         return false;
@@ -66,7 +67,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       return true;
     }
 
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    @Override
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (!state) return;
 
       final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
@@ -94,6 +96,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     return myChildren;
@@ -152,7 +155,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     return children.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public void update(final AnActionEvent event) {
+  @Override
+  public void update(@NotNull final AnActionEvent event) {
     if(!DebuggerAction.isFirstStart(event)) {
       return;
     }
@@ -170,7 +174,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       event.getPresentation().setEnabled(false);
       return;
     }
-    
+
     process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {

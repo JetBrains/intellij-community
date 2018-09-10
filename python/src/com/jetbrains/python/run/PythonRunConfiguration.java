@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
@@ -37,13 +35,17 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
   public static final String MODULE_MODE = "MODULE_MODE";
+  public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
+  public static final String INPUT_FILE = "INPUT_FILE";
 
   private String myScriptName;
   private String myScriptParameters;
   private boolean myShowCommandLineAfterwards = false;
   private boolean myEmulateTerminal = false;
   private boolean myModuleMode = false;
+  @NotNull private String myInputFile = "";
   private final Pattern myQualifiedNameRegex = Pattern.compile("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$");
+  private boolean myRedirectInput = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -55,6 +57,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return new PythonRunConfigurationEditor(this);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return new PythonScriptCommandLineState(this, env);
   }
@@ -72,8 +75,12 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
         throw new RuntimeConfigurationWarning("Provide a qualified name of a module");
       }
     }
+    if (isRedirectInput() && !new File(myInputFile).exists()) {
+      throw new RuntimeConfigurationWarning("Input file doesn't exist");
+    }
   }
 
+  @Override
   public String suggestedName() {
     final String scriptName = getScriptName();
     if (scriptName == null) return null;
@@ -84,26 +91,32 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return name;
   }
 
+  @Override
   public String getScriptName() {
     return myScriptName;
   }
 
+  @Override
   public void setScriptName(String scriptName) {
     myScriptName = scriptName;
   }
 
+  @Override
   public String getScriptParameters() {
     return myScriptParameters;
   }
 
+  @Override
   public void setScriptParameters(String scriptParameters) {
     myScriptParameters = scriptParameters;
   }
 
+  @Override
   public boolean showCommandLineAfterwards() {
     return myShowCommandLineAfterwards;
   }
 
+  @Override
   public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
     myShowCommandLineAfterwards = showCommandLineAfterwards;
   }
@@ -118,6 +131,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myEmulateTerminal = emulateTerminal;
   }
 
+  @Override
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
@@ -125,8 +139,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myShowCommandLineAfterwards = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, SHOW_COMMAND_LINE, "false"));
     myEmulateTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EMULATE_TERMINAL, "false"));
     myModuleMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MODULE_MODE, "false"));
+    myRedirectInput = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, REDIRECT_INPUT, "false"));
+    myInputFile  = JDOMExternalizerUtil.readField(element, INPUT_FILE, "");
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
@@ -134,8 +151,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, SHOW_COMMAND_LINE, Boolean.toString(myShowCommandLineAfterwards));
     JDOMExternalizerUtil.writeField(element, EMULATE_TERMINAL, Boolean.toString(myEmulateTerminal));
     JDOMExternalizerUtil.writeField(element, MODULE_MODE, Boolean.toString(myModuleMode));
+    JDOMExternalizerUtil.writeField(element, REDIRECT_INPUT, Boolean.toString(myRedirectInput));
+    JDOMExternalizerUtil.writeField(element, INPUT_FILE, myInputFile);
   }
 
+  @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return this;
   }
@@ -147,6 +167,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptParameters(source.getScriptParameters());
     target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
     target.setEmulateTerminal(source.emulateTerminal());
+    target.setRedirectInput(source.isRedirectInput());
+    target.setInputFile(source.getInputFile());
   }
 
   @Override
@@ -186,5 +208,26 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   @Override
   public void setModuleMode(boolean moduleMode) {
     myModuleMode = moduleMode;
+  }
+
+  @NotNull
+  @Override
+  public String getInputFile() {
+    return myInputFile;
+  }
+
+  @Override
+  public void setInputFile(@NotNull String inputFile) {
+    myInputFile = inputFile;
+  }
+
+  @Override
+  public boolean isRedirectInput() {
+    return myRedirectInput;
+  }
+
+  @Override
+  public void setRedirectInput(boolean isRedirectInput) {
+    myRedirectInput = isRedirectInput;
   }
 }

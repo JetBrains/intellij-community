@@ -43,6 +43,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     myRenamedOutputFileName = outputFileName;
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new FileCopyPresentation(myFilePath, getOutputFileName());
@@ -80,10 +81,12 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
            && Comparing.equal(myRenamedOutputFileName, ((FileCopyPackagingElement)element).getRenamedOutputFileName());
   }
 
+  @Override
   public FileCopyPackagingElement getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull FileCopyPackagingElement state) {
     setFilePath(state.getFilePath());
     setRenamedOutputFileName(state.getRenamedOutputFileName());
@@ -99,14 +102,17 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     myRenamedOutputFileName = renamedOutputFileName;
   }
 
+  @Override
   public String getName() {
     return getOutputFileName();
   }
 
+  @Override
   public boolean canBeRenamed() {
     return !isDirectory();
   }
 
+  @Override
   public void rename(@NotNull String newName) {
     myRenamedOutputFileName = newName.equals(PathUtil.getFileName(myFilePath)) ? null : newName;
   }

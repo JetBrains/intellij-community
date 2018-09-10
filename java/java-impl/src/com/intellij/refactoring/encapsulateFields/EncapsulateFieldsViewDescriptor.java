@@ -26,26 +26,30 @@ import org.jetbrains.annotations.NotNull;
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private final PsiField[] myFields;
 
-  public EncapsulateFieldsViewDescriptor(FieldDescriptor[] descriptors) {
+  EncapsulateFieldsViewDescriptor(FieldDescriptor[] descriptors) {
     myFields = new PsiField[descriptors.length];
     for (int i = 0; i < descriptors.length; i++) {
       myFields[i] = descriptors[i].getField();
     }
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("encapsulate.fields.fields.to.be.encapsulated");
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myFields;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

@@ -27,24 +27,29 @@ public class TestTreeExpander implements TreeExpander {
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
     Disposer.register(model, new Disposable() {
+      @Override
       public void dispose() {
         myModel = null;
       }
     });
   }
 
+  @Override
   public void expandAll() {
     myModel.getTreeBuilder().expandAll(null);
   }
 
+  @Override
   public boolean canExpand() {
     return treeHasMoreThanOneLevel();
   }
 
+  @Override
   public void collapseAll() {
     TreeUtil.collapseAll(myModel.getTreeView(), 1);
   }
 
+  @Override
   public boolean canCollapse() {
     return treeHasMoreThanOneLevel();
   }

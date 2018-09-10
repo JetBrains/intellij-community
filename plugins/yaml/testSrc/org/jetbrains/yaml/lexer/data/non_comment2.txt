@@ -1,3 +1,4 @@
-scalar key ('foo#non_comment:')
+scalar key ('foo#non_comment')
+: (':')
 whitespace (' ')
 text ('text')

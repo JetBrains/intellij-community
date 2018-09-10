@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -29,6 +30,7 @@ import java.util.Map;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
+  private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
   @NonNls public static final String PATCH = "patch";
@@ -130,6 +132,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
+  public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
 
   private static final int MAX_STORED_MESSAGES = 25;
 
@@ -158,7 +161,11 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     LAST_COMMIT_MESSAGE = comment;
     if (comment == null || comment.length() == 0) return;
     myLastCommitMessages.remove(comment);
-    while (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
+    addCommitMessage(comment);
+  }
+
+  private void addCommitMessage(@NotNull String comment) {
+    if (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
       myLastCommitMessages.remove(0);
     }
     myLastCommitMessages.add(comment);
@@ -178,10 +185,20 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return new ArrayList<>(myLastCommitMessages);
   }
 
-  public void removeMessage(final String content) {
-    myLastCommitMessages.remove(content);
+  public void replaceMessage(@NotNull String oldMessage, @NotNull String newMessage) {
+    if (oldMessage.equals(LAST_COMMIT_MESSAGE)) {
+      LAST_COMMIT_MESSAGE = newMessage;
+    }
+    int index = myLastCommitMessages.indexOf(oldMessage);
+    if (index >= 0) {
+      myLastCommitMessages.remove(index);
+      myLastCommitMessages.add(index, newMessage);
+    }
+    else {
+      LOG.debug("Couldn't find message [" + oldMessage + "] in the messages history");
+      addCommitMessage(newMessage);
+    }
   }
-
 
   public PerformInBackgroundOption getUpdateOption() {
     return myUpdateOption;

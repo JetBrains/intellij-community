@@ -32,13 +32,17 @@ object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvi
  *
  * @property isFilterByBlacklist allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
  * @property relatesToPrecedingText whether hint is associated with previous or following text
+ * @property widthAdjustment allows resulting hint's width to match certain editor text's width, see [HintWidthAdjustment]
  */
 class InlayInfo(val text: String,
                 val offset: Int,
                 val isShowOnlyIfExistedBefore: Boolean,
                 val isFilterByBlacklist: Boolean,
-                val relatesToPrecedingText: Boolean) {
+                val relatesToPrecedingText: Boolean,
+                val widthAdjustment: HintWidthAdjustment?) {
 
+  constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean, isFilterByBlacklist: Boolean, relatesToPrecedingText: Boolean)
+    : this(text, offset, isShowOnlyIfExistedBefore, isFilterByBlacklist, relatesToPrecedingText, null)
   constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean) : this(text, offset, isShowOnlyIfExistedBefore, true, false)
   constructor(text: String, offset: Int) : this(text, offset, false, true, false)
 
@@ -79,15 +83,15 @@ sealed class HintInfo {
 
   open class OptionInfo(protected val option: Option) : HintInfo() {
 
-    open fun disable() = alternate()
-    open fun enable() = alternate()
+    open fun disable(): Unit = alternate()
+    open fun enable(): Unit = alternate()
 
     private fun alternate() {
       val current = option.get()
       option.set(!current)
     }
 
-    open val optionName = option.name
+    open val optionName: String = option.name
 
     fun isOptionEnabled(): Boolean = option.isEnabled()
 
@@ -99,7 +103,7 @@ data class Option(val id: String,
                   val name: String,
                   val defaultValue: Boolean) {
 
-  fun isEnabled() = get()
+  fun isEnabled(): Boolean = get()
 
   fun get(): Boolean {
     return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue

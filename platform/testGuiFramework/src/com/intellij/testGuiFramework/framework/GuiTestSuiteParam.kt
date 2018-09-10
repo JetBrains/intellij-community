@@ -16,6 +16,8 @@
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
+import com.intellij.testGuiFramework.launcher.ide.Ide
+import org.apache.log4j.Logger
 import org.junit.runner.Runner
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
@@ -26,15 +28,15 @@ import org.junit.runners.parameterized.TestWithParameters
 class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass) {
 
   //IDE type to run suite tests with
-  val myIde = getIdeFromAnnotation(klass)
-  var isFirstStart = true
-  val UNDEFINED_FIRST_CLASS = "undefined"
+  val myIde: Ide = getIdeFromAnnotation(klass)
+  var isFirstStart: Boolean = true
+  val UNDEFINED_FIRST_CLASS: String = "undefined"
   val myFirstStartClassName: String by lazy {
     val annotation = klass.getAnnotation(FirstStartWith::class.java)
     val value = annotation?.value
     if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
   }
-  val LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteParam")!!
+  val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteParam")!!
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {

@@ -267,7 +267,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), s -> {
         for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
           if (configurable.getDisplayName().equals(s)) {

@@ -12,7 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 
-fun Path.exists() = Files.exists(this)
+fun Path.exists(): Boolean = Files.exists(this)
 
 fun Path.createDirectories(): Path {
   // symlink or existing regular file - Java SDK do this check, but with as `isDirectory(dir, LinkOption.NOFOLLOW_LINKS)`, i.e. links are not checked
@@ -75,7 +75,7 @@ fun Path.delete() {
     }
   }
   catch (e: Exception) {
-    FileUtil.delete(toFile())
+    deleteAsIOFile()
   }
 }
 
@@ -116,7 +116,7 @@ private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleF
       Files.delete(file)
     }
     catch (e: Exception) {
-      FileUtil.delete(file.toFile())
+      deleteAsIOFile()
     }
     return FileVisitResult.CONTINUE
   }
@@ -126,11 +126,19 @@ private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleF
       Files.delete(dir)
     }
     catch (e: Exception) {
-      FileUtil.delete(dir.toFile())
+      deleteAsIOFile()
     }
     return FileVisitResult.CONTINUE
   }
 })
+
+private fun Path.deleteAsIOFile() {
+  try {
+    FileUtil.delete(toFile())
+  }
+  // according to specification #toFile() method may throw UnsupportedOperationException
+  catch (ignored: UnsupportedOperationException) {}
+}
 
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
@@ -144,11 +152,11 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
-fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
+fun Path.readChars(): CharSequence = inputStream().reader().readCharSequence(size().toInt())
 
-fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
-fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
 @JvmOverloads
 fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
@@ -191,7 +199,7 @@ fun Path.write(data: String): Path {
   return this
 }
 
-fun Path.size() = Files.size(this)
+fun Path.size(): Long = Files.size(this)
 
 fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   try {
@@ -202,18 +210,18 @@ fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   }
 }
 
-fun Path.sizeOrNull() = basicAttributesIfExists()?.size() ?: -1
+fun Path.sizeOrNull(): Long = basicAttributesIfExists()?.size() ?: -1
 
-fun Path.isHidden() = Files.isHidden(this)
+fun Path.isHidden(): Boolean = Files.isHidden(this)
 
-fun Path.isDirectory() = Files.isDirectory(this)
+fun Path.isDirectory(): Boolean = Files.isDirectory(this)
 
-fun Path.isFile() = Files.isRegularFile(this)
+fun Path.isFile(): Boolean = Files.isRegularFile(this)
 
 fun Path.move(target: Path): Path = Files.move(this, target, StandardCopyOption.REPLACE_EXISTING)
 
 fun Path.copy(target: Path): Path {
-  parent?.createDirectories()
+  target.parent?.createDirectories()
   return Files.copy(this, target, StandardCopyOption.REPLACE_EXISTING)
 }
 

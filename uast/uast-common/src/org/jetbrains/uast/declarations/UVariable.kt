@@ -47,15 +47,15 @@ interface UVariable : UDeclaration, PsiVariable {
     visitor.afterVisitVariable(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitVariable(this, data)
 
   @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
-  override fun getInitializer() = psi.initializer
+  override fun getInitializer(): PsiExpression? = psi.initializer
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     if (annotations.isNotEmpty()) {
       annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
     }
@@ -63,6 +63,13 @@ interface UVariable : UDeclaration, PsiVariable {
     append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
     uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
   }
+}
+
+/**
+ * @since 2018.2
+ */
+interface UVariableEx : UVariable, UDeclarationEx {
+  override val javaPsi: PsiVariable
 }
 
 private fun UVariable.visitContents(visitor: UastVisitor) {
@@ -73,7 +80,7 @@ private fun UVariable.visitContents(visitor: UastVisitor) {
 interface UParameter : UVariable, PsiParameter {
   override val psi: PsiParameter
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitParameter(this)) return
@@ -81,13 +88,20 @@ interface UParameter : UVariable, PsiParameter {
     visitor.afterVisitParameter(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitParameter(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitParameter(this, data)
+}
+
+/**
+ * @since 2018.2
+ */
+interface UParameterEx : UParameter, UDeclarationEx {
+  override val javaPsi: PsiParameter
 }
 
 interface UField : UVariable, PsiField {
   override val psi: PsiField
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitField(this)) return
@@ -95,13 +109,20 @@ interface UField : UVariable, PsiField {
     visitor.afterVisitField(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitField(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
+}
+
+/**
+ * @since 2018.2
+ */
+interface UFieldEx : UField, UDeclarationEx {
+  override val javaPsi: PsiField
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
   override val psi: PsiLocalVariable
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitLocalVariable(this)) return
@@ -109,7 +130,14 @@ interface ULocalVariable : UVariable, PsiLocalVariable {
     visitor.afterVisitLocalVariable(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitLocalVariable(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLocalVariable(this, data)
+}
+
+/**
+ * @since 2018.2
+ */
+interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
+  override val javaPsi: PsiLocalVariable
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
@@ -117,7 +145,7 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
 
   val initializingClass: UClass?
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitEnumConstant(this)) return
@@ -129,14 +157,14 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
     visitor.afterVisitEnumConstant(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitEnumConstantExpression(this, data)
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     if (annotations.isNotEmpty()) {
       annotations.joinTo(this, separator = " ", postfix = " ", transform = UAnnotation::asRenderString)
     }
-    append(name ?: "<ERROR>")
+    append(name)
     if (valueArguments.isNotEmpty()) {
       valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
     }
@@ -148,4 +176,11 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
       append("}")
     }
   }
+}
+
+/**
+ * @since 2018.2
+ */
+interface UEnumConstantEx : UEnumConstant, UDeclarationEx {
+  override val javaPsi: PsiEnumConstant
 }

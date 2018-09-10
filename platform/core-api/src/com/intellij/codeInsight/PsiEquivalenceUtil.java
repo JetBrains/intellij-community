@@ -50,15 +50,15 @@ public class PsiEquivalenceUtil {
 
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
-                                              @Nullable Comparator<PsiElement> resolvedElementsComparator,
-                                              @Nullable Comparator<PsiElement> leafElementsComparator) {
+                                              @Nullable Comparator<? super PsiElement> resolvedElementsComparator,
+                                              @Nullable Comparator<? super PsiElement> leafElementsComparator) {
     return areElementsEquivalent(element1, element2, new ReferenceComparator(resolvedElementsComparator), leafElementsComparator, null, false);
   }
 
   private static class ReferenceComparator implements Comparator<PsiReference> {
-    private @Nullable final Comparator<PsiElement> myResolvedElementsComparator;
+    private @Nullable final Comparator<? super PsiElement> myResolvedElementsComparator;
 
-    ReferenceComparator(@Nullable Comparator<PsiElement> resolvedElementsComparator) {
+    ReferenceComparator(@Nullable Comparator<? super PsiElement> resolvedElementsComparator) {
       myResolvedElementsComparator = resolvedElementsComparator;
     }
 
@@ -73,9 +73,9 @@ public class PsiEquivalenceUtil {
 
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
-                                              @NotNull Comparator<PsiReference> referenceComparator,
-                                              @Nullable Comparator<PsiElement> leafElementsComparator,
-                                              @Nullable Condition<PsiElement> isElementSignificantCondition,
+                                              @NotNull Comparator<? super PsiReference> referenceComparator,
+                                              @Nullable Comparator<? super PsiElement> leafElementsComparator,
+                                              @Nullable Condition<? super PsiElement> isElementSignificantCondition,
                                               boolean areCommentsSignificant) {
     if(element1 == element2) return true;
     ASTNode node1 = element1.getNode();
@@ -118,7 +118,7 @@ public class PsiEquivalenceUtil {
 
   @NotNull
   public static PsiElement[] getFilteredChildren(@NotNull final PsiElement element,
-                                                 @Nullable Condition<PsiElement> isElementSignificantCondition,
+                                                 @Nullable Condition<? super PsiElement> isElementSignificantCondition,
                                                  boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);
     ArrayList<PsiElement> array = new ArrayList<>();
@@ -133,13 +133,13 @@ public class PsiEquivalenceUtil {
   }
 
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
-                                              final List<Couple<PsiElement>> result,
+                                              final List<? super Couple<PsiElement>> result,
                                               PsiElement scope) {
     findChildRangeDuplicates(first, last, scope, (start, end) -> result.add(Couple.of(start, end)));
   }
 
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last, PsiElement scope,
-                                              PairConsumer<PsiElement, PsiElement> consumer) {
+                                              PairConsumer<? super PsiElement, ? super PsiElement> consumer) {
     LOG.assertTrue(first.getParent() == last.getParent());
     LOG.assertTrue(!(first instanceof PsiWhiteSpace) && !(last instanceof PsiWhiteSpace));
     addRangeDuplicates(scope, first, last, consumer);
@@ -148,7 +148,7 @@ public class PsiEquivalenceUtil {
   private static void addRangeDuplicates(final PsiElement scope,
                                          final PsiElement first,
                                          final PsiElement last,
-                                         final PairConsumer<PsiElement, PsiElement> result) {
+                                         final PairConsumer<? super PsiElement, ? super PsiElement> result) {
     final PsiElement[] children = getFilteredChildren(scope, null, true);
     NextChild:
     for (int i = 0; i < children.length;) {

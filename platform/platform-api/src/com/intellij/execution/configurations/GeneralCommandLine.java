@@ -103,6 +103,19 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+  protected GeneralCommandLine(@NotNull GeneralCommandLine original) {
+    myExePath = original.myExePath;
+    myWorkDirectory = original.myWorkDirectory;
+    myEnvParams.putAll(original.myEnvParams);
+    myParentEnvironmentType = original.myParentEnvironmentType;
+    original.myProgramParams.copyTo(myProgramParams);
+    myCharset = original.myCharset;
+    myRedirectErrorStream = original.myRedirectErrorStream;
+    myInputFile = original.myInputFile;
+    // this is intentional memory waste, to avoid warning suppression. We should not copy UserData, but can't suppress a warning for a single field
+    myUserData = ContainerUtil.newHashMap();
+  }
+
   @NotNull
   public String getExePath() {
     return myExePath;
@@ -168,6 +181,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 2018.*) */
+  @Deprecated
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiReferenceProvider;
  * @author Dmitry Avdeev
  * @deprecated use PsiReferenceProvider instead
  */
+@Deprecated
 public abstract class PsiReferenceProviderBase extends PsiReferenceProvider {
 
 }

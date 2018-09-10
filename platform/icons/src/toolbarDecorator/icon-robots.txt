@@ -1,4 +1,5 @@
 deprecated: add.png -> /general/add.svg; to be removed in IDEA 2020 - use AllIcons.General.Add
+deprecated: addPackage.png -> /toolbarDecorator/addFolder.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddFolder
 deprecated: edit.png -> /actions/edit.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Edit
 deprecated: moveDown.png -> /actions/moveDown.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown
 deprecated: moveUp.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp

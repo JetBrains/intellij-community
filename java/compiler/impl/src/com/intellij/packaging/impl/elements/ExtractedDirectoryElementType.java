@@ -51,6 +51,7 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
     return true;
   }
 
+  @Override
   @NotNull
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
@@ -70,6 +71,7 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
     return list;
   }
 
+  @Override
   @NotNull
   public ExtractedDirectoryPackagingElement createEmpty(@NotNull Project project) {
     return new ExtractedDirectoryPackagingElement();

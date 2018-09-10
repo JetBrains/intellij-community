@@ -42,6 +42,11 @@ public class InternalPromiseUtil {
     void _setValue(@NotNull PromiseValue<T> value);
   }
 
+  public interface CompletablePromise<T> extends Promise<T> {
+    void setResult(@Nullable T t);
+    boolean setError(@NotNull Throwable error);
+  }
+
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
   public static class MessageError extends RuntimeException {
     public final ThreeState log;
@@ -77,7 +82,7 @@ public class InternalPromiseUtil {
 
     @NotNull
     public Promise.State getState() {
-      return error == null ? Promise.State.FULFILLED : Promise.State.REJECTED;
+      return error == null ? Promise.State.SUCCEEDED : Promise.State.REJECTED;
     }
 
     public boolean isCancelled() {

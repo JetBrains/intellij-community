@@ -20,6 +20,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.BufferedOutputStream
@@ -169,6 +170,49 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
 
     buildArtifacts(artifact)
     assertOutput(artifact, directoryContent { file("A.class") })
+  }
+
+  fun testModuleSources() {
+    val file = createFile("src/A.java", "class A{}")
+    val m = addModule("m", PathUtil.getParentPath(file))
+    val a = addArtifact(root().moduleSource(m))
+    buildAll()
+    assertOutput(a, directoryContent {
+      file("A.java")
+    })
+
+    val b = createFile("src/B.java", "class B{}")
+
+    buildAll()
+    assertOutput(a, directoryContent {
+      file("A.java")
+      file("B.java")
+    })
+
+    delete(b)
+    buildAll()
+    assertOutput(a, directoryContent {
+      file("A.java")
+    })
+  }
+
+  fun testModuleSourcesWithPackagePrefix() {
+    val file = createFile("src/A.java", "class A{}")
+    val m = addModule("m", PathUtil.getParentPath(file))
+    val sourceRoot = assertOneElement(m.sourceRoots)
+    val typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE)
+    assertNotNull(typed)
+    typed!!.properties.packagePrefix = "org.foo"
+
+    val a = addArtifact(root().moduleSource(m))
+    buildAll()
+    assertOutput(a, directoryContent {
+      dir("org") {
+        dir("foo") {
+          file("A.java")
+        }
+      }
+    })
   }
 
   fun testCopyResourcesFromModuleOutput() {

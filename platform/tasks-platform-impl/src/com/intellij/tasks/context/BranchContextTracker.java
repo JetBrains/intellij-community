@@ -8,7 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.tasks.BranchInfo;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class BranchContextTracker implements BranchChangeListener {
 
@@ -36,6 +41,15 @@ public class BranchContextTracker implements BranchChangeListener {
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     if (!vcsConfiguration.RELOAD_CONTEXT) return;
 
+    // check if the task is already switched
+    TaskManager manager = TaskManager.getManager(myProject);
+    if (manager != null) {
+      LocalTask task = manager.getActiveTask();
+      List<BranchInfo> branches = task.getBranches(false);
+      if (branches.stream().anyMatch(info -> branchName.equals(info.name)))
+        return;
+    }
+
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;
 
@@ -47,7 +61,7 @@ public class BranchContextTracker implements BranchChangeListener {
     myContextManager.loadContext(contextName);
 
     Notification notification =
-      NOTIFICATION.createNotification("Workspace is restored to how it was in the ‘" + branchName + "' branch", NotificationType.INFORMATION);
+      NOTIFICATION.createNotification("Workspace associated with branch ‘" + branchName + "' has been restored", NotificationType.INFORMATION);
     if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
       notification.addAction(new NotificationAction("Rollback") {
         @Override
@@ -62,9 +76,9 @@ public class BranchContextTracker implements BranchChangeListener {
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-    }).setContextHelpAction(new AnAction("What is a workspace?", "Workspace includes open editors, current run configuration, and breakpoints.", null) {
+    }).setContextHelpAction(new AnAction("What is a workspace?", "A workspace is a set of opened files, the current run configuration, and breakpoints.", null) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
 
       }
     }).notify(myProject);

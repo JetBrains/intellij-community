@@ -539,8 +539,16 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<? extends java.lang.Object>>"));
   }
 
+  public void testKeepComments() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testDenotableType2() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I<? extends I<?>>"));
+  }
+
+  public void testExpectedTypeInsteadOfNullForVarargs() {
+    doTest(new MockIntroduceVariableHandler("s", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
   public void testDenotableType3() {

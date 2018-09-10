@@ -64,7 +64,7 @@ public interface UpdateEnvironment extends VcsProviderMarker {
   /**
    * Allows to show a settings dialog for the operation.
    *
-   * @param files the content roots for which update/integrate/status will be perfromed.
+   * @param files the content roots for which update/integrate/status will be performed.
    * @return the settings dialog instance, or null if the VCS doesn't provide a settings dialog for this operation.
    */
   @Nullable

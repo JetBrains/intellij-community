@@ -3,7 +3,7 @@ import java.util.Map;
 
 abstract class NoImports implements List<NoImports.A> {
   Map.Entry entry;
-  <warning descr="'A' is unnecessarily qualified with 'NoImports'">NoImports</warning>.A a;
+  <caret>NoImports.A a;
 
   class A {}
 }

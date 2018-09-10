@@ -154,7 +154,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     Document document = getEditor().getDocument();
     List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
     List<LineMarkerInfo> inMyClass = ContainerUtil.filter(markers, info -> OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset));
-    assertTrue(inMyClass.toString(), inMyClass.size() == 2);
+    assertEquals(inMyClass.toString(), 2, inMyClass.size());
     LineMarkerInfo iMarker = findMarkerWithElement(inMyClass, getName.getNameIdentifier());
     assertSame(MarkerType.OVERRIDING_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
 

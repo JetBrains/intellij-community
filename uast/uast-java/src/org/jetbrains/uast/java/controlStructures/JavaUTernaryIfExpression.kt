@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiConditionalExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
@@ -24,9 +25,9 @@ class JavaUTernaryIfExpression(
   override val psi: PsiConditionalExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UIfExpression {
-  override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-  override val thenExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
-  override val elseExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
+  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
+  override val thenExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
+  override val elseExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
 
   override val isTernary: Boolean
     get() = true

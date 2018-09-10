@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -82,7 +82,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     connection.subscribe(Notifications.TOPIC, new MyNotificationListener(null));
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
           notification.hideBalloon();
         }
@@ -177,7 +177,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           else {
             balloon.addListener(new JBPopupAdapter() {
               @Override
-              public void onClosed(LightweightWindowEvent event) {
+              public void onClosed(@NotNull LightweightWindowEvent event) {
                 if (!event.isOk()) {
                   notification.expire();
                 }
@@ -818,18 +818,22 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
       handleEvent(e, true, false);
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       handleEvent(e, false, false);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       handleEvent(e, false, true);
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
       if (myLastComponent != null) {
         mouseExited(e, myLastComponent);
@@ -1006,7 +1010,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class DropDownAction extends LinkLabel<Void> {
     Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
 
-    public DropDownAction(String text, @Nullable LinkListener<Void> listener) {
+    DropDownAction(String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
@@ -1015,8 +1019,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       setIcon(new Icon() {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - getIconHeight();
-          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
+          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, y + 1);
         }
 
         @Override
@@ -1104,7 +1107,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private JPanel myActionPanel;
     private Component myExpandAction;
 
-    public CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
+    CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
       myText = text;
       myLayoutData = layoutData;
     }
@@ -1285,7 +1288,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private String myTitleTextR;
     private String myTitleTextD;
 
-    public LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
+    LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
       myContent = content;
       myContentTextR = textR;
       myContentTextD = textD;
@@ -1319,7 +1322,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
-    public TextCaret(@NotNull BalloonLayoutData layoutData) {
+    TextCaret(@NotNull BalloonLayoutData layoutData) {
       myLayoutData = layoutData;
     }
 

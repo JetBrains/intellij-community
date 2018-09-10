@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 /**
  * @author Irina.Chernushina on 2/13/2016.
@@ -32,12 +32,21 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();
     final List<JsonSchemaFileProvider> providers = map.values().stream()
-      .map(schema -> new MyProvider(project, schema.getSchemaVersion(), schema.getName(), isHttpPath(schema.getRelativePathToSchema())
-                                                               ? schema.getRelativePathToSchema()
-                                                               : new File(project.getBasePath(), schema.getRelativePathToSchema()).getAbsolutePath(),
-                                    schema.getCalculatedPatterns())).collect(Collectors.toList());
+                                                      .map(schema -> createProvider(project, schema)).collect(Collectors.toList());
 
     return providers.isEmpty() ? Collections.emptyList() : providers;
+  }
+
+  @NotNull
+  public MyProvider createProvider(@NotNull Project project,
+                                   UserDefinedJsonSchemaConfiguration schema) {
+    String relPath = schema.getRelativePathToSchema();
+    return new MyProvider(project, schema.getSchemaVersion(), schema.getName(),
+                          isHttpPath(relPath) || new File(relPath).isAbsolute()
+                            ? relPath
+                            : new File(project.getBasePath(),
+                          relPath).getAbsolutePath(),
+                          schema.getCalculatedPatterns());
   }
 
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
@@ -48,7 +57,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     private VirtualFile myVirtualFile;
     @NotNull private final List<PairProcessor<Project, VirtualFile>> myPatterns;
 
-    public MyProvider(@NotNull final Project project,
+    MyProvider(@NotNull final Project project,
                       @NotNull final JsonSchemaVersion version,
                       @NotNull final String name,
                       @NotNull final String file,
@@ -71,7 +80,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       if (myVirtualFile != null && myVirtualFile.isValid()) return myVirtualFile;
       String path = myFile;
       if (isHttpPath(path)) {
-        myVirtualFile = JsonFileResolver.urlToFile(path, myProject);
+        myVirtualFile = JsonFileResolver.urlToFile(path);
       }
       else {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();

@@ -17,12 +17,14 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.testFramework.PsiTestUtil;
 
 public class RemoveUnusedVariableTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
   }
 
   public void test() { doAllTests(); }

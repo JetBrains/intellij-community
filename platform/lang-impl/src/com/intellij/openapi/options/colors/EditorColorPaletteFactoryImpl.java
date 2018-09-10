@@ -44,7 +44,7 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
 
     @Nullable private final Language myLanguage;
 
-    public ColorPagesPalette(@NotNull EditorColorsScheme colorsScheme, @Nullable Language language) {
+    ColorPagesPalette(@NotNull EditorColorsScheme colorsScheme, @Nullable Language language) {
       super(colorsScheme);
       myLanguage = language;
     }

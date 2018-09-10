@@ -46,13 +46,14 @@ public class PluginNode implements IdeaPluginDescriptor {
   private List<PluginId> myDependencies;
   private PluginId[] myOptionalDependencies;
   private int myStatus = STATUS_UNKNOWN;
-  private boolean myLoaded = false;
+  private boolean myLoaded;
   private String myDownloadUrl;
   private String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
   private String myRating;
   private boolean myIncomplete;
+  private List<String> myTags;
 
   public PluginNode() { }
 
@@ -70,6 +71,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.category = category;
   }
 
+  @Override
   public String getName() {
     return name;
   }
@@ -102,7 +104,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setReleaseDate(Date date) {
-    this.releaseDate = date;
+    releaseDate = date;
   }
 
   @Override
@@ -114,6 +116,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.releaseVersion = releaseVersion;
   }
 
+  @Override
   public String getCategory() {
     return category;
   }
@@ -124,6 +127,7 @@ public class PluginNode implements IdeaPluginDescriptor {
    *
    * @return Return plugin version
    */
+  @Override
   public String getVersion() {
     return version;
   }
@@ -132,6 +136,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.version = version;
   }
 
+  @Override
   public String getVendor() {
     return vendor;
   }
@@ -140,6 +145,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.vendor = vendor;
   }
 
+  @Override
   public String getDescription() {
     return description;
   }
@@ -148,6 +154,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.description = description;
   }
 
+  @Override
   public String getChangeNotes() {
     return changeNotes;
   }
@@ -156,6 +163,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.changeNotes = changeNotes;
   }
 
+  @Override
   public String getSinceBuild() {
     return sinceBuild;
   }
@@ -174,9 +182,10 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setStatus(int status) {
-    this.myStatus = status;
+    myStatus = status;
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -186,9 +195,10 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setLoaded(boolean loaded) {
-    this.myLoaded = loaded;
+    myLoaded = loaded;
   }
 
+  @Override
   public String getDownloads() {
     return downloads;
   }
@@ -205,6 +215,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.size = size;
   }
 
+  @Override
   public String getVendorEmail() {
     return vendorEmail;
   }
@@ -213,6 +224,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.vendorEmail = vendorEmail;
   }
 
+  @Override
   public String getVendorUrl() {
     return vendorUrl;
   }
@@ -221,6 +233,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.vendorUrl = vendorUrl;
   }
 
+  @Override
   public String getUrl() {
     return url;
   }
@@ -237,10 +250,12 @@ public class PluginNode implements IdeaPluginDescriptor {
     return date;
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode();
   }
 
+  @Override
   public boolean equals(Object object) {
     return object instanceof PluginNode && name.equals(((PluginNode)object).getName());
   }
@@ -258,6 +273,18 @@ public class PluginNode implements IdeaPluginDescriptor {
     (myDependencies != null ? myDependencies : (myDependencies = new ArrayList<>())).add(PluginId.getId(id));
   }
 
+  public List<String> getTags() {
+    return myTags;
+  }
+
+  public void setTags(List<String> tags) {
+    myTags = new ArrayList<>(tags);
+  }
+
+  void addTags(String tag) {
+    (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
+  }
+
   /**
    * Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
    */
@@ -272,60 +299,72 @@ public class PluginNode implements IdeaPluginDescriptor {
     return null;
   }
 
+  @Override
   @Nullable
   public File getPath() {
     return null;
   }
 
+  @Override
   @NotNull
   public PluginId[] getDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public PluginId[] getOptionalDependentPluginIds() {
     return myOptionalDependencies != null ? myOptionalDependencies : PluginId.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public String getResourceBundleBaseName() {
     return null;
   }
 
+  @Override
   @Nullable
   public List<Element> getActionsDescriptionElements() {
     return null;
   }
 
+  @Override
   @NotNull
   public ComponentConfig[] getAppComponents() {
     throw new IllegalStateException();
   }
 
+  @Override
   @NotNull
   public ComponentConfig[] getProjectComponents() {
     throw new IllegalStateException();
   }
 
+  @Override
   @NotNull
   public ComponentConfig[] getModuleComponents() {
     throw new IllegalStateException();
   }
 
+  @Override
   @NotNull
   public HelpSetPath[] getHelpSets() {
     throw new IllegalStateException();
   }
 
+  @Override
   @Nullable
   public String getVendorLogoPath() {
     return null;
   }
 
+  @Override
   public boolean getUseIdeaClassLoader() {
     return false;
   }
 
+  @Override
   public String getUntilBuild() {
     return untilBuild;
   }
@@ -334,6 +373,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.untilBuild = untilBuild;
   }
 
+  @Override
   public boolean isBundled() {
     return false;
   }

@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 
 class XmlTextElementType extends IXmlElementType implements IStrongWhitespaceHolderElementType {
-  public XmlTextElementType() {
+  XmlTextElementType() {
     super("XML_TEXT");
   }
 }

@@ -62,7 +62,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   private static class SimplifiableIfStatementFix implements LocalQuickFix {
     private final String myOperator;
 
-    public SimplifiableIfStatementFix(String operator) {
+    SimplifiableIfStatementFix(String operator) {
       myOperator = operator;
     }
 
@@ -94,7 +94,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       if (!PsiTreeUtil.isAncestor(ifStatement, model.myElseBranch, true)) {
         commentTracker.delete(model.myElseBranch);
       }
-      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, commentTracker.markUnchanged(model.myThenBranch));
+      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, model.myThenBranch);
       tryJoinDeclaration(result);
     }
 

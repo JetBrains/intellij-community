@@ -53,6 +53,11 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
   @NotNull
   Object getDefaultBean(@NotNull Object bean) {
     Class<?> c = bean.getClass();
+    return getDefaultValue(c);
+  }
+
+  @NotNull
+  public Object getDefaultValue(Class<?> c) {
     Object o = myDefaultBeans.get(c);
 
     if (o == null) {

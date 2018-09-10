@@ -77,6 +77,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
   /**
    * @deprecated use {@link RemoteExternalSystemTaskManager#executeTasks(ExternalSystemTaskId, List, String, ExternalSystemExecutionSettings, String)}
    */
+  @Deprecated
   default void executeTasks(@NotNull ExternalSystemTaskId id,
                             @NotNull List<String> taskNames,
                             @NotNull String projectPath,
@@ -94,5 +95,6 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
     executeTasks(id, taskNames, projectPath, settings, Collections.emptyList(), Collections.emptyList(), jvmAgentSetup);
   }
 
+  @Override
   boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException;
 }

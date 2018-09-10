@@ -115,8 +115,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
       return aClass == otherClass;
     }
     return aClass.getManager().areElementsEquivalent(aClass, otherClass) &&
-           (PsiUtil.isRawSubstitutor(aClass, result.getSubstitutor()) ||
-            PsiUtil.equalOnEquivalentClasses(this, aClass, otherClassType, otherClass));
+           PsiUtil.equalOnEquivalentClasses(this, aClass, otherClassType, otherClass);
   }
 
   /**

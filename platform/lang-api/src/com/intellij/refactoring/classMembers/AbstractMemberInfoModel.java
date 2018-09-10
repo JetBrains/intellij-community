@@ -45,6 +45,6 @@ public abstract class AbstractMemberInfoModel<T extends PsiElement, M extends Me
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
   }
 }

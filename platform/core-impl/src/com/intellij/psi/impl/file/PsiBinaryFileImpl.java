@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
@@ -39,11 +40,11 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
-  private final FileViewProvider myViewProvider;
-  private boolean myInvalidated;
+  private final AbstractFileViewProvider myViewProvider;
+  private volatile boolean myPossiblyInvalidated;
 
   public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
-    myViewProvider = viewProvider;
+    myViewProvider = (AbstractFileViewProvider)viewProvider;
     myManager = manager;
   }
 
@@ -244,7 +245,18 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @Override
   public boolean isValid() {
     if (isCopy()) return true; // "dummy" file
-    return getVirtualFile().isValid() && !myManager.getProject().isDisposed() && !myInvalidated;
+    if (!getVirtualFile().isValid() || myManager.getProject().isDisposed()) return false;
+
+
+    if (!myPossiblyInvalidated) return true;
+
+    // synchronized by read-write action
+    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
+      myPossiblyInvalidated = false;
+      PsiInvalidElementAccessException.setInvalidationTrace(this, null);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -317,7 +329,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   @Override
   public void markInvalidated() {
-    myInvalidated = true;
+    myPossiblyInvalidated = true;
     DebugUtil.onInvalidated(this);
   }
 }

@@ -169,9 +169,11 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
     PsiElement parentStatement = RefactoringUtil.getParentStatement(element, false);
-    if (parentStatement instanceof PsiDeclarationStatement &&
-        ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass) {
-      return null;
+    if (parentStatement instanceof PsiDeclarationStatement) {
+      PsiElement[] declaredElements = ((PsiDeclarationStatement)parentStatement).getDeclaredElements();
+      if (declaredElements.length > 0 && declaredElements[0] instanceof PsiClass) {
+        return null;
+      }
     }
 
     @SuppressWarnings({"unchecked"})

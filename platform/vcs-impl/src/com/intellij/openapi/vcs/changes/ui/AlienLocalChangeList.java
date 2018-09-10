@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.Change;
@@ -35,35 +21,43 @@ public class AlienLocalChangeList extends LocalChangeList {
     myComment = "";
   }
 
+  @Override
   public Collection<Change> getChanges() {
     return myChanges;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(@NotNull final String name) {
     myName = name;
   }
 
+  @Override
   public String getComment() {
     return myComment;
   }
 
+  @Override
   public void setComment(final String comment) {
     myComment = comment;
   }
 
+  @Override
   public boolean isDefault() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public void setReadOnly(final boolean isReadOnly) {
     throw new UnsupportedOperationException();
   }
@@ -74,11 +68,13 @@ public class AlienLocalChangeList extends LocalChangeList {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public LocalChangeList copy() {
     throw new UnsupportedOperationException();
   }
 
   public static final AlienLocalChangeList DEFAULT_ALIEN = new AlienLocalChangeList(Collections.emptyList(), "Default") {
+    @Override
     public boolean isDefault() {
       return true;
     }

@@ -28,7 +28,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,7 +107,6 @@ public class AnalyzeStacktraceUtil {
     ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.getEditor());
     console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
-    toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     consoleView.allowHeavyFilters();
     if (consoleFactory == null) {
@@ -118,7 +116,7 @@ public class AnalyzeStacktraceUtil {
   }
 
   private static final class MyConsolePanel extends JPanel {
-    public MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
+    MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
       JPanel toolbarPanel = new JPanel(new BorderLayout());
       toolbarPanel.add(ActionManager.getInstance()
@@ -158,7 +156,7 @@ public class AnalyzeStacktraceUtil {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return myEditor;
       }

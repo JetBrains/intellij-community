@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RepositoryUtils {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryUtils");
@@ -95,6 +97,7 @@ public class RepositoryUtils {
     }
     final RepositoryLibraryProperties properties = (RepositoryLibraryProperties)library.getProperties();
     String[] annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance());
+    String[] excludedRootUrls = library.getExcludedRootUrls();
 
     return JarRepositoryManager.loadDependenciesAsync(
       project, properties, downloadSources, downloadJavaDocs, null, copyTo).thenAsync(roots -> {
@@ -117,6 +120,14 @@ public class RepositoryUtils {
               editor.addRoots(roots);
               for (String url : annotationUrls) {
                 editor.addRoot(url, AnnotationOrderRootType.getInstance());
+              }
+              List<String> allRootUrls = editor.getOrderRootTypes().stream()
+                                               .flatMap(type -> Arrays.stream(editor.getUrls(type)))
+                                               .collect(Collectors.toList());
+              for (String excludedRootUrl: excludedRootUrls) {
+                if (VfsUtilCore.isUnder(excludedRootUrl, allRootUrls)) {
+                  editor.addExcludedRoot(excludedRootUrl);
+                }
               }
               final LibraryEx.ModifiableModelEx model = library.getModifiableModel();
               editor.applyTo(model);

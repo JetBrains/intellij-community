@@ -13,11 +13,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.BlockSupportImpl;
+import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.BlockSupportImpl;
-import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
@@ -48,7 +47,7 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 /**
  * @author max
  */
-public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
+public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
   // function stored in PsiBuilderImpl' user data which called during reparse when merge algorithm is not sure what to merge
@@ -85,7 +84,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final MyTreeStructure myParentLightTree;
   private final int myOffset;
 
-  private Map<Key, Object> myUserData;
   private IElementType myCachedTokenType;
 
   private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
@@ -655,6 +653,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @NotNull
   @Override
   public CharSequence getOriginalText() {
     return myText;
@@ -952,11 +951,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
-    private final DiffTreeChangeBuilder<ASTNode, ASTNode> myDelegate;
+    private final DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> myDelegate;
     private final ASTConverter myConverter;
 
     private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode,
-                                          @NotNull DiffTreeChangeBuilder<ASTNode, ASTNode> delegate,
+                                          @NotNull DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> delegate,
                                           @Nullable ASTFactory astFactory) {
       myDelegate = delegate;
       myConverter = new ASTConverter(rootNode, astFactory);
@@ -990,7 +989,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     final List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(myFile);
     ShallowNodeComparator<ASTNode, LighterASTNode> comparator =
-      new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), customLanguageASTComparators, treeStructure);
+      new MyComparator(getUserData(CUSTOM_COMPARATOR), customLanguageASTComparators, treeStructure);
 
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator == null ? new EmptyProgressIndicator() : indicator,
@@ -1303,12 +1302,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
-    private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom;
-    @NotNull private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
+    private final TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>
+      custom;
+    @NotNull private final List<? extends CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
-    private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
-                         @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators,
+    private MyComparator(TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         @NotNull List<? extends CustomLanguageASTComparator> customLanguageASTComparators,
                          @NotNull MyTreeStructure treeStructure) {
       this.custom = custom;
       myCustomLanguageASTComparators = customLanguageASTComparators;
@@ -1445,7 +1445,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private final LimitedPool<LazyParseableToken> myLazyPool;
     private final StartMarker myRoot;
 
-    public MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
+    MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
         myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<Token>() {
           @Override
@@ -1718,18 +1718,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     if (key == FileContextUtil.CONTAINING_FILE_KEY) return (T)myFile;
-    return myUserData != null ? (T)myUserData.get(key) : null;
+    return super.getUserData(key);
   }
 
   @Override
-  public <T> void putUserDataUnprotected(@NotNull final Key<T> key, @Nullable final T value) {
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (key == FileContextUtil.CONTAINING_FILE_KEY) {
       myFile = (PsiFile)value;
       return;
     }
-    if (myUserData == null) myUserData = ContainerUtil.newHashMap();
-    myUserData.put(key, value);
+    super.putUserData(key, value);
   }
 }

@@ -11,9 +11,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * fixture-based parameters should be skipped by inspection
  */
 object PyTestFixtureInspectionExtension : PyInspectionExtension() {
-  override fun ignoreUnused(local: PsiElement) = local is PyNamedParameter
-                                                 && hasFixture(local, TypeEvalContext.codeAnalysis(local.project,
-                                                                                                   local.containingFile))
+  override fun ignoreUnused(local: PsiElement, evalContext: TypeEvalContext) =
+    local is PyNamedParameter && local.isFixture(evalContext)
 
   override fun ignoreShadowed(element: PsiElement) = element is PyFunction && element.isFixture()
 }

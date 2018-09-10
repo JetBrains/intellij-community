@@ -5,10 +5,9 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')
@@ -49,7 +48,7 @@ Groovy script
             PsiElement(if)('if')
             PsiWhiteSpace(' ')
             PsiElement(()('(')
-            PsiErrorElement:Expression expected
+            PsiErrorElement:<expression> expected, got ')'
               <empty list>
             PsiElement())(')')
             PsiWhiteSpace(' ')
@@ -64,7 +63,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n\n    ')
+          PsiElement(new line)('\n\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n    ')
       RETURN statement
@@ -83,10 +82,9 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')
@@ -113,7 +111,7 @@ Groovy script
           PsiElement(new line)('\n        ')
           Modifiers
             PsiElement(def)('def')
-          PsiErrorElement:Identifier, string literal or '(' expected
+          PsiErrorElement:identifier expected, got '='
             <empty list>
           PsiWhiteSpace('  ')
           PsiElement(=)('=')
@@ -125,7 +123,7 @@ Groovy script
             PsiElement(if)('if')
             PsiWhiteSpace(' ')
             PsiElement(()('(')
-            PsiErrorElement:Expression expected
+            PsiErrorElement:<expression> expected, got ')'
               <empty list>
             PsiElement())(')')
             PsiWhiteSpace(' ')
@@ -140,7 +138,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n\n    ')
+          PsiElement(new line)('\n\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n    ')
       RETURN statement

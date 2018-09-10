@@ -51,9 +51,4 @@ public interface CreateFieldRequest extends ActionRequest {
    * @return whether the field must be a compile-time constant
    */
   boolean isConstant();
-
-  @Deprecated
-  default boolean getConstant() {
-    return isConstant();
-  }
 }

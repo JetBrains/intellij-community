@@ -24,9 +24,9 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
-  public static final Color POPUP_SEPARATOR_FOREGROUND = new JBColor(Color.gray.brighter(), Gray.x51);
-  public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = Color.gray;
-  public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
+  public static final Color POPUP_SEPARATOR_FOREGROUND = JBColor.namedColor("Popup.Separator.color", new JBColor(Color.gray.brighter(), Gray.x51));
+  public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = JBColor.namedColor("Popup.Separator.foreground", Color.gray);
+  public static final Color SELECTED_FRAME_FOREGROUND = JBColor.namedColor("", Color.black);
 
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
@@ -70,16 +70,6 @@ public abstract class GroupedElementsRenderer {
     myRendererComponent.setPrefereedWidth(preferredForcedWidth);
 
     return myRendererComponent;
-  }
-
-  /** @deprecated backgrounds are set uniformly via setSelected() / setDeselected() (to be removed in IDEA 16) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected static void adjustOpacity(JComponent component, boolean selected) {
-    if (!selected) {
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        component.setOpaque(false);
-      }
-    }
   }
 
   protected final void setSelected(JComponent aComponent) {

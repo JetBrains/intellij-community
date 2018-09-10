@@ -70,14 +70,14 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
     Editor editor = getEditor(e);
     return editor != null && editor.getSettings().isUseSoftWraps();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
     if (editor == null) {
       return;
@@ -105,7 +105,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   }
 
   @Nullable
-  protected Editor getEditor(AnActionEvent e) {
+  protected Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR);
   }
 }

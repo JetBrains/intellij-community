@@ -74,7 +74,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void doTest(String fileName) {
+  private void doTest(String fileName, boolean performAction) {
     String testFullPath = BASE_PATH + fileName;
 
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
@@ -84,7 +84,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infosBefore = highlightErrors();
     final IntentionAction action = findActionAndCheck(actionHint, infosBefore);
 
-    if(action != null) {
+    if(action != null && performAction) {
       String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
 
@@ -111,11 +111,11 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   public void testAddDependency() {
     removeModule();
-    doTest("B/src/y/AddDependency.java");
+    doTest("B/src/y/AddDependency.java", true);
   }
 
   public void testAddAmbiguousDependency() {
-    doTest("B/src/y/AddAmbiguous.java");
+    doTest("B/src/y/AddAmbiguous.java", true);
   }
 
   private void removeModule() {
@@ -126,7 +126,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddLibrary() {
-    doTest("B/src/y/AddLibrary.java");
+    doTest("B/src/y/AddLibrary.java", true);
   }
 
   public void testAddCircularDependency() {
@@ -136,7 +136,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     removeModule();
 
     try {
-      doTest("B/src/y/AddDependency.java");
+      doTest("B/src/y/AddDependency.java", true);
       fail("user should have been warned");
     }
     catch (RuntimeException e) {
@@ -149,19 +149,19 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddJunit() {
-    doTest("A/src/x/DoTest.java");
+    doTest("A/src/x/DoTest.java", false);
   }
 
   public void testAddJunit4() {
-    doTest("A/src/x/DoTest4.java");
+    doTest("A/src/x/DoTest4.java", false);
   }
 
   public void testAddJunit4inJunit() {
-    doTest("A/src/x/DoTest4junit.java");
+    doTest("A/src/x/DoTest4junit.java", false);
   }
 
   public void testExistingJunit() {
-    doTest("B/src/y/AddExistingJunit.java");
+    doTest("B/src/y/AddExistingJunit.java", true);
   }
 
   private void removeLibs() {

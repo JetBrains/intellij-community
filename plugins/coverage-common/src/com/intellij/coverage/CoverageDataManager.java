@@ -66,17 +66,6 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
 
 
   public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
-  /**
-   * TeamCity 3.1.1 compatibility
-   */
-  @Deprecated
-  public CoverageSuite addCoverageSuite(String name,
-                                        CoverageFileProvider fileProvider,
-                                        String[] filters,
-                                        long lastCoverageTimeStamp,
-                                        boolean suiteToMergeWith) {
-    return addCoverageSuite(name, fileProvider, filters, lastCoverageTimeStamp, null, null, false, false);
-  }
 
 
   /**
@@ -90,23 +79,11 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
    */
   public abstract CoverageSuitesBundle getCurrentSuitesBundle();
 
-  @Deprecated
-  @Nullable
-  public CoverageSuite getCurrentSuite() {
-    final CoverageSuitesBundle bundle = getCurrentSuitesBundle();
-    return bundle != null ? bundle.getSuites()[0] : null;
-  }
-
   /**
    * Choose active suite. Calling this method triggers updating the presentations in project view, editors etc.
    * @param suite coverage suite to choose. <b>null</b> means no coverage information should be presented
    */
   public abstract void chooseSuitesBundle(@Nullable CoverageSuitesBundle suite);
-
-  @Deprecated
-  public void chooseSuite(CoverageSuite suite) {
-    chooseSuitesBundle(suite != null ? new CoverageSuitesBundle(suite) : null);
-  }
 
   public abstract void coverageGathered(@NotNull CoverageSuite suite);
 

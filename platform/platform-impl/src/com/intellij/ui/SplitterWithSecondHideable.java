@@ -51,6 +51,7 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator = new MyTitledSeparator(separatorText, vertical);
     mySplitter = new MySplitter(vertical);
     mySplitter.setDoubleBuffered(true);
+    mySplitter.setHonorComponentsMinimumSize(false);
     mySplitter.setFirstComponent(firstComponent);
     mySplitter.setSecondComponent(myFictivePanel);
     mySplitter.setProportion(1.0f);
@@ -90,7 +91,7 @@ public abstract class SplitterWithSecondHideable {
   }
 
   private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
-    public MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
+    MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
       super(ComboArrowRight, vertical ? ComboArrowDown : ComboArrowRightPassive, separatorText);
     }
 
@@ -165,7 +166,7 @@ public abstract class SplitterWithSecondHideable {
       }
     };
 
-    public MySplitter(boolean vertical) {
+    MySplitter(boolean vertical) {
       super(vertical);
       myTitledSeparator.mySeparator.addMouseListener(myMouseListener);
       myTitledSeparator.mySeparator.addMouseMotionListener(myMouseListener);

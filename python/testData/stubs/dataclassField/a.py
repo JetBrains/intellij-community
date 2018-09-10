@@ -20,3 +20,4 @@ class A:
     f: int = field(init=INIT_2)
     g: int = field(init=INIT_3)
     h: int = field()
+    i: int = field(default=dataclasses.MISSING, default_factory=dataclasses.MISSING)

@@ -68,6 +68,10 @@ public interface MergeVersion {
       myOriginalText = originalText;
     }
 
+    public String getOriginalText() {
+      return myOriginalText;
+    }
+
     @Override
     public Document createWorkingDocument(final Project project) {
       //TODO[ik]: do we really need to create copy here?

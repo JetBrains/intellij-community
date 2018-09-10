@@ -73,7 +73,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     private final ExtensionPoint<T> myEp;
     private T[] myExtensions;
 
-    public BlockExtensions(ExtensionPoint<T> extensionPoint) {
+    BlockExtensions(ExtensionPoint<T> extensionPoint) {
       myEp = extensionPoint;
       block();
     }
@@ -148,7 +148,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
 
-    List<HighlightInfo> infos = startTest(3_000);
+    List<HighlightInfo> infos = startTest(3_300);
     assertEmpty(infos);
   }
 }

@@ -10,11 +10,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.copy.CopyHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class SaveAsAction extends DumbAwareAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
@@ -22,7 +23,7 @@ public class SaveAsAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);

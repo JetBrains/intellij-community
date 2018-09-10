@@ -31,6 +31,7 @@ public interface ArtifactInstructionsBuilder {
   /**
    * @deprecated use {@link #createCopyingHandler(File, JpsPackagingElement, ArtifactCompilerInstructionCreator)} instead
    */
+  @Deprecated
   @NotNull
   FileCopyingHandler createCopyingHandler(@NotNull File file, @NotNull JpsPackagingElement contextElement);
 

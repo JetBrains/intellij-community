@@ -161,7 +161,7 @@ public class ActionStepBuilder extends PresentationFactory {
       if (icon == null && selectedIcon == null) {
         @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")) {
-          icon =  AllIcons.Actions.QuickList;
+          icon =  null; // AllIcons.Actions.QuickList;
         }
         else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
           icon = LafIconLookup.getIcon("checkmark");

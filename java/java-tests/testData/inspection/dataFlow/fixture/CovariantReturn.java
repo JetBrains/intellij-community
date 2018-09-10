@@ -71,7 +71,7 @@ class CovariantReturn {
 
   void testCast(Super s) {
     if(s instanceof Sub) {
-      Integer i = (<warning descr="Casting 's.get()' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)s.get();
+      Integer i = (<warning descr="Casting 's.get()' to 'Integer' may produce 'ClassCastException'">Integer</warning>)s.get();
       System.out.println(i);
     }
   }

@@ -140,7 +140,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }
@@ -523,7 +523,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private class BuildValueNodeCommand extends BuildNodeCommand implements ChildrenBuilder {
-    public BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
+    BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);
     }
 
@@ -605,7 +605,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private class BuildStaticNodeCommand extends BuildNodeCommand {
-    public BuildStaticNodeCommand(DebuggerTreeNodeImpl node) {
+    BuildStaticNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);
     }
 
@@ -628,7 +628,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private class BuildThreadCommand extends BuildNodeCommand {
-    public BuildThreadCommand(DebuggerTreeNodeImpl threadNode) {
+    BuildThreadCommand(DebuggerTreeNodeImpl threadNode) {
       super(threadNode, ((ThreadDescriptorImpl)threadNode.getDescriptor()).getThreadReference());
     }
 
@@ -673,7 +673,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     private final DebuggerTreeNodeImpl myNode;
     protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<>();
 
-    public BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
+    BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
       myNode = node;
     }
 

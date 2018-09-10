@@ -95,3 +95,21 @@ class C {
     }
   }
 }
+
+class Incomplete {
+  interface A {
+    Void m();
+  }
+  
+  {
+    A a = new A() {
+      public Void m() {
+        return
+      }
+    };
+    
+    A a1 = () -> {
+      return
+    };
+  }
+}

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import org.jetbrains.annotations.Nullable;
@@ -37,19 +23,23 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     myLibrariesFilter = libFilter;
   }
 
+  @Override
   protected String getElementName(final ModuleDescriptor entry) {
     return entry.getName();
   }
 
+  @Override
   protected void setElementName(final ModuleDescriptor entry, final String name) {
     entry.setName(name);
   }
 
+  @Override
   protected List<ModuleDescriptor> getEntries() {
     final List<ModuleDescriptor> modules = getInsight().getSuggestedModules();
     return modules != null? modules : Collections.emptyList();
   }
 
+  @Override
   protected Collection getDependencies(final ModuleDescriptor entry) {
     final List<Object> deps = new ArrayList<>(entry.getDependencies());
     final Collection<LibraryDescriptor> libDependencies = getInsight().getLibraryDependencies(entry);
@@ -61,6 +51,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return deps;
   }
 
+  @Override
   @Nullable
   protected ModuleDescriptor merge(final List<ModuleDescriptor> entries) {
     final ModuleInsight insight = getInsight();
@@ -76,18 +67,22 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return mainDescr;
   }
 
+  @Override
   protected ModuleDescriptor split(final ModuleDescriptor entry, final String newEntryName, final Collection<File> extractedData) {
     return getInsight().splitModule(entry, newEntryName, extractedData);
   }
 
+  @Override
   protected Collection<File> getContent(final ModuleDescriptor entry) {
     return entry.getContentRoots();
   }
 
+  @Override
   protected String getEntriesChooserTitle() {
     return "Modules";
   }
 
+  @Override
   protected String getDependenciesTitle() {
     return "Module dependencies";
   }
@@ -97,14 +92,17 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return "module";
   }
 
+  @Override
   protected String getSplitDialogChooseFilesPrompt() {
     return "&Select content roots to extract to the new module:";
   }
 
+  @Override
   protected String getNameAlreadyUsedMessage(final String name) {
     return "Module with name " + name + " already exists";
   }
 
+  @Override
   protected String getStepDescriptionText() {
     return "Please review suggested module structure for the project. At this stage you can set module names,\n" +
            "exclude particular modules from the project, merge or split individual modules.\n" +

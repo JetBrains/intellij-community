@@ -471,7 +471,7 @@ public class PsiClassImplUtil {
   private static boolean processCachedMembersByName(@NotNull final PsiClass aClass,
                                                     @NotNull PsiScopeProcessor processor,
                                                     @NotNull ResolveState state,
-                                                    @Nullable Set<PsiClass> visited,
+                                                    @Nullable Set<? super PsiClass> visited,
                                                     PsiElement last,
                                                     @NotNull final PsiElement place,
                                                     final boolean isRaw,
@@ -735,7 +735,7 @@ public class PsiClassImplUtil {
                                    @NotNull PsiElementFactory factory,
                                    @NotNull LanguageLevel languageLevel,
                                    GlobalSearchScope resolveScope,
-                                   PairProcessor<PsiClass, PsiSubstitutor> processor) {
+                                   PairProcessor<? super PsiClass, ? super PsiSubstitutor> processor) {
     boolean resolved = false;
     for (PsiClassType.ClassResolveResult superTypeResolveResult : getScopeCorrectedSuperTypes(aClass, resolveScope)) {
       PsiClass superClass = superTypeResolveResult.getElement();
@@ -997,7 +997,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
-    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
+    PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1040,7 +1040,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseClass.getQualifiedName());
     }
-    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
+    PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1148,8 +1148,8 @@ public class PsiClassImplUtil {
       return true;
     }
 
-    final PsiFile file1 = aClass.getContainingFile().getOriginalFile();
-    final PsiFile file2 = another.getContainingFile().getOriginalFile();
+    final PsiFile file1 = getOriginalFile(aClass);
+    final PsiFile file2 = getOriginalFile((PsiClass)another);
 
     //see com.intellij.openapi.vcs.changes.PsiChangeTracker
     //see com.intellij.psi.impl.PsiFileFactoryImpl#createFileFromText(CharSequence,PsiFile)
@@ -1166,6 +1166,16 @@ public class PsiClassImplUtil {
     boolean lib2 = fileIndex.isInLibraryClasses(vfile2);
 
     return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex.isInSource(vfile2) || lib2);
+  }
+
+  @NotNull
+  private static PsiFile getOriginalFile(@NotNull PsiClass aClass) {
+    PsiFile file = aClass.getContainingFile();
+    if (file == null) {
+      PsiUtilCore.ensureValid(aClass);
+      throw new IllegalStateException("No containing file for " + aClass.getLanguage() + " " + aClass.getClass());
+    }
+    return file.getOriginalFile();
   }
 
   private static boolean compareClassSeqNumber(@NotNull PsiClass aClass, @NotNull PsiClass another) {
@@ -1227,7 +1237,7 @@ public class PsiClassImplUtil {
     return true;
   }
 
-  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<String> visited) {
+  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<? super String> visited) {
     if (type1 instanceof PsiArrayType) {
       if (type2 instanceof PsiArrayType) {
         final PsiType componentType1 = ((PsiArrayType)type1).getComponentType();

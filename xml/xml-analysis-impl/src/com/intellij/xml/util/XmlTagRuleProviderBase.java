@@ -19,7 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
-import com.intellij.codeInspection.htmlInspections.RemoveAttributeIntentionAction;
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -76,7 +76,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
     return new InvalidAllExpectSome(text, ProblemHighlightType.LIKE_UNUSED_SYMBOL, attrNames);
   }
 
-  public static Rule rule(Condition<XmlTag> condition, Effect ... effect) {
+  public static Rule rule(Condition<? super XmlTag> condition, Effect ... effect) {
     return new ConditionRule(condition, effect);
   }
 
@@ -132,7 +132,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
       if (attribute != null) {
         PsiElement attributeNameElement = getAttributeNameElement(attribute);
         if (attributeNameElement != null) {
-          holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionAction(myAttrName));
+          holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionFix(myAttrName));
         }
       }
     }
@@ -156,7 +156,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
         if (!ArrayUtil.contains(attrName, myAttrNames)) {
           PsiElement attributeNameElement = getAttributeNameElement(xmlAttribute);
           if (attributeNameElement != null) {
-            holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionAction(attrName));
+            holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionFix(attrName));
           }
         }
       }
@@ -164,10 +164,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
   }
 
   public static class ConditionRule extends Rule {
-    private final Condition<XmlTag> myCondition;
+    private final Condition<? super XmlTag> myCondition;
     private final Effect[] myEffect;
 
-    public ConditionRule(Condition<XmlTag> condition, Effect ... effect) {
+    public ConditionRule(Condition<? super XmlTag> condition, Effect ... effect) {
       this.myCondition = condition;
       this.myEffect = effect;
     }

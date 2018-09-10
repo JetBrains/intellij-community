@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -26,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * plugin.dtd:idea-plugin interface.
- */
 @DefinesXml
 @Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
 @Stubbed
@@ -40,6 +33,18 @@ public interface IdeaPlugin extends DomElement {
   @NameValue
   @Stubbed
   GenericDomValue<String> getId();
+
+  @NotNull
+  @SubTag("productCode")
+  GenericDomValue<String> getProductCode();
+
+  @NotNull
+  @SubTag("releaseDate")
+  GenericDomValue<String> getReleaseDate();
+
+  @NotNull
+  @SubTag("releaseVersion")
+  GenericDomValue<Integer> getReleaseVersion();
 
   /**
    * @deprecated Unused.

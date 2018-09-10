@@ -1,13 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.configurationStore.DataWriter
+import com.intellij.configurationStore.DataWriterFilter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.*
 import com.intellij.util.loadElement
-import com.intellij.util.write
 import org.jdom.Element
 import java.nio.file.Path
 
@@ -20,7 +20,7 @@ internal interface ExternalSystemStorage {
 
   fun read(name: String): Element?
 
-  fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter? = null)
+  fun write(name: String, dataWriter: DataWriter?, filter: DataWriterFilter? = null)
 
   fun forceSave()
 
@@ -84,14 +84,14 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
     }
   }
 
-  override fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter?) {
-    if (element == null) {
+  override fun write(name: String, dataWriter: DataWriter?, filter: DataWriterFilter?) {
+    if (dataWriter == null || (filter != null && !dataWriter.hasData(filter))) {
       remove(name)
       return
     }
 
     hasSomeData = true
-    element.write(nameToPath(name), filter = filter)
+    nameToPath(name).outputStream().use { dataWriter.write(it, filter = filter) }
   }
 
   override fun rename(oldName: String, newName: String) {

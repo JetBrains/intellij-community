@@ -96,6 +96,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[] { new AbstractAction("&Configure...") {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(manager));
@@ -103,6 +104,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
     }};
   }
 
+  @Override
   protected String getHelpId() {
     return "project.propVCSSupport.ChangelistConflict";
   }

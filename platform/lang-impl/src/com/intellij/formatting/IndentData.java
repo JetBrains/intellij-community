@@ -25,6 +25,7 @@ public class IndentData {
   private final int mySpaces;
 
   public IndentData(final int indentSpaces, final int spaces) {
+    assert indentSpaces >= 0 : "Indent spaces can't be negative";
     myIndentSpaces = indentSpaces;
     mySpaces = spaces;
   }

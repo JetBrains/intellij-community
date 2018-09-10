@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -94,12 +95,13 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       .setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl.toDecodedString()));
 
     final String addText = SvnBundle.message("action.Subversion.integrate.changes.dialog.add.wc.text");
-    final AnAction addAction = new AnAction(addText, addText, IconUtil.getAddIcon()) {
+    final AnAction addAction = new DumbAwareAction(addText, addText, IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
       }
 
-      public void actionPerformed(final AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
           final File file = virtualToIoFile(vFile);
@@ -127,18 +129,20 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myGroup.add(addAction);
 
     final String removeText = SvnBundle.message("action.Subversion.integrate.changes.dialog.remove.wc.text");
-    myGroup.add(new AnAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
+    myGroup.add(new DumbAwareAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
       }
 
-      public void update(final AnActionEvent e) {
+      @Override
+      public void update(@NotNull final AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         final int idx = (myWorkingCopiesList == null) ? -1 : myWorkingCopiesList.getSelectedIndex();
         presentation.setEnabled(idx != -1);
       }
 
-      public void actionPerformed(final AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final int idx = myWorkingCopiesList.getSelectedIndex();
         if (idx != -1) {
           final DefaultListModel model = (DefaultListModel)myWorkingCopiesList.getModel();
@@ -214,6 +218,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     svnConfig.setIgnoreSpacesInMerge(myIgnoreWhitespacesCheckBox.isSelected());
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
@@ -228,6 +233,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     private WorkingCopyInfoComparator() {
     }
 
+    @Override
     public int compare(final WorkingCopyInfo o1, final WorkingCopyInfo o2) {
       return o1.getLocalPath().compareTo(o2.getLocalPath());
     }

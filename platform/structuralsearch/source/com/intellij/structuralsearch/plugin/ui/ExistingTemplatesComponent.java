@@ -109,7 +109,7 @@ public class ExistingTemplatesComponent {
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final Object selection = patternTree.getLastSelectedPathComponent();
           if (selection instanceof DefaultMutableTreeNode) {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
@@ -165,20 +165,11 @@ public class ExistingTemplatesComponent {
   }
 
   public void selectConfiguration(String name) {
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)patternTreeModel.getRoot();
-    final int count = root.getChildCount();
-    for (int i = 0; i < count; i++) {
-      final DefaultMutableTreeNode category = (DefaultMutableTreeNode)root.getChildAt(i);
-      final int count1 = category.getChildCount();
-      for (int j = 0; j < count1; j++ ) {
-        final DefaultMutableTreeNode leaf = (DefaultMutableTreeNode)category.getChildAt(j);
-        final Configuration configuration = (Configuration)leaf.getUserObject();
-        if (name.equals(configuration.getName())) {
-          TreeUtil.selectInTree(leaf, false, patternTree, false);
-          return;
-        }
-      }
-    }
+    final DefaultMutableTreeNode node = TreeUtil.findNode((DefaultMutableTreeNode)patternTreeModel.getRoot(), n -> {
+      final Object object = n.getUserObject();
+      return object instanceof Configuration && name.equals(((Configuration)object).getName());
+    });
+    TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
   private void initialize() {
@@ -197,6 +188,7 @@ public class ExistingTemplatesComponent {
   private void configureSelectTemplateAction(JComponent component) {
     component.addKeyListener(
       new KeyAdapter() {
+        @Override
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
@@ -254,7 +246,7 @@ public class ExistingTemplatesComponent {
 
     private final ListSpeedSearch mySpeedSearch;
 
-    public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
+    ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
       mySpeedSearch = speedSearch;
     }
 

@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.xml.XmlExtension;
@@ -80,19 +79,13 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof SchemaPrefix) || !myName.equals(((SchemaPrefix)element).getName())) return false;
     return super.isReferenceTo(element);
   }
 
   @Override
-  public PsiElement handleElementRename(String name) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String name) throws IncorrectOperationException {
     if (myElement instanceof XmlAttribute) {
       final XmlAttribute attr = (XmlAttribute)myElement;
       return ("xmlns".equals(attr.getNamespacePrefix()))

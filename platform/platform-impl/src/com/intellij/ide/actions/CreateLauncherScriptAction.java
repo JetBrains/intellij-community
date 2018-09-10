@@ -3,19 +3,23 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,10 +40,17 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
  */
 public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateLauncherScriptAction.class);
-  private static final String CONTENTS = "/Contents";
+
+  private static final NullableLazyValue<String> INTERPRETER_NAME = NullableLazyValue.createValue(() -> {
+    File python = PathEnvironmentVariableUtil.findInPath("python");
+    if (python != null) return "python";
+    python = PathEnvironmentVariableUtil.findInPath("python3");
+    if (python != null) return "python3";
+    return null;
+  });
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && !PathManager.isSnap();
+    return SystemInfo.isUnix && !PathManager.isSnap() && INTERPRETER_NAME.getValue() != null;
   }
 
   @Override
@@ -142,12 +153,13 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), CONTENTS) : CreateDesktopEntryAction.getLauncherScript();
+    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), "/Contents") : CreateDesktopEntryAction.getLauncherScript();
     if (runPath == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
     Map<String, String> variables = newHashMap(
+      pair("$PYTHON$", INTERPRETER_NAME.getValue()),
       pair("$CONFIG_PATH$", PathManager.getConfigPath()),
       pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
       pair("$RUN_PATH$", runPath));

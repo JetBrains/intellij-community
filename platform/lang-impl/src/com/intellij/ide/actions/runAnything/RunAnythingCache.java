@@ -3,17 +3,16 @@ package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,22 +20,6 @@ import java.util.stream.Collectors;
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
   private final State mySettings = new State();
-  public boolean CAN_RUN_RVM = false;
-  public boolean CAN_RUN_RBENV = false;
-
-  public RunAnythingCache() {
-    try {
-      CAN_RUN_RVM = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRVM()).get();
-    }
-    catch (InterruptedException | java.util.concurrent.ExecutionException ignored) {
-    }
-
-    try {
-      CAN_RUN_RBENV = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRbenv()).get();
-    }
-    catch (InterruptedException | java.util.concurrent.ExecutionException ignored) {
-    }
-  }
 
   public static RunAnythingCache getInstance(Project project) {
     return ServiceManager.getService(project, RunAnythingCache.class);
@@ -51,7 +34,8 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
 
   /**
    * Saves group visibility flag
-   * @param key to store visibility flag
+   *
+   * @param key     to store visibility flag
    * @param visible true if group should be shown
    */
   public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
@@ -92,7 +76,10 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
   public static class State {
     @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
     @NotNull private final Map<String, Boolean> myKeys =
-      Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).collect(Collectors.toMap(group -> group.getVisibilityKey(), group -> true));
+      StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
+              .filter(provider -> provider.getCompletionGroupTitle() != null)
+              .distinct(RunAnythingProvider::getCompletionGroupTitle)
+              .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true));
 
     @XCollection(elementName = "command")
     @NotNull private final List<String> myCommands = ContainerUtil.newArrayList();

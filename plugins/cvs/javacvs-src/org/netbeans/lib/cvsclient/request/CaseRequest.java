@@ -27,7 +27,8 @@ public final class CaseRequest extends AbstractRequest {
 	 * Get the request String that will be passed to the server
 	 * @return the request String
 	 */
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Case \n";
 	}
 }

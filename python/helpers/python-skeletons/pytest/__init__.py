@@ -60,6 +60,12 @@ class collect:
         """ fill missing funcargs for a test function. """
 
 
+
+
+# _pytest.pdb
+def set_trace():
+    """ invoke PDB set_trace debugging, dropping any IO capturing. """
+
 # _pytest.mark
 class mark:
 
@@ -75,11 +81,11 @@ class mark:
         value.
 
         Optionally specify a reason for better reporting.
-        
-        Evaluation happens within the module global context. 
+
+        Evaluation happens within the module global context.
         Example: ``skipif('sys.platform == "win32"')`` skips the test if
         we are on the win32 platform.
-        
+
         see http://doc.pytest.org/en/latest/skipping.html
         """
 
@@ -94,10 +100,10 @@ class mark:
     def xfail(condition=None, reason=None, raises=None, run=True, strict=False):
         """mark the the test function as an expected failure if eval(condition)
         has a True value.
-        
+
         Optionally specify a reason for better reporting and run=False if
         you don't even want to execute the test function.
-        
+
         See http://doc.pytest.org/en/latest/skipping.html
         """
 
@@ -142,14 +148,14 @@ class mark:
         """
 
     @staticmethod
-    def usefixtures(*fixturenames): 
-        """mark tests as needing all of the specified fixtures. 
-        
+    def usefixtures(*fixturenames):
+        """mark tests as needing all of the specified fixtures.
+
         see http://doc.pytest.org/en/latest/fixture.html#usefixtures
         """
 
     @staticmethod
-    def tryfirst(f): 
+    def tryfirst(f):
         """mark a hook implementation function such that the plugin machinery
         will try to call it first/as early as possible.
         """
@@ -162,15 +168,10 @@ class mark:
 
     @staticmethod
     def hookwrapper(f):
-        """A hook wrapper is a generator function which yields exactly once. 
-        When pytest invokes hooks it first executes hook wrappers and passes 
+        """A hook wrapper is a generator function which yields exactly once.
+        When pytest invokes hooks it first executes hook wrappers and passes
         the same arguments as to the regular hooks.
         """
-
-
-# _pytest.pdb
-def set_trace():
-    """ invoke PDB set_trace debugging, dropping any IO capturing. """
 
 
 # _pytest.python

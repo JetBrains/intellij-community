@@ -2,7 +2,10 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
@@ -21,20 +24,31 @@ import java.util.Set;
 public interface JsonLikePsiWalker {
   JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
 
-  boolean isName(PsiElement element);
+  /**
+   * Returns YES in place where a property name is expected,
+   *         NO in place where a property value is expected,
+   *         UNSURE where both property name and property value can be present
+   */
+  ThreeState isName(PsiElement element);
+
   boolean isPropertyWithValue(@NotNull PsiElement element);
   PsiElement goUpToCheckable(@NotNull final PsiElement element);
   @Nullable
   List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull final PsiElement element, boolean forceLastTransition);
   boolean isNameQuoted();
   boolean onlyDoubleQuotesForStringLiterals();
+  default boolean quotesForStringLiterals() { return true; }
   boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element);
-  Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element);
+  Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition);
   @Nullable
   JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);
   boolean isTopJsonElement(@NotNull PsiElement element);
   @Nullable
   JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
+
+  default TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
+    return element.getTextRange();
+  }
 
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
@@ -45,5 +59,25 @@ public interface JsonLikePsiWalker {
       .findFirst()
       .map(extension -> extension.create(schemaObject))
       .orElse(null);
+  }
+
+  default String getDefaultObjectValue() { return "{}"; }
+  @Nullable default String defaultObjectValueDescription() { return null; }
+  default String getDefaultArrayValue() { return "[]"; }
+  @Nullable default String defaultArrayValueDescription() { return null; }
+
+  default boolean invokeEnterBeforeObjectAndArray() { return false; }
+
+  default String getNodeTextForValidation(PsiElement element) { return element.getText(); }
+
+  default QuickFixAdapter getQuickFixAdapter(Project project) { return null; }
+  interface QuickFixAdapter {
+    @Nullable PsiElement getPropertyValue(PsiElement property);
+    default @NotNull PsiElement adjustValue(@NotNull PsiElement value) { return value; }
+    @Nullable String getPropertyName(PsiElement property);
+    @NotNull PsiElement createProperty(@NotNull final String name, @NotNull final String value);
+    boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement);
+    void removeIfComma(PsiElement forward);
+    boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element);
   }
 }

@@ -129,4 +129,17 @@ class WithLambdaUnfriendlyOverloads {
   private <T> T foo() {
     return null;
   }
+
+  void testSynchronized() {
+    synchronized (Integer.valueOf(123)) {
+      System.out.println("hello");
+    }
+  }
+
+  void testVar() {
+    var x = Integer.valueOf(5);
+    Integer y = <warning descr="Unnecessary boxing 'Integer.valueOf(5)'">Integer.valueOf(5)</warning>;
+    System.out.println(x.getClass());
+    System.out.println(y.getClass());
+  }
 }

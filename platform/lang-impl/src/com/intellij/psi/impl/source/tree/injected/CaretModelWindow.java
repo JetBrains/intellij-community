@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -89,7 +89,7 @@ class CaretModelWindow implements CaretModel {
   public void addCaretListener(@NotNull final CaretListener listener) {
     CaretListener wrapper = new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (!myEditorWindow.getDocument().isValid()) return; // injected document can be destroyed by now
         CaretEvent event = new CaretEvent(myEditorWindow, createInjectedCaret(e.getCaret()),
                                           myEditorWindow.hostToInjected(e.getOldPosition()),

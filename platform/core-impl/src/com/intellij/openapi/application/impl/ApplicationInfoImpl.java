@@ -16,7 +16,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +26,8 @@ import java.awt.*;
 import java.io.File;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -99,8 +98,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
-  @Deprecated
-  private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
@@ -186,8 +183,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
   private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
-  @Deprecated
-  private static final String ELEMENT_THIRD_PARTY = "third-party";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final String STEPS_PROVIDER = "provider";
@@ -210,8 +205,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   ApplicationInfoImpl() {
     String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, resource);
-      loadState(doc.getRootElement());
+      loadState(JDOMUtil.load(ApplicationInfoImpl.class, resource));
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -553,11 +547,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getThirdPartySoftwareURL() {
-    return myThirdPartySoftwareUrl;
-  }
-
-  @Override
   public String getJetbrainsTvUrl() {
     return myJetbrainsTvUrl;
   }
@@ -660,15 +649,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
-        try {
-          final JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar");
-          try {
-            final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
-            myBuildDate.setTime(new Date(jarEntry.getTime()));
-          }
-          finally {
-            bootstrapJar.close();
-          }
+        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar")) {
+          final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
+          myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
       }
@@ -894,12 +877,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
       myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
       myStatisticsServiceKey  = null;
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-assistant.xml";
-    }
-
-    Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);
-    if (thirdPartyElement != null) {
-      myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);

@@ -2,17 +2,20 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('spring:')
+        PsiElement(scalar key)('spring')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('application:')
+            PsiElement(scalar key)('application')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('name:')
+                PsiElement(scalar key)('name')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('bar')
@@ -22,17 +25,20 @@ YAML file
     PsiElement(Eol)('\n')
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('spring:')
+        PsiElement(scalar key)('spring')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('application:')
+            PsiElement(scalar key)('application')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('name:')
+                PsiElement(scalar key)('name')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('bar')

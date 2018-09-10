@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.java;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ApproximateResolver;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -38,18 +38,13 @@ import java.util.Set;
  * @author peter
  */
 public class FunExprOccurrence {
-  public final int funExprOffset;
   private final int argIndex;
-  private final List<ReferenceChainLink> referenceContext;
+  private final List<? extends ReferenceChainLink> referenceContext;
 
-  public FunExprOccurrence(int funExprOffset,
-                           int argIndex,
-                           List<ReferenceChainLink> referenceContext) {
-    this.funExprOffset = funExprOffset;
+  public FunExprOccurrence(int argIndex, List<? extends ReferenceChainLink> referenceContext) {
     this.argIndex = argIndex;
     this.referenceContext = referenceContext;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -58,7 +53,6 @@ public class FunExprOccurrence {
 
     FunExprOccurrence that = (FunExprOccurrence)o;
 
-    if (funExprOffset != that.funExprOffset) return false;
     if (argIndex != that.argIndex) return false;
     if (!referenceContext.equals(that.referenceContext)) return false;
 
@@ -67,41 +61,25 @@ public class FunExprOccurrence {
 
   @Override
   public int hashCode() {
-    int result = funExprOffset;
-    result = 31 * result + argIndex;
-    result = 31 * result + referenceContext.hashCode();
-    return result;
+    return 31 * argIndex + referenceContext.hashCode();
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-      .add("offset", funExprOffset)
       .add("argIndex", argIndex)
       .add("chain", referenceContext)
       .toString();
   }
 
   void serialize(DataOutput out) throws IOException {
-    DataInputOutputUtil.writeINT(out, funExprOffset);
     DataInputOutputUtil.writeINT(out, argIndex);
-
-    DataInputOutputUtil.writeINT(out, referenceContext.size());
-    for (ReferenceChainLink link : referenceContext) {
-      serializeLink(out, link);
-    }
+    DataInputOutputUtilRt.writeSeq(out, referenceContext, link -> serializeLink(out, link));
   }
 
   static FunExprOccurrence deserialize(DataInput in) throws IOException {
-    int offset = DataInputOutputUtil.readINT(in);
     int argIndex = DataInputOutputUtil.readINT(in);
-
-    int contextSize = DataInputOutputUtil.readINT(in);
-    List<ReferenceChainLink> context = new ArrayList<>(contextSize);
-    for (int i = 0; i < contextSize; i++) {
-      context.add(deserializeLink(in));
-    }
-    return new FunExprOccurrence(offset, argIndex, context);
+    return new FunExprOccurrence(argIndex, DataInputOutputUtilRt.readSeq(in, () -> deserializeLink(in)));
   }
 
   private static void serializeLink(DataOutput out, ReferenceChainLink link) throws IOException {
@@ -119,7 +97,7 @@ public class FunExprOccurrence {
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);
   }
 
-  public boolean canHaveType(@NotNull List<PsiClass> samClasses, @NotNull VirtualFile placeFile) {
+  public boolean canHaveType(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
     if (referenceContext.isEmpty()) return true;
 
     Set<PsiClass> qualifiers = null;
@@ -139,7 +117,7 @@ public class FunExprOccurrence {
     return true;
   }
 
-  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<PsiClass> samClasses) {
+  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<? extends PsiClass> samClasses) {
     if (link.isCall) {
       return member instanceof PsiMethod && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
     }
@@ -150,7 +128,7 @@ public class FunExprOccurrence {
            ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType()));
   }
 
-  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<PsiClass> samClasses) {
+  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<? extends PsiClass> samClasses) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
     return paramIndex < parameters.length &&

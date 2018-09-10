@@ -30,12 +30,14 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   /**
    * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String)} instead
    */
+  @Deprecated
   public JavaSourceRootProperties() {
   }
 
   /**
    * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String)} instead
    */
+  @Deprecated
   public JavaSourceRootProperties(@NotNull String packagePrefix) {
     myPackagePrefix = packagePrefix;
   }
@@ -43,6 +45,7 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   /**
    * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String, boolean)} instead
    */
+  @Deprecated
   public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources) {
     myPackagePrefix = packagePrefix;
     myForGeneratedSources = forGeneratedSources;
@@ -86,6 +89,7 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   /**
    * @deprecated use {@link #setPackagePrefix(String)} instead
    */
+  @Deprecated
   @Override
   public void setData(@NotNull JavaSourceRootProperties data) {
     applyChanges(data);
@@ -94,6 +98,7 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   /**
    * @deprecated use {@link #getPackagePrefix()} instead
    */
+  @Deprecated
   @NotNull
   @Override
   public JavaSourceRootProperties getData() {

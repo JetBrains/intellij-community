@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,7 @@ public class EditorRenderingBenchmarkAction extends AnAction implements DumbAwar
   private final NotificationGroup myNotificationGroup = NotificationGroup.logOnlyGroup("editor-rendering-benchmark");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
 
     Editor editor = e.getData(CommonDataKeys.EDITOR);

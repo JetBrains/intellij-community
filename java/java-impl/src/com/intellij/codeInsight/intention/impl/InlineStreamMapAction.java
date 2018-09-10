@@ -84,13 +84,10 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
 
   @Nullable
   private static PsiMethodCallExpression getNextExpressionToMerge(PsiMethodCallExpression methodCallExpression) {
-    PsiElement parent = methodCallExpression.getParent();
-    if(!(parent instanceof PsiReferenceExpression)) return null;
-    PsiElement gParent = parent.getParent();
-    if(!(gParent instanceof PsiMethodCallExpression)) return null;
-    String nextName = ((PsiReferenceExpression)parent).getReferenceName();
-    PsiMethodCallExpression nextCall = (PsiMethodCallExpression)gParent;
-    if(nextName == null || !NEXT_METHODS.contains(nextName) || translateName(methodCallExpression, nextCall) == null) return null;
+    PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
+    if (nextCall == null) return null;
+    String nextName = nextCall.getMethodExpression().getReferenceName();
+    if (nextName == null || !NEXT_METHODS.contains(nextName) || translateName(methodCallExpression, nextCall) == null) return null;
     PsiExpressionList argumentList = (nextCall).getArgumentList();
     PsiExpression[] expressions = argumentList.getExpressions();
     if(expressions.length == 0) {
@@ -243,13 +240,13 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       }
       ct.replace(e, replacement);
     }
-    ct.replace(nextParameters[0], ct.markUnchanged(prevParameters[0]));
+    ct.replace(nextParameters[0], prevParameters[0]);
     ExpressionUtils.bindReferenceTo(nextRef, newName);
     PsiExpression prevQualifier = mapCall.getMethodExpression().getQualifierExpression();
     if(prevQualifier == null) {
       ct.deleteAndRestoreComments(nextQualifier);
     } else {
-      ct.replaceAndRestoreComments(nextQualifier, ct.markUnchanged(prevQualifier));
+      ct.replaceAndRestoreComments(nextQualifier, prevQualifier);
     }
     CodeStyleManager.getInstance(project).reformat(lambda);
   }

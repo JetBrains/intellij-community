@@ -16,12 +16,13 @@
 package com.intellij.openapi.externalSystem.service.project.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -59,6 +60,7 @@ public class ConfigurationDataService extends AbstractProjectDataService<Configu
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty() || !Registry.is(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED)) {
+      LOG.debug("Configuration data is" + (!toImport.isEmpty() ? " not " : " ") + "empty, Registry flag is " + Registry.is(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED));
       return;
     }
 
@@ -69,13 +71,19 @@ public class ConfigurationDataService extends AbstractProjectDataService<Configu
 
     DataNode<ConfigurationData> projectConfigurationNode = ExternalSystemApiUtil.find(projectDataNode, ProjectKeys.CONFIGURATION);
     if (projectConfigurationNode != null) {
+
+      final ConfigurationData data = projectConfigurationNode.getData();
+      if (LOG.isDebugEnabled() && data instanceof ConfigurationDataImpl) {
+        LOG.debug("Importing project configuration: " + ((ConfigurationDataImpl)data).getJsonString());
+      }
+
       if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode.getData())) {
         LOG.warn("This external project are not the only project in the current IDE workspace, " +
                  "found project level configuration can override the configuration came from other external projects.");
       }
 
       for (ConfigurationHandler handler : ConfigurationHandler.EP_NAME.getExtensions()) {
-        handler.apply(project, modelsProvider, projectConfigurationNode.getData());
+        handler.apply(project, modelsProvider, data);
       }
     }
 
@@ -93,8 +101,13 @@ public class ConfigurationDataService extends AbstractProjectDataService<Configu
           continue;
         }
 
+        final ConfigurationData data = node.getData();
+        if (LOG.isDebugEnabled() && data instanceof ConfigurationDataImpl) {
+          LOG.debug("Importing module configuration: " + ((ConfigurationDataImpl)data).getJsonString());
+        }
+
         for (ConfigurationHandler handler : ConfigurationHandler.EP_NAME.getExtensions()) {
-          handler.apply(module, modelsProvider, node.getData());
+          handler.apply(module, modelsProvider, data);
         }
       }
     }

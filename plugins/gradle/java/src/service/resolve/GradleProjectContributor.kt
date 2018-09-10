@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
@@ -20,13 +21,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  * @since 11/10/2016
  */
 class GradleProjectContributor : GradleMethodContextContributor {
-
   companion object {
-    val copySpecClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
-    val fileTreeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
-    val filesClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
-    val taskClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "task"))
-    val execClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "exec"))
+    val copySpecClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
+    val fileTreeClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
+    val filesClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
+    val taskClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "task"))
+    val execClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "exec"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {

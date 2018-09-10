@@ -40,7 +40,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (Extensions.getExtensions(TypeDeclarationProvider.EP_NAME).length == 0) {
       event.getPresentation().setVisible(false);
     }

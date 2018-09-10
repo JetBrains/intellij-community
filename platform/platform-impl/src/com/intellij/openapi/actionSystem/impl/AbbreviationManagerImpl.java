@@ -146,4 +146,13 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
       }
     }
   }
+
+  @Override
+  public void removeAllAbbreviations(String actionId) {
+    Set<String> abbreviations = getAbbreviations(actionId);
+    for (String abbreviation : abbreviations) {
+      myAbbreviation2ActionId.get(abbreviation).remove(actionId);
+    }
+    myActionId2Abbreviations.remove(actionId);
+  }
 }

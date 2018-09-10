@@ -321,7 +321,7 @@ public class GitRefManager implements VcsLogRefManager {
     private final GitRemote myRemote;
     private final Collection<VcsRef> myBranches;
 
-    public RemoteRefGroup(GitRemote remote, Collection<VcsRef> branches) {
+    RemoteRefGroup(GitRemote remote, Collection<VcsRef> branches) {
       myRemote = remote;
       myBranches = branches;
     }

@@ -34,9 +34,11 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingSet;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
@@ -134,6 +136,8 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
 
+    updateLocalSdkVersion(sdk, sdkModificator);
+
     if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
@@ -229,7 +233,7 @@ public class PythonSdkUpdater implements StartupActivity {
   /**
    * Updates the paths of an SDK and regenerates its skeletons as a background task. Shows an error message if the update fails.
    *
-   * @see {@link #update(Sdk, SdkModificator, Project, Component)}
+   * @see #update(Sdk, SdkModificator, Project, Component)
    */
   public static void updateOrShowError(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project,
                                        @Nullable Component ownerComponent) {
@@ -238,6 +242,24 @@ public class PythonSdkUpdater implements StartupActivity {
       Messages.showErrorDialog(project,
                                PyBundle.message("MSG.cant.setup.sdk.$0", getSdkPresentableName(sdk)),
                                PyBundle.message("MSG.title.bad.sdk"));
+    }
+  }
+
+  /**
+   * Changes the version string of an SDK if it's out of date.
+   *
+   * May be invoked from any thread. May freeze the current thread while evaluating the run-time Python version.
+   */
+  private static void updateLocalSdkVersion(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
+    if (!PythonSdkType.isRemote(sdk)) {
+      final SdkModificator modificatorToRead = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
+      final String versionString = sdk.getSdkType().getVersionString(sdk);
+      if (!StringUtil.equals(versionString, modificatorToRead.getVersionString())) {
+        changeSdkModificator(sdk, sdkModificator, modificatorToWrite -> {
+          modificatorToWrite.setVersionString(versionString);
+          return true;
+        });
+      }
     }
   }
 
@@ -438,22 +460,36 @@ public class PythonSdkUpdater implements StartupActivity {
                                               @Nullable final SdkModificator sdkModificator,
                                               @NotNull final List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
-    final String key = PythonSdkType.getSdkKey(sdk);
-    final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
-    final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
+    final SdkModificator modificatorToRead = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
+    final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToRead.getRoots(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
-      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
-        final SdkModificator modificatorToCommit = sdkModificator != null ? sdkModificator :
-                                                   sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : modificatorToGetRoots;
-        modificatorToCommit.removeAllRoots();
+      changeSdkModificator(sdk, sdkModificator, effectiveModificator -> {
+        effectiveModificator.removeAllRoots();
         for (VirtualFile sdkPath : sdkPaths) {
-          modificatorToCommit.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
+          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
         }
-        modificatorToCommit.commitChanges();
+        return true;
       });
     }
+  }
+
+  /**
+   * Applies a processor to an SDK modificator or an SDK and commits it.
+   *
+   * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
+   */
+  private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
+                                           @NotNull Processor<SdkModificator> processor) {
+    final String key = PythonSdkType.getSdkKey(sdk);
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
+      final SdkModificator effectiveModificator = sdkModificator != null ? sdkModificator :
+                                                  sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : sdk.getSdkModificator();
+      if (processor .process(effectiveModificator)) {
+        effectiveModificator.commitChanges();
+      }
+    });
   }
 
   /**

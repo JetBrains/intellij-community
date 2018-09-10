@@ -30,7 +30,7 @@ class ConstantMatchProvider implements MatchProvider {
   private final List<Match> myMatches;
   private static final Logger LOG = Logger.getInstance(ConstantMatchProvider.class);
 
-  public ConstantMatchProvider(PsiMember member, Project project, List<Match> matches) {
+  ConstantMatchProvider(PsiMember member, Project project, List<Match> matches) {
     myField = (PsiField)member;
     myProject = project;
     myMatches = matches;

@@ -43,11 +43,11 @@ public class ComparisonToNaNInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
     final IElementType tokenType = comparison.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.EQEQ)) {
-      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor1");
+    if (tokenType.equals(JavaTokenType.NE)) {
+      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor2");
     }
     else {
-      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor2");
+      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor1");
     }
   }
 
@@ -58,7 +58,8 @@ public class ComparisonToNaNInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new ComparisonToNaNFix();
+    final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
+    return ComparisonUtils.isEqualityComparison(comparison) ? new ComparisonToNaNFix() : null;
   }
 
   private static class ComparisonToNaNFix extends InspectionGadgetsFix {
@@ -114,7 +115,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!ComparisonUtils.isEqualityComparison(expression)) {
+      if (!ComparisonUtils.isComparison(expression)) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();

@@ -37,7 +37,7 @@
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
   </extensions>
   <actions>
-    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export to Eclipse...">
+    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
   </actions>

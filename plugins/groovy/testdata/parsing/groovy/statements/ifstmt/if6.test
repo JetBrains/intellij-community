@@ -2,7 +2,7 @@ else
 {1+2}
 -----
 Groovy script
-  PsiErrorElement:'else' without 'if'
+  PsiErrorElement:';', <statement> or new line expected, got 'else'
     PsiElement(else)('else')
   PsiElement(new line)('\n')
   Closable block

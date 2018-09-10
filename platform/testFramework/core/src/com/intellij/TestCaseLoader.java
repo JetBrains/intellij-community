@@ -5,7 +5,7 @@ package com.intellij;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.JITSensitive;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.util.containers.MultiMap;
@@ -82,14 +82,8 @@ public class TestCaseLoader {
     MultiMap<String, String> groups = MultiMap.createLinked();
 
     for (URL fileUrl : groupingFileUrls) {
-      try {
-        InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
-        try {
-          groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
-        }
-        finally {
-          reader.close();
-        }
+      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream())) {
+        groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -230,14 +224,13 @@ public class TestCaseLoader {
   }
 
   private static int getRank(Class aClass) {
-    if (isPerformanceTestsRun()) {
-      return moveToStart(aClass) ? 0 : 1;
-    }
+    if (runFirst(aClass)) return 0;
+    if (isPerformanceTestsRun()) return 1;
 
     // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
-    // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension 
-    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked 
-    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDEA 
+    // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension
+    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked
+    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDEA
     // application is such that static final fields are often used to cache extensions. While having a positive effect on performance,
     // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
     // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
@@ -252,8 +245,8 @@ public class TestCaseLoader {
     return ourRankList.size();
   }
 
-  private static boolean moveToStart(Class testClass) {
-    return testClass.getAnnotation(JITSensitive.class) != null;
+  private static boolean runFirst(Class testClass) {
+    return testClass.getAnnotation(RunFirst.class) != null;
   }
 
   private static boolean isPlatformLiteFixture(Class aClass) {
@@ -283,8 +276,10 @@ public class TestCaseLoader {
     return result;
   }
 
-  public void clearClasses() {
+  private void clearClasses() {
     myClassList.clear();
+    myFirstTestClass = null;
+    myLastTestClass = null;
   }
 
   static boolean isPerformanceTestsRun() {
@@ -315,7 +310,7 @@ public class TestCaseLoader {
       }
     }
 
-    if (getClasses().size() == 1) {
+    if (myClassList.isEmpty()) { // nothing valuable to test
       clearClasses();
     }
     long after = System.currentTimeMillis();

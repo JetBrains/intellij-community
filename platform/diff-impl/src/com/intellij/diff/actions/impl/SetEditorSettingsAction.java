@@ -181,12 +181,12 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       setSelected(state);
       for (Editor editor : myEditors) {
         apply(editor, state);
@@ -199,6 +199,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     public abstract void apply(@NotNull Editor editor, boolean value);
 
+    @Override
     public void applyDefaults(@NotNull List<? extends Editor> editors) {
       for (Editor editor : editors) {
         apply(editor, isSelected());
@@ -206,10 +207,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
   }
 
-  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction {
+  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction, DumbAware {
     private final AnAction[] myOptions;
 
-    public EditorHighlightingLayerAction() {
+    EditorHighlightingLayerAction() {
       super("Highlighting Level", true);
       myOptions = ContainerUtil.map(HighlightingLevel.values(), level -> new OptionAction(level), AnAction.EMPTY_ARRAY);
     }
@@ -234,18 +235,18 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     private class OptionAction extends ToggleAction implements DumbAware {
       @NotNull private final HighlightingLevel myLayer;
 
-      public OptionAction(@NotNull HighlightingLevel layer) {
+      OptionAction(@NotNull HighlightingLevel layer) {
         super(layer.getText(), null, layer.getIcon());
         myLayer = layer;
       }
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return myTextSettings.getHighlightingLevel() == myLayer;
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myTextSettings.setHighlightingLevel(myLayer);
         apply(myLayer);
       }

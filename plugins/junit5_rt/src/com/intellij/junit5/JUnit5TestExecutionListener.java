@@ -197,7 +197,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
   
   private void testFinished(TestIdentifier testIdentifier, long duration) {
-    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + Long.toString(duration) + "\'" : "") + "]");
+    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + duration + "\'" : "") + "]");
   }
 
   private void testFailure(TestIdentifier testIdentifier,
@@ -394,7 +394,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static String javaLocation(String className, String maybeMethodName, boolean isTest) {
     String type = isTest ? "test" : "suite";
-    String methodName = maybeMethodName == null ? "" : "." + maybeMethodName;
+    String methodName = maybeMethodName == null ? "" : "/" + maybeMethodName;
     String location = escapeName(className + methodName);
     return "java:" + type + "://" + location;
   }

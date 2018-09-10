@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -28,13 +14,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
@@ -85,10 +71,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     doReset(settings);
   }
 
-  private void doReset(RunnerAndConfigurationSettings settings) {
-    final RunConfiguration runConfiguration = settings.getConfiguration();
+  private void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     myBeforeRunStepsPanel.doReset(settings);
-    myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof WithoutOwnBeforeRunSteps));
+    myBeforeLaunchContainer.setVisible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
   }
 
   @Override
@@ -109,36 +94,50 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
-    doApply(settings);
+    doApply(settings, false);
   }
 
+  @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
-    doApply(result);
+    doApply(result, true);
     return result;
   }
 
-  private void doApply(final RunnerAndConfigurationSettings settings) {
+  private void doApply(@NotNull RunnerAndConfigurationSettings settings, boolean isSnapshot) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true));
+    final RunManagerImpl runManager = ((RunnerAndConfigurationSettingsImpl)settings).getManager();
+
+    List<BeforeRunTask<?>> tasks = ContainerUtil.copyList(myBeforeRunStepsPanel.getTasks());
+    if (isSnapshot) {
+      runConfiguration.setBeforeRunTasks(tasks);
+    }
+    else {
+      runManager.setBeforeRunTasks(runConfiguration, tasks);
+    }
+
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
       runManagerSettings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
-    } else {
+    }
+    else {
       settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
       settings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     }
   }
 
-  public void addBeforeLaunchStep(BeforeRunTask<?> task) {
+  public void addBeforeLaunchStep(@NotNull BeforeRunTask<?> task) {
     myBeforeRunStepsPanel.addTask(task);
   }
 
-  public List<BeforeRunTask> getStepsBeforeLaunch() {
-    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
+  /**
+   * You MUST NOT modify tasks in the returned list.
+   */
+  @NotNull
+  public List<BeforeRunTask<?>> getStepsBeforeLaunch() {
+    return myBeforeRunStepsPanel.getTasks();
   }
 
   @Override
@@ -147,14 +146,14 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   @Override
-  public void titleChanged(String title) {
+  public void titleChanged(@NotNull String title) {
     myDecorator.setTitle(title);
   }
 
   private class MyDataProvider implements DataProvider {
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return ConfigurationSettingsEditorWrapper.this;
       }

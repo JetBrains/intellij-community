@@ -3,6 +3,7 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
 
 /**
@@ -17,6 +18,10 @@ import com.intellij.lang.jvm.JvmModifiersOwner
  */
 abstract class JvmElementActionsFactory {
 
+  open fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> =
+    createChangeModifierActions(target, MemberRequest.Modifier(request.modifier, request.shouldBePresent()))
+
+  @Deprecated(message = "use createChangeModifierActions(JvmModifiersOwner, ChangeModifierRequest)")
   open fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
 
   open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
@@ -29,4 +34,7 @@ abstract class JvmElementActionsFactory {
   open fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> = emptyList()
 
   open fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> = emptyList()
+
 }

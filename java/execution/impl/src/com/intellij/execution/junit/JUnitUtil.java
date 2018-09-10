@@ -163,9 +163,9 @@ public class JUnitUtil {
     if (isJUnit5(psiClass) && isJUnit5TestClass(psiClass, checkAbstract)) {
       return true;
     }
-    
+
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
-    
+
     final PsiClass topLevelClass = getTopmostClass(psiClass);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
@@ -226,6 +226,10 @@ public class JUnitUtil {
           return true;
         }
 
+        if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, CHECK_HIERARCHY)) {
+          return true;
+        }
+
         //default runners do not implicitly run inner classes
         if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_UNAWARE_OF_INNER_CLASSES)) {
           return true;
@@ -254,7 +258,7 @@ public class JUnitUtil {
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
-    
+
     if (psiClass.isAnnotationType()) return false;
 
     if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
@@ -441,7 +445,8 @@ public class JUnitUtil {
   }
 
   public static boolean isInheritorOrSelfRunner(PsiAnnotation annotation, String... runners) {
-    final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    final PsiAnnotationMemberValue value = attribute != null ? attribute.getDetachedValue() : null;
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
@@ -451,7 +456,8 @@ public class JUnitUtil {
   }
 
   public static boolean isOneOf(PsiAnnotation annotation, String... runners) {
-    final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    final PsiAnnotationMemberValue value = attribute != null ? attribute.getDetachedValue() : null;
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
@@ -473,6 +479,7 @@ public class JUnitUtil {
       this.framework = (framework instanceof JavaTestFramework) ? (JavaTestFramework)framework : null;
     }
 
+    @Override
     public boolean value(final PsiMethod method) {
       return framework != null
              ? framework.isTestMethod(method, myClass)

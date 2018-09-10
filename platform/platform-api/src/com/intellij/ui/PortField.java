@@ -26,6 +26,7 @@ public class PortField extends JBIntSpinner {
     this(value, 0);
   }
 
+  @Override
   public void setMin(int value) {
     ((SpinnerNumberModel)getModel()).setMinimum(value);
   }

@@ -101,6 +101,7 @@ final public class LogMessageParser extends AbstractMessageParser {
 
   // Implemented ============================================================
 
+  @Override
   protected void outputDone() {
     if (addingDescription) {
       addingDescription = false;
@@ -140,6 +141,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     return logMessageString.startsWith(FINAL_SPLIT) || logMessageString.startsWith(FINAL_SPLIT_WITH_TAB);
   }
 
+  @Override
   public void parseLine(String line, boolean isErrorMessage) {
     if (isErrorMessage) return;
     if (processingRevision) {
@@ -214,8 +216,7 @@ final public class LogMessageParser extends AbstractMessageParser {
       return;
     }
     if (line.startsWith(TOTAL_REVISIONS)) {
-      final String separator = SELECTED_REVISIONS;
-      final int semicolonIndex = line.indexOf(separator);
+      final int semicolonIndex = line.indexOf(SELECTED_REVISIONS);
       if (semicolonIndex < 0) {
         // no selected revisions here..
         logInfo.setTotalRevisions(line.substring(TOTAL_REVISIONS.length()).trim());

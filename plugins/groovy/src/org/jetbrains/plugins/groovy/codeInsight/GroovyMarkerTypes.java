@@ -191,8 +191,8 @@ public class GroovyMarkerTypes {
 
       }
     });
-  public static final MarkerType GR_OVERRIDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",
-                                                                      (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType GR_OVERRIDDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",
+                                                                       (NullableFunction<PsiElement, String>)element -> {
                                                                         PsiElement parent = element.getParent();
                                                                         if (!(parent instanceof GrMethod)) return null;
                                                                         GrMethod method = (GrMethod)parent;
@@ -309,7 +309,7 @@ public class GroovyMarkerTypes {
   private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
     private final GrMethod myMethod;
 
-    public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
+    OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
       super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
       myMethod = method;
     }

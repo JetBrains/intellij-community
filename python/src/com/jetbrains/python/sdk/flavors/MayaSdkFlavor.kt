@@ -57,7 +57,7 @@ class MayaSdkFlavor private constructor() : PythonSdkFlavor() {
 
   companion object {
 
-    var INSTANCE = MayaSdkFlavor()
+    var INSTANCE: MayaSdkFlavor = MayaSdkFlavor()
 
     private fun isMayaFolder(file: File): Boolean {
       return file.isDirectory && file.name == "Maya.app"
@@ -67,5 +67,5 @@ class MayaSdkFlavor private constructor() : PythonSdkFlavor() {
 
 
 class MayaFlavorProvider: PythonFlavorProvider {
-  override fun getFlavor(platformIndependent: Boolean) = MayaSdkFlavor.INSTANCE
+  override fun getFlavor(platformIndependent: Boolean): MayaSdkFlavor = MayaSdkFlavor.INSTANCE
 }

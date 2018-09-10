@@ -15,9 +15,12 @@
  */
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -149,14 +152,27 @@ public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFix
                   "}");
   }
 
+  public void testUseConfiguredNullityAnnotation() {
+    PsiClass clazz = myFixture.addClass("final class Foo { void foo(String s) { s.hashCode(); } }");
+    PsiParameter parameter = clazz.getMethods()[0].getParameterList().getParameters()[0];
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
+    String javax = "javax.annotation.Nonnull";
+    manager.setDefaultNotNull(javax);
+    try {
+      assertEquals(javax, manager.findOwnNullabilityInfo(parameter).getAnnotation().getQualifiedName());
+    } finally {
+      manager.setDefaultNotNull(AnnotationUtil.NOT_NULL);
+    }
+  }
+
   // expected: + = notnull, - = unknown/nullable for each parameter
   private void assertNullity(String expected, String classBody) {
     PsiClass clazz = myFixture.addClass("final class Foo { " + classBody + " }");
     assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
     PsiMethodImpl method = (PsiMethodImpl)clazz.getMethods()[0];
     String actual = StreamEx.of(method.getParameterList().getParameters())
-      .map(JavaSourceInference::inferNullity)
-      .map(n -> n == Nullness.NOT_NULL ? "+" : "-")
+      .map(JavaSourceInference::inferNullability)
+      .map(n -> n == Nullability.NOT_NULL ? "+" : "-")
       .joining();
     assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
     assertEquals(expected, actual);

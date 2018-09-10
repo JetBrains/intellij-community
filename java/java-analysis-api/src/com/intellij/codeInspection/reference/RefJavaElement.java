@@ -46,13 +46,6 @@ public interface RefJavaElement extends RefElement {
   boolean isStatic();
 
   /**
-   * Checks if the element directly references any elements marked as deprecated.
-   *
-   * @return true if the element references any deprecated elements, false otherwise.
-   */
-  boolean isUsesDeprecatedApi();
-
-  /**
    * Checks if the element is, or belongs to, a synthetic class or method created for a JSP page.
    *
    * @return true if the element is a synthetic JSP element, false otherwise.
@@ -61,11 +54,11 @@ public interface RefJavaElement extends RefElement {
 
   /**
    * Returns the access modifier for the element, as one of the keywords from the
-   * {@link com.intellij.psi.PsiModifier} class.
+   * {@link PsiModifier} class.
    *
    * @return the modifier, or null if the element does not have any access modifier.
    */
-  @Nullable
+  @NotNull
   @PsiModifier.ModifierConstant
   String getAccessModifier();
 }

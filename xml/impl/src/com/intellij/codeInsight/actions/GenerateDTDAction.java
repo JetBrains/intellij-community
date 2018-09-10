@@ -87,7 +87,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       Presentation presentation = event.getPresentation();

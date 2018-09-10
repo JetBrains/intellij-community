@@ -26,20 +26,24 @@ public interface Options {
   void setToBeShown(boolean value, Project project, boolean onOk);
 
   Options ADD_ACTION = new Options() {
+    @Override
     public boolean isToBeShown(Project project) {
       return CvsVcs2.getInstance(project).getAddOptions().getValue();
     }
 
+    @Override
     public void setToBeShown(boolean value, Project project, boolean onOk) {
       CvsVcs2.getInstance(project).getAddOptions().setValue(value);
     }
   };
 
   Options ON_FILE_ADDING = new Options() {
+    @Override
     public boolean isToBeShown(Project project) {
       return CvsVcs2.getInstance(project).getAddConfirmation().getValue() == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     }
 
+    @Override
     public void setToBeShown(boolean value, Project project, boolean onOk) {
       CvsVcs2.getInstance(project).getAddConfirmation().setValue(CvsConfiguration.convertToEnumValue(value, onOk));
     }
@@ -48,27 +52,33 @@ public interface Options {
 
 
   Options ON_FILE_REMOVING = new Options() {
+    @Override
     public boolean isToBeShown(Project project) {
       return CvsVcs2.getInstance(project).getRemoveConfirmation().getValue() == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     }
 
+    @Override
     public void setToBeShown(boolean value, Project project, boolean onOk) {
       CvsVcs2.getInstance(project).getRemoveConfirmation().setValue(CvsConfiguration.convertToEnumValue(value, onOk));
     }
   };
 
   Options REMOVE_ACTION = new Options() {
+    @Override
     public boolean isToBeShown(Project project) {
       return CvsVcs2.getInstance(project).getRemoveOptions().getValue();
     }
 
+    @Override
     public void setToBeShown(boolean value, Project project, boolean onOk) {
       CvsVcs2.getInstance(project).getRemoveOptions().setValue(value);
     }
   };
 
   Options NULL = new Options() {
+    @Override
     public boolean isToBeShown(Project project) { return true; }
+    @Override
     public void setToBeShown(boolean value, Project project, boolean onOk) {}
   };
 }

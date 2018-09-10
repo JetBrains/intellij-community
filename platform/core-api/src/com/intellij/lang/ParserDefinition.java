@@ -112,14 +112,24 @@ public interface ParserDefinition {
    * @param left  the first token to check.
    * @param right the second token to check.
    * @return the spacing requirements.
-   * @since 6.0
    */
-  SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right);
+  default SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    //noinspection deprecation
+    return spaceExistanceTypeBetweenTokens(left, right);
+  }
+
+  /**
+   * @deprecated Override {@link ParserDefinition#spaceExistenceTypeBetweenTokens(ASTNode, ASTNode)} instead
+   */
+  @Deprecated
+  default SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MAY;
+  }
 
   /**
    * Requirements for spacing between tokens.
    *
-   * @see ParserDefinition#spaceExistanceTypeBetweenTokens
+   * @see ParserDefinition#spaceExistenceTypeBetweenTokens
    */
   enum SpaceRequirements {
     /** Whitespace between tokens is optional. */

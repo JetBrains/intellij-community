@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +38,7 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final EditorImpl editor = getEditor(e);
     if (editor != null) {
       final int size = editor.getFontSize() + myStep;
@@ -48,7 +49,7 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   }
 
   @Nullable
-  private static EditorImpl getEditor(AnActionEvent e) {
+  private static EditorImpl getEditor(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor instanceof EditorImpl) {
       return (EditorImpl)editor;
@@ -57,7 +58,7 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEditor(e) != null);
   }
 

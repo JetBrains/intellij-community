@@ -15,16 +15,14 @@
  */
 package org.intellij.plugins.xpathView.support.jaxen.extensions;
 
-import org.intellij.lang.xpath.context.functions.Parameter;
-import org.intellij.lang.xpath.psi.XPathType;
-
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
-
+import org.intellij.lang.xpath.context.functions.Parameter;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jaxen.Context;
 import org.jaxen.Function;
 import org.jaxen.FunctionCallException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -33,10 +31,12 @@ public abstract class BasicFileInfoFunction extends FunctionImplementation imple
         super(name, returnType, parameters);
     }
 
+    @Override
     public Function getImplementation() {
         return this;
     }
 
+    @Override
     @Nullable
     @SuppressWarnings({ "RawUseOfParameterizedType" })
     public Object call(Context context, List list) throws FunctionCallException {

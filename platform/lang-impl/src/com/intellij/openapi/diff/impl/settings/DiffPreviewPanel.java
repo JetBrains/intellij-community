@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -35,7 +21,10 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -66,7 +55,7 @@ class DiffPreviewPanel implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel() {
+  DiffPreviewPanel() {
     myViewer = new MyViewer();
     myViewer.init();
 
@@ -107,7 +96,7 @@ class DiffPreviewPanel implements PreviewPanel {
   private static class SampleRequest extends ContentDiffRequest {
     private final List<DiffContent> myContents;
 
-    public SampleRequest() {
+    SampleRequest() {
       myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
@@ -131,7 +120,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private static class SampleContext extends DiffContext {
-    public SampleContext() {
+    SampleContext() {
       TextDiffSettings settings = new TextDiffSettings();
       settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
       settings.setIgnorePolicy(IgnorePolicy.IGNORE_WHITESPACES);
@@ -166,7 +155,7 @@ class DiffPreviewPanel implements PreviewPanel {
     myDispatcher.addListener(listener);
   }
 
-  private class EditorMouseListener extends EditorMouseMotionAdapter {
+  private class EditorMouseListener implements EditorMouseMotionListener {
     @NotNull private final ThreeSide mySide;
 
     private EditorMouseListener(@NotNull ThreeSide side) {
@@ -174,7 +163,7 @@ class DiffPreviewPanel implements PreviewPanel {
     }
 
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       int line = getLineNumber(mySide, e);
       if (getChange(mySide, line) != null || getFoldRegion(mySide, line) != null) {
         EditorUtil.setHandCursor(e.getEditor());
@@ -182,7 +171,7 @@ class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  private class EditorClickListener extends EditorMouseAdapter implements CaretListener {
+  private class EditorClickListener implements CaretListener, com.intellij.openapi.editor.event.EditorMouseListener {
     @NotNull private final ThreeSide mySide;
 
     private EditorClickListener(@NotNull ThreeSide side) {
@@ -190,12 +179,12 @@ class DiffPreviewPanel implements PreviewPanel {
     }
 
     @Override
-    public void mouseClicked(EditorMouseEvent e) {
+    public void mouseClicked(@NotNull EditorMouseEvent e) {
       selectColorForLine(mySide, getLineNumber(mySide, e));
     }
 
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       selectColorForLine(mySide, e.getNewPosition().line);
     }
   }
@@ -213,7 +202,6 @@ class DiffPreviewPanel implements PreviewPanel {
     FoldRegion region = getFoldRegion(side, line);
     if (region != null) {
       myDispatcher.getMulticaster().selectionInPreviewChanged(DiffLineSeparatorRenderer.BACKGROUND.getExternalName());
-      return;
     }
   }
 
@@ -263,7 +251,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private static class MyViewer extends SimpleThreesideDiffViewer {
-    public MyViewer() {super(new SampleContext(), new SampleRequest());}
+    MyViewer() {super(new SampleContext(), new SampleRequest());}
 
     @Override
     protected boolean forceRediffSynchronously() {

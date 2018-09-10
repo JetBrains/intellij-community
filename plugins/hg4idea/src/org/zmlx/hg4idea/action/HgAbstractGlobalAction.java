@@ -34,6 +34,7 @@ import java.util.List;
 
 public abstract class HgAbstractGlobalAction extends DumbAwareAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -54,7 +55,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);

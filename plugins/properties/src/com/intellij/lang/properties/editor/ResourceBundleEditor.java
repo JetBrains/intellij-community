@@ -417,12 +417,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
       editor.addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(final Editor editor) {
+        public void focusGained(@NotNull final Editor editor) {
           mySelectedEditor = editor;
         }
 
         @Override
-        public void focusLost(final Editor editor) {
+        public void focusLost(@NotNull final Editor editor) {
           if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
             myVfsListener.flush();
@@ -575,7 +575,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
     JTree tree = myStructureViewComponent.getTree();
     return JBIterable.of(tree.getSelectionModel().getSelectionPaths())
-      .map(o -> TreeUtil.getUserObject(o.getLastPathComponent()));
+      .map(TreeUtil::getLastUserObject);
   }
 
   @Nullable
@@ -860,7 +860,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
               group.addSeparator();
               group.add(new AnAction("Propagate Value Across of Resource Bundle") {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   final String valueToPropagate = editor.getDocument().getText();
                   final String currentSelectedProperty = getSelectedPropertyName();
                   if (currentSelectedProperty == null) {
@@ -902,7 +902,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     @Override
     @Nullable
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       return ResourceBundleEditor.this.getData(dataId);
     }
   }

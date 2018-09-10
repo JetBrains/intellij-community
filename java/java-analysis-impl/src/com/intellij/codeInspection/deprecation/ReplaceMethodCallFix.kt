@@ -31,7 +31,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     PsiFormatUtil.formatMethod(replacementMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, 0)
 
   override fun getText(): String {
-    return "Replace method call with " + myReplacementText
+    return "Replace method call with $myReplacementText"
   }
 
   @Nls

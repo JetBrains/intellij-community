@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -20,8 +6,7 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -45,9 +30,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
   private final NotNullLazyValue<PsiTypeElement> myReturnType;
-  private final NotNullLazyValue<PsiAnnotationMemberValue> myDefaultValue;
+  private final NullableLazyValue<PsiAnnotationMemberValue> myDefaultValue;
 
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
@@ -64,8 +51,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
     };
 
     final String text = getStub().getDefaultValueText();
-    myDefaultValue = StringUtil.isEmptyOrSpaces(text) ? null : new AtomicNotNullLazyValue<PsiAnnotationMemberValue>() {
-      @NotNull
+    myDefaultValue = StringUtil.isEmptyOrSpaces(text) ? null : new VolatileNullableLazyValue<PsiAnnotationMemberValue>() {
       @Override
       protected PsiAnnotationMemberValue compute() {
         return ClsParsingUtil.createMemberValueFromText(text, getManager(), ClsMethodImpl.this);
@@ -140,7 +126,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiModifierList getModifierList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
+    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
@@ -151,18 +137,18 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiParameterList getParameterList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST).getPsi();
+    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
   }
 
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST).getPsi();
+    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST)).getPsi();
   }
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST).getPsi();
+    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
   }
 
   @Override
@@ -280,19 +266,21 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
 
   @Nullable
   public PsiMethod getSourceMirrorMethod() {
-    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calcSourceMirrorMethod(),
-                                                                                            getContainingFile(),
-                                                                                            getContainingFile().getNavigationElement(),
-                                                                                            FileIndexFacade.getInstance(getProject()).getRootModificationTracker()));
+    return CachedValuesManager.getCachedValue(this, () -> {
+      PsiFile file = getContainingFile();
+      ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
+      return CachedValueProvider.Result.create(calcSourceMirrorMethod(), file, file.getNavigationElement(), tracker);
+    });
   }
 
   @Nullable
   private PsiMethod calcSourceMirrorMethod() {
-    PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
-    if (sourceClassMirror == null) return null;
-    for (PsiMethod sourceMethod : sourceClassMirror.findMethodsByName(getName(), false)) {
-      if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod)) {
-        return sourceMethod;
+    PsiClass mirrorClass = ((ClsClassImpl)getParent()).getSourceMirrorClass();
+    if (mirrorClass != null) {
+      for (PsiMethod sourceMethod: mirrorClass.findMethodsByName(getName(), false)) {
+        if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod)) {
+          return sourceMethod;
+        }
       }
     }
     return null;
@@ -301,23 +289,21 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       try {
-        PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
-        if (navigationElement != null) {
-          return navigationElement;
-        }
+        PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
+        if (navigationElement != null) return navigationElement;
       }
       catch (IndexNotReadyException ignore) { }
     }
 
     try {
-      final PsiMethod method = getSourceMirrorMethod();
-      return method != null ? method.getNavigationElement() : this;
+      PsiMethod method = getSourceMirrorMethod();
+      if (method != null) return method.getNavigationElement();
     }
-    catch (IndexNotReadyException e) {
-      return this;
-    }
+    catch (IndexNotReadyException ignore) { }
+
+    return this;
   }
 
   @Override

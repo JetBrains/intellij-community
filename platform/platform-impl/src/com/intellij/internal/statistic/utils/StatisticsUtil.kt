@@ -15,10 +15,18 @@
  */
 package com.intellij.internal.statistic.utils
 
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.util.*
+
+fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
+  val plugin = PluginManager.getPlugin(pluginId)
+  return plugin == null || plugin.isBundled || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
+}
 
 /**
  * Constructs a proper UsageDescriptor for a boolean value,

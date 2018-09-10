@@ -198,6 +198,14 @@
   <action id="NextDiff">
     <keyboard-shortcut first-keystroke="control F7"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="shift meta F6"/>
+    <keyboard-shortcut first-keystroke="meta alt LEFT"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="meta F6"/>
+    <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+  </action>
   <action id="NextOccurence"/>
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="meta F6"/>

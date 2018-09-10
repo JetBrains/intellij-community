@@ -34,6 +34,11 @@ public class PartialChangesUtil {
     VirtualFile file = getVirtualFile(change);
     if (file == null) return null;
 
+    return getPartialTracker(project, file);
+  }
+
+  @Nullable
+  public static PartialLocalLineStatusTracker getPartialTracker(@NotNull Project project, @NotNull VirtualFile file) {
     LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(file);
     return ObjectUtils.tryCast(tracker, PartialLocalLineStatusTracker.class);
   }

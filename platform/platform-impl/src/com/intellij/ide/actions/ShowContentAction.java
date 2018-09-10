@@ -33,7 +33,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ToolWindow window = getWindow(e);
     e.getPresentation().setEnabledAndVisible(window != null && window.getContentManager().getContentCount() > 1);
     e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
@@ -42,7 +42,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     getWindow(e).showContentPopup(e.getInputEvent());
   }
 

@@ -114,6 +114,12 @@ public class SerializedStubTree {
       return false;
     }
     final SerializedStubTree thatTree = (SerializedStubTree)that;
+    
+    if (myCharContentLength != thatTree.myCharContentLength ||
+        myByteContentLength != thatTree.myByteContentLength
+    ) {
+      return false;
+    }
     final int length = myLength;
     if (length != thatTree.myLength) {
       return false;

@@ -9,9 +9,9 @@ import com.intellij.debugger.streams.ui.ValueWithPosition
  */
 data class ValueWithPositionImpl(override val traceElement: TraceElement) : ValueWithPosition {
   companion object {
-    val INVALID_POSITION = Int.MIN_VALUE
-    val DEFAULT_VISIBLE_VALUE = false
-    val DEFAULT_HIGHLIGHTING_VALUE = false
+    val INVALID_POSITION: Int = Int.MIN_VALUE
+    val DEFAULT_VISIBLE_VALUE: Boolean = false
+    val DEFAULT_HIGHLIGHTING_VALUE: Boolean = false
   }
 
   private var myPosition: Int = INVALID_POSITION
@@ -36,7 +36,7 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
   fun updateToInvalid(): Boolean =
     updateProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
-  fun setInvalid() =
+  fun setInvalid(): Unit =
     setProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
   fun updateProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean): Boolean {

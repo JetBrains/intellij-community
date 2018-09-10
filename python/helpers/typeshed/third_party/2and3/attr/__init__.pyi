@@ -1,5 +1,9 @@
 from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Mapping, Tuple, Type, TypeVar, Union, overload
 # `import X as X` is required to make these public
+from . import exceptions as exceptions
+from . import filters as filters
+from . import converters as converters
+from . import validators as validators
 
 _T = TypeVar('_T')
 _C = TypeVar('_C', bound=type)
@@ -65,7 +69,21 @@ class Attribute(Generic[_T]):
 #     attr(validator=<some callable>)  -> Whatever the callable expects.
 # This makes this type of assignments possible:
 #     x: int = attr(8)
-
+#
+# This form catches explicit None or no default but with no other arguments returns Any.
+@overload
+def attrib(default: None = ...,
+           validator: None = ...,
+           repr: bool = ...,
+           cmp: bool = ...,
+           hash: Optional[bool] = ...,
+           init: bool = ...,
+           convert: None = ...,
+           metadata: Optional[Mapping[Any, Any]] = ...,
+           type: None = ...,
+           converter: None = ...,
+           factory: None = ...,
+           ) -> Any: ...
 # This form catches an explicit None or no default and infers the type from the other arguments.
 @overload
 def attrib(default: None = ...,
@@ -94,20 +112,6 @@ def attrib(default: _T,
            converter: Optional[_ConverterType[_T]] = ...,
            factory: Optional[Callable[[], _T]] = ...,
            ) -> _T: ...
-# This form catches explicit None or no default but with no other arguments returns Any.
-@overload
-def attrib(default: None = ...,
-           validator: None = ...,
-           repr: bool = ...,
-           cmp: bool = ...,
-           hash: Optional[bool] = ...,
-           init: bool = ...,
-           convert: None = ...,
-           metadata: Optional[Mapping[Any, Any]] = ...,
-           type: None = ...,
-           converter: None = ...,
-           factory: None = ...,
-           ) -> Any: ...
 # This form covers type=non-Type: e.g. forward references (str), Any
 @overload
 def attrib(default: Optional[_T] = ...,
@@ -203,191 +207,6 @@ def get_run_validators() -> bool: ...
 
 # aliases --
 
-# FIXME: there is a bug in PyCharm with creating aliases to overloads.
-# Use the aliases instead of the duplicated overloads when the bug is fixed:
-# https://youtrack.jetbrains.com/issue/PY-27788
-
-# s = attributes = attrs
-# ib = attr = attrib
-# dataclass = attrs # Technically, partial(attrs, auto_attribs=True) ;)
-
-
-@overload
-def ib(default: None = ...,
-       validator: Optional[_ValidatorArgType[_T]] = ...,
-       repr: bool = ...,
-       cmp: bool = ...,
-       hash: Optional[bool] = ...,
-       init: bool = ...,
-       convert: Optional[_ConverterType[_T]] = ...,
-       metadata: Optional[Mapping[Any, Any]] = ...,
-       type: Optional[Type[_T]] = ...,
-       converter: Optional[_ConverterType[_T]] = ...,
-       factory: Optional[Callable[[], _T]] = ...,
-       ) -> _T: ...
-@overload
-def ib(default: _T,
-       validator: Optional[_ValidatorArgType[_T]] = ...,
-       repr: bool = ...,
-       cmp: bool = ...,
-       hash: Optional[bool] = ...,
-       init: bool = ...,
-       convert: Optional[_ConverterType[_T]] = ...,
-       metadata: Optional[Mapping[Any, Any]] = ...,
-       type: Optional[Type[_T]] = ...,
-       converter: Optional[_ConverterType[_T]] = ...,
-       factory: Optional[Callable[[], _T]] = ...,
-       ) -> _T: ...
-@overload
-def ib(default: None = ...,
-       validator: None = ...,
-       repr: bool = ...,
-       cmp: bool = ...,
-       hash: Optional[bool] = ...,
-       init: bool = ...,
-       convert: None = ...,
-       metadata: Optional[Mapping[Any, Any]] = ...,
-       type: None = ...,
-       converter: None = ...,
-       factory: None = ...,
-       ) -> Any: ...
-@overload
-def ib(default: Optional[_T] = ...,
-       validator: Optional[_ValidatorArgType[_T]] = ...,
-       repr: bool = ...,
-       cmp: bool = ...,
-       hash: Optional[bool] = ...,
-       init: bool = ...,
-       convert: Optional[_ConverterType[_T]] = ...,
-       metadata: Optional[Mapping[Any, Any]] = ...,
-       type: object = ...,
-       converter: Optional[_ConverterType[_T]] = ...,
-       factory: Optional[Callable[[], _T]] = ...,
-       ) -> Any: ...
-
-@overload
-def attr(default: None = ...,
-         validator: Optional[_ValidatorArgType[_T]] = ...,
-         repr: bool = ...,
-         cmp: bool = ...,
-         hash: Optional[bool] = ...,
-         init: bool = ...,
-         convert: Optional[_ConverterType[_T]] = ...,
-         metadata: Optional[Mapping[Any, Any]] = ...,
-         type: Optional[Type[_T]] = ...,
-         converter: Optional[_ConverterType[_T]] = ...,
-         factory: Optional[Callable[[], _T]] = ...,
-         ) -> _T: ...
-@overload
-def attr(default: _T,
-         validator: Optional[_ValidatorArgType[_T]] = ...,
-         repr: bool = ...,
-         cmp: bool = ...,
-         hash: Optional[bool] = ...,
-         init: bool = ...,
-         convert: Optional[_ConverterType[_T]] = ...,
-         metadata: Optional[Mapping[Any, Any]] = ...,
-         type: Optional[Type[_T]] = ...,
-         converter: Optional[_ConverterType[_T]] = ...,
-         factory: Optional[Callable[[], _T]] = ...,
-         ) -> _T: ...
-@overload
-def attr(default: None = ...,
-         validator: None = ...,
-         repr: bool = ...,
-         cmp: bool = ...,
-         hash: Optional[bool] = ...,
-         init: bool = ...,
-         convert: None = ...,
-         metadata: Optional[Mapping[Any, Any]] = ...,
-         type: None = ...,
-         converter: None = ...,
-         factory: None = ...,
-         ) -> Any: ...
-@overload
-def attr(default: Optional[_T] = ...,
-         validator: Optional[_ValidatorArgType[_T]] = ...,
-         repr: bool = ...,
-         cmp: bool = ...,
-         hash: Optional[bool] = ...,
-         init: bool = ...,
-         convert: Optional[_ConverterType[_T]] = ...,
-         metadata: Optional[Mapping[Any, Any]] = ...,
-         type: object = ...,
-         converter: Optional[_ConverterType[_T]] = ...,
-         factory: Optional[Callable[[], _T]] = ...,
-         ) -> Any: ...
-
-@overload
-def attributes(maybe_cls: _C,
-               these: Optional[Dict[str, Any]] = ...,
-               repr_ns: Optional[str] = ...,
-               repr: bool = ...,
-               cmp: bool = ...,
-               hash: Optional[bool] = ...,
-               init: bool = ...,
-               slots: bool = ...,
-               frozen: bool = ...,
-               str: bool = ...,
-               auto_attribs: bool = ...) -> _C: ...
-@overload
-def attributes(maybe_cls: None = ...,
-               these: Optional[Dict[str, Any]] = ...,
-               repr_ns: Optional[str] = ...,
-               repr: bool = ...,
-               cmp: bool = ...,
-               hash: Optional[bool] = ...,
-               init: bool = ...,
-               slots: bool = ...,
-               frozen: bool = ...,
-               str: bool = ...,
-               auto_attribs: bool = ...) -> Callable[[_C], _C]: ...
-
-@overload
-def s(maybe_cls: _C,
-      these: Optional[Dict[str, Any]] = ...,
-      repr_ns: Optional[str] = ...,
-      repr: bool = ...,
-      cmp: bool = ...,
-      hash: Optional[bool] = ...,
-      init: bool = ...,
-      slots: bool = ...,
-      frozen: bool = ...,
-      str: bool = ...,
-      auto_attribs: bool = ...) -> _C: ...
-@overload
-def s(maybe_cls: None = ...,
-      these: Optional[Dict[str, Any]] = ...,
-      repr_ns: Optional[str] = ...,
-      repr: bool = ...,
-      cmp: bool = ...,
-      hash: Optional[bool] = ...,
-      init: bool = ...,
-      slots: bool = ...,
-      frozen: bool = ...,
-      str: bool = ...,
-      auto_attribs: bool = ...) -> Callable[[_C], _C]: ...
-
-# same as above, but with auto_attrib=True
-@overload
-def dataclass(maybe_cls: _C,
-              these: Optional[Dict[str, Any]] = ...,
-              repr_ns: Optional[str] = ...,
-              repr: bool = ...,
-              cmp: bool = ...,
-              hash: Optional[bool] = ...,
-              init: bool = ...,
-              slots: bool = ...,
-              frozen: bool = ...,
-              str: bool = ...) -> _C: ...
-@overload
-def dataclass(maybe_cls: None = ...,
-              these: Optional[Dict[str, Any]] = ...,
-              repr_ns: Optional[str] = ...,
-              repr: bool = ...,
-              cmp: bool = ...,
-              hash: Optional[bool] = ...,
-              init: bool = ...,
-              slots: bool = ...,
-              frozen: bool = ...,
-              str: bool = ...) -> Callable[[_C], _C]: ...
+s = attributes = attrs
+ib = attr = attrib
+dataclass = attrs  # Technically, partial(attrs, auto_attribs=True) ;)

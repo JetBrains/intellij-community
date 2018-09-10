@@ -54,7 +54,7 @@ public class KeywordArgumentCompletionUtil {
         final List<LookupElement> extra = PyTypeUtil.toStream(calleeType)
           .select(PyCallableType.class)
           .flatMap(type -> collectParameterNamesFromType(type, callExpr, context).stream())
-          .map(name -> PyUtil.createNamedParameterLookup(name, element.getProject()))
+          .map(name -> PyUtil.createNamedParameterLookup(name, element.getContainingFile()))
           .toList();
 
         ret.addAll(extra);

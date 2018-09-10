@@ -48,7 +48,9 @@ public class HtmlMissingClosingTagInspectionTest extends LightPlatformCodeInsigh
     quickfixTest("<html><<warning descr=\"Element <p> is missing an end tag\">p</warning><caret>>Behold!</html>", "<html><p>Behold!</p></html>", "Add </p>");
   }
 
-
+  public void testCollapsedEmptyTag() {
+    highlightTest("<html><body><App/></body></html>");
+  }
 
   @NotNull
   protected LocalInspectionTool getInspection() {

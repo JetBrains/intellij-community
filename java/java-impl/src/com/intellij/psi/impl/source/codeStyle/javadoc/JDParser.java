@@ -689,7 +689,7 @@ public class JDParser {
     public final String comment;
     public final String commentFooter;
 
-    public CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment, String commentFooter) {
+    CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment, String commentFooter) {
       this.docComment = docComment;
       this.commentOwner = commentOwner;
       this.commentHeader = commentHeader;

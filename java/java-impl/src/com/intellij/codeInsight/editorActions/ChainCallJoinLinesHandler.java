@@ -34,6 +34,7 @@ public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
 
     boolean result = false;
     if (firstStatement instanceof PsiExpressionStatement) {
+      if (firstStatement.getParent() != secondStatement.getParent()) return CANNOT_JOIN;
       PsiExpression firstExpression = ((PsiExpressionStatement)firstStatement).getExpression();
       if (firstExpression instanceof PsiMethodCallExpression) {
         result = joinTwoCalls((PsiMethodCallExpression)firstExpression, secondCall);

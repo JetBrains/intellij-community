@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -179,7 +180,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   private void showNotePopup(Project project,
                              final DnDAwareTree tree,
-                             final Consumer<String> after, final String initText) {
+                             final Consumer<? super String> after, final String initText) {
     final JTextArea textArea = new JTextArea(3, 50);
     textArea.setFont(UIUtil.getTreeFont());
     textArea.setText(initText);
@@ -194,7 +195,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
     final JComponent content = popup.getContent();
     final AnAction action = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         popup.closeOk(e.getInputEvent());
         unregisterCustomShortcutSet(content);
         after.consume(textArea.getText());

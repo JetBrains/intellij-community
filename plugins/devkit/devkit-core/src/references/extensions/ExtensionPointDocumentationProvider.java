@@ -22,6 +22,7 @@ import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiClass;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
@@ -63,9 +65,12 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
       epClassText.append("<unknown>");
     }
 
-    return (epModule == null ? "" : "[" + epModule.getName() + "]") +
-           (epPrefix == null ? "" : " " + epPrefix) +
-           "<br/>" +
+    String moduleAndPrefix = (epModule == null ? "" : "[" + epModule.getName() + "]") +
+                             (epPrefix == null ? "" : " " + epPrefix);
+    if (!moduleAndPrefix.isEmpty()) {
+      moduleAndPrefix += "<br/>";
+    }
+    return moduleAndPrefix +
            "<b>" + extensionPoint.getEffectiveName() + "</b>" +
            " (" + epDeclarationFile.getName() + ")<br/>" +
            epClassText.toString();
@@ -79,14 +84,19 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
     final PsiClass epClass = getExtensionPointClass(extensionPoint);
     if (epClass != null) {
       StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
-      sb.append("<b>").append(extensionPoint.getEffectiveName()).append("</b> [").append(extensionPoint.getNamePrefix()).append("]<br>");
+      sb.append("<b>").append(extensionPoint.getEffectiveName()).append("</b>");
+      String namePrefix = extensionPoint.getNamePrefix();
+      if (StringUtil.isNotEmpty(namePrefix)) {
+        sb.append(" [").append(namePrefix).append("]");
+      }
+      sb.append("<br>");
       generateClassLink(sb, epClass);
       sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
 
       List<With> withElements = extensionPoint.getWithElements();
       if (!withElements.isEmpty()) {
         sb.append(DocumentationMarkup.SECTIONS_START);
-        for (With withElement : withElements) {
+        for (With withElement: withElements) {
 
           String name = DomUtil.hasXml(withElement.getAttribute())
                         ? withElement.getAttribute().getStringValue()
@@ -131,6 +141,7 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
 
   @Nullable
   private static ExtensionPoint findExtensionPoint(PsiElement element) {
+    // via @NameValue
     if (element instanceof PomTargetPsiElement &&
         DescriptorUtil.isPluginXml(element.getContainingFile())) {
       final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
@@ -139,6 +150,14 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
         if (domElement instanceof ExtensionPoint) {
           return (ExtensionPoint)domElement;
         }
+      }
+    }
+    // via XmlTag
+    else if (element instanceof XmlTag &&
+             DescriptorUtil.isPluginXml(element.getContainingFile())) {
+      DomElement domElement = DomUtil.getDomElement(element);
+      if (domElement instanceof ExtensionPoint) {
+        return (ExtensionPoint)domElement;
       }
     }
     return null;

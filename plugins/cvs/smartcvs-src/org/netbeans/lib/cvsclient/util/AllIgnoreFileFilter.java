@@ -28,7 +28,8 @@ public final class AllIgnoreFileFilter
 
 	// Implemented ============================================================
 
-	public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
 		return true;
 	}
 }

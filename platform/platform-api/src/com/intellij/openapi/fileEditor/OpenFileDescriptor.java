@@ -18,11 +18,13 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +49,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   private final int myOffset;
   private final RangeMarker myRangeMarker;
 
-  private boolean myUseCurrentWindow = false;
+  private boolean myUseCurrentWindow;
   private ScrollType myScrollType = ScrollType.CENTER;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
@@ -111,9 +113,14 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
       throw new IllegalStateException("target not valid");
     }
 
-    if (!myFile.isDirectory() && navigateInEditorOrNativeApp(myProject, requestFocus)) return;
+    if (!myFile.isDirectory()) {
+      if (navigateInEditorOrNativeApp(myProject, requestFocus)) return;
+    }
 
-    navigateInProjectView(requestFocus);
+    if (navigateInProjectView(requestFocus)) return;
+
+    String message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().getProductName());
+    Messages.showErrorDialog(myProject, message, IdeBundle.message("title.cannot.open.file"));
   }
 
   private boolean navigateInEditorOrNativeApp(@NotNull Project project, boolean requestFocus) {
@@ -157,14 +164,15 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
     return !editors.isEmpty();
   }
 
-  private void navigateInProjectView(boolean requestFocus) {
+  private boolean navigateInProjectView(boolean requestFocus) {
     SelectInContext context = new FileSelectInContext(myProject, myFile, null);
     for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargets()) {
       if (target.canSelect(context)) {
         target.selectIn(context, requestFocus);
-        return;
+        return true;
       }
     }
+    return false;
   }
 
   public void navigateIn(@NotNull Editor e) {
@@ -254,7 +262,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   }
 
   @Override
-  public int compareTo(OpenFileDescriptor o) {
+  public int compareTo(@NotNull OpenFileDescriptor o) {
     int i = myProject.getName().compareTo(o.myProject.getName());
     if (i != 0) return i;
     i = myFile.getName().compareTo(o.myFile.getName());

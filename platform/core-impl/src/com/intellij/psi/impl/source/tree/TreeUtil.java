@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -73,7 +59,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipElements(ASTNode element, TokenSet types) {
+  public static ASTNode skipElements(@Nullable ASTNode element, @NotNull TokenSet types) {
     while (true) {
       if (element == null) return null;
       if (!types.contains(element.getElementType())) break;
@@ -83,7 +69,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipElementsBack(@Nullable ASTNode element, TokenSet types) {
+  public static ASTNode skipElementsBack(@Nullable ASTNode element, @NotNull TokenSet types) {
     if (element == null) return null;
     if (!types.contains(element.getElementType())) return element;
 
@@ -255,6 +241,11 @@ public class TreeUtil {
   @Nullable
   public static ASTNode nextLeaf(@NotNull final ASTNode node) {
     return nextLeaf((TreeElement)node, null);
+  }
+
+  @Nullable
+  public static LeafElement nextLeaf(@NotNull final LeafElement node) {
+    return nextLeaf(node, null);
   }
 
   public static final Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
@@ -437,12 +428,12 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceAndComments(final ASTNode node, boolean forward) {
+  public static ASTNode skipWhitespaceAndComments(@Nullable ASTNode node, boolean forward) {
     return skipWhitespaceCommentsAndTokens(node, TokenSet.EMPTY, forward);
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, @NotNull TokenSet alsoSkip, boolean forward) {
+  public static ASTNode skipWhitespaceCommentsAndTokens(@Nullable ASTNode node, @NotNull TokenSet alsoSkip, boolean forward) {
     ASTNode element = node;
     while (true) {
       if (element == null) return null;
@@ -452,7 +443,7 @@ public class TreeUtil {
     return element;
   }
 
-  public static boolean isWhitespaceOrComment(ASTNode element) {
+  public static boolean isWhitespaceOrComment(@NotNull ASTNode element) {
     return element.getPsi() instanceof PsiWhiteSpace || element.getPsi() instanceof PsiComment;
   }
 }

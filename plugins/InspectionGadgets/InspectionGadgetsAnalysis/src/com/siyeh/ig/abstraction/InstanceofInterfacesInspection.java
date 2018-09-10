@@ -21,17 +21,23 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class InstanceofInterfacesInspection extends BaseInspection {
+  private static final CallMatcher OBJECT_GET_CLASS =
+    CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAbstractClasses = false;
 
+  @Pattern(VALID_ID_PATTERN)
   @NotNull
   @Override
   public String getID() {
@@ -54,15 +60,14 @@ public class InstanceofInterfacesInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "instanceof.concrete.class.problem.descriptor");
+    return InspectionGadgetsBundle.message(infos[0] instanceof PsiInstanceOfExpression ?
+                                           "instanceof.concrete.class.problem.descriptor" :
+                                           "instanceof.concrete.class.equality.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("instanceof.interfaces.option"),
-      this, "ignoreAbstractClasses");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("instanceof.interfaces.option"), this, "ignoreAbstractClasses");
   }
 
   @Override
@@ -71,19 +76,30 @@ public class InstanceofInterfacesInspection extends BaseInspection {
   }
 
   private class InstanceofInterfacesVisitor extends BaseInspectionVisitor {
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      if (OBJECT_GET_CLASS.test(call)) {
+        PsiExpression other = ExpressionUtils.getExpressionComparedTo(call);
+        if (other instanceof PsiClassObjectAccessExpression) {
+          checkTypeElement(((PsiClassObjectAccessExpression)other).getOperand());
+        }
+      }
+    }
 
     @Override
     public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
-      super.visitInstanceOfExpression(expression);
-      final PsiTypeElement typeElement = expression.getCheckType();
+      checkTypeElement(expression.getCheckType());
+    }
+
+    public void checkTypeElement(PsiTypeElement typeElement) {
       if (!ConcreteClassUtil.typeIsConcreteClass(typeElement, ignoreAbstractClasses)) {
         return;
       }
-      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (MethodUtils.isEquals(method)) {
         return;
       }
-      registerError(typeElement);
+      registerError(typeElement, typeElement.getParent());
     }
   }
 }

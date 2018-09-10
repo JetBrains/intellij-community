@@ -118,10 +118,6 @@ public class ExternalDocumentValidator {
     final List<ValidationInfo> results = new LinkedList<>();
 
     myHost = new Validator.ValidationHost() {
-      @Override
-      public void addMessage(PsiElement context, String message, int type) {
-        addMessage(context, message, type==ERROR?ErrorType.ERROR : type==WARNING?ErrorType.WARNING : ErrorType.INFO);
-      }
 
       @Override
       public void addMessage(final PsiElement context, final String message, @NotNull final ErrorType type) {

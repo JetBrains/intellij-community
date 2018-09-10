@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,7 +144,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditorCaretListener = new CaretListener(){
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        syncUpdateOnCaretMove();
         rescheduleUpdate();
       }
     };
@@ -155,7 +154,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         rescheduleUpdate();
       }
     }, this);
@@ -166,27 +165,30 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       updateWhenAllCommitted();
     });
 
-    PropertyChangeListener lookupListener = new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-          Lookup lookup = (Lookup)evt.getNewValue();
-          if (lookup != null) {
-            adjustPositionForLookup(lookup);
-          }
+    PropertyChangeListener lookupListener = evt -> {
+      if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
+        Lookup lookup = (Lookup)evt.getNewValue();
+        if (lookup != null) {
+          adjustPositionForLookup(lookup);
         }
       }
     };
     LookupManager.getInstance(project).addPropertyChangeListener(lookupListener, this);
-    if (myEditor instanceof EditorImpl) {
-      Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
-    }
+    EditorUtil.disposeWithEditor(myEditor, this);
 
     myComponent.update(mySingleParameterInfo); // to have correct preferred size
     if (showHint) {
       showHint(requestFocus, mySingleParameterInfo);
     }
     updateComponent();
+  }
+
+  void setDescriptors(Object[] descriptors) {
+    myComponent.setDescriptors(descriptors);
+  }
+
+  private void syncUpdateOnCaretMove() {
+    myHandler.syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
   }
 
   private LightweightHint createHint() {
@@ -208,7 +210,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   @Override
-  public void visibleAreaChanged(VisibleAreaEvent e) {
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
     if (Registry.is("editor.keep.completion.hints.even.longer")) rescheduleUpdate();
   }
 
@@ -220,7 +222,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
-    
+
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
                                                              null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
@@ -309,7 +311,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
+      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) &&
                                myComponent.getCurrentParameterIndex() != -1;
       if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
         hideHint();
@@ -360,12 +362,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
   }
 
-  public static boolean hasPrevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
+  static boolean hasPrevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
     ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
     return controller != null && controller.getPrevOrNextParameterOffset(isNext) != -1;
   }
 
-  public static void prevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
+  static void prevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
     ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
     int newOffset = controller != null ? controller.getPrevOrNextParameterOffset(isNext) : -1;
     if (newOffset != -1) {
@@ -379,13 +381,9 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     if (argsList == null && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return;
 
     if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
-    
+
     offset = adjustOffsetToInlay(offset);
-    VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
-    if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {
-      visualPosition = new VisualPosition(visualPosition.line, visualPosition.column + 1);
-    }
-    myEditor.getCaretModel().moveToVisualPosition(visualPosition);
+    myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     if (argsList != null) {
@@ -395,11 +393,24 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
   private int adjustOffsetToInlay(int offset) {
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
-    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
-    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(whitespaceStart, whitespaceEnd);
+    int hostWhitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
+    int hostWhitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
+    Editor hostEditor = myEditor;
+    if (myEditor instanceof EditorWindow) {
+      hostEditor = ((EditorWindow)myEditor).getDelegate();
+      hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
+      hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
+    }
+    List<Inlay> inlays = hostEditor.getInlayModel().getInlineElementsInRange(hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
-      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) return inlay.getOffset();
+      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) {
+        int inlayOffset = inlay.getOffset();
+        if (myEditor instanceof EditorWindow) {
+          if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
+          inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
+        }
+        return inlayOffset;
+      }
     }
     return offset;
   }
@@ -419,15 +430,15 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     @SuppressWarnings("unchecked") PsiElement[] parameters = handler.getActualParameters(argList);
     int currentParameterIndex =
-      noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
+      noDelimiter ? JBIterable.of(parameters).indexOf(o -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
     if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
-      if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
+      if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length && parameters.length > 0) return -1;
       if (offset >= argList.getTextRange().getEndOffset()) currentParameterIndex = isNext ? -1 : parameters.length;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
       if (prevOrNextParameterIndex < 0 || prevOrNextParameterIndex >= parameters.length) {
         PsiElement parameterOwner = myComponent.getParameterOwner();
-        return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
+        return parameterOwner != null && parameterOwner.isValid() ? parameterOwner.getTextRange().getEndOffset() : -1;
       }
       else {
         return getParameterNavigationOffset(parameters[prevOrNextParameterIndex], text);
@@ -554,11 +565,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
-  public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
+  private class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
     private final int myOffset;
     private final PsiFile myFile;
 
-    public MyUpdateParameterInfoContext(final int offset, final PsiFile file) {
+    MyUpdateParameterInfoContext(final int offset, final PsiFile file) {
       myOffset = offset;
       myFile = file;
     }
@@ -665,8 +676,29 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    @Override
     public UserDataHolderEx getCustomContext() {
       return ParameterInfoController.this;
+    }
+  }
+
+  private class MyLazyUpdateParameterInfoContext extends MyUpdateParameterInfoContext {
+    private PsiFile myFile;
+
+    private MyLazyUpdateParameterInfoContext() {
+      super(myEditor.getCaretModel().getOffset(), null);
+    }
+
+    @Override
+    public PsiFile getFile() {
+      if (myFile == null) {
+        myFile = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
+      }
+      return myFile;
     }
   }
 
@@ -684,11 +716,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     public final List<Integer> startOffsets;
     public final List<Integer> endOffsets;
 
-    public SignatureItem(String text,
-                         boolean deprecated,
-                         boolean disabled,
-                         List<Integer> startOffsets,
-                         List<Integer> endOffsets) {
+    SignatureItem(String text,
+                  boolean deprecated,
+                  boolean disabled,
+                  List<Integer> startOffsets,
+                  List<Integer> endOffsets) {
       this.text = text;
       this.deprecated = deprecated;
       this.disabled = disabled;
@@ -711,7 +743,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     private Point previousBestPoint;
     private Short previousBestPosition;
 
-    public MyBestLocationPointProvider(final Editor editor) {
+    MyBestLocationPointProvider(final Editor editor) {
       myEditor = editor;
     }
 
@@ -725,10 +757,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
         if (!rangeWithoutParens.contains(offset)) {
-          if (offset < rangeWithoutParens.getStartOffset())
-            offset = rangeWithoutParens.getStartOffset();
-          else
-            offset = rangeWithoutParens.getEndOffset();
+          offset = offset < rangeWithoutParens.getStartOffset() ? rangeWithoutParens.getStartOffset() : rangeWithoutParens.getEndOffset();
           pos = null;
         }
       }
@@ -753,12 +782,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   private static class WrapperPanel extends JPanel {
-    public WrapperPanel() {
+    WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());
     }
 
-    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint) 
+    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint)
     @Override
     public Color getForeground() {
       return getComponentCount() == 0 ? super.getForeground() : getComponent(0).getForeground();

@@ -173,7 +173,7 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  private static Field processFields(@NotNull Class clazz, @NotNull Condition<Field> checker) {
+  private static Field processFields(@NotNull Class clazz, @NotNull Condition<? super Field> checker) {
     for (Class c : classTraverser(clazz)) {
       Field field = JBIterable.of(c.getDeclaredFields()).find(checker);
       if (field != null) {
@@ -587,6 +587,20 @@ public class ReflectionUtil {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public static Class<?> boxType(@NotNull Class<?> type) {
+    if (!type.isPrimitive()) return type;
+    if (type == boolean.class) return Boolean.class;
+    if (type == byte.class) return Byte.class;
+    if (type == short.class) return Short.class;
+    if (type == int.class) return Integer.class;
+    if (type == long.class) return Long.class;
+    if (type == float.class) return Float.class;
+    if (type == double.class) return Double.class;
+    if (type == char.class) return Character.class;
+    return type;
   }
 
 

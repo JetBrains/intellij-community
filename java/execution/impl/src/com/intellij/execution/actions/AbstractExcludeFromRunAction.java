@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfigur
   protected abstract boolean isPatternBasedConfiguration(RunConfiguration configuration);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project != null);
@@ -51,7 +52,7 @@ public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfigur
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(false);
     final DataContext dataContext = e.getDataContext();

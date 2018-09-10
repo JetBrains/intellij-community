@@ -3,5 +3,5 @@ package org.jetbrains.yaml.psi;
 /**
  * @author oleg
  */
-public interface YAMLScalarText extends YAMLScalar {
+public interface YAMLScalarText extends YAMLBlockScalar {
 }

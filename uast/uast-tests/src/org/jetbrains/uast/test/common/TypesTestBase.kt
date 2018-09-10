@@ -37,9 +37,9 @@ interface TypesTestBase {
 
   class TypesLogger : UastVisitor {
 
-    val builder = StringBuilder()
+    val builder: StringBuilder = StringBuilder()
 
-    var level = 0
+    var level: Int = 0
 
     override fun visitElement(node: UElement): Boolean {
       val initialLine = node.asLogString() + " [" + run {
@@ -67,6 +67,6 @@ interface TypesTestBase {
       level--
     }
 
-    override fun toString() = builder.toString()
+    override fun toString(): String = builder.toString()
   }
 }

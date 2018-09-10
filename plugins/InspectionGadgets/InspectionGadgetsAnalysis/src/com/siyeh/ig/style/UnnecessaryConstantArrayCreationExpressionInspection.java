@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,8 +53,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     return null;
   }
 
-  private static class UnnecessaryConstantArrayCreationExpressionFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryConstantArrayCreationExpressionFix extends InspectionGadgetsFix {
     private final String myType;
 
     private UnnecessaryConstantArrayCreationExpressionFix(String type) {
@@ -81,12 +81,15 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)element;
-      final PsiArrayInitializerExpression arrayInitializer =
-        newExpression.getArrayInitializer();
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       if (arrayInitializer == null) {
         return;
       }
-      new CommentTracker().replaceAndRestoreComments(newExpression, arrayInitializer);
+      PsiExpression target = newExpression;
+      while(target.getParent() instanceof PsiParenthesizedExpression) {
+        target = (PsiExpression)target.getParent();
+      }
+      new CommentTracker().replaceAndRestoreComments(target, arrayInitializer);
     }
   }
 
@@ -95,8 +98,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     return new UnnecessaryConstantArrayCreationExpressionVisitor();
   }
 
-  private static class UnnecessaryConstantArrayCreationExpressionVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryConstantArrayCreationExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
@@ -105,13 +107,17 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
       if (!(parent instanceof PsiNewExpression)) {
         return;
       }
-      final PsiElement grandParent = parent.getParent();
+      final PsiElement grandParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (!(grandParent instanceof PsiVariable)) {
         return;
       }
       final PsiVariable variable = (PsiVariable)grandParent;
       final PsiType expressionType = expression.getType();
       if (!variable.getType().equals(expressionType)) {
+        return;
+      }
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
         return;
       }
       if (hasGenericTypeParameters(variable)) {

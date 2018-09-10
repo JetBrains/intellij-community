@@ -180,7 +180,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     private final OrderRootType myType;
     private final List<String> myInvalidUrls;
 
-    public RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
+    RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
       super("Remove invalid " + StringUtil.pluralize("root", invalidUrls.size()));
       myLibrary = library;
       myType = type;

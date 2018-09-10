@@ -86,7 +86,7 @@ public class PsiConcatenationUtil {
 
   private static void addFormatParameter(@NotNull PsiExpression expression,
                                          StringBuilder formatString,
-                                         List<PsiExpression> formatParameters, boolean printfFormat) {
+                                         List<? super PsiExpression> formatParameters, boolean printfFormat) {
     final PsiType type = expression.getType();
     if (!printfFormat) {
       formatString.append("{").append(formatParameters.size()).append("}");

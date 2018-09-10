@@ -58,6 +58,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +141,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return codeStyleManager.suggestUniqueVariableName(delegate, anchor, true);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
@@ -170,6 +172,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         else {
           IntroduceTargetChooser.showChooser(editor, expressions,
             new Pass<PsiExpression>(){
+              @Override
               public void pass(final PsiExpression selectedValue) {
                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
               }
@@ -559,6 +562,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return null;
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, final PsiExpression expr,
                                final Editor editor) {
     if (expr != null) {
@@ -920,11 +924,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
             if (deleteSelf) {
-              final PsiElement lastChild = statement.getLastChild();
-              if (lastChild instanceof PsiComment) { // keep trailing comment
-                declaration.addBefore(lastChild, null);
-              }
-              statement.delete();
+              CommentTracker commentTracker = new CommentTracker();
+              commentTracker.markUnchanged(initializer);
+              commentTracker.deleteAndRestoreComments(statement);
               if (editor != null) {
                 LogicalPosition pos = new LogicalPosition(line, col);
                 editor.getCaretModel().moveToLogicalPosition(pos);
@@ -1040,7 +1042,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
-                                                          final PsiType expectedType) {
+                                                        final PsiType expectedType) {
+    return simplifyVariableInitializer(initializer, expectedType, true);
+  }
+
+  public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
+                                                          final PsiType expectedType,
+                                                          final boolean inDeclaration) {
 
     if (initializer instanceof PsiTypeCastExpression) {
       PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
@@ -1054,7 +1062,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     else if (initializer instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
       if (newExpression.getArrayInitializer() != null) {
-        return newExpression.getArrayInitializer();
+        if (inDeclaration) {
+          return newExpression.getArrayInitializer();
+        }
       }
       else {
         final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
@@ -1125,6 +1135,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                            : factory.createExpressionFromText(text, parent);
   }
 
+  @Override
   protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
     throw new UnsupportedOperationException();
   }
@@ -1271,7 +1282,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean myHasWriteAccess;
     final String myChainMethodName;
 
-    public OccurrencesInfo(PsiExpression[] occurrences) {
+    OccurrencesInfo(PsiExpression[] occurrences) {
       myOccurrences = Arrays.asList(occurrences);
       myNonWrite = new ArrayList<>();
       myCantReplaceAll = false;

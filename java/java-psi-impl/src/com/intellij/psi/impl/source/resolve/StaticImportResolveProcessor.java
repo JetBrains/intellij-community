@@ -111,7 +111,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
   private static class OurResolveResult extends CandidateInfo {
     private final PsiImportStaticReferenceElement myReference;
 
-    public OurResolveResult(@NotNull PsiElement candidate, final PsiImportStaticReferenceElement reference) {
+    OurResolveResult(@NotNull PsiElement candidate, final PsiImportStaticReferenceElement reference) {
       super(candidate, PsiSubstitutor.EMPTY);
       myReference = reference;
     }

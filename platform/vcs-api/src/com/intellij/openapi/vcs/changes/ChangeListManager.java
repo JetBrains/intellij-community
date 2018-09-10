@@ -54,7 +54,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable String title,
-                                         @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManager,
+                                         @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
                                          @Nullable ModalityState state);
 
 

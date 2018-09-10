@@ -95,7 +95,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel panel = ToolbarDecorator.createDecorator(myLocalTable)
       .addExtraAction(new AnActionButton("Share", AllIcons.Actions.Share) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           share();
         }
 
@@ -131,7 +131,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel shared = ToolbarDecorator.createDecorator(mySharedTable)
       .addExtraAction(new AnActionButton("Unshare", AllIcons.Actions.Unshare) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           unshare();
         }
 

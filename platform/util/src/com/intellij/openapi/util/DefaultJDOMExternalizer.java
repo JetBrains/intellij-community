@@ -21,6 +21,7 @@ import java.util.List;
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
  * @author mike
  */
+@Deprecated
 @SuppressWarnings("HardCodedStringLiteral")
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SelectFilteringAction extends LabeledComboBoxAction {
+public class SelectFilteringAction extends LabeledComboBoxAction implements DumbAware {
 
   @NotNull private final Project myProject;
   @NotNull private final CommittedChangesTreeBrowser myBrowser;

@@ -25,9 +25,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class NullableLazyKey<T,H extends UserDataHolder> extends Key<T>{
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("NullableLazyKey");
-  private final NullableFunction<H,T> myFunction;
+  private final NullableFunction<? super H, ? extends T> myFunction;
 
-  private NullableLazyKey(@NonNls String name, final NullableFunction<H, T> function) {
+  private NullableLazyKey(@NonNls String name, final NullableFunction<? super H, ? extends T> function) {
     super(name);
     myFunction = function;
   }

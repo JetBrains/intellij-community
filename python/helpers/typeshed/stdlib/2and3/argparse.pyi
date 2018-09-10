@@ -1,10 +1,10 @@
 # Stubs for argparse (Python 2.7 and 3.4)
 
-import sys
 from typing import (
     Any, Callable, Dict, Generator, Iterable, List, IO, NoReturn, Optional,
-    Pattern, Sequence, Tuple, Type, Union, TypeVar
+    Pattern, Sequence, Tuple, Type, Union, TypeVar, overload
 )
+import sys
 
 _T = TypeVar('_T')
 _ActionT = TypeVar('_ActionT', bound='Action')

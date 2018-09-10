@@ -50,7 +50,7 @@ public final class OffsetIcon extends CachingScalableJBIcon<OffsetIcon> {
 
   @NotNull
   @Override
-  protected OffsetIcon copy() {
+  public OffsetIcon copy() {
     return new OffsetIcon(this);
   }
 

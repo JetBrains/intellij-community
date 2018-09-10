@@ -29,7 +29,7 @@ public class SelectRefactoringDialogFixture extends IdeaDialogFixture<DialogWrap
   @NotNull
   public static SelectRefactoringDialogFixture findByTitle(@NotNull Robot robot) {
     final Ref<DialogWrapper> wrapperRef = new Ref<DialogWrapper>();
-    JDialog dialog = GuiTestUtil.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!"Select Refactoring".equals(dialog.getTitle()) || !dialog.isShowing()) {
@@ -59,7 +59,7 @@ public class SelectRefactoringDialogFixture extends IdeaDialogFixture<DialogWrap
   }
 
   public void clickOk() {
-    GuiTestUtil.findAndClickOkButton(this);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(this);
   }
 
   private SelectRefactoringDialogFixture(@NotNull Robot robot, @NotNull JDialog target, @NotNull DialogWrapper dialogWrapper) {

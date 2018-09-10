@@ -27,6 +27,7 @@ public interface PsiSearchHelper {
     /**
      * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
      */
+    @Deprecated
     public static PsiSearchHelper getInstance(@NotNull Project project) {
       return PsiSearchHelper.getInstance(project);
     }
@@ -54,7 +55,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return false if processor returned false, true otherwise
    */
-  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<PsiElement> processor);
+  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<? super PsiElement> processor);
 
   /**
    * Returns the list of files which contain the specified word in "plain text"
@@ -95,7 +96,7 @@ public interface PsiSearchHelper {
 
   /**
    * Returns the scope in which references to the specified element are searched. This scope includes the result of
-   * {@link com.intellij.psi.PsiElement#getUseScope()} and also the results returned from the registered
+   * {@link PsiElement#getUseScope()} and also the results returned from the registered
    * com.intellij.psi.search.UseScopeEnlarger instances.
    *
    * @param element the element to return the use scope form.

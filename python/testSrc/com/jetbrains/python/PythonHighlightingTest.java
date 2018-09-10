@@ -406,6 +406,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20530
+  public void testUnparsedTypeHints() {
+    doTest(LanguageLevel.PYTHON36, false, false);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();

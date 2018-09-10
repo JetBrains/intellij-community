@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLoopStatement;
 import com.intellij.psi.PsiStatement;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import org.jetbrains.annotations.Nls;
@@ -64,14 +63,14 @@ class MigrateToStreamFix implements LocalQuickFix {
     PsiElement result = myMigration.migrate(project, body, tb);
     if (result == null) return;
     tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
-    simplifyAndFormat(project, result);
+    simplify(project, result);
   }
 
-  static void simplifyAndFormat(@NotNull Project project, PsiElement result) {
+  static void simplify(@NotNull Project project, PsiElement result) {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
     result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, true);
-    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
   }
 }

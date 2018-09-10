@@ -3,6 +3,7 @@ package com.intellij.copyright
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -51,7 +52,7 @@ private val LOG = Logger.getInstance(CopyrightManager::class.java)
 class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<CopyrightManager>()
+    fun getInstance(project: Project): CopyrightManager = project.service<CopyrightManager>()
   }
 
   private var defaultCopyrightName: String? = null
@@ -62,8 +63,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       defaultCopyrightName = value?.name
     }
 
-  val scopeToCopyright = LinkedHashMap<String, String>()
-  val options = Options()
+  val scopeToCopyright: LinkedHashMap<String, String> = LinkedHashMap<String, String>()
+  val options: Options = Options()
 
   private val schemeWriter = { scheme: CopyrightProfile ->
     val element = scheme.writeScheme()
@@ -75,7 +76,7 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
   private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
-                              attributeProvider: Function<String, String?>,
+                              attributeProvider: Function<in String, String?>,
                               isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
@@ -227,9 +228,9 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
           return
         }
 
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).submit {
           if (!virtualFile.isValid) {
-            return@Runnable
+            return@submit
           }
 
           val file = PsiManager.getInstance(project).findFile(virtualFile)
@@ -238,7 +239,7 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
               UpdateCopyrightProcessor(project, module, file).run()
             }
           }
-        }, ModalityState.NON_MODAL, project.disposed)
+        }
       }
     }, project)
   }

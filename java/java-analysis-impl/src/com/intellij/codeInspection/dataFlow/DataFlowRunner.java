@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -24,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +134,7 @@ public class DataFlowRunner {
 
   public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
                                              @NotNull InstructionVisitor visitor,
-                                             Consumer<DfaMemoryState> initialStateAdjuster) {
+                                             Consumer<? super DfaMemoryState> initialStateAdjuster) {
     final DfaMemoryState state = createMemoryState();
     initialStateAdjuster.accept(state);
     return analyzeMethod(block, visitor, false, Collections.singleton(state));
@@ -271,7 +273,8 @@ public class DataFlowRunner {
       } else if (instruction instanceof ConditionalGotoInstruction) {
         joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
       } else if (instruction instanceof ControlTransferInstruction) {
-        joinInstructions.addAll(((ControlTransferInstruction)instruction).getPossibleTargetInstructions(myInstructions));
+        IntStreamEx.of(((ControlTransferInstruction)instruction).getPossibleTargetIndices()).elements(myInstructions)
+                   .into(joinInstructions);
       } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
         joinInstructions.add(myInstructions[index + 1]);
       }
@@ -292,7 +295,17 @@ public class DataFlowRunner {
       }
       attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flowText));
       if (lastInstructionState != null) {
-        attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", lastInstructionState.getMemoryState().toString()));
+        DfaMemoryState memoryState = lastInstructionState.getMemoryState();
+        String memStateText = null;
+        try {
+          memStateText = memoryState.toString();
+        }
+        catch (RuntimeException second) {
+          e.addSuppressed(second);
+        }
+        if (memStateText != null) {
+          attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", memStateText));
+        }
       }
     }
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
@@ -346,9 +359,11 @@ public class DataFlowRunner {
     DfaValueFactory factory = var.getFactory();
     if (var.getSource() instanceof DfaExpressionFactory.ThisSource) {
       PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
-      DfaValue value = factory.createTypeValue(var.getVariableType(), Nullness.NOT_NULL);
+      DfaValue value = factory.createTypeValue(var.getVariableType(), Nullability.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
-        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+        // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
+        // as fields may not contribute to the visible state
+        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE_VIEW);
       }
       return null;
     }
@@ -479,7 +494,7 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  public void forNestedClosures(BiConsumer<PsiElement, Collection<? extends DfaMemoryState>> consumer) {
+  public void forNestedClosures(BiConsumer<? super PsiElement, ? super Collection<? extends DfaMemoryState>> consumer) {
     // Copy to avoid concurrent modifications
     MultiMap<PsiElement, DfaMemoryState> closures = new MultiMap<>(myNestedClosures);
     for (PsiElement closure : closures.keySet()) {

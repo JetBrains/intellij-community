@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.search.searches;
 
@@ -45,6 +31,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
     private final IndexPattern myPattern;
     private final IndexPatternProvider myPatternProvider;
     private final TextRange myRange;
+    private final boolean myMultiLine;
 
     public SearchParameters(@NotNull PsiFile file, @NotNull IndexPattern pattern) {
       this(file, pattern,null);
@@ -54,16 +41,25 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
       myRange = range;
       myPatternProvider = null;
       myPattern = pattern;
+      myMultiLine = false;
     }
 
     public SearchParameters(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider) {
-      this(file, patternProvider,null);
+      this(file, patternProvider,null, false);
+    }
+    public SearchParameters(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider, boolean multiLine) {
+      this(file, patternProvider,null, multiLine);
     }
     public SearchParameters(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider, TextRange range) {
+      this(file, patternProvider, range, false);
+    }
+
+    private SearchParameters(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider, TextRange range, boolean multiLine) {
       myFile = file;
       myPatternProvider = patternProvider;
       myRange = range;
       myPattern = null;
+      myMultiLine = multiLine;
     }
 
     @NotNull
@@ -81,6 +77,10 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
 
     public TextRange getRange() {
       return myRange;
+    }
+
+    public boolean isMultiLine() {
+      return myMultiLine;
     }
   }
 
@@ -132,6 +132,24 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
   @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider) {
     final SearchParameters parameters = new SearchParameters(file, patternProvider);
+    return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
+  }
+
+  /**
+   * Returns a query which can be used to process occurrences of any pattern from the
+   * specified provider in the specified file. The query is executed by parsing the
+   * contents of the file.
+   *
+   * @param file                 the file in which occurrences should be searched.
+   * @param patternProvider      the provider the patterns from which are searched.
+   * @param multiLineOccurrences whether continuation of occurrences on following lines should be detected
+   *                             (will be returned as {@link IndexPatternOccurrence#getAdditionalTextRanges()}
+   * @return the query instance.
+   */
+  @NotNull
+  public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider,
+                                                     boolean multiLineOccurrences) {
+    final SearchParameters parameters = new SearchParameters(file, patternProvider, multiLineOccurrences);
     return Holder.INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
   }
 

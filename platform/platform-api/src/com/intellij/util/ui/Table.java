@@ -23,6 +23,7 @@ import javax.swing.table.TableModel;
 /**
  * @deprecated use {@link com.intellij.ui.table.JBTable}
  */
+@Deprecated
 public class Table extends JBTable {
   public Table() {
     super();

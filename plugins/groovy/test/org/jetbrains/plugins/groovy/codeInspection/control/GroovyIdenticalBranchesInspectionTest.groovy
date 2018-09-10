@@ -36,6 +36,8 @@ class GroovyIdenticalBranchesInspectionTest extends GrHighlightingTestBase {
 
   void 'test two new expressions'() { doTest() }
 
+  void 'test empty list and map'() { doTest() }
+
   @NotNull
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {

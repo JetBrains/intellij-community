@@ -25,7 +25,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -103,9 +106,11 @@ public abstract class DebuggerUtils {
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
+        Method finalToStringMethod = toStringMethod;
+        final Value result = evaluationContext.computeAndKeep(
+          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0));
         // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
         // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
-        final Value result = debugProcess.invokeInstanceMethod(evaluationContext, objRef, toStringMethod, Collections.emptyList(), 0);
         if (result == null) {
           return "null";
         }

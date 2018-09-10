@@ -16,17 +16,20 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.pom.java.LanguageLevel.JDK_1_9;
 
 /**
  * @author Bas Leijdekkers
  */
 public class DanglingJavadocInspectionTest extends LightInspectionTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
+  }
 
   public void testDanglingJavadoc() {
     doTest();
@@ -37,7 +40,6 @@ public class DanglingJavadocInspectionTest extends LightInspectionTestCase {
   }
 
   public void testModuleInfo() {
-    ModuleRootModificationUtil.updateModel(myModule, m -> m.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(JDK_1_9));
     doNamedTest("module-info");
   }
 

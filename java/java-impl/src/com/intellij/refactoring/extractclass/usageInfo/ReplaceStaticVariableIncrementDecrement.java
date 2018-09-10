@@ -32,6 +32,7 @@ public class ReplaceStaticVariableIncrementDecrement extends FixableUsageInfo {
     this.reference = PsiTreeUtil.getParentOfType(reference, PsiUnaryExpression.class);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     MutationUtils.replaceExpression(originalClassName + '.' + reference.getText(), reference);
   }

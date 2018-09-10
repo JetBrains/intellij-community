@@ -39,6 +39,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   /**
    * @deprecated use {@link #buildFix(PsiBinaryExpression)} instead
    */
+  @Deprecated
   public EqualityToEqualsFix() {
     this(true);
   }

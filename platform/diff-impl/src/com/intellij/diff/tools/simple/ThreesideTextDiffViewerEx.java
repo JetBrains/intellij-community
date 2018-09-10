@@ -265,24 +265,24 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
 
   private class PrevConflictAction extends DumbAwareAction {
-    public PrevConflictAction() {
+    PrevConflictAction() {
       ActionUtil.copyFrom(this, "Diff.PreviousConflict");
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!myPrevNextConflictIterable.canGoPrev()) return;
       myPrevNextConflictIterable.goPrev();
     }
   }
 
   private class NextConflictAction extends DumbAwareAction {
-    public NextConflictAction() {
+    NextConflictAction() {
       ActionUtil.copyFrom(this, "Diff.NextConflict");
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!myPrevNextConflictIterable.canGoNext()) return;
       myPrevNextConflictIterable.goNext();
     }
@@ -346,7 +346,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
     }

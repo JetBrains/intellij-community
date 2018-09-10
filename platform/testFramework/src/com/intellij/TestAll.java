@@ -242,6 +242,15 @@ public class TestAll implements Test {
     }
 
     List<Class> classes = myTestCaseLoader.getClasses();
+
+    // to make it easier to reproduce order-dependent failures locally
+    System.out.println("------");
+    System.out.println("Running tests:");
+    for (Class aClass : classes) {
+      System.out.println(aClass.getName());
+    }
+    System.out.println("------");
+
     int totalTests = classes.size();
     for (Class<?> aClass : classes) {
       boolean recording = false;
@@ -526,7 +535,7 @@ public class TestAll implements Test {
   private static class ExplodedBomb extends TestCase {
     private final Bombed myBombed;
 
-    public ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
+    ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
       super(testName);
       myBombed = bombed;
     }

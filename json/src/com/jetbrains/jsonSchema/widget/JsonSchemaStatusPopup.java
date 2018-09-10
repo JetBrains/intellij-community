@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 public class JsonSchemaStatusPopup {
   static final JsonSchemaInfo ADD_MAPPING = new JsonSchemaInfo("") {
+    @NotNull
     @Override
     public String getDescription() {
       return "New Schema Mapping…";
@@ -27,6 +28,7 @@ public class JsonSchemaStatusPopup {
   };
 
   static final JsonSchemaInfo EDIT_MAPPINGS = new JsonSchemaInfo("") {
+    @NotNull
     @Override
     public String getDescription() {
       return "Edit Schema Mappings…";
@@ -34,6 +36,7 @@ public class JsonSchemaStatusPopup {
   };
 
   static final JsonSchemaInfo LOAD_REMOTE = new JsonSchemaInfo("") {
+    @NotNull
     @Override
     public String getDescription() {
       return "Load SchemaStore Mappings";

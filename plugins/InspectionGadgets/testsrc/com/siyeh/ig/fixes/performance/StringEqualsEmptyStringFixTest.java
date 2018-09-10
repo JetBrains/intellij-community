@@ -31,5 +31,12 @@ public class StringEqualsEmptyStringFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() { doTest(); }
   public void testNullCheck() { doTest(); }
+  public void testNullCheckSuppress() {
+    StringEqualsEmptyStringInspection inspection = new StringEqualsEmptyStringInspection();
+    inspection.SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = true;
+    myFixture.enableInspections(inspection);
+    assertQuickfixNotAvailable();
+  }
   public void testNullCheckAlreadyPresent() { doTest(); }
+  public void testTernary() { doTest(); }
 }

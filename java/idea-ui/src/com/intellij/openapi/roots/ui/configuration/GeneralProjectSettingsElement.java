@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ModuleSourceSet;
+import com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -124,6 +125,8 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @Override
   public List<ProjectStructureElementUsage> getUsagesInElement() {
+    List<ProjectStructureElementUsage> usages = new ArrayList<>();
+
     Collection<UnloadedModuleDescription> unloadedModules = ModuleManager.getInstance(myContext.getProject()).getUnloadedModuleDescriptions();
     if (!unloadedModules.isEmpty()) {
       MultiMap<Module, UnloadedModuleDescription> dependenciesInUnloadedModules = new MultiMap<>();
@@ -136,7 +139,6 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
         }
       }
 
-      List<ProjectStructureElementUsage> usages = new ArrayList<>();
       for (Map.Entry<Module, Collection<UnloadedModuleDescription>> entry : dependenciesInUnloadedModules.entrySet()) {
         usages.add(new UsagesInUnloadedModules(myContext, this, new ModuleProjectStructureElement(myContext, entry.getKey()),
                                                entry.getValue()));
@@ -146,9 +148,16 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
       for (Library library : myContext.getProjectLibrariesProvider().getModifiableModel().getLibraries()) {
         usages.add(new UsagesInUnloadedModules(myContext, this, new LibraryProjectStructureElement(myContext, library), unloadedModules));
       }
-      return usages;
     }
-    return Collections.emptyList();
+
+    for (String libraryName : BuildProcessCustomPluginsConfiguration.getInstance(myContext.getProject()).getProjectLibraries()) {
+      Library library = myContext.getProjectLibrariesProvider().getModifiableModel().getLibraryByName(libraryName);
+      if (library != null) {
+        usages.add(new UsageInProjectSettings(myContext, new LibraryProjectStructureElement(myContext, library), "Build process configuration"));
+      }
+    }
+
+    return usages;
   }
 
   @Override

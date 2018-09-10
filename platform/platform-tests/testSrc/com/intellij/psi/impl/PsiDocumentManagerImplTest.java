@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -22,6 +8,7 @@ import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -81,6 +68,7 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformTestCase {
@@ -331,7 +319,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     assertEquals(StdFileTypes.JAVA.getLanguage(), file.getLanguage());
 
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < 30; i++) {
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
       WriteCommandAction.runWriteCommandAction(null, () -> {
         document.insertString(0, "/**/");
@@ -755,6 +743,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
   }
 
+  public void testPerformWhenAllCommittedWorksAfterFileDeletion() throws Exception {
+    PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    Document document = file.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    AtomicBoolean invoked = new AtomicBoolean();
+    WriteAction.run(() -> {
+      document.setText("class A{}");
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> invoked.set(true));
+      file.getVirtualFile().delete(this);
+    });
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertTrue(invoked.get());
+  }
+
   @SuppressWarnings("ConstantConditions")
   public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
     Document document = createDocument();
@@ -840,7 +843,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       }
 
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
         throw new ProcessCanceledException();
       }
     });
@@ -886,7 +889,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getDocument(psiFile);
     Random random = new Random();
 
-    for (int i=0; i<1000;i++) {
+    for (int i=0; i<100;i++) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         @Language(value = "JAVA", prefix = "class c {", suffix = "}")
         String body = "@NotNull\n" +

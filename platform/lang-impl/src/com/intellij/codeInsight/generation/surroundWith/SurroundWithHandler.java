@@ -64,10 +64,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, null);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return null;
+  public boolean startInWriteAction() {
+    return false;
   }
 
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
@@ -274,7 +273,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     private final Editor myEditor;
     private final PsiElement[] myElements;
 
-    public InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
+    InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
       super(UIUtil.MNEMONIC + String.valueOf(mnemonic) + ". " + surrounder.getTemplateDescription());
       mySurrounder = surrounder;
       myProject = project;
@@ -283,7 +282,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!FileDocumentManager.getInstance().requestWriting(myEditor.getDocument(), myProject)) {
         return;
       }
@@ -298,7 +297,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), "Live Templates");
     }
   }

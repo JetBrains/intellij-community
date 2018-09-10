@@ -77,7 +77,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       List<VirtualFile> roots = calcClassRoots();
       List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
       if (!invalidRoots.isEmpty()) {
-        roots.removeAll(invalidRoots);
+        roots = ContainerUtil.filter(roots, VirtualFile::isValid);
         LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
       }
       myCache = cache = createCache(roots);
@@ -182,7 +182,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   private boolean processDirectories(@NotNull String qualifiedName,
                                      @NotNull final GlobalSearchScope scope,
-                                     @NotNull final Processor<VirtualFile> processor) {
+                                     @NotNull final Processor<? super VirtualFile> processor) {
     return ContainerUtil.process(getCache(scope).getDirectoriesByPackageName(qualifiedName),
                                  file -> !scope.contains(file) || processor.process(file));
   }
@@ -221,7 +221,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     if (nonClasspathScopes.isEmpty()) {
       return base;
     }
-    return GlobalSearchScope.union(ArrayUtil.prepend(base, nonClasspathScopes.toArray(new GlobalSearchScope[0])));
+    return GlobalSearchScope.union(ArrayUtil.prepend(base, nonClasspathScopes.toArray(GlobalSearchScope.EMPTY_ARRAY)));
   }
 
   public PsiManager getPsiManager() {

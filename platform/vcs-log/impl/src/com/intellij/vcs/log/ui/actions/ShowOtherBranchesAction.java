@@ -21,8 +21,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogRevisionFilter;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.history.FileHistoryUiProperties;
@@ -55,8 +53,7 @@ public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
     if (project != null && logManager != null && filePath != null && logUi != null) {
       VcsLogIndex index = logManager.getDataManager().getIndex();
       VirtualFile root = VcsUtil.getVcsRootFor(project, filePath);
-      VcsLogRevisionFilter revisionFilter = logUi.getFilterUi().getFilters().get(VcsLogFilterCollection.REVISION_FILTER);
-      if ((root != null && !index.isIndexed(root)) || revisionFilter != null) {
+      if (root != null && !index.isIndexed(root)) {
         e.getPresentation().setEnabled(false);
       }
     }

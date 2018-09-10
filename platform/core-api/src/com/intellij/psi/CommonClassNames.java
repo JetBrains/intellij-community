@@ -107,9 +107,4 @@ public interface CommonClassNames {
 
   String CLASS_FILE_EXTENSION = ".class";
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #JAVA_UTIL_FUNCTION_BI_FUNCTION} (to be removed in IDEA 2019) */
-  @SuppressWarnings("SpellCheckingInspection")
-  String JAVA_UTIL_FUNCTION_BIFUNCTION = JAVA_UTIL_FUNCTION_BI_FUNCTION;
-  //</editor-fold>
 }

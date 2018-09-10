@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -36,10 +35,7 @@ import java.util.*;
 
 @State(
   name = "TemplateSettings",
-  storages = {
-    @Storage("templates.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
+  storages = @Storage("templates.xml"),
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
@@ -97,7 +93,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private State myState = new State();
 
   static final class ShortcutConverter extends Converter<Character> {
-    @Nullable
+    @NotNull
     @Override
     public Character fromString(@NotNull String shortcut) {
       return TAB.equals(shortcut) ? TAB_CHAR :
@@ -466,7 +462,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private void loadDefaultLiveTemplates() {
     try {
-      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensions()) {
+      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
           readDefTemplate(provider, defTemplate, true);
         }
@@ -487,10 +483,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
+  private void readDefTemplate(@NotNull DefaultLiveTemplatesProvider provider, @NotNull String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JdomKt.loadElement(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
+      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
       if (group != null && group.getReplace() != null) {
         for (TemplateImpl template : myTemplates.get(group.getReplace())) {
           removeTemplate(template);

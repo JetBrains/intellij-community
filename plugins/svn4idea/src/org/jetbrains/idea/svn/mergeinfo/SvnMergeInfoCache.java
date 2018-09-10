@@ -114,7 +114,7 @@ public class SvnMergeInfoCache {
       myPath = path;
       myRevision = -1;
 
-      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), "", false) {
+      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), "Calculating Copy Revision", false) {
         private CopyData myData;
 
         @Override

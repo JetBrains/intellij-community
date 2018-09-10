@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound;
 import static com.intellij.util.ui.UIUtil.findComponentOfType;
 import static com.intellij.util.ui.UIUtil.findComponentsOfType;
 import static junit.framework.Assert.assertNotNull;
@@ -142,7 +142,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
 
       TabLabel tabLabel;
       if (parentComponentType == null) {
-        tabLabel = waitUntilFound(myRobot, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
+        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
           @Override
           protected boolean isMatching(@NotNull TabLabel component) {
             return component.toString().equals(tabName);
@@ -151,7 +151,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
       }
       else {
         final JComponent parent = myRobot.finder().findByType(root, parentComponentType, false);
-        tabLabel = waitUntilFound(myRobot, parent, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
+        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, parent, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
           @Override
           protected boolean isMatching(@NotNull TabLabel component) {
             return component.getParent() == parent && component.toString().equals(tabName);

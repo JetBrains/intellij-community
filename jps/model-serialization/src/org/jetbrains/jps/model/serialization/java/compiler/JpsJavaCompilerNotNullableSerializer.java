@@ -23,24 +23,13 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author vladimir.dolzhenko
  */
 public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSerializer {
-  public static final List<String> DEFAULT_NOT_NULLS = Arrays.asList(
-    NotNull.class.getName(),
-    "javax.annotation.Nonnull",
-    "javax.validation.constraints.NotNull",
-    "edu.umd.cs.findbugs.annotations.NonNull",
-    "android.support.annotation.NonNull",
-    "androidx.annotation.NonNull",
-    "org.checkerframework.checker.nullness.qual.NonNull",
-    "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
-    "org.checkerframework.checker.nullness.compatqual.NonNullType"
-  );
 
   public JpsJavaCompilerNotNullableSerializer() {
     super("misc.xml", "NullableNotNullManager");
@@ -50,26 +39,21 @@ public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSer
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     List<String> annoNames = ContainerUtil.newArrayList();
-    for (Element option : componentTag.getChildren("option")) {
-      if ("myNotNulls".equals(option.getAttributeValue("name"))){
-        for (Element value : option.getChildren("value")) {
-          for (Element list : value.getChildren("list")) {
-            for (Element item : list.getChildren("item")) {
-              ContainerUtil.addIfNotNull(annoNames, item.getAttributeValue("itemvalue"));
-            }
-          }
-        }
+    for (Element option : componentTag.getChildren("instrumentedNotNulls")) {
+      for (Element item : option.getChildren("option")) {
+        ContainerUtil.addIfNotNull(annoNames, item.getAttributeValue("value"));
       }
     }
     if (annoNames.isEmpty()) {
-      annoNames.addAll(DEFAULT_NOT_NULLS);
+      annoNames.add(NotNull.class.getName());
     }
     configuration.setNotNullAnnotations(annoNames);
   }
 
   @Override
   public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).setNotNullAnnotations(DEFAULT_NOT_NULLS);
+    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).setNotNullAnnotations(
+      Collections.singletonList(NotNull.class.getName()));
   }
 
   @Override

@@ -12,4 +12,11 @@ class GeneralAutoPopupTest extends CompletionAutoPopupTestCase {
     type 'r'
     assert !lookup
   }
+
+  void "test no lookup after typing a letter and then quickly overtyping a quote"() {
+    myFixture.configureByText 'a.html', '<a href="<caret>">'
+    myFixture.type('a')
+    type '"'
+    assert !lookup
+  }
 }

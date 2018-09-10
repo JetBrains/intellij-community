@@ -54,7 +54,7 @@ class WinExeInstallerBuilder {
 
       buildContext.ant.copy(file: "$silentConfigTemplate", tofile: targetFilePath)
       File silentConfigFile = new File(targetFilePath)
-      def extensionsList = customizer.fileAssociations
+      def extensionsList = getFileAssociations()
       String associations = "\n\n; List of associations. To create an association change value to 1.\n"
       if (!extensionsList.isEmpty()) {
         associations += extensionsList.collect { "$it=0\n" }.join("")
@@ -64,6 +64,13 @@ class WinExeInstallerBuilder {
       }
       silentConfigFile.append(associations)
     }
+  }
+
+  /**
+   * Returns list of file extensions with leading dot added
+   */
+  private List<String> getFileAssociations() {
+    customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
   void buildInstaller(String winDistPath) {
@@ -179,7 +186,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
 """
 
-    def extensionsList = customizer.fileAssociations
+    def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
                       "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" :

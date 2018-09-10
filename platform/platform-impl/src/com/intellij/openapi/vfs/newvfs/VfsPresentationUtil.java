@@ -1,18 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
-import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider;
-import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeMnemonics;
 import static com.intellij.openapi.util.text.StringUtil.firstLast;
@@ -29,50 +24,21 @@ public class VfsPresentationUtil {
 
   @NotNull
   public static String getPresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
-    List<EditorTabTitleProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabTitleProvider.EP_NAME));
-    for (EditorTabTitleProvider provider : providers) {
-      String result = provider.getEditorTabTitle(project, file);
-      if (result != null) {
-        return result;
-      }
-    }
-
-    return file.getPresentableName();
+    return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
   }
 
   @NotNull
   public static String getUniquePresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
-    String name = getPresentableNameForUI(project, file);
-    if (name.equals(file.getPresentableName())) {
-      return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
-    }
-    return name;
+    return EditorTabPresentationUtil.getUniqueEditorTabTitle(project, file, null);
   }
 
   @Nullable
   public static Color getFileTabBackgroundColor(@NotNull Project project, @NotNull VirtualFile file) {
-    List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
-    for (EditorTabColorProvider provider : providers) {
-      Color result = provider.getEditorTabColor(project, file);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
+    return EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file, null);
   }
 
   @Nullable
   public static Color getFileBackgroundColor(@NotNull Project project, @NotNull VirtualFile file) {
-    List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
-    for (EditorTabColorProvider provider : providers) {
-      Color result = provider.getProjectViewColor(project, file);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
+    return EditorTabPresentationUtil.getFileBackgroundColor(project, file);
   }
 }

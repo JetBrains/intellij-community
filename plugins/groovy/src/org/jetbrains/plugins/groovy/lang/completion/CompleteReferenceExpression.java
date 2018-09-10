@@ -146,11 +146,6 @@ public class CompleteReferenceExpression {
 
       ClosureMissingMethodContributor.processMethodsFromClosures(myRefExpr, myProcessor);
 
-      GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(myRefExpr);
-      if (runtimeQualifier != null) {
-        getVariantsFromQualifier(runtimeQualifier);
-      }
-
       getBindings();
     }
     else {
@@ -253,7 +248,7 @@ public class CompleteReferenceExpression {
     final PsiType substituted = resolveResult != null ? resolveResult.getSubstitutor().substitute(propType) : propType;
 
     LookupElementBuilder builder =
-      LookupElementBuilder.create(generatePropertyResolveResult(propName, accessor, propType, resolveResult), propName)
+      LookupElementBuilder.create(generatePropertyElement(propName, accessor, propType), propName)
         .withIcon(JetgroovyIcons.Groovy.Property);
     if (substituted != null) {
       builder = builder.withTypeText(substituted.getPresentableText());
@@ -262,20 +257,9 @@ public class CompleteReferenceExpression {
   }
 
   @NotNull
-  private static GroovyResolveResult generatePropertyResolveResult(@NotNull String name,
-                                                                   @NotNull PsiMethod method,
-                                                                   @Nullable PsiType type,
-                                                                   @Nullable GroovyResolveResult resolveResult) {
-    PsiType nonNullType = type != null ? type : TypesUtil.getJavaLangObject(method);
-
-    final GrPropertyForCompletion field = new GrPropertyForCompletion(method, name, nonNullType);
-    if (resolveResult != null) {
-      return new GroovyResolveResultImpl(field, resolveResult.getCurrentFileResolveContext(), resolveResult.getSpreadState(),
-                                         resolveResult.getSubstitutor(), resolveResult.isAccessible(), resolveResult.isStaticsOK());
-    }
-    else {
-      return new GroovyResolveResultImpl(field, true);
-    }
+  private static PsiElement generatePropertyElement(@NotNull String name, @NotNull PsiMethod method, @Nullable PsiType type) {
+    PsiType nonNullType = type == null ? TypesUtil.getJavaLangObject(method) : type;
+    return new GrPropertyForCompletion(method, name, nonNullType);
   }
 
   private void getVariantsFromQualifier(@NotNull GrExpression qualifier) {
@@ -423,7 +407,7 @@ public class CompleteReferenceExpression {
     }
 
     private boolean shouldSkipPackages() {
-      if (PsiImplUtil.getRuntimeQualifier(myRefExpr) != null) {
+      if (myRefExpr.getQualifierExpression() != null) {
         return false;
       }
 
@@ -547,7 +531,7 @@ public class CompleteReferenceExpression {
         final String name = listenerMethod.getName();
         if (myPropertyNames.add(name)) {
           LookupElementBuilder builder = LookupElementBuilder
-            .create(generatePropertyResolveResult(name, listenerMethod, null, null), name)
+            .create(generatePropertyElement(name, listenerMethod, null), name)
             .withIcon(JetgroovyIcons.Groovy.Property);
           myConsumer.consume(builder);
         }

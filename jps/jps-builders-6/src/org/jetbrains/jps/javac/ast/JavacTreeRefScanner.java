@@ -384,7 +384,8 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   private static TypeElement asTypeElement(TypeMirror typeMirror, Types typeUtility) {
-    if (typeMirror instanceof PrimitiveType) {
+    // in jdk6 the line above isn't equivalent to <code>typeMirror instanceof PrimitiveType</code>
+    if (typeMirror.getKind().isPrimitive()) {
       return typeUtility.boxedClass((PrimitiveType)typeMirror);
     }
     Element element = typeUtility.asElement(typeMirror);

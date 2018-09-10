@@ -43,7 +43,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
   protected abstract Set<String> getPatterns(T configuration);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     final LinkedHashSet<PsiElement> classes = new LinkedHashSet<>();
@@ -82,7 +82,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(false);
     final DataContext dataContext = e.getDataContext();

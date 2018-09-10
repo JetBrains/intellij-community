@@ -43,7 +43,7 @@ public abstract class AbstractTestNGSuiteConfigurationProducer extends TestNGCon
     if (containingFile == null) return false;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
-    if (!TestNGUtil.isTestngXML(virtualFile)) return false;
+    if (!TestNGUtil.isTestngSuiteFile(virtualFile)) return false;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();

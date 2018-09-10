@@ -131,6 +131,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public String toString() {
     return "PsiMethodCallExpression:" + getText();
   }
@@ -142,7 +143,6 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     @Nullable
     public PsiType fun(final PsiMethodCallExpression call) {
       PsiReferenceExpression methodExpression = call.getMethodExpression();
-      PsiType theOnly = null;
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
       PsiFile file = call.getContainingFile();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
@@ -158,7 +158,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       }
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(parentArgList);
       final boolean genericMethodCall = properties != null && properties.getInfo().isToInferApplicability();
-      
+
+      PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {
         final JavaResolveResult candidateInfo = results[i];
 
@@ -186,9 +187,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
 
     @Nullable
-    private static PsiType getResultType(PsiMethodCallExpression call,
-                                         PsiReferenceExpression methodExpression,
-                                         JavaResolveResult result,
+    private static PsiType getResultType(@NotNull PsiMethodCallExpression call,
+                                         @NotNull PsiReferenceExpression methodExpression,
+                                         @NotNull JavaResolveResult result,
                                          @NotNull final LanguageLevel languageLevel) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
@@ -216,11 +217,11 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
-  public static PsiType captureReturnType(PsiMethodCallExpression call,
-                                          PsiMethod method,
-                                          PsiType ret,
-                                          JavaResolveResult result, 
-                                          LanguageLevel languageLevel) {
+  private static PsiType captureReturnType(PsiMethodCallExpression call,
+                                           PsiMethod method,
+                                           PsiType ret,
+                                           JavaResolveResult result,
+                                           LanguageLevel languageLevel) {
     PsiSubstitutor substitutor = result.getSubstitutor();
     PsiType substitutedReturnType = substitutor.substitute(ret);
     if (substitutedReturnType == null) {

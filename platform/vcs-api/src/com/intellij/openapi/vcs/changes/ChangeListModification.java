@@ -29,7 +29,9 @@ public interface ChangeListModification {
 
   void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes);
 
-  // added - since ChangeListManager wouldn't pass internal lists, only copies
+  /**
+   * Prohibit changelist deletion or rename until Project is closed
+   */
   boolean setReadOnly(@NotNull String name, final boolean value);
 
   boolean editName(@NotNull String fromName, @NotNull String toName);

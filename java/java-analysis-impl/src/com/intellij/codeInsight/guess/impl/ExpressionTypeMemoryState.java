@@ -51,7 +51,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     }
 
     @Override
-    public boolean equals(PsiExpression o1, PsiExpression o2) {
+    public boolean equals(@NotNull PsiExpression o1, @NotNull PsiExpression o2) {
       if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(o1, o2)) {
         if (computeHashCode(o1) != computeHashCode(o2)) {
           LOG.error("different hashCodes: " + o1 + "; " + o2 + "; " + computeHashCode(o1) + "!=" + computeHashCode(o2));

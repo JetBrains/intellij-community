@@ -14,6 +14,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -50,7 +51,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       return true;
     }
   };
-  
+
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
   @Nullable private ExecutionTarget myActiveTarget;
@@ -176,6 +177,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     return null;
   }
 
+  @Override
   protected boolean doCanRun(@Nullable RunnerAndConfigurationSettings settings, @NotNull ExecutionTarget target) {
     if (settings == null) return false;
 
@@ -189,6 +191,12 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     return doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
       RunConfiguration configuration = each.first.getConfiguration();
       if (!(configuration instanceof TargetAwareRunProfile)) return true;
+
+      if ((ApplicationManager.getApplication().isInternal() || Registry.is("update.run.configuration.actions.from.cache"))
+          && RunManagerImpl.getInstanceImpl(myProject).isInvalidInCache(each.first)) {
+        return false;
+      }
+
       TargetAwareRunProfile targetAwareProfile = (TargetAwareRunProfile)configuration;
 
       return target.canRun(each.first) && targetAwareProfile.canRunOn(target)
@@ -235,7 +243,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(
-    @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
+    @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<? super Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
     if (settings == null) return true;
 
     RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
@@ -276,7 +284,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     updateActiveTarget();
   }
-  
+
   @TestOnly
   public void reset() {
     mySavedActiveTargetId = null;

@@ -21,38 +21,58 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 class WindowsJavaFinder extends JavaHomeFinder {
 
   @NotNull
   @Override
   protected List<String> findExistingJdks() {
-    File javaHome = getJavaHome();
-    if (javaHome == null) return Collections.emptyList();
-
     ArrayList<String> result = new ArrayList<>();
-    File javasFolder = javaHome.getParentFile();
-    scanFolder(javasFolder, result);
-    File parentFile = javasFolder.getParentFile();
-    File root = parentFile != null ? parentFile.getParentFile() : null;
-    String name = parentFile != null ? parentFile.getName() : "";
-    if (name.contains("Program Files") && root != null) {
-      String x86Suffix = " (x86)";
-      boolean x86 = name.endsWith(x86Suffix) && name.length() > x86Suffix.length();
-      File anotherJavasFolder;
-      if (x86) {
-        anotherJavasFolder = new File(root, name.substring(0, name.length() - x86Suffix.length()));
-      }
-      else {
-        anotherJavasFolder = new File(root, name + x86Suffix);
-      }
-      if (anotherJavasFolder.isDirectory()) {
-        scanFolder(new File(anotherJavasFolder, javasFolder.getName()), result);
+    Set<File> roots = findRootsToScan();
+    for (File root : roots) {
+       scanFolder(root, result);
+    }
+    result.sort((o1, o2) -> {
+      String name1 = new File(o1).getName();
+      String name2 = new File(o2).getName();
+      return Comparing.compare(JavaSdkVersion.fromVersionString(name2), JavaSdkVersion.fromVersionString(name1));
+    });
+    return result;
+  }
+
+  private static Set<File> findRootsToScan() {
+    TreeSet<File> roots = new TreeSet<>();
+    File javaHome = getJavaHome();
+    if (javaHome != null) {
+      File parentFile = javaHome.getParentFile();
+      if (parentFile != null) {
+        roots.add(parentFile);
       }
     }
-    result.sort((o1, o2) -> Comparing.compare(JavaSdkVersion.fromVersionString(o2), JavaSdkVersion.fromVersionString(o1)));
-    return result;
+    File[] fsRoots = File.listRoots();
+    for (File root : fsRoots) {
+      if (root.exists()) {
+        File[] children = root.listFiles();
+        if (children != null) {
+          for (File child : children) {
+            if (child.isDirectory() && child.getName().contains("Program Files")) {
+              roots.add(child);
+              File[] subFolders = child.listFiles();
+              if (subFolders != null) {
+                for (File subFolder : subFolders) {
+                  if (subFolder.isDirectory() && subFolder.getName().equals("Java")) {
+                    roots.add(subFolder);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return roots;
   }
 }

@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -228,7 +214,8 @@ public class SoftWrapApplianceManager implements Dumpable {
       LOG.error("Soft wrapping is not supported for documents with non-standard line endings. File: " + myEditor.getVirtualFile());
     }
     if (myInProgress) {
-      LogMessageEx.error(LOG, "Detected race condition at soft wraps recalculation", myEditor.dumpState(), event.toString());
+      LOG.error("Detected race condition at soft wraps recalculation", new Throwable(),
+                AttachmentFactory.createContext(myEditor.dumpState(), event));
     }
     myInProgress = true;
     try {
@@ -482,9 +469,9 @@ public class SoftWrapApplianceManager implements Dumpable {
     int startOffset = myContext.currentPosition.offset;
     while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
       if (counter++ > limit) {
-        LogMessageEx.error(LOG, "Cycled soft wraps recalculation detected", String.format(
+        LOG.error("Cycled soft wraps recalculation detected", new Throwable(), AttachmentFactory.createContext(String.format(
           "Start recalculation offset: %d, visible area width: %d, calculation context: %s, editor info: %s",
-          startOffset, myVisibleAreaWidth, myContext, myEditor.dumpState()));
+          startOffset, myVisibleAreaWidth, myContext, myEditor.dumpState())));
         while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
           int c = Character.codePointAt(myContext.text, myContext.currentPosition.offset);
           if (c == '\n') {

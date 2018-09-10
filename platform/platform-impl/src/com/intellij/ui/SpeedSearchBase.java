@@ -88,7 +88,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final String prefix = getEnteredPrefix();
         assert prefix != null;
         final String[] strings = NameUtil.splitNameIntoWords(prefix);
@@ -98,7 +98,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
@@ -477,7 +477,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public Dimension getPreferredSize() {
       Dimension dim = super.getPreferredSize();
-      dim.width = getFontMetrics(getFont()).stringWidth(getText()) + 10;
+      Insets m = getMargin();
+      dim.width = getFontMetrics(getFont()).stringWidth(getText()) + 10 + m.left + m.right;
       return dim;
     }
 

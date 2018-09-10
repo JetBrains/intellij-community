@@ -44,6 +44,7 @@ public interface CheckoutProvider {
   }
 
   class CheckoutProviderComparator implements Comparator<CheckoutProvider> {
+    @Override
     public int compare(@NotNull final CheckoutProvider o1, @NotNull final CheckoutProvider o2) {
       return getTextWithoutMnemonicEscaping(o1.getVcsName()).compareTo(getTextWithoutMnemonicEscaping(o2.getVcsName()));
     }

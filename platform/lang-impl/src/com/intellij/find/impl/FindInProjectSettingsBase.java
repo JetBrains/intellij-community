@@ -89,7 +89,7 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
   }
 
 
-  static void addRecentStringToList(@NotNull String str, @NotNull List<String> list) {
+  static void addRecentStringToList(@NotNull String str, @NotNull List<? super String> list) {
     if (list.contains(str)) {
       list.remove(str);
     }

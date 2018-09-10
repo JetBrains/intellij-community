@@ -65,6 +65,7 @@
   <extensions defaultExtensionNs="org.jetbrains.debugger.streams">
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
+    <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
   </extensions>
 
   <actions>

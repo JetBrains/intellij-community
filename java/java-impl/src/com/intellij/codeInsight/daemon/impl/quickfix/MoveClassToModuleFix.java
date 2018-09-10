@@ -103,7 +103,7 @@ public class MoveClassToModuleFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return !myModules.isEmpty();
+    return !myModules.isEmpty() && myModules.keySet().stream().allMatch(PsiElement::isValid);
   }
 
   @Override

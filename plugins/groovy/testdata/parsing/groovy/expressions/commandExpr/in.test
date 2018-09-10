@@ -10,7 +10,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Relational expression
+      GrInExpressionImpl(IN_EXPRESSION)
         Method call
           Reference expression
             PsiElement(identifier)('abc')

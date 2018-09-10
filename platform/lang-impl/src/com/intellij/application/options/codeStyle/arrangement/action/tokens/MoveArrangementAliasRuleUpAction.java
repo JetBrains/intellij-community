@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.arrangement.action.MoveArrange
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.tokens.ArrangementRuleAliasControl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,7 +29,7 @@ public class MoveArrangementAliasRuleUpAction extends MoveArrangementMatchingRul
 
   @Override
   @Nullable
-  protected ArrangementMatchingRulesControl getRulesControl(AnActionEvent e) {
+  protected ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return ArrangementRuleAliasControl.KEY.getData(e.getDataContext());
   }
 }

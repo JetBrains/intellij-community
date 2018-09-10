@@ -48,7 +48,7 @@ public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentPro
     ExecuteRunConfigurationTask
       runTask = new ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings);
     for (ProjectTaskRunner projectTaskRunner : ProjectTaskRunner.EP_NAME.getExtensions()) {
-      if (projectTaskRunner.canRun(runTask)) {
+      if (projectTaskRunner.canRun(project, runTask)) {
         return projectTaskRunner.createExecutionEnvironment(project, runTask, executor);
       }
     }

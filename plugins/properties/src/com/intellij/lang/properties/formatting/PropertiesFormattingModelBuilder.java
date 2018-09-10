@@ -41,9 +41,4 @@ public class PropertiesFormattingModelBuilder implements FormattingModelBuilder 
     return new PsiBasedFormattingModel(element.getContainingFile(), new PropertiesRootBlock(root, settings), documentModel);
   }
 
-  @Nullable
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
-  }
 }

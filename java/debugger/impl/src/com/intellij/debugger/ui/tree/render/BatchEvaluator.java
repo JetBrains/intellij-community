@@ -2,7 +2,10 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessListener;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -16,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -35,7 +39,8 @@ public class BatchEvaluator {
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
     myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      @Override
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
         myBatchEvaluatorObject= null;
         myBatchEvaluatorMethod = null;
@@ -108,10 +113,12 @@ public class BatchEvaluator {
         myBuffer.put(suspendContext, commands);
 
         myDebugProcess.getManagerThread().invokeCommand(new SuspendContextCommand() {
+          @Override
           public SuspendContext getSuspendContext() {
             return suspendContext;
           }
 
+          @Override
           public void action() {
             myBuffer.remove(suspendContext);
 
@@ -120,6 +127,7 @@ public class BatchEvaluator {
             }
           }
 
+          @Override
           public void commandCancelled() {
             myBuffer.remove(suspendContext);
           }
@@ -161,7 +169,7 @@ public class BatchEvaluator {
       Value value = debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorObject,
                                               myBatchEvaluatorMethod, argList);
       if (value instanceof ArrayReference) {
-        ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep((ArrayReference)value); // to avoid ObjectCollectedException for both the array and its elements
+        evaluationContext.keep(value); // to avoid ObjectCollectedException for both the array and its elements
         final ArrayReference strings = (ArrayReference)value;
         final List<Value> allValuesArray = strings.getValues();
         final Value[] allValues = allValuesArray.toArray(new Value[0]);
@@ -177,10 +185,10 @@ public class BatchEvaluator {
             catch (ObjectCollectedException e) {
               // ignored
             }
-          } 
+          }
           else if(strValue instanceof ObjectReference){
             request.evaluationError(EvaluateExceptionUtil.createEvaluateException(new InvocationException((ObjectReference)strValue)).getMessage());
-          } 
+          }
           else {
             LOG.assertTrue(false);
           }

@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 public class FindUsagesInFileAction extends AnAction {
   public FindUsagesInFileAction() {
@@ -45,7 +46,7 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
@@ -73,7 +74,7 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     updateFindUsagesAction(event);
   }
 
@@ -104,7 +105,7 @@ public class FindUsagesInFileAction extends AnAction {
     }
   }
 
-  public static void updateFindUsagesAction(AnActionEvent event) {
+  public static void updateFindUsagesAction(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     boolean enabled = isEnabled(dataContext);

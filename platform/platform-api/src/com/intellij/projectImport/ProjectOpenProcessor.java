@@ -49,8 +49,17 @@ public abstract class ProjectOpenProcessor {
 
   @Nullable
   public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
+    return getImportProvider(file, false);
+  }
+
+  /**
+   * @param onlyIfExistingProjectFile when true, doesn't return 'generic' providers that can open any non-project directory/text file
+   *                                  (e.g. PlatformProjectOpenProcessor)
+   */
+  @Nullable
+  public static ProjectOpenProcessor getImportProvider(VirtualFile file, boolean onlyIfExistingProjectFile) {
     for (ProjectOpenProcessor provider : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
-      if (provider.canOpenProject(file)) {
+      if (provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file))) {
         return provider;
       }
     }

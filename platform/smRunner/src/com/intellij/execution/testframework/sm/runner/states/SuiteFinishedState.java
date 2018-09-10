@@ -31,6 +31,7 @@ public abstract class SuiteFinishedState extends AbstractState {
   //instance-specific information
 
   public static SuiteFinishedState PASSED_SUITE = new SuiteFinishedState() {
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.PASSED_INDEX;
     }
@@ -47,6 +48,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return true;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.FAILED_INDEX;
     }
@@ -64,6 +66,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return true;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.IGNORED_INDEX;
     }
@@ -81,6 +84,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return true;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.ERROR_INDEX;
     }
@@ -121,6 +125,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return false;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;
     }
@@ -135,22 +140,27 @@ public abstract class SuiteFinishedState extends AbstractState {
   private SuiteFinishedState() {
   }
 
+  @Override
   public boolean isInProgress() {
     return false;
   }
 
+  @Override
   public boolean isDefect() {
     return false;
   }
 
+  @Override
   public boolean wasLaunched() {
     return true;
   }
 
+  @Override
   public boolean isFinal() {
     return true;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
@@ -162,6 +172,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return false;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;
     }

@@ -10,7 +10,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -77,12 +76,7 @@ public class DataManagerImpl extends DataManager {
       if (dataRule != null) {
         final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
         ids.add(dataId);
-        data = dataRule.getData(new DataProvider() {
-          @Override
-          public Object getData(String dataId) {
-            return getDataFromProvider(provider, dataId, ids);
-          }
-        });
+        data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
         if (data != null) return validated(data, dataId, provider);
       }
@@ -119,18 +113,7 @@ public class DataManagerImpl extends DataManager {
 
     final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
     if (plainRule != null) {
-      return new GetDataRule() {
-        @Override
-        public Object getData(final DataProvider dataProvider) {
-          return plainRule.getData(new DataProvider() {
-            @Override
-            @Nullable
-            public Object getData(@NonNls String dataId) {
-              return dataProvider.getData(AnActionEvent.injectedId(dataId));
-            }
-          });
-        }
-      };
+      return dataProvider -> plainRule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
     }
 
     return null;
@@ -140,8 +123,7 @@ public class DataManagerImpl extends DataManager {
   private GetDataRule getRuleFromMap(@NotNull String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
-      final KeyedLazyInstanceEP<GetDataRule>[] eps = Extensions.getExtensions(GetDataRule.EP_NAME);
-      for(KeyedLazyInstanceEP<GetDataRule> ruleEP: eps) {
+      for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensionList()) {
         if (ruleEP.key.equals(dataId)) {
           rule = ruleEP.getInstance();
         }
@@ -166,11 +148,14 @@ public class DataManagerImpl extends DataManager {
     return data;
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(Component component) {
+    //noinspection deprecation
     return new MyDataContext(component);
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
@@ -317,6 +302,11 @@ public class DataManagerImpl extends DataManager {
     PlatformDataKeys.MODALITY_STATE.getName()
   ));
 
+  /**
+   * todo make private in 2020
+   * @deprecated use {@link DataManager#getDataContext(Component)} instead
+   */
+  @Deprecated
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
@@ -338,8 +328,7 @@ public class DataManagerImpl extends DataManager {
     }
 
     @Override
-    public Object getData(String dataId) {
-      if (dataId == null) return null;
+    public Object getData(@NotNull String dataId) {
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
         LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
@@ -382,6 +371,7 @@ public class DataManagerImpl extends DataManager {
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "component=" + SoftReference.dereference(myRef);

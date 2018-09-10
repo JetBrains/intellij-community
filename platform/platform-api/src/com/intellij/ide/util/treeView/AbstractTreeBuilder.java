@@ -12,7 +12,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NonNls;
@@ -33,13 +33,7 @@ import java.util.*;
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
   @NonNls private static final String TREE_BUILDER = "TreeBuilder";
-  public static final boolean DEFAULT_UPDATE_INACTIVE = true;
-  private final TransferToEDTQueue<Runnable>
-    myLaterInvocator = new TransferToEDTQueue<>("Tree later invocator", runnable -> {
-    runnable.run();
-    return true;
-  }, o -> isDisposed());
-
+  protected static final boolean DEFAULT_UPDATE_INACTIVE = true;
 
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
@@ -130,7 +124,7 @@ public class AbstractTreeBuilder implements Disposable {
 
 
   @NotNull
-  protected AbstractTreeNode createSearchingTreeNodeWrapper() {
+  AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
   }
 
@@ -231,6 +225,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @see #queueUpdateFrom
    * @deprecated
    */
+  @Deprecated
   public void updateFromRoot() {
     queueUpdate();
   }
@@ -238,15 +233,6 @@ public class AbstractTreeBuilder implements Disposable {
   public void initRootNode() {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.initRootNode();
-  }
-
-  /**
-   * @see #queueUpdateFrom
-   * @deprecated
-   */
-  @NotNull
-  protected ActionCallback updateFromRootCB() {
-    return queueUpdate();
   }
 
   @NotNull
@@ -289,19 +275,18 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @param element
    * @deprecated
    */
+  @Deprecated
   public void buildNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
   }
 
   /**
-   * @param element
-   * @return
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
@@ -340,16 +325,7 @@ public class AbstractTreeBuilder implements Disposable {
     return getUi() == null;
   }
 
-  /**
-   * @param node
-   * @deprecated
-   */
-  public final void updateSubtree(final DefaultMutableTreeNode node) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.updateSubtree(node, true);
-  }
-
-  public final boolean wasRootNodeInitialized() {
+  final boolean wasRootNodeInitialized() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.wasRootNodeInitialized();
   }
@@ -357,24 +333,6 @@ public class AbstractTreeBuilder implements Disposable {
   public final boolean isNodeBeingBuilt(final TreePath path) {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isNodeBeingBuilt(path);
-  }
-
-  /**
-   * @param path
-   * @deprecated
-   */
-  public final void buildNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-  }
-
-  /**
-   * @deprecated
-   */
-  @Nullable
-  public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    return ui == null ? null : ui.getNodeForPath(path);
   }
 
   @Nullable
@@ -387,12 +345,12 @@ public class AbstractTreeBuilder implements Disposable {
     return AbstractTreeUi.isLoadingNode(node);
   }
 
-  public boolean isChildrenResortingNeeded(NodeDescriptor descriptor) {
+  boolean isChildrenResortingNeeded(NodeDescriptor descriptor) {
     return true;
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  protected void runOnYeildingDone(Runnable onDone) {
+  void runOnYeildingDone(Runnable onDone) {
     AbstractTreeUi ui = getUi();
     if (ui == null) return;
 
@@ -400,7 +358,9 @@ public class AbstractTreeBuilder implements Disposable {
       onDone.run();
     }
     else {
-      myLaterInvocator.offer(onDone);
+      EdtExecutorService.getInstance().execute(()->{
+        if (!isDisposed()) onDone.run();
+      });
     }
   }
 
@@ -412,11 +372,13 @@ public class AbstractTreeBuilder implements Disposable {
       runnable.run();
     }
     else {
-      myLaterInvocator.offer(runnable);
+      EdtExecutorService.getInstance().execute(()->{
+        if (!isDisposed()) runnable.run();
+      });
     }
   }
 
-  public boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
+  boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
     return true;
   }
 
@@ -465,7 +427,7 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? ActionCallback.REJECTED : ui.getReady(requestor);
   }
 
-  protected void sortChildren(Comparator<TreeNode> nodeComparator, DefaultMutableTreeNode node, ArrayList<TreeNode> children) {
+  protected void sortChildren(Comparator<? super TreeNode> nodeComparator, DefaultMutableTreeNode node, List<? extends TreeNode> children) {
     Collections.sort(children, nodeComparator);
   }
 
@@ -506,8 +468,8 @@ public class AbstractTreeBuilder implements Disposable {
     return promise;
   }
 
-  public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
-    public AbstractTreeNodeWrapper() {
+  private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
+    AbstractTreeNodeWrapper() {
       super(null, null);
     }
 
@@ -518,7 +480,7 @@ public class AbstractTreeBuilder implements Disposable {
     }
 
     @Override
-    public void update(PresentationData presentation) {
+    public void update(@NotNull PresentationData presentation) {
     }
 
     @Override
@@ -645,7 +607,7 @@ public class AbstractTreeBuilder implements Disposable {
   class UserRunnable implements Runnable {
     private final Runnable myRunnable;
 
-    public UserRunnable(Runnable runnable) {
+    UserRunnable(Runnable runnable) {
       myRunnable = runnable;
     }
 

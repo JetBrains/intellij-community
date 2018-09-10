@@ -217,11 +217,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     for (PsiMethod targetMethod : methods) {
       methodSignatureChangeVisitor.addBase(targetMethod);
       ChangeSignatureProcessor processor = new UsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
-                                                                        false, null,
-                                                                        myName,
-                                                                        returnType,
-                                                                        RemoveUnusedParameterFix.getNewParametersInfo(targetMethod, null),
-                                                                        methodSignatureChangeVisitor);
+                                                                                   false, null,
+                                                                                   myName,
+                                                                                   returnType,
+                                                                                   ParameterInfoImpl.fromMethod(targetMethod),
+                                                                                   methodSignatureChangeVisitor);
       processor.run();
     }
 
@@ -331,6 +331,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiSubstitutor superClassSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, baseClass, PsiSubstitutor.EMPTY);
     final PsiType superReturnTypeInBaseClassType = superClassSubstitutor.substitute(superReturnType);
+    if (superReturnTypeInBaseClassType == null) return true;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
     final PsiSubstitutor psiSubstitutor =
       resolveHelper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(superReturnTypeInBaseClassType, baseClass.getTypeParameters()),

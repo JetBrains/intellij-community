@@ -12,34 +12,39 @@ import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtilities;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 class ContentTabLabel extends BaseLabel {
-  private final ActiveIcon closeIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
-                                                      JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
+  private static final int MAX_WIDTH = JBUI.scale(300);
+  private static final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
+  protected static final int ICONS_GAP = JBUI.scale(3);
+
+  private final ActiveIcon myCloseIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
+                                                        JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
   private final Content myContent;
   private final TabContentLayout myLayout;
 
-  protected static final int ICONS_GAP = 3;
+  private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
+  private String myText = null;
+  private int myIconWithInsetsWidth;
 
-  private final List<AdditionalIcon> additionalIcons = new ArrayList<>();
-
-  private final AdditionalIcon closeTabIcon = new AdditionalIcon(closeIcon) {
+  private final AdditionalIcon closeTabIcon = new AdditionalIcon(myCloseIcon) {
     private static final String ACTION_NAME = "Close tab";
 
     @NotNull
@@ -69,7 +74,7 @@ class ContentTabLabel extends BaseLabel {
       return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() || !UISettings.getShadowInstance().getShowCloseButton();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getTooltip() {
       String text =
@@ -83,21 +88,31 @@ class ContentTabLabel extends BaseLabel {
 
   private void showTooltip(AdditionalIcon icon) {
 
-    if (currentIconTooltip != null) {
-      if (currentIconTooltip.icon == icon) {
-        IdeTooltipManager.getInstance().show(currentIconTooltip.currentTooltip, false, false);
-        return;
+    if(icon != null) {
+      if (currentIconTooltip != null) {
+        if (currentIconTooltip.icon == icon) {
+          IdeTooltipManager.getInstance().show(currentIconTooltip.currentTooltip, false, false);
+          return;
+        }
+
+        hideCurrentTooltip();
       }
 
-      hideCurrentTooltip();
+      String toolText = icon.getTooltip();
+
+      if (toolText != null && !toolText.isEmpty()) {
+        IdeTooltip tooltip = new IdeTooltip(this, icon.getCenterPoint(), new JLabel(toolText));
+        currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), icon);
+        return;
+      }
     }
 
-    String toolText = icon.getTooltip();
-
-    if (toolText != null && !toolText.isEmpty()) {
-      IdeTooltip tooltip = new IdeTooltip(this, icon.getCenterPoint(), new JLabel(toolText));
-      currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), icon);
+    hideCurrentTooltip();
+    if(myText != null && !myText.equals(getText())) {
+      IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(myText));
+      currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), null);
     }
+
   }
 
   private void hideCurrentTooltip() {
@@ -108,11 +123,12 @@ class ContentTabLabel extends BaseLabel {
   }
 
   BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
+    @Override
     protected void execute(final MouseEvent e) {
 
-      Optional<Runnable> first = additionalIcons.stream()
-                                                .filter(icon -> mouseOverIcon(icon))
-                                                .map(icon -> icon.getAction()).findFirst();
+      Optional<Runnable> first = myAdditionalIcons.stream()
+                                                  .filter(icon -> mouseOverIcon(icon))
+                                                  .map(icon -> icon.getAction()).findFirst();
 
       if (first.isPresent()) {
         first.get().run();
@@ -122,6 +138,29 @@ class ContentTabLabel extends BaseLabel {
       selectContent();
     }
   };
+
+  @Override
+  public void setText(String text) {
+    myText = text;
+    updateText();
+  }
+
+  private void updateText() {
+    FontMetrics fm = getFontMetrics(getFont());
+    int textWidth = UIUtilities.stringWidth(this, fm, myText);
+    int prefWidth = myIconWithInsetsWidth + textWidth;
+
+    int maxWidth = getMaximumSize().width;
+
+    if(prefWidth > maxWidth) {
+      int offset = maxWidth - myIconWithInsetsWidth;
+      String s = UIUtilities.clipString(this, fm, myText, offset);
+      super.setText(s);
+      return;
+    }
+
+    super.setText(myText);
+  }
 
   protected final boolean mouseOverIcon(AdditionalIcon icon) {
     if (!isHovered() || !icon.getAvailable()) return false;
@@ -133,12 +172,12 @@ class ContentTabLabel extends BaseLabel {
     return icon.contains(point);
   }
 
-  public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
+  ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
     super(layout.myUi, false);
     myLayout = layout;
     myContent = content;
 
-    fillIcons(additionalIcons);
+    fillIcons(myAdditionalIcons);
 
     behavior.setActionTrigger(MouseEvent.MOUSE_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
@@ -152,6 +191,8 @@ class ContentTabLabel extends BaseLabel {
         }
       }
     });
+
+    setMaximumSize(new Dimension(MAX_WIDTH, getMaximumSize().height));
   }
 
   protected void fillIcons(List<AdditionalIcon> icons) {
@@ -169,7 +210,7 @@ class ContentTabLabel extends BaseLabel {
         repaint();
       }
 
-      Optional<AdditionalIcon> first = additionalIcons.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
+      Optional<AdditionalIcon> first = myAdditionalIcons.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
 
       if (first.isPresent()) {
         showTooltip(first.get());
@@ -177,15 +218,15 @@ class ContentTabLabel extends BaseLabel {
       }
     }
 
-    hideCurrentTooltip();
+    showTooltip(null);
   }
 
   protected boolean invalid() {
-    return additionalIcons.stream().anyMatch(icon -> icon.getAvailable());
+    return myAdditionalIcons.stream().anyMatch(icon -> icon.getAvailable());
   }
 
   public final boolean canBeClosed() {
-    return myContent.isCloseable() && contentManager().canCloseContents();
+    return myContent.isCloseable() && myUi.myWindow.canCloseContents();
   }
 
   protected void selectContent() {
@@ -204,42 +245,46 @@ class ContentTabLabel extends BaseLabel {
     updateTextAndIcon(myContent, isSelected());
   }
 
+
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    int x = 0;
-    Map<Boolean, List<AdditionalIcon>> map =
-      additionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
+    int iconWidth = 0;
+    Map<Boolean, List<AdditionalIcon>> map = new THashMap<>();
+    for (AdditionalIcon myAdditionalIcon : myAdditionalIcons) {
+      if (myAdditionalIcon.getAvailable()) {
+        map.computeIfAbsent(myAdditionalIcon.getAfterText(), k -> new SmartList<>()).add(myAdditionalIcon);
+      }
+    }
 
-    int right = 12;
-    int left = 12;
+    int right = DEFAULT_HORIZONTAL_INSET;
+    int left = DEFAULT_HORIZONTAL_INSET;
 
     if (map.get(false) != null) {
-      x = ICONS_GAP;
+      iconWidth = ICONS_GAP;
 
       for (AdditionalIcon icon : map.get(false)) {
-        icon.setX(x);
-        x += icon.getIconWidth() + ICONS_GAP;
+        icon.setX(iconWidth);
+        iconWidth += icon.getIconWidth() + ICONS_GAP;
       }
 
-      left = x;
-      x = 0;
+      left = iconWidth;
+      iconWidth = 0;
     }
-
-    x += size.width;
 
     if (map.get(true) != null) {
-      right = ICONS_GAP + 4;
+      right = ICONS_GAP + JBUI.scale(4);
 
       for (AdditionalIcon icon : map.get(true)) {
-        icon.setX(x + ICONS_GAP - right);
-        x += icon.getIconWidth() + ICONS_GAP;
+        icon.setX(iconWidth + size.width + ICONS_GAP - right);
+        iconWidth += icon.getIconWidth() + ICONS_GAP;
       }
     }
 
-    setBorder(JBUI.Borders.empty(0, left, 0, right));
+    setBorder(new EmptyBorder(0, left, 0, right));
+    myIconWithInsetsWidth = iconWidth + right + left;
 
-    return new Dimension(x, size.height);
+    return new Dimension(iconWidth + size.width, size.height);
   }
 
   @Override
@@ -266,13 +311,14 @@ class ContentTabLabel extends BaseLabel {
   }
 
   private void paintIcons(final Graphics g) {
-    for (AdditionalIcon icon : additionalIcons) {
+    for (AdditionalIcon icon : myAdditionalIcons) {
       if (icon.getAvailable()) {
         icon.paintIcon(this, g);
       }
     }
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     paintIcons(g);
@@ -309,7 +355,7 @@ class ContentTabLabel extends BaseLabel {
     final IdeTooltip currentTooltip;
     final AdditionalIcon icon;
 
-    public CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
+    CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
       this.currentTooltip = currentTooltip;
       this.icon = icon;
     }

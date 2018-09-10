@@ -336,7 +336,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     private AnAction[] myChildren;
     private final boolean myFromPopup;
 
-    public MyAddAction(boolean fromPopup) {
+    MyAddAction(boolean fromPopup) {
       super(IdeBundle.message("add.scope.popup.title"), true);
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
@@ -346,7 +346,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (myFromPopup) {
         setPopup(false);
@@ -361,14 +361,14 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         myChildren[0] = new DumbAwareAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
                                             myLocalScopesManager.getIcon()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
         myChildren[1] = new DumbAwareAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
                                             mySharedScopesManager.getIcon()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
@@ -415,12 +415,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       TreeUtil.moveSelectedRow(myTree, myDirection);
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath selectionPath = myTree.getSelectionPath();
@@ -439,14 +439,14 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private class MyCopyAction extends AnAction {
-    public MyCopyAction() {
+    MyCopyAction() {
       super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"),
             COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       NamedScope scope = (NamedScope)getSelectedObject();
       if (scope != null) {
         final ScopeConfigurable configurable =
@@ -458,19 +458,19 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
     }
   }
 
   private class MySaveAsAction extends AnAction {
-    public MySaveAsAction() {
+    MySaveAsAction() {
       super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
             AllIcons.Actions.Menu_saveall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
         final MyNode node = (MyNode)selectionPath.getLastPathComponent();
@@ -491,7 +491,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
     }
   }

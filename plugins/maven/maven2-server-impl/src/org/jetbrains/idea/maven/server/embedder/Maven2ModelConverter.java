@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.archetype.catalog.Archetype;
@@ -364,7 +364,7 @@ public class Maven2ModelConverter {
   }
 
   private static void doConvert(Object object, String prefix, Map<String, String> result) throws IllegalAccessException {
-    for (Field each : ReflectionUtil.collectFields(object.getClass())) {
+    for (Field each : ReflectionUtilRt.collectFields(object.getClass())) {
       Class<?> type = each.getType();
       if (shouldSkip(type)) continue;
 

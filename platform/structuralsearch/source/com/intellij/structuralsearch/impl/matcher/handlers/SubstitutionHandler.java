@@ -39,6 +39,7 @@ public class SubstitutionHandler extends MatchingHandler {
   private int matchedOccurs;
   private int totalMatchedOccurs = -1;
   private MatchResultImpl myNestedResult;
+  private boolean myRepeatedVar = false;
 
   private static final NodeFilter VARS_DELIM_FILTER = new NodeFilter() {
     @Override
@@ -95,6 +96,10 @@ public class SubstitutionHandler extends MatchingHandler {
     return findRegExpPredicate(getPredicate());
   }
 
+  public void setRepeatedVar(boolean repeatedVar) {
+    myRepeatedVar = repeatedVar;
+  }
+
   private static RegExpPredicate findRegExpPredicate(MatchPredicate start) {
     if (start==null) return null;
     if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
@@ -111,7 +116,10 @@ public class SubstitutionHandler extends MatchingHandler {
     return null;
   }
 
-  private static boolean validateOneMatch(final PsiElement match, int start, int end, final MatchResult result, final MatchContext matchContext) {
+  private boolean validateOneMatch(final PsiElement match, int start, int end, final MatchResult result, final MatchContext matchContext) {
+    if (!myRepeatedVar) {
+      return true;
+    }
     if (match != null) {
       if (start == 0 && end == -1 && result.getStart() == 0 && result.getEnd() == -1) {
         return matchContext.getMatcher().match(match, result.getMatch());
@@ -134,8 +142,11 @@ public class SubstitutionHandler extends MatchingHandler {
 
     MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
 
-    if (result == null && context.getPreviousResult() != null) {
-      result = context.getPreviousResult().findChild(name);
+    if (result == null) {
+      final MatchResultImpl previous = context.getPreviousResult();
+      if (previous != null) {
+        result = MatchResultImpl.findChildDeep(previous, name);
+      }
     }
 
     if (result != null) {
@@ -384,7 +395,7 @@ public class SubstitutionHandler extends MatchingHandler {
         } else {
           // match found
           if (handler.isMatchSequentiallySucceeded(matchNodes)) {
-            return checkSameOccurrencesConstraint();
+            return checkSameOccurrencesConstraint(context);
           }
           removeLastResults(matchedOccurs, context);
           return false;
@@ -404,7 +415,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
           while(matchNodes.hasNext() && matchedOccurs <= maxOccurs) {
             if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
-              return checkSameOccurrencesConstraint();
+              return checkSameOccurrencesConstraint(context);
             }
 
             if (flag) {
@@ -427,7 +438,7 @@ public class SubstitutionHandler extends MatchingHandler {
           removeLastResults(matchedOccurs, context);
           return false;
         } else {
-          return checkSameOccurrencesConstraint();
+          return checkSameOccurrencesConstraint(context);
         }
       }
     } finally {
@@ -435,14 +446,16 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   }
 
-  private boolean checkSameOccurrencesConstraint() {
+  private boolean checkSameOccurrencesConstraint(MatchContext context) {
     if (totalMatchedOccurs == -1) {
       totalMatchedOccurs = matchedOccurs;
       return true;
     }
-    else {
-      return totalMatchedOccurs == matchedOccurs;
+    MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
+    if (result == null && context.getPreviousResult() != null) {
+      result = context.getPreviousResult().findChild(name);
     }
+    return result == null || result.size() == matchedOccurs;
   }
 
   public void setTarget(boolean target) {

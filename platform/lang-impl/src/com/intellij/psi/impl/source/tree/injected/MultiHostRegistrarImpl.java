@@ -12,10 +12,12 @@ import java.util.List;
 /**
  * @deprecated Use {@link MultiHostRegistrar} instead. to be removed in IDEA 2018.1
  */
+@Deprecated
 public abstract class MultiHostRegistrarImpl implements MultiHostRegistrar {
   /**
    * @deprecated to be removed in IDEA 2018.1
    */
+  @Deprecated
   public List<Pair<Place, PsiFile>> getResult() {
     throw new IllegalStateException();
   }
@@ -23,6 +25,7 @@ public abstract class MultiHostRegistrarImpl implements MultiHostRegistrar {
   /**
    * @deprecated Use {@link MultiHostRegistrar#startInjecting(Language)} instead. to be removed in IDEA 2018.1
    */
+  @Deprecated
   @NotNull
   @Override
   public MultiHostRegistrar startInjecting(@NotNull Language language) {

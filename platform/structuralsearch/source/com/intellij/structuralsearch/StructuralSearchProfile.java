@@ -24,10 +24,8 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,33 +91,49 @@ public abstract class StructuralSearchProfile {
   }
 
   @NotNull
-  public Editor createEditor(@NotNull SearchContext searchContext,
-                             @NotNull FileType fileType,
-                             Language dialect,
-                             String text,
-                             boolean useLastConfiguration) {
-    PsiFile codeFragment = createCodeFragment(searchContext.getProject(), text, null);
+  public Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
     if (codeFragment == null) {
-      codeFragment = createFileFragment(searchContext, fileType, dialect, text);
+      codeFragment = createFileFragment(project, fileType, dialect, text);
     }
 
     if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(codeFragment);
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
-      DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(codeFragment, false);
-      return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+      //DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return doc;
+    }
+
+    return EditorFactory.getInstance().createDocument(text);
+  }
+
+  @NotNull
+  public Editor createEditor(@NotNull Project project,
+                             @NotNull FileType fileType,
+                             Language dialect,
+                             String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
     }
 
     final EditorFactory factory = EditorFactory.getInstance();
     final Document document = factory.createDocument(text);
-    final EditorEx editor = (EditorEx)factory.createEditor(document, searchContext.getProject());
+    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
     editor.getSettings().setFoldingOutlineShown(false);
     return editor;
   }
 
-  private static PsiFile createFileFragment(SearchContext searchContext, FileType fileType, Language dialect, String text) {
+  private static PsiFile createFileFragment(Project project, FileType fileType, Language dialect, String text) {
     final String name = "__dummy." + fileType.getDefaultExtension();
-    final PsiFileFactory factory = PsiFileFactory.getInstance(searchContext.getProject());
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
     return dialect == null ?
            factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true) :
@@ -145,7 +159,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return null;
   }
 

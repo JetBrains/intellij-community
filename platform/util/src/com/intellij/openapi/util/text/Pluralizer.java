@@ -30,6 +30,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -51,6 +52,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
  * (a java implementation: https://github.com/atteo/evo-inflector)
  *
  * @author gregsh
+ * @noinspection SpellCheckingInspection
  */
 class Pluralizer {
 
@@ -135,7 +137,8 @@ class Pluralizer {
   /**
    * Pluralize or singularize a word based on the passed in count.
    */
-  public String pluralize(String word, int count, boolean inclusive) {
+  @NotNull
+  public String pluralize(@NotNull String word, int count, boolean inclusive) {
     String pluralized = count == 1 ? singular(word) : plural(word);
 
     return (inclusive ? count + " " : "") + notNullize(pluralized, word);

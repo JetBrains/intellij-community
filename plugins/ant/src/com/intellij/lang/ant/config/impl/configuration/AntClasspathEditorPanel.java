@@ -47,20 +47,25 @@ public class AntClasspathEditorPanel extends JPanel {
     classpathBinding.addAddManyFacility(myForm.myAddAllInDir,
                                         new AllJarsUnderDirEntry.AddEntriesFactory(myForm.myClasspathList));
     myBinding.addBinding(new UIPropertyBinding() {
+      @Override
       public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       }
 
+      @Override
       public void apply(AbstractProperty.AbstractPropertyContainer container) {
       }
 
+      @Override
       public void beDisabled() {
         myForm.enableButtons(false);
       }
 
+      @Override
       public void beEnabled() {
         myForm.enableButtons(true);
       }
 
+      @Override
       public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
       }
     });
@@ -86,8 +91,7 @@ public class AntClasspathEditorPanel extends JPanel {
     }
 
     public void enableButtons(boolean enable) {
-      for (Iterator<ListUtil.Updatable> iterator = myUpdatables.iterator(); iterator.hasNext();) {
-        ListUtil.Updatable updatable = iterator.next();
+      for (ListUtil.Updatable updatable : myUpdatables) {
         updatable.enable(enable);
       }
     }

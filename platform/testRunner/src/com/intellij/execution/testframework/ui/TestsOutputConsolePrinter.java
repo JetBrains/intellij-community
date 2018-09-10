@@ -20,6 +20,8 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Key;
+import com.intellij.terminal.TerminalExecutionConsole;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +39,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   private int myMarkOffset = 0;
 
   private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<Boolean>() {
+        @Override
         public void onChanged(final Boolean value) {
           if (!value.booleanValue()) myMarkOffset = 0;
         }
@@ -64,10 +67,12 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     }
   }
 
+  @Override
   public void print(final String text, final ConsoleViewContentType contentType) {
     myConsole.print(text, contentType);
   }
 
+  @Override
   public void onNewAvailable(@NotNull final Printable printable) {
     if (myPaused) {
       printable.printOn(myPausedPrinter);
@@ -122,15 +127,18 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     return proxy != null && proxy.getParent() == myUnboundOutputRoot;
   }
 
+  @Override
   public void printHyperlink(final String text, final HyperlinkInfo info) {
     myConsole.printHyperlink(text, info);
   }
 
+  @Override
   public void mark() {
     if (TestConsoleProperties.SCROLL_TO_STACK_TRACE.value(myProperties))
       myMarkOffset = myConsole.getContentSize();
   }
 
+  @Override
   public void dispose() {
     myProperties.removeListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
   }
@@ -147,5 +155,16 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         myConsole.scrollTo(myMarkOffset);
       }
     });
+  }
+
+  @Override
+  public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+    if (myConsole instanceof TerminalExecutionConsole) {
+      // Terminal console handles ANSI escape sequences itself
+      print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+    }
+    else {
+      Printer.super.printWithAnsiColoring(text, processOutputType);
+    }
   }
 }

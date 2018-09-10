@@ -8,19 +8,15 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
@@ -141,21 +137,12 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   public static void openFile(VirtualFile file, @NotNull Project project) {
-    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-    if (providers.length == 0) {
-      String message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().getProductName());
-      Messages.showErrorDialog(project, message, IdeBundle.message("title.cannot.open.file"));
-      return;
-    }
-
     NonProjectFileWritingAccessProvider.allowWriting(file);
-
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
   }
 
   private static class ProjectOnlyFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
-    public ProjectOnlyFileChooserDescriptor() {
+    ProjectOnlyFileChooserDescriptor() {
       super(true);
       setTitle(IdeBundle.message("title.open.project"));
     }
@@ -166,7 +153,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     private final FileChooserDescriptor myStandardDescriptor =
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false);
 
-    public ProjectOrFileChooserDescriptor() {
+    ProjectOrFileChooserDescriptor() {
       super(true);
       setTitle(IdeBundle.message("title.open.file.or.project"));
     }

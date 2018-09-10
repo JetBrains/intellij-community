@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ToggleRegex extends EditorHeaderToggleAction {
   public ToggleRegex() {
-    super("Re&gex");
+    super("Rege&x");
   }
 
   @Override

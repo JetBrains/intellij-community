@@ -49,6 +49,7 @@ public class BoldLabel extends JLabel {
     super(toHtml(text), icon, horizontalAlignment);
   }
 
+  @Override
   public void setText(String text) {
     super.setText(toHtml(text));
   }

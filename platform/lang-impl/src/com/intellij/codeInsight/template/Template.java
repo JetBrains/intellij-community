@@ -40,20 +40,25 @@ public abstract class Template {
   public abstract void addTextSegment(@NotNull String text);
   public abstract void addVariableSegment(@NonNls @NotNull String name);
 
+  @NotNull
   public Variable addVariable(@NonNls @NotNull String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, defaultValueExpression, defaultValueExpression, isAlwaysStopAt);
   }
-  public abstract Variable addVariable(Expression expression, boolean isAlwaysStopAt);
+  @NotNull
+  public abstract Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt);
 
+  @NotNull
   public Variable addVariable(@NonNls @NotNull String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, expression, defaultValueExpression, isAlwaysStopAt, false);
   }
 
+  @NotNull
   public abstract Variable addVariable(@NonNls @NotNull String name,
                                        Expression expression,
                                        Expression defaultValueExpression,
                                        boolean isAlwaysStopAt,
                                        boolean skipOnStart);
+  @NotNull
   public abstract Variable addVariable(@NonNls @NotNull String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
 
   public abstract void addEndVariable();
@@ -84,6 +89,7 @@ public abstract class Template {
 
   public abstract int getSegmentsCount();
 
+  @NotNull
   public abstract String getSegmentName( int segmentIndex);
 
   public abstract int getSegmentOffset(int segmentIndex);

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -70,6 +69,7 @@ public abstract class ExtensionLocator {
       myPsiClass = psiClass;
     }
 
+    @Override
     @NotNull
     public List<ExtensionCandidate> findCandidates() {
       return findCandidatesByClassName(ClassUtil.getJVMClassName(myPsiClass), myPsiClass.getProject());
@@ -89,9 +89,6 @@ public abstract class ExtensionLocator {
     @Override
     public List<ExtensionCandidate> findCandidates() {
       XmlTag epTag = myExtensionPoint.getXmlTag();
-      if (epTag == null) {
-        return Collections.emptyList();
-      }
 
       // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
       // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -60,8 +61,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -179,7 +180,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
     myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         setPathFileChangeDefault();
         queueRequest();
       }
@@ -214,7 +215,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final int inapplicable = myInfoCalculator.getInapplicable();
         if (inapplicable > 0) {
           appendSpace();
-          appendText(inapplicable, inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "Missing Base:");
+          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "missing base");
         }
       }
     };
@@ -466,7 +467,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myVf = null; // don't try to find vf for each typing; only when requested
     }
 
-    public FilePresentationModel(@NotNull VirtualFile file) {
+    FilePresentationModel(@NotNull VirtualFile file) {
       myPath = file.getPath();
       myVf = file;
     }
@@ -518,9 +519,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(new ResetStrip());
       group.add(new ZeroStrip());
       if (myCanChangePatchFile) {
-        group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
+        group.add(new DumbAwareAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             syncUpdatePatchFileAndScheduleReloadIfNeeded(null);
           }
         });
@@ -622,7 +623,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MapDirectory extends AnAction {
+  private class MapDirectory extends DumbAwareAction {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
@@ -631,7 +632,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       if ((selectedChanges.size() >= 1) && (sameBase(selectedChanges))) {
         final AbstractFilePatchInProgress.PatchChange patchChange = selectedChanges.get(0);
@@ -649,7 +650,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       e.getPresentation().setEnabled((selectedChanges.size() >= 1) && (sameBase(selectedChanges)));
     }
@@ -762,11 +763,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private class NewBaseSelector implements Runnable {
     final boolean myDirectorySelector;
 
-    public NewBaseSelector() {
+    NewBaseSelector() {
       this(true);
     }
 
-    public NewBaseSelector(boolean directorySelector) {
+    NewBaseSelector(boolean directorySelector) {
       myDirectorySelector = directorySelector;
     }
 
@@ -848,7 +849,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private int myDeleted;
     private int myInapplicable;
 
-    public NamedLegendStatuses() {
+    NamedLegendStatuses() {
       myAdded = 0;
       myModified = 0;
       myDeleted = 0;
@@ -1014,13 +1015,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     runExecutor(myCallback);
   }
 
-  private class ZeroStrip extends AnAction {
+  private class ZeroStrip extends DumbAwareAction {
     private ZeroStrip() {
       super("Remove Directories", "Remove Directories", AllIcons.Vcs.StripNull);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
         change.getPatchInProgress().setZero();
@@ -1029,18 +1030,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class StripDown extends AnAction {
+  private class StripDown extends DumbAwareAction {
     private StripDown() {
       super("Restore Directory", "Restore Directory", AllIcons.Vcs.StripDown);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!isEnabled()) return;
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
@@ -1059,18 +1060,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class StripUp extends AnAction {
+  private class StripUp extends DumbAwareAction {
     private StripUp() {
       super("Strip Directory", "Strip Directory", AllIcons.Vcs.StripUp);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!isEnabled()) return;
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
@@ -1089,13 +1090,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class ResetStrip extends AnAction {
+  private class ResetStrip extends DumbAwareAction {
     private ResetStrip() {
       super("Reset Directories", "Reset Directories", AllIcons.Vcs.ResetStrip);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
         change.getPatchInProgress().reset();
@@ -1104,7 +1105,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyShowDiff extends AnAction {
+  private class MyShowDiff extends DumbAwareAction {
     private final MyChangeComparator myMyChangeComparator;
 
     private MyShowDiff() {
@@ -1113,12 +1114,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled((!myPatches.isEmpty()) && myContainBasedChanges);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       showDiff();
     }
 
@@ -1176,7 +1177,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final List<DiffRequestProducer> myRequests;
     private final List<? extends Change> myChanges;
 
-    public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
+    MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
       super(index);
       assert requests.size() == changes.size();
       myRequests = requests;

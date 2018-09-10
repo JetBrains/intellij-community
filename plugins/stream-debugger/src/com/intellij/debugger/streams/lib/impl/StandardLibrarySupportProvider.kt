@@ -5,6 +5,7 @@ import com.intellij.debugger.streams.lib.LibrarySupport
 import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
+import com.intellij.debugger.streams.psi.impl.PackageChainDetector
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
@@ -18,7 +19,8 @@ import com.intellij.openapi.project.Project
  */
 class StandardLibrarySupportProvider : LibrarySupportProvider {
   private companion object {
-    val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(), "java.util.stream")
+    val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(),
+                                                             PackageChainDetector.forJavaStreams("java.util.stream"))
     val support: LibrarySupport = StandardLibrarySupport()
     val dsl: Dsl = DslImpl(JavaStatementFactory())
   }
@@ -26,7 +28,7 @@ class StandardLibrarySupportProvider : LibrarySupportProvider {
   override fun getLanguageId(): String = "JAVA"
 
   override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
-    JavaTraceExpressionBuilder(project, support.createHandlerFactory(dsl))
+    JavaTraceExpressionBuilder(project, support.createHandlerFactory(dsl), dsl)
 
   override fun getChainBuilder(): StreamChainBuilder = builder
 

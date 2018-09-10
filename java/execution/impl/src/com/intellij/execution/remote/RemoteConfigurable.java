@@ -16,6 +16,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.util.ui.JBUI;
@@ -123,6 +124,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private final JPanel          mainPanel;
   private final JTextArea       myArgsArea = new JTextArea();
   private final JComboBox<Mode> myModeCombo = new ComboBox<>(Mode.values());
+  private final JBCheckBox      myAutoRestart = new JBCheckBox("Auto restart");
   private final JComboBox<Transport> myTransportCombo = new ComboBox<>(Transport.values());
 
   private final ConfigurationModuleSelector myModuleSelector;
@@ -198,7 +200,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateArgsText(ddl.getChosenItem());
       }
     };
@@ -212,6 +214,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   }
 
   private void updateArgsText(@NotNull JDKVersionItem vi) {
+    myAutoRestart.setVisible(myModeCombo.getSelectedItem() == Mode.LISTEN);
     boolean useSockets = myTransportCombo.getSelectedItem() == Transport.SOCKET;
 
     RemoteConnection connection = new RemoteConnection(useSockets, myHostName.getText().trim(),
@@ -225,6 +228,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   @Override
   protected void resetEditorFrom(@NotNull RemoteConfiguration rc) {
     myModeCombo.setSelectedItem(rc.SERVER_MODE ? Mode.LISTEN : Mode.ATTACH);
+    myAutoRestart.setSelected(rc.AUTO_RESTART);
 
     if (SystemInfo.isWindows) {
       myTransportCombo.setSelectedItem(rc.USE_SOCKET_TRANSPORT ? Transport.SOCKET : Transport.SHMEM);
@@ -266,6 +270,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     }
 
     rc.SERVER_MODE = myModeCombo.getSelectedItem() == Mode.LISTEN;
+    rc.AUTO_RESTART = myAutoRestart.isVisible() && myAutoRestart.isSelected();
     myModuleSelector.applyTo(rc);
   }
 
@@ -298,10 +303,10 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     panel.add(myModeCombo, gc);
 
     gc.gridx++;
-    gc.weightx = 1.0;
     gc.gridwidth = 2;
-    gc.fill = GridBagConstraints.REMAINDER;
-    panel.add(new JPanel(), gc);
+    gc.fill = GridBagConstraints.NONE;
+    gc.insets = JBUI.insets(4, 20, 0, 8);
+    panel.add(myAutoRestart, gc);
 
     if (SystemInfo.isWindows) {
       JLabel addressLabel = createLabelFor("&Address:", myAddress);

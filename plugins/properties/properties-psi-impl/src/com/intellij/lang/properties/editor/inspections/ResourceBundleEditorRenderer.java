@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.SimpleTextAttributes;
@@ -54,8 +55,9 @@ public class ResourceBundleEditorRenderer extends NodeRenderer {
       final TextAttributesPresentation textAttributesPresentation = (TextAttributesPresentation)presentation;
       final String text = textAttributesPresentation.getPresentableText();
       if (text != null) {
-        final SimpleTextAttributes attr =
-          SimpleTextAttributes.fromTextAttributes(textAttributesPresentation.getTextAttributes(getColorsScheme()));
+        SimpleTextAttributes attr = SimpleTextAttributes.fromTextAttributes(
+          textAttributesPresentation.getTextAttributes(
+            EditorColorsManager.getInstance().getSchemeForCurrentUITheme()));
         append(text, new SimpleTextAttributes(attr.getBgColor(), attr.getFgColor(), attr.getWaveColor(),
                                               attr.getStyle() | SimpleTextAttributes.STYLE_OPAQUE));
         return true;

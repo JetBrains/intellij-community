@@ -79,20 +79,20 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     final PsiElement parent = myInitializer.getParent();
     if (!(parent instanceof PsiAssignmentExpression)) {
       if (initializers.length <= 0) return null;
-      return validateType(initializers[0].getType());
+      return validateType(initializers[0].getType(), parent);
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
     final PsiType type = assignmentExpression.getType();
     if (!(type instanceof PsiArrayType)) {
       if (initializers.length <= 0) return null;
-      return validateType(initializers[0].getType());
+      return validateType(initializers[0].getType(), parent);
     }
-    return validateType(((PsiArrayType)type).getComponentType());
+    return validateType(((PsiArrayType)type).getComponentType(), parent);
   }
 
-  private static PsiType validateType(PsiType type) {
+  private static PsiType validateType(PsiType type, @NotNull PsiElement context) {
     if (PsiType.NULL.equals(type)) return null;
-    return LambdaUtil.notInferredType(type) || !PsiTypesUtil.isDenotableType(type) ? null
+    return LambdaUtil.notInferredType(type) || !PsiTypesUtil.isDenotableType(type, context) ? null
                                                                                    : TypeConversionUtil.erasure(type);
   }
 

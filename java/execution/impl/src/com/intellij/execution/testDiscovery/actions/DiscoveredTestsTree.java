@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -30,18 +32,19 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 class DiscoveredTestsTree extends Tree implements DataProvider {
   private final DiscoveredTestsTreeModel myModel;
 
-  public DiscoveredTestsTree(String title) {
+  DiscoveredTestsTree(String title) {
     myModel = new DiscoveredTestsTreeModel();
     setModel(new AsyncTreeModel(myModel));
-    HintUpdateSupply.installSimpleHintUpdateSupply(this);
+    HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);
     TreeUIHelper.getInstance().installTreeSpeedSearch(this, o -> {
-      Object component = o.getLastPathComponent();
+      Object component = obj2psi(o.getLastPathComponent());
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
     }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
@@ -63,13 +66,19 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
           String name = node.getName();
           assert name != null;
           append(name);
-          if (node.isClass()) {
-            String packageName = node.getPackageName();
+          if (node instanceof DiscoveredTestsTreeModel.Node.Clazz) {
+            String packageName = ((DiscoveredTestsTreeModel.Node.Clazz)node).getPackageName();
             if (packageName != null) {
               append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             int testMethodCount = myModel.getChildren(value).size();
             append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          else if (node instanceof DiscoveredTestsTreeModel.Node.Method) {
+            boolean isParametrized = !((DiscoveredTestsTreeModel.Node.Method)node).getParameters().isEmpty();
+            if (isParametrized) {
+              append(FontUtil.spaceAndThinSpace() + "parametrized", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            }
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, false);
         }
@@ -79,18 +88,25 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       //TODO
       boolean myAlreadyDone;
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
-        if (!myAlreadyDone && !myModel.getTestClasses().isEmpty()) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
+        if (!myAlreadyDone && getTestCount() != 0) {
           myAlreadyDone = true;
-          EdtInvocationManager.getInstance().invokeLater(() -> TreeUtil.selectFirstNode(DiscoveredTestsTree.this));
+          EdtInvocationManager.getInstance().invokeLater(() -> {
+            TreeUtil.collapseAll(DiscoveredTestsTree.this, 0);
+            TreeUtil.selectFirstNode(DiscoveredTestsTree.this);
+          });
         }
       }
     });
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(this);
+    CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
+    CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
   }
 
-  public synchronized void addTest(@NotNull PsiClass testClass,
-                                   @NotNull PsiMethod testMethod) {
-    myModel.addTest(testClass, testMethod);
+  public void addTest(@NotNull PsiClass testClass,
+                      @NotNull PsiMethod testMethod,
+                      @Nullable String parameter) {
+    myModel.addTest(testClass, testMethod, parameter);
   }
 
   @NotNull
@@ -104,39 +120,54 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
                   .collect(Collectors.toSet());
   }
 
-  public DiscoveredTestsTreeModel.Node<PsiMethod>[] getTestMethods() {
+  @NotNull
+  TestMethodUsage[] getTestMethods() {
     return myModel.getTestMethods();
   }
 
+  @Nullable
   public PsiElement getSelectedElement() {
     TreePath path = getSelectionModel().getSelectionPath();
-    return ObjectUtils.tryCast(path == null ? null : path.getLastPathComponent(), PsiElement.class);
+    return obj2psi(path == null ? null : path.getLastPathComponent());
+  }
+
+  @Nullable
+  private static PsiElement obj2psi(@Nullable Object obj) {
+    return Optional.ofNullable(ObjectUtils.tryCast(obj, DiscoveredTestsTreeModel.Node.class))
+                   .map(n -> n.getPointer())
+                   .map(p -> p.getElement())
+                   .orElse(null);
   }
 
   public int getTestCount() {
     return myModel.getTestCount();
   }
 
+  public int getTestClassesCount() {
+    return myModel.getTestClassesCount();
+  }
+
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionModel().getSelectionPaths();
       List<PsiElement> result = ContainerUtil.newSmartList();
       TreeModel model = getModel();
       for (TreePath p : paths) {
-        Object e = p.getLastPathComponent();
+        Object o = p.getLastPathComponent();
+        PsiElement e = obj2psi(o);
         if (e instanceof PsiMethod) {
-          result.add((PsiMethod)e);
+          result.add(e);
         }
         else {
           int count = model.getChildCount(e);
-          if (count == 0 && e instanceof PsiElement) {
-            result.add((PsiElement)e);
+          if (count == 0 && e != null) {
+            result.add(e);
           }
           else {
             for (int i = 0; i < count; i++) {
-              ContainerUtil.addIfNotNull(result, ObjectUtils.tryCast(model.getChild(e, i), PsiMethod.class));
+              ContainerUtil.addIfNotNull(result, ObjectUtils.tryCast(obj2psi(model.getChild(e, i)), PsiMethod.class));
             }
           }
         }

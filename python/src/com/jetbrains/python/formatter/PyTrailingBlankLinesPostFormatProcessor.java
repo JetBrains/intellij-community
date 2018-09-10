@@ -15,16 +15,15 @@
  */
 package com.jetbrains.python.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
@@ -94,8 +93,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
 
   @NotNull
   private static TextRange replaceOrDeleteTrailingWhitespaces(@NotNull final PsiFile pyFile, @NotNull final TextRange whitespaceRange) {
-    final Project project = pyFile.getProject();
-    final PyCodeStyleSettings customSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
+    final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(pyFile, PyCodeStyleSettings.class);
     final boolean addLineFeed = customSettings.BLANK_LINE_AT_FILE_END || EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF();
     
     final String realWhitespace = whitespaceRange.substring(pyFile.getText());
@@ -103,7 +101,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
 
     // Do not add extra blank line in empty file
     if (!realWhitespace.equals(desiredWhitespace) && (desiredWhitespace.isEmpty() || whitespaceRange.getStartOffset() != 0)) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(pyFile.getProject());
       final Document document = documentManager.getDocument(pyFile);
       if (document != null) {
         documentManager.doPostponedOperationsAndUnblockDocument(document);

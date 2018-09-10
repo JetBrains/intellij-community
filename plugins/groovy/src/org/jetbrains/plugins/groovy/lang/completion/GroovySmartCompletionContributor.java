@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -83,7 +81,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters params,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
         if (position.getParent() instanceof GrLiteral) return;
@@ -130,7 +128,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, IN_CAST_PARENTHESES, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final GrTypeCastExpression parenthesizedExpression = ((GrTypeCastExpression)position.getParent().getParent().getParent());
@@ -149,7 +147,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.casting");
 
               final Editor editor = context.getEditor();
@@ -180,8 +178,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                 final ProcessingContext matchingContext,
-                                 @NotNull final CompletionResultSet result) {
+                                    @NotNull final ProcessingContext matchingContext,
+                                    @NotNull final CompletionResultSet result) {
         generateInheritorVariants(parameters, result.getPrefixMatcher(), lookupElement -> result.addElement(lookupElement));
       }
     });
@@ -189,7 +187,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, IN_ANNOTATION, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters params,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
 
@@ -266,7 +264,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         if (item.getObject() instanceof PsiClass) {
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
           });

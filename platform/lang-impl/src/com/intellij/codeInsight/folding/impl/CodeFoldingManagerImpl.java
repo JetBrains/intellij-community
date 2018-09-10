@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -14,7 +12,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
@@ -34,7 +32,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -63,21 +60,22 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void projectOpened() {
-    final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
+    final EditorMouseMotionListener myMouseMotionListener = new EditorMouseMotionListener() {
       LightweightHint myCurrentHint;
       FoldRegion myCurrentFold;
 
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
-        HintManager hintManager = HintManager.getInstance();
-        if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
-          return;
-        }
-
-        if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
         LightweightHint hint = null;
         try {
+          HintManager hintManager = HintManager.getInstance();
+          if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
+            return;
+          }
+
+          if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
+
           Editor editor = e.getEditor();
           if (PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) return;
 
@@ -112,17 +110,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
             // editor content, hence, we show max(2; available visual lines number) instead.
             // P.S. '2' is used here in assumption that many java methods have javadocs which first line is just '/**'.
             // So, it's not too useful to show only it even when available vertical space is not big enough.
-            int availableVisualLines = 2;
-            JComponent editorComponent = editor.getComponent();
-            Container editorComponentParent = editorComponent.getParent();
-            if (editorComponentParent != null) {
-              Container contentPane = editorComponent.getRootPane().getContentPane();
-              if (contentPane != null) {
-                int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
-                int visualLines = y / editor.getLineHeight();
-                availableVisualLines = Math.max(availableVisualLines, visualLines);
-              }
-            }
+            int availableVisualLines = EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor);
             int startVisualLine = editor.offsetToVisualPosition(textOffset).line;
             int desiredEndVisualLine = Math.max(0, editor.xyToVisualPosition(new Point(0, visibleArea.y)).line - 1);
             int endVisualLine = startVisualLine + availableVisualLines;

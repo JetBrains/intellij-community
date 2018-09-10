@@ -61,7 +61,7 @@ public abstract class SchemesToImportPopup<T> {
     private final JPanel myPanel = new JPanel(new BorderLayout());
     private final JLabel myNameLabel = new JLabel("", SwingConstants.LEFT);
 
-    public SchemesToImportListCellRenderer() {
+    SchemesToImportListCellRenderer() {
       myPanel.add(myNameLabel, BorderLayout.CENTER);
     }
 

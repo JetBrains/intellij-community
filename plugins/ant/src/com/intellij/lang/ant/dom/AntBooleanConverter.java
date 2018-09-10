@@ -35,6 +35,7 @@ public class AntBooleanConverter extends Converter<Boolean> {
     DEFAULT_VALUE = Boolean.valueOf(defaultValue);
   }
 
+  @Override
   public Boolean fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null || s.length() == 0) {
       return DEFAULT_VALUE;
@@ -42,6 +43,7 @@ public class AntBooleanConverter extends Converter<Boolean> {
     return "true".equalsIgnoreCase(s) || "yes".equalsIgnoreCase(s);
   }
 
+  @Override
   public String toString(@Nullable Boolean aBoolean, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {

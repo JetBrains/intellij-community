@@ -168,7 +168,7 @@ public class ActionCallback implements Disposable {
   }
 
   private static class ExecutedExecutionCallback extends ExecutionCallback {
-    public ExecutedExecutionCallback() {
+    ExecutedExecutionCallback() {
       super(0);
     }
 
@@ -262,15 +262,6 @@ public class ActionCallback implements Disposable {
   @NotNull
   public Runnable createSetDoneRunnable() {
     return () -> setDone();
-  }
-
-  /**
-   * @deprecated use {@link #notifyWhenRejected(ActionCallback)}
-   */
-  @NotNull
-  @Deprecated
-  public Runnable createSetRejectedRunnable() {
-    return () -> setRejected();
   }
 
   public boolean waitFor(long msTimeout) {

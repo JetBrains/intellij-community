@@ -511,6 +511,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
   }
 
+  @Override
   protected Sdk setupJdkForModule(final String moduleName) {
     final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
@@ -545,7 +546,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return counter;
   }
 
-  protected static Collection<UsageInfo> findUsages(PsiElement element) throws Exception {
+  protected static Collection<UsageInfo> findUsages(@NotNull PsiElement element) throws Exception {
     return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(element.getProject(), "", false) {
       @Override
       protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {

@@ -56,7 +56,7 @@ public class AddAllToFavoritesActionGroup extends ActionGroup implements DumbAwa
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(AddToFavoritesAction.canCreateNodes(e));
   }

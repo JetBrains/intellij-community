@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
@@ -37,7 +38,8 @@ public class WinIntelliJPopupBorder extends AbstractBorder implements UIResource
 
   private static Shape getBorderShape(Component c, Rectangle rect) {
     Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-    if ("ComboPopup.popup".equals(c.getName())) {
+    if ("ComboPopup.popup".equals(c.getName()) && c instanceof BasicComboPopup &&
+        ((BasicComboPopup)c).getClientProperty("JComboBox.isCellEditor") == Boolean.TRUE) {
       JBInsets.removeFrom(rect, JBUI.insets(0, 1));
     }
 

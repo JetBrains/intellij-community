@@ -16,6 +16,8 @@
 package com.intellij.execution.console;
 
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
@@ -78,11 +80,11 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
   }
 
   private void consoleNext() {
-    myHistoryController.getHistoryNext().actionPerformed(null);
+    myHistoryController.getHistoryNext().actionPerformed(AnActionEvent.createFromDataContext("test", null, DataContext.EMPTY_CONTEXT));
   }
 
   private void consolePrev() {
-    myHistoryController.getHistoryPrev().actionPerformed(null);
+    myHistoryController.getHistoryPrev().actionPerformed(AnActionEvent.createFromDataContext("test", null, DataContext.EMPTY_CONTEXT));
   }
 
   public void testNavigateUp() {
@@ -142,7 +144,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
 
   private static class MockExecutionActionHandler extends BaseConsoleExecuteActionHandler {
 
-    public MockExecutionActionHandler() {
+    MockExecutionActionHandler() {
       super(true);
     }
   }

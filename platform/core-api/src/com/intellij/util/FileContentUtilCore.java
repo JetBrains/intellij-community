@@ -66,7 +66,7 @@ public class FileContentUtilCore {
     });
   }
 
-  private static void saveOrReload(VirtualFile file, @NotNull Collection<VFilePropertyChangeEvent> events) {
+  private static void saveOrReload(VirtualFile file, @NotNull Collection<? super VFilePropertyChangeEvent> events) {
     if (file == null || file.isDirectory() || !file.isValid()) {
       return;
     }

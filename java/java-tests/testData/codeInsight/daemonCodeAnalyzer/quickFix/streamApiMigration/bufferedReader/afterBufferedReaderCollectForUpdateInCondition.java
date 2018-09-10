@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   List<String> test(BufferedReader br) throws IOException {
-      List<String> result = br.lines().map(String::trim).collect(Collectors.toList());
+    List<String> result = br.lines().map(String::trim).collect(Collectors.toList());
       return result;
   }
 }

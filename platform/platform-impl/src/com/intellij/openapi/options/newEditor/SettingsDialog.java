@@ -6,9 +6,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
@@ -17,7 +16,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +70,6 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     TransactionGuard.getInstance().submitTransactionAndWait(() -> super.show());
   }
 
-
   private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
@@ -87,7 +84,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor instanceof DataProvider) {
       DataProvider provider = (DataProvider)myEditor;
       return provider.getData(dataId);
@@ -121,6 +118,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return myEditor;
   }
 
+  @SuppressWarnings("unused") // used in Rider
   protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
     if (myEditor instanceof SettingsEditor) {
       ((SettingsEditor) myEditor).addOptionsListener(colleague);
@@ -141,29 +139,22 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     if (reset != null && myResetButtonNeeded) {
       actions.add(reset);
     }
-    String topic = getHelpTopic();
-    if (topic != null) {
+    if (getHelpId() != null) {
       actions.add(getHelpAction());
     }
     return actions.toArray(new Action[0]);
   }
 
-  protected String getHelpTopic() {
-    return myEditor.getHelpTopic();
-  }
-
+  @Nullable
   @Override
-  protected void doHelpAction() {
-    String topic = getHelpTopic();
-    if (topic != null) {
-      HelpManager.getInstance().invokeHelp(topic);
-    }
+  protected String getHelpId() {
+    return myEditor.getHelpTopic();
   }
 
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      ApplicationManager.getApplication().saveAll(true);
+      StoreUtil.saveProjectsAndApp(true);
       super.doOKAction();
     }
   }

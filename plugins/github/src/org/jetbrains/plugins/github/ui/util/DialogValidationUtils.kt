@@ -21,7 +21,7 @@ object DialogValidationUtils {
    * Stateful validator that checks that contents of [textField] are unique among [records]
    */
   class RecordUniqueValidator(private val textField: JTextField, private val message: String) : Validator {
-    var records = setOf<String>()
+    var records: Set<String> = setOf<String>()
 
     override fun invoke(): ValidationInfo? = if (records.contains(textField.text)) ValidationInfo(message, textField) else null
   }

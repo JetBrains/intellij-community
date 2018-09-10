@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -23,7 +23,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.util.List;
 import java.util.Map;
@@ -58,10 +58,10 @@ public class ChainCompletionContext {
   @NotNull
   private final CompilerReferenceServiceEx myRefServiceEx;
 
-  private final NotNullLazyValue<Set<LightRef>> myContextClassReferences = new NotNullLazyValue<Set<LightRef>>() {
+  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<Set<CompilerRef>>() {
     @NotNull
     @Override
-    protected Set<LightRef> compute() {
+    protected Set<CompilerRef> compute() {
       return getContextTypes()
         .stream()
         .map(PsiUtil::resolveClassInType)
@@ -70,7 +70,7 @@ public class ChainCompletionContext {
         .filter(Objects::nonNull)
         .mapToInt(c -> myRefServiceEx.getNameId(c))
         .filter(n -> n != 0)
-        .mapToObj(n -> new LightRef.JavaLightClassRef(n)).collect(Collectors.toSet());
+        .mapToObj(n -> new CompilerRef.JavaCompilerClassRef(n)).collect(Collectors.toSet());
     }
   };
 
@@ -125,7 +125,7 @@ public class ChainCompletionContext {
   }
 
   @NotNull
-  public Set<LightRef> getContextClassReferences() {
+  public Set<CompilerRef> getContextClassReferences() {
     return myContextClassReferences.getValue();
   }
 
@@ -156,7 +156,7 @@ public class ChainCompletionContext {
   }
 
   @Nullable
-  public PsiClass resolvePsiClass(LightRef.LightClassHierarchyElementDef aClass) {
+  public PsiClass resolvePsiClass(CompilerRef.CompilerClassHierarchyElementDef aClass) {
     int nameId = aClass.getName();
     if (myQualifierClassResolver.contains(nameId)) {
       return myQualifierClassResolver.get(nameId);

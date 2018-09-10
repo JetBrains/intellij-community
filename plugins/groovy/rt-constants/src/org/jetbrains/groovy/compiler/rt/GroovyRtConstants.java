@@ -41,6 +41,12 @@ public class GroovyRtConstants {
   public static final String JAVAC_COMPLETED = "Javac completed";
   public static final String BUILD_ABORTED = "Build aborted";
 
+  /**
+   * Older version of groovyc generated malformed annotations in stubs, so give a possibility to skip those
+   */
+  public static final String GROOVYC_LEGACY_REMOVE_ANNOTATIONS = "groovyc.remove.annotations.for.stub.generation";
+
   public static final String GROOVYC_ASM_RESOLVING_ONLY = "groovyc.asm.resolving.only";
   public static final String GROOVYC_CONFIG_SCRIPT = "groovyc.config.script";
+  public static final String GROOVY_TARGET_BYTECODE = "groovy.target.bytecode";
 }

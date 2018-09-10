@@ -17,6 +17,9 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -26,6 +29,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,11 +93,11 @@ public class UIUtil {
     else {
       ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
     }
-  
+
     TemplateEditorUtil.setHighlighter(editor, contextType);
 
     if (addToolTipForVariableHandler) {
-      SubstitutionShortInfoHandler.install(editor);
+      SubstitutionShortInfoHandler.install(editor, null);
     }
 
     return editor;
@@ -116,10 +120,19 @@ public class UIUtil {
 
   public static void setContent(final Editor editor, String text) {
     final String value = text != null ? text : "";
-
+    final Document document = editor.getDocument();
     CommandProcessor.getInstance().executeCommand(
-      editor.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
-        () -> editor.getDocument().replaceString(0, editor.getDocument().getTextLength(), value)),
+      editor.getProject(),
+      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
+      MODIFY_EDITOR_CONTENT, SS_GROUP);
+  }
+
+  public static void setContent(final EditorTextField editor, String text) {
+    final String value = text != null ? text : "";
+    final Document document = editor.getDocument();
+    CommandProcessor.getInstance().executeCommand(
+      editor.getProject(),
+      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
       MODIFY_EDITOR_CONTENT, SS_GROUP);
   }
 
@@ -168,12 +181,18 @@ public class UIUtil {
 
   @NotNull
   public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
-    final JLabel completeMatchInfo = new JLabel(AllIcons.RunConfigurations.Variables);
-    final Point location = completeMatchInfo.getLocation();
+    return installCompleteMatchInfo(new JLabel(AllIcons.Actions.ListFiles), configurationProducer);
+  }
+
+  @NotNull
+  public static JComponent installCompleteMatchInfo(JLabel completeMatchInfo,
+                                                    Producer<? extends Configuration> configurationProducer) {
+    final Rectangle bounds = completeMatchInfo.getBounds();
+    final Point location = new Point(bounds.x + (bounds.width / 2) , bounds.y);
     final JLabel label = new JLabel(SSRBundle.message("complete.match.variable.tooltip.message",
                                                       SSRBundle.message("no.constraints.specified.tooltip.message")));
     final IdeTooltip tooltip = new IdeTooltip(completeMatchInfo, location, label);
-    tooltip.setPreferredPosition(Balloon.Position.atRight).setCalloutShift(6).setHint(true).setExplicitClose(true);
+    tooltip.setHint(true).setExplicitClose(true);
 
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
@@ -189,6 +208,10 @@ public class UIUtil {
         }
         label.setText(SSRBundle.message("complete.match.variable.tooltip.message",
                                         SubstitutionShortInfoHandler.getShortParamString(constraint)));
+        tooltip.setPreferredPosition(Balloon.Position.below);
+        final Rectangle bounds = completeMatchInfo.getBounds();
+        final Point location = new Point(bounds.x + (bounds.width / 2) , bounds.y + bounds.height);
+        tooltip.setPoint(location);
         IdeTooltipManager.getInstance().show(tooltip, true);
         configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }
@@ -199,5 +222,28 @@ public class UIUtil {
       }
     });
     return completeMatchInfo;
+  }
+
+  public static EditorTextField createTextComponent(String text, Project project) {
+    return createEditorComponent(text, "1.txt", project);
+  }
+
+  public static EditorTextField createRegexComponent(String text, Project project) {
+    return createEditorComponent(text, "1.regexp", project);
+  }
+
+  public static EditorTextField createScriptComponent(String text, Project project) {
+    return createEditorComponent(text, "1.groovy", project);
+  }
+
+  @NotNull
+  public static EditorTextField createEditorComponent(String text, String fileName, Project project) {
+    return new EditorTextField(text, project, getFileType(fileName));
+  }
+
+  private static FileType getFileType(final String fileName) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
+    return fileType;
   }
 }

@@ -62,4 +62,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
+
+  @Test
+  fun testImports() = doTest("Simple/External.java")
 }

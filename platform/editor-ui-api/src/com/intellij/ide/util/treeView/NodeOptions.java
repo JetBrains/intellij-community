@@ -30,6 +30,13 @@ public interface NodeOptions {
   boolean isHideEmptyMiddlePackages();
 
   /**
+   * @return {@code true} if directories in a tree should be merged if possible
+   */
+  default boolean isCompactDirectories() {
+    return false;
+  }
+
+  /**
    * Gets the value of the "Show/Hide Library Contents" option.
    *
    * @return true if the library contents are shown, false otherwise.
@@ -42,12 +49,14 @@ public interface NodeOptions {
     private final boolean myFlattenPackages;
     private final boolean myAbbreviatePackageNames;
     private final boolean myHideEmptyMiddlePackages;
+    private final boolean myCompactDirectories;
     private final boolean myShowLibraryContents;
 
     public Immutable(NodeOptions options) {
       myFlattenPackages = options != null && options.isFlattenPackages();
       myAbbreviatePackageNames = options != null && options.isAbbreviatePackageNames();
       myHideEmptyMiddlePackages = options != null && options.isHideEmptyMiddlePackages();
+      myCompactDirectories = options != null && options.isCompactDirectories();
       myShowLibraryContents = options != null && options.isShowLibraryContents();
     }
 
@@ -67,6 +76,11 @@ public interface NodeOptions {
     }
 
     @Override
+    public boolean isCompactDirectories() {
+      return myCompactDirectories;
+    }
+
+    @Override
     public boolean isShowLibraryContents() {
       return myShowLibraryContents;
     }
@@ -79,6 +93,7 @@ public interface NodeOptions {
       return options.isFlattenPackages() == isFlattenPackages() &&
              options.isAbbreviatePackageNames() == isAbbreviatePackageNames() &&
              options.isHideEmptyMiddlePackages() == isHideEmptyMiddlePackages() &&
+             options.isCompactDirectories() == isCompactDirectories() &&
              options.isShowLibraryContents() == isShowLibraryContents();
     }
 
@@ -88,6 +103,7 @@ public interface NodeOptions {
       result = 31 * result + Boolean.hashCode(isFlattenPackages());
       result = 31 * result + Boolean.hashCode(isAbbreviatePackageNames());
       result = 31 * result + Boolean.hashCode(isHideEmptyMiddlePackages());
+      result = 31 * result + Boolean.hashCode(isCompactDirectories());
       result = 31 * result + Boolean.hashCode(isShowLibraryContents());
       return result;
     }

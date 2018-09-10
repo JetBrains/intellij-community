@@ -54,7 +54,8 @@ abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIcon
   }
 
   /**
-   * @see {@link #navigate(MouseEvent, PsiElement)} and {@link #MARKERS}
+   * @see #navigate(MouseEvent, PsiElement)
+   * @see #MARKERS
    */
   @TestOnly
   @Nullable

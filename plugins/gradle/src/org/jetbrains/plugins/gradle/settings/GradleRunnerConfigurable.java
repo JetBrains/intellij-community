@@ -34,7 +34,7 @@ public class GradleRunnerConfigurable implements Configurable {
   @Nullable
   @Override
   public String getHelpTopic() {
-    return "reference.settings.project.gradle.running";
+    return "reference.settingsdialog.project.gradle";
   }
 
   @Override
@@ -94,7 +94,7 @@ public class GradleRunnerConfigurable implements Configurable {
   }
 
   static class TestRunnerItem {
-    public TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
+    TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
       this.value = value;
     }
 

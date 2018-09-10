@@ -2,7 +2,7 @@ package com.siyeh.igtest.encapsulation.package_visible_inner_class;
 
 public class PackageVisibleInnerClassInspection<T>
 {
-    class Barangus
+    class <warning descr="Package-visible nested class 'Barangus'">Barangus</warning>
     {
 
         public Barangus(int val)

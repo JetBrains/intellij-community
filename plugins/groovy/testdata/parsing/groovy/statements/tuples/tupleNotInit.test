@@ -1,18 +1,19 @@
 def (a,b,c)
 -----
 Groovy script
-  Modifiers
-    PsiElement(def)('def')
-  PsiWhiteSpace(' ')
-  PsiElement(()('(')
-  Variable
-    PsiElement(identifier)('a')
-  PsiElement(,)(',')
-  Variable
-    PsiElement(identifier)('b')
-  PsiElement(,)(',')
-  Variable
-    PsiElement(identifier)('c')
-  PsiElement())(')')
-  PsiErrorElement:'=' expected
-    <empty list>
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Variable
+      PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    Variable
+      PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    Variable
+      PsiElement(identifier)('c')
+    PsiElement())(')')
+    PsiErrorElement:'=' expected
+      <empty list>

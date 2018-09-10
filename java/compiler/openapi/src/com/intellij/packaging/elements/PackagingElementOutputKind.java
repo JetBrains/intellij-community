@@ -15,13 +15,16 @@
  */
 package com.intellij.packaging.elements;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
 public class PackagingElementOutputKind {
-  public static final PackagingElementOutputKind DIRECTORIES_WITH_CLASSES = new PackagingElementOutputKind(true, false);
-  public static final PackagingElementOutputKind JAR_FILES = new PackagingElementOutputKind(false, true);
-  public static final PackagingElementOutputKind OTHER = new PackagingElementOutputKind(false, false);
+  @NotNull public static final PackagingElementOutputKind DIRECTORIES_WITH_CLASSES = new PackagingElementOutputKind(true, false);
+  @NotNull public static final PackagingElementOutputKind JAR_FILES = new PackagingElementOutputKind(false, true);
+  @NotNull public static final PackagingElementOutputKind OTHER = new PackagingElementOutputKind(false, false);
+
   private final boolean myContainsDirectoriesWithClasses;
   private final boolean myContainsJarFiles;
 

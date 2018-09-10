@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.model;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -20,7 +21,7 @@ public interface CppBinary extends Serializable {
    */
   String getVariantName();
 
-  Set<File> getSources();
+  Map<File, CppFileSettings> getSources();
 
   CompilerDetails getCompilerDetails();
 

@@ -18,7 +18,6 @@ package com.intellij.formatting.contextConfiguration;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -81,7 +80,6 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    UsageTrigger.trigger(ID);
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
     CodeStyleSettings settings = CodeStyle.getSettings(file);
@@ -109,7 +107,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     private final CodeStyleSettings mySettings;
 
 
-    public FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
+    FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
                                            @NotNull SelectedTextFormatter selectedTextFormatter,
                                            @NotNull Language language,
                                            CodeStyleSettings settings,
@@ -189,7 +187,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       private final int myEditorComponentWidth;
       private final int myEditorComponentHeight;
 
-      public DialogPositionProvider() {
+      DialogPositionProvider() {
         myContentComponent = myEditor.getContentComponent();
         myEditorComponent = myEditor.getComponent();
 
@@ -328,7 +326,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     }
 
     private class ApplyToSettingsAndReformat extends AbstractAction {
-      public ApplyToSettingsAndReformat() {
+      ApplyToSettingsAndReformat() {
         super("Save and Reformat File");
       }
 

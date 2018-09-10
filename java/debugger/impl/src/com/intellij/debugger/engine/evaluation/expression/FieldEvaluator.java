@@ -35,7 +35,7 @@ public class FieldEvaluator implements Evaluator {
     TargetClassFilter ALL = refType -> true;
     boolean acceptClass(ReferenceType refType);
   }
-  
+
   public FieldEvaluator(Evaluator objectEvaluator, TargetClassFilter filter, @NonNls String fieldName) {
     myObjectEvaluator = objectEvaluator;
     myFieldName = fieldName;
@@ -95,6 +95,7 @@ public class FieldEvaluator implements Evaluator {
     return null;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     myEvaluatedField = null;
     myEvaluatedQualifier = null;
@@ -152,18 +153,22 @@ public class FieldEvaluator implements Evaluator {
     throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
   }
 
+  @Override
   public Modifier getModifier() {
     Modifier modifier = null;
     if (myEvaluatedField != null && (myEvaluatedQualifier instanceof ClassType || myEvaluatedQualifier instanceof ObjectReference)) {
       modifier = new Modifier() {
+        @Override
         public boolean canInspect() {
           return myEvaluatedQualifier instanceof ObjectReference;
         }
 
+        @Override
         public boolean canSetValue() {
           return true;
         }
 
+        @Override
         public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
           if (myEvaluatedQualifier instanceof ReferenceType) {
             ClassType classType = (ClassType)myEvaluatedQualifier;
@@ -175,10 +180,12 @@ public class FieldEvaluator implements Evaluator {
           }
         }
 
+        @Override
         public Type getExpectedType() throws ClassNotLoadedException {
           return myEvaluatedField.type();
         }
 
+        @Override
         public NodeDescriptorImpl getInspectItem(Project project) {
           if(myEvaluatedQualifier instanceof ObjectReference) {
             return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
@@ -202,6 +209,7 @@ public class FieldEvaluator implements Evaluator {
       myQName = qName;
     }
 
+    @Override
     public boolean acceptClass(final ReferenceType refType) {
       return refType.name().equals(myQName);
     }
@@ -214,6 +222,7 @@ public class FieldEvaluator implements Evaluator {
       myLocalClassShortName = localClassShortName;
     }
 
+    @Override
     public boolean acceptClass(final ReferenceType refType) {
       final String name = refType.name();
       final int index = name.lastIndexOf(myLocalClassShortName);

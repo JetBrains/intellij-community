@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ArrayUtil
 
 /**
  * @author peter
@@ -95,7 +96,7 @@ class Foo {
 
   @Override
   protected void tearDown() throws Exception {
-    NullableNotNullManager.getInstance(project).notNulls = NullableNotNullManager.getInstance(project).predefinedNotNulls as String[]
+    NullableNotNullManager.getInstance(project).notNulls = ArrayUtil.EMPTY_STRING_ARRAY
     NullableNotNullManager.getInstance(project).defaultNotNull = AnnotationUtil.NOT_NULL
 
     super.tearDown()

@@ -20,6 +20,7 @@ public abstract class JdkVersionDetector {
   }
 
   /** @deprecated use {@link #detectJdkVersionInfo(String)} (to be removed in IDEA 2019) */
+  @Deprecated
   @Nullable
   @SuppressWarnings("deprecation")
   public String detectJdkVersion(@NotNull String homePath) {
@@ -28,6 +29,7 @@ public abstract class JdkVersionDetector {
   }
 
   /** @deprecated use {@link #detectJdkVersionInfo(String, ActionRunner)} (to be removed in IDEA 2019) */
+  @Deprecated
   @Nullable
   @SuppressWarnings("deprecation")
   public String detectJdkVersion(@NotNull String homePath, @NotNull ActionRunner runner) {
@@ -61,11 +63,13 @@ public abstract class JdkVersionDetector {
     }
 
     /** @deprecated use {@link #version} (to be removed in IDEA 2019) */
+    @Deprecated
     public String getVersion() {
       return formatVersionString(version);
     }
 
     /** @deprecated use {@link #bitness} (to be removed in IDEA 2019) */
+    @Deprecated
     public Bitness getBitness() {
       return bitness;
     }

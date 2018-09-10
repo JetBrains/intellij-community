@@ -117,7 +117,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       private int myInsideGetData = 0;
 
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         myInsideGetData++;
         try {
           if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -142,7 +142,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myToolwindowIdToBaseIconMap.put(toolWindowId, toolWindowIcon);
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
           Content content = event.getContent();
           Executor contentExecutor = executor;
@@ -432,9 +432,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
-    if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited() ) {
-      //content.setExecutionId(executionId);
-      return oldDescriptor;
+    if (oldDescriptor != null) {
+      if (oldDescriptor.isContentReuseProhibited()) {
+        return null;
+      }
+      if (descriptor == null || oldDescriptor.getReusePolicy().canBeReusedBy(descriptor)) {
+        return oldDescriptor;
+      }
     }
 
     return null;
@@ -612,7 +616,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void contentRemoved(final ContentManagerEvent event) {
+    public void contentRemoved(@NotNull final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
         Disposer.dispose(this);
@@ -640,7 +644,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void contentRemoveQuery(final ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         final boolean canClose = closeQuery(false);
         if (!canClose) {
@@ -650,7 +654,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void projectClosed(final Project project) {
+    public void projectClosed(@NotNull final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
         Disposer.dispose(this); // Dispose content even if content manager refused to.

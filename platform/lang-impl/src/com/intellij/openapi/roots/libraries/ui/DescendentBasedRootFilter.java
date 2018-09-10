@@ -33,9 +33,9 @@ import java.util.function.Predicate;
  * @author nik
  */
 public class DescendentBasedRootFilter extends RootFilter {
-  private final Predicate<VirtualFile> myCondition;
+  private final Predicate<? super VirtualFile> myCondition;
 
-  public DescendentBasedRootFilter(OrderRootType rootType, boolean jarDirectory, String presentableRootTypeName, Predicate<VirtualFile> condition) {
+  public DescendentBasedRootFilter(OrderRootType rootType, boolean jarDirectory, String presentableRootTypeName, Predicate<? super VirtualFile> condition) {
     super(rootType, jarDirectory, presentableRootTypeName);
     myCondition = condition;
   }

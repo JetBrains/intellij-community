@@ -2,18 +2,20 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest
+import org.jetbrains.plugins.groovy.util.TestUtils
 
-class Groovy30HighlightingTest extends GrHighlightingTestBase {
-  @Override
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_3_0
-  }
+@CompileStatic
+class Groovy30HighlightingTest extends GroovyVersionBasedTest {
+
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
+  final String basePath = TestUtils.testDataPath + 'highlighting/v30/'
 
   void 'test default method in interfaces'() {
-    testHighlighting '''
+    highlightingTest '''
 import groovy.transform.CompileStatic
 
 interface I {
@@ -32,8 +34,8 @@ interface I2 {
   }
 
   void 'test default modifier'() {
-    testHighlighting '''
-default<error descr="':' expected"> </error>interface I {
+    highlightingTest '''
+default interface I {
 }
 
 trait T {
@@ -51,7 +53,7 @@ class C {
   }
 
   void 'test sam with default modifier'() {
-    testHighlighting '''
+    highlightingTest '''
 interface I {
     int foo() 
     default int bar() {
@@ -61,5 +63,10 @@ interface I {
 
 I i = {3}
 '''
+  }
+
+  void 'test constructor reference static access'() {
+    fixture.enableInspections GrUnresolvedAccessInspection
+    highlightingTest()
   }
 }

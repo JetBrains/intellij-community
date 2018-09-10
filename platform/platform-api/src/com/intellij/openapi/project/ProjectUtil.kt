@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -31,6 +17,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
@@ -129,7 +116,7 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
  *
  *  @throws IllegalStateException if called on the default project, since there is no sense in "project dir" in that case.
  */
-fun Project.guessProjectDir() : VirtualFile {
+fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
     throw IllegalStateException("Not applicable for default project")
   }
@@ -139,7 +126,7 @@ fun Project.guessProjectDir() : VirtualFile {
   module?.rootManager?.contentRoots?.firstOrNull()?.let {
     return it
   }
-  return this.baseDir!!
+  return LocalFileSystem.getInstance().findFileByPath(basePath!!)
 }
 
 fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
@@ -182,13 +169,13 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
 /**
  * Add one-time projectOpened listener.
  */
-fun Project.runWhenProjectOpened(handler: Runnable) = runWhenProjectOpened(this) { handler.run() }
+fun Project.runWhenProjectOpened(handler: Runnable): Unit = runWhenProjectOpened(this) { handler.run() }
 
 /**
  * Add one-time first projectOpened listener.
  */
 @JvmOverloads
-fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) = runWhenProjectOpened(project) { handler.accept(it) }
+fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>): Unit = runWhenProjectOpened(project) { handler.accept(it) }
 
 /**
  * Add one-time projectOpened listener.

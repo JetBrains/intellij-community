@@ -103,7 +103,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
       }
-      else if (getPosition(editor, offset + 1).matchesRule(
+      else if (afterOptionalWhitespaceOnSameLine(editor, offset).matchesRule(
         position -> position.isAt(BlockClosingBrace) && !position.after().afterOptional(Whitespace).isAt(Comma))) {
         return myFactory.createIndentCalculator(
           NONE,
@@ -189,6 +189,15 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
     //return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_BEFORE); /* TO CHECK UNCOVERED CASES */
     return null;
+  }
+
+  private SemanticEditorPosition afterOptionalWhitespaceOnSameLine(@NotNull Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    if (position.isAt(Whitespace)) {
+      if (position.hasLineBreaksAfter(offset)) return position;
+      position.moveAfter();
+    }
+    return position;
   }
 
   /**

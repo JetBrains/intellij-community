@@ -64,14 +64,14 @@ public class BuildArtifactAction extends DumbAwareAction {
     super("Build Artifacts...", "Select and build artifacts configured in the project", null);
   }
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(project != null && !ArtifactUtil.getArtifactWithOutputPaths(project).isEmpty());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 
@@ -295,7 +295,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     private final Project myProject;
     private final ArtifactAwareProjectSettingsService mySettingsService;
 
-    public ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
+    ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,
                               Project project, final ArtifactAwareProjectSettingsService settingsService) {
       super("Build Artifact", artifacts);

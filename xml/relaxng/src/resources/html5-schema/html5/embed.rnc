@@ -22,6 +22,7 @@ namespace local = ""
 		&	img.attrs.width?
 		&	img.attrs.usemap?
 		&	img.attrs.ismap?
+		&	img.attrs.decoding?
 		&	img.attrs.border? # obsolete
 		&	referrerpolicy?
 		&	embedded.content.attrs.crossorigin?
@@ -60,6 +61,13 @@ namespace local = ""
 		img.attrs.ismap =
 			attribute ismap {
 				w:string "ismap" | w:string ""
+			}
+		img.attrs.decoding =
+			attribute decoding {
+				(	string "sync"
+				|	string "async"
+				|	string "auto"
+				)
 			}
 		img.attrs.border =
 			attribute border {
@@ -438,6 +446,7 @@ namespace local = ""
 		&	iframe.attrs.allowfullscreen?
 		&	iframe.attrs.allowpaymentrequest?
 		&	iframe.attrs.allowusermedia?
+		&	iframe.attrs.allow?
 		&	referrerpolicy?
 		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
@@ -481,6 +490,10 @@ namespace local = ""
 			attribute allowusermedia {
 				w:string "allowusermedia" | w:string ""
 			} & v5only
+		iframe.attrs.allow =
+			attribute allow {
+				common.data.feature-policy
+			}
 	iframe.inner =
 		empty
 

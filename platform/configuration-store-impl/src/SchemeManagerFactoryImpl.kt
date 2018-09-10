@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val ROOT_CONFIG = "\$ROOT_CONFIG$"
+const val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
 
 sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
@@ -139,6 +139,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @TestOnly
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
-    override fun pathToFile(path: String) = basePath.resolve(path)!!
+    override fun pathToFile(path: String): Path = basePath.resolve(path)!!
   }
 }

@@ -63,6 +63,7 @@ public abstract class InspectionValidator {
   /**
    * @deprecated Provide inspection classes via {@link #getInspectionToolClasses(CompileContext)} instead.
    */
+  @Deprecated
   @SafeVarargs
   protected InspectionValidator(@NotNull final String description,
                                 @NotNull final String progressIndicatorText,

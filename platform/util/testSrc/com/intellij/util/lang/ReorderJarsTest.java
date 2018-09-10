@@ -59,13 +59,9 @@ public class ReorderJarsTest {
   public void testReordering() throws IOException {
     String path = getTestDataPath() + "/ide/plugins/reorderJars";
 
-    JBZipFile zipFile1 = new JBZipFile(path + "/annotations.jar");
-    try {
+    try (JBZipFile zipFile1 = new JBZipFile(path + "/annotations.jar")) {
       List<JBZipEntry> entries = zipFile1.getEntries();
       System.out.println(entries);
-    }
-    finally {
-      zipFile1.close();
     }
 
     ReorderJarsMain.main(new String[]{path + "/order.txt", path, myTempDirectory.getPath()});
@@ -77,8 +73,7 @@ public class ReorderJarsTest {
     assertEquals("annotations.jar", file.getName());
 
     byte[] data;
-    JBZipFile zipFile2 = new JBZipFile(file);
-    try {
+    try (JBZipFile zipFile2 = new JBZipFile(file)) {
       List<JBZipEntry> entries = zipFile2.getEntries();
       System.out.println(entries);
       assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
@@ -89,12 +84,8 @@ public class ReorderJarsTest {
       assertEquals("org/jetbrains/annotations/NotNull.class", entries.get(2).getName());
       assertEquals("META-INF/", entries.get(3).getName());
     }
-    finally {
-      zipFile2.close();
-    }
 
-    ZipFile zipFile3 = new ZipFile(file);
-    try {
+    try (ZipFile zipFile3 = new ZipFile(file)) {
       JarMemoryLoader loader = JarMemoryLoader.load(zipFile3, file.toURI().toURL(), null);
       assertNotNull(loader);
       Resource resource = loader.getResource("org/jetbrains/annotations/Nullable.class");
@@ -102,9 +93,6 @@ public class ReorderJarsTest {
       byte[] bytes = resource.getBytes();
       assertEquals(548, bytes.length);
       assertTrue(Arrays.equals(data, bytes));
-    }
-    finally {
-      zipFile3.close();
     }
   }
 
@@ -119,15 +107,11 @@ public class ReorderJarsTest {
     File file = files[0];
     assertEquals("zkm.jar", file.getName());
 
-    JBZipFile zipFile = new JBZipFile(file);
-    try {
+    try (JBZipFile zipFile = new JBZipFile(file)) {
       List<JBZipEntry> entries = zipFile.getEntries();
       System.out.println(entries);
       assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
       assertEquals("META-INF/plugin.xml", entries.get(1).getName());
-    }
-    finally {
-      zipFile.close();
     }
   }
 }

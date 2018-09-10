@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
 
 class SetRepositoryChangesGroupingAction : SetChangesGroupingAction() {
-  override val groupingKey get() = "repository"
+  override val groupingKey: String get() = "repository"
 
-  override fun update(e: AnActionEvent) = super.update(e).also {
+  override fun update(e: AnActionEvent): Unit = super.update(e).also {
     val colorManager = e.project?.let(::getColorManager)
 
     e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && colorManager?.isMultipleRoots ?: false

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -51,7 +37,6 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -59,6 +44,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -83,6 +69,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
@@ -110,8 +99,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -253,7 +242,7 @@ public class DiffUtil {
   public static boolean canNavigateToFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
-    if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
+    if (OutsidersPsiFileSupport.isOutsiderFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
@@ -561,11 +550,11 @@ public class DiffUtil {
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
                                        boolean readOnly) {
-    if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
-
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
+    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
+    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
+    panel.add(titleLabel, BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -685,7 +674,7 @@ public class DiffUtil {
 
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
     boolean hadFocus = context.isFocusedInWindow();
-    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+//    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
     if (hadFocus) context.requestFocusInWindow();
   }
@@ -823,6 +812,15 @@ public class DiffUtil {
   // Document modification
   //
 
+  public static boolean isSomeRangeSelected(@NotNull Editor editor, @NotNull Condition<? super BitSet> condition) {
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    if (carets.size() != 1) return true;
+    Caret caret = carets.get(0);
+    if (caret.hasSelection()) return true;
+
+    return condition.value(getSelectedLines(editor));
+  }
+
   @NotNull
   public static BitSet getSelectedLines(@NotNull Editor editor) {
     Document document = editor.getDocument();
@@ -855,13 +853,21 @@ public class DiffUtil {
       lines.set(line1, line2 + 1);
       if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
     }
-    else if (expectedCaretOffset == -1) {
-      lines.set(caret.getLogicalPosition().line);
-      if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
-    }
     else {
-      lines.set(document.getLineNumber(expectedCaretOffset));
-      if (expectedCaretOffset == document.getTextLength()) lines.set(totalLines);
+      int offset;
+      VisualPosition visualPosition;
+      if (expectedCaretOffset == -1) {
+        offset = caret.getOffset();
+        visualPosition = caret.getVisualPosition();
+      }
+      else {
+        offset = expectedCaretOffset;
+        visualPosition = editor.offsetToVisualPosition(expectedCaretOffset);
+      }
+
+      Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
+      lines.set(pair.first.line, pair.second.line);
+      if (offset == document.getTextLength()) lines.set(totalLines);
     }
   }
 
@@ -1199,6 +1205,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
                                                @NotNull Equality<ThreeSide> equality,
+                                               @Nullable Equality<ThreeSide> trueEquality,
                                                @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
@@ -1229,7 +1236,14 @@ public class DiffUtil {
       else { // -==, ==-, ===
         boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
         boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
-        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft && unchangedRight) {
+          assert trueEquality != null;
+          boolean trueUnchangedLeft = trueEquality.equals(ThreeSide.BASE, ThreeSide.LEFT);
+          boolean trueUnchangedRight = trueEquality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+          assert !trueUnchangedLeft || !trueUnchangedRight;
+          return new MergeConflictType(TextDiffType.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
+        }
 
         if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
         if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
@@ -1247,12 +1261,24 @@ public class DiffUtil {
   }
 
   @NotNull
+  public static MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
+                                                          @NotNull List<? extends CharSequence> sequences,
+                                                          @NotNull List<LineOffsets> lineOffsets,
+                                                          @NotNull ComparisonPolicy policy) {
+    return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        null,
+                        () -> canResolveLineConflict(fragment, sequences, lineOffsets));
+  }
+
+  @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
                                                    @NotNull List<? extends CharSequence> sequences,
                                                    @NotNull List<LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1, side2),
                         () -> canResolveLineConflict(fragment, sequences, lineOffsets));
   }
 
@@ -1305,14 +1331,15 @@ public class DiffUtil {
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2),
+                        null,
                         BooleanGetter.FALSE);
   }
 
-  private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
-                                                  @NotNull List<? extends CharSequence> texts,
-                                                  @NotNull ComparisonPolicy policy,
-                                                  @NotNull ThreeSide side1,
-                                                  @NotNull ThreeSide side2) {
+  public static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
+                                                 @NotNull List<? extends CharSequence> texts,
+                                                 @NotNull ComparisonPolicy policy,
+                                                 @NotNull ThreeSide side1,
+                                                 @NotNull ThreeSide side2) {
     int start1 = fragment.getStartOffset(side1);
     int end1 = fragment.getEndOffset(side1);
     int start2 = fragment.getStartOffset(side2);
@@ -1463,7 +1490,7 @@ public class DiffUtil {
    */
   private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
     if (window instanceof IdeFrameImpl) return false;
-    if (modalOnly && window instanceof Frame) return false;
+    if (modalOnly && canBeHiddenBehind(window)) return false;
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
@@ -1472,6 +1499,21 @@ public class DiffUtil {
 
     window.setVisible(false);
     window.dispose();
+    return true;
+  }
+
+  private static boolean canBeHiddenBehind(@NotNull Window window) {
+    if (!(window instanceof Frame)) return false;
+    if (SystemInfo.isMac) {
+      if (window instanceof IdeFrame) {
+        // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
+        Project project = ((IdeFrame)window).getProject();
+        IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
+        if (projectFrame instanceof IdeFrameEx) {
+          return !((IdeFrameEx)projectFrame).isInFullScreen();
+        }
+      }
+    }
     return true;
   }
 
@@ -1620,7 +1662,7 @@ public class DiffUtil {
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;
 
-    public SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

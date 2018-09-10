@@ -162,17 +162,9 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
                         JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
                       }) int classNamesInJavadoc,
                       String fileName) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-
-    final int oldClassNamesInJavadoc = javaSettings.CLASS_NAMES_IN_JAVADOC;
-    try {
-      javaSettings.CLASS_NAMES_IN_JAVADOC = classNamesInJavadoc;
-      doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix"), before, after, fileName);
-    }
-    finally {
-      javaSettings.CLASS_NAMES_IN_JAVADOC = oldClassNamesInJavadoc;
-    }
+    final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.CLASS_NAMES_IN_JAVADOC = classNamesInJavadoc;
+    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix"), before, after, fileName);
   }
 
   @Override

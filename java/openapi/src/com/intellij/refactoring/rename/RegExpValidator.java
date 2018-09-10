@@ -30,6 +30,7 @@ public class RegExpValidator implements Condition<String> {
     myPattern = pattern;
   }
 
+  @Override
   public boolean value(final String object) {
     return object.matches(myPattern);
   }

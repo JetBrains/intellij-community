@@ -1,6 +1,6 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.run;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -23,7 +23,7 @@ import com.intellij.remote.RemoteSdkCredentialsHolder;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.DebugAwareConfiguration;
@@ -32,7 +32,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
 
 public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRunConfiguration> implements DebugAwareConfiguration {
 
@@ -50,6 +54,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     setUnbufferedEnv();
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getConfigurationModule().getModule();
     if (module == null) {
@@ -58,10 +63,12 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     return new IpnbCommandLineState(this, env);
   }
 
+  @Override
   protected SettingsEditor<IpnbRunConfiguration> createConfigurationEditor() {
     return new IpnbConfigurationEditor(this);
   }
 
+  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     myAdditionalOptions = JDOMExternalizerUtil.readField(element, ATTR_ADDITIONAL_OPTIONS);
@@ -71,6 +78,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     myPort = port != null && port.length() > 0 ? port : null;
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, ATTR_ADDITIONAL_OPTIONS, myAdditionalOptions);
@@ -78,6 +86,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     JDOMExternalizerUtil.writeField(element, ATTR_PORT, myPort);
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final Module module = getConfigurationModule().getModule();
@@ -95,9 +104,12 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     if (RemoteSdkCredentialsHolder.isRemoteSdk(sdk.getHomePath())) {
       throw new RuntimeConfigurationError("Please select local python interpreter");
     }
-    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+    final List<PyPackage> packages = packageManager.getPackages();
+
     final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
     final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
+
     if (ipythonPackage == null && jupyterPackage == null) {
       throw new RuntimeConfigurationError("Install Jupyter Notebook to the interpreter of the current project.",
                                           () -> ProgressManager.getInstance().run(new Task.Backgroundable(getProject(),
@@ -109,12 +121,16 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
                                                 if (version != null) {
                                                   final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
                                                   if (level.isAtLeast(LanguageLevel.PYTHON33)) {
-                                                    PyPackageManager.getInstance(sdk).install("jupyter");
+                                                    packageManager.install("jupyter");
                                                   }
                                                   else {
-                                                    PyPackageManager.getInstance(sdk).install(Lists.newArrayList(
-                                                      PyRequirement.fromLine("ipython==5"), PyRequirement.fromLine("jupyter")),
-                                                                                              Lists.newArrayList());
+                                                    packageManager.install(
+                                                      Arrays.asList(
+                                                        pyRequirement("ipython", PyRequirementRelation.EQ, "5"),
+                                                        pyRequirement("jupyter")
+                                                      ),
+                                                      Collections.emptyList()
+                                                    );
                                                   }
                                                 }
                                               }

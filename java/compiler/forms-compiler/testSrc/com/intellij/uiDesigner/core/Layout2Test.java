@@ -44,6 +44,8 @@ public final class Layout2Test extends TestCase{
     panel.add(button2, new GridConstraints(2,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     assertEquals(20, panel.getPreferredSize().height);
     assertEquals(50, panel.getPreferredSize().width);
     

@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -77,7 +78,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     private final String myName2;
     private final Boolean myEquals;
 
-    public EqualsReplaceableByObjectsCallFix(String name1, String name2, Boolean equals) {
+    EqualsReplaceableByObjectsCallFix(String name1, String name2, Boolean equals) {
       myName1 = name1;
       myName2 = name2;
       myEquals = equals;
@@ -141,15 +142,15 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
           return;
         }
       }
-      if (!checkNotNull) {
-        if (qualifierExpression == null) {
-          return;
-        }
-        final PsiExpression argumentExpression = getArgumentExpression(expression);
-        if (argumentExpression == null) {
-          return;
-        }
-        registerError(expression, qualifierExpression.getText(), argumentExpression.getText(), true);
+      if (qualifierExpression == null) {
+        return;
+      }
+      final PsiExpression argumentExpression = getArgumentExpression(expression);
+      if (argumentExpression == null) {
+        return;
+      }
+      if (isOnTheFly()) {
+        registerError(expression, ProblemHighlightType.INFORMATION, qualifierExpression.getText(), argumentExpression.getText(), true);
       }
     }
 
@@ -219,7 +220,12 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
             final PsiExpression argumentExpression = getArgumentExpression(methodCallExpression);
             if (argumentExpression != null) {
               final PsiExpression expressionToReplace = checkEqualityBefore(expression, equal, qualifierExpression, argumentExpression);
-              registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              ProblemHighlightType highlightType = checkNotNull || expression != expressionToReplace ?
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
+              if (isOnTheFly() || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+                registerError(expressionToReplace, highlightType,
+                              nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              }
               return true;
             }
           }
@@ -318,7 +324,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression expression;
     final boolean isEqual;
 
-    public Negated(@NotNull PsiExpression expression, boolean isEqual) {
+    Negated(@NotNull PsiExpression expression, boolean isEqual) {
       this.expression = expression;
       this.isEqual = isEqual;
     }
@@ -342,7 +348,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression compared;
     final boolean isEqual;
 
-    public NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
+    NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
       this.compared = compared;
       this.isEqual = isEqual;
     }
@@ -367,7 +373,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression qualifier;
     final boolean isEqual;
 
-    public EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
+    EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
       this.argument = argument;
       this.qualifier = qualifier;
       this.isEqual = isEqual;
@@ -416,21 +422,11 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
 
     @Override
-    protected Match prefixExpressionsMatch(@NotNull PsiPrefixExpression prefixExpression1,
-                                           @NotNull PsiPrefixExpression prefixExpression2) {
-      if (isSideEffectUnaryOperator(prefixExpression1.getOperationTokenType())) {
+    protected Match unaryExpressionsMatch(@NotNull PsiUnaryExpression unaryExpression1, @NotNull PsiUnaryExpression unaryExpression2) {
+      if (isSideEffectUnaryOperator(unaryExpression1.getOperationTokenType())) {
         return EXACT_MISMATCH;
       }
-      return super.prefixExpressionsMatch(prefixExpression1, prefixExpression2);
-    }
-
-    @Override
-    protected Match postfixExpressionsMatch(@NotNull PsiPostfixExpression postfixExpression1,
-                                            @NotNull PsiPostfixExpression postfixExpression2) {
-      if (isSideEffectUnaryOperator(postfixExpression1.getOperationTokenType())) {
-        return EXACT_MISMATCH;
-      }
-      return super.postfixExpressionsMatch(postfixExpression1, postfixExpression2);
+      return super.unaryExpressionsMatch(unaryExpression1, unaryExpression2);
     }
 
     private static boolean isSideEffectUnaryOperator(IElementType tokenType) {

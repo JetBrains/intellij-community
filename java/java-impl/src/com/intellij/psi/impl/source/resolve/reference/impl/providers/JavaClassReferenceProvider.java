@@ -51,31 +51,28 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> ALLOW_DOLLAR_NAMES = new CustomizationKey<>("ALLOW_DOLLAR_NAMES");
   public static final CustomizationKey<Boolean> ALLOW_WILDCARDS = new CustomizationKey<>("ALLOW_WILDCARDS");
 
-  /** @deprecated use {@code SUPER_CLASSES} instead */
-  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
-  /** @deprecated use {@code IMPORTS} instead */
-  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
+  /** @deprecated use {@link #SUPER_CLASSES} instead */
+  @Deprecated public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
+  /** @deprecated use {@link #IMPORTS} instead */
+  @Deprecated public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
   @Nullable
   private Map<CustomizationKey, Object> myOptions;
 
   private boolean myAllowEmpty;
 
-  private final ParameterizedCachedValueProvider<List<PsiPackage>, Project> myPackagesProvider =
-    new ParameterizedCachedValueProvider<List<PsiPackage>, Project>() {
-      @Override
-      public CachedValueProvider.Result<List<PsiPackage>> compute(Project project) {
-        PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
-        List<PsiPackage> psiPackages = JBIterable.of("").append(IMPORTS.getValue(myOptions))
-          .filterMap(o -> o == null ? null : JavaPsiFacade.getInstance(project).findPackage(o))
-          .flatten(o -> JBIterable.of(o.getSubPackages()))
-          .filter(o -> nameHelper.isIdentifier(o.getName(), PsiUtil.getLanguageLevel(o)))
-          .toList();
-        return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    };
+  private final ParameterizedCachedValueProvider<List<PsiPackage>, Project> myPackagesProvider = project -> {
+    PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
+    List<PsiPackage> psiPackages = JBIterable.of("").append(IMPORTS.getValue(myOptions))
+                                             .filterMap(o -> o == null ? null : JavaPsiFacade.getInstance(project).findPackage(o))
+                                             .flatten(o -> JBIterable.of(o.getSubPackages()))
+                                             .filter(o -> nameHelper.isIdentifier(o.getName(), PsiUtil.getLanguageLevel(o)))
+                                             .toList();
+    return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
+  };
 
-  private static final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> PACKAGES_KEY = Key.create("default packages");
+  // non-static: different for each provider with its unique settings
+  private final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> myPackagesKey = Key.create("default packages");
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
@@ -150,7 +147,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   @NotNull
   protected List<PsiPackage> getDefaultPackages(@NotNull Project project) {
-    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, PACKAGES_KEY, myPackagesProvider, false, project);
+    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, myPackagesKey, myPackagesProvider, false, project);
   }
 
   @Override

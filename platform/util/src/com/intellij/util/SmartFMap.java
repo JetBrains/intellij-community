@@ -19,6 +19,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Generated;
 import java.util.*;
 
 /**
@@ -109,7 +110,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return this;
   }
 
-  public SmartFMap<K, V> plusAll(Map<K, V> m) {
+  public SmartFMap<K, V> plusAll(Map<? extends K, ? extends V> m) {
     SmartFMap<K, V> result = this;
     for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
       result = result.plus(e.getKey(), e.getValue());
@@ -117,7 +118,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return result;
   }
 
-  public SmartFMap<K, V> minusAll(@NotNull Collection<K> keys) {
+  public SmartFMap<K, V> minusAll(@NotNull Collection<? extends K> keys) {
     SmartFMap<K, V> result = this;
     for (K key : keys) {
       result = result.minus(key);
@@ -261,6 +262,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   // copied from AbstractMap
+  @Generated("from AbstractMap")
   public String toString() {
     Iterator<Entry<K,V>> i = entrySet().iterator();
     if (! i.hasNext())

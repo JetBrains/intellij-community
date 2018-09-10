@@ -1,10 +1,15 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.jna.DisposableMemory
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 private val LIBRARY by lazy { Native.loadLibrary("secret-1", SecretLibrary::class.java) }
 
@@ -35,25 +40,26 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    checkError("secret_password_lookup_sync") { errorRef ->
-      val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-      if (attributes.userName == null) {
-        LIBRARY.secret_password_lookup_sync(scheme, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
-          // Secret Service doesn't allow to get attributes, so, we store joined data
-          return splitData(it)
+    return CompletableFuture.supplyAsync(Supplier {
+      checkError("secret_password_lookup_sync") { errorRef ->
+        val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
+        if (attributes.userName == null) {
+          LIBRARY.secret_password_lookup_sync(scheme, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
+            // Secret Service doesn't allow to get attributes, so, we store joined data
+            return@Supplier splitData(it)
+          }
+        }
+        else {
+          LIBRARY.secret_password_lookup_sync(scheme, null, errorRef,
+                                              serviceAttributeNamePointer, serviceNamePointer,
+                                              accountAttributeNamePointer, stringPointer(attributes.userName!!.toByteArray()),
+                                              null)?.let {
+            return@Supplier splitData(it)
+          }
         }
       }
-      else {
-        LIBRARY.secret_password_lookup_sync(scheme, null, errorRef,
-                                            serviceAttributeNamePointer, serviceNamePointer,
-                                            accountAttributeNamePointer, stringPointer(attributes.userName!!.toByteArray()),
-                                            null)?.let {
-          return splitData(it)
-        }
-      }
-    }
-
-    return null
+    }, AppExecutorUtil.getAppExecutorService())
+      .get(30 /* on Linux first access to keychain can cause system unlock dialog, so, allow user to input data */, TimeUnit.SECONDS)
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
@@ -114,6 +120,7 @@ private inline fun <T> checkError(method: String, task: (errorRef: Array<GErrorS
 }
 
 // we use sync API to simplify - client will use postponed write
+@Suppress("FunctionName")
 private interface SecretLibrary : Library {
   fun secret_schema_new(name: String, flags: Int, vararg attributes: Any?): Pointer
 

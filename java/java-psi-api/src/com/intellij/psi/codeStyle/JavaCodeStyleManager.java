@@ -24,9 +24,6 @@ public abstract class JavaCodeStyleManager {
   public static final int DO_NOT_ADD_IMPORTS = 0x1000;
   public static final int INCOMPLETE_CODE = 0x2000;
 
-  /** @deprecated use {@link #INCOMPLETE_CODE} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "SpellCheckingInspection"}) public static final int UNCOMPLETE_CODE = INCOMPLETE_CODE;
-
   public abstract boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass);
   @NotNull
   public abstract PsiElement shortenClassReferences(@NotNull PsiElement element,
@@ -202,7 +199,7 @@ public abstract class JavaCodeStyleManager {
    * @return the generated unique name
    */
   @NotNull
-  public abstract String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused);
+  public abstract String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused);
 
   /**
    * Suggests a unique name for the variable used at the specified location.

@@ -167,7 +167,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   private static class ExternalEnhancerProcessHandler extends EnhancerProcessHandlerBase {
     private final CompileContext myContext;
 
-    public ExternalEnhancerProcessHandler(Process process, List<String> commandLine, CompileContext context) {
+    ExternalEnhancerProcessHandler(Process process, List<String> commandLine, CompileContext context) {
       super(process, ParametersListUtil.join(commandLine), null);
       myContext = context;
     }

@@ -75,6 +75,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
     return new MavenRunnerParameters(true, f.getParent().getPath(), f.getName(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
   }
 
+  @Override
   public int compareTo(Object o) {
     return PREFERED;
   }

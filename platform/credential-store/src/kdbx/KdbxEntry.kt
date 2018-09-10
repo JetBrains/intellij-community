@@ -22,7 +22,7 @@ import org.jdom.Element
 
 private const val VALUE_ELEMENT_NAME = "Value"
 
-class KdbxEntry(private val element: Element, private val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
+internal class KdbxEntry(private val element: Element, private val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
   @Volatile var title: String? = element.removeProperty("Title")
     set(value) {
       if (field != value) {
@@ -41,7 +41,7 @@ class KdbxEntry(private val element: Element, private val database: KeePassDatab
       }
     }
 
-  @Volatile var password =  element.removeProperty("Password")?.let(::SecureString)
+  @Volatile var password: SecureString? =  element.removeProperty("Password")?.let(::SecureString)
     set(value) {
       if (field != value) {
         field = value

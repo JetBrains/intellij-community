@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -63,7 +64,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     appendDescriptors(root, descriptors, new HashSet<>());
   }
 
-  private void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
+  private static void appendDescriptors(final PsiElement element, List<? super FoldingDescriptor> descriptors, Set<? super PsiElement> usedComments) {
     ASTNode node = element.getNode();
     if (node == null) return;
     IElementType type = node.getElementType();
@@ -74,10 +75,16 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
     }
     // comments
-    if ((type.equals(GroovyTokenTypes.mML_COMMENT) || type.equals(GroovyDocElementTypes.GROOVY_DOC_COMMENT)) &&
+    if (type.equals(GroovyTokenTypes.mML_COMMENT) &&
         isMultiline(element) &&
         isWellEndedComment(element)) {
-      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, "/*...*/",
+                                                 isFileHeader(node) && JavaCodeFoldingSettings.getInstance().isCollapseFileHeader(), Collections.emptySet()));
+    }
+    if (type.equals(GroovyDocElementTypes.GROOVY_DOC_COMMENT) &&
+        isMultiline(element) &&
+        isWellEndedComment(element)) {
+      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, "/**...*/", isFileHeader(node) ? JavaCodeFoldingSettings.getInstance().isCollapseFileHeader() : JavaCodeFoldingSettings.getInstance().isCollapseJavadocs(), Collections.emptySet()));
     }
 
     if (type.equals(GroovyTokenTypes.mSL_COMMENT) && usedComments.add(element) && !isCustomRegionElement(element)) {
@@ -94,7 +101,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
       if (end != null) {
         final TextRange range = new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
-        descriptors.add(new FoldingDescriptor(element, range));
+        descriptors.add(new NamedFoldingDescriptor(node, range, null, "...", isFileHeader(node) ? JavaCodeFoldingSettings.getInstance().isCollapseFileHeader() : JavaCodeFoldingSettings.getInstance().isCollapseEndOfLineComments(), Collections.emptySet()));
       }
     }
 
@@ -111,7 +118,36 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
   }
 
-  private static void collapseBlock(List<FoldingDescriptor> descriptors, PsiElement psi) {
+  private static boolean isCollapseBlock(@NotNull ASTNode node) {
+    IElementType type = node.getElementType();
+    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+    if ((type == GroovyElementTypes.OPEN_BLOCK || type == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() ==
+                                                                                                                                    GroovyElementTypes.METHOD_DEFINITION) {
+      return settings.isCollapseMethods();
+    }
+
+    if (type == GroovyElementTypes.CLOSABLE_BLOCK) {
+      return settings.isCollapseAnonymousClasses();
+    }
+
+    if (type == GroovyElementTypes.CLASS_BODY) {
+      final PsiElement parent = node.getPsi().getParent();
+      if (parent instanceof PsiClass) {
+        if (parent instanceof PsiAnonymousClass) {
+          return settings.isCollapseAnonymousClasses();
+        }
+        if (((PsiClass)parent).getContainingClass() != null) {
+          return settings.isCollapseInnerClasses();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static void collapseBlock(List<? super FoldingDescriptor> descriptors, @NotNull PsiElement psi) {
+    ASTNode node = psi.getNode();
+    boolean collapse = isCollapseBlock(node);
     if (psi instanceof GrCodeBlock) {
       final int lineFeedCount = StringUtil.countChars(psi.getText(), '\n');
       if (lineFeedCount <= 2) {
@@ -120,17 +156,16 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         if (lbrace != null && rbrace != null) {
           final PsiElement next = lbrace.getNextSibling();
           final PsiElement prev = rbrace.getPrevSibling();
-          if (next != null && PsiImplUtil.isWhiteSpaceOrNls(next) &&
-              prev != null && PsiImplUtil.isWhiteSpaceOrNls(prev)) {
+          if (PsiImplUtil.isWhiteSpaceOrNls(next) && PsiImplUtil.isWhiteSpaceOrNls(prev)) {
             final FoldingGroup group = FoldingGroup.newGroup("block_group");
-            descriptors.add(new NamedFoldingDescriptor(psi, lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
-            descriptors.add(new NamedFoldingDescriptor(psi, prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
+            descriptors.add(new NamedFoldingDescriptor(node, new TextRange(lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset()), group, "{", collapse, Collections.emptySet()));
+            descriptors.add(new NamedFoldingDescriptor(node, new TextRange(prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset()), group, "}", collapse, Collections.emptySet()));
             return;
           }
         }
       }
     }
-    descriptors.add(new FoldingDescriptor(psi, psi.getTextRange()));
+    descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, "{...}", collapse, Collections.emptySet()));
   }
 
   private static boolean isSingleHighLevelClassBody(PsiElement element) {
@@ -146,11 +181,11 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     return file instanceof GroovyFile && ((GroovyFile)file).getClasses().length == 1;
   }
 
-  private static void addFoldingForStrings(List<FoldingDescriptor> descriptors, ASTNode node) {
+  private static void addFoldingForStrings(List<? super FoldingDescriptor> descriptors, ASTNode node) {
     if (!isMultiLineStringLiteral(node)) return;
 
     if (!node.getElementType().equals(GroovyElementTypes.GSTRING) && !node.getElementType().equals(GroovyElementTypes.REGEX)) {
-      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, multiLineStringLiteralPlaceholder(node), false, Collections.emptySet()));
       return;
     }
 
@@ -159,11 +194,9 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
     final GrStringInjection[] injections = grString.getInjections();
     if (injections.length == 0) {
-      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      descriptors.add(new NamedFoldingDescriptor(node, node.getTextRange(), null, multiLineStringLiteralPlaceholder(node), false, Collections.emptySet()));
       return;
     }
-    final String start_quote = GrStringUtil.getStartQuote(node.getText());
-    final String end_quote = GrStringUtil.getEndQuote(node.getText());
     final FoldingGroup group = FoldingGroup.newGroup("GString");
     final TextRange nodeRange = node.getTextRange();
     int startOffset = nodeRange.getStartOffset();
@@ -171,26 +204,27 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     GrStringInjection injection = injections[0];
     TextRange injectionRange = injection.getTextRange();
     if (startOffset + 1 < injectionRange.getStartOffset()) {
-      descriptors.add(new NamedFoldingDescriptor(node, startOffset, injectionRange.getStartOffset(), group, start_quote));
+      final String start_quote = GrStringUtil.getStartQuote(node.getText());
+      descriptors.add(new NamedFoldingDescriptor(node, new TextRange(startOffset, injectionRange.getStartOffset()), group, start_quote, false, Collections.emptySet()));
     }
 
-    final String placeholder = " ";
     startOffset = injectionRange.getEndOffset();
     for (int i = 1; i < injections.length; i++) {
       injection = injections[i];
       injectionRange = injection.getTextRange();
       final int endOffset = injectionRange.getStartOffset();
       if (endOffset - startOffset >= 2) {
-        descriptors.add(new NamedFoldingDescriptor(injection.getNode().getTreePrev(), startOffset, endOffset, group, placeholder));
+        descriptors.add(new NamedFoldingDescriptor(injection.getNode().getTreePrev(), new TextRange(startOffset, endOffset), group, " ", false, Collections.emptySet()));
       }
       startOffset = injectionRange.getEndOffset();
     }
     if (startOffset + 1 < nodeRange.getEndOffset()) {
-      descriptors.add(new NamedFoldingDescriptor(node.getLastChildNode(), startOffset, nodeRange.getEndOffset(), group, end_quote));
+      final String end_quote = GrStringUtil.getEndQuote(node.getText());
+      descriptors.add(new NamedFoldingDescriptor(node.getLastChildNode(), new TextRange(startOffset, nodeRange.getEndOffset()), group, end_quote, false, Collections.emptySet()));
     }
   }
 
-  private static void processImports(final List<FoldingDescriptor> descriptors, GrImportStatement[] imports) {
+  private static void processImports(final List<? super FoldingDescriptor> descriptors, GrImportStatement[] imports) {
     if (imports.length < 2) return;
 
     PsiElement first = imports[0];
@@ -206,7 +240,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         int end = marker.getTextRange().getEndOffset();
         int tail = "import ".length();
         if (start + tail < end && !JavaFoldingBuilderBase.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
-          FoldingDescriptor descriptor = new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end));
+          FoldingDescriptor descriptor = new NamedFoldingDescriptor(first.getNode(), new TextRange(start + tail, end), null, "...", JavaCodeFoldingSettings.getInstance().isCollapseImports(), Collections
+            .emptySet());
           // imports are often added/removed automatically, so we enable autoupdate of folded region for foldings even if it's collapsed
           descriptor.setCanBeRemovedWhenCollapsed(true);
           descriptors.add(descriptor);
@@ -229,76 +264,32 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   @Nullable
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    final IElementType elemType = node.getElementType();
-    if (TokenSets.BLOCK_SET.contains(elemType) || elemType == GroovyElementTypes.CLOSABLE_BLOCK) {
-      return "{...}";
-    }
-    if (elemType.equals(GroovyTokenTypes.mML_COMMENT)) {
-      return "/*...*/";
-    }
-    if (elemType.equals(GroovyDocElementTypes.GROOVY_DOC_COMMENT)) {
-      return "/**...*/";
-    }
-    if (GroovyElementTypes.IMPORT_STATEMENT.equals(elemType)) {
-      return "...";
-    }
-    if (isMultiLineStringLiteral(node)) {
-      final String start_quote = GrStringUtil.getStartQuote(node.getText());
-      final String end_quote = GrStringUtil.getEndQuote(node.getText());
-      return start_quote + "..." + end_quote;
-    }
     return null;
+  }
+
+  @NotNull
+  private static String multiLineStringLiteralPlaceholder(@NotNull ASTNode node) {
+    final String start_quote = GrStringUtil.getStartQuote(node.getText());
+    final String end_quote = GrStringUtil.getEndQuote(node.getText());
+    return start_quote + "..." + end_quote;
+  }
+
+  private static boolean isFileHeader(ASTNode node) {
+    PsiElement element = node.getPsi();
+    PsiElement parent = element.getParent();
+    if (parent instanceof GroovyFile) {
+      PsiElement firstChild = parent.getFirstChild();
+      if (firstChild instanceof PsiWhiteSpace) {
+        firstChild = firstChild.getNextSibling();
+      }
+      return element.equals(firstChild);
+    }
+
+    return false;
   }
 
   @Override
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
-    final JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-    if ( node.getElementType() == GroovyElementTypes.IMPORT_STATEMENT){
-      return settings.isCollapseImports();
-    }
-
-    if (node.getElementType() == GroovyDocElementTypes.GROOVY_DOC_COMMENT || node.getElementType() == GroovyTokenTypes.mML_COMMENT) {
-      PsiElement element = node.getPsi();
-      PsiElement parent = element.getParent();
-      if (parent instanceof GroovyFile) {
-        PsiElement firstChild = parent.getFirstChild();
-        if (firstChild instanceof PsiWhiteSpace) {
-          firstChild = firstChild.getNextSibling();
-        }
-        if (element.equals(firstChild)) {
-          return settings.isCollapseFileHeader();
-        }
-      }
-      if (node.getElementType() == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
-        return settings.isCollapseJavadocs();
-      }
-    }
-
-    if ((node.getElementType() == GroovyElementTypes.OPEN_BLOCK || node.getElementType() == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() ==
-                                                                                                                                    GroovyElementTypes.METHOD_DEFINITION) {
-      return settings.isCollapseMethods();
-    }
-
-    if (node.getElementType() == GroovyElementTypes.CLOSABLE_BLOCK) {
-      return settings.isCollapseAnonymousClasses();
-    }
-
-    if (node.getElementType() == GroovyElementTypes.CLASS_BODY) {
-      final PsiElement parent = node.getPsi().getParent();
-      if (parent instanceof PsiClass) {
-        if (parent instanceof PsiAnonymousClass) {
-          return settings.isCollapseAnonymousClasses();
-        }
-        if (((PsiClass)parent).getContainingClass() != null) {
-          return settings.isCollapseInnerClasses();
-        }
-      }
-    }
-
-    if (node.getElementType() == GroovyTokenTypes.mSL_COMMENT) {
-      return settings.isCollapseEndOfLineComments();
-    }
-
     return false;
   }
 

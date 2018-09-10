@@ -37,7 +37,7 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   ASTNode getNameNode();
 
   @Nullable
-  PyType getReturnStatementType(TypeEvalContext typeEvalContext);
+  PyType getReturnStatementType(@NotNull TypeEvalContext context);
 
   /**
    * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..

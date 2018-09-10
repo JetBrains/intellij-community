@@ -174,7 +174,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     private final Item myValue;
     private final ItemType myItemType;
 
-    public SingleValue(Item value, ItemType itemType) {
+    SingleValue(Item value, ItemType itemType) {
       myValue = value;
       myItemType = itemType;
     }
@@ -192,7 +192,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     private final String myValue;
     private final ItemType myItemType;
 
-    public SequenceValue(Item value, SequenceIterator it, ItemType type) throws XPathException {
+    SequenceValue(Item value, SequenceIterator it, ItemType type) throws XPathException {
       String s = "(" + value.getStringValue() + ", " + it.current().getStringValue();
       while (it.next() != null) {
         s += ", " + it.current().getStringValue();
@@ -226,7 +226,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
 
     private final StyleElement myElement;
 
-    public EvalContext(final StyleElement element) {
+    EvalContext(final StyleElement element) {
       super(element);
       myElement = element;
     }
@@ -291,7 +291,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       private final FunctionLibrary myLibrary;
       private final PrincipalStylesheetModule myModule;
 
-      public FunctionLibraryWrapper(StyleElement element) {
+      FunctionLibraryWrapper(StyleElement element) {
         myLibrary = element.getStaticContext().getFunctionLibrary();
         myModule = element.getPrincipalStylesheetModule();
       }
@@ -337,7 +337,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
   private static class ExpressionFacade implements ValueFacade {
     private final Expression myExpression;
 
-    public ExpressionFacade(Expression expression) {
+    ExpressionFacade(Expression expression) {
       myExpression = expression;
     }
 
@@ -353,7 +353,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
   private static class GlobalVariableFacade implements ValueFacade {
     private final GlobalVariable myVariable;
 
-    public GlobalVariableFacade(GlobalVariable variable) {
+    GlobalVariableFacade(GlobalVariable variable) {
       myVariable = variable;
     }
 
@@ -381,7 +381,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
   private static class LocalVariableFacade implements ValueFacade {
     private final ValueRepresentation myValue;
 
-    public LocalVariableFacade(ValueRepresentation value) {
+    LocalVariableFacade(ValueRepresentation value) {
       myValue = value;
     }
 
@@ -410,7 +410,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     private final String myError;
     private final ValueFacade myFacade;
 
-    public ErrorValue(String error, ValueFacade facade) {
+    ErrorValue(String error, ValueFacade facade) {
       myError = error;
       myFacade = facade;
     }

@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -18,8 +17,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
+import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
@@ -65,13 +68,24 @@ public class GradleRunnerUtil {
   @Nullable
   public static String resolveProjectPath(@NotNull Module module) {
     final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-    String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (rootProjectPath == null || projectPath == null) return null;
-    if (!FileUtil.isAncestor(rootProjectPath, projectPath, false)) {
-      projectPath = rootProjectPath;
+
+    GradleProjectSettings projectSettings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(rootProjectPath);
+    if (projectSettings != null &&
+        projectSettings.getCompositeBuild() != null &&
+        projectSettings.getCompositeBuild().getCompositeDefinitionSource() == CompositeDefinitionSource.SCRIPT) {
+      List<BuildParticipant> buildParticipants = projectSettings.getCompositeBuild().getCompositeParticipants();
+      String compositeProjectPath = buildParticipants.stream()
+                                                     .filter(participant -> participant.getProjects().contains(projectPath))
+                                                     .findFirst()
+                                                     .map(BuildParticipant::getRootPath)
+                                                     .orElse(null);
+      if (compositeProjectPath != null) {
+        return compositeProjectPath;
+      }
     }
-    return projectPath;
+    return rootProjectPath;
   }
 
   public static boolean isFromGroovyGradleScript(@Nullable Location location) {

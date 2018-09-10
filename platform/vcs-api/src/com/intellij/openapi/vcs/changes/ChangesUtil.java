@@ -105,12 +105,12 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<Change> changes, @NotNull Project project) {
+  public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
     return ContainerUtil.map2SetNotNull(changes, change -> getVcsForChange(change, project));
   }
 
   @NotNull
-  public static Set<AbstractVcs> getAffectedVcsesForFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project) {
+  public static Set<AbstractVcs> getAffectedVcsesForFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
     return ContainerUtil.map2SetNotNull(files, file -> getVcsForFile(file, project));
   }
 
@@ -138,7 +138,7 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static Stream<FilePath> getPaths(@NotNull Stream<Change> changes) {
+  public static Stream<FilePath> getPaths(@NotNull Stream<? extends Change> changes) {
     return changes.flatMap(ChangesUtil::getPathsCaseSensitive);
   }
 
@@ -152,14 +152,14 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static Stream<VirtualFile> getFiles(@NotNull Stream<Change> changes) {
+  public static Stream<VirtualFile> getFiles(@NotNull Stream<? extends Change> changes) {
     return getPaths(changes)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }
 
   @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<? extends Change> changes) {
     return changes
       .map(ChangesUtil::getAfterPath)
       .filter(Objects::nonNull)
@@ -167,11 +167,6 @@ public class ChangesUtil {
       .filter(Objects::nonNull);
   }
 
-  /**
-   * @deprecated Use {@link ChangesUtil#getFiles(Stream)}.
-   */
-  @SuppressWarnings("unused") // Required for compatibility with external plugins.
-  @Deprecated
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);
@@ -183,7 +178,7 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<VirtualFile> files) {
+  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
     return files
       .filter(file -> !file.isDirectory())
       .map(file -> new OpenFileDescriptor(project, file))
@@ -299,11 +294,11 @@ public class ChangesUtil {
     AbstractVcs getVcsFor(@NotNull T item);
   }
 
-  public static <T> void processItemsByVcs(@NotNull Collection<T> items,
-                                           @NotNull VcsSeparator<T> separator,
+  public static <T> void processItemsByVcs(@NotNull Collection<? extends T> items,
+                                           @NotNull VcsSeparator<? super T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
     Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
-      () -> StreamEx.of(items)
+      () -> StreamEx.<T>of(items)
         .mapToEntry(separator::getVcsFor, identity())
         .nonNullKeys()
         .grouping()
@@ -313,19 +308,19 @@ public class ChangesUtil {
   }
 
   public static void processChangesByVcs(@NotNull Project project,
-                                         @NotNull Collection<Change> changes,
+                                         @NotNull Collection<? extends Change> changes,
                                          @NotNull PerVcsProcessor<Change> processor) {
     processItemsByVcs(changes, change -> getVcsForChange(change, project), processor);
   }
 
   public static void processVirtualFilesByVcs(@NotNull Project project,
-                                              @NotNull Collection<VirtualFile> files,
+                                              @NotNull Collection<? extends VirtualFile> files,
                                               @NotNull PerVcsProcessor<VirtualFile> processor) {
     processItemsByVcs(files, file -> getVcsForFile(file, project), processor);
   }
 
   public static void processFilePathsByVcs(@NotNull Project project,
-                                           @NotNull Collection<FilePath> files,
+                                           @NotNull Collection<? extends FilePath> files,
                                            @NotNull PerVcsProcessor<FilePath> processor) {
     processItemsByVcs(files, filePath -> getVcsForFile(filePath.getIOFile(), project), processor);
   }
@@ -337,13 +332,13 @@ public class ChangesUtil {
       .collect(toList());
   }
 
-  public static boolean hasFileChanges(@NotNull Collection<Change> changes) {
+  public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {
     return changes.stream()
       .map(ChangesUtil::getFilePath)
       .anyMatch(path -> !path.isDirectory());
   }
 
-  public static void markInternalOperation(@NotNull Iterable<Change> changes, boolean set) {
+  public static void markInternalOperation(@NotNull Iterable<? extends Change> changes, boolean set) {
     for (Change change : changes) {
       VirtualFile file = change.getVirtualFile();
       if (file != null) {
@@ -364,7 +359,7 @@ public class ChangesUtil {
    * Find common ancestor for changes (included both before and after files)
    */
   @Nullable
-  public static File findCommonAncestor(@NotNull Collection<Change> changes) {
+  public static File findCommonAncestor(@NotNull Collection<? extends Change> changes) {
     File ancestor = null;
     for (Change change : changes) {
       File currentChangeAncestor = getCommonBeforeAfterAncestor(change);

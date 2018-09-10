@@ -48,14 +48,8 @@ public class BuildTargetsState {
     myModel = model;
     myBuildRootIndex = buildRootIndex;
     File targetTypesFile = getTargetTypesFile();
-    try {
-      DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)));
-      try {
-        myMaxTargetId.set(input.readInt());
-      }
-      finally {
-        input.close();
-      }
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)))) {
+      myMaxTargetId.set(input.readInt());
     }
     catch (IOException e) {
       LOG.debug("Cannot load " + targetTypesFile + ":" + e.getMessage(), e);

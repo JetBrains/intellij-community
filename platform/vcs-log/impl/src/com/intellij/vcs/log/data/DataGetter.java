@@ -25,11 +25,10 @@ import java.util.List;
 
 public interface DataGetter<T extends VcsShortCommitDetails> {
   @NotNull
-  T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes);
+  T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes);
 
-  void loadCommitsData(@NotNull List<Integer> hashes,
-                       @NotNull Consumer<List<T>> consumer,
-                       @Nullable ProgressIndicator indicator);
+  void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
+                       @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator);
 
   @Nullable
   T getCommitDataIfAvailable(int hash);

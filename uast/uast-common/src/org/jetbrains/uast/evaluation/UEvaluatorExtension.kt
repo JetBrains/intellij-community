@@ -28,7 +28,7 @@ interface UEvaluatorExtension {
       ExtensionPointName.create<UEvaluatorExtension>("org.jetbrains.uast.evaluation.UEvaluatorExtension")
   }
 
-  infix fun UValue.to(state: UEvaluationState) = UEvaluationInfo(this, state)
+  infix fun UValue.to(state: UEvaluationState): UEvaluationInfo = UEvaluationInfo(this, state)
 
   val language: Language
 

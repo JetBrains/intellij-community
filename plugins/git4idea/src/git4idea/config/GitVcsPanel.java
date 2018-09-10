@@ -48,8 +48,8 @@ import static com.intellij.util.containers.ContainerUtil.sorted;
  */
 public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSettingsHolder> {
 
-  private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
-  private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
+  private static final String IDEA_SSH_NAME = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
+  private static final String NATIVE_SSH_NAME = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
 
   @NotNull private final Project myProject;
   @NotNull private final GitExecutableManager myExecutableManager;
@@ -60,10 +60,11 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JComponent myRootPanel;
   private TextFieldWithBrowseButton myGitField;
   private JBCheckBox myProjectGitPathCheckBox;
-  private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
+  private JComboBox<String> mySSHExecutableComboBox; // Type of SSH executable to use
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncControl;
   private JCheckBox myAutoCommitOnCherryPick;
+  private JCheckBox myAddCherryPickSuffix;
   private JBCheckBox myWarnAboutCrlf;
   private JCheckBox myWarnAboutDetachedHead;
   private JTextField myProtectedBranchesField;
@@ -81,9 +82,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
     myExecutableManager = executableManager;
-    mySSHExecutableComboBox.addItem(IDEA_SSH);
-    mySSHExecutableComboBox.addItem(NATIVE_SSH);
-    mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
+    mySSHExecutableComboBox.addItem(IDEA_SSH_NAME);
+    mySSHExecutableComboBox.addItem(NATIVE_SSH_NAME);
+    mySSHExecutableComboBox.setSelectedItem(IDEA_SSH_NAME);
     mySSHExecutableComboBox
       .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
     myTestButton.addActionListener(e -> testExecutable());
@@ -187,10 +188,11 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     String projectSettingsPathToGit = projectSettings.getPathToGit();
     myGitField.setText(ObjectUtils.coalesce(projectSettingsPathToGit, myApplicationGitPath));
     myProjectGitPathCheckBox.setSelected(projectSettingsPathToGit != null);
-    mySSHExecutableComboBox.setSelectedItem(projectSettings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    mySSHExecutableComboBox.setSelectedItem(applicationSettings.isUseIdeaSsh() ? IDEA_SSH_NAME : NATIVE_SSH_NAME);
     myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
     mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
     myAutoCommitOnCherryPick.setSelected(projectSettings.isAutoCommitOnCherryPick());
+    myAddCherryPickSuffix.setSelected(projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits());
     myWarnAboutCrlf.setSelected(projectSettings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
@@ -215,10 +217,11 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     GitSharedSettings sharedSettings = settings.getSharedSettings();
 
     return isGitPathModified(applicationSettings, projectSettings) ||
-           (projectSettings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
+           applicationSettings.isUseIdeaSsh() != IDEA_SSH_NAME.equals(mySSHExecutableComboBox.getSelectedItem()) ||
            !projectSettings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
             projectSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
+            projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits() != myAddCherryPickSuffix.isSelected() ||
             projectSettings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
             projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
             projectSettings.shouldPreviewPushOnCommitAndPush() != myPreviewPushOnCommitAndPush.isSelected() ||
@@ -250,13 +253,14 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
       projectSettings.setPathToGit(null);
     }
 
-    applicationSettings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
+    applicationSettings.setIdeaSsh(IDEA_SSH_NAME.equals(mySSHExecutableComboBox.getSelectedItem()) ?
                                    GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
                                    GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
 
     projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     projectSettings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
+    projectSettings.setAddSuffixToCherryPicks(myAddCherryPickSuffix.isSelected());
     projectSettings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     projectSettings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
     projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());

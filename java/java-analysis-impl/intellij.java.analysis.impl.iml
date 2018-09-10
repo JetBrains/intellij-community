@@ -22,5 +22,6 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
   </component>
 </module>

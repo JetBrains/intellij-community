@@ -10,7 +10,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -26,14 +26,10 @@ import java.io.IOException
 import java.net.URI
 import java.util.*
 
+private val LOG = logger<BrowserLauncherAppless>()
+
 open class BrowserLauncherAppless : BrowserLauncher() {
   companion object {
-    internal val LOG = Logger.getInstance(BrowserLauncherAppless::class.java)
-
-    private fun isDesktopActionSupported(action: Desktop.Action): Boolean {
-      return !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
-    }
-
     @JvmStatic
     fun canUseSystemDefaultBrowserPolicy(): Boolean {
       return isDesktopActionSupported(Desktop.Action.BROWSE) ||
@@ -41,50 +37,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
              SystemInfo.isUnix && SystemInfo.hasXdgOpen()
     }
 
-    private val generalSettings: GeneralSettings
-      get() {
-        if (ApplicationManager.getApplication() != null) {
-          GeneralSettings.getInstance()?.let {
-            return it
-          }
-        }
-
-        return GeneralSettings()
-      }
-
-    private val defaultBrowserCommand: List<String>?
-      get() {
-        return when {
-          SystemInfo.isWindows -> listOf(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
-          SystemInfo.isMac -> listOf(ExecUtil.getOpenCommandPath())
-          SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
-          else -> null
-        }
-      }
-
-    private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettings?, additional: Array<String>) {
-      val specific = settings?.additionalParameters ?: emptyList<String>()
-      if (specific.size + additional.size > 0) {
-        if (isOpenCommandUsed(command)) {
-          if (BrowserUtil.isOpenCommandSupportArgs()) {
-            command.addParameter("--args")
-          }
-          else {
-            LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " +
-                     StringUtil.join(specific, ", ") + " " + Arrays.toString(additional))
-            return
-          }
-        }
-
-        command.addParameters(specific)
-        command.addParameters(*additional)
-      }
-    }
-
-    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
+    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
   }
 
-  override fun open(url: String) = openOrBrowse(url, false)
+  override fun open(url: String): Unit = openOrBrowse(url, false)
 
   override fun browse(file: File) {
     var path = file.absolutePath
@@ -220,14 +176,16 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun doLaunch(url: String?, command: List<String>, browser: WebBrowser?, project: Project?, additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY, launchTask: (() -> Unit)? = null): Boolean {
-    val commandLine = GeneralCommandLine(command)
-
-    if (url != null) {
-      if (url.startsWith("jar:")) {
-        return false
-      }
-      commandLine.addParameter(url)
+    if (url != null && url.startsWith("jar:")) {
+      return false
     }
+
+    val commandWithUrl = command.toMutableList()
+    if (url != null) {
+      if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
+      else commandWithUrl.add(url)
+    }
+    val commandLine = GeneralCommandLine(commandWithUrl)
 
     val browserSpecificSettings = browser?.specificSettings
     if (browserSpecificSettings != null) {
@@ -256,4 +214,48 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
+}
+
+private fun isDesktopActionSupported(action: Desktop.Action): Boolean {
+  return !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+}
+
+private val generalSettings: GeneralSettings
+  get() {
+    if (ApplicationManager.getApplication() != null) {
+      GeneralSettings.getInstance()?.let {
+        return it
+      }
+    }
+
+    return GeneralSettings()
+  }
+
+private val defaultBrowserCommand: List<String>?
+  get() {
+    return when {
+      SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+      SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
+      SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
+      else -> null
+    }
+  }
+
+private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettings?, additional: Array<String>) {
+  val specific = settings?.additionalParameters ?: emptyList<String>()
+  if (specific.size + additional.size > 0) {
+    if (BrowserLauncherAppless.isOpenCommandUsed(command)) {
+      if (BrowserUtil.isOpenCommandSupportArgs()) {
+        command.addParameter("--args")
+      }
+      else {
+        LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " +
+                 StringUtil.join(specific, ", ") + " " + Arrays.toString(additional))
+        return
+      }
+    }
+
+    command.addParameters(specific)
+    command.addParameters(*additional)
+  }
 }

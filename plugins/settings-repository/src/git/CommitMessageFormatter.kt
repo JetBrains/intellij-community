@@ -30,11 +30,11 @@ interface CommitMessageFormatter {
 }
 
 class IdeaCommitMessageFormatter : CommitMessageFormatter {
-  override fun message(text: String) = StringBuilder().appendCommitOwnerInfo().append(text).toString()
+  override fun message(text: String): String = StringBuilder().appendCommitOwnerInfo().append(text).toString()
 
-  override fun prependMessage(builder: StringBuilder) = builder.appendCommitOwnerInfo()
+  override fun prependMessage(builder: StringBuilder): StringBuilder = builder.appendCommitOwnerInfo()
 
-  override fun mergeMessage(refsToMerge: List<Ref>, target: Ref) = StringBuilder().appendCommitOwnerInfo().append(super.mergeMessage(refsToMerge, target)).toString()
+  override fun mergeMessage(refsToMerge: List<Ref>, target: Ref): String = StringBuilder().appendCommitOwnerInfo().append(super.mergeMessage(refsToMerge, target)).toString()
 
   fun StringBuilder.appendCommitOwnerInfo(avoidAppInfoInstantiation: Boolean = false): StringBuilder {
     if (avoidAppInfoInstantiation) {

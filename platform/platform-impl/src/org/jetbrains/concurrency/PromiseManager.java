@@ -43,7 +43,7 @@ public abstract class PromiseManager<HOST, VALUE> {
 
   public final boolean has(HOST host) {
     Promise<VALUE> result = fieldUpdater.get(host);
-    return result != null && result.getState() == Promise.State.FULFILLED;
+    return result != null && result.isSucceeded();
   }
 
   @Nullable
@@ -76,7 +76,7 @@ public abstract class PromiseManager<HOST, VALUE> {
         // if current promise is not processed, so, we don't need to check cache state
         return promise;
       }
-      else if (state == Promise.State.FULFILLED) {
+      else if (state == Promise.State.SUCCEEDED) {
         //noinspection unchecked
         try {
           if (!checkFreshness || isUpToDate(host, promise.blockingGet(0))) {
@@ -114,6 +114,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     Promise<VALUE> effectivePromise = load(host);
     if (effectivePromise != promise) {
       fieldUpdater.compareAndSet(host, promise, effectivePromise);
+      promise.onError(e -> {});
       effectivePromise.processed(promise);
     }
     return effectivePromise;

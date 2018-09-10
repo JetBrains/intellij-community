@@ -1,17 +1,21 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.applet;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +25,7 @@ import java.util.List;
 
 public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
   protected AppletConfigurationProducer() {
-    super(AppletConfigurationType.getInstance());
+    super(ConfigurationTypeUtil.findConfigurationType(AppletConfigurationType.class));
   }
 
   @Override
@@ -46,6 +50,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     return settings;
   }
 
+  @Override
   public int compareTo(Object o) {
     return PREFERED;
   }

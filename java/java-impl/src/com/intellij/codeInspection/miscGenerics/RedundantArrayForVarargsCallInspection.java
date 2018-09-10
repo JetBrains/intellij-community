@@ -9,6 +9,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -86,7 +87,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         if (parameters.length != args.length) {
           return;
         }
-        PsiExpression lastArg = args[args.length - 1];
+        PsiExpression lastArg = PsiUtil.skipParenthesizedExprDown(args[args.length - 1]);
         PsiParameter lastParameter = parameters[args.length - 1];
         if (!lastParameter.isVarArgs()) {
           return;

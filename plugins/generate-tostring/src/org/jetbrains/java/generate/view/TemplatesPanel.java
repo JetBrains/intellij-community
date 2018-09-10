@@ -40,14 +40,17 @@ import java.util.Collections;
 
 public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     private static final Namer<TemplateResource> NAMER = new Namer<TemplateResource>() {
+        @Override
         public String getName(TemplateResource templateResource) {
             return templateResource.getFileName();
         }
 
+        @Override
         public boolean canRename(TemplateResource item) {
             return !item.isDefault();
         }
 
+        @Override
         public void setName(TemplateResource templateResource, String name) {
             templateResource.setFileName(name);
         }
@@ -56,11 +59,13 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     private static final Factory<TemplateResource> FACTORY = () -> new TemplateResource();
 
     private static final Cloner<TemplateResource> CLONER = new Cloner<TemplateResource>() {
+        @Override
         public TemplateResource cloneOf(TemplateResource templateResource) {
             if (templateResource.isDefault()) return templateResource;
             return copyOf(templateResource);
         }
 
+        @Override
         public TemplateResource copyOf(TemplateResource templateResource) {
             TemplateResource result = new TemplateResource();
             result.setFileName(templateResource.getFileName());
@@ -91,7 +96,8 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     public void setHint(String hint) {
       myHint = hint;
     }
-  
+
+    @Override
     @Nls
     public String getDisplayName() {
         return "Templates";
@@ -106,7 +112,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     @Nullable
     @NonNls
     public String getHelpTopic() {
-        return "Templates Dialog";
+        return "Templates_Dialog";
     }
 
     @Override
@@ -119,6 +125,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         return !item.isDefault();
     }
 
+    @Override
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
       final GenerateTemplateConfigurable configurable =
         new GenerateTemplateConfigurable(item, Collections.emptyMap(), myProject, onMultipleFields());

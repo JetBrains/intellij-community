@@ -4,114 +4,74 @@
 
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.openapi.application.ApplicationAdapter
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.text.StringUtil
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
+import com.intellij.openapi.Disposable
+import com.intellij.util.ConcurrencyUtil
 import java.io.File
-import java.io.IOException
-import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.Executors
 
-class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
-  private val myLogExecutor = Executors.newSingleThreadExecutor()
-
-  private val sessionId = UUID.randomUUID().toString().shortedUUID()
-  private val bucket = "-1"
-  private val recorderVersion = "2"
-
-  private var fileAppender: FeatureUsageEventFileAppender? = null
-  private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
+open class FeatureUsageFileEventLogger(private val sessionId: String,
+                                       private val build: String,
+                                       private val bucket: String,
+                                       private val recorderVersion: String,
+                                       private val writer: FeatureUsageEventWriter) : FeatureUsageEventLogger, Disposable {
+  protected val myLogExecutor = ConcurrencyUtil.newSingleThreadExecutor(javaClass.simpleName)
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
-  private var count: Int = 1
+  private var lastEventCreatedTime: Long = 0
 
-  init {
-    eventLogger.level = Level.INFO
-    eventLogger.additivity = false
-
-    val pattern = PatternLayout("%m\n")
-    try {
-      val dir = getEventLogDir()
-      fileAppender = FeatureUsageEventFileAppender.create(pattern, dir)
-      fileAppender?.let { appender ->
-        appender.setMaxFileSize("200KB")
-        eventLogger.addAppender(appender)
-      }
-    }
-    catch (e: IOException) {
-      System.err.println("Unable to initialize logging for feature usage: " + e.localizedMessage)
-    }
-
-    ApplicationManager.getApplication().addApplicationListener(object : ApplicationAdapter() {
-      override fun applicationExiting() {
-        dispose(eventLogger)
-      }
-    })
+  override fun log(recorderId: String, action: String, isState: Boolean) {
+    log(recorderId, action, Collections.emptyMap(), isState)
   }
 
-  private fun getEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log")
-
-  private fun String.shortedUUID(): String {
-    val start = this.lastIndexOf('-')
-    if (start > 0 && start + 1 < this.length) {
-      return this.substring(start + 1)
-    }
-    return this
-  }
-
-  override fun log(recorderId: String, action: String) {
-    log(recorderId, action, Collections.emptyMap())
-  }
-
-  override fun log(recorderId: String, action: String, data: Map<String, Any>) {
+  override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
+    val eventTime = System.currentTimeMillis()
     myLogExecutor.execute(Runnable {
-      val event = LogEvent(sessionId, bucket, recorderId, recorderVersion, action)
+      val creationTime = System.currentTimeMillis()
+      val event = newLogEvent(sessionId, build, bucket, eventTime, recorderId, recorderVersion, action, isState)
       for (datum in data) {
-        event.action.addData(datum.key, datum.value)
+        event.event.addData(datum.key, datum.value)
       }
-      log(eventLogger, event)
+      log(writer, event, creationTime)
     })
   }
 
-  private fun dispose(logger: Logger) {
-    myLogExecutor.execute(Runnable {
-      log(logger, LogEvent(sessionId, bucket, "feature-usage-stats", recorderVersion, "ideaapp.closed"))
-      logLastEvent(logger)
-    })
-  }
-
-  private fun log(logger: Logger, event: LogEvent) {
+  private fun log(writer: FeatureUsageEventWriter, event: LogEvent, createdTime: Long) {
     if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
       lastEventTime = event.time
-      count++
+      lastEvent!!.event.increment()
     }
     else {
-      logLastEvent(logger)
+      logLastEvent(writer)
       lastEvent = event
       lastEventTime = event.time
+      lastEventCreatedTime = createdTime
     }
   }
 
-  private fun logLastEvent(logger: Logger) {
-    if (lastEvent != null) {
-      if (count > 1) {
-        lastEvent!!.action.addData("count", count)
+  private fun logLastEvent(writer: FeatureUsageEventWriter) {
+    lastEvent?.let {
+      if (it.event.isEventGroup()) {
+        it.event.addData("last", lastEventTime)
       }
-      logger.info(LogEventSerializer.toString(lastEvent!!))
+      it.event.addData("created", lastEventCreatedTime)
+      writer.log(LogEventSerializer.toString(it))
     }
     lastEvent = null
-    count = 1
   }
 
-  override fun getLogFiles() : List<File> {
-    val activeLog = fileAppender?.activeLogName
-    val files = File(getEventLogDir().toUri()).listFiles({ f: File-> !StringUtil.equals(f.name, activeLog) })
-    return files?.toList() ?: emptyList()
+  override fun getLogFiles(): List<File> {
+    return writer.getFiles()
+  }
+
+  override fun dispose() {
+    dispose(writer)
+  }
+
+  private fun dispose(writer: FeatureUsageEventWriter) {
+    myLogExecutor.execute(Runnable {
+      logLastEvent(writer)
+    })
+    myLogExecutor.shutdown()
   }
 }

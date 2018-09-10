@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
+import static com.intellij.openapi.util.text.StringUtil.getShortName;
 
 /**
  * @author peter
@@ -105,7 +106,9 @@ public abstract class GrLiteralClassType extends PsiClassType {
 
   @Override
   @NotNull
-  public abstract String getClassName() ;
+  public String getClassName() {
+    return getShortName(getJavaClassName());
+  }
 
   @Override
   @NotNull

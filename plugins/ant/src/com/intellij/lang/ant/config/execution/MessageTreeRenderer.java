@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.process.ConsoleHighlighter;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultilineTreeCellRenderer;
@@ -43,6 +43,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
     return scrollPane;
   }
 
+  @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if(value instanceof MessageNode) {
       MessageNode messageNode = (MessageNode)value;
@@ -76,20 +77,24 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntBuildMessageView.PRIORITY_WARN) {
           icon = AllIcons.General.Warning;
-          foreground = ConsoleHighlighter.DARKGRAY.getDefaultAttributes().getForegroundColor();
+          foreground = ConsoleViewContentType.LOG_WARNING_OUTPUT.getAttributes().getForegroundColor();
         }
-        else if (node.getPriority() == AntBuildMessageView.PRIORITY_BRIEF) {
+        else if (node.getPriority() == AntBuildMessageView.PRIORITY_INFO) {
           icon = AntIcons.Message;
-          foreground = ConsoleHighlighter.BLUE.getDefaultAttributes().getForegroundColor();
+          foreground = ConsoleViewContentType.LOG_INFO_OUTPUT.getAttributes().getForegroundColor();
+        }
+        else if (node.getPriority() == AntBuildMessageView.PRIORITY_VERBOSE) {
+          icon = AntIcons.LogVerbose;
+          foreground = ConsoleViewContentType.LOG_VERBOSE_OUTPUT.getAttributes().getForegroundColor();
         }
         else {
-          icon = AntIcons.Message;
-          foreground = ConsoleHighlighter.GREEN.getDefaultAttributes().getForegroundColor();
+          icon = AntIcons.LogDebug;
+          foreground = ConsoleViewContentType.LOG_DEBUG_OUTPUT.getAttributes().getForegroundColor();
         }
       }
       else if (type == AntBuildMessageView.MessageType.ERROR) {
         icon = AllIcons.General.Error;
-        foreground = ConsoleHighlighter.RED.getDefaultAttributes().getForegroundColor();
+        foreground = ConsoleViewContentType.LOG_ERROR_OUTPUT.getAttributes().getForegroundColor();
       }
     }
     if (myUseAnsiColor) {

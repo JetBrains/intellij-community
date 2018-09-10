@@ -249,6 +249,7 @@ public class InjectorUtils {
   /**
    * @deprecated use {@link InjectorUtils#registerSupport(LanguageInjectionSupport, boolean, PsiElement, Language)} instead
    */
+  @Deprecated
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
     LOG.warn("use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead");
     putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
@@ -264,6 +265,7 @@ public class InjectorUtils {
   /**
    * @deprecated use {@link InjectorUtils#putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
    */
+  @Deprecated
   public static <T> void putInjectedFileUserData(@NotNull MultiHostRegistrar registrar, @NotNull Key<T> key, T value) {
     InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
   }
@@ -281,12 +283,12 @@ public class InjectorUtils {
   }
 
   @Nullable
-  private static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<PsiElement> causeRef) {
+  private static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<? super PsiElement> causeRef) {
     return findCommentInjectionData(context, true, causeRef);
   }
 
   @Nullable
-  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<PsiElement> causeRef) {
+  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
     if (file == null) return null;

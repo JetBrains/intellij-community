@@ -7,9 +7,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.DocumentUtil.isLineEmpty;
 
 /**
  * Emulates Emacs 'forward-paragraph' action
@@ -51,11 +52,6 @@ public class ForwardParagraphAction extends EditorAction {
       caret.removeSelection();
       caret.moveToOffset(targetOffset);
       EditorModificationUtil.scrollToCaret(editor);
-    }
-
-    private static boolean isLineEmpty(Document document, int line) {
-      return StringUtil.equalsIgnoreWhitespaces(
-        document.getImmutableCharSequence().subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)), "");
     }
   }
 }

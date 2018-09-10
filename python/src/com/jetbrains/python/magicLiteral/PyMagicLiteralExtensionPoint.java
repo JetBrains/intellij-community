@@ -16,6 +16,7 @@
 package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,4 +44,6 @@ public interface PyMagicLiteralExtensionPoint {
    */
   @NotNull
   String getLiteralType();
+
+  boolean isEnabled(@NotNull final PsiElement anchor);
 }

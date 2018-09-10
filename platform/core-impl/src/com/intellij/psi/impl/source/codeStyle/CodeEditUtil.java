@@ -308,7 +308,9 @@ public class CodeEditUtil {
   }
 
   public static void markToReformatBefore(@NotNull ASTNode right, boolean value) {
-    right.putCopyableUserData(REFORMAT_BEFORE_KEY, value ? true : null);
+    if (ALLOW_TO_MARK_NODES_TO_REFORMAT.get()) {
+      right.putCopyableUserData(REFORMAT_BEFORE_KEY, value ? true : null);
+    }
   }
 
   private static int getBlankLines(@NotNull String text) {

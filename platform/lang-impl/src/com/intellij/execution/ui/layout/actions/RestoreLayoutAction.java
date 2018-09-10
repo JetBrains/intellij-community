@@ -22,16 +22,17 @@ package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
 public class RestoreLayoutAction extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     ToggleToolbarLayoutAction.getRunnerUi(e).restoreLayout();
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(ToggleToolbarLayoutAction.getRunnerUi(e) != null);
   }
 }

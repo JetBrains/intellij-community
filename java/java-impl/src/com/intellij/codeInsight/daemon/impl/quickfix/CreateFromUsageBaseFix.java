@@ -305,6 +305,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
           }
         }
       }
+      qualifier = newExpression.getQualifier();
     }
     else if (element instanceof PsiReferenceExpression) {
       qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
@@ -381,7 +382,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  private void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes) {
+  private void collectSupers(PsiClass psiClass, ArrayList<? super PsiClass> classes) {
     classes.add(psiClass);
 
     final PsiClass[] supers = psiClass.getSupers();

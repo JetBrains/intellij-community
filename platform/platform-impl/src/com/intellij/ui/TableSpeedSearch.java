@@ -113,7 +113,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
     private int myCursor;
 
-    public MyListIterator(int startingIndex) {
+    MyListIterator(int startingIndex) {
       final int total = getElementCount();
       myCursor = startingIndex < 0 ? total : startingIndex;
     }
@@ -185,7 +185,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     @NotNull private final JTable myTable;
     @NotNull private final TableSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JTable table, @NotNull TableSpeedSearch search) {
+    MySelectAllAction(@NotNull JTable table, @NotNull TableSpeedSearch search) {
       myTable = table;
       mySearch = search;
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
@@ -193,14 +193,14 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
                                      myTable.getRowSelectionAllowed() &&
                                      myTable.getSelectionModel().getSelectionMode() == MULTIPLE_INTERVAL_SELECTION);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListSelectionModel sm = myTable.getSelectionModel();
 
       String query = mySearch.getEnteredPrefix();

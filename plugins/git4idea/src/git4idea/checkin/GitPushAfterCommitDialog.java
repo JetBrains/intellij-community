@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
+import com.intellij.dvcs.push.ui.PushUtils;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
@@ -27,11 +28,11 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   @NotNull
   @Override
   protected JPanel createOptionsPanel() {
-    myDontShowAgainCheckbox = new JCheckBox("For Commit and Push, preview commits before push");
+    myDontShowAgainCheckbox = new JCheckBox("For Commit and Push to non-protected branches, preview commits before push");
     myDontShowAgainCheckbox.setSelected(GitVcsSettings.getInstance(myProject).shouldPreviewPushOnCommitAndPush());
 
     JPanel basePanel = super.createOptionsPanel();
-    if (myController.getProhibitedTarget() != null) {
+    if (PushUtils.getProhibitedTarget(this) != null) {
       return basePanel;
     }
 
@@ -43,13 +44,16 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   @Override
   public void push(boolean forcePush) {
     if (!myDontShowAgainCheckbox.isSelected()) {
-      GitVcsSettings.getInstance(myProject).setPreviewPushOnCommitAndPush(false);
+      GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+      if (settings.shouldPreviewPushOnCommitAndPush()) {
+        settings.setPreviewPushProtectedOnly(true);
+      }
     }
     super.push(forcePush);
   }
 
   public void showOrPush() {
-    boolean hasProtectedBranch = myController.getProhibitedTarget() != null;
+    boolean hasProtectedBranch = PushUtils.getProhibitedTarget(this) != null;
     GitVcsSettings vcsSettings = GitVcsSettings.getInstance(myProject);
     boolean showDialog = vcsSettings.shouldPreviewPushOnCommitAndPush();
     boolean showOnlyProtected = vcsSettings.isPreviewPushProtectedOnly();

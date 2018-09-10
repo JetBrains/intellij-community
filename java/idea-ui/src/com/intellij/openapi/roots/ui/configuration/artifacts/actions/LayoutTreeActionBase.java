@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -38,7 +39,7 @@ public abstract class LayoutTreeActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled());
   }
 

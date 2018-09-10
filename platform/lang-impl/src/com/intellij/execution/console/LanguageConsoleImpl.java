@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -91,7 +77,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   private final JScrollBar myScrollBar = new JBScrollBar(Adjustable.HORIZONTAL);
   private final DocumentListener myDocumentAdapter = new DocumentListener() {
     @Override
-    public void documentChanged(DocumentEvent event) {
+    public void documentChanged(@NotNull DocumentEvent event) {
       myPanel.revalidate();
     }
   };
@@ -105,7 +91,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   private final MessageBusConnection myBusConnection;
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
-    public void focusGained(Editor editor) {
+    public void focusGained(@NotNull Editor editor) {
       myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
         TransactionGuard.submitTransaction(LanguageConsoleImpl.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
@@ -113,7 +99,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
 
     @Override
-    public void focusLost(Editor editor) {
+    public void focusLost(@NotNull Editor editor) {
     }
   };
 
@@ -455,7 +441,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return super.getData(dataId);
   }
 

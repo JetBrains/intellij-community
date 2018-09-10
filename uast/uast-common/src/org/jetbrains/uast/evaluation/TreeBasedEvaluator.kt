@@ -646,7 +646,7 @@ class TreeBasedEvaluator(
   }
 }
 
-fun Any?.toConstant(node: ULiteralExpression? = null) = when (this) {
+fun Any?.toConstant(node: ULiteralExpression? = null): UValueBase = when (this) {
   null -> UNullConstant
   is Float -> UFloatConstant.create(this.toDouble(), UNumericType.FLOAT, node)
   is Double -> UFloatConstant.create(this, UNumericType.DOUBLE, node)

@@ -33,9 +33,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -54,34 +52,45 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 8/1/11 1:29 PM
  */
-@SuppressWarnings("MethodMayBeStatic")
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>
 {
 
   private static final Logger LOG = Logger.getInstance(AbstractExternalProjectImportBuilder.class);
 
-  @NotNull private final ProjectDataManager            myProjectDataManager;
-  @NotNull private final C                             myControl;
-  @NotNull private final ProjectSystemId               myExternalSystemId;
+  @NotNull private final ProjectDataManager myProjectDataManager;
+  @NotNull private final NotNullLazyValue<C> myControlValue;
+  @NotNull private final ProjectSystemId myExternalSystemId;
 
   private DataNode<ProjectData> myExternalProjectNode;
 
   /**
-   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, AbstractImportFromExternalSystemControl, ProjectSystemId)}
+   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
    */
+  @Deprecated
   public AbstractExternalProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager projectDataManager,
                                               @NotNull C control,
                                               @NotNull ProjectSystemId externalSystemId) {
     this((ProjectDataManager)projectDataManager, control, externalSystemId);
   }
 
+  /**
+   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
+   */
+  @Deprecated
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull C control,
-                                              @NotNull ProjectSystemId externalSystemId)
-  {
+                                              @NotNull ProjectSystemId externalSystemId) {
     myProjectDataManager = projectDataManager;
-    myControl = control;
+    myControlValue = NotNullLazyValue.createValue(() -> control);
+    myExternalSystemId = externalSystemId;
+  }
+
+  public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
+                                              @NotNull NotNullFactory<C> controlFactory,
+                                              @NotNull ProjectSystemId externalSystemId) {
+    myProjectDataManager = projectDataManager;
+    myControlValue = NotNullLazyValue.createValue(controlFactory);
     myExternalSystemId = externalSystemId;
   }
 
@@ -105,18 +114,20 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   @NotNull
   public C getControl(@Nullable Project currentProject) {
-    myControl.setCurrentProject(currentProject);
-    return myControl;
+    C control = getControl();
+    control.setCurrentProject(currentProject);
+    return control;
   }
 
   public void prepare(@NotNull WizardContext context) {
     if (context.getProjectJdk() == null) {
       context.setProjectJdk(resolveProjectJdk(context));
     }
-    myControl.setShowProjectFormatPanel(context.isCreatingNewProject());
-    myControl.reset(context);
+    C control = getControl();
+    control.setShowProjectFormatPanel(context.isCreatingNewProject());
+    control.reset(context);
     String pathToUse = getFileToImport();
-    myControl.setLinkedProjectPath(pathToUse);
+    control.setLinkedProjectPath(pathToUse);
     doPrepare(context);
   }
 
@@ -194,7 +205,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     projects.add(projectSettings);
 
     //noinspection unchecked
-    systemSettings.copyFrom(myControl.getSystemSettings());
+    systemSettings.copyFrom(getControl().getSystemSettings());
     //noinspection unchecked
     systemSettings.setLinkedProjectsSettings(projects);
 
@@ -259,7 +270,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   @NotNull
   private ExternalProjectSettings getCurrentExternalProjectSettings() {
-    ExternalProjectSettings result = myControl.getProjectSettings().clone();
+    ExternalProjectSettings result = getControl().getProjectSettings().clone();
     File externalProjectConfigFile = getExternalProjectConfigToUse(new File(result.getExternalProjectPath()));
     final String linkedProjectPath = FileUtil.toCanonicalPath(externalProjectConfigFile.getPath());
     assert linkedProjectPath != null;
@@ -271,7 +282,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   @Nullable
   private File getProjectFile() {
-    String path = myControl.getProjectSettings().getExternalProjectPath();
+    String path = getControl().getProjectSettings().getExternalProjectPath();
     return path == null ? null : new File(path);
   }
 
@@ -349,7 +360,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     if (systemSettings instanceof PersistentStateComponent) {
       systemStateToRestore = ((PersistentStateComponent)systemSettings).getState();
     }
-    systemSettings.copyFrom(myControl.getSystemSettings());
+    systemSettings.copyFrom(getControl().getSystemSettings());
     Collection projectSettingsToRestore = systemSettings.getLinkedProjectsSettings();
     Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
     projects.add(getCurrentExternalProjectSettings());
@@ -428,4 +439,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     return project;
   }
+
+  @NotNull
+  private C getControl() {
+    return myControlValue.getValue();
+  }
+
 }

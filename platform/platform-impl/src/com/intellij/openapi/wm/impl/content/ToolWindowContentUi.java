@@ -146,6 +146,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return myType == ToolWindowContentUiType.TABBED ? myTabsLayout : myComboLayout;
   }
 
+  @Override
   public JComponent getComponent() {
     return myContent;
   }
@@ -154,6 +155,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return this;
   }
 
+  @Override
   public void setManager(@NotNull final ContentManager manager) {
     if (myManager != null) {
       getCurrentLayout().reset();
@@ -164,23 +166,27 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     getCurrentLayout().init();
 
     myManager.addContentManagerListener(new ContentManagerListener() {
-      public void contentAdded(final ContentManagerEvent event) {
+      @Override
+      public void contentAdded(@NotNull final ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
         rebuild();
       }
 
-      public void contentRemoved(final ContentManagerEvent event) {
+      @Override
+      public void contentRemoved(@NotNull final ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
       }
 
-      public void contentRemoveQuery(final ContentManagerEvent event) {
+      @Override
+      public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       }
 
-      public void selectionChanged(final ContentManagerEvent event) {
+      @Override
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         ensureSelectedContentVisible();
 
         update();
@@ -234,26 +240,31 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
 
+  @Override
   public void doLayout() {
     getCurrentLayout().layout();
   }
 
 
+  @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     getCurrentLayout().paintComponent(g);
   }
 
+  @Override
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
     getCurrentLayout().paintChildren(g);
   }
 
+  @Override
   public Dimension getMinimumSize() {
     Insets insets = getInsets();
     return new Dimension(insets.left + insets.right + getCurrentLayout().getMinimumWidth(), super.getMinimumSize().height);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     size.height = 0;
@@ -261,9 +272,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
     }
+    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
     return size;
   }
 
+  @Override
   public void propertyChange(final PropertyChangeEvent evt) {
     update();
   }
@@ -275,21 +288,26 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     repaint();
   }
 
+  @Override
   public boolean isSingleSelection() {
     return true;
   }
 
+  @Override
   public boolean isToSelectAddedContent() {
     return false;
   }
 
+  @Override
   public boolean canBeEmptySelection() {
     return false;
   }
 
+  @Override
   public void beforeDispose() {
   }
 
+  @Override
   public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     return true;
   }
@@ -404,7 +422,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       @Override
       public void mouseDragged(MouseEvent e) {
-        if (myLastPoint.isNull()) return;
+        if (myLastPoint.isNull() || myPressPoint.isNull()) return;
 
         PointerInfo info = MouseInfo.getPointerInfo();
         if (info == null) return;
@@ -440,6 +458,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
     c.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final Content content = c instanceof BaseLabel ? ((BaseLabel)c).getContent() : null;
         ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup(), content);
@@ -502,7 +521,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private static AnAction createSplitTabsAction(final TabbedContent content) {
     return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
       }
     };
@@ -511,7 +530,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private static AnAction createMergeTabsAction(final ContentManager manager, final String tabPrefix) {
     return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Content selectedContent = manager.getSelectedContent();
         final List<Pair<String, JComponent>> tabs = new ArrayList<>();
         int selectedTab = -1;
@@ -571,8 +590,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
   }
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {
@@ -595,6 +615,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private class HideToolwindowTarget implements CloseAction.CloseTarget {
+    @Override
     public void close() {
       myWindow.fireHidden();
     }
@@ -608,11 +629,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       myContent = content;
     }
 
+    @Override
     public void close() {
       myManager.removeContent(myContent, true, true, true);
     }
   }
 
+  @Override
   public void dispose() {
     myContent.removeAll();
   }

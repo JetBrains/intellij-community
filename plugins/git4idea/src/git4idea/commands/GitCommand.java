@@ -37,8 +37,10 @@ public class GitCommand {
   public static final GitCommand ADD = write("add");
   public static final GitCommand BLAME = read("blame");
   public static final GitCommand BRANCH = read("branch");
+  public static final GitCommand CAT_FILE = read("cat-file");
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand CHECK_ATTR = read("check-attr");
+  public static final GitCommand CHECK_IGNORE = read("check-ignore");
   public static final GitCommand COMMIT = write("commit");
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY = read("cherry");
@@ -66,6 +68,7 @@ public class GitCommand {
   public static final GitCommand SHOW = read("show");
   public static final GitCommand STASH = write("stash");
   public static final GitCommand STATUS = write("status");
+  public static final GitCommand SUBMODULE = write("submodule"); // NB: it is write command in the submodule, not in the current root which is the submodule's parent
   public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
   public static final GitCommand UPDATE_REF = write("update-ref");

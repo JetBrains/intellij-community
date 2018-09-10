@@ -43,10 +43,10 @@ abstract class LocalContextCodeGenerator<C : Component> : ContextCodeGenerator<C
 
   abstract fun acceptor(): (Component) -> Boolean
 
-  override fun accept(cmp: Component) = (findComponentInHierarchy(cmp) != null)
+  override fun accept(cmp: Component): Boolean = (findComponentInHierarchy(cmp) != null)
 
 
-  override fun buildContext(component: Component) =
+  override fun buildContext(component: Component): Context =
     Context(originalGenerator = this, component = typeSafeCast(findComponentInHierarchy(component)!!),
             code = generate(typeSafeCast(findComponentInHierarchy(component)!!)))
 

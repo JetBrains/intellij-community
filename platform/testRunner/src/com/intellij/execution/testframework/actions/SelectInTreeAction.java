@@ -18,16 +18,19 @@ package com.intellij.execution.testframework.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class SelectInTreeAction extends AnAction {
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final TestContext context = TestContext.from(e);
     if (!shouldBeEnabled(context))
       return;
     context.getModel().getTreeBuilder().select(context.getSelection());
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(shouldBeEnabled(TestContext.from(e)));
   }
 

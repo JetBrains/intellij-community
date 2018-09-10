@@ -81,7 +81,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myReuseCondition = this::canReuseContent;
 
     myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
-      .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
   }
@@ -156,9 +155,16 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         updateToolWindowContent();
         updateDashboard(true);
+      }
+
+      @Override
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
+        if (myContentManager.getContentCount() == 0 && !isShowConfigurations()) {
+          setShowConfigurations(true);
+        }
       }
     });
   }
@@ -209,6 +215,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myToolWindowContentManager.addContent(myToolWindowContent);
 
     myToolWindowContentManagerListener = new ToolWindowContentManagerListener();
+    myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
   }
 
   @Override
@@ -400,33 +407,41 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         return;
       }
 
+      boolean containsConfigurationsContent = false;
+      for (Content content : myToolWindowContentManager.getContents()) {
+        if (myToolWindowContent.equals(content)) {
+          containsConfigurationsContent = true;
+          break;
+        }
+      }
+
       if (myShowConfigurations) {
-        if (!myDashboardToToolWindowContents.isEmpty() || myToolWindowContentManager.getContentCount() == 0) {
+        if (!containsConfigurationsContent) {
           myToolWindowContentManager.removeContentManagerListener(myToolWindowContentManagerListener);
           myDashboardToToolWindowContents.clear();
           myToolWindowContentManager.removeAllContents(true);
           myToolWindowContentManager.addContent(myToolWindowContent);
-          Content content = myContentManager.getSelectedContent();
-          if (content != null) {
-            myToolWindowContent.setDisplayName(content.getDisplayName());
-            myToolWindowContent.setIcon(content.getIcon());
-          }
-          else {
-            myToolWindowContent.setDisplayName(null);
-            myToolWindowContent.setIcon(null);
-          }
+          myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
+        updateToolWindowContentTabHeader(myContentManager.getSelectedContent());
       }
       else {
-        if (myDashboardToToolWindowContents.isEmpty()) {
+        if (containsConfigurationsContent) {
           myToolWindowContentManager.removeContentManagerListener(myToolWindowContentManagerListener);
           myToolWindowContentManager.removeContent(myToolWindowContent, false);
           for (Content dashboardContent : myContentManager.getContents()) {
             addToolWindowContent(dashboardContent);
           }
-          Content contentToSelect = myDashboardToToolWindowContents.get(myContentManager.getSelectedContent());
+          Content dashboardSelectedContent = myContentManager.getSelectedContent();
+          if (dashboardSelectedContent == null && myContentManager.getContentCount() > 0) {
+            dashboardSelectedContent = myContentManager.getContent(0);
+            if (dashboardSelectedContent != null) {
+              myContentManager.setSelectedContent(dashboardSelectedContent);
+            }
+          }
+          Content contentToSelect = myDashboardToToolWindowContents.get(dashboardSelectedContent);
           if (contentToSelect != null) {
-            myToolWindowContentManager.setSelectedContent(contentToSelect);
+            myToolWindowContentManager.setSelectedContent(contentToSelect, true);
           }
           myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
@@ -471,6 +486,19 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myDashboardToToolWindowContents.put(dashboardContent, toolWindowContent);
   }
 
+  private void updateToolWindowContentTabHeader(@Nullable Content content) {
+    if (content != null) {
+      myToolWindowContent.setDisplayName(content.getDisplayName());
+      myToolWindowContent.setIcon(content.getIcon());
+      myToolWindowContent.setCloseable(true);
+    }
+    else {
+      myToolWindowContent.setDisplayName(null);
+      myToolWindowContent.setIcon(null);
+      myToolWindowContent.setCloseable(false);
+    }
+  }
+
   @Nullable
   @Override
   public State getState() {
@@ -497,7 +525,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
-          return;
+          break;
         }
       }
     }
@@ -525,7 +553,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private class DashboardContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       if (myShowConfigurations || myToolWindowContentManager == null) return;
 
       Content toolWindowContent = myDashboardToToolWindowContents.get(event.getContent());
@@ -540,7 +568,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (myShowConfigurations || myToolWindowContentManager == null) return;
 
       Content toolWindowContent = myDashboardToToolWindowContents.remove(event.getContent());
@@ -552,27 +580,30 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
         contentAdded(event);
       }
 
       if (myToolWindowContentManager == null || myToolWindowContent == null || !myShowConfigurations) return;
 
-      if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-        myToolWindowContent.setDisplayName(event.getContent().getDisplayName());
-        myToolWindowContent.setIcon(event.getContent().getIcon());
-      }
-      else {
-        myToolWindowContent.setDisplayName(null);
-        myToolWindowContent.setIcon(null);
-      }
+      Content content = event.getOperation() == ContentManagerEvent.ContentOperation.add ? event.getContent() : null;
+      updateToolWindowContentTabHeader(content);
     }
   }
 
   private class ToolWindowContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
+      if (event.getContent().equals(myToolWindowContent)) {
+        Content content = myContentManager.getSelectedContent();
+        if (content != null) {
+          myContentManager.removeContent(content, true);
+        }
+        event.consume();
+        return;
+      }
+
       Content dashboardContent = getDashboardContent(event.getContent());
       if (dashboardContent == null || dashboardContent.getManager() == null) return;
 
@@ -584,7 +615,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
+      if (event.getContent().equals(myToolWindowContent)) return;
+
       if (event.getOperation() != ContentManagerEvent.ContentOperation.add) return;
 
       Content dashboardContent = getDashboardContent(event.getContent());

@@ -283,6 +283,12 @@ class Test88 {
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
 
+  void testLambdaInAmbiguousConstructorCall() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Empty') })
+    checkResultByFileName()
+  }
+
   void testLambdaWithSuperWildcardInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
@@ -365,6 +371,13 @@ class Test88 {
   void "test intersection type members"() {
     myFixture.configureByText 'a.java',
                               'import java.util.*; class F { { (true ? new LinkedList<>() : new ArrayList<>()).<caret> }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
+  void "test do not suggest inaccessible methods"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { new ArrayList<String>().forEach(O<caret>) }}'
     myFixture.completeBasic()
     assert !('finalize' in myFixture.lookupElementStrings)
   }

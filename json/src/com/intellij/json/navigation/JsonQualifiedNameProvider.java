@@ -35,7 +35,13 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
     StringBuilder builder = new StringBuilder();
     while (parentProperty != null) {
       if (parentProperty instanceof JsonProperty) {
-        builder.insert(0, parentProperty.getName());
+        String name = parentProperty.getName();
+        if (qualifiedNameKind == JsonQualifiedNameKind.JsonPointer) {
+          // note: order is IMPORTANT
+          name = name == null ? null : StringUtil.replace(name, "~", "~0");
+          name = name == null ? null : StringUtil.replace(name, "/", "~1");
+        }
+        builder.insert(0, name);
         builder.insert(0, qualifiedNameKind == JsonQualifiedNameKind.JsonPointer ? "/" : ".");
       }
       else {

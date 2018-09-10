@@ -38,7 +38,7 @@ public class AddFileAsMavenProjectAction extends MavenAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     VirtualFile file = getSelectedFile(context);
     return super.isAvailable(e)
@@ -47,7 +47,7 @@ public class AddFileAsMavenProjectAction extends MavenAction {
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     return super.isVisible(e) && isAvailable(e);
   }
 

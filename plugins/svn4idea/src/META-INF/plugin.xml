@@ -133,8 +133,7 @@
                         serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
     <search.topHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
-    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
-         crawlUpToCheckUnderVcs="true"/>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
     <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
       <configurable id="vcs.Subversion.Presentation" displayName="Presentation"
@@ -144,7 +143,7 @@
     </projectConfigurable>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
 
-    <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
 
     <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
                         predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>

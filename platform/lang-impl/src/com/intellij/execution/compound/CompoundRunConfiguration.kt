@@ -25,7 +25,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
-    val COMPARATOR = Comparator<RunConfiguration> { o1, o2 ->
+    val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
       val i = o1.type.displayName.compareTo(o2.type.displayName)
       when {
         i != 0 -> i
@@ -84,7 +84,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     isInitialized = true
   }
 
-  override fun getConfigurationEditor() = CompoundRunConfigurationSettingsEditor(project)
+  override fun getConfigurationEditor(): CompoundRunConfigurationSettingsEditor = CompoundRunConfigurationSettingsEditor(project)
 
   override fun checkConfiguration() {
     if (sortedConfigurationsWithTargets.isEmpty()) {
@@ -105,10 +105,16 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
       throw ExecutionException(e.message)
     }
 
+    promptUserToUseRunDashboard(
+      project,
+      getConfigurationsWithEffectiveRunTargets().map { it.settings.configuration.type }
+    )
+
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
+        val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
         for ((settings, target) in getConfigurationsWithEffectiveRunTargets()) {
-          ExecutionUtil.runConfiguration(settings, executor, target)
+          ExecutionUtil.runConfiguration(settings, executor, target, groupId)
         }
       }
       null

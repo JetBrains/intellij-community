@@ -17,6 +17,7 @@ public interface ExternalSystemTaskNotificationListener {
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Deprecated
   void onQueued(@NotNull ExternalSystemTaskId id, String workingDir);
 
   /**
@@ -33,6 +34,7 @@ public interface ExternalSystemTaskNotificationListener {
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Deprecated
   void onStart(@NotNull ExternalSystemTaskId id);
 
   /**

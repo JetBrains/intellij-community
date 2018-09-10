@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.execution.*;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;

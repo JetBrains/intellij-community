@@ -24,7 +24,7 @@ import com.intellij.usageView.UsageInfo;
 class ParameterUsageInfo extends UsageInfo {
   private final PsiReference myReferenceExpression;
 
-  public ParameterUsageInfo(PsiReference referenceElement) {
+  ParameterUsageInfo(PsiReference referenceElement) {
     super(referenceElement);
     myReferenceExpression = referenceElement;
   }

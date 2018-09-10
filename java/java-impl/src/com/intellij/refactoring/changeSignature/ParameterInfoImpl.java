@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -138,16 +139,6 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return getTypeText().endsWith("...");
   }
 
-  public static ParameterInfoImpl[] fromMethod(PsiMethod method) {
-    List<ParameterInfoImpl> result = new ArrayList<>();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
-    }
-    return result.toArray(new ParameterInfoImpl[0]);
-  }
-
   @Override
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
@@ -169,5 +160,42 @@ public class ParameterInfoImpl implements JavaParameterInfo {
 
   public void setDefaultValue(final String defaultValue) {
     this.defaultValue = defaultValue;
+  }
+
+  /**
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to given method signature.
+   *
+   * @param method method to create an array from
+   * @return an array of ParameterInfoImpl entries
+   */
+  @NotNull
+  public static ParameterInfoImpl[] fromMethod(@NotNull PsiMethod method) {
+    List<ParameterInfoImpl> result = new ArrayList<>();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
+    }
+    return result.toArray(new ParameterInfoImpl[0]);
+  }
+
+  /**
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to given method signature with given parameter removed.
+   *
+   * @param method method to create an array from
+   * @param parameterToRemove parameter to remove from method signature
+   * @return an array of ParameterInfoImpl entries
+   */
+  @NotNull
+  public static ParameterInfoImpl[] fromMethodExceptParameter(@NotNull PsiMethod method, @NotNull PsiParameter parameterToRemove) {
+    List<ParameterInfoImpl> result = new ArrayList<>();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      if (!parameterToRemove.equals(parameter)) {
+        result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
+      }
+    }
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 }

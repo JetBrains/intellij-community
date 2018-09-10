@@ -68,7 +68,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
 
-  private void findSimpleUsages(final PsiMethod method, final ArrayList<UsageInfo> result) {
+  private void findSimpleUsages(final PsiMethod method, final ArrayList<? super UsageInfo> result) {
     PsiMethod[] overridingMethods = findSimpleUsagesWithoutParameters(method, result, true, true, true);
     findUsagesInCallers(result);
 
@@ -85,7 +85,7 @@ class JavaChangeSignatureUsageSearcher {
     findParametersUsage(method, result, overridingMethods);
   }
 
-  private void findUsagesInCallers(final ArrayList<UsageInfo> usages) {
+  private void findUsagesInCallers(final ArrayList<? super UsageInfo> usages) {
     if (myChangeInfo instanceof JavaChangeInfoImpl) {
       JavaChangeInfoImpl changeInfo = (JavaChangeInfoImpl)myChangeInfo;
 
@@ -105,7 +105,7 @@ class JavaChangeSignatureUsageSearcher {
     }
   }
 
-  private void detectLocalsCollisionsInMethod(final PsiMethod method, final ArrayList<UsageInfo> result, boolean isOriginal) {
+  private void detectLocalsCollisionsInMethod(final PsiMethod method, final ArrayList<? super UsageInfo> result, boolean isOriginal) {
     if (!JavaLanguage.INSTANCE.equals(method.getLanguage())) return;
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -126,13 +126,14 @@ class JavaChangeSignatureUsageSearcher {
       final int oldParameterIndex = parameterInfo.getOldIndex();
       final String newName = parameterInfo.getName();
       if (oldParameterIndex >= 0 ) {
-        if (isOriginal && oldParameterIndex < parameters.length && !newName.equals(myChangeInfo.getOldParameterNames()[oldParameterIndex])) {   
+        if (isOriginal && oldParameterIndex < parameters.length && !newName.equals(myChangeInfo.getOldParameterNames()[oldParameterIndex])) {
           //Name changes take place only in primary method when name was actually changed
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {
             JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(
               parameter, newName, method.getBody(), null,
               new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+                @Override
                 public void visitCollidingElement(final PsiVariable collidingVariable) {
                   if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                     result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
@@ -146,6 +147,7 @@ class JavaChangeSignatureUsageSearcher {
         JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(
           method, newName, method.getBody(), null,
           new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+            @Override
             public void visitCollidingElement(PsiVariable collidingVariable) {
               if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                 result.add(new NewParameterCollidesWithLocalUsageInfo(
@@ -157,7 +159,7 @@ class JavaChangeSignatureUsageSearcher {
     }
   }
 
-  private void findParametersUsage(final PsiMethod method, ArrayList<UsageInfo> result, PsiMethod[] overriders) {
+  private void findParametersUsage(final PsiMethod method, ArrayList<? super UsageInfo> result, PsiMethod[] overriders) {
     if (JavaLanguage.INSTANCE.equals(myChangeInfo.getLanguage())) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (ParameterInfo info : myChangeInfo.getNewParameters()) {
@@ -179,9 +181,9 @@ class JavaChangeSignatureUsageSearcher {
   }
 
   private static boolean shouldPropagateToNonPhysicalMethod(PsiMethod method,
-                                                            ArrayList<UsageInfo> result,
+                                                            ArrayList<? super UsageInfo> result,
                                                             PsiClass containingClass,
-                                                            final Set<PsiMethod> propagateMethods) {
+                                                            final Set<? extends PsiMethod> propagateMethods) {
     for (PsiMethod psiMethod : propagateMethods) {
       if (!psiMethod.isPhysical() && Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
         result.add(new DefaultConstructorImplicitUsageInfo(psiMethod, containingClass, method));
@@ -192,7 +194,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
   private PsiMethod[] findSimpleUsagesWithoutParameters(final PsiMethod method,
-                                                        final ArrayList<UsageInfo> result,
+                                                        final ArrayList<? super UsageInfo> result,
                                                         boolean isToModifyArgs,
                                                         boolean isToThrowExceptions,
                                                         boolean isOriginal) {
@@ -295,7 +297,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
 
-  private static void addParameterUsages(PsiParameter parameter, ArrayList<UsageInfo> results, ParameterInfo info) {
+  private static void addParameterUsages(PsiParameter parameter, ArrayList<? super UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {
@@ -319,12 +321,13 @@ class JavaChangeSignatureUsageSearcher {
     private final PsiElement myCollidingElement;
     private final PsiMethod myMethod;
 
-    public RenamedParameterCollidesWithLocalUsageInfo(PsiParameter parameter, PsiElement collidingElement, PsiMethod method) {
+    RenamedParameterCollidesWithLocalUsageInfo(PsiParameter parameter, PsiElement collidingElement, PsiMethod method) {
       super(parameter, collidingElement);
       myCollidingElement = collidingElement;
       myMethod = method;
     }
 
+    @Override
     public String getDescription() {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),

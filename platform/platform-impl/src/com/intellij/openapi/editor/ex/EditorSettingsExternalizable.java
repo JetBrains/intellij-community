@@ -90,7 +90,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
-    @SuppressWarnings("unused")
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
     }

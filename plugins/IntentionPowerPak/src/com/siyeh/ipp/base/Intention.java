@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   }
 
   protected abstract void processIntention(@NotNull PsiElement element);
-  
+
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
     processIntention(element);
   }
@@ -74,12 +75,20 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
       }
       expString = "!(" + newExpression + ')';
     }
-    final PsiExpression newCall = factory.createExpressionFromText(expString, expression);
     assert expressionToReplace != null;
-    final PsiElement insertedElement = tracker.replaceAndRestoreComments(expressionToReplace, newCall);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(insertedElement);
+    PsiExpression newCall = factory.createExpressionFromText(expString, expression);
+    if (newCall instanceof PsiPolyadicExpression) {
+      PsiElement insertedElement = ExpressionUtils.replacePolyadicWithParent(expressionToReplace, newCall);
+      if (insertedElement != null) {
+        CodeStyleManager.getInstance(project).reformat(insertedElement);
+        return;
+      }
+    }
+
+    PsiElement insertedElement = tracker.replaceAndRestoreComments(expressionToReplace, newCall);
+    CodeStyleManager.getInstance(project).reformat(insertedElement);
   }
+
 
   @Nullable
   PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
@@ -133,6 +142,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     return IntentionPowerPackBundle.message(getPrefix() + ".name");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     //noinspection UnresolvedPropertyKey

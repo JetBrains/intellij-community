@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -42,8 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
-  private static final Logger LOG = Logger.getInstance(MethodReferenceResolver.class);
-
   @NotNull
   @Override
   public JavaResolveResult[] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
@@ -59,7 +56,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (isConstructor && !canBeConstructed(containingClass)) {
           return JavaResolveResult.EMPTY_ARRAY;
         }
-        final PsiType functionalInterfaceType = getInterfaceType(reference);
+        final PsiType functionalInterfaceType = reference.getFunctionalInterfaceType();
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
         final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
@@ -190,10 +187,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     return false;
   }
 
-  protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-    return reference.getFunctionalInterfaceType();
-  }
-
   protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                                PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                PsiMethod interfaceMethod,
@@ -301,6 +294,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
       final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
+      if (((MethodCandidateInfo)conflict).getInferenceErrorMessage() != null) return null;
       final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
       final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
@@ -405,12 +399,12 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         final PsiElement element = candidateInfo.getElement();
         if (element instanceof PsiMethod) {
           final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
-          if (shouldBeStatic && isStatic || !shouldBeStatic && !isStatic) {
+          if (shouldBeStatic == isStatic) {
             for (CandidateInfo secondCandidate : secondCandidates) {
               final PsiElement psiElement = secondCandidate.getElement();
               if (psiElement instanceof PsiMethod) {
                 final boolean oppositeStatic = ((PsiMethod)psiElement).hasModifierProperty(PsiModifier.STATIC);
-                if (shouldBeStatic && !oppositeStatic || !shouldBeStatic && oppositeStatic) {
+                if (shouldBeStatic != oppositeStatic) {
                   return null;
                 }
               }
@@ -425,9 +419,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
   private static boolean arrayCreationSignature(MethodSignature signature) {
     final PsiType[] parameterTypes = signature.getParameterTypes();
-    if (parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0])) {
-      return true;
-    }
-    return false;
+    return parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0]);
   }
 }

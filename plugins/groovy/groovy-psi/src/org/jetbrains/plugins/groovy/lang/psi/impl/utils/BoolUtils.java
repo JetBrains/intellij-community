@@ -3,14 +3,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class BoolUtils {
@@ -64,16 +62,6 @@ public class BoolUtils {
     final GrUnaryExpression prefixExp = (GrUnaryExpression) exp;
     final GrExpression operand = prefixExp.getOperand();
     return (GrExpression)PsiUtil.skipParentheses(operand, false);
-  }
-
-  @Deprecated // to be removed
-  public static boolean isBooleanLiteral(GrExpression exp) {
-    if (exp instanceof GrLiteral) {
-      final GrLiteral expression = (GrLiteral) exp;
-      @NonNls final String text = expression.getText();
-      return "true".equals(text) || "false".equals(text);
-    }
-    return false;
   }
 
   public static String getNegatedExpressionText(GrExpression condition) {

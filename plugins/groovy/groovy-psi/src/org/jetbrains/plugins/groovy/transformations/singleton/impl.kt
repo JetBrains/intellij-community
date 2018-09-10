@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 internal val singletonFqn = GroovyCommonClassNames.GROOVY_LANG_SINGLETON
 internal val singletonOriginInfo = "by @Singleton"
 
-fun PsiAnnotation.getPropertyName() = findDeclaredDetachedValue("property").stringValue().nullize(true) ?: "instance"
+fun PsiAnnotation.getPropertyName(): String = findDeclaredDetachedValue("property").stringValue().nullize(true) ?: "instance"
 
 internal fun getAnnotation(identifier: PsiElement?): GrAnnotation? {
   val parent = identifier?.parent as? GrMethod ?: return null

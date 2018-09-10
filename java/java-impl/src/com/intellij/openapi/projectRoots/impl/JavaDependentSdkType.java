@@ -41,7 +41,7 @@ public abstract class JavaDependentSdkType extends DependentSdkType implements J
   }
 
   @Override
-  protected SdkType getDependencyType() {
+  public SdkType getDependencyType() {
     return JavaSdk.getInstance();
   }
 

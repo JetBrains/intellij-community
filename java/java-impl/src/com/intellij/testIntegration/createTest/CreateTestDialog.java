@@ -16,7 +16,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
@@ -60,8 +59,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -211,15 +210,17 @@ public class CreateTestDialog extends DialogWrapper {
     return getClass().getName();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.createTest";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTargetClassNameField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -227,9 +228,9 @@ public class CreateTestDialog extends DialogWrapper {
 
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
-    
+
     int gridy = 1;
-    
+
     constr.insets = insets(4);
     constr.gridy = gridy++;
     constr.gridx = 0;
@@ -266,7 +267,7 @@ public class CreateTestDialog extends DialogWrapper {
     myTargetClassNameField = new EditorTextField(suggestTestClassName(myTargetClass));
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         getOKAction().setEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getClassName()));
       }
     });
@@ -302,7 +303,8 @@ public class CreateTestDialog extends DialogWrapper {
     myTargetPackageField = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
 
     new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myTargetPackageField.getButton().doClick();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
@@ -380,6 +382,7 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     myLibrariesCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final Object selectedItem = myLibrariesCombo.getSelectedItem();
         if (selectedItem != null) {
@@ -403,6 +406,7 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     myFixLibraryButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (mySelectedFramework instanceof JavaTestFramework) {
           ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
@@ -417,6 +421,7 @@ public class CreateTestDialog extends DialogWrapper {
 
 
     myShowInheritedMethodsBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateMethodsTable();
       }
@@ -469,6 +474,7 @@ public class CreateTestDialog extends DialogWrapper {
     return mySelectedFramework;
   }
 
+  @Override
   protected void doOKAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myTargetPackageField.getText());
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_SUPERS_KEY, mySuperClassField.getText());
@@ -591,12 +597,8 @@ public class CreateTestDialog extends DialogWrapper {
     return name != null ? name.trim() : "";
   }
 
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.dialogs.createTest");
-  }
-
   private class MyChooseSuperClassAction implements ActionListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
       TreeClassChooserFactory f = TreeClassChooserFactory.getInstance(myProject);
       TreeClassChooser dialog =

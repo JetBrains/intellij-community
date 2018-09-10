@@ -51,7 +51,6 @@ class EqualsAssertionError(AssertionError):
     NOT_EQ_SEP = " != "
 
     def __init__(self, expected, actual, msg=None, preformated=False):
-        super(AssertionError, self).__init__()
         self.expected = expected
         self.actual = actual
         self.msg = text_type(msg)

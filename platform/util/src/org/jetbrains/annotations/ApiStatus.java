@@ -35,4 +35,22 @@ public class ApiStatus {
     ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
   })
   public @interface Experimental {}
+
+  /**
+   * Indicates that a public API of the annotated element (class, method or field) is is subject to removal in a future version. It's a stronger
+   * variant of {@link Deprecated} annotation.
+   * <br>
+   * Since many tools aren't aware of this annotation it should be used as an addition to {@code @Deprecated} annotation or {@code @deprecated} javadoc tag only.
+   */
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+    ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
+  })
+  public @interface ScheduledForRemoval {
+    /**
+     * Specifies in which version the API will be removed.
+     */
+    String inVersion() default "";
+  }
 }

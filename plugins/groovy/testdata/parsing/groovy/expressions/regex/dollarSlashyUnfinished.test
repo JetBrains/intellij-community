@@ -39,5 +39,5 @@ Groovy script
             PsiElement(})('}')
         GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)('\n    $ dollar-sign\n    $$ dollar-sign\n    \ backslash\n    / slash\n    $/ slash\n/')
-        PsiErrorElement:Dollar slash ending expected
+        PsiErrorElement:$/ regex end expected
           <empty list>

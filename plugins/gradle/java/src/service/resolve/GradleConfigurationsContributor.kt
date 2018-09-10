@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
@@ -22,15 +23,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 class GradleConfigurationsContributor : GradleMethodContextContributor {
 
   companion object {
-    val configurationsClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "configurations"))
-    val configurationReference = object : ElementPattern<PsiElement> {
+    val configurationsClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "configurations"))
+    val configurationReference: ElementPattern<PsiElement> = object : ElementPattern<PsiElement> {
       override fun getCondition() = null
       override fun accepts(o: Any?) = false
       override fun accepts(o: Any?, context: ProcessingContext): Boolean {
         return o is GrExpression && o.type?.equalsToText(GRADLE_API_CONFIGURATION) ?: false
       }
     }
-    val dependencySubstitutionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_RESOLUTION_STRATEGY, "dependencySubstitution"))
+    val dependencySubstitutionClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_RESOLUTION_STRATEGY, "dependencySubstitution"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {

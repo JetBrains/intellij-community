@@ -11,7 +11,7 @@ public class ToggleSelectionOnlyAction extends EditorHeaderToggleAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     EditorSearchSession session = e.getData(EditorSearchSession.SESSION_KEY);

@@ -2,22 +2,24 @@ package com.intellij.tasks.gitlab;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.*;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +32,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
@@ -40,8 +43,10 @@ import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObje
  */
 @Tag("Gitlab")
 public class GitlabRepository extends NewBaseRepositoryImpl {
+  private static final Logger LOG = Logger.getInstance(GitlabRepository.class);
 
-  @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
+  enum ApiVersion {V3, V4}
+
   @NonNls private static final String TOKEN_HEADER = "PRIVATE-TOKEN";
 
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
@@ -65,6 +70,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   };
   private GitlabProject myCurrentProject;
   private List<GitlabProject> myProjects = null;
+  private ApiVersion myApiVersion = null;
 
   /**
    * Serialization constructor
@@ -86,6 +92,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   public GitlabRepository(GitlabRepository other) {
     super(other);
     myCurrentProject = other.myCurrentProject;
+    myApiVersion = other.myApiVersion;
   }
 
   @Override
@@ -93,6 +100,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     if (!super.equals(o)) return false;
     final GitlabRepository repository = (GitlabRepository)o;
     if (!Comparing.equal(myCurrentProject, repository.myCurrentProject)) return false;
+    if (!Comparing.equal(myApiVersion, repository.myApiVersion)) return false;
     return true;
   }
 
@@ -119,24 +127,38 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    return new HttpTestConnection(new HttpGet(getIssuesUrl()));
+    return new HttpTestConnection(new HttpGet()) {
+      @Override
+      protected void test() throws Exception {
+        // Reload API version
+        myCurrentRequest = getApiVersionRequest();
+        myApiVersion = fetchApiVersion((HttpGet)myCurrentRequest);
+
+        myCurrentRequest = new HttpGet(getIssuesUrl());
+        super.test();
+      }
+    };
   }
 
   /**
-   * Always forcibly attempts do fetch new projects from server.
+   * Always forcibly attempt to fetch new projects from server.
    */
   @NotNull
   public List<GitlabProject> fetchProjects() throws Exception {
+    ensureApiVersionDiscovered();
     final ResponseHandler<List<GitlabProject>> handler = new GsonMultipleObjectsDeserializer<>(GSON, LIST_OF_PROJECTS_TYPE);
     final String projectUrl = getRestApiUrl("projects");
     final List<GitlabProject> result = new ArrayList<>();
     int pageNum = 1;
     while (true) {
-      final URI paginatedProjectsUrl = new URIBuilder(projectUrl)
+      final URIBuilder paginatedProjectsUrl = new URIBuilder(projectUrl)
         .addParameter("page", String.valueOf(pageNum))
-        .addParameter("per_page", "30")
-        .build();
-      final List<GitlabProject> page = getHttpClient().execute(new HttpGet(paginatedProjectsUrl), handler);
+        .addParameter("per_page", "30");
+      // In v4 this endpoint otherwise returns all projects visible to the current user
+      if (myApiVersion == ApiVersion.V4) {
+        paginatedProjectsUrl.addParameter("membership", "true");
+      }
+      final List<GitlabProject> page = getHttpClient().execute(new HttpGet(paginatedProjectsUrl.build()), handler);
       // Gitlab's REST API doesn't allow to know beforehand how many projects are available
       if (page.isEmpty()) {
         break;
@@ -151,12 +173,14 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public GitlabProject fetchProject(int id) throws Exception {
+    ensureApiVersionDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("project", id));
     return getHttpClient().execute(request, new GsonSingleObjectDeserializer<>(GSON, GitlabProject.class));
   }
 
   @NotNull
   public List<GitlabIssue> fetchIssues(int pageNumber, int pageSize, boolean openedOnly) throws Exception {
+    ensureApiVersionDiscovered();
     ensureProjectsDiscovered();
     final URIBuilder uriBuilder = new URIBuilder(getIssuesUrl())
       .addParameter("page", String.valueOf(pageNumber))
@@ -183,6 +207,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
    */
   @Nullable
   public GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
+    ensureApiVersionDiscovered();
     ensureProjectsDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
     final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<>(GSON, GitlabIssue.class, true);
@@ -196,6 +221,12 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
       name += "/" + myCurrentProject.getName();
     }
     return name;
+  }
+
+  @NotNull
+  @Override
+  public HttpClient getHttpClient() {
+    return super.getHttpClient();
   }
 
   @Nullable
@@ -212,7 +243,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NotNull
   @Override
   public String getRestApiPathPrefix() {
-    return REST_API_PATH_PREFIX;
+    return "/api/" + (myApiVersion == ApiVersion.V4 ? "v4" : "v3") + "/";
   }
 
   @Nullable
@@ -255,9 +286,95 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     }
   }
 
+  private void ensureApiVersionDiscovered() throws Exception {
+    if (myApiVersion == null) {
+      myApiVersion = fetchApiVersion(getApiVersionRequest());
+    }
+  }
+
+  @NotNull
+  private ApiVersion fetchApiVersion(@NotNull HttpGet request) throws IOException {
+    final HttpResponse response = getHttpClient().execute(request);
+    // The same endpoint for API version 3 is either unavailable (before v8.13) or 410 Gone.
+    final ApiVersion version = response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ? ApiVersion.V4 : ApiVersion.V3;
+    LOG.debug("Version " + version + " of Gitlab API is discovered at " + getUrl());
+    return version;
+  }
+
+  @NotNull
+  private HttpGet getApiVersionRequest() {
+    return new HttpGet(StringUtil.trimEnd(getUrl(), "/") + "/api/v4/version");
+  }
+
   @TestOnly
   @Transient
   public void setProjects(@NotNull List<GitlabProject> projects) {
     myProjects = projects;
+  }
+
+
+  @Override
+  protected int getFeatures() {
+    final int features = super.getFeatures();
+    if (myApiVersion == ApiVersion.V4) {
+      return features | TIME_MANAGEMENT;
+    }
+    return features;
+  }
+
+  /**
+   * Adds time spent to a task.
+   *
+   * @param task      The local task we are submitting time for.
+   * @param timeSpent The amount of time spent on the issue in the format 0h0m.
+   * @param comment   The comment to also add to the issue.
+   * @throws Exception
+   */
+  @Override
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
+    ensureApiVersionDiscovered();
+
+    final Pattern issueURLPattern = Pattern.compile("https?://.*/([^/]*/[^/]*)/issues/\\d+"); // Captures project namespace from URL
+    final String issueURL = task.getIssueUrl();
+    if (issueURL == null) {
+      throw new IllegalArgumentException("A GitLab-bound LocalTask should not have a null issue url.");
+    }
+
+    final Matcher issueURLMatcher = issueURLPattern.matcher(issueURL);
+    if (!issueURLMatcher.matches()) {
+      throw new IllegalStateException("Could not find project namespace from issue URL.");
+    }
+    final String projectNamespace = issueURLMatcher.group(1);
+
+    // Use URL-encoded project namespace since we can't find the project id from a LocalTask
+    final URI timeUpdateURI =
+      new URIBuilder(getRestApiUrl("projects", projectNamespace, "issues", task.getNumber(), "add_spent_time"))
+        .addParameter("duration", timeSpent)
+        .build();
+
+    LOG.debug("Sending POST request to " + timeUpdateURI);
+
+    final HttpPost timeUpdateRequest = new HttpPost(timeUpdateURI);
+    final HttpResponse timeUpdateResponse = getHttpClient().execute(timeUpdateRequest);
+    if (timeUpdateResponse.getStatusLine().getStatusCode() != 201) {
+      LOG.error("Failed adding time spent to GitLab. Received error code: " + timeUpdateResponse.getStatusLine().getStatusCode());
+      throw new RuntimeException("Could not add time to the remote task.");
+    }
+
+    // Not sure if we do want to add a comment to the issue when we add time spent,
+    // since GitLab doesn't mark it as attributed to the time spent. But the functionality
+    // is here, even if it is later removed.
+    if (!StringUtil.isEmptyOrSpaces(comment)) { // Ignore adding comment if the user doesn't have one to add
+      final URI addCommentURI = new URIBuilder(getRestApiUrl("projects", projectNamespace, "issues", task.getNumber(), "notes"))
+        .addParameter("body", comment)
+        .build();
+
+      final HttpPost addCommentRequest = new HttpPost(addCommentURI);
+      final HttpResponse addCommentResponse = getHttpClient().execute(addCommentRequest);
+      if (addCommentResponse.getStatusLine().getStatusCode() != 201) {
+        LOG.error("Failed adding a comment to GitLab. Received error code: " + addCommentResponse.getStatusLine().getStatusCode());
+        throw new RuntimeException("Could not add a comment to the remote task.");
+      }
+    }
   }
 }

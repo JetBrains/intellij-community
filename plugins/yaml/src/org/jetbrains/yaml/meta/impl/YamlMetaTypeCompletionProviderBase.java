@@ -36,7 +36,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
   protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull CompletionParameters params);
 
   @Override
-  protected void addCompletions(@NotNull CompletionParameters params, ProcessingContext context, @NotNull CompletionResultSet result) {
+  protected void addCompletions(@NotNull CompletionParameters params, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     final YamlMetaTypeProvider metaTypeProvider = getMetaTypeProvider(params);
     if (metaTypeProvider == null) {
       return;
@@ -82,6 +82,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       YamlScalarType scalarType = (YamlScalarType)metaType;
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
+        if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
+          prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
+        }
         if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
           addValueCompletions(insertedScalar, scalarType, result, Collections.emptyMap());
           return;

@@ -6,6 +6,7 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.advancedResolve
@@ -18,7 +19,7 @@ class GrIndexPropertyInfo(private val myCall: GrIndexProperty, private val rhs: 
 
   override fun getElementToHighlight(): PsiElement = argumentList
 
-  override fun getArgumentList() = myCall.argumentList
+  override fun getArgumentList(): GrArgumentList = myCall.argumentList
 
   override fun getArgumentTypes(): Array<PsiType>? = myCall.getArgumentTypes(rhs)
 
@@ -30,7 +31,7 @@ class GrIndexPropertyInfo(private val myCall: GrIndexProperty, private val rhs: 
 
   override fun multiResolve(): Array<GroovyResolveResult> = myCall.multiResolve(rhs)
 
-  override fun getExpressionArguments() = TODO("not supported")
-  override fun getClosureArguments() = TODO("not supported")
-  override fun getNamedArguments() = TODO("not supported")
+  override fun getExpressionArguments(): Nothing = TODO("not supported")
+  override fun getClosureArguments(): Nothing = TODO("not supported")
+  override fun getNamedArguments(): Nothing = TODO("not supported")
 }

@@ -12,7 +12,7 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaStatementFactory : StatementFactory {
+open class JavaStatementFactory : StatementFactory {
   override val types: Types = JavaTypes
   override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock = JavaCodeBlock(this)
 

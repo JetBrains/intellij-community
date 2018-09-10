@@ -87,7 +87,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
     private final boolean inSameFile;
 
-    public UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
+    UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
       this.inSameFile = inSameFile;
     }
 
@@ -233,7 +233,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final CodeStyleSettings styleSettings = CodeStyle.getSettings(reference.getContainingFile());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(containingFile);
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {
@@ -296,7 +296,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
+    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<? super PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
       while (rParent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;

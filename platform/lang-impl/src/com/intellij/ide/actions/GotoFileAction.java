@@ -56,14 +56,14 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("new.search.everywhere")) {
-      showInSearchEverywherePopup(FileSearchEverywhereContributor.class.getSimpleName(), e);
+      showInSearchEverywherePopup(FileSearchEverywhereContributor.class.getSimpleName(), e, true);
     } else {
       super.actionPerformed(e);
     }
   }
 
   @Override
-  public void gotoActionPerformed(AnActionEvent e) {
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
@@ -130,11 +130,11 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
    * <li>File type with greater name is greater (case is ignored).</li>
    * </ol>
    */
-  static class FileTypeComparator implements Comparator<FileType> {
+  public static class FileTypeComparator implements Comparator<FileType> {
     /**
      * an instance of comparator
      */
-    static final Comparator<FileType> INSTANCE = new FileTypeComparator();
+    public static final Comparator<FileType> INSTANCE = new FileTypeComparator();
 
     /**
      * {@inheritDoc}

@@ -22,5 +22,7 @@ public class LengthOneStringInConcatenationInspection
         System.out.println("asdf" + "b" + 2);
         System.out.println(1 + "b" + "asdf");
         System.out.println("a" + );
+        System.out.println("asdf" + ("b") + 2);
+        buffer2.append(("p"));
     }
 }

@@ -63,6 +63,8 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     withJava7(this::doTestNotAvailable);
   }
 
+  public void testNotFailingOnBadEscapes() { withJava7(this::doTest); }
+
   private void withJava7(Runnable runnable) {
     final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLanguageLevel = languageLevelProjectExtension.getLanguageLevel();

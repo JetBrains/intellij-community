@@ -147,12 +147,8 @@ public class DownloadUtil {
     if (!parentDirExists) {
       throw new IOException("Parent dir of '" + outputFile.getAbsolutePath() + "' can not be created!");
     }
-    OutputStream out = new FileOutputStream(outputFile);
-    try {
+    try (OutputStream out = new FileOutputStream(outputFile)) {
       download(progress, url, out);
-    }
-    finally {
-      out.close();
     }
   }
 

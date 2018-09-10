@@ -42,8 +42,8 @@ Groovy script
         Type element
           Reference element
             PsiElement(identifier)('e')
-        PsiErrorElement:Identifier expected
-          <empty list>
+      PsiErrorElement:identifier expected, got ')'
+        <empty list>
       PsiElement())(')')
       PsiWhiteSpace(' ')
       Open block

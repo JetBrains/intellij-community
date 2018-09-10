@@ -48,6 +48,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ColorProgressBar;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -81,8 +82,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -157,10 +158,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     */
   }
 
+  @Override
   protected ToolbarPanel createToolbarPanel() {
     return new SMTRunnerToolbarPanel(myProperties, this, this);
   }
 
+  @Override
   protected JComponent createTestTreeView() {
     myTreeView = new SMTRunnerTestTreeView();
 
@@ -193,7 +196,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         }
 
         //pretend the selection on the first leaf
-        //so if test would be run, tracking would be restarted 
+        //so if test would be run, tracking would be restarted
         myLastSelected = testProxy;
 
         //ensure scroll to source on explicit selection only
@@ -220,6 +223,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    *
    * @param handler
    */
+  @Override
   public void setShowStatisticForProxyHandler(final PropagateSelectionHandler handler) {
     myShowStatisticForProxyHandler = handler;
   }
@@ -230,6 +234,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @param testsRoot
    * @return
    */
+  @Override
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myTotalTestCount = 0;
     myStartedTestCount = 0;
@@ -282,6 +287,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
+  @Override
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myEndTime = System.currentTimeMillis();
 
@@ -314,7 +320,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     fireOnTestingFinished();
-    
+
     if (testsRoot.wasTerminated() && myStatusLine.getStatusColor() == ColorProgressBar.GREEN) {
       myStatusLine.setStatusColor(JBColor.LIGHT_GRAY);
     }
@@ -326,8 +332,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       return;
     }
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
-      .getPresentation(myFailedTestCount, 
-                       Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
+      .getPresentation(myFailedTestCount,
+                       Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount),
                        myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
@@ -338,9 +344,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                             TestConsoleProperties consoleProperties,
                             Disposable parentDisposable) {
     final RunProfile configuration = consoleProperties.getConfiguration();
-    if (configuration instanceof RunConfiguration && 
+    if (configuration instanceof RunConfiguration &&
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
         !myDisposed) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
@@ -356,6 +361,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
+  @Override
   public void onTestsCountInSuite(final int count) {
     updateCountersAndProgressOnTestCount(count, false);
   }
@@ -366,6 +372,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    *
    * @param testProxy Proxy
    */
+  @Override
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
     if (!testProxy.isConfig()) {
       updateOnTestStarted(false);
@@ -383,6 +390,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   public void onSuiteTreeStarted(SMTestProxy suite) {
   }
 
+  @Override
   public void onTestFailed(@NotNull final SMTestProxy test) {
     if (Comparing.equal(test, myLastFailed)) return;
     myLastFailed = test;
@@ -394,13 +402,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateIconProgress(false);
 
     //still expand failure when user selected another test
-    if (myLastSelected != null && 
+    if (myLastSelected != null &&
         TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties) &&
         TestConsoleProperties.HIDE_PASSED_TESTS.value(myProperties)) {
       myTreeBuilder.expand(test, null);
     }
   }
 
+  @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {
     updateOnTestIgnored();
   }
@@ -412,19 +421,23 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    *
    * @param newSuite Tests suite
    */
+  @Override
   public void onSuiteStarted(@NotNull final SMTestProxy newSuite) {
     _addTestOrSuite(newSuite);
   }
 
+  @Override
   public void onCustomProgressTestsCategory(@Nullable String categoryName, int testCount) {
     myCurrentCustomProgressCategory = categoryName;
     updateCountersAndProgressOnTestCount(testCount, true);
   }
 
+  @Override
   public void onCustomProgressTestStarted() {
     updateOnTestStarted(true);
   }
 
+  @Override
   public void onCustomProgressTestFailed() {
     updateOnTestFailed(true);
   }
@@ -434,6 +447,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateOnTestFinished(true);
   }
 
+  @Override
   public void onTestFinished(@NotNull final SMTestProxy test) {
     if (!test.isConfig()) {
       updateOnTestFinished(false);
@@ -441,19 +455,23 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateIconProgress(false);
   }
 
+  @Override
   public void onSuiteFinished(@NotNull final SMTestProxy suite) {
     //Do nothing
   }
 
+  @Override
   @NotNull
   public SMTestProxy.SMRootTestProxy getTestsRootNode() {
     return myTestsRootNode;
   }
 
+  @Override
   public TestConsoleProperties getProperties() {
     return myProperties;
   }
 
+  @Override
   public void setFilter(final Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
     final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getSMRunnerTreeStructure();
@@ -466,10 +484,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.queueUpdate();
   }
 
+  @Override
   public boolean isRunning() {
     return myTestsRunning;
   }
 
+  @Override
   public TestTreeView getTreeView() {
     return myTreeView;
   }
@@ -479,10 +499,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myTreeBuilder;
   }
 
+  @Override
   public boolean hasTestSuites() {
     return getRoot().getChildren().size() > 0;
   }
 
+  @Override
   @NotNull
   public AbstractTestProxy getRoot() {
     return myTestsRootNode;
@@ -509,9 +531,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   }
 
+  @Override
   public void addEventsListener(final EventsListener listener) {
     myEventListeners.add(listener);
     addTestsTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(final TreeSelectionEvent e) {
         //We should fire event only if it was generated by this component,
         //e.g. it is focused. Otherwise it is side effect of selecting proxy in
@@ -524,6 +548,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     });
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myShowStatisticForProxyHandler = null;
@@ -531,6 +556,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myDisposed = true;
   }
 
+  @Override
   public void showStatisticsForSelectedProxy() {
     TestConsoleProperties.SHOW_STATISTICS.set(myProperties, true);
     final AbstractTestProxy selectedProxy = myTreeView.getSelectedTest();
@@ -611,7 +637,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  private void fireOnTestNodeAdded(final SMTestProxy test) {
+  private void fireOnTestNodeAdded(@NotNull SMTestProxy test) {
     for (EventsListener eventListener : myEventListeners) {
       eventListener.onTestNodeAdded(this, test);
     }
@@ -704,6 +730,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   public PropagateSelectionHandler createSelectMeListener() {
     return new PropagateSelectionHandler() {
+      @Override
       public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                                   final boolean requestFocus) {
         SMRunnerUtil.addToInvokeLater(() -> {
@@ -774,6 +801,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (!isModeConsistent(isCustomMessage)) return;
     myFinishedTestCount++;
     updateProgressOnTestDone();
+    updateStatusLabel(false);
   }
 
   private void updateOnTestIgnored() {
@@ -794,7 +822,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     private RunConfiguration myConfiguration;
     private File myOutputFile;
 
-    public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
+    MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
       super(consoleProperties.getProject(), "Save Test Results", true);
       myConsoleProperties = consoleProperties;
       myRoot = root;
@@ -832,24 +860,24 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     private void writeState() {
-      // read action to prevent project (and storage) from being disposed
-      ApplicationManager.getApplication().runReadAction(() -> {
-        Project project = getProject();
-        if (project.isDisposed() || myRoot == null) return;
-        TestStateStorage storage = TestStateStorage.getInstance(project);
-        List<SMTestProxy> tests = myRoot.getAllTests();
-        for (SMTestProxy proxy : tests) {
-          String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
-          if (url != null) {
-            String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-            TestStackTraceParser info = new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+      if (myRoot == null) return;
+      List<SMTestProxy> tests = myRoot.getAllTests();
+      for (SMTestProxy proxy : tests) {
+        String url = proxy.getLocationUrl();
+        if (url != null) {
+          String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
+          DumbService.getInstance(getProject()).runWhenSmart(() -> {
+            Project project = getProject();
+            TestStackTraceParser info =
+              new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+            TestStateStorage storage = TestStateStorage.getInstance(project);
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
                                                                 info.getFailedLine(), info.getFailedMethodName(),
                                                                 info.getErrorMessage(), info.getTopLocationLine()));
-          }
+          });
         }
-      });
+      }
     }
 
     @Override
@@ -861,7 +889,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                             myConfiguration.getType().getId());
       }
     }
-    
+
     public void dispose() {
       myConfiguration = null;
       myRoot = null;

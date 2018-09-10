@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -188,16 +189,11 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     @Override
     public void visitRequiresStatement(PsiRequiresStatement statement) {
       PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
-      if (refElement != null) {
-        PsiPolyVariantReference ref = refElement.getReference();
-        PsiElement target = ref != null ? ref.resolve() : null;
-        if (target instanceof PsiJavaModule &&
-            isMarkedForRemoval((PsiJavaModule)target, myForRemoval) &&
-            PsiImplUtil.isDeprecatedByAnnotation((PsiJavaModule)target)) {
-          String description = JavaErrorMessages.message(myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
-                                                         HighlightMessageUtil.getSymbolName(target));
-          myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
-        }
+      PsiJavaModule target = PsiJavaModuleReference.resolve(refElement);
+      if (target != null && isMarkedForRemoval(target, myForRemoval) && PsiImplUtil.isDeprecatedByAnnotation(target)) {
+        String key = myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol";
+        String description = JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(target));
+        myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
       }
     }
   }

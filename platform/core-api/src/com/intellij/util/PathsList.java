@@ -96,7 +96,7 @@ public class PathsList  {
     }
   }
 
-  private void addAllLast(Iterable<String> elements, List<String> toArray) {
+  private void addAllLast(Iterable<String> elements, List<? super String> toArray) {
     for (String element : elements) {
       toArray.add(element);
       myPathSet.add(element);

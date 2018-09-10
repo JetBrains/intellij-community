@@ -48,7 +48,7 @@
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
-    <projectOpenProcessor id="java" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
+    <projectOpenProcessor id="java" order="before gradle" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
 
     <!--Gradle Test Runner-->
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
@@ -69,4 +69,11 @@
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
                               implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
   </extensions>
+  <actions>
+    <action id="Gradle.ImportExternalProject" class = "org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction"
+            text="Import Gradle project" description="Import Gradle project described by this file"
+            icon="GradleIcons.Gradle">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

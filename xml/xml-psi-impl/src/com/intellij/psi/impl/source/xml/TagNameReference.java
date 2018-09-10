@@ -26,7 +26,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -68,7 +67,7 @@ public class TagNameReference implements PsiReference {
       return TextRange.EMPTY_RANGE;
     }
 
-    int colon = nameElement.getText().indexOf(':') + 1;
+    int colon = getPrefixIndex(nameElement.getText()) + 1;
     if (myStartTagFlag) {
       final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
       return new TextRange(parentOffset + colon, parentOffset + nameElement.getTextLength());
@@ -89,6 +88,10 @@ public class TagNameReference implements PsiReference {
     }
   }
 
+  protected int getPrefixIndex(@NotNull String name) {
+    return name.indexOf(":");
+  }
+  
   public ASTNode getNameElement() {
     return myNameElement;
   }
@@ -119,11 +122,11 @@ public class TagNameReference implements PsiReference {
 
   @Override
   @Nullable
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
     if (element == null || !myStartTagFlag) return element;
 
-    if (newElementName.indexOf(':') == -1) {
+    if (getPrefixIndex(newElementName) == -1) {
       final String namespacePrefix = element.getNamespacePrefix();
       final int index = newElementName.lastIndexOf('.');
 
@@ -140,7 +143,7 @@ public class TagNameReference implements PsiReference {
     return element;
   }
 
-  private static String prependNamespacePrefix(String newElementName, String namespacePrefix) {
+  protected String prependNamespacePrefix(String newElementName, String namespacePrefix) {
     newElementName = (!namespacePrefix.isEmpty() ? namespacePrefix + ":":namespacePrefix) + newElementName;
     return newElementName;
   }
@@ -173,14 +176,8 @@ public class TagNameReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(element, resolve());
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants(){
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

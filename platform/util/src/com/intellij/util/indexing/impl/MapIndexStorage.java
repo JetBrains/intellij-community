@@ -145,7 +145,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
   @NotNull
   private File getStorageFile() {
-    return new File(myBaseStorageFile.getPath() + ".storage");
+    return getIndexStorageFile(myBaseStorageFile);
   }
 
   @Override
@@ -284,7 +284,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   }
 
   @TestOnly
-  public boolean processKeys(@NotNull Processor<Key> processor) throws StorageException {
+  public boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
@@ -305,5 +305,10 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   @TestOnly
   public PersistentMap<Key, UpdatableValueContainer<Value>> getIndexMap() {
     return myMap;
+  }
+
+  @NotNull
+  public static File getIndexStorageFile(@NotNull File baseFile) {
+    return new File(baseFile.getPath() + ".storage");
   }
 }

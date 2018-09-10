@@ -76,7 +76,7 @@ class CompoundRendererConfigurable extends JPanel {
   private static final int EXPRESSION_TABLE_COLUMN = 1;
   private static final int ONDEMAND_TABLE_COLUMN = 2;
 
-  public CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
+  CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
     if (myProject == null) {
@@ -411,7 +411,7 @@ class CompoundRendererConfigurable extends JPanel {
   private static final class MyTableModel extends AbstractTableModel {
     private final List<EnumerationChildrenRenderer.ChildInfo> myData = new ArrayList<>();
 
-    public MyTableModel() {
+    MyTableModel() {
     }
 
     public void init(List<EnumerationChildrenRenderer.ChildInfo> data) {
@@ -530,7 +530,7 @@ class CompoundRendererConfigurable extends JPanel {
       public String name;
       public TextWithImports value;
 
-      public Row(final String name, final TextWithImports value) {
+      Row(final String name, final TextWithImports value) {
         this.name = name;
         this.value = value;
       }
@@ -543,7 +543,7 @@ class CompoundRendererConfigurable extends JPanel {
             s -> {
               JavaCodeFragment fragment = new PsiTypeCodeFragmentImpl(project, true, "fragment.java", s, 0, null) {
                 @Override
-                public boolean importClass(PsiClass aClass) {
+                public boolean importClass(@NotNull PsiClass aClass) {
                   return false;
                 }
               };

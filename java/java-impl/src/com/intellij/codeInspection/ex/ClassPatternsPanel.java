@@ -34,6 +34,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ class ClassPatternsPanel extends JPanel {
   private final List<EntryPointsManagerBase.ClassPattern> myModifiedPatterns;
   private final JBTable myTable;
 
-  public ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
+  ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
     super(new BorderLayout());
     myModifiedPatterns = patterns;
     myTable = createTableForPatterns();
@@ -76,7 +77,7 @@ class ClassPatternsPanel extends JPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myTable.getSelectedRow() >= 0;
         }
       });
@@ -161,7 +162,7 @@ class ClassPatternsPanel extends JPanel {
     public static final String ERROR_MESSAGE = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
     private final PsiNameHelper myNameHelper;
 
-    public ClassPatternValidator(PsiNameHelper nameHelper) {
+    ClassPatternValidator(PsiNameHelper nameHelper) {
       myNameHelper = nameHelper;
     }
 
@@ -187,18 +188,21 @@ class ClassPatternsPanel extends JPanel {
   private class MyTableModel extends AbstractTableModel implements ItemRemovable {
     private final String[] myNames;
 
-    public MyTableModel() {
+    MyTableModel() {
       myNames = new String[] {"With Subclasses",  "Class", "Method"};
     }
 
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public int getRowCount() {
       return myModifiedPatterns.size();
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int row, int col) {
       if (row < 0 || row > myModifiedPatterns.size() - 1) return null;
@@ -213,10 +217,12 @@ class ClassPatternsPanel extends JPanel {
       return classPattern.method;
     }
 
+    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }
 
+    @Override
     public Class getColumnClass(int col) {
       if (col == 0) {
         return Boolean.class;
@@ -230,10 +236,12 @@ class ClassPatternsPanel extends JPanel {
       throw new IllegalArgumentException(String.valueOf(col));
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
       return true;
     }
 
+    @Override
     public void setValueAt(Object aValue, int row, int col) {
       EntryPointsManagerBase.ClassPattern classPattern = myModifiedPatterns.get(row);
       if (classPattern == null) return;

@@ -7,9 +7,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import org.jetbrains.annotations.NotNull;
 
-class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
+public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   private final EditorWindow myEditorWindow;
 
   private final FoldRegion myHostRegion;
@@ -57,7 +58,7 @@ class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   }
 
   @Override
-  public RangeMarkerEx getDelegate() {
-    return (RangeMarkerEx)myHostRegion;
+  public FoldRegionImpl getDelegate() {
+    return (FoldRegionImpl)myHostRegion;
   }
 }

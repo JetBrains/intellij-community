@@ -13,10 +13,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -50,7 +50,7 @@ public class Alarm implements Disposable {
   private final ScheduledExecutorService myExecutorService;
 
   private final Object LOCK = new Object();
-  final ThreadToUse myThreadToUse;
+  private final ThreadToUse myThreadToUse;
 
   private JComponent myActivationComponent;
 
@@ -146,7 +146,7 @@ public class Alarm implements Disposable {
       final MessageBusConnection connection = bus.connect(this);
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           connection.disconnect();
           addRequest(request, delay);
         }
@@ -172,9 +172,9 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, getModalityState());
   }
 
-  public void addComponentRequest(@NotNull Runnable request, int delay) {
+  public void addComponentRequest(@NotNull Runnable request, int delayMillis) {
     assert myActivationComponent != null;
-    _addRequest(request, delay, ModalityState.stateForComponent(myActivationComponent));
+    _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
   public void addComponentRequest(@NotNull Runnable request, long delayMillis) {
@@ -318,11 +318,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  protected boolean isEdt() {
-    return isEventDispatchThread();
-  }
-
-  public static boolean isEventDispatchThread() {
+  private static boolean isEventDispatchThread() {
     final Application app = ApplicationManager.getApplication();
     return app != null && app.isDispatchThread() || EventQueue.isDispatchThread();
   }
@@ -331,7 +327,7 @@ public class Alarm implements Disposable {
     private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
-    private final long myDelay;
+    private final long myDelayMillis;
 
     @Async.Schedule
     private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -339,7 +335,7 @@ public class Alarm implements Disposable {
         myTask = task;
 
         myModalityState = modalityState;
-        myDelay = delayMillis;
+        myDelayMillis = delayMillis;
       }
     }
 
@@ -349,52 +345,29 @@ public class Alarm implements Disposable {
         if (myDisposed) {
           return;
         }
+        final Runnable task;
         synchronized (LOCK) {
-          if (myTask == null) {
-            return;
-          }
+          task = myTask;
+          myTask = null;
         }
-
-        final Runnable scheduledTask = new Runnable() {
-          @Override
-          public void run() {
-            final Runnable task;
-            synchronized (LOCK) {
-              task = myTask;
-              myTask = null;
-            }
-            if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
-              //noinspection SSBasedInspection
-              EdtInvocationManager.getInstance().invokeLater(() -> runSafely(task));
-            }
-            else {
-              runSafely(task);
-            }
-          }
-
-          @Override
-          public String toString() {
-            return "ScheduledTask "+Request.this;
-          }
-        };
-
-        if (myModalityState == null) {
-          scheduledTask.run();
-        }
-        else {
-          final Application app = ApplicationManager.getApplication();
-          if (app == null) {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(scheduledTask);
-          }
-          else {
-            app.invokeLater(scheduledTask, myModalityState);
-          }
+        if (task != null) {
+          runSafely(task);
         }
       }
       catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.error(e);
+      }
+    }
+
+    void invokeLater(@NotNull Runnable scheduledTask) {
+      final Application app = ApplicationManager.getApplication();
+      if (app == null) {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(scheduledTask);
+      }
+      else {
+        app.invokeLater(scheduledTask, myModalityState == null ? ModalityState.any() : myModalityState);
       }
     }
 
@@ -406,7 +379,7 @@ public class Alarm implements Disposable {
         }
       }
       finally {
-        // remove from the list after execution to be able for waitForAllExecuted() to wait for completion
+        /** remove from the list after execution to be able for {@link #waitForAllExecuted(long, TimeUnit)} to wait for completion */
         synchronized (LOCK) {
           myRequests.remove(this);
           myFuture = null;
@@ -416,7 +389,12 @@ public class Alarm implements Disposable {
 
     // must be called under LOCK
     private void schedule() {
-      myFuture = myExecutorService.schedule(this, myDelay, TimeUnit.MILLISECONDS);
+      if (myModalityState == null) {
+        myFuture = myExecutorService.schedule(this, myDelayMillis, TimeUnit.MILLISECONDS);
+      }
+      else {
+        myFuture = EdtScheduledExecutorService.getInstance().schedule(this, myModalityState, myDelayMillis, TimeUnit.MILLISECONDS);
+      }
     }
 
     /**

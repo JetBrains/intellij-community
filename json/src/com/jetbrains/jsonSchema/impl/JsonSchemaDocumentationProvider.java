@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
@@ -44,7 +44,9 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
-    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
+    VirtualFile virtualFile = containingFile.getViewProvider().getVirtualFile();
+    if (!service.isApplicableToFile(virtualFile)) return null;
+    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
     if (rootSchema == null) return null;
 
     return generateDoc(element, rootSchema, preferShort);
@@ -81,13 +83,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
            : appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription);
   }
 
-  @Nullable
-  private static String concatTypeInfo(@NotNull List<JsonSchemaType> possibleTypes) {
-    if (possibleTypes.size() == 0) return null;
-    if (possibleTypes.size() == 1) return possibleTypes.get(0).getDescription();
-
-    return StringUtil.join(possibleTypes.stream().map(t -> t.getDescription()).distinct().sorted().collect(Collectors.toList()), " | ");
-  }
   @NotNull
   private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
                                              @NotNull String apiInfo,
@@ -100,7 +95,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (name == null) return htmlDescription;
 
     String type = "";
-    String schemaType = concatTypeInfo(possibleTypes);
+    String schemaType = JsonSchemaObject.getTypesDescription(false, possibleTypes);
     if (schemaType != null) {
       type = ": " + schemaType;
     }
@@ -132,9 +127,13 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (preferShort && !StringUtil.isEmptyOrSpaces(title)) {
       return plainTextPostProcess(title);
     } else if (!StringUtil.isEmptyOrSpaces(htmlDescription)) {
-      return htmlDescription;
+      String desc = htmlDescription;
+      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
+      return desc;
     } else if (!StringUtil.isEmptyOrSpaces(description)) {
-      return plainTextPostProcess(description);
+      String desc = plainTextPostProcess(description);
+      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
+      return desc;
     }
     return null;
   }

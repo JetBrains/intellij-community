@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.completion;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -24,7 +25,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
   protected abstract YAMLKeyValue createNewEntry(@NotNull YAMLDocument document, T item);
 
   @Override
-  public void handleInsert(InsertionContext context, T item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull T item) {
     final PsiElement currentElement = context.getFile().findElementAt(context.getStartOffset());
     assert currentElement != null : "no element at " + context.getStartOffset();
 
@@ -59,6 +60,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     final YAMLKeyValue keyValue = PsiTreeUtil.getParentOfType(elementAtCaret, YAMLKeyValue.class);
     assert keyValue != null;
+    assert keyValue.getParentMapping() != null;
 
     context.commitDocument();
     if (keyValue.getValue() != null) {

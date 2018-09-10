@@ -21,14 +21,14 @@ class ProjectInspectionManagerTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val projectRule: ProjectRule = ProjectRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager, InitInspectionRule())
+  val ruleChain: RuleChain = RuleChain(tempDirManager, InitInspectionRule())
 
   @Test fun `component`() {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {

@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -45,7 +46,7 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
   public abstract void setSelected(AnActionEvent e, boolean state);
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     final boolean state = !isSelected(e);
     setSelected(e, state);
     final Boolean selected = state;
@@ -54,7 +55,7 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
   }
 
   @Override
-  public final void updateButton(AnActionEvent e) {
+  public final void updateButton(@NotNull AnActionEvent e) {
     final Boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, selected);

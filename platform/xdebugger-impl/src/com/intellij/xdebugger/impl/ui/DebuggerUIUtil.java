@@ -162,7 +162,7 @@ public class DebuggerUIUtil {
     builder.setResizable(true)
       .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-        .setRequestFocus(false);
+        .setRequestFocus(true);
       if (callback != null) {
         builder.setCancelCallback(() -> {
           callback.setObsolete();
@@ -216,25 +216,25 @@ public class DebuggerUIUtil {
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
 
-    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
+    Disposable disposable = Disposer.newDisposable();
+
+    balloon.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        Disposer.dispose(disposable);
+        propertiesPanel.saveProperties();
+        propertiesPanel.dispose();
+      }
+    });
+
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
         if (removedBreakpoint.equals(breakpoint)) {
           balloon.hide();
         }
       }
-    };
-
-    balloon.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        propertiesPanel.saveProperties();
-        propertiesPanel.dispose();
-        breakpointManager.removeBreakpointListener(breakpointListener);
-      }
     });
-
-    breakpointManager.addBreakpointListener(breakpointListener);
     ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstance().requestFocus(mainPanel, true));
   }
 
@@ -323,7 +323,7 @@ public class DebuggerUIUtil {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final EditorTextField myTextArea;
 
-    public FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
+    FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
     }
 

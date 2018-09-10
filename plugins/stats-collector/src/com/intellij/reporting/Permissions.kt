@@ -18,7 +18,7 @@ package com.intellij.reporting
 import com.intellij.openapi.application.ApplicationManager
 
 class AllowedOnlyInEAP : DataSendPermission {
-  override fun isDataSendAllowed() = ApplicationManager.getApplication().isEAP
+  override fun isDataSendAllowed(): Boolean = ApplicationManager.getApplication().isEAP
 }
 
 fun isSendAllowed(): Boolean {

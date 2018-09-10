@@ -16,13 +16,11 @@ Groovy script
         PsiElement(()('(')
         Reference expression
           PsiElement(identifier)('doSomething')
-        PsiErrorElement:')' expected
+        PsiErrorElement:')' expected, got '2'
           <empty list>
       PsiWhiteSpace(' ')
       Literal
         PsiElement(Integer)('2')
       PsiElement())(')')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:')' unexpected
     PsiElement())(')')

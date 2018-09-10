@@ -32,7 +32,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
   }
 
   @Nullable
-  public static NamedScope findPredefinedScope(@NotNull String name, @NotNull List<NamedScope> predefinedScopes) {
+  public static NamedScope findPredefinedScope(@NotNull String name, @NotNull List<? extends NamedScope> predefinedScopes) {
     for (NamedScope scope : predefinedScopes) {
       if (name.equals(scope.getName())) return scope;
     }
@@ -66,7 +66,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     @NotNull
     private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
       @Override
-      public boolean contains(final VirtualFile file, NamedScopesHolder scopesHolder) {
+      public boolean contains(@NotNull final VirtualFile file, NamedScopesHolder scopesHolder) {
         return true;
       }
     });

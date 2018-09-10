@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,15 +42,15 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Nullable private byte[] myContent = null;
 
-  public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @NotNull ContentRevision revision, @NotNull FilePath path) {
+  public VcsLogFileRevision(@NotNull VcsCommitMetadata commitMetadata, @NotNull ContentRevision revision, @NotNull FilePath path) {
     myRevision = revision;
     myPath = path;
 
-    myAuthor = details.getAuthor();
-    myCommitter = details.getCommitter();
-    myAuthorTime = details.getAuthorTime();
-    myCommitTime = details.getCommitTime();
-    myFullMessage = details.getFullMessage();
+    myAuthor = commitMetadata.getAuthor();
+    myCommitter = commitMetadata.getCommitter();
+    myAuthorTime = commitMetadata.getAuthorTime();
+    myCommitTime = commitMetadata.getCommitTime();
+    myFullMessage = commitMetadata.getFullMessage();
   }
 
   @Nullable

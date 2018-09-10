@@ -40,7 +40,7 @@ public class LanguageTokenSeparatorGenerators extends LanguageExtension<TokenSep
           PsiManager manager = right.getTreeParent().getPsi().getManager();
           ASTNode generatedWhitespace;
           //noinspection EnumSwitchStatementWhichMissesCases
-          switch(parserDefinition.spaceExistanceTypeBetweenTokens(left, right)){
+          switch (parserDefinition.spaceExistenceTypeBetweenTokens(left, right)) {
             case MUST:
               generatedWhitespace = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, null, manager);
               break;

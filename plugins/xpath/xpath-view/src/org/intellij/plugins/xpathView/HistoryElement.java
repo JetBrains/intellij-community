@@ -18,7 +18,6 @@ package org.intellij.plugins.xpathView;
 import org.intellij.plugins.xpathView.util.Copyable;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,13 +49,14 @@ public final class HistoryElement implements Copyable<HistoryElement> {
 
         final HistoryElement that = (HistoryElement)o;
 
-        return !(expression != null ? !expression.equals(that.expression) : that.expression != null); 
+        return !(expression != null ? !expression.equals(that.expression) : that.expression != null);
     }
 
     public int hashCode() {
         return (expression != null ? expression.hashCode() : 0);
     }
 
+    @Override
     public HistoryElement copy() {
         return new HistoryElement(expression, Copyable.Util.copy(this.variables), Copyable.Util.copy(namespaces));
     }

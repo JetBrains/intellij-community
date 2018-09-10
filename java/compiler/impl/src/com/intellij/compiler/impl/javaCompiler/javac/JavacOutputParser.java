@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class JavacOutputParser extends OutputParser {
   @NonNls private String WARNING_PREFIX = "warning:"; // default value
 
   public JavacOutputParser(Project project) {
-    myTabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    myTabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // emulate patterns setup if 'embedded' javac is used (javac is started not via JavacRunner)
       addJavacPattern(JavacResourcesReader.MSG_PARSING_STARTED + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[parsing started {0}]");
@@ -53,10 +53,11 @@ public class JavacOutputParser extends OutputParser {
     }
   }
 
+  @Override
   public boolean processMessageLine(Callback callback) {
     if (super.processMessageLine(callback)) {
       return true;
-    }                                              
+    }
     final String line = callback.getCurrentLine();
     if (line == null) {
       return false;
@@ -205,6 +206,7 @@ public class JavacOutputParser extends OutputParser {
     }
     else if (JavacResourcesReader.MSG_CHECKING.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        @Override
         protected void doExecute(final String line, String parsedData, final Callback callback) {
           callback.setProgressText(CompilerBundle.message("progress.compiling.class", parsedData));
         }
@@ -212,6 +214,7 @@ public class JavacOutputParser extends OutputParser {
     }
     else if (JavacResourcesReader.MSG_LOADING.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        @Override
         protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
           callback.setProgressText(CompilerBundle.message("progress.loading.classes"));
         }
@@ -219,6 +222,7 @@ public class JavacOutputParser extends OutputParser {
     }
     else if (JavacResourcesReader.MSG_NOTE.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        @Override
         protected void doExecute(final String line, @Nullable final String filePath, final Callback callback) {
           final boolean fileExists = filePath != null &&
                                      ReadAction
@@ -237,6 +241,7 @@ public class JavacOutputParser extends OutputParser {
     }
     else if (JavacResourcesReader.MSG_STATISTICS.equals(category) || JavacResourcesReader.MSG_IGNORED.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        @Override
         protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
           // empty
         }

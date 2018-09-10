@@ -33,7 +33,7 @@ internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass &&
 
 internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
 
-@JvmField val RESOLVED_CODE = Key.create<Boolean?>("gradle.resolved")
+@JvmField val RESOLVED_CODE: Key<Boolean?> = Key.create<Boolean?>("gradle.resolved")
 
 fun processDeclarations(aClass: PsiClass,
                         processor: PsiScopeProcessor,

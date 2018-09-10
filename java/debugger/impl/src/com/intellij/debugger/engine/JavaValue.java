@@ -128,7 +128,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     if (isOnDemand() && !isCalculated()) {
       node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(DebuggerBundle.message("message.node.evaluate")));
-      node.setPresentation(AllIcons.Debugger.Watch, new XRegularValuePresentation("", null, ""), false);
+      node.setPresentation(AllIcons.Debugger.Db_watch, new XRegularValuePresentation("", null, ""), false);
       return;
     }
     myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
@@ -248,7 +248,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     private final String myError;
     private final ValueDescriptorImpl myValueDescriptor;
 
-    public JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error, ValueDescriptorImpl valueDescriptor) {
+    JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error, ValueDescriptorImpl valueDescriptor) {
       myValue = value;
       myType = type;
       myError = error;

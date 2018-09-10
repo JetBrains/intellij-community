@@ -73,6 +73,7 @@
                        enabledByDefault="true" level="WARNING"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"
                        groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.ConstantTestNGAssertArgumentInspection"/>
+      <externalSystem.runConfigurationImporter implementation="com.theoryinpractice.testng.configuration.TestNGRunConfigurationImporter"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.TestNGTestDiscoveryListener"/>

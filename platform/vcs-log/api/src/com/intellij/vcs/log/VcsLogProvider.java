@@ -70,14 +70,23 @@ public interface VcsLogProvider {
   void readFullDetails(@NotNull VirtualFile root,
                        @NotNull List<String> hashes,
                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                       boolean fast)
+                       boolean isForIndexing)
     throws VcsException;
 
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.
    */
   @NotNull
-  List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  @Deprecated
+  default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+    throws VcsException {
+    return readMetadata(root, hashes);
+  }
+
+  /**
+   * Reads those details of the given commits, which are necessary to be shown in the log table and commit details.
+   */
+  List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
   /**
    * Read full details of the given commits from the VCS.

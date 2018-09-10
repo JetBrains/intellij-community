@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.build;
 
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ParameterizedRunnable;
@@ -31,6 +33,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.util.*;
@@ -200,6 +203,7 @@ public class Standalone {
 
   public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope) throws Exception {
+    final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     final BuildRunner buildRunner = new BuildRunner(loader);
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
@@ -207,6 +211,7 @@ public class Standalone {
     }
     finally {
       descriptor.release();
+      Disposer.dispose(memWatcher);
     }
   }
 

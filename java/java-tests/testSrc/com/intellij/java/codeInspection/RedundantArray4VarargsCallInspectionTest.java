@@ -38,6 +38,7 @@ public class RedundantArray4VarargsCallInspectionTest extends LightCodeInsightFi
 
   public void testPreserveComments() { doTest(); }
   public void testRemoveTailingCommas() { doTest(); }
+  public void testParentheses() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);

@@ -68,7 +68,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).mapToObj(i -> myInstructions[i]).toList();
+    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).elements(myInstructions).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {
@@ -256,7 +256,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private static class InstructionState extends Pair<Instruction, BitSet> {
-    public InstructionState(Instruction first, BitSet second) {
+    InstructionState(Instruction first, BitSet second) {
       super(first, second);
     }
   }

@@ -25,6 +25,7 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
 
   private volatile boolean myIsRunning;
   private volatile boolean myIsCanceled;
+  private volatile int myNonCancelableSectionCount;
 
   public EmptyProgressIndicator() {
     this(ModalityState.defaultModalityState());
@@ -63,7 +64,7 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
 
   @Override
   public final void checkCanceled() {
-    if (myIsCanceled) {
+    if (myIsCanceled && myNonCancelableSectionCount == 0) {
       throw new ProcessCanceledException();
     }
   }
@@ -105,10 +106,12 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
 
   @Override
   public void startNonCancelableSection() {
+    myNonCancelableSectionCount++;
   }
 
   @Override
   public void finishNonCancelableSection() {
+    myNonCancelableSectionCount--;
   }
 
   @Override

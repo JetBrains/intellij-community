@@ -82,6 +82,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
           final PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC) ||
               resolved instanceof PsiClass) {
+            if (!PsiUtil.isAccessible((PsiMember)resolved, element.getContainingFile(), null)) return null;
             PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
             String qName = aClass != null ? aClass.getQualifiedName() : null;
             if (aClass != null &&
@@ -167,6 +168,9 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
         final PsiElement qResolved = ((PsiReferenceExpression)qualifier).resolve();
         if (qResolved instanceof PsiVariable) {
           aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)qResolved).getType());
+        }
+        else if (qResolved instanceof PsiClass) {
+          aClass = (PsiClass)qResolved;
         }
       }
     }

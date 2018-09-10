@@ -317,7 +317,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
       for (PyInspectionExtension filter : filters) {
-        if (filter.ignoreUnused(element)) {
+        if (filter.ignoreUnused(element, myTypeEvalContext)) {
           ignoreUnused = true;
         }
       }

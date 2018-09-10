@@ -1,10 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.xdebugger.memory.component.MemoryViewManager</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <interface-class>com.intellij.debugger.ui.DebuggerPanelsManager</interface-class>
@@ -30,6 +24,10 @@
       <implementation-class>com.intellij.xdebugger.memory.component.InstancesTracker</implementation-class>
     </component>
   </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+  </extensions>
 
   <!--
   <actions>

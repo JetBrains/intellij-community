@@ -25,7 +25,7 @@ open class UastSpecialExpressionKind(val name: String) {
 
   companion object {
     @JvmField
-    val VARARGS = UastSpecialExpressionKind("varargs")
+    val VARARGS: UastSpecialExpressionKind = UastSpecialExpressionKind("varargs")
   }
 
 }

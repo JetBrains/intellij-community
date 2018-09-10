@@ -21,14 +21,14 @@ package org.jetbrains.uast
 open class UastPostfixOperator(override val text: String) : UastOperator {
   companion object {
     @JvmField
-    val INC = UastPostfixOperator("++")
+    val INC: UastPostfixOperator = UastPostfixOperator("++")
 
     @JvmField
-    val DEC = UastPostfixOperator("--")
+    val DEC: UastPostfixOperator = UastPostfixOperator("--")
 
     @JvmField
-    val UNKNOWN = UastPostfixOperator("<unknown>")
+    val UNKNOWN: UastPostfixOperator = UastPostfixOperator("<unknown>")
   }
 
-  override fun toString() = text
+  override fun toString(): String = text
 }

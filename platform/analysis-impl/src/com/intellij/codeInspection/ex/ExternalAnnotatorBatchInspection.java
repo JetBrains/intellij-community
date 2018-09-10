@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +49,9 @@ public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspe
                                         @NotNull InspectionManager manager) {
     final String shortName = getShortName();
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getLanguages();
+    final Set<Language> relevantLanguages = ReadAction.compute(() -> viewProvider.getLanguages());
     for (Language language : relevantLanguages) {
-      PsiFile psiRoot = viewProvider.getPsi(language);
+      PsiFile psiRoot = ReadAction.compute(() -> viewProvider.getPsi(language));
       final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
 
       for (ExternalAnnotator annotator : externalAnnotators) {

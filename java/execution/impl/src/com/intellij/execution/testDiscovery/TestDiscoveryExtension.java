@@ -65,7 +65,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
             if (testsRoot.getHandler() != handler) return;
             processTracesAlarm.cancelAllRequests();
-            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationBase)configuration), 0);
+            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationWithDiscoverySupport)configuration), 0);
             connection.disconnect();
             Disposer.dispose(disposable);
           }
@@ -130,7 +130,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   private static final Object ourTracesLock = new Object();
   
-  private static void processTracesFile(JavaTestConfigurationBase configuration) {
+  private static void processTracesFile(JavaTestConfigurationWithDiscoverySupport configuration) {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     String moduleName = getConfigurationModuleName(configuration);
@@ -166,7 +166,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     TestDiscoveryDataSocketListener listener = null;
     if (USE_SOCKET) {
       try {
-        JavaTestConfigurationBase javaTestConfigurationBase = (JavaTestConfigurationBase)configuration;
+        JavaTestConfigurationWithDiscoverySupport javaTestConfigurationBase = (JavaTestConfigurationWithDiscoverySupport)configuration;
         listener = new TestDiscoveryDataSocketListener(configuration.getProject(),
                                                        getConfigurationModuleName(javaTestConfigurationBase),
                                                        javaTestConfigurationBase.getTestFrameworkId());

@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -46,11 +47,12 @@ import java.util.*;
  * @author yole
  */
 public class SdkConfigurationUtil {
+  private static final Logger LOG = Logger.getInstance(SdkConfigurationUtil.class);
   private SdkConfigurationUtil() { }
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final SdkType... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
@@ -58,7 +60,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final boolean followSymLinks,
                                final SdkType... sdkTypes) {
@@ -107,7 +109,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final SdkType... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, true, sdkTypes);
   }
@@ -144,13 +146,18 @@ public class SdkConfigurationUtil {
                              final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    final ProjectJdkImpl sdk;
+    ProjectJdkImpl sdk = null;
     try {
       sdk = createSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
 
       sdkType.setupSdkPaths(sdk);
     }
     catch (Exception e) {
+      LOG.warn("Error creating or configuring sdk: homeDir=[" + homeDir + "]; " +
+               "sdkType=[" + sdkType + "]; " +
+               "additionalData=[" + additionalData + "]; " +
+               "customSdkSuggestedName=[" + customSdkSuggestedName + "]; " +
+               "sdk=[" + sdk + "]", e);
       if (!silent) {
         Messages.showErrorDialog("Error configuring SDK: " +
                                  e.getMessage() +

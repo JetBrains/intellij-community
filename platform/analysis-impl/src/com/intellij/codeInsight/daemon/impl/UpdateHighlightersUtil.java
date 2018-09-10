@@ -123,21 +123,11 @@ public class UpdateHighlightersUtil {
     setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), (MarkupModelEx)markup, group);
   }
 
-  @Deprecated //for teamcity
-  public static void setHighlightersToEditor(@NotNull Project project,
-                                             @NotNull Document document,
-                                             int startOffset,
-                                             int endOffset,
-                                             @NotNull Collection<HighlightInfo> highlights,
-                                             int group) {
-    setHighlightersToEditor(project, document, startOffset, endOffset, highlights, null, group);
-  }
-
   // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
                                           @NotNull final PsiFile psiFile,
-                                          @NotNull final List<HighlightInfo> infos,
+                                          @NotNull final List<? extends HighlightInfo> infos,
                                           @Nullable final EditorColorsScheme colorsScheme,
                                           // if null global scheme will be used
                                           final int startOffset,
@@ -216,7 +206,7 @@ public class UpdateHighlightersUtil {
                                      @NotNull final Document document,
                                      @NotNull final TextRange range,
                                      @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                     @NotNull final List<HighlightInfo> infos,
+                                     @NotNull final List<? extends HighlightInfo> infos,
                                      @NotNull final MarkupModelEx markup,
                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -274,7 +264,7 @@ public class UpdateHighlightersUtil {
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
-                                                 @NotNull Collection<HighlightInfo> overlappingIntervals,
+                                                 @NotNull Collection<? extends HighlightInfo> overlappingIntervals,
                                                  @NotNull SeverityRegistrar severityRegistrar) {
     if (!isSevere(info, severityRegistrar)) {
       for (HighlightInfo overlapping : overlappingIntervals) {

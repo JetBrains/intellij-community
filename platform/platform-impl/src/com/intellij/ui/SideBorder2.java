@@ -20,6 +20,7 @@ import java.awt.*;
 /**
  * @deprecated use ColoredSideBorder
  */
+@Deprecated
 public class SideBorder2 extends ColoredSideBorder {
   public SideBorder2(Color topColor, Color leftColor, Color bottomColor, Color rightColor, int thickness) {
     super(topColor, leftColor, bottomColor, rightColor, thickness);

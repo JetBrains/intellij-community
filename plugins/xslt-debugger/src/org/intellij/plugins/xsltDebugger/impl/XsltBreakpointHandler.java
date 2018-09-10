@@ -1,6 +1,6 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -48,9 +48,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     final String fileURL = getFileURL(file);
     final int lineNumber = getActualLineNumber(breakpoint, project);
     if (lineNumber == -1) {
-      final XDebugSession session = myXsltDebugProcess.getSession();
-      session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint,
-                                           "Unsupported breakpoint position");
+      myXsltDebugProcess.getSession().setBreakpointInvalid(breakpoint, "Unsupported breakpoint position");
       return;
     }
 
@@ -66,8 +64,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     } catch (VMPausedException e) {
       final XDebugSession session = myXsltDebugProcess.getSession();
       session.reportMessage("Target VM is not responding. Breakpoint can not be set", MessageType.ERROR);
-      session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint,
-                                           "Target VM is not responding. Breakpoint can not be set");
+      session.setBreakpointInvalid(breakpoint, "Target VM is not responding. Breakpoint can not be set");
     }
   }
 

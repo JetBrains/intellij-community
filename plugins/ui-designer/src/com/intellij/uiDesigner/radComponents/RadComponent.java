@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -228,11 +214,13 @@ public abstract class RadComponent implements IComponent {
   /**
    * @return the component's id. It is unique within the form.
    */
+  @Override
   @NotNull
   public final String getId() {
     return myId;
   }
 
+  @Override
   public final String getBinding() {
     return myBinding;
   }
@@ -242,6 +230,7 @@ public abstract class RadComponent implements IComponent {
     myBinding = binding;
   }
 
+  @Override
   public boolean isCustomCreate() {
     return myCustomCreate;
   }
@@ -308,11 +297,13 @@ public abstract class RadComponent implements IComponent {
     return myClass;
   }
 
+  @Override
   @NotNull
   public String getComponentClassName() {
     return myClass.getName();
   }
 
+  @Override
   public final Object getCustomLayoutConstraints() {
     return myCustomLayoutConstraints;
   }
@@ -402,6 +393,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @return component's constarints.
    */
+  @Override
   @NotNull
   public final GridConstraints getConstraints() {
     return myConstraints;
@@ -430,6 +422,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @see JComponent#getClientProperty(Object)
    */
+  @Override
   public final Object getClientProperty(@NotNull final Object key) {
     return myDelegee.getClientProperty(key);
   }
@@ -437,6 +430,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @see JComponent#putClientProperty(Object, Object)
    */
+  @Override
   public final void putClientProperty(@NotNull final Object key, final Object value) {
     myDelegee.putClientProperty(key, value);
   }
@@ -657,6 +651,7 @@ public abstract class RadComponent implements IComponent {
     firePropertyChanged(PROP_CONSTRAINTS, oldConstraints, myConstraints);
   }
 
+  @Override
   public IProperty[] getModifiedProperties() {
     IntrospectedProperty[] props = getPalette().getIntrospectedProperties(this);
     ArrayList<IProperty> result = new ArrayList<>();
@@ -668,6 +663,7 @@ public abstract class RadComponent implements IComponent {
     return result.toArray(new IProperty[0]);
   }
 
+  @Override
   public IContainer getParentContainer() {
     return myParent;
   }
@@ -676,10 +672,12 @@ public abstract class RadComponent implements IComponent {
     return true;
   }
 
+  @Override
   public boolean accept(ComponentVisitor visitor) {
     return visitor.visit(this);
   }
 
+  @Override
   public boolean areChildrenExclusive() {
     return false;
   }

@@ -26,6 +26,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     super(PackagingElementFactoryImpl.ARTIFACT_ROOT_ELEMENT_TYPE);
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new PackagingElementPresentation() {
@@ -48,10 +49,12 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     };
   }
 
+  @Override
   public Object getState() {
     return null;
   }
 
+  @Override
   public void loadState(@Nullable Object state) {
   }
 
@@ -60,9 +63,11 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     return false;
   }
 
+  @Override
   public void rename(@NotNull String newName) {
   }
 
+  @Override
   @NotNull
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
@@ -70,6 +75,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     return computeChildrenGenerators(resolvingContext, creator, generationContext, artifactType);
   }
 
+  @Override
   public String getName() {
     return "";
   }

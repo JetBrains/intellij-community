@@ -50,7 +50,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(isVisible());
   }
 
@@ -94,7 +94,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Module module = getSelectedModule();
     if (module == null) return;
 

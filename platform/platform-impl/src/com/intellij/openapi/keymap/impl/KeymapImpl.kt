@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
@@ -52,12 +53,12 @@ fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapIm
 
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
-  open var canModify = true
+  open var canModify: Boolean = true
 
   @JvmField
   internal var schemeState: SchemeState? = null
 
-  override fun getSchemeState() = schemeState
+  override fun getSchemeState(): SchemeState? = schemeState
 
   private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
     get() {
@@ -123,7 +124,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       return result
     }
 
-  override fun getPresentableName() = name
+  override fun getPresentableName(): String = name
 
   override fun deriveKeymap(newName: String): KeymapImpl {
     if (canModify()) {
@@ -178,9 +179,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return otherKeymap
   }
 
-  override fun getParent() = parent
+  override fun getParent(): KeymapImpl? = parent
 
-  override final fun canModify() = canModify
+  override final fun canModify(): Boolean = canModify
 
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
     val list = actionIdToShortcuts.getOrPut(actionId) {
@@ -335,7 +336,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return sortInRegistrationOrder(list)
   }
 
-  override fun getActionIds(firstKeyStroke: KeyStroke) = getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke)
+  override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> = getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke)
 
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
     val ids = getActionIds(firstKeyStroke)
@@ -387,7 +388,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     while (true)
   }
 
-  override fun getActionIds(shortcut: MouseShortcut) = getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
+  override fun getActionIds(shortcut: MouseShortcut): Array<String> = getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
 
   private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): Array<String> {
     // first, get keystrokes from own map
@@ -416,7 +417,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return sortInRegistrationOrder(list)
   }
 
-  fun isActionBound(actionId: String) = keymapManager.boundActions.contains(actionId)
+  fun isActionBound(actionId: String): Boolean = keymapManager.boundActions.contains(actionId)
 
   override fun getShortcuts(actionId: String?): Array<Shortcut> = getMutableShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
 
@@ -534,7 +535,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
   }
 
-  protected open fun findParentScheme(parentSchemeName: String) = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
+  protected open fun findParentScheme(parentSchemeName: String): Keymap? = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
 
   override fun writeScheme(): Element {
     dataHolder?.let {
@@ -594,7 +595,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
   }
 
-  fun hasOwnActionId(actionId: String) = actionIdToShortcuts.containsKey(actionId)
+  fun hasOwnActionId(actionId: String): Boolean = actionIdToShortcuts.containsKey(actionId)
 
   fun clearOwnActionsId(actionId: String) {
     actionIdToShortcuts.remove(actionId)
@@ -643,11 +644,11 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return result
   }
 
-  protected open fun convertKeyStroke(keyStroke: KeyStroke) = keyStroke
+  protected open fun convertKeyStroke(keyStroke: KeyStroke): KeyStroke = keyStroke
 
-  protected open fun convertMouseShortcut(shortcut: MouseShortcut) = shortcut
+  protected open fun convertMouseShortcut(shortcut: MouseShortcut): MouseShortcut = shortcut
 
-  protected open fun convertShortcut(shortcut: Shortcut) = shortcut
+  protected open fun convertShortcut(shortcut: Shortcut): Shortcut = shortcut
 
   override fun addShortcutChangeListener(listener: Keymap.Listener) {
     listeners.add(listener)
@@ -658,13 +659,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   private fun fireShortcutChanged(actionId: String) {
-    (keymapManager as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
+    (KeymapManager.getInstance() as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
     for (listener in listeners) {
       listener.onShortcutChanged(actionId)
     }
   }
 
-  override fun toString() = presentableName
+  override fun toString(): String = presentableName
 
   override fun equals(other: Any?): Boolean {
     if (other !is KeymapImpl) return false
@@ -675,7 +676,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return true
   }
 
-  override fun hashCode() = name.hashCode()
+  override fun hashCode(): Int = name.hashCode()
 }
 
 private fun sortInRegistrationOrder(ids: List<String>?): Array<String> {

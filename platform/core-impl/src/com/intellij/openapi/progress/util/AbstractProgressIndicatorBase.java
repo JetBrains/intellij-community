@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
@@ -61,6 +63,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
+  private volatile int myNonCancelableSectionCount;
 
   @Override
   public synchronized void start() {
@@ -180,7 +183,15 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void setFraction(final double fraction) {
     if (isIndeterminate()) {
-      LOG.warn("This progress indicator is indeterminate, this may lead to visual inconsistency. Please call setIndeterminate(false) before you start progress.");
+      StackTraceElement[] trace = new Throwable().getStackTrace();
+      Optional<StackTraceElement> first =
+        Arrays.stream(trace).filter(element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util")).findFirst();
+      String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+                       "Please call setIndeterminate(false) before you start progress.";
+      if (first.isPresent()) {
+        message += "\n" + first.get();
+      }
+      LOG.warn(message);
       setIndeterminate(false);
     }
     myFraction = fraction;
@@ -209,14 +220,16 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void startNonCancelableSection() {
+    myNonCancelableSectionCount++;
   }
 
   @Override
   public void finishNonCancelableSection() {
+    myNonCancelableSectionCount--;
   }
 
   protected boolean isCancelable() {
-    return !ProgressManager.getInstance().isInNonCancelableSection();
+    return myNonCancelableSectionCount == 0 && !ProgressManager.getInstance().isInNonCancelableSection();
   }
 
   @Override
@@ -311,10 +324,5 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public synchronized Stack<String> getText2Stack() {
     if (myText2Stack == null) myText2Stack = new Stack<>(2);
     return myText2Stack;
-  }
-
-  @Override
-  public int getNonCancelableCount() {
-    return ProgressManager.getInstance().isInNonCancelableSection() ? 1 : 0;
   }
 }

@@ -2,12 +2,16 @@
 <body>
 Reports expressions that can be replaced with a call to <code>java.util.Objects.equals()</code>, which is available since JDK 1.7.
 For example:
-<code><pre>a != <b>null</b> <b>&&</b> a.equals(b)</pre></code>
+<p>
+  <code><pre>a == b || a != <b>null</b> && a.equals(b)</pre></code>
+<br>
+  <code><pre>a != <b>null</b> ? a.equals(b) : b == <b>null</b></pre></code>
+</p>
 <!-- tooltip end -->
 <p>
-  If <code>a.equals(b)</code> isn't preceded with <code>a != <b>null</b></code>, replacing it with <code>Objects.equals(a, b)</code>
-  still makes sense, but slightly changes the semantics. For the cases where only equivalent replacement is needed, there's
-  the check box <i>Report only null safe 'equals' calls</i> to enforce that.
+  Replacing expressions like <code><pre>a != null && a.equals(b)</pre></code> with
+  <code><pre>Objects.equals(a, b)</pre></code> slightly changes the semantics,
+  but if that's what you need there's a check box for that in the inspection settings.
 <p>
   This inspection only applies to projects and modules configured to use a language level of 7 or higher.
 </body>

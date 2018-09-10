@@ -56,9 +56,8 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     doTest();
   }
 
-  public void testMethodReferenceWithCollectionCalls() {
-    doTest();
-  }
+  public void testMethodReferenceWithCollectionCalls() { doTest(); }
+  public void testSuspiciousSecondArg() { doTest(); }
 
   public void testNonClassArgTypes() {
     doTest();

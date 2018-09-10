@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationTypeBase;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
@@ -18,7 +16,7 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
   public CompoundRunConfigurationType() {
     super("CompoundRunConfigurationType",
           "Compound",
-          "It runs batch of run configurations at once", lazyIcon(() -> LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)));
+          "It runs batch of run configurations at once", LazyUtil.create(() -> LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)));
     addFactory(new ConfigurationFactory(this) {
       @NotNull
       @Override
@@ -26,20 +24,22 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
         return new CompoundRunConfiguration(project, "Compound Run Configuration", this);
       }
 
+      @NotNull
       @Override
       public String getName() {
         return "Compound Run Configuration";
       }
 
+      @NotNull
       @Override
-      public boolean isConfigurationSingletonByDefault() {
-        return true;
-      }
-
-      @Override
-      public boolean canConfigurationBeSingleton() {
-        return false;
+      public RunConfigurationSingletonPolicy getSingletonPolicy() {
+        return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
       }
     });
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.CompoundRunConfigurationType";
   }
 }

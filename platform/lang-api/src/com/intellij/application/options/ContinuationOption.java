@@ -28,14 +28,14 @@ public class ContinuationOption implements CodeStyleConstraints {
   private @Nullable IntegerField myField;
   private boolean mySupported;
   private final String myName;
-  private final Function<CommonCodeStyleSettings.IndentOptions, Integer> myGetter;
-  private final BiConsumer<CommonCodeStyleSettings.IndentOptions, Integer> mySetter;
+  private final Function<? super CommonCodeStyleSettings.IndentOptions, Integer> myGetter;
+  private final BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> mySetter;
   private final int myDefaultValue;
   private JLabel myLabel;
 
   public ContinuationOption(String name,
-                            Function<CommonCodeStyleSettings.IndentOptions,Integer> getter,
-                            BiConsumer<CommonCodeStyleSettings.IndentOptions,Integer> setter,
+                            Function<? super CommonCodeStyleSettings.IndentOptions, Integer> getter,
+                            BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> setter,
                             int defaultValue) {
     myName = name;
     myGetter = getter;
@@ -88,6 +88,13 @@ public class ContinuationOption implements CodeStyleConstraints {
   public void setDefaultValueToDisplay(int value) {
     if (mySupported && myField != null) {
       myField.setDefaultValueText(Integer.toString(value));
+    }
+  }
+
+  public void setVisible(boolean visible) {
+    if (myField != null && myLabel != null) {
+      myLabel.setVisible(visible);
+      myField.setVisible(visible);
     }
   }
 }

@@ -43,7 +43,7 @@ public class Java8MigrationUtils {
     PsiMethodCallExpression call;
     if (condition instanceof PsiBinaryExpression) {
       negated ^= ((PsiBinaryExpression)condition).getOperationTokenType().equals(JavaTokenType.EQEQ);
-      PsiExpression value = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
+      PsiExpression value = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition));
       if (value instanceof PsiReferenceExpression && statement != null) {
         valueReference = (PsiReferenceExpression)value;
         PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);

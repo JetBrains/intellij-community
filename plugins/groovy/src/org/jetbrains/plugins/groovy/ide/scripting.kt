@@ -33,13 +33,13 @@ import javax.swing.JPanel
 
 class GroovyScriptingShellAction : AnAction() {
 
-  override fun actionPerformed(e: AnActionEvent?) {
-    val project = e?.project ?: return
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     initConsole(project)
   }
 
-  override fun update(e: AnActionEvent?) {
-    e?.presentation?.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
   }
 }
 

@@ -17,12 +17,13 @@
 package com.intellij.ide.impl;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiElementDataValidator extends DataValidator<PsiElement> {
   @Override
   @Nullable
-  public PsiElement findInvalid(final String dataId, PsiElement psiElement, final Object dataSource) {
+  public PsiElement findInvalid(@NotNull final String dataId, @NotNull PsiElement psiElement, @NotNull final Object dataSource) {
     return psiElement.isValid() ? null : psiElement;
   }
 }

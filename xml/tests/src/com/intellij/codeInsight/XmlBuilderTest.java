@@ -31,7 +31,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     private final StringBuilder currentDisplayText = new StringBuilder();
     private final ProcessingOrder myTagProcessingOrder;
 
-    public TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
+    TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
       myTagProcessingOrder = tagsAndAttributes;
     }
 

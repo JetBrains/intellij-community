@@ -6,8 +6,8 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
+      PsiElement(()('(')
       Parameter
         Modifiers
           <empty list>
@@ -27,9 +27,9 @@ Groovy script
           PsiElement(.)('.')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('b')
-      PsiErrorElement:Identifier expected
+      PsiErrorElement:identifier expected, got ')'
         <empty list>
-    PsiElement())(')')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')

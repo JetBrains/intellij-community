@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -113,8 +114,12 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       final PsiExpression condition = newIfStatement.getCondition();
       assert condition != null;
       condition.replace(initializer);
-      final PsiElement newElement = declarationStatement.getParent().addAfter(newIfStatement, declarationStatement);
-      CodeStyleManager.getInstance(project).reformat(newElement);
+      CodeStyleManager.getInstance(project).reformat(declarationStatement.getParent().addAfter(newIfStatement, declarationStatement));
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement.isInferredType() && 
+          PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+        return;
+      }
       initializer.delete();
     }
   }

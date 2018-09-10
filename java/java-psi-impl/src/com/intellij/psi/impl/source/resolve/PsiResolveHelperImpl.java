@@ -114,7 +114,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                               @Nullable PsiElement currentFileResolveScope) {
     PsiClass containingClass = member.getContainingClass();
     boolean accessible = JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
-    if (accessible && member instanceof PsiClass) {
+    if (accessible && member instanceof PsiClass && !(member instanceof PsiTypeParameter)) {
       accessible = isAccessible(moduleSystem -> moduleSystem.isAccessible(((PsiClass)member), place));
     }
     return accessible;
@@ -125,7 +125,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg.getQualifiedName(), null, place));
   }
 
-  private static boolean isAccessible(Predicate<JavaModuleSystem> predicate) {
+  private static boolean isAccessible(Predicate<? super JavaModuleSystem> predicate) {
     return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
   }
 

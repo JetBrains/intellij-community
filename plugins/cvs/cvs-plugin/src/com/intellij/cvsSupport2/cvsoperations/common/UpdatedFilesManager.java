@@ -17,11 +17,11 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -85,6 +85,7 @@ public class UpdatedFilesManager implements IMessageListener {
     myCvsFileSystem = cvsFileSystem;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (message.startsWith(MERGED_FILE_MESSAGE_PREFIX)) {
       String pathInRepository = message.substring(MERGED_FILE_MESSAGE_PREFIX.length(),
@@ -192,6 +193,7 @@ public class UpdatedFilesManager implements IMessageListener {
     return myNonUpdatedFiles.contains(file);
   }
 
+  @Override
   public void binaryMessageSent(final byte[] bytes) {
   }
 }

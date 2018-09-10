@@ -35,6 +35,7 @@ public class ErrorPostponingMethodVisitor extends FailSafeMethodVisitor {
     myMethodName = methodName;
   }
 
+  @Override
   public void visitMaxs(int maxStack, int maxLocals) {
     try {
       super.visitMaxs(maxStack, maxLocals);

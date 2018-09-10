@@ -77,7 +77,7 @@ public class ColorSettingsUtil {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.weak.warning"), CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.runtime"), CodeInsightColors.RUNTIME_PROBLEM));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.runtime"), CodeInsightColors.RUNTIME_ERROR));
 
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {

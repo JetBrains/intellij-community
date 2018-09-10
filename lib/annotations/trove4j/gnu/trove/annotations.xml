@@ -47,6 +47,21 @@
   <item name='gnu.trove.TFloatProcedure'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
+  <item name='gnu.trove.THashMap THashMap(gnu.trove.TObjectHashingStrategy&lt;K&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.THashMap THashMap(int, float, gnu.trove.TObjectHashingStrategy&lt;K&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.THashMap THashMap(int, gnu.trove.TObjectHashingStrategy&lt;K&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.THashMap THashMap(java.util.Map&lt;K,V&gt;, gnu.trove.TObjectHashingStrategy&lt;K&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.THashMap V put(K, V) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='gnu.trove.TIntFunction'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
@@ -70,6 +85,27 @@
   </item>
   <item name='gnu.trove.TObjectFunction'>
     <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TObjectHash TObjectHash(gnu.trove.TObjectHashingStrategy&lt;T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.TObjectHash TObjectHash(int, float, gnu.trove.TObjectHashingStrategy&lt;T&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.TObjectHash TObjectHash(int, gnu.trove.TObjectHashingStrategy&lt;T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.TObjectIntHashMap TObjectIntHashMap(gnu.trove.TObjectHashingStrategy&lt;K&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.TObjectIntHashMap TObjectIntHashMap(int, float, gnu.trove.TObjectHashingStrategy&lt;K&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.TObjectIntHashMap TObjectIntHashMap(int, gnu.trove.TObjectHashingStrategy&lt;K&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='gnu.trove.TObjectIntHashMap gnu.trove.TObjectIntIterator&lt;K&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='gnu.trove.TObjectProcedure'>
     <annotation name='java.lang.FunctionalInterface'/>

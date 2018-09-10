@@ -79,6 +79,18 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     return handler;
   }
 
+  @NotNull
+  public LoggingHandler findOrCreateAdditionalLog(@NotNull String presentableName) {
+    synchronized (myAdditionalLoggingHandlers) {
+      for (LoggingHandlerBase next : myAdditionalLoggingHandlers) {
+        if (next instanceof LoggingHandler && presentableName.equals(next.getPresentableName())) {
+          return (LoggingHandler)next;
+        }
+      }
+      return addAdditionalLog(presentableName);
+    }
+  }
+
   @Override
   public TerminalHandler addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
     TerminalHandlerBase handler = CloudTerminalProvider.getInstance().createTerminal(presentableName, myProject, terminalOutput,

@@ -51,9 +51,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
-    <projectOpenProcessor id="default"
-                          implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor"
-                          order="last"/>
+    <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
     <stacktrace.fold substring="at org.gradle."/>
@@ -66,6 +64,8 @@
                                            id="gradle"/>
 
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.GradleTaskTriggersImporter"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.ActionDelegateConfigImporter"/>
     <externalSystem.beforeRunTaskImporter implementation="org.jetbrains.plugins.gradle.service.project.GradleBeforeRunTaskImporter"/>
     <internalFileTemplate name="Gradle Build Script"/>
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
@@ -111,6 +111,8 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
+    <runAnything.executionProvider implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider" order="first"/>
+    <runAnything.helpGroup implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingHelpGroup"/>
   </extensions>
 
   <actions>

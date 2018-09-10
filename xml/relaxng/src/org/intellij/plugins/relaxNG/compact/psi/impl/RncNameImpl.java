@@ -38,7 +38,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -120,7 +119,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ASTNode node = getNode();
     final ASTNode child = RenameUtil.createPrefixedNode(getManager(), newElementName, getLocalPart());
     node.getTreeParent().replaceChild(node, child);
@@ -133,14 +132,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof RncElement && Comparing.equal(resolve(), element);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -169,7 +162,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     private final Kind myKind;
     private PsiElement myResult;
 
-    public MyResolver(String prefix, Kind kind) {
+    MyResolver(String prefix, Kind kind) {
       myPrefix = prefix;
       myKind = kind;
     }

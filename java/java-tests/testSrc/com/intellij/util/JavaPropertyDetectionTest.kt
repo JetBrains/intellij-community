@@ -1,33 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.JavaSimplePropertyIndex
 import com.intellij.psi.impl.PropertyIndexValue
-import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexingDataKeys
-import junit.framework.TestCase
 import kotlin.test.assertNotEquals
 
 class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
@@ -128,6 +111,14 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
           return name;
         }
 
+        public String getBoo() {
+          return Boo.Foo.CONST;
+        }
+
+        public String getXxx() {
+          return xxx().yyy;
+        }
+
         public class Bar {
           public String getName() {
             return Foo.this.getName();
@@ -138,7 +129,29 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
           }
         }
       }
-    """.trimIndent(), mapOf(Pair(0, PropertyIndexValue("name", true))))
+    """.trimIndent(), mapOf(Pair(0, PropertyIndexValue("name", true)), Pair(2, PropertyIndexValue("Boo.Foo.CONST", true))))
+  }
+
+  fun testIndexDoesntContainPolyadicExpressions() {
+    assertJavaSimplePropertyIndex("""
+      public class Foo {
+        public String getName() {
+          return n + a + m + e;
+        }
+
+        public String getName1() {
+          return --i;
+        }
+
+        public String getName2() {
+          return 1 == 1 ? 1 : 1;
+        }
+
+        public String getName3() {
+          return new String();
+        }
+      }
+    """.trimIndent(), emptyMap())
   }
 
   private fun assertPropertyMember(text: String, memberType: PropertyMemberType) {

@@ -40,7 +40,7 @@ public abstract class AbstractWizardFixture<S> extends ComponentFixture<S, JDial
   @NotNull
   protected JRootPane findStepWithTitle(@NotNull final String title) {
     JRootPane rootPane = target().getRootPane();
-    GuiTestUtil.waitUntilFound(robot(), rootPane, new GenericTypeMatcher<JLabel>(JLabel.class) {
+    GuiTestUtil.INSTANCE.waitUntilFound(robot(), rootPane, new GenericTypeMatcher<JLabel>(JLabel.class) {
       @Override
       protected boolean isMatching(@NotNull JLabel label) {
         if (!label.isShowing()) {
@@ -54,19 +54,19 @@ public abstract class AbstractWizardFixture<S> extends ComponentFixture<S, JDial
 
   @NotNull
   public S clickNext() {
-    GuiTestUtil.findAndClickButton(this, "Next");
+    GuiTestUtil.INSTANCE.findAndClickButton(this, "Next");
     return myself();
   }
 
   @NotNull
   public S clickFinish() {
-    GuiTestUtil.findAndClickButton(this, "Finish");
+    GuiTestUtil.INSTANCE.findAndClickButton(this, "Finish");
     return myself();
   }
 
   @NotNull
   public S clickCancel() {
-    GuiTestUtil.findAndClickCancelButton(this);
+    GuiTestUtil.INSTANCE.findAndClickCancelButton(this);
     return myself();
   }
 
@@ -92,7 +92,7 @@ public abstract class AbstractWizardFixture<S> extends ComponentFixture<S, JDial
 
   @NotNull
   public JLabelFixture findLabel(@NotNull final String text) {
-    JLabel label = GuiTestUtil.waitUntilFound(robot(), target(), new GenericTypeMatcher<JLabel>(JLabel.class) {
+    JLabel label = GuiTestUtil.INSTANCE.waitUntilFound(robot(), target(), new GenericTypeMatcher<JLabel>(JLabel.class) {
       @Override
       protected boolean isMatching(@NotNull JLabel label) {
         return text.equals(label.getText().replaceAll("(?i)<.?html>", ""));

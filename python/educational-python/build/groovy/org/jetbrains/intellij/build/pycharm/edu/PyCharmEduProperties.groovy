@@ -20,10 +20,17 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
     productLayout.mainModules = ["intellij.pycharm.edu.main"]
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["intellij.xml.dom"]
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
-      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharm.community.resources",
-      "intellij.pycharm.community", "intellij.python.configure", "intellij.pycharm.edu", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
+    productLayout.productApiModules = ["intellij.xml.dom"]
+    productLayout.productImplementationModules = [
+      "intellij.xml.dom.impl",
+      "intellij.python.community.impl",
+      "intellij.pycharm.community.resources",
+      "intellij.pycharm.community",
+      "intellij.python.configure",
+      "intellij.pycharm.edu",
+      "intellij.python.community",
+      "intellij.python.psi",
+      "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
     additionalIDEPropertiesFilePaths = ["$pythonCommunityPath/educational-python/build/pycharm-edu.properties".toString()]
@@ -37,7 +44,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
 
-    EduUtils.copyEduToolsPlugin(dependenciesPath, context, targetDirectory)
+    EduUtils.copyPlugin("EduTools", dependenciesPath, context, targetDirectory)
   }
 
   @Override
@@ -55,7 +62,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new PyCharmWindowsDistributionCustomizer() {
       {
         installerImagesPath = "$pythonCommunityPath/educational-python/build/resources"
-        fileAssociations = [".py"]
+        fileAssociations = ["py"]
         silentInstallationConfig = "$pythonCommunityPath/educational-python/build/silent.config"
         customNsiConfigurationFiles = [
           "$pythonCommunityPath/educational-python/build/desktop.ini",
@@ -99,6 +106,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
         dmgImagePath = "$pythonCommunityPath/educational-python/build/dmg_background.tiff"
+        fileAssociations = ["py"]
       }
 
       @Override

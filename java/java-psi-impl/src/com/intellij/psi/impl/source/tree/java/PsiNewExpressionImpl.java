@@ -27,8 +27,10 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +139,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   public PsiPolyVariantCachingReference getConstructorFakeReference() {
-    return new PsiPolyVariantCachingReference() {
+    return CachedValuesManager.getCachedValue(this, () -> new CachedValueProvider.Result<>(new PsiPolyVariantCachingReference() {
       @Override
       @NotNull
       public JavaResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
@@ -187,19 +189,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
 
       @Override
-      public PsiElement handleElementRename(String newElementName) {
+      public PsiElement handleElementRename(@NotNull String newElementName) {
         return null;
       }
 
       @Override
       public PsiElement bindToElement(@NotNull PsiElement element) {
         return null;
-      }
-
-      @Override
-      @NotNull
-      public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       @Override
@@ -211,7 +207,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       public boolean equals(Object obj) {
         return obj instanceof PsiPolyVariantCachingReference && getElement() == ((PsiReference)obj).getElement();
       }
-    };
+    }, PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

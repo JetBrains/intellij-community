@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.util;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -24,7 +25,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
@@ -164,8 +164,7 @@ public class HighlighterUtil {
         }
         // have to use html/preformatted or else the tooltip gets formatted totally weird.
 
-        final CodeStyleSettingsManager instance = CodeStyleSettingsManager.getInstance(element.getProject());
-        final int tabSize = instance.getCurrentSettings().getTabSize(FileTypeManager.getInstance().getFileTypeByExtension("xml"));
+        final int tabSize = CodeStyle.getSettings(element.getProject()).getTabSize(FileTypeManager.getInstance().getFileTypeByExtension("xml"));
         final char[] spaces = new char[tabSize];
         for (int i = 0; i < spaces.length; i++) {
             spaces[i] = ' ';

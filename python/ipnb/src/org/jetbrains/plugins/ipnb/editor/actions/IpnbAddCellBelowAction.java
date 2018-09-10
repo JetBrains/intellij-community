@@ -38,7 +38,7 @@ public class IpnbAddCellBelowAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     IpnbEditablePanel panel = myFileEditor.getIpnbFilePanel().getSelectedCellPanel();
     if (panel != null && panel.isEditing()) {
       e.getPresentation().setEnabled(false);

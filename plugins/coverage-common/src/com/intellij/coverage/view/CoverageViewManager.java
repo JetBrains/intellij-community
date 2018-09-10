@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -46,10 +47,12 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     new ContentManagerWatcher(toolWindow, myContentManager);
   }
 
+  @Override
   public StateBean getState() {
     return myStateBean;
   }
 
+  @Override
   public void loadState(@NotNull StateBean state) {
     myStateBean = state;
   }
@@ -86,6 +89,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   void closeView(String displayName) {
     final CoverageView oldView = myViews.remove(displayName);
     if (oldView != null) {
+      oldView.saveSize();
       final Content content = myContentManager.getContent(oldView);
       final Runnable runnable = () -> {
         if (content != null) {
@@ -114,5 +118,6 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
+    public int myElementSize = JBUI.scale(200);
   }
 }

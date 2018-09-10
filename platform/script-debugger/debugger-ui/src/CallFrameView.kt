@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.frame
 
 import com.intellij.icons.AllIcons
@@ -36,7 +22,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
 
   private var evaluator: XDebuggerEvaluator? = null
 
-  override fun getEqualityObject() = callFrame.equalityObject
+  override fun getEqualityObject(): Any = callFrame.equalityObject
 
   override fun computeChildren(node: XCompositeNode) {
     node.setAlreadySorted(true)
@@ -46,12 +32,12 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
   override val evaluateContext: EvaluateContext
     get() = callFrame.evaluateContext
 
-  override fun watchableAsEvaluationExpression() = true
+  override fun watchableAsEvaluationExpression(): Boolean = true
 
   override val memberFilter: Promise<MemberFilter>
     get() = viewSupport.getMemberFilter(this)
 
-  fun getMemberFilter(scope: Scope) = createVariableContext(scope, this, callFrame).memberFilter
+  fun getMemberFilter(scope: Scope): Promise<MemberFilter> = createVariableContext(scope, this, callFrame).memberFilter
 
   override fun getEvaluator(): XDebuggerEvaluator? {
     if (evaluator == null) {
@@ -60,7 +46,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
     return evaluator
   }
 
-  override fun getSourcePosition() = sourceInfo
+  override fun getSourcePosition(): SourceInfo? = sourceInfo
 
   override fun customizePresentation(component: ColoredTextContainer) {
     if (sourceInfo == null) {
@@ -95,6 +81,6 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
       }
       component.append("(), $fileName:$line", textAttributes)
     }
-    component.setIcon(AllIcons.Debugger.StackFrame)
+    component.setIcon(AllIcons.Debugger.Frame)
   }
 }

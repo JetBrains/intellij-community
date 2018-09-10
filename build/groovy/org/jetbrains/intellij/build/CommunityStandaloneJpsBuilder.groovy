@@ -19,8 +19,6 @@ class CommunityStandaloneJpsBuilder {
     new LayoutBuilder(buildContext, false).layout(targetDir) {
       zip("standalone-jps-${buildNumber}.zip") {
         jar("util.jar") {
-          module("intellij.platform.annotations.common")
-          module("intellij.platform.annotations.java5")
           module("intellij.platform.util.rt")
           module("intellij.platform.util")
         }
@@ -76,7 +74,8 @@ class CommunityStandaloneJpsBuilder {
 
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-          "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava"
+          "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava",
+          "jetbrains-annotations-java5"
         ].each {
           projectLibrary(it)
         }

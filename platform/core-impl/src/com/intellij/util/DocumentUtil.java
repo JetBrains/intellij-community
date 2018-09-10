@@ -133,4 +133,14 @@ public final class DocumentUtil {
   public static int getNextCodePointOffset(@NotNull Document document, int offset) {
     return offset + (isSurrogatePair(document, offset) ? 2 : 1);
   }
+
+  public static boolean isLineEmpty(@NotNull Document document, final int line) {
+    final CharSequence chars = document.getCharsSequence();
+    int start = document.getLineStartOffset(line);
+    int end = Math.min(document.getLineEndOffset(line), document.getTextLength() - 1);
+    for (int i = start; i <= end; i++) {
+      if (!Character.isWhitespace(chars.charAt(i))) return false;
+    }
+    return true;
+  }
 }

@@ -29,6 +29,7 @@ public interface UsageFilteringRule {
   /**
    * @deprecated implement {@link #isVisible(Usage, UsageTarget[])} instead
    */
+  @Deprecated
   default boolean isVisible(@NotNull Usage usage) {
     throw new UnsupportedOperationException();
   }

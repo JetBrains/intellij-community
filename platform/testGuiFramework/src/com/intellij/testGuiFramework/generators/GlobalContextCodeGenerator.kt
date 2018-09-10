@@ -30,7 +30,7 @@ abstract class GlobalContextCodeGenerator<C : Component> : ContextCodeGenerator<
     return generate(typeSafeCast(cmp))
   }
 
-  override fun buildContext(component: Component) = Context(originalGenerator = this, component = (component as JComponent).rootPane.parent, code = generate(
+  override fun buildContext(component: Component): Context = Context(originalGenerator = this, component = (component as JComponent).rootPane.parent, code = generate(
     typeSafeCast(component.rootPane.parent)))
 
 }

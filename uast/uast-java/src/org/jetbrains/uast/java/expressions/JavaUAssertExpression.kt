@@ -46,7 +46,7 @@ class JavaUAssertExpression(
   override val valueArgumentCount: Int
     get() = if (message != null) 2 else 1
 
-  override val valueArguments by lz {
+  override val valueArguments: List<UExpression> by lz {
     val message = this.message
     if (message != null) listOf(condition, message) else listOf(condition)
   }
@@ -65,5 +65,5 @@ class JavaUAssertExpression(
   override val kind: UastCallKind
     get() = JavaUastCallKinds.ASSERT
 
-  override fun resolve() = null
+  override fun resolve(): Nothing? = null
 }

@@ -71,6 +71,8 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
 
   public void testChain3() { doTest(); }
 
+  public void testChain4() { doTest(); }
+
   public void testWithoutSpaces() {
     doTest();
   }

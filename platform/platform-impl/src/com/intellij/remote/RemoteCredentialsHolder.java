@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.google.common.collect.ImmutableMap;
@@ -25,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -53,6 +40,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private String myHost;
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
   private String myLiteralPort;
+  @Nullable
   private String myUserName;
   private String myPassword;
   private String myPrivateKeyFile;
@@ -63,6 +51,12 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   @NotNull
   private AuthType myAuthType = AuthType.PASSWORD;
 
+  public RemoteCredentialsHolder() {}
+
+  public RemoteCredentialsHolder(@NotNull RemoteCredentials credentials) {
+    copyFrom(credentials);
+  }
+
   public static String getCredentialsString(@NotNull RemoteCredentials cred) {
     return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
@@ -72,6 +66,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myHost;
   }
 
+  @Override
   public void setHost(String host) {
     myHost = host;
   }
@@ -106,12 +101,14 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
+  @Nullable
   @Transient
   public String getUserName() {
     return myUserName;
   }
 
-  public void setUserName(String userName) {
+  @Override
+  public void setUserName(@Nullable String userName) {
     myUserName = userName;
   }
 
@@ -120,14 +117,17 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myPassword;
   }
 
+  @Override
   public void setPassword(String password) {
     myPassword = password;
   }
 
+  @Override
   public void setStorePassword(boolean storePassword) {
     myStorePassword = storePassword;
   }
 
+  @Override
   public void setStorePassphrase(boolean storePassphrase) {
     myStorePassphrase = storePassphrase;
   }
@@ -147,6 +147,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myPrivateKeyFile;
   }
 
+  @Override
   public void setPrivateKeyFile(String privateKeyFile) {
     myPrivateKeyFile = privateKeyFile;
   }
@@ -157,6 +158,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myPassphrase;
   }
 
+  @Override
   public void setPassphrase(String passphrase) {
     myPassphrase = passphrase;
   }
@@ -178,6 +180,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myAuthType == AuthType.KEY_PAIR;
   }
 
+  @Override
   @Deprecated
   public void setUseKeyPair(boolean useKeyPair) {
     if (useKeyPair) {
@@ -277,8 +280,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setSerializedPassword(element.getAttributeValue(PASSWORD));
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
-    boolean useKeyPair = StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false);
-    boolean useAuthAgent = StringUtil.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT), false);
+    boolean useKeyPair = Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR));
+    boolean useAuthAgent = Boolean.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT));
     if (useKeyPair) {
       myAuthType = AuthType.KEY_PAIR;
     }
@@ -314,7 +317,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       }
     }
 
-    boolean isAnonymous = StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false);
+    boolean isAnonymous = Boolean.parseBoolean(element.getAttributeValue(ANONYMOUS));
     if (isAnonymous) {
       setSerializedUserName("anonymous");
       setSerializedPassword("user@example.com");

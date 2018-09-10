@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
+import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.runReadAction
@@ -15,12 +16,14 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.connection.RemoteVmConnection
 import org.jetbrains.debugger.connection.VmConnection
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.event.HyperlinkListener
 
 interface MultiVmDebugProcess {
   val mainVm: Vm?
@@ -48,8 +51,8 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
-  @Volatile protected var isForceStep = false
-  @Volatile protected var disableDoNotStepIntoLibraries = false
+  @Volatile protected var isForceStep: Boolean = false
+  @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
@@ -63,14 +66,14 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   protected val realProcessHandler: ProcessHandler?
     get() = executionResult?.processHandler
 
-  override final fun getSmartStepIntoHandler() = smartStepIntoHandler
+  override final fun getSmartStepIntoHandler(): XSmartStepIntoHandler<*>? = smartStepIntoHandler
 
-  override final fun getBreakpointHandlers() = when (connection.state.status) {
+  override final fun getBreakpointHandlers(): Array<out XBreakpointHandler<*>> = when (connection.state.status) {
     ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED, ConnectionStatus.CONNECTION_FAILED -> XBreakpointHandler.EMPTY_ARRAY
     else -> _breakpointHandlers
   }
 
-  override final fun getEditorsProvider() = editorsProvider
+  override final fun getEditorsProvider(): XDebuggerEditorsProvider = editorsProvider
 
   val vm: Vm?
     get() = connection.vm
@@ -82,6 +85,9 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
   init {
+    if (session is XDebugSessionImpl && executionResult is DefaultExecutionResult) {
+      session.addRestartActions(*executionResult.restartActions)
+    }
     connection.stateChanged {
       when (it.status) {
         ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {
@@ -110,9 +116,9 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     lastCallFrame = vm.suspendContextManager.context?.topFrame
   }
 
-  override final fun checkCanPerformCommands() = activeOrMainVm != null
+  override final fun checkCanPerformCommands(): Boolean = activeOrMainVm != null
 
-  override final fun isValuesCustomSorted() = true
+  override final fun isValuesCustomSorted(): Boolean = true
 
   override final fun startStepOver(context: XSuspendContext?) {
     val vm = context.vm
@@ -146,7 +152,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   }
 
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
-  protected open fun isVmStepOutCorrect() = true
+  protected open fun isVmStepOutCorrect(): Boolean = true
 
   override fun resume(context: XSuspendContext?) {
     continueVm(context.vm, StepAction.CONTINUE)
@@ -158,7 +164,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
 
   @Suppress("unused")
   @Deprecated("Pass vm explicitly", ReplaceWith("continueVm(vm!!, stepAction)"))
-  protected open fun continueVm(stepAction: StepAction) = continueVm(activeOrMainVm!!, stepAction)
+  protected open fun continueVm(stepAction: StepAction): Promise<*>? = continueVm(activeOrMainVm!!, stepAction)
 
   /**
    * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
@@ -194,11 +200,11 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
       .onError(RejectErrorReporter(session, "Cannot pause"))
   }
 
-  override final fun getCurrentStateMessage() = connection.state.message
+  override final fun getCurrentStateMessage(): String = connection.state.message
 
-  override final fun getCurrentStateHyperlinkListener() = connection.state.messageLinkListener
+  override final fun getCurrentStateHyperlinkListener(): HyperlinkListener? = connection.state.messageLinkListener
 
-  override fun doGetProcessHandler() = executionResult?.processHandler ?: object : DefaultDebugProcessHandler() { override fun isSilentlyDestroyOnClose() = true }
+  override fun doGetProcessHandler(): ProcessHandler = executionResult?.processHandler ?: object : DefaultDebugProcessHandler() { override fun isSilentlyDestroyOnClose() = true }
 
   fun saveResolvedFile(url: Url, file: VirtualFile) {
     urlToFileCache.putIfAbsent(url, file)
@@ -210,7 +216,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
 
   open fun getLocationsForBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
-  override fun isLibraryFrameFilterSupported() = true
+  override fun isLibraryFrameFilterSupported(): Boolean = true
 
   // todo make final (go plugin compatibility)
   override fun checkCanInitBreakpoints(): Boolean {

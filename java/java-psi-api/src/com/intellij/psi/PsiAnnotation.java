@@ -52,6 +52,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
    *
    * @return the class name, or null if the annotation is unresolved.
    */
+  @Override
   @Nullable
   @NonNls
   String getQualifiedName();
@@ -125,5 +126,13 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
   @Override
   default List<JvmAnnotationAttribute> getAttributes() {
     return Arrays.asList(getParameterList().getAttributes());
+  }
+
+  /**
+   * @return whether the annotation has the given qualified name. Specific languages may provide efficient implementation
+   * that doesn't always create/resolve annotation reference.
+   */
+  default boolean hasQualifiedName(@NotNull String qualifiedName) {
+    return qualifiedName.equals(getQualifiedName());
   }
 }

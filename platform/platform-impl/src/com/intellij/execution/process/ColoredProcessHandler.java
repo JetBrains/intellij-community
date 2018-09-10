@@ -92,6 +92,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    * and override method coloredChunksAvailable to process colored chunks.
    * To be removed in IDEA 14.
    */
+  @Deprecated
   protected void textAvailable(final String text, final Key attributes) {
     super.notifyTextAvailable(text, attributes);
   }

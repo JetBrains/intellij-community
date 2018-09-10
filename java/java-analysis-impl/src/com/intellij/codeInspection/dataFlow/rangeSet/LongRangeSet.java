@@ -1256,6 +1256,9 @@ public abstract class LongRangeSet {
     @NotNull
     @Override
     public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      if (myRanges.length > 6) {
+        return range(min(), max()).plus(other, isLong);
+      }
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
         result = result.union(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));

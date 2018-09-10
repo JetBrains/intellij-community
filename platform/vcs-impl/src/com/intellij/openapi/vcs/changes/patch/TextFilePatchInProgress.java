@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -46,6 +31,7 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
     super(patch.pathsOnlyCopy(), autoBases, baseDir);
   }
 
+  @Override
   public ContentRevision getNewContentRevision() {
     if (FilePatchStatus.DELETED.equals(myStatus)) return null;
 
@@ -59,10 +45,6 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       else {
         final FilePath newFilePath = detectNewFilePathForMovedOrModified();
         myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
-        if (myCurrentBase != null) {
-          ApplicationManager.getApplication().executeOnPooledThread(
-            (Runnable)() -> ((LazyPatchContentRevision)myNewContentRevision).getContent());
-        }
       }
     }
     return myNewContentRevision;

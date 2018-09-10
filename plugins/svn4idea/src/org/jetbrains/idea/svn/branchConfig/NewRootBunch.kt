@@ -16,9 +16,9 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
   private val myLock = Any()
   private val myMap = mutableMapOf<VirtualFile, InfoStorage<SvnBranchConfigurationNew>>()
 
-  val mapCopy get() = synchronized(myLock) { myMap.mapValues { it.value.value } }
+  val mapCopy: Map<VirtualFile, SvnBranchConfigurationNew> get() = synchronized(myLock) { myMap.mapValues { it.value.value } }
 
-  fun updateForRoot(root: VirtualFile, config: InfoStorage<SvnBranchConfigurationNew>, reload: Boolean) = synchronized(myLock) {
+  fun updateForRoot(root: VirtualFile, config: InfoStorage<SvnBranchConfigurationNew>, reload: Boolean): Unit = synchronized(myLock) {
     val previous: SvnBranchConfigurationNew?
     val override: Boolean
     val existing = myMap[root]
@@ -38,7 +38,7 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
     }
   }
 
-  fun updateBranches(root: VirtualFile, branchesParent: Url, items: InfoStorage<List<SvnBranchItem>>) = synchronized(myLock) {
+  fun updateBranches(root: VirtualFile, branchesParent: Url, items: InfoStorage<List<SvnBranchItem>>): Unit = synchronized(myLock) {
     val existing = myMap[root]
     if (existing == null) {
       LOG.info("cannot update branches, branches parent not found: ${branchesParent.toDecodedString()}")
@@ -48,7 +48,7 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
     }
   }
 
-  fun getConfig(root: VirtualFile) = synchronized(myLock) {
+  fun getConfig(root: VirtualFile): SvnBranchConfigurationNew = synchronized(myLock) {
     val value = myMap[root]
     val result: SvnBranchConfigurationNew
     if (value == null) {
@@ -80,6 +80,6 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
     }
   }
 
-  fun reloadBranches(root: VirtualFile, branchLocation: Url, reliability: InfoReliability, passive: Boolean) =
+  fun reloadBranches(root: VirtualFile, branchLocation: Url, reliability: InfoReliability, passive: Boolean): Unit =
     BranchesLoader(myProject, this, branchLocation, reliability, root, passive).run()
 }

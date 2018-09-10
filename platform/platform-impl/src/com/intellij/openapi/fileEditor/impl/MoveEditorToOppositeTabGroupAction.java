@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
@@ -20,11 +6,12 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
 
   @Override
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -37,8 +24,10 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
       if (siblings != null && siblings.length == 1) {
         final EditorWithProviderComposite editorComposite = window.getSelectedEditor();
         final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
-        ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry, true);
+        vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
         closeOldFile(vFile, window);
+        ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry, true);
+        vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
       }
     }
   }
@@ -48,7 +37,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);

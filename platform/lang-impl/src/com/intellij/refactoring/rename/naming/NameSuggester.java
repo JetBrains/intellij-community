@@ -250,7 +250,7 @@ public class NameSuggester {
     final int newFirst;
     final int newLast;
 
-    public OriginalToNewChange(int firstInOld, int lastInOld, int firstInNew, int lastInNew) {
+    OriginalToNewChange(int firstInOld, int lastInOld, int firstInNew, int lastInNew) {
       oldFirst = firstInOld;
       oldLast = lastInOld;
       newFirst = firstInNew;
@@ -283,7 +283,7 @@ public class NameSuggester {
     final int propertyNameIndex;
     final String propertyWord;
 
-    public Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
+    Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
       this.oldClassNameIndex = oldClassNameIndex;
       this.propertyNameIndex = propertyNameIndex;
       this.propertyWord = propertyWord;

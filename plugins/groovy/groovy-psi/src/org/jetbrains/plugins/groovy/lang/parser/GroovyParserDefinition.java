@@ -96,7 +96,7 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final IElementType lType = left.getElementType();
     final IElementType rType = right.getElementType();
 

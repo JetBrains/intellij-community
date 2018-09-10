@@ -45,7 +45,7 @@ public abstract class IntentionManager  {
   public static final Key<Boolean> SHOW_INTENTION_OPTIONS_KEY = Key.create("SHOW_INTENTION_OPTIONS_KEY");
 
   /**
-   * @deprecated Use {@link #getInstance()} unstead.
+   * @deprecated Use {@link #getInstance()} instead.
    * Returns instance of {@code IntentionManager} for given project.
    *
    * @param project the project for which the instance is returned.
@@ -101,22 +101,6 @@ public abstract class IntentionManager  {
    *                 in the "Intention Settings" dialog.
    */
   public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
-
-  /**
-   * @deprecated custom directory name causes problem with internationalization of intention descriptions.
-   * Register intention class via extension point {@link IntentionManager#EP_INTENTION_ACTIONS} instead.
-   */
-  @Deprecated
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                                    @NotNull String[] category,
-                                                    @NotNull String descriptionDirectoryName);
-
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                                    @NotNull String[] category,
-                                                    @NotNull String description,
-                                                    @NotNull String exampleFileExtension,
-                                                    @NotNull String[] exampleTextBefore,
-                                                    @NotNull String[] exampleTextAfter);
 
   public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 

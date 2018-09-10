@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -133,8 +134,8 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         StandardInstructionVisitor visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, stableExceptionVar);
         Consumer<DfaMemoryState> stateAdjuster = state -> {
           state.applyCondition(factory.createCondition(exceptionVar, RelationType.EQ, stableExceptionVar));
-          state
-            .applyCondition(factory.createCondition(exceptionVar, RelationType.IS, factory.createTypeValue(exception, Nullness.NOT_NULL)));
+          state.applyCondition(
+            factory.createCondition(exceptionVar, RelationType.IS, factory.createTypeValue(exception, Nullability.NOT_NULL)));
           };
         return runner.analyzeCodeBlock(block, visitor, stateAdjuster) == RunnerResult.OK;
       }
@@ -147,7 +148,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     private final @NotNull List<PsiMethod> myMethods;
     private final @NotNull DfaVariableValue myExceptionVar;
 
-    public IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
+    IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
                                    @NotNull PsiCodeBlock block,
                                    @NotNull PsiClass exceptionClass,
                                    @NotNull DfaVariableValue exceptionVar) {
@@ -175,6 +176,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       return super.visitMethodCall(instruction, runner, memState);
     }
 
+    @Override
     protected boolean isModificationAllowed(DfaVariableValue variable) {
       PsiModifierListOwner owner = variable.getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);

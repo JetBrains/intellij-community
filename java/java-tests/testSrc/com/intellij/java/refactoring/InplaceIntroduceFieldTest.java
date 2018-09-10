@@ -37,6 +37,15 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
+  public void testArrayInitializer() {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+      }
+    });
+  }
+
   public void testAnchor1() {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {

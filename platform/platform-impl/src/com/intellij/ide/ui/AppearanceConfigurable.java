@@ -17,6 +17,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
@@ -127,7 +128,17 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
       "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
+    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
+    updateDarkWindowHeaderVisibility();
+    myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
+
     return myComponent.myPanel;
+  }
+
+  private void updateDarkWindowHeaderVisibility() {
+    Object item = myComponent.myLafComboBox.getSelectedItem();
+    boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
+    myComponent.myDarkWindowHeaders.setVisible(SystemInfo.isMac && isDarkLaf);
   }
 
   @Override
@@ -224,6 +235,12 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     update |= settings.getShowIconInQuickNavigation() != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
+
+    if (isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"))) {
+      Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected());
+      update = true;
+      shouldUpdateUI = true;
+    }
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
@@ -333,6 +350,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
+    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
     myComponent.myUseSmallLabelsOnTabs.setSelected(settings.getUseSmallLabelsOnTabs());
@@ -417,6 +435,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
+    isModified |= isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"));
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();
       int delay = -1;
@@ -486,8 +505,9 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
+    private JBCheckBox myDarkWindowHeaders;
 
-    public MyComponent() {
+    MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());
       if (!Registry.is("ide.transparency.mode.for.windows")) {
         myTransparencyPanel.getParent().remove(myTransparencyPanel);

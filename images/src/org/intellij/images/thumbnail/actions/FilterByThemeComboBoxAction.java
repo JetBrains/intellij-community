@@ -29,11 +29,12 @@ import javax.swing.*;
 import java.util.Arrays;
 
 public final class FilterByThemeComboBoxAction extends ComboBoxAction {
-    
-    public void update(final AnActionEvent e) {
+
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-        boolean hasApplicableExtension = 
+        boolean hasApplicableExtension =
           Arrays.stream(ThemeFilter.EP_NAME.getExtensions())
             .allMatch(filter -> project != null && filter.isApplicableToProject(project));
         e.getPresentation().setVisible(view != null && hasApplicableExtension);

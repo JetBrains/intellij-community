@@ -28,10 +28,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,7 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
 
   private final List<IntentionAction> myActions = ContainerUtil.createLockFreeCopyOnWriteList();
   private final IntentionManagerSettings mySettings;
+  private boolean myIntentionsDisabled;
 
   private final Alarm myInitActionsAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -126,28 +129,11 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
-  @Override
   public void registerIntentionAndMetaData(@NotNull IntentionAction action,
                                            @NotNull String[] categories,
                                            @NotNull @NonNls String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, categories, descriptionDirectoryName);
-  }
-
-  @Override
-  public void registerIntentionAndMetaData(@NotNull final IntentionAction action,
-                                           @NotNull final String[] category,
-                                           @NotNull final String description,
-                                           @NotNull final String exampleFileExtension,
-                                           @NotNull final String[] exampleTextBefore,
-                                           @NotNull final String[] exampleTextAfter) {
-    addAction(action);
-
-    IntentionActionMetaData metaData = new IntentionActionMetaData(action, category,
-                                                                   new PlainTextDescriptor(description, "description.html"),
-                                                                   mapToDescriptors(exampleTextBefore, "before." + exampleFileExtension),
-                                                                   mapToDescriptors(exampleTextAfter, "after." + exampleFileExtension));
-    mySettings.registerMetaData(metaData);
   }
 
   @Override
@@ -266,12 +252,14 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
   @Override
   @NotNull
   public IntentionAction[] getIntentionActions() {
+    if (myIntentionsDisabled) return IntentionAction.EMPTY_ARRAY;
     return myActions.toArray(IntentionAction.EMPTY_ARRAY);
   }
 
   @NotNull
   @Override
   public IntentionAction[] getAvailableIntentionActions() {
+    if (myIntentionsDisabled) return IntentionAction.EMPTY_ARRAY;
     checkForDuplicates();
     List<IntentionAction> list = new ArrayList<>(myActions.size());
     for (IntentionAction action : myActions) {
@@ -307,5 +295,17 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
 
   public boolean hasActiveRequests() {
     return !myInitActionsAlarm.isEmpty();
+  }
+
+  @TestOnly
+  public <T extends Throwable> void withDisabledIntentions(ThrowableRunnable<T> runnable) throws T {
+    boolean oldIntentionsDisabled = myIntentionsDisabled;
+    myIntentionsDisabled = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      myIntentionsDisabled = oldIntentionsDisabled;
+    }
   }
 }

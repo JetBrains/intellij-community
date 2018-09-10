@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class Main<T> {
   public static List<Collection<String>> test(List<String> list) {
-      List<Collection<String>> strings = list.stream().map(Collections::singletonList).collect(Collectors.toList());
+    List<Collection<String>> strings = list.stream().map(Collections::singletonList).collect(Collectors.toList());
       return strings;
   }
 }

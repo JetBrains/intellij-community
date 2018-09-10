@@ -25,13 +25,14 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.HierarchyService;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class BuildStubsHierarchyAction extends InheritanceAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction");
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 

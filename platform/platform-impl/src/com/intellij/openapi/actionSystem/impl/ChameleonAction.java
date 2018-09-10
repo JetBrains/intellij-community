@@ -71,7 +71,7 @@ public class ChameleonAction extends AnAction {
   }
 
   @Nullable
-  private AnAction getAction(AnActionEvent e) {
+  private AnAction getAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     ProjectType projectType = ProjectTypeService.getProjectType(project);
     AnAction action = myActions.get(projectType);

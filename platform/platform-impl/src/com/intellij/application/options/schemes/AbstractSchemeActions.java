@@ -108,16 +108,16 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return actions;
   }
   
-  protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {}
+  protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {}
 
   private class CopyToProjectAction extends DumbAwareAction {
 
-    public CopyToProjectAction() {
+    CopyToProjectAction() {
       super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null && !getModel().isProjectScheme(currentScheme)) {
         copyToProject(currentScheme);
@@ -125,7 +125,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && !getModel().isProjectScheme(currentScheme));
@@ -135,12 +135,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   private class CopyToIDEAction extends DumbAwareAction {
 
-    public CopyToIDEAction() {
+    CopyToIDEAction() {
       super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null && getModel().isProjectScheme(currentScheme)) {
         copyToIDE(currentScheme);
@@ -148,7 +148,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && getModel().isProjectScheme(currentScheme));
@@ -157,12 +157,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class ResetAction extends DumbAwareAction {
     
-    public ResetAction() {
+    ResetAction() {
       super(ApplicationBundle.message("settings.editor.scheme.reset"));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
@@ -171,7 +171,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       if(scheme != null && mySchemesPanel.getModel().canResetScheme(scheme)) {
@@ -186,12 +186,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   
   private class CopyAction extends DumbAwareAction {
-    public CopyAction() {
+    CopyAction() {
       super(ApplicationBundle.message("settings.editor.scheme.copy"));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.editNewSchemeName(
@@ -202,7 +202,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme));
@@ -211,18 +211,18 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   
   private class RenameAction extends DumbAwareAction {
-    public RenameAction() {
+    RenameAction() {
       super("Rename...");
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       mySchemesPanel.editCurrentSchemeName(
         (currentScheme, newName) -> renameScheme(currentScheme, newName));
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canRenameScheme(scheme));
@@ -230,12 +230,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   private class DeleteAction extends DumbAwareAction {
-    public DeleteAction() {
+    DeleteAction() {
       super(ApplicationBundle.message("settings.editor.scheme.delete"));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
@@ -244,7 +244,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       boolean isEnabled = scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme);
@@ -258,7 +258,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   private static AnAction createImportExportAction(@NotNull String groupName,
                                                    @NotNull Collection<String> actionNames,
-                                                   @NotNull BiFunction<String, String, AnAction> createActionByName) {
+                                                   @NotNull BiFunction<? super String, ? super String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     } else {
@@ -275,7 +275,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private abstract static class ImportExportActionGroup extends ActionGroup {
     private final Collection<String> myActionNames;
 
-    public ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
+    ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
       super(groupName, true);
       myActionNames = actionNames;
     }
@@ -298,13 +298,13 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
     private final String myImporterName;
 
-    public ImportAction(@NotNull String importerName, @NotNull String importerText) {
+    ImportAction(@NotNull String importerName, @NotNull String importerText) {
       super(importerText);
       myImporterName = importerName;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       mySchemesPanel.cancelEdit();
       importScheme(myImporterName);
     }
@@ -313,13 +313,13 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ExportAction extends DumbAwareAction {
     private final String myExporterName;
 
-    public ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
+    ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
       super(exporterText);
       myExporterName = exporterName;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
@@ -400,16 +400,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
           try {
             Object finalConfig = config;
             WriteAction.run(() -> {
-              OutputStream outputStream = targetFile.getOutputStream(this);
-              try {
+              try (OutputStream outputStream = targetFile.getOutputStream(this)) {
                 if (exporter instanceof ConfigurableSchemeExporter) {
                   //noinspection unchecked
                   ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
                 }
                 exporter.exportScheme(scheme, outputStream);
-              }
-              finally {
-                outputStream.close();
               }
             });
             message = ApplicationBundle

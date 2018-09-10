@@ -275,4 +275,18 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testUsingFunctoolsSingledispatch() {
     doTest();
   }
+
+  // PY-27866
+  public void testUnionOwnSlots() {
+    doTestByText("from typing import Union\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    __slots__ = ['x']\n" +
+                 "\n" +
+                 "class B:\n" +
+                 "    __slots__ = ['y']\n" +
+                 "    \n" +
+                 "def foo(ab: Union[A, B]):\n" +
+                 "    print(ab.x)");
+  }
 }

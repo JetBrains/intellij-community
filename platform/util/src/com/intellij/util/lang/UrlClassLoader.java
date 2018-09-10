@@ -140,11 +140,6 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
-    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
-
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -158,6 +153,7 @@ public class UrlClassLoader extends ClassLoader {
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
+  @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories());
@@ -201,7 +197,7 @@ public class UrlClassLoader extends ClassLoader {
    * @deprecated Adding additional urls to classloader at runtime could lead to hard-to-debug errors
    * <b>Note:</b> Used via reflection because of classLoaders incompatibility
    */
-  @SuppressWarnings({"unused", "deprecation"})
+  @SuppressWarnings({"unused", "deprecation", "DeprecatedIsStillUsed"})
   @Deprecated
   public void addURL(URL url) {
     getClassPath().addURL(url);
@@ -346,7 +342,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "override"})
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;

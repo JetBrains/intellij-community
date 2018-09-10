@@ -118,6 +118,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CLONE_RECURSE_SUBMODULES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 11, 0));
+    }
+  },
+
   /**
    * {@code --no-walk=unsorted} <br/>
    * Before this version {@code --no-walk} didn't take any parameters.
@@ -223,6 +230,20 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 0, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_FILTERS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 11, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_TEXTCONV {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
     }
   };
 

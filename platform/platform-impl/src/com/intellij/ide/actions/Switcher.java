@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -64,8 +65,6 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
-import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getUniquePresentableNameForUI;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -213,7 +212,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         final List list = getSelectedList().getSelectedValuesList();
         if (!list.isEmpty()) {
@@ -437,7 +436,7 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !isPinnedMode()) {
+              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !isPinnedMode() || selectedFiles.isEmpty()) {
                 firstRecentMarked = true;
               }
             }
@@ -737,13 +736,15 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void keyTyped(@NotNull KeyEvent e) {
+      if (e.getKeyCode() == VK_ENTER) {
+        navigate(e);
+      }
     }
 
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
-      boolean enter = e.getKeyCode() == VK_ENTER;
-      if (ctrl && isAutoHide() || enter) {
+      if (ctrl && isAutoHide()) {
         navigate(e);
       }
     }
@@ -961,7 +962,7 @@ public class Switcher extends AnAction implements DumbAware {
           final DataContext dataContext = new DataContext() {
             @Nullable
             @Override
-            public Object getData(@NonNls String dataId) {
+            public Object getData(@NotNull @NonNls String dataId) {
               if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
                 return fileName;
               }
@@ -1047,7 +1048,7 @@ public class Switcher extends AnAction implements DumbAware {
     private class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
       private Object[] myElements;
 
-      public SwitcherSpeedSearch() {
+      SwitcherSpeedSearch() {
         super(SwitcherPanel.this);
         addChangeListener(this);
         setComparator(new SpeedSearchComparator(false, true));
@@ -1201,7 +1202,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;
 
-    public VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
+    VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
       mySwitcherPanel = switcherPanel;
     }
 
@@ -1221,7 +1222,7 @@ public class Switcher extends AnAction implements DumbAware {
         append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including EPs
-        Color color = getFileBackgroundColor(project, virtualFile);
+        Color color = EditorTabPresentationUtil.getFileBackgroundColor(project, virtualFile);
 
         if (!selected && color != null) {
           setBackground(color);
@@ -1235,7 +1236,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final Project myProject;
     private String myNameForRendering;
 
-    public FileInfo(VirtualFile first, EditorWindow second, Project project) {
+    FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
       myProject = project;
     }
@@ -1243,7 +1244,7 @@ public class Switcher extends AnAction implements DumbAware {
     String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
-        myNameForRendering = getUniquePresentableNameForUI(myProject, first);
+        myNameForRendering = EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second);
       }
       return myNameForRendering;
     }

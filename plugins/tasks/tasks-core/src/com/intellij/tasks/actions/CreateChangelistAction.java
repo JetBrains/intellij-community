@@ -23,6 +23,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -30,7 +31,7 @@ import com.intellij.tasks.impl.TaskUtil;
 public class CreateChangelistAction extends BaseTaskAction {
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (event.getPresentation().isEnabled()) {
       TaskManager manager = getTaskManager(event);
@@ -53,7 +54,7 @@ public class CreateChangelistAction extends BaseTaskAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
     assert manager != null;
     LocalTask activeTask = manager.getActiveTask();

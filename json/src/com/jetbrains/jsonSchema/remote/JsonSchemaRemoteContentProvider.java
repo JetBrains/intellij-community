@@ -21,7 +21,8 @@ import java.util.List;
 public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvider {
   private static final int DEFAULT_CONNECT_TIMEOUT = 10000;
   private static final long UPDATE_DELAY = Duration.ofHours(4).toMillis();
-  private static final String STORE_URL_PREFIX = "http://json.schemastore.org";
+  static final String STORE_URL_PREFIX_HTTP = "http://json.schemastore.org";
+  static final String STORE_URL_PREFIX_HTTPS = "https://schemastore.azurewebsites.net";
   private static final String SCHEMA_URL_PREFIX = "http://json-schema.org/";
   private static final String ETAG_HEADER = "ETag";
   private static final String LAST_MODIFIED_HEADER = "Last-Modified";
@@ -31,7 +32,8 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
   @Override
   public boolean canProvideContent(@NotNull Url url) {
     String externalForm = url.toExternalForm();
-    return externalForm.startsWith(STORE_URL_PREFIX)
+    return externalForm.startsWith(STORE_URL_PREFIX_HTTP)
+           || externalForm.startsWith(STORE_URL_PREFIX_HTTPS)
            || externalForm.startsWith(SCHEMA_URL_PREFIX)
            || externalForm.endsWith(".json");
   }
@@ -70,6 +72,7 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
     Files.write(tagFile.toPath(), ContainerUtil.createMaybeSingletonList(headerValue));
   }
 
+  @Override
   public boolean isUpToDate(@NotNull Url url, @NotNull VirtualFile local) {
     long now = System.currentTimeMillis();
     // don't update more frequently than once in 4 hours

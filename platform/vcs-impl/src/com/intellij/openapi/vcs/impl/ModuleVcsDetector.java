@@ -38,7 +38,6 @@ public class ModuleVcsDetector {
       if (myVcsManager.needAutodetectMappings()) {
         autoDetectVcsMappings(true);
       }
-      myVcsManager.updateActiveVcss();
     });
     startupManager.registerPostStartupActivity(() -> {
       MessageBusConnection connection = myProject.getMessageBus().connect();
@@ -52,12 +51,12 @@ public class ModuleVcsDetector {
     private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<>();
 
     @Override
-    public void beforeRootsChange(ModuleRootEvent event) {
+    public void beforeRootsChange(@NotNull ModuleRootEvent event) {
       myMappingsForRemovedModules.clear();
     }
 
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       for (Pair<String, VcsDirectoryMapping> mapping : myMappingsForRemovedModules) {
         myVcsManager.removeDirectoryMapping(mapping.second);
       }

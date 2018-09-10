@@ -16,6 +16,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -27,6 +28,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -48,6 +50,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.JpsGroovycRunner");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
+  public static final String GROOVYC_IN_PROCESS = "groovyc.in.process";
   final boolean myForStubs;
 
   public JpsGroovycRunner(boolean forStubs) {
@@ -62,8 +65,6 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     List<CompilerMessage> messages;
     long start = 0;
     try {
-      JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
-
       Ref<Boolean> hasStubExcludes = Ref.create(false);
       final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, hasStubExcludes);
       if (toCompile.isEmpty()) {
@@ -83,7 +84,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       Map<T, String> generationOutputs = getGenerationOutputs(context, chunk, finalOutputs);
       String compilerOutput = generationOutputs.get(representativeTarget(generationOutputs));
 
-      GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, settings, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
+      GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
 
       MultiMap<T, GroovycOutputParser.OutputItem> compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
 
@@ -132,7 +133,6 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   @NotNull
   private GroovycOutputParser runGroovycOrContinuation(CompileContext context,
                                                        ModuleChunk chunk,
-                                                       JpsGroovySettings settings,
                                                        Map<T, String> finalOutputs,
                                                        String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
     if (myForStubs) {
@@ -180,16 +180,29 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
     GroovycOutputParser parser = new GroovycOutputParser(chunk, context);
 
-    continuation = groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
+    continuation = groovyc.runGroovyc(classpath, myForStubs, context, tempFile, parser, getBytecodeTarget(context, chunk));
     setContinuation(context, chunk, continuation);
     return parser;
   }
 
+  @Nullable
+  static String getBytecodeTarget(CompileContext context, ModuleChunk chunk) {
+    String explicit = System.getProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
+    if (explicit != null) {
+      return explicit;
+    }
+
+    int bytecodeTarget = JavaBuilder.getModuleBytecodeTarget(context, chunk, getJavaCompilerSettings(context));
+    return bytecodeTarget == 0 ? null :
+           bytecodeTarget >= 9 ? String.valueOf(bytecodeTarget) :
+           "1." + bytecodeTarget;
+  }
+
   private static boolean shouldRunGroovycInProcess(int jdkVersion) {
-    String explicitProperty = System.getProperty("groovyc.in.process");
-    return explicitProperty != null ? "true".equals(explicitProperty) 
-                                    : jdkVersion == JavaVersion.current().feature 
-                                      || jdkVersion < 5; // our own jars require at least JDK 5 
+    String explicitProperty = System.getProperty(GROOVYC_IN_PROCESS);
+    return explicitProperty != null ? "true".equals(explicitProperty)
+                                    : jdkVersion == JavaVersion.current().feature
+                                      || jdkVersion < 5; // our own jars require at least JDK 5
   }
 
   static void clearContinuation(CompileContext context, ModuleChunk chunk) {
@@ -316,15 +329,13 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                                  boolean forStubs, Ref<Boolean> hasExcludes)
     throws IOException {
 
-    final JpsJavaCompilerConfiguration configuration =
-      JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
-    assert configuration != null;
-
-    final JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
+    JpsJavaCompilerConfiguration configuration = getJavaCompilerSettings(context);
+    JpsGroovySettings settings = getGroovyCompilerSettings(context);
 
     final List<File> toCompile = new ArrayList<>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-      public boolean apply(T target, File file, R sourceRoot) throws IOException {
+      @Override
+      public boolean apply(T target, File file, R sourceRoot) {
         if (shouldProcessSourceFile(file, sourceRoot, file.getPath(), configuration)) {
           if (forStubs && settings.isExcludedFromStubGeneration(file)) {
             hasExcludes.set(true);
@@ -337,6 +348,16 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       }
     });
     return toCompile;
+  }
+
+  @NotNull
+  static JpsGroovySettings getGroovyCompilerSettings(CompileContext context) {
+    return JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
+  }
+
+  @NotNull
+  static JpsJavaCompilerConfiguration getJavaCompilerSettings(CompileContext context) {
+    return Objects.requireNonNull(JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject()));
   }
 
   protected boolean shouldProcessSourceFile(File file,
@@ -353,7 +374,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   void updateDependencies(CompileContext context,
                           List<File> toCompile,
                           MultiMap<T, GroovycOutputParser.OutputItem> successfullyCompiled,
-                          final GroovyOutputConsumer outputConsumer, Builder builder) throws IOException {
+                          final GroovyOutputConsumer outputConsumer, Builder builder) {
     JavaBuilderUtil.registerFilesToCompile(context, toCompile);
     if (!successfullyCompiled.isEmpty()) {
 

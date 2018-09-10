@@ -34,7 +34,7 @@ class FindUsagesHelper {
   static boolean processUsagesInText(@NotNull final PsiElement element,
                                      @NotNull Collection<String> stringToSearch,
                                      @NotNull GlobalSearchScope searchScope,
-                                     @NotNull Processor<UsageInfo> processor) {
+                                     @NotNull Processor<? super UsageInfo> processor) {
     final TextRange elementTextRange = ReadAction.compute(() -> !element.isValid() || element instanceof PsiCompiledElement ? null : element.getTextRange());
     UsageInfoFactory factory = (usage, startOffset, endOffset) -> {
       if (!element.isValid()) return new UsageInfo(usage, startOffset, endOffset, true);

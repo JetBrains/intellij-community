@@ -15,15 +15,16 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +53,8 @@ public class FileContent extends DiffContent {
   }
 
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    return new OpenFileDescriptor(myProject, myFile, offset);
+  public Navigatable getOpenFileDescriptor(int offset) {
+    return PsiNavigationSupport.getInstance().createNavigatable(myProject, myFile, offset);
   }
 
   @Override

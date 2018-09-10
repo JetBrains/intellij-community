@@ -41,11 +41,11 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
   }
 
   class Factory(val project: Project) : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(model: DefaultTreeModel) = RepositoryChangesGroupingPolicy(project, model)
+    override fun createGroupingPolicy(model: DefaultTreeModel): RepositoryChangesGroupingPolicy = RepositoryChangesGroupingPolicy(project, model)
   }
 
   companion object {
-    val REPOSITORY_CACHE = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>(
+    val REPOSITORY_CACHE: NotNullLazyKey<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>(
       "ChangesTree.RepositoryCache") { _ -> mutableMapOf() }
 
   }

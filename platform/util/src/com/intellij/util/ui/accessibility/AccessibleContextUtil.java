@@ -143,6 +143,7 @@ public class AccessibleContextUtil {
   /**
    * @deprecated use {@link #setParent(Component, Component)} instead
    */
+  @Deprecated
   public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
     setParent((Component)component, newParent);
   }

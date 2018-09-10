@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferenceResolver;
 import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -45,7 +45,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (StringUtil.isJavaIdentifier(newElementName)) {
       return super.handleElementRename(newElementName);
     }
@@ -66,7 +66,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitCodeReferenceElement(this);
   }
 
@@ -162,21 +162,48 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
-    final PsiManager manager = getManager();
-    if (element instanceof PsiNamedElement && getParent() instanceof GrImportStatement) {
-      final GroovyResolveResult[] results = multiResolve(false);
-      for (GroovyResolveResult result : results) {
-        if (manager.areElementsEquivalent(result.getElement(), element)) return true;
-      }
+  public boolean isReferenceTo(@NotNull PsiElement element) {
+    switch (getKind()) {
+      case PACKAGE_REFERENCE:
+        return referencesPackage(element);
+      case REFERENCE:
+        return referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
+      case IMPORT_REFERENCE:
+        return (element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element)
+               || element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element);
+      default:
+        throw new IllegalStateException();
     }
-    return manager.areElementsEquivalent(element, resolve());
   }
 
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  private boolean referencesPackage(@NotNull PsiElement element) {
+    return element instanceof PsiPackage && checkName((PsiNamedElement)element) && resolvesTo(element);
+  }
+
+  private boolean checkName(@NotNull PsiNamedElement namedElement) {
+    final String referenceName = getReferenceName();
+    if (referenceName == null) return false;
+    final String name = namedElement.getName();
+    return referenceName.equals(name);
+  }
+
+  private boolean checkPropertyName(@NotNull PsiNamedElement namedElement) {
+    final String referenceName = getReferenceName();
+    if (referenceName == null) return false;
+    final String name = namedElement.getName();
+    if (name == null) return false;
+    return referenceName.equals(name) || ContainerUtil.or(PropertyKind.values(), kind -> getAccessorName(kind, referenceName).equals(name));
+  }
+
+  private boolean resolvesTo(@NotNull PsiElement element) {
+    return getManager().areElementsEquivalent(element, resolve());
+  }
+
+  private boolean multiResolvesTo(@NotNull PsiElement element) {
+    final PsiManager manager = getManager();
+    return resolve(false).stream()
+      .map(it -> it.getElement())
+      .anyMatch(it -> manager.areElementsEquivalent(it, element));
   }
 
   @Override

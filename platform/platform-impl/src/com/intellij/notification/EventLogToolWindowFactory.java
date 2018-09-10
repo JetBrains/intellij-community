@@ -73,7 +73,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
 
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
@@ -102,13 +102,13 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   private static class EditNotificationSettings extends DumbAwareAction {
     private final Project myProject;
 
-    public EditNotificationSettings(Project project) {
+    EditNotificationSettings(Project project) {
       super("Settings", "Edit notification settings", AllIcons.General.Settings);
       myProject = project;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, new NotificationsConfigurable());
     }
   }
@@ -122,7 +122,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
 
     @Override
-    protected Editor getEditor(AnActionEvent e) {
+    protected Editor getEditor(@NotNull AnActionEvent e) {
       return myEditor;
     }
   }
@@ -130,7 +130,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   private static class LogShownTracker extends AncestorListenerAdapter {
     private final Project myProject;
 
-    public LogShownTracker(Project project) {
+    LogShownTracker(Project project) {
       myProject = project;
     }
 

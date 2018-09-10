@@ -62,7 +62,7 @@ public class FSTSerializer<T> implements DataNodeSerializer<T> {
 
 class MultiLoaderWrapper extends ClassLoader {
   private final ClassLoader[] myDelegates;
-  public MultiLoaderWrapper(ClassLoader parentCl, ClassLoader[] delegates) {
+  MultiLoaderWrapper(ClassLoader parentCl, ClassLoader[] delegates) {
     super(parentCl);
     myDelegates = delegates;
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -75,6 +61,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     }
   }
 
+  @Override
   public void defaultActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
@@ -157,6 +144,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
   private static void preloadContent(final Project project, final List<Change> changes) {
     // to avoid multiple progress dialogs, preload content under one progress
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         for (Change change : changes) {
           checkLoadContent(change.getBeforeRevision());
@@ -178,6 +166,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
+  @Override
   public void defaultUpdate(@NotNull AnActionEvent e) {
     Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);

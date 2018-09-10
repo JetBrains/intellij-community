@@ -39,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
@@ -83,12 +82,6 @@ public class ConflictsDialog extends DialogWrapper{
     setOKButtonText(RefactoringBundle.message("continue.button"));
     setOKActionEnabled(alwaysShowOkButton || getDoRefactoringRunnable(null) != null);
     init();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
-    this(project, ArrayUtil.toStringArray(conflictDescriptions));
   }
 
   @Deprecated
@@ -155,7 +148,7 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   private class CancelAction extends AbstractAction {
-    public CancelAction() {
+    CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
       putValue(DEFAULT_ACTION,Boolean.TRUE);
     }
@@ -173,7 +166,7 @@ public class ConflictsDialog extends DialogWrapper{
   private class MyShowConflictsInUsageViewAction extends AbstractAction {
 
 
-    public MyShowConflictsInUsageViewAction() {
+    MyShowConflictsInUsageViewAction() {
       super("Show Conflicts in View");
     }
 
@@ -234,7 +227,7 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final String myConflictDescription;
 
-      public DescriptionOnlyUsage(String conflictDescription) {
+      DescriptionOnlyUsage(String conflictDescription) {
         myConflictDescription = StringUtil.unescapeXml(conflictDescription)
           .replaceAll("<code>", "")
           .replaceAll("</code>", "")
@@ -242,7 +235,7 @@ public class ConflictsDialog extends DialogWrapper{
           .replaceAll("</b>", "");
       }
 
-      public DescriptionOnlyUsage() {
+      DescriptionOnlyUsage() {
         myConflictDescription =
           Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
       }

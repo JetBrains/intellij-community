@@ -19,10 +19,13 @@ import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -34,7 +37,9 @@ import javax.swing.event.ListDataListener
 private const val ACCOUNT_PICTURE_SIZE: Int = 40
 private const val LINK_TAG = "EDIT_LINK"
 
-internal class GithubAccountsPanel(private val project: Project, private val accountInformationProvider: GithubAccountInformationProvider)
+internal class GithubAccountsPanel(private val project: Project,
+                                   private val executorFactory: GithubApiRequestExecutor.Factory,
+                                   private val accountInformationProvider: GithubAccountInformationProvider)
   : BorderLayoutPanel(), Disposable {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
@@ -60,6 +65,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   private val progressManager = createListProgressManager()
   private val errorLinkHandler = createLinkActivationListener()
   private var errorLinkHandlerInstalled = false
+  private var currentTokensMap = mapOf<GithubAccount, String?>()
   private val newTokensMap = mutableMapOf<GithubAccount, String>()
 
   init {
@@ -69,7 +75,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                   .setAddAction { addAccount() }
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton("Set default",
                                                                                 AllIcons.Actions.Checked) {
-                    override fun actionPerformed(e: AnActionEvent?) {
+                    override fun actionPerformed(e: AnActionEvent) {
                       if (accountList.selectedValue.projectDefault) return
                       for (accountData in accountListModel.items) {
                         if (accountData == accountList.selectedValue) {
@@ -83,7 +89,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                       }
                     }
 
-                    override fun updateButton(e: AnActionEvent?) {
+                    override fun updateButton(e: AnActionEvent) {
                       isEnabled = isEnabled && !accountList.selectedValue.projectDefault
                     }
                   })
@@ -93,9 +99,9 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun addAccount() {
-    val dialog = GithubLoginDialog(project, this, ::isAccountUnique)
+    val dialog = GithubLoginDialog(executorFactory, project, this, ::isAccountUnique)
     if (dialog.showAndGet()) {
-      val githubAccount = GithubAccount(dialog.getLogin(), dialog.getServer())
+      val githubAccount = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
       newTokensMap[githubAccount] = dialog.getToken()
 
       val accountData = GithubAccountDecorator(githubAccount, false)
@@ -105,7 +111,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
-    val dialog = GithubLoginDialog(project, this).apply {
+    val dialog = GithubLoginDialog(executorFactory, project, this).apply {
       withServer(decorator.account.server.toString(), false)
       withCredentials(decorator.account.name)
     }
@@ -202,17 +208,25 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun loadAccountDetails(accountData: GithubAccountDecorator) {
-    val newToken: String? = newTokensMap[accountData.account]
+    val account = accountData.account
+    val token = newTokensMap[account] ?: currentTokensMap[account]
+    if (token == null) {
+      accountListModel.contentsChanged(accountData.apply {
+        loadingError = "Missing access token"
+        showLoginLink = true
+      })
+      return
+    }
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
-      lateinit var data: Pair<GithubUserDetailed, Image>
+      lateinit var data: Pair<GithubUserDetailed, Image?>
 
       override fun run(indicator: ProgressIndicator) {
-        data = if (newToken != null) {
-          accountInformationProvider.getAccountInformationWithPicture(indicator, accountData.account.server, newToken)
+        val executor = executorFactory.create(token)
+        val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
+        val image = details.avatarUrl?.let {
+          accountInformationProvider.getAvatar(executor, indicator, account, it)
         }
-        else {
-          accountInformationProvider.getAccountInformationWithPicture(indicator, accountData.account)
-        }
+        data = details to image
       }
 
       override fun onSuccess() {
@@ -238,9 +252,10 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
     override fun getModalityState() = ModalityState.any()
   }
 
-  fun setAccounts(accounts: Set<GithubAccount>, defaultAccount: GithubAccount?) {
+  fun setAccounts(accounts: Map<GithubAccount, String?>, defaultAccount: GithubAccount?) {
     accountListModel.removeAll()
-    accountListModel.addAll(0, accounts.map { GithubAccountDecorator(it, it == defaultAccount) })
+    accountListModel.addAll(0, accounts.keys.map { GithubAccountDecorator(it, it == defaultAccount) })
+    currentTokensMap = accounts
   }
 
   /**

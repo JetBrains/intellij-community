@@ -48,13 +48,13 @@ interface UWhileExpression : ULoopExpression {
     visitor.afterVisitWhileExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitWhileExpression(this, data)
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append("while (${condition.asRenderString()}) ")
     append(body.asRenderString())
   }
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

@@ -7,8 +7,8 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('A')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Parameter list
+      PsiElement(()('(')
       Parameter
         Modifiers
           <empty list>
@@ -23,15 +23,11 @@ Groovy script
         Modifiers
           <empty list>
         PsiElement(identifier)('t')
-    PsiElement())(')')
+      PsiElement())(')')
     Throw clause
       <empty list>
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:'=' unexpected
     PsiElement(=)('=')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   Generalized list
     PsiElement([)('[')
     Reference expression

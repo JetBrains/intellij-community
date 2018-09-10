@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link com.intellij.codeInsight.intention.QuickFixFactory#createDeleteFix} (to be removed in IDEA 2018) */
+@Deprecated
 public class RemoveElementQuickFix implements LocalQuickFix {
   private final String myName;
 

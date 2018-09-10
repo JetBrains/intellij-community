@@ -63,7 +63,7 @@ interface UClass : UDeclaration, PsiClass {
   override fun getInnerClasses(): Array<UClass> =
     psi.innerClasses.map { getLanguagePlugin().convert<UClass>(it, this) }.toTypedArray()
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitClass(this)) return
@@ -72,7 +72,7 @@ interface UClass : UDeclaration, PsiClass {
     visitor.afterVisitClass(this)
   }
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append(psi.renderModifiers())
     val kind = when {
       psi.isAnnotationType -> "annotation"
@@ -93,7 +93,7 @@ interface UClass : UDeclaration, PsiClass {
     append("}")
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitClass(this, data)
 }
 

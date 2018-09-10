@@ -75,6 +75,7 @@ public class SelectInManager  {
   public static class SelectInTargetComparator implements Comparator<SelectInTarget> {
     public static final Comparator<SelectInTarget> INSTANCE = new SelectInTargetComparator();
 
+    @Override
     public int compare(final SelectInTarget o1, final SelectInTarget o2) {
       return Float.compare(o1.getWeight(), o2.getWeight());
     }

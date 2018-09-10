@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
@@ -24,38 +20,16 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * plugin.dtd:shortcut interface.
- */
 public interface Shortcut extends DomElement {
 
-	/**
-	 * Returns the value of the first-keystroke child.
-	 * Attribute first-keystroke
-	 * @return the value of the first-keystroke child.
-	 */
-	@NotNull
-	@Required
-	GenericAttributeValue<String> getFirstKeystroke();
+  @NotNull
+  @Required
+  GenericAttributeValue<String> getFirstKeystroke();
 
+  @NotNull
+  @Required
+  GenericAttributeValue<String> getKeymap();
 
-	/**
-	 * Returns the value of the keymap child.
-	 * Attribute keymap
-	 * @return the value of the keymap child.
-	 */
-	@NotNull
-	@Required
-	GenericAttributeValue<String> getKeymap();
-
-
-	/**
-	 * Returns the value of the second-keystroke child.
-	 * Attribute second-keystroke
-	 * @return the value of the second-keystroke child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getSecondKeystroke();
-
-
+  @NotNull
+  GenericAttributeValue<String> getSecondKeystroke();
 }

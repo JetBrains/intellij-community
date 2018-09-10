@@ -66,8 +66,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode.updateUpHierarchy;
 import static com.intellij.util.containers.ContainerUtil.exists;
@@ -441,8 +441,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     actions.add(actionManager.createExpandAllAction(myTreeExpander, myTreeTable));
     actions.add(actionManager.createCollapseAllAction(myTreeExpander, myTreeTable));
-    actions.add(new DumbAwareAction("Reset to Empty", "Reset to empty", AllIcons.Actions.Reset_to_empty){
-
+    actions.add(new DumbAwareAction("Reset to Empty", "Reset to empty", AllIcons.Actions.Unselectall) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myProfile != null && myProfile.isExecutable(myProjectProfileManager.getProject()));
@@ -851,7 +850,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
           new AnActionButtonUpdater() {
             @Override
-            public boolean isEnabled(AnActionEvent e) {
+            public boolean isEnabled(@NotNull AnActionEvent e) {
               final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
               final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
               return rowCount - 1 != selectedRow;
@@ -915,14 +914,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public InspectionProfileModifiableModel getProfile() {
     return myProfile;
-  }
-
-  private void setProfile(InspectionProfileModifiableModel modifiableModel) {
-    if (myProfile == modifiableModel) {
-      return;
-    }
-    myProfile = modifiableModel;
-    initToolStates();
   }
 
   @Override
@@ -1038,7 +1029,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void reset() {
     myModified = false;
-    setProfile(myProfile);
     filterTree();
     final String filter = myProfileFilter.getFilter();
     myProfileFilter.reset();
@@ -1176,7 +1166,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
-    public ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
+    ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
       GridBagConstraints optionsLabelConstraints = new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(0, 2, 0, 0), 0, 0);
@@ -1212,7 +1202,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     private void setupResetLinkVisibility() {
-      if (myTreeTable == null) return;
+      if (myTreeTable == null || myProfile == null) return;
       InspectionConfigTreeNode.Tool node = myTreeTable.getStrictlySelectedToolNode();
       if (node != null) {
         ScopeToolState state = getSelectedState();

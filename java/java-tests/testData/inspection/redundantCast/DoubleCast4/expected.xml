@@ -3,7 +3,7 @@
   <problem>
     <file>DoubleCast4.java</file>
     <line>4</line>
-    <description>Casting '(String) o' to Object is redundant</description>
+    <description>Casting '(String)o' to Object is redundant</description>
   </problem>
   <problem>
     <file>DoubleCast4.java</file>

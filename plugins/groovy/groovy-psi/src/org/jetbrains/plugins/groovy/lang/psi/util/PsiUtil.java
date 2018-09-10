@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -64,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -80,9 +76,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_INSTANCE_EXTENSIONS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_STATIC_EXTENSIONS;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
  * @author ven
@@ -114,27 +110,6 @@ public class PsiUtil {
     if (((GrReferenceExpression)invokedExpression).isQualified()) return null;
 
     return ((GrReferenceExpression)invokedExpression).getReferenceName();
-  }
-
-  @Nullable
-  public static String getQualifiedReferenceText(GrCodeReferenceElement referenceElement) {
-    StringBuilder builder = new StringBuilder();
-    if (!appendName(referenceElement, builder)) return null;
-
-    return builder.toString();
-  }
-
-  private static boolean appendName(GrCodeReferenceElement referenceElement, StringBuilder builder) {
-    String refName = referenceElement.getReferenceName();
-    if (refName == null) return false;
-    GrCodeReferenceElement qualifier = referenceElement.getQualifier();
-    if (qualifier != null) {
-      appendName(qualifier, builder);
-      builder.append(".");
-    }
-
-    builder.append(refName);
-    return true;
   }
 
   public static boolean isLValue(GroovyPsiElement element) {
@@ -564,7 +539,7 @@ public class PsiUtil {
       final PsiType[] types = getArgumentTypes(call.getInvokedExpression(), true);
       final Trinity<GrClosureSignature, GrClosureSignatureUtil.ArgInfo<PsiType>[], GrClosureSignatureUtil.ApplicabilityResult>
         resultTrinity = types != null ? GrClosureSignatureUtil.getApplicableSignature(signature, types, call) : null;
-      _signature = resultTrinity != null ? resultTrinity.first : null;
+      _signature = Trinity.getFirst(resultTrinity);
     }
     if (_signature != null) {
       return isRawType(_signature.getReturnType(), TypesUtil.composeSubstitutors(_signature.getSubstitutor(), result.getSubstitutor()));
@@ -820,8 +795,7 @@ public class PsiUtil {
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
           && method.getParameterList().isEmpty()) {
         final PsiType type = getSmartReturnType(method);
-        if (type != null && (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.isClassType(type,
-                                                                                                                     GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
+        if (type != null && (TypesUtil.isClassType(type, JAVA_LANG_OBJECT, GROOVY_LANG_CLOSURE))) {
           return true;
         }
       }

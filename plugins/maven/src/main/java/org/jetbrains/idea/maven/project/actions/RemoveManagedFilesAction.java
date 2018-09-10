@@ -32,7 +32,7 @@ import java.util.List;
 
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
     return MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).size() > 0;
   }

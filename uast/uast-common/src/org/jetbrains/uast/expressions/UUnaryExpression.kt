@@ -51,7 +51,7 @@ interface UUnaryExpression : UExpression {
     visitor.afterVisitUnaryExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitUnaryExpression(this, data)
 }
 
@@ -65,12 +65,12 @@ interface UPrefixExpression : UUnaryExpression {
     visitor.afterVisitPrefixExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitPrefixExpression(this, data)
 
-  override fun asLogString() = log("operator = $operator")
+  override fun asLogString(): String = log("operator = $operator")
 
-  override fun asRenderString() = operator.text + operand.asRenderString()
+  override fun asRenderString(): String = operator.text + operand.asRenderString()
 }
 
 interface UPostfixExpression : UUnaryExpression {
@@ -83,10 +83,10 @@ interface UPostfixExpression : UUnaryExpression {
     visitor.afterVisitPostfixExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitPostfixExpression(this, data)
 
-  override fun asLogString() = log("operator = $operator")
+  override fun asLogString(): String = log("operator = $operator")
 
-  override fun asRenderString() = operand.asRenderString() + operator.text
+  override fun asRenderString(): String = operand.asRenderString() + operator.text
 }

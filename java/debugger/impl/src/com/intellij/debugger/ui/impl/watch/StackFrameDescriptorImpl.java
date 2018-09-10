@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
@@ -40,7 +38,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private SourcePosition mySourcePosition;
 
-  private Icon myIcon = AllIcons.Debugger.StackFrame;
+  private Icon myIcon = AllIcons.Debugger.Frame;
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
     myFrame = frame;
@@ -117,7 +115,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     return null;
   }
-  
+
   @Override
   public String getName() {
     return myName;
@@ -138,7 +136,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
     }
     if (settings.SHOW_LINE_NUMBER) {
-      label.append(':').append(Integer.toString(DebuggerUtilsEx.getLineNumber(myLocation, false)));
+      label.append(':').append(DebuggerUtilsEx.getLineNumber(myLocation, false));
     }
     if (settings.SHOW_CLASS_NAME) {
       String name;
@@ -213,6 +211,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myIcon;
   }
 
+  @Nullable
   public ObjectReference getThisObject() {
     return myThisObject;
   }

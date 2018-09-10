@@ -42,11 +42,13 @@ public class JpsModelImpl implements JpsModel {
     myGlobal = new JpsGlobalImpl(original.myGlobal, this, eventDispatcher);
   }
 
+  @Override
   @NotNull
   public JpsProjectImpl getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public JpsGlobalImpl getGlobal() {
     return myGlobal;

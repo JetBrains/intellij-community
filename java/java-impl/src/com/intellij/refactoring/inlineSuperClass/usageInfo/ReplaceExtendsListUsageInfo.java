@@ -30,6 +30,7 @@ public class ReplaceExtendsListUsageInfo extends FixableUsageInfo {
     mySafeDeleteUsageInfo = new SafeDeleteExtendsClassUsageInfo(element, superClass, targetClass);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     if (mySafeDeleteUsageInfo.isSafeDelete()) {
       mySafeDeleteUsageInfo.deleteElement();

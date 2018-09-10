@@ -3,7 +3,7 @@ while true {doSomething()}
 Groovy script
   WHILE statement
     PsiElement(while)('while')
-    PsiErrorElement:'(' expected
+    PsiErrorElement:'(' expected, got 'true'
       <empty list>
   PsiWhiteSpace(' ')
   Method call

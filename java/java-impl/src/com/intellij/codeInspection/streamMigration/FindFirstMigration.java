@@ -57,6 +57,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
       InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
       PsiExpression initializer = var.getInitializer();
       PsiExpression falseExpression = lValue;
+      PsiElement toDelete = null;
       if (status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN &&
           (status != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE || ExpressionUtils.isSafelyRecomputableExpression(initializer))) {
         falseExpression = initializer;
@@ -64,11 +65,14 @@ class FindFirstMigration extends BaseStreamApiMigration {
         PsiElement maybeAssignment = PsiTreeUtil.skipWhitespacesAndCommentsBackward(loopStatement);
         PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
         if (prevRValue != null) {
-          ct.delete(maybeAssignment);
+          toDelete = maybeAssignment;
           falseExpression = prevRValue;
         }
       }
       String replacementText = generateOptionalUnwrap(ct, tb, value, falseExpression, var.getType());
+      if (toDelete != null) {
+        ct.delete(toDelete);
+      }
       return replaceInitializer(loopStatement, var, initializer, replacementText, status, ct);
     }
   }

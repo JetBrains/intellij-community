@@ -208,6 +208,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @Override
   @NotNull
+  public JpsProductionModuleSourcePackagingElement createProductionModuleSource(@NotNull JpsModuleReference moduleReference) {
+    return new JpsProductionModuleSourcePackagingElementImpl(moduleReference);
+  }
+
+  @Override
+  @NotNull
   public JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
     return new JpsTestModuleOutputPackagingElementImpl(moduleReference);
   }

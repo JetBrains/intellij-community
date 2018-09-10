@@ -2,13 +2,35 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class AssignmentOrReturnOfFieldWithMutableTypeInspectionTest extends LightInspectionTestCase {
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package com.google.common.collect;\n" +
+      "\n" +
+      "import java.util.List;\n" +
+      "\n" +
+      "public class ImmutableList<E> implements List<E> {\n" +
+      "  public static ImmutableList<?> of() {return new ImmutableList<>();}\n" +
+      "  public static <T> ImmutableList<T> copyOf(List<T> list) {return new ImmutableList<>();}\n" +
+      "}"
+    };
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8_ANNOTATED;
+  }
 
   public void testAssignmentOrReturnOfFieldWithMutableType() {
     doTest();

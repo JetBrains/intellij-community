@@ -33,7 +33,10 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,14 +53,12 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Decompressor;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,14 +167,14 @@ public class PlatformTestUtil {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<String> nodePrintCondition) {
+  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
   private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
-                             @Nullable Predicate<String> nodePrintCondition) {
+                             @Nullable Predicate<? super String> nodePrintCondition) {
     return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
   }
 
@@ -181,7 +182,7 @@ public class PlatformTestUtil {
                                                 TreePath path,
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
-                                                @Nullable Predicate<String> nodePrintCondition) {
+                                                @Nullable Predicate<? super String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
@@ -189,11 +190,11 @@ public class PlatformTestUtil {
 
   private static void printImpl(JTree tree,
                                 TreePath path,
-                                Collection<String> strings,
+                                Collection<? super String> strings,
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Predicate<String> nodePrintCondition) {
+                                @Nullable Predicate<? super String> nodePrintCondition) {
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
@@ -771,7 +772,7 @@ public class PlatformTestUtil {
     }
   }
 
-  public static void assertJarFilesEqual(File file1, File file2) throws IOException {
+  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
     final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
     try {
       final File tempDirectory1 = new File(tempDir, "tmp1");
@@ -781,8 +782,8 @@ public class PlatformTestUtil {
 
       try (JarFile jarFile1 = new JarFile(file1)) {
         try (JarFile jarFile2 = new JarFile(file2)) {
-          ZipUtil.extract(jarFile1, tempDirectory1, null);
-          ZipUtil.extract(jarFile2, tempDirectory2, null);
+          new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
+          new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
         }
       }
 
@@ -798,31 +799,6 @@ public class PlatformTestUtil {
     }
     finally {
       FileUtilRt.delete(tempDir);
-    }
-  }
-
-  /**
-   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void assertElementsEqual(final Element expected, final Element actual) {
-    if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
-    }
-  }
-
-  /**
-   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void assertElementEquals(final String expected, final Element actual) {
-    try {
-      assertElementsEqual(JdomKt.loadElement(expected), actual);
-    }
-    catch (IOException | JDOMException e) {
-      throw new AssertionError(e);
     }
   }
 
@@ -995,9 +971,9 @@ public class PlatformTestUtil {
   }
 
 
-  public static <T> void assertComparisonContractNotViolated(@NotNull List<T> values,
-                                                             @NotNull Comparator<T> comparator,
-                                                             @NotNull Equality<T> equality) {
+  public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
+                                                             @NotNull Comparator<? super T> comparator,
+                                                             @NotNull Equality<? super T> equality) {
     for (int i1 = 0; i1 < values.size(); i1++) {
       for (int i2 = i1; i2 < values.size(); i2++) {
         T value1 = values.get(i1);

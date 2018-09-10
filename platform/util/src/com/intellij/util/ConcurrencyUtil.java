@@ -17,6 +17,8 @@ package com.intellij.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.util.ThrowableComputable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -25,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -203,7 +206,18 @@ public class ConcurrencyUtil {
     joinAll(Arrays.asList(threads));
   }
 
-  public static void runUnderThreadName(@NotNull String name, @NotNull Runnable runnable) {
+  @NotNull
+  @Contract(pure = true)
+  public static Runnable underThreadNameRunnable(@NotNull final String name, @NotNull final Runnable runnable) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        runUnderThreadName(name, runnable);
+      }
+    };
+  }
+
+  public static void runUnderThreadName(@NotNull final String name, @NotNull final Runnable runnable) {
     Thread currentThread = Thread.currentThread();
     String oldThreadName = currentThread.getName();
     if (name.equals(oldThreadName)) {
@@ -232,4 +246,25 @@ public class ConcurrencyUtil {
       }
     };
   }
+
+  public static <T, E extends Throwable> T withLock(@NotNull Lock lock, @NotNull ThrowableComputable<T, E> runnable) throws E {
+    lock.lock();
+    try {
+      return runnable.compute();
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  public static <E extends Throwable> void withLock(@NotNull Lock lock, @NotNull ThrowableRunnable<E> runnable) throws E {
+    lock.lock();
+    try {
+      runnable.run();
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
 }

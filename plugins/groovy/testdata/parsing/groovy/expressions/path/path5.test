@@ -23,5 +23,5 @@ Groovy script
           PsiElement(import)('import')
       GrStringContentImpl(STRING_CONTENT)
         PsiElement(Gstring content)('.bugaga aga')
-      PsiErrorElement:String end expected
+      PsiErrorElement:Gstring end expected
         <empty list>

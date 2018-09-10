@@ -25,11 +25,12 @@ class InstrumentationItem implements FileProcessingCompiler.ProcessingItem {
   private final VirtualFile myClassFile;
   private final boolean myJDK6;
 
-  public InstrumentationItem(@NotNull VirtualFile classFile, boolean jdk6) {
+  InstrumentationItem(@NotNull VirtualFile classFile, boolean jdk6) {
     myJDK6 = jdk6;
     myClassFile = classFile;
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myClassFile;
@@ -40,6 +41,7 @@ class InstrumentationItem implements FileProcessingCompiler.ProcessingItem {
     return myClassFile;
   }
 
+  @Override
   public ValidityState getValidityState() {
 //        return new TimestampValidityState(myClassFile.getModificationStamp());
     return null;

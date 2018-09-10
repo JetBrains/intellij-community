@@ -43,7 +43,8 @@ import java.awt.Graphics2D
 import java.awt.LayoutManager
 import javax.swing.JComponent
 
-/** Debug color for cell outline.
+/**
+ * Debug color for cell outline.
  */
 private val DB_CELL_OUTLINE = Color(255, 0, 0)
 

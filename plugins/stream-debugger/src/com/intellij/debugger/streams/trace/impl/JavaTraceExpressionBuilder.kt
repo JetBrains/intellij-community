@@ -5,8 +5,7 @@ import com.intellij.debugger.streams.lib.HandlerFactory
 import com.intellij.debugger.streams.psi.impl.LambdaToAnonymousTransformer
 import com.intellij.debugger.streams.psi.impl.MethodReferenceToLambdaTransformer
 import com.intellij.debugger.streams.psi.impl.ToObjectInheritorTransformer
-import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
-import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
+import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -17,8 +16,8 @@ import com.intellij.psi.JavaPsiFacade
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaTraceExpressionBuilder(private val project: Project, handlerFactory: HandlerFactory)
-  : TraceExpressionBuilderBase(DslImpl(JavaStatementFactory()), handlerFactory) {
+class JavaTraceExpressionBuilder(private val project: Project, handlerFactory: HandlerFactory, dsl: Dsl)
+  : TraceExpressionBuilderBase(dsl, handlerFactory) {
   private companion object {
     private val LOG = Logger.getInstance(JavaTraceExpressionBuilder::class.java)
   }

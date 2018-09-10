@@ -25,7 +25,7 @@ class JavaUSwitchExpression(
   override val psi: PsiSwitchStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
-  override val expression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
+  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
 
   override val body: UExpressionList by lz {
     object : JavaUExpressionList(psi, JavaSpecialExpressionKinds.SWITCH, this) {
@@ -87,7 +87,7 @@ class JavaUSwitchEntry(
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
   override val psi: PsiSwitchLabelStatement = labels.first()
 
-  override val caseValues by lz {
+  override val caseValues: List<UExpression> by lz {
     labels.mapNotNull {
       if (it.isDefaultCase) {
         JavaUDefaultCaseExpression(it, this)
@@ -119,7 +119,7 @@ class JavaUDefaultCaseExpression(override val psi: PsiElement?, givenParent: UEl
   override val annotations: List<UAnnotation>
     get() = emptyList()
 
-  override fun asLogString() = "UDefaultCaseExpression"
+  override fun asLogString(): String = "UDefaultCaseExpression"
 
-  override fun asRenderString() = "else"
+  override fun asRenderString(): String = "else"
 }

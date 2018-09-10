@@ -42,7 +42,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
 
     fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ): Int = throw AbstractMethodError()
 
-    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ, incoming: INCOMING) = getSequence(incomingWithSeq)
+    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ, incoming: INCOMING): Int = getSequence(incomingWithSeq)
 
     fun acceptNonSequence(incoming: INCOMING)
 
@@ -107,7 +107,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
     }
   }
 
-  fun getCallbackAndRemove(id: Int) = callbackMap.remove(id) ?: throw IllegalArgumentException("Cannot find callback with id $id")
+  fun getCallbackAndRemove(id: Int): RequestCallback<SUCCESS> = callbackMap.remove(id) ?: throw IllegalArgumentException("Cannot find callback with id $id")
 
   fun cancelWaitingRequests() {
     // we should call them in the order they have been submitted

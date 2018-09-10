@@ -162,6 +162,9 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   public void testRenameVarParamToOuterConst() {
     doTest("STATIC_FIELD");
   }
+  public void testRenameConflictNoQualification() {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest("f"));
+  }
 
   public void testRenameLocalVariableHidesFieldInAnonymous() {
     try {

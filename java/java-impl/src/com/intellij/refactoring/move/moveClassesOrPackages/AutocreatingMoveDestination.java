@@ -42,10 +42,13 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
     myFileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
   }
 
+  @Override
   public abstract PackageWrapper getTargetPackage();
 
+  @Override
   public abstract PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException;
 
+  @Override
   public abstract PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException;
 
   @Nullable

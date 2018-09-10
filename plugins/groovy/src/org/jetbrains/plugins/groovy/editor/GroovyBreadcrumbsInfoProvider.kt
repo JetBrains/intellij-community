@@ -37,9 +37,9 @@ class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     val ourLanguages: Array<Language> = arrayOf(GroovyLanguage)
   }
 
-  override fun getLanguages() = ourLanguages
+  override fun getLanguages(): Array<Language> = ourLanguages
 
-  override fun acceptElement(e: PsiElement) = when (e) {
+  override fun acceptElement(e: PsiElement): Boolean = when (e) {
     is GrVariableDeclaration -> e.variables.singleOrNull() is GrField
     is GrField -> e is GrEnumConstant
     is GrClosableBlock -> true
@@ -47,7 +47,7 @@ class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     else -> false
   }
 
-  override fun getElementInfo(e: PsiElement) = when (e) {
+  override fun getElementInfo(e: PsiElement): String = when (e) {
     is GrVariableDeclaration -> e.variables.single().name
     is GrClosableBlock -> (((e.parent as? GrMethodCall)?.invokedExpression as? GrReferenceExpression)?.referenceName ?: "") + "{}"
     is GrAnonymousClassDefinition -> "new ${e.baseClassReferenceGroovy.referenceName}"
@@ -56,7 +56,7 @@ class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     else -> throw RuntimeException()
   }
 
-  override fun getElementTooltip(e: PsiElement) = (if (e is GrVariableDeclaration) e.variables.single() else e).let {
+  override fun getElementTooltip(e: PsiElement): String = (if (e is GrVariableDeclaration) e.variables.single() else e).let {
     ElementDescriptionUtil.getElementDescription(it, WITH_PARENT)
   }
 }

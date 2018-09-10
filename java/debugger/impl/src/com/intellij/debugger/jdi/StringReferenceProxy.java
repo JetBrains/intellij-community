@@ -40,6 +40,7 @@ public class StringReferenceProxy extends ObjectReferenceProxyImpl{
     return myStringValue;
   }
 
+  @Override
   public void clearCaches() {
     myStringValue = null;
     super.clearCaches();

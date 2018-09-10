@@ -47,9 +47,10 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (myCoverageDataManager.isSubCoverageActive()) {
       return showSubCoverageNotification();
     }
+    PsiPackage aPackage = (PsiPackage)node.getValue();
     final String coverageInformationString = myAnnotator
-      .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return getNotCoveredMessage(coverageInformationString) + " in package \'" + node + "\'";
+      .getPackageCoverageInformationString(aPackage, null, myCoverageDataManager, myStateBean.myFlattenPackages);
+    return getNotCoveredMessage(coverageInformationString) + " in package \'" + (aPackage != null ? aPackage.getQualifiedName() : node.getName()) + "\'";
   }
 
   private static String showSubCoverageNotification() {
@@ -264,7 +265,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return children;
   }
 
-  protected void collectFileChildren(final PsiFile file, AbstractTreeNode node, List<AbstractTreeNode> children) {
+  protected void collectFileChildren(final PsiFile file, AbstractTreeNode node, List<? super AbstractTreeNode> children) {
     if (file instanceof PsiClassOwner) {
       PsiClass[] classes = ReadAction.compute(() -> file.isValid() ? ((PsiClassOwner)file).getClasses() : PsiClass.EMPTY_ARRAY);
       for (PsiClass aClass : classes) {

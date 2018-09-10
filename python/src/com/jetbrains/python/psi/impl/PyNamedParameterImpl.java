@@ -43,6 +43,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,9 +304,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         if (context.maySwitchToAST(this)) {
-          final Set<String> attributes = collectUsedAttributes(context);
-          if (!attributes.isEmpty()) {
-            return new PyStructuralType(attributes, true);
+          final PyType typeFromUsages = getTypeFromUsages(context);
+          if (typeFromUsages != null) {
+            return typeFromUsages;
           }
         }
       }
@@ -318,12 +319,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return new PyElementPresentation(this);
   }
 
-  @NotNull
-  private Set<String> collectUsedAttributes(@NotNull final TypeEvalContext context) {
-    final Set<String> result = new LinkedHashSet<>();
+  @Nullable
+  private PyType getTypeFromUsages(@NotNull TypeEvalContext context) {
+    final Set<String> usedAttributes = new LinkedHashSet<>();
+
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
+
     final Ref<Boolean> parameterWasReassigned = Ref.create(false);
+    final Ref<Boolean> noneComparison = Ref.create(false);
 
     if (owner != null && name != null) {
       owner.accept(new PyRecursiveElementVisitor() {
@@ -341,24 +345,16 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               final String attributeName = expr.getReferencedName();
               final PyExpression referencedExpr = node instanceof PyBinaryExpression && PyNames.isRightOperatorName(attributeName) ?
                                                   ((PyBinaryExpression)node).getRightExpression() : qualifier;
-              if (referencedExpr != null) {
-                final PsiReference ref = referencedExpr.getReference();
-                if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
-                  if (attributeName != null && !result.contains(attributeName)) {
-                    result.add(attributeName);
-                  }
-                }
+              if (attributeName != null && isReferenceToParameter(referencedExpr)) {
+                usedAttributes.add(attributeName);
               }
             }
-            else {
-              final PsiReference ref = expr.getReference();
-              if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
-                StreamEx.of(getParametersByCallArgument(expr, context))
-                  .nonNull()
-                  .map(parameter -> parameter.getType(context))
-                  .select(PyStructuralType.class)
-                  .forEach(type -> result.addAll(type.getAttributeNames()));
-              }
+            else if (isReferenceToParameter(expr)) {
+              StreamEx.of(getParametersByCallArgument(expr, context))
+                      .nonNull()
+                      .map(parameter -> parameter.getType(context))
+                      .select(PyStructuralType.class)
+                      .forEach(type -> usedAttributes.addAll(type.getAttributeNames()));
             }
           }
           super.visitPyElement(node);
@@ -386,18 +382,11 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
           Optional
             .ofNullable(node.getCallee())
-            .filter(callee -> "len".equals(callee.getName()))
+            .filter(callee -> "len".equals(callee.getName()) && isReferenceToParameter(node.getArgument(0, PyReferenceExpression.class)))
             .map(PyExpression::getReference)
             .map(PsiReference::resolve)
             .filter(element -> PyBuiltinCache.getInstance(element).isBuiltin(element))
-            .ifPresent(
-              callable -> {
-                final PyReferenceExpression argument = node.getArgument(0, PyReferenceExpression.class);
-                if (argument != null && argument.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
-                  result.add(PyNames.LEN);
-                }
-              }
-            );
+            .ifPresent(callable -> usedAttributes.add(PyNames.LEN));
 
           super.visitPyCallExpression(node);
         }
@@ -406,12 +395,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         public void visitPyForStatement(PyForStatement node) {
           if (parameterWasReassigned.get()) return;
 
-          Optional
-            .of(node.getForPart())
-            .map(PyForPart::getSource)
-            .map(PyExpression::getReference)
-            .filter(reference -> reference.isReferenceTo(PyNamedParameterImpl.this))
-            .ifPresent(reference -> result.add(PyNames.ITER));
+          if (isReferenceToParameter(node.getForPart().getSource())) {
+            usedAttributes.add(PyNames.ITER);
+          }
 
           super.visitPyForStatement(node);
         }
@@ -420,16 +406,44 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         public void visitPyTargetExpression(PyTargetExpression node) {
           if (parameterWasReassigned.get()) return;
 
-          if (node.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
+          if (isReferenceToParameter(node)) {
             parameterWasReassigned.set(true);
           }
           else {
             super.visitPyTargetExpression(node);
           }
         }
+
+        @Override
+        public void visitPyBinaryExpression(PyBinaryExpression node) {
+          super.visitPyBinaryExpression(node);
+
+          if (noneComparison.get() || !node.isOperator(PyNames.IS) && !node.isOperator("isnot")) return;
+
+          final PyExpression lhs = node.getLeftExpression();
+          final PyExpression rhs = node.getRightExpression();
+
+          if (isReferenceToParameter(lhs) ^ isReferenceToParameter(rhs) &&
+              (lhs != null && context.getType(lhs) instanceof PyNoneType) ^ (rhs != null && context.getType(rhs) instanceof PyNoneType)) {
+            noneComparison.set(true);
+          }
+        }
+
+        @Contract("null -> false")
+        private boolean isReferenceToParameter(@Nullable PsiElement element) {
+          if (element == null) return false;
+          final PsiReference reference = element.getReference();
+          return reference != null && reference.isReferenceTo(PyNamedParameterImpl.this);
+        }
       });
     }
-    return result;
+
+    if (!usedAttributes.isEmpty()) {
+      final PyStructuralType structuralType = new PyStructuralType(usedAttributes, true);
+      return noneComparison.get() ? PyUnionType.union(structuralType, PyNoneType.INSTANCE) : structuralType;
+    }
+
+    return null;
   }
 
   @NotNull
@@ -449,11 +463,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         if (callee instanceof PyReferenceExpression) {
           final PyReferenceExpression calleeReferenceExpr = (PyReferenceExpression)callee;
           final PyExpression firstQualifier = PyPsiUtils.getFirstQualifier(calleeReferenceExpr);
-          if (firstQualifier != null) {
-            final PsiReference ref = firstQualifier.getReference();
-            if (ref != null && ref.isReferenceTo(this)) {
-              return Collections.emptyList();
-            }
+          final PsiReference ref = firstQualifier.getReference();
+          if (ref != null && ref.isReferenceTo(this)) {
+            return Collections.emptyList();
           }
         }
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);

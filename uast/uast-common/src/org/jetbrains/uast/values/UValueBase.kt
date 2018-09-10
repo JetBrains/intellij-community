@@ -49,9 +49,9 @@ abstract class UValueBase : UValue {
 
   override fun less(other: UValue): UValue = other.greater(this)
 
-  override fun greaterOrEquals(other: UValue) = this.greater(other) or this.valueEquals(other)
+  override fun greaterOrEquals(other: UValue): UValue = this.greater(other) or this.valueEquals(other)
 
-  override fun lessOrEquals(other: UValue) = this.less(other) or this.valueEquals(other)
+  override fun lessOrEquals(other: UValue): UValue = this.less(other) or this.valueEquals(other)
 
   override fun inc(): UValue = UUndeterminedValue
 
@@ -95,7 +95,7 @@ abstract class UValueBase : UValue {
 
   internal open fun coerceConstant(constant: UConstant): UValue = constant
 
-  override val reachable = true
+  override val reachable: Boolean = true
 
   override abstract fun toString(): String
 }

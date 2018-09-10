@@ -38,16 +38,19 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   protected ObjectPattern(final Class<T> aClass) {
     this(new InitialPatternCondition<T>(aClass) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return aClass.isInstance(o);
       }
     });
   }
 
+  @Override
   public final boolean accepts(@Nullable Object t) {
     return accepts(t, new ProcessingContext());
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
     if (!myInitialCondition.accepts(o, context)) return false;
@@ -67,6 +70,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     return true;
   }
 
+  @Override
   @NotNull
   @SuppressWarnings("unchecked")
   public final ElementPatternCondition<T> getCondition() {
@@ -105,6 +109,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   @NotNull
   public Self equalTo(@NotNull final T o) {
     return with(new ValuePatternCondition<T>("equalTo") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t.equals(o);
       }
@@ -165,6 +170,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   public Self isNull() {
     //noinspection Convert2Diamond (would break compilation: IDEA-168317)
     return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o == null;
       }
@@ -175,6 +181,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   public Self notNull() {
     //noinspection Convert2Diamond (would break compilation: IDEA-168317)
     return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o != null;
       }
@@ -184,6 +191,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   @NotNull
   public Self save(final Key<? super T> key) {
     return with(new PatternCondition<T>("save") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         context.put((Key)key, t);
         return true;
@@ -194,6 +202,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   @NotNull
   public Self save(@NonNls final String key) {
     return with(new PatternCondition<T>("save") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         context.put(key, t);
         return true;
@@ -225,6 +234,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   @NotNull
   public Self without(final PatternCondition<? super T> pattern) {
     return with(new PatternCondition<T>("without") {
+      @Override
       public boolean accepts(@NotNull final T o, final ProcessingContext context) {
         return !pattern.accepts(o, context);
       }

@@ -47,6 +47,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     return HelpID.RemoveMiddleman;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -59,6 +60,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     invoke((PsiField)element, editor);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) {
       return;

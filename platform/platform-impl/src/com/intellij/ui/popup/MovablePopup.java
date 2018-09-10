@@ -30,7 +30,16 @@ import java.awt.event.WindowFocusListener;
  */
 public class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
-  private WindowFocusListener myWindowFocusAdapter = null;
+  private Runnable myOnAncestorFocusLost = null;
+  private final WindowAdapter myWindowFocusAdapter = new WindowAdapter() {
+    @Override
+    public void windowLostFocus(WindowEvent e) {
+      super.windowLostFocus(e);
+      if (myOnAncestorFocusLost != null) {
+        myOnAncestorFocusLost.run();
+      }
+    }
+  };
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -63,14 +72,7 @@ public class MovablePopup {
   }
 
   public void onAncestorFocusLost(Runnable r) {
-    myWindowFocusAdapter = new WindowAdapter() {
-      @Override
-      public void windowLostFocus(WindowEvent e) {
-        super.windowLostFocus(e);
-        r.run();
-      }
-    };
-    SwingUtilities.getWindowAncestor(myOwner).addWindowFocusListener(myWindowFocusAdapter);
+    myOnAncestorFocusLost = r;
   }
 
   private static void setAlwaysOnTop(@NotNull Window window, boolean value) {
@@ -169,12 +171,16 @@ public class MovablePopup {
   }
 
   public void setVisible(boolean visible) {
+    Window owner = UIUtil.getWindow(myOwner);
     if (!visible && myView != null) {
       disposeAndUpdate(false);
+      if (owner != null) {
+        owner.removeWindowFocusListener(myWindowFocusAdapter);
+      }
     }
     else if (visible && myView == null) {
-      Window owner = UIUtil.getWindow(myOwner);
       if (owner != null) {
+        owner.addWindowFocusListener(myWindowFocusAdapter);
         if (myHeavyWeight) {
           Window view = new JWindow(owner);
           view.setType(Window.Type.POPUP);

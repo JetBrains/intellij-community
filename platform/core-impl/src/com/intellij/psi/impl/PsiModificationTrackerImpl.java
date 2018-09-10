@@ -201,7 +201,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   @ApiStatus.Experimental
   @NotNull
-  public ModificationTracker forLanguages(@NotNull Condition<Language> condition) {
+  public ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
     if (!ourEnableLanguageTracker.asBoolean()) return this;
     return () -> {
       long result = 0;

@@ -76,7 +76,7 @@ public class NewColorAndFontPanel extends JPanel {
 
     previewPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void selectionInPreviewChanged(final String typeToSelect) {
+      public void selectionInPreviewChanged(@NotNull final String typeToSelect) {
         optionsPanel.selectOption(typeToSelect);
       }
     });
@@ -90,7 +90,7 @@ public class NewColorAndFontPanel extends JPanel {
       }
 
       @Override
-      public void selectedOptionChanged(final Object selected) {
+      public void selectedOptionChanged(@NotNull final Object selected) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
           myPreviewPanel.blinkSelectedHighlightType(selected);
         }
@@ -99,7 +99,7 @@ public class NewColorAndFontPanel extends JPanel {
     });
     mySchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void schemeChanged(final Object source) {
+      public void schemeChanged(@NotNull final Object source) {
         myOptionsPanel.updateOptionsList();
         myPreviewPanel.updateView();
       }
@@ -120,6 +120,10 @@ public class NewColorAndFontPanel extends JPanel {
 
   public Runnable showOption(final String option) {
     return myOptionsPanel.showOption(option);
+  }
+
+  public void selectOptionByType(final String typeToSelect) {
+    myOptionsPanel.selectOption(typeToSelect);
   }
 
   @NotNull

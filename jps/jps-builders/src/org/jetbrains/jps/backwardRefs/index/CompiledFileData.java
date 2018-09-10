@@ -1,27 +1,27 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs.index;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.Collection;
 import java.util.Map;
 
 public class CompiledFileData {
-  private final Map<LightRef, Collection<LightRef>> myBackwardHierarchyMap;
-  private final Map<LightRef, Collection<LightRef>> myCasts;
-  private final Map<LightRef, Integer> myReferences;
-  private final Map<LightRef, Void> myDefinitions;
-  private final Map<SignatureData, Collection<LightRef>> mySignatureData;
-  private final Map<LightRef, Void> myImplicitToString;
+  private final Map<CompilerRef, Collection<CompilerRef>> myBackwardHierarchyMap;
+  private final Map<CompilerRef, Collection<CompilerRef>> myCasts;
+  private final Map<CompilerRef, Integer> myReferences;
+  private final Map<CompilerRef, Void> myDefinitions;
+  private final Map<SignatureData, Collection<CompilerRef>> mySignatureData;
+  private final Map<CompilerRef, Void> myImplicitToString;
 
-  public CompiledFileData(@NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
-                          @NotNull Map<LightRef, Collection<LightRef>> casts,
-                          @NotNull Map<LightRef, Integer> references,
-                          @NotNull Map<LightRef, Void> definitions,
-                          @NotNull Map<SignatureData, Collection<LightRef>> signatureData,
-                          @NotNull Map<LightRef, Void> implicitToString) {
+  public CompiledFileData(@NotNull Map<CompilerRef, Collection<CompilerRef>> backwardHierarchyMap,
+                          @NotNull Map<CompilerRef, Collection<CompilerRef>> casts,
+                          @NotNull Map<CompilerRef, Integer> references,
+                          @NotNull Map<CompilerRef, Void> definitions,
+                          @NotNull Map<SignatureData, Collection<CompilerRef>> signatureData,
+                          @NotNull Map<CompilerRef, Void> implicitToString) {
     myBackwardHierarchyMap = backwardHierarchyMap;
     myCasts = casts;
     myReferences = references;
@@ -31,32 +31,32 @@ public class CompiledFileData {
   }
 
   @NotNull
-  public Map<LightRef, Collection<LightRef>> getBackwardHierarchy() {
+  public Map<CompilerRef, Collection<CompilerRef>> getBackwardHierarchy() {
     return myBackwardHierarchyMap;
   }
 
   @NotNull
-  public Map<LightRef, Integer> getReferences() {
+  public Map<CompilerRef, Integer> getReferences() {
     return myReferences;
   }
 
   @NotNull
-  public Map<LightRef, Void> getDefinitions() {
+  public Map<CompilerRef, Void> getDefinitions() {
     return myDefinitions;
   }
 
   @NotNull
-  public Map<SignatureData, Collection<LightRef>> getSignatureData() {
+  public Map<SignatureData, Collection<CompilerRef>> getSignatureData() {
     return mySignatureData;
   }
 
   @NotNull
-  public Map<LightRef, Collection<LightRef>> getCasts() {
+  public Map<CompilerRef, Collection<CompilerRef>> getCasts() {
     return myCasts;
   }
 
   @NotNull
-  public Map<LightRef, Void> getImplicitToString() {
+  public Map<CompilerRef, Void> getImplicitToString() {
     return myImplicitToString;
   }
 }

@@ -25,13 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class EmmetParser {
-  private final List<ZenCodingToken> myTokens;
+  private final List<? extends ZenCodingToken> myTokens;
   protected final CustomTemplateCallback myCallback;
   protected final ZenCodingGenerator myGenerator;
 
   private int myIndex = 0;
 
-  public EmmetParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  public EmmetParser(List<? extends ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
     myTokens = tokens;
     myCallback = callback;
     myGenerator = generator;

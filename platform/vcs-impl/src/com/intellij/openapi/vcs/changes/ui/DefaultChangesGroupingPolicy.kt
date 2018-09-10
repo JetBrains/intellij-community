@@ -11,6 +11,12 @@ object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
 }
 
+object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
+  override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy {
+    return NoneChangesGroupingPolicy
+  }
+}
+
 class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val vFile = nodePath.resolve() ?: return null
@@ -32,11 +38,11 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
   }
 
   companion object {
-    val CONFLICTS_NODE_CACHE = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
+    val CONFLICTS_NODE_CACHE: Key<ChangesBrowserNode<*>> = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
   }
 
   class Factory @JvmOverloads constructor(val project: Project, val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(model: DefaultTreeModel) =
+    override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy =
       if (forLocalChanges) DefaultChangesGroupingPolicy(project, model) else NoneChangesGroupingPolicy
   }
 }

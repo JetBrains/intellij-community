@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,13 @@ public enum AntialiasingType {
   }
 
   public Object getTextInfo() {
-    return isEnabled ? GraphicsUtil.createAATextInfo(myHint) : null;
+    try {
+      return isEnabled || SystemInfo.isJetBrainsJvm ? GraphicsUtil.createAATextInfo(myHint) : null;
+    }
+    // [tav] todo: to support JBSDK prior to 8u152 b1248.5, remove in 2018.3, see JRE-772
+    catch (InternalError ignored) {
+      return null;
+    }
   }
 
   @Override

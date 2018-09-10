@@ -139,7 +139,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
       if (0 < threshold && threshold < time) {
         String name = configurable.getDisplayName();
         String id = ConfigurableVisitor.ByID.getID(configurable);
-        LOG.warn(String.valueOf(time) + " ms to " + action + " '" + name + "' id=" + id);
+        LOG.warn(time + " ms to " + action + " '" + name + "' id=" + id);
       }
     }
   }

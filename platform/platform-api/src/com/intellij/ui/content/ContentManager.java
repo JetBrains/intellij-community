@@ -35,11 +35,6 @@ public interface ContentManager extends Disposable, BusyObject {
   void addContent(@NotNull Content content);
   void addContent(@NotNull Content content, final int order);
 
-  /**
-   * @deprecated use {@link #addContent(Content)} instead, {@code constraints} parameter isn't used anyway
-   */
-  void addContent(@NotNull Content content, Object constraints);
-
   boolean removeContent(@NotNull Content content, final boolean dispose);
   @NotNull
   ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);
@@ -55,6 +50,14 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
+  /**
+   *
+   * @param content to be selected
+   * @param requestFocus defines if content would request focus after selection
+   * @param forcedFocus isn't used anymore
+   * @param implicit if it's true and content cannot be focused (e.g. it's minimized at the moment) ActionCallback.REJECTED would be returned
+   * @return resulting ActionCallback for both selection and focus transfer (if need)
+   */
   @NotNull
   ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit);
 

@@ -1,0 +1,12 @@
+for (foo
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Reference expression
+        PsiElement(identifier)('foo')
+      PsiErrorElement:';' or identifier expected
+        <empty list>

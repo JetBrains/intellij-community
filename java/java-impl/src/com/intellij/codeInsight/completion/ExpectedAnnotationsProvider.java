@@ -38,7 +38,7 @@ class ExpectedAnnotationsProvider extends CompletionProvider<CompletionParameter
 
   @Override
   public void addCompletions(@NotNull final CompletionParameters parameters,
-                             final ProcessingContext context,
+                             @NotNull final ProcessingContext context,
                              @NotNull final CompletionResultSet result) {
     final PsiElement element = parameters.getPosition();
 

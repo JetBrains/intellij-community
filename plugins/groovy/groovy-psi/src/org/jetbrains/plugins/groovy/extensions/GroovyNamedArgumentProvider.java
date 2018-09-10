@@ -42,35 +42,11 @@ public abstract class GroovyNamedArgumentProvider {
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =
     ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
 
-  @SuppressWarnings("unused")
-  @Deprecated
-  public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiElement resolve,
-                                @Nullable String argumentName,
-                                boolean forCompletion,
-                                @NotNull Map<String, NamedArgumentDescriptor> result) {
-    // no op
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiElement resolve,
-                                @Nullable GroovyResolveResult resolveResult,
-                                @Nullable String argumentName,
-                                boolean forCompletion,
-                                @NotNull Map<String, NamedArgumentDescriptor> result) {
-    //noinspection deprecation
-    getNamedArguments(call, resolve, argumentName, forCompletion, result);
-  }
-
   public void getNamedArguments(@NotNull GrCall call,
                                 @NotNull GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 @NotNull Map<String, NamedArgumentDescriptor> result) {
-    //noinspection deprecation
-    getNamedArguments(call, resolveResult.getElement(), resolveResult, argumentName, forCompletion, result);
   }
 
   @NotNull

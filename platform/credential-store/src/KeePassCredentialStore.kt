@@ -227,9 +227,9 @@ interface MasterKeyStorage {
 }
 
 class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
-  override fun encrypt(data: ByteArray, size: Int) = WindowsCryptUtils.protect(super.encrypt(data, size))
+  override fun encrypt(data: ByteArray, size: Int): ByteArray = WindowsCryptUtils.protect(super.encrypt(data, size))
 
-  override fun decrypt(data: ByteArray) = super.decrypt(WindowsCryptUtils.unprotect(data))
+  override fun decrypt(data: ByteArray): ByteArray = super.decrypt(WindowsCryptUtils.unprotect(data))
 }
 
 class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {

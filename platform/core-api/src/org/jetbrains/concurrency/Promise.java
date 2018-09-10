@@ -22,13 +22,13 @@ import java.util.concurrent.TimeoutException;
  *
  * <ul>
  *   <li>pending: initial state, neither fulfilled nor rejected.</li>
- *   <li>fulfilled: meaning that the operation completed successfully.</li>
+ *   <li>succeeded: meaning that the operation completed successfully.</li>
  *   <li>rejected: meaning that the operation failed.</li>
  * </ul>
  */
 public interface Promise<T> {
   enum State {
-    PENDING, FULFILLED, REJECTED
+    PENDING, SUCCEEDED, REJECTED
   }
 
   /**
@@ -115,6 +115,7 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve (result value will be passed),
    * or on promise reject (null as result value will be passed).
    */
+  @NotNull
   Promise<T> onProcessed(@NotNull java.util.function.Consumer<? super T> processed);
 
   /**
@@ -122,6 +123,7 @@ public interface Promise<T> {
    * or on promise reject (null as result value will be passed).
    */
   @Deprecated
+  @NotNull
   default Promise<T> processed(@NotNull Consumer<? super T> action) {
     return onProcessed(it -> action.consume(it));
   }
@@ -138,5 +140,9 @@ public interface Promise<T> {
   @Nullable
   default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
+  }
+
+  default boolean isSucceeded() {
+    return getState() == State.SUCCEEDED;
   }
 }

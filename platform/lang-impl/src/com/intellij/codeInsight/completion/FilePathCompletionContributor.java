@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -56,7 +54,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiReference psiReference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
         if (getReference(psiReference) != null && parameters.getInvocationCount() == 1) {
@@ -69,7 +67,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     CompletionProvider<CompletionParameters> provider = new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet _result) {
         if (!parameters.isExtendedCompletion()) {
           return;
@@ -290,7 +288,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     }
 
     @Override
-    public void handleInsert(InsertionContext context) {
+    public void handleInsert(@NotNull InsertionContext context) {
       context.commitDocument();
       if (myFile.isValid()) {
         final PsiReference psiReference = context.getFile().findReferenceAt(context.getStartOffset());

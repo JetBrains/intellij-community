@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -49,6 +50,7 @@ public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
     myTopLeft = topLeft;
 
     updateIcons(null);
+    LafManager.getInstance().addLafManagerListener(source -> updateIcons(null));
   }
 
   public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft, @Nullable Color borderColor) {

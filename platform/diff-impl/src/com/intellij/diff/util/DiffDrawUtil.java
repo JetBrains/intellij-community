@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,14 +85,6 @@ public class DiffDrawUtil {
     return gutterBackground;
   }
 
-  public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
-                                                int x1, int x2,
-                                                int start1, int end1,
-                                                int start2, int end2,
-                                                @Nullable EditorColorsScheme scheme) {
-    DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, start2, end1 - start1, scheme);
-  }
-
   public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color,
                                          boolean doubleLine, boolean dottedLine) {
     if (dottedLine && doubleLine) {
@@ -140,6 +133,7 @@ public class DiffDrawUtil {
     Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
     Shape lowerCurve = makeCurve(x1, x2, end1 + 1, end2 + 1, false);
     Shape lowerCurveBorder = makeCurve(x1, x2, end1, end2, false);
+    Shape middleCurve = makeCurve(x1, x2, start1 + (end1 - start1) / 2, start2 + (end2 - start2) / 2, true);
 
     if (fillColor != null) {
       Path2D path = new Path2D.Double();
@@ -148,6 +142,11 @@ public class DiffDrawUtil {
 
       g.setColor(fillColor);
       g.fill(path);
+
+      Stroke oldStroke = g.getStroke();
+      g.setStroke(new BasicStroke(JBUI.scale(1f)));
+      g.draw(middleCurve);
+      g.setStroke(oldStroke);
     }
 
     if (borderColor != null) {
@@ -184,6 +183,10 @@ public class DiffDrawUtil {
       return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
     }
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+  }
+
+  public static int yToLine(@NotNull Editor editor, int y) {
+    return editor.xyToLogicalPosition(new Point(0, y)).line;
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.util.ui.JBUI;
@@ -31,6 +17,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private boolean myNoIconSpace = false;
   private boolean myPaintContentBorder = true;
 
+  @Override
   public void installUI(JComponent c) {
     super.installUI(c);
     Object clientProperty = UIUtil.getTabbedPanePaintContentBorder(c);
@@ -40,6 +27,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected Insets getContentBorderInsets(int tabPlacement) {
     if (tabPlacement == TOP && !myPaintContentBorder) {
       return JBUI.insetsTop(1);
@@ -56,6 +44,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     return JBUI.insets(1);
   }
 
+  @Override
   protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     g.setColor(darkShadow);
     switch (tabPlacement) {
@@ -126,6 +115,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected void paintText(Graphics g, int tabPlacement,
                            Font font, FontMetrics metrics, int tabIndex,
                            String title, Rectangle textRect,
@@ -152,6 +142,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     if (isSelected) {
       g.setColor(LIGHT);
@@ -175,6 +166,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected void paintContentBorderTopEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {
     if (tabPlacement == TOP || myPaintContentBorder) {
       boolean leftToRight = isLeftToRight(tabPane);
@@ -213,6 +205,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected void paintContentBorderBottomEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {
     if (tabPlacement == BOTTOM || myPaintContentBorder) {
       boolean leftToRight = isLeftToRight(tabPane);
@@ -254,6 +247,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected void paintContentBorderLeftEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {
     if (tabPlacement == LEFT || myPaintContentBorder) {
       Rectangle selRect = selectedIndex < 0 ? null :
@@ -279,6 +273,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     }
   }
 
+  @Override
   protected void paintContentBorderRightEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {
     if (tabPlacement == RIGHT || myPaintContentBorder) {
       Rectangle selRect = selectedIndex < 0 ? null :
@@ -315,10 +310,12 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     return c.getComponentOrientation().isLeftToRight();
   }
 
+  @Override
   protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
     return (int)(super.calculateTabHeight(tabPlacement, tabIndex, fontHeight) * 1.0);
   }
 
+  @Override
   protected int calculateMaxTabHeight(int tabPlacement) {
     FontMetrics metrics = getFontMetrics();
     int tabCount = tabPane.getTabCount();
@@ -342,6 +339,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
    * less then width of plain font. To handle correctly this "anomaly" we have to
    * determine maximum of these two widths.
    */
+  @Override
   protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
     final Font font = metrics.getFont();
     final FontMetrics plainMetrics = font.isPlain()? metrics : tabPane.getFontMetrics(font.deriveFont(Font.PLAIN));
@@ -359,6 +357,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
 
   private FontMetrics myLayoutMetrics = null;
 
+  @Override
   protected void layoutLabel(int tabPlacement, FontMetrics metrics, int tabIndex, String title, Icon icon, Rectangle tabRect,
                              Rectangle iconRect, Rectangle textRect, boolean isSelected) {
 
@@ -402,6 +401,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
     myPaintContentBorder = paintContentBorder;
   }
 
+  @Override
   protected int calculateTabAreaHeight(int tabPlacement, int horizRunCount, int maxTabHeight) {
     for (int i = 0; i < tabPane.getTabCount(); i++) {
       Component component = tabPane.getComponentAt(i);

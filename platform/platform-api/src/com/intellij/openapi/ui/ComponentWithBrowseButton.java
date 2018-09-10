@@ -52,31 +52,14 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setFocusable(false);
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.isFeatureEnabled("inline.browse.button");
     if (inlineBrowseButton) {
-      ExtendableTextComponent.Extension action = new ExtendableTextComponent.Extension() {
-        @Override
-        public Icon getIcon(boolean hovered) {
-          return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
-        }
-
-        @Override
-        public String getTooltip() {
-          return UIBundle.message("component.with.browse.button.browse.button.tooltip.text");
-        }
-
-        @Override
-        public Runnable getActionOnClick() {
-          return () -> {
-            for (ActionListener listener : myBrowseButton.getActionListeners()) {
-              listener.actionPerformed(new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action"));
-            }
-          };
-        }
-      };
-      ((ExtendableTextComponent)myComponent).addExtension(action);
+      ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
+        getDefaultIcon(), getHoveredIcon(),
+        UIBundle.message("component.with.browse.button.browse.button.tooltip.text"),
+        this::notifyActionListeners));
       new DumbAwareAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
-          action.getActionOnClick().run();
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          notifyActionListeners();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
     }
@@ -99,6 +82,21 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
     }
+  }
+
+  @NotNull
+  protected Icon getDefaultIcon() {
+    return AllIcons.General.OpenDisk;
+  }
+
+  @NotNull
+  protected Icon getHoveredIcon() {
+    return AllIcons.General.OpenDiskHover;
+  }
+
+  private void notifyActionListeners() {
+    ActionEvent event = new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action");
+    for (ActionListener listener: myBrowseButton.getActionListeners()) listener.actionPerformed(event);
   }
 
   @NotNull
@@ -176,15 +174,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     addActionListener(actionListener);
   }
 
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("UnusedParameters")
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
-  }
-
   @Override
   public void dispose() {
     ActionListener[] listeners = myBrowseButton.getActionListeners();
@@ -207,12 +196,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myBrowseButton.isVisible() && myBrowseButton.isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e){
+    public void actionPerformed(@NotNull AnActionEvent e){
       myBrowseButton.doClick();
     }
 
@@ -350,4 +339,13 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
   }
+  /**
+   * @deprecated use {@link #addActionListener(ActionListener)} instead
+   */
+  @Deprecated
+  @SuppressWarnings("UnusedParameters")
+  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
+    addActionListener(actionListener);
+  }
+
 }

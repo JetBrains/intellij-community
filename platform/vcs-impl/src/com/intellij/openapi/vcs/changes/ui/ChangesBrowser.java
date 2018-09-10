@@ -12,7 +12,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 
-public class ChangesBrowser extends OldChangesBrowserBase<Change> {
+/**
+ * @deprecated Use {@link SimpleChangesBrowser}
+ */
+@Deprecated
+public class ChangesBrowser extends OldChangesBrowserBase {
 
   public ChangesBrowser(@NotNull Project project,
                         @Nullable List<? extends ChangeList> changeLists,
@@ -23,60 +27,11 @@ public class ChangesBrowser extends OldChangesBrowserBase<Change> {
                         @Nullable Runnable inclusionListener,
                         @NotNull MyUseCase useCase,
                         @Nullable VirtualFile toSelect) {
-    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect, Change.class);
+    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect);
 
     init();
-    setInitialSelection(changeLists, changes, initialListSelection);
+    mySelectedChangeList = initialListSelection;
     rebuildList();
-  }
-
-  @NotNull
-  protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
-    return TreeModelBuilder.buildFromChanges(myProject, myViewer.getGrouping(), changes, changeNodeDecorator);
-  }
-
-  @NotNull
-  protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<?> node) {
-    return node.getAllChangesUnder();
-  }
-
-  @Nullable
-  protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode<?> node) {
-    final Object o = node.getUserObject();
-    if (o instanceof Change) {
-      return (Change)o;
-    }
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getSelectedChanges() {
-    return myViewer.getSelectedChanges();
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getAllChanges() {
-    return myViewer.getChanges();
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getCurrentDisplayedChanges() {
-    return myChangesToDisplay != null ? myChangesToDisplay : super.getCurrentDisplayedChanges();
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getCurrentIncludedChanges() {
-    return ContainerUtil.newArrayList(myViewer.getIncludedChanges());
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getCurrentDisplayedObjects() {
-    return getCurrentDisplayedChanges();
   }
 
   public enum MyUseCase {

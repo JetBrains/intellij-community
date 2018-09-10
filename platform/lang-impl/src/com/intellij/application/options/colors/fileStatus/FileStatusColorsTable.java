@@ -77,7 +77,7 @@ public class FileStatusColorsTable extends JBTable {
 
     private final JLabel myLabel = new JLabel();
 
-    public MyStatusCellRenderer() {
+    MyStatusCellRenderer() {
       myLabel.setOpaque(true);
     }
 
@@ -101,7 +101,7 @@ public class FileStatusColorsTable extends JBTable {
     private final JLabel myLabel = new JLabel();
     private final Color myLabelColor;
 
-    public MyDefaultStatusRenderer() {
+    MyDefaultStatusRenderer() {
       myLabel.setOpaque(true);
       myLabelColor = ColorUtil.withAlpha(myLabel.getForeground(), 0.5);
     }

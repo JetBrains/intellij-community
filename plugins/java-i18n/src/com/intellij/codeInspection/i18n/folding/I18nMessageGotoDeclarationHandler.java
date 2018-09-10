@@ -19,10 +19,8 @@ import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CompositeFoldingBuilder;
-import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
-  private static final Key<FoldingBuilder> KEY = CompositeFoldingBuilder.FOLDING_BUILDER;
 
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {
@@ -39,7 +36,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
     int i = 4; //some street magic
     while (element != null && i > 0) {
       final ASTNode node = element.getNode();
-      if (node != null && node.getUserData(KEY) instanceof PropertyFoldingBuilder) {
+      if (node != null && node.getUserData(CompositeFoldingBuilder.FOLDING_BUILDER) instanceof PropertyFoldingBuilder) {
         break;
       }
       else {

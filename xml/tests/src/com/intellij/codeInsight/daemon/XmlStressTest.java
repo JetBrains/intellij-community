@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspectio
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
@@ -29,11 +30,11 @@ import com.intellij.xml.util.XmlInvalidIdInspection;
 import java.io.File;
 
 public class XmlStressTest extends DaemonAnalyzerTestCase {
-
+  private static final Logger LOG = Logger.getInstance(XmlStressTest.class);
   public void testSchemaValidator() throws Exception {
     for (int i = 0; i < 100; i++) {
       doTest("xml/WsdlValidation.wsdl", false, false);
-      System.out.println(i);
+      LOG.debug(String.valueOf(i));
     }
   }
 

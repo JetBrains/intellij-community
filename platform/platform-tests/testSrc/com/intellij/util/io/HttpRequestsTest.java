@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPOutputStream;
@@ -41,8 +42,8 @@ public class HttpRequestsTest {
     myServer.stop(0);
   }
 
-  @Test
-  public void testRedirectLimit() {
+  @Test(timeout = 5000)
+  public void redirectLimit() {
     try {
       HttpRequests.request("").redirectLimit(0).readString(null);
       fail();
@@ -53,10 +54,10 @@ public class HttpRequestsTest {
   }
 
   @Test(timeout = 5000, expected = SocketTimeoutException.class)
-  public void testReadTimeout() throws IOException {
+  public void readTimeout() throws IOException {
     myServer.createContext("/", ex -> {
       TimeoutUtil.sleep(1000);
-      ex.sendResponseHeaders(200, 0);
+      ex.sendResponseHeaders(HTTP_OK, 0);
       ex.close();
     });
 
@@ -65,53 +66,37 @@ public class HttpRequestsTest {
   }
 
   @Test(timeout = 5000)
-  public void testReadString() throws IOException {
-    createServerForDataReadTest();
-    assertThat(HttpRequests.request(myUrl).readString()).isEqualTo("hello кодировочки");
+  public void readContent() throws IOException {
+    myServer.createContext("/", ex -> {
+      ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
+      ex.sendResponseHeaders(HTTP_OK, 0);
+      ex.getResponseBody().write("hello кодировочки".getBytes("koi8-r"));
+      ex.close();
+    });
+
+    assertThat(HttpRequests.request(myUrl).readString(null)).isEqualTo("hello кодировочки");
   }
 
   @Test(timeout = 5000)
-  public void readGzippedString() throws IOException {
-    createServerForGzippedRead();
-    assertThat(HttpRequests.request(myUrl).readString()).isEqualTo("hello кодировочки");
-  }
-
-  private void createServerForGzippedRead() {
+  public void gzippedContent() throws IOException {
     myServer.createContext("/", ex -> {
       ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
       ex.getResponseHeaders().add("Content-Encoding", "gzip");
-      ex.sendResponseHeaders(200, 0);
-
+      ex.sendResponseHeaders(HTTP_OK, 0);
       try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(ex.getResponseBody())) {
         gzipOutputStream.write("hello кодировочки".getBytes("koi8-r"));
       }
       ex.close();
     });
+
+    assertThat(HttpRequests.request(myUrl).readString(null)).isEqualTo("hello кодировочки");
+
+    byte[] bytes = HttpRequests.request(myUrl).gzip(false).readBytes(null);
+    assertThat(bytes).startsWith(0x1f, 0x8b);  // GZIP magic
   }
 
   @Test(timeout = 5000)
-  public void gzippedStringIfSupportDisbled() throws IOException {
-    createServerForGzippedRead();
-    assertThat(HttpRequests.request(myUrl).gzip(false).readString()).isNotEqualTo("hello кодировочки");
-  }
-
-  private void createServerForDataReadTest() {
-    myServer.createContext("/", ex -> {
-      ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
-      ex.sendResponseHeaders(200, 0);
-      ex.getResponseBody().write("hello кодировочки".getBytes("koi8-r"));
-      ex.close();
-    });
-  }
-
-  @Test(timeout = 5000)
-  public void testReadChars() throws IOException {
-    createServerForDataReadTest();
-    assertThat(HttpRequests.request(myUrl).readChars().toString()).isEqualTo("hello кодировочки");
-  }
-
-  @Test(timeout = 5000)
-  public void testTuning() throws IOException {
+  public void tuning() throws IOException {
     myServer.createContext("/", ex -> {
       ex.sendResponseHeaders("HEAD".equals(ex.getRequestMethod()) ? HTTP_NO_CONTENT : HTTP_NOT_IMPLEMENTED, -1);
       ex.close();
@@ -122,15 +107,15 @@ public class HttpRequestsTest {
       .tryConnect());
   }
 
-  @Test(expected = AssertionError.class)
-  public void testPutNotAllowed() throws IOException {
+  @Test(timeout = 5000, expected = AssertionError.class)
+  public void putNotAllowed() throws IOException {
     HttpRequests.request(myUrl)
                 .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("PUT"))
                 .tryConnect();
     fail();
   }
 
-  @Test
+  @Test(timeout = 5000)
   public void post() throws IOException {
     Ref<String> receivedData = Ref.create();
     myServer.createContext("/", ex -> {
@@ -143,32 +128,37 @@ public class HttpRequestsTest {
     assertThat(receivedData.get()).isEqualTo("hello");
   }
 
-  @Test
+  @Test(timeout = 5000)
   public void postNotFound() throws IOException {
     myServer.createContext("/", ex -> {
       ex.sendResponseHeaders(HTTP_NOT_FOUND, -1);
       ex.close();
     });
 
+    //noinspection SpellCheckingInspection
     try {
       HttpRequests
         .post(myUrl, null)
         .write("hello");
+      fail();
+    }
+    catch (SocketException e) {
+      // java.net.SocketException: Software caused connection abort: recv failed
+      //noinspection SpellCheckingInspection
+      assertThat(e.getMessage()).contains("recv failed");
     }
     catch (HttpRequests.HttpStatusException e) {
       assertThat(e.getMessage()).isEqualTo("Request failed with status code 404");
-      return;
+      assertThat(e.getStatusCode()).isEqualTo(HTTP_NOT_FOUND);
     }
-
-    fail();
   }
 
-  @Test
+  @Test(timeout = 5000)
   public void postNotFoundWithResponse() throws IOException {
     String serverErrorText = "use another url";
     myServer.createContext("/", ex -> {
       byte[] bytes = serverErrorText.getBytes(StandardCharsets.UTF_8);
-      ex.sendResponseHeaders(503, bytes.length);
+      ex.sendResponseHeaders(HTTP_UNAVAILABLE, bytes.length);
       ex.getResponseBody().write(bytes);
       ex.close();
     });
@@ -178,29 +168,48 @@ public class HttpRequestsTest {
         .post(myUrl, null)
         .isReadResponseOnError(true)
         .write("hello");
+      fail();
     }
     catch (HttpRequests.HttpStatusException e) {
       assertThat(e.getMessage()).isEqualTo(serverErrorText);
-      return;
     }
-
-    fail();
   }
 
   @Test(timeout = 5000)
-  public void testNotModified() throws IOException {
+  public void notModified() throws IOException {
     myServer.createContext("/", ex -> {
       ex.sendResponseHeaders(HTTP_NOT_MODIFIED, -1);
       ex.close();
     });
 
-    assertEquals(0, HttpRequests.request(myUrl).readBytes(null).length);
+    byte[] bytes = HttpRequests.request(myUrl).readBytes(null);
+    assertThat(bytes).isEmpty();
   }
 
-  @Test(expected = HttpRequests.HttpStatusException.class)
+  @Test(timeout = 5000)
   public void permissionDenied() throws IOException {
-    HttpRequests.request("https://httpbin.org/basic-auth/username/passwd")
-                .productNameAsUserAgent()
-                .readString();
+    try {
+      myServer.createContext("/", ex -> {
+        ex.sendResponseHeaders(HTTP_UNAUTHORIZED, -1);
+        ex.close();
+      });
+
+      HttpRequests.request(myUrl).productNameAsUserAgent().readString(null);
+      fail();
+    }
+    catch (HttpRequests.HttpStatusException e) {
+      assertThat(e.getStatusCode()).isEqualTo(HTTP_UNAUTHORIZED);
+    }
+  }
+
+  @Test(timeout = 5000)
+  public void invalidHeader() throws IOException {
+    try {
+      HttpRequests.request(myUrl).tuner(connection -> connection.setRequestProperty("X-Custom", "c-str\0")).readString(null);
+      fail();
+    }
+    catch (AssertionError e) {
+      assertThat(e.getMessage()).contains("value contains NUL bytes");
+    }
   }
 }

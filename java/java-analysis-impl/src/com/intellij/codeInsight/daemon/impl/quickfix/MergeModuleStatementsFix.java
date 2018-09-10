@@ -66,7 +66,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends L
   }
 
   @NotNull
-  protected abstract String getReplacementText(List<T> statementsToMerge);
+  protected abstract String getReplacementText(List<? extends T> statementsToMerge);
 
   @NotNull
   protected abstract List<T> getStatementsToMerge(@NotNull PsiJavaModule javaModule);

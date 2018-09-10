@@ -1,10 +1,11 @@
+syntax = "proto2";
+
 package org.jetbrains.jpsservice;
 
 option java_package = "org.jetbrains.jps.api";
 option optimize_for = LITE_RUNTIME;
 
 message Message {
-
   message UUID {
     required sint64 most_sig_bits = 1;
     required sint64 least_sig_bits = 2;
@@ -161,5 +162,3 @@ message Message {
   optional BuilderMessage builder_message = 4;
   optional Failure failure = 5;
 }
-
-

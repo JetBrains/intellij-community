@@ -35,60 +35,60 @@ open class UDependentValue protected constructor(
 
   private fun wrapUnary(result: UValue) = create(result, dependenciesWithThis)
 
-  override fun plus(other: UValue) = wrapBinary(unwrap() + other.unwrap(), other)
+  override fun plus(other: UValue): UValue = wrapBinary(unwrap() + other.unwrap(), other)
 
-  override fun minus(other: UValue) = wrapBinary(unwrap() - other.unwrap(), other)
+  override fun minus(other: UValue): UValue = wrapBinary(unwrap() - other.unwrap(), other)
 
-  override fun times(other: UValue) = wrapBinary(unwrap() * other.unwrap(), other)
+  override fun times(other: UValue): UValue = wrapBinary(unwrap() * other.unwrap(), other)
 
-  override fun div(other: UValue) = wrapBinary(unwrap() / other.unwrap(), other)
+  override fun div(other: UValue): UValue = wrapBinary(unwrap() / other.unwrap(), other)
 
   internal fun inverseDiv(other: UValue) = wrapBinary(other.unwrap() / unwrap(), other)
 
-  override fun mod(other: UValue) = wrapBinary(unwrap() % other.unwrap(), other)
+  override fun mod(other: UValue): UValue = wrapBinary(unwrap() % other.unwrap(), other)
 
   internal fun inverseMod(other: UValue) = wrapBinary(other.unwrap() % unwrap(), other)
 
-  override fun unaryMinus() = wrapUnary(-unwrap())
+  override fun unaryMinus(): UValue = wrapUnary(-unwrap())
 
-  override fun valueEquals(other: UValue) = wrapBinary(unwrap() valueEquals other.unwrap(), other)
+  override fun valueEquals(other: UValue): UValue = wrapBinary(unwrap() valueEquals other.unwrap(), other)
 
-  override fun valueNotEquals(other: UValue) = wrapBinary(unwrap() valueNotEquals other.unwrap(), other)
+  override fun valueNotEquals(other: UValue): UValue = wrapBinary(unwrap() valueNotEquals other.unwrap(), other)
 
-  override fun not() = wrapUnary(!unwrap())
+  override fun not(): UValue = wrapUnary(!unwrap())
 
-  override fun greater(other: UValue) = wrapBinary(unwrap() greater other.unwrap(), other)
+  override fun greater(other: UValue): UValue = wrapBinary(unwrap() greater other.unwrap(), other)
 
-  override fun less(other: UValue) = wrapBinary(other.unwrap() greater unwrap(), other)
+  override fun less(other: UValue): UValue = wrapBinary(other.unwrap() greater unwrap(), other)
 
-  override fun inc() = wrapUnary(unwrap().inc())
+  override fun inc(): UValue = wrapUnary(unwrap().inc())
 
-  override fun dec() = wrapUnary(unwrap().dec())
+  override fun dec(): UValue = wrapUnary(unwrap().dec())
 
-  override fun and(other: UValue) = wrapBinary(unwrap() and other.unwrap(), other)
+  override fun and(other: UValue): UValue = wrapBinary(unwrap() and other.unwrap(), other)
 
-  override fun or(other: UValue) = wrapBinary(unwrap() or other.unwrap(), other)
+  override fun or(other: UValue): UValue = wrapBinary(unwrap() or other.unwrap(), other)
 
-  override fun bitwiseAnd(other: UValue) = wrapBinary(unwrap() bitwiseAnd other.unwrap(), other)
+  override fun bitwiseAnd(other: UValue): UValue = wrapBinary(unwrap() bitwiseAnd other.unwrap(), other)
 
-  override fun bitwiseOr(other: UValue) = wrapBinary(unwrap() bitwiseOr other.unwrap(), other)
+  override fun bitwiseOr(other: UValue): UValue = wrapBinary(unwrap() bitwiseOr other.unwrap(), other)
 
-  override fun bitwiseXor(other: UValue) = wrapBinary(unwrap() bitwiseXor other.unwrap(), other)
+  override fun bitwiseXor(other: UValue): UValue = wrapBinary(unwrap() bitwiseXor other.unwrap(), other)
 
-  override fun shl(other: UValue) = wrapBinary(unwrap() shl other.unwrap(), other)
+  override fun shl(other: UValue): UValue = wrapBinary(unwrap() shl other.unwrap(), other)
 
   internal fun inverseShiftLeft(other: UValue) = wrapBinary(other.unwrap() shl unwrap(), other)
 
-  override fun shr(other: UValue) = wrapBinary(unwrap() shr other.unwrap(), other)
+  override fun shr(other: UValue): UValue = wrapBinary(unwrap() shr other.unwrap(), other)
 
   internal fun inverseShiftRight(other: UValue) = wrapBinary(other.unwrap() shr unwrap(), other)
 
-  override fun ushr(other: UValue) = wrapBinary(unwrap() ushr other.unwrap(), other)
+  override fun ushr(other: UValue): UValue = wrapBinary(unwrap() ushr other.unwrap(), other)
 
   internal fun inverseShiftRightUnsigned(other: UValue) =
     wrapBinary(other.unwrap() ushr unwrap(), other)
 
-  override fun merge(other: UValue) = when (other) {
+  override fun merge(other: UValue): UValue = when (other) {
     this -> this
     value -> this
     is UVariableValue -> other.merge(this)
@@ -100,7 +100,7 @@ open class UDependentValue protected constructor(
     else -> UPhiValue.create(this, other)
   }
 
-  override fun toConstant() = value.toConstant()
+  override fun toConstant(): UConstant? = value.toConstant()
 
   open internal fun copy(dependencies: Set<UDependency>) =
     if (dependencies == this.dependencies) this else create(value, dependencies)
@@ -109,7 +109,7 @@ open class UDependentValue protected constructor(
     if (toConstant() == constant) this
     else create(value.coerceConstant(constant), dependencies)
 
-  override fun equals(other: Any?) =
+  override fun equals(other: Any?): Boolean =
     other is UDependentValue
     && javaClass == other.javaClass
     && value == other.value
@@ -122,7 +122,7 @@ open class UDependentValue protected constructor(
     return result
   }
 
-  override fun toString() =
+  override fun toString(): String =
     if (dependencies.isNotEmpty())
       "$value" + dependencies.joinToString(prefix = " (depending on: ", postfix = ")", separator = ", ")
     else

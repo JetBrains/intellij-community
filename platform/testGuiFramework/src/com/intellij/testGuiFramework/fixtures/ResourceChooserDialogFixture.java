@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.Robot;
 import org.fest.swing.core.matcher.DialogMatcher;
 import org.fest.swing.core.matcher.JLabelMatcher;
@@ -24,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton;
 
 //TODO: probably should drop it from IDEA GUI testing framework
 public class ResourceChooserDialogFixture extends ComponentFixture<ResourceChooserDialogFixture, Dialog>
@@ -53,7 +52,7 @@ public class ResourceChooserDialogFixture extends ComponentFixture<ResourceChoos
 
   @NotNull
   public ResourceChooserDialogFixture clickOK() {
-    findAndClickOkButton(this);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(this);
     return this;
   }
 }

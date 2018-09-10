@@ -3,11 +3,12 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.openapi.util.io.FileUtil.ensureExists
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testGuiFramework.framework.IdeTestApplication
-import org.fest.swing.image.ScreenshotTaker
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -19,6 +20,10 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
   private val myScreenshotTaker = ScreenshotTaker()
   private val myExecutorService: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var myFolder: File? = null
+  private var isTestSuccessful = false
+  private val screenshotName
+    get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis()) + ".jpg"
+
 
   override fun starting(description: Description) {
     val folderName = description.testClass.simpleName + "-" + description.methodName
@@ -27,18 +32,11 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
       ensureExists(myFolder!!)
     }
     catch (e: IOException) {
-      println("Could not create folder " + folderName)
+      println("Could not create folder $folderName")
     }
 
-    myExecutorService.scheduleAtFixedRate({
-                                            try {
-                                              myScreenshotTaker.saveDesktopAsPng(
-                                                File(myFolder, System.currentTimeMillis().toString() + ".png").path)
-                                            }
-                                            catch (e: Throwable) {
-                                              // Do nothing
-                                            }
-                                          }, 100, myPeriod.toLong(), TimeUnit.MILLISECONDS)
+    myExecutorService.scheduleAtFixedRate({ myScreenshotTaker.safeTakeScreenshotAndSave(File(myFolder, screenshotName)) },
+                                          100, myPeriod.toLong(), TimeUnit.MILLISECONDS)
   }
 
   override fun finished(description: Description) {
@@ -49,9 +47,11 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
     catch (e: InterruptedException) {
       // Do not report the timeout
     }
+    if(isTestSuccessful && myFolder != null) FileUtilRt.delete(myFolder!!)
   }
 
   override fun succeeded(description: Description?) {
-    if (myFolder != null) FileUtilRt.delete(myFolder!!)
+    isTestSuccessful = true
   }
+
 }

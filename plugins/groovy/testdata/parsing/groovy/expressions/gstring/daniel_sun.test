@@ -13,15 +13,15 @@ Groovy script
       Method call
         Reference expression
           Literal
-            PsiElement(Gstring)('"haha"')
+            PsiElement(double quoted string)('"haha"')
           PsiElement(.)('.')
           PsiElement(identifier)('replaceAll')
         Arguments
           PsiElement(()('(')
           Literal
-            PsiElement(Gstring)('"\\\\"')
+            PsiElement(double quoted string)('"\\\\"')
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(Gstring)('"/"')
+            PsiElement(double quoted string)('"/"')
           PsiElement())(')')

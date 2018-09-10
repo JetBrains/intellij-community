@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
@@ -48,7 +49,7 @@ import java.util.List;
 public class AnnotateVcsVirtualFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateVcsVirtualFileAction.class);
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDisposed()) return false;
 
@@ -67,12 +68,12 @@ public class AnnotateVcsVirtualFileAction {
     return provider instanceof AnnotationProviderEx;
   }
 
-  private static boolean isSuspended(AnActionEvent e) {
+  private static boolean isSuspended(@NotNull AnActionEvent e) {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     return VcsAnnotateUtil.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
-  private static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     List<Editor> editors = getEditors(project, file, e.getDataContext());
@@ -162,6 +163,10 @@ public class AnnotateVcsVirtualFileAction {
       revisionNumber = revision.getRevisionNumber();
     }
     if (filePath == null || revisionNumber == null) return null;
+    if (revisionNumber instanceof TextRevisionNumber ||
+        revisionNumber == VcsRevisionNumber.NULL) {
+      return null;
+    }
 
     AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
     return vcs != null ? new AnnotationData(vcs, filePath, revisionNumber) : null;
@@ -182,7 +187,7 @@ public class AnnotateVcsVirtualFileAction {
     @NotNull public final FilePath filePath;
     @NotNull public final VcsRevisionNumber revisionNumber;
 
-    public AnnotationData(@NotNull AbstractVcs vcs,
+    AnnotationData(@NotNull AbstractVcs vcs,
                           @NotNull FilePath filePath,
                           @NotNull VcsRevisionNumber revisionNumber) {
       this.vcs = vcs;
@@ -198,7 +203,7 @@ public class AnnotateVcsVirtualFileAction {
     }
 
     @Override
-    public boolean isSuspended(AnActionEvent e) {
+    public boolean isSuspended(@NotNull AnActionEvent e) {
       return AnnotateVcsVirtualFileAction.isSuspended(e);
     }
 
@@ -208,7 +213,7 @@ public class AnnotateVcsVirtualFileAction {
     }
 
     @Override
-    public void perform(AnActionEvent e, boolean selected) {
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
       AnnotateVcsVirtualFileAction.perform(e, selected);
     }
   }

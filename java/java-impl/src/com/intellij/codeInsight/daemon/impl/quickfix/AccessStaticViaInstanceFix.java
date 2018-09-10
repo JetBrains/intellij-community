@@ -92,24 +92,29 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     if (containingClass == null) return;
     final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    if (qualifierExpression != null) {
-      if (!checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
-      WriteAction.run(() -> {
-        try {
-          PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
-          PsiElement qualifiedWithClassName = myExpression.copy();
-          if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
-            newQualifier.delete();
-            if (myExpression.resolve() != myMember) {
-              myExpression.replace(qualifiedWithClassName);
-            }
+    if (qualifierExpression != null && !checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
+    WriteAction.run(() -> {
+      try {
+        PsiElement newQualifier = factory.createReferenceExpression(containingClass);
+        if (qualifierExpression != null) {
+          newQualifier = qualifierExpression.replace(newQualifier);
+        }
+        else {
+          myExpression.setQualifierExpression((PsiExpression)newQualifier);
+          newQualifier = myExpression.getQualifierExpression();
+        }
+        PsiElement qualifiedWithClassName = myExpression.copy();
+        if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
+          newQualifier.delete();
+          if (myExpression.resolve() != myMember) {
+            myExpression.replace(qualifiedWithClassName);
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      });
-    }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   @Override

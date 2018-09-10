@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WeakFocusStackManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
 
   public IdeFocusManagerImpl(ToolWindowManagerImpl twManager) {
     myToolWindowManager = twManager;
+    WeakFocusStackManager.getInstance();
   }
 
   @Override

@@ -2,9 +2,9 @@
 package org.jetbrains.idea.svn.branchConfig
 
 class InfoStorage<T>(value: T, infoReliability: InfoReliability) {
-  var value = value
+  var value: T = value
     private set
-  var infoReliability = infoReliability
+  var infoReliability: InfoReliability = infoReliability
     private set
 
   fun accept(infoStorage: InfoStorage<T>): Boolean {
@@ -21,16 +21,16 @@ class InfoStorage<T>(value: T, infoReliability: InfoReliability) {
 
 enum class InfoReliability {
   empty {
-    override val overriddenBy get() = arrayOf(defaultValues, setByUser)
+    override val overriddenBy: Array<InfoReliability> get() = arrayOf(defaultValues, setByUser)
   },
   defaultValues {
-    override val overriddenBy get() = arrayOf(setByUser)
+    override val overriddenBy: Array<InfoReliability> get() = arrayOf(setByUser)
   },
   setByUser {
-    override val overriddenBy get() = arrayOf(setByUser)
+    override val overriddenBy: Array<InfoReliability> get() = arrayOf(setByUser)
   };
 
   protected abstract val overriddenBy: Array<InfoReliability>
 
-  fun shouldOverride(other: InfoReliability) = this in other.overriddenBy
+  fun shouldOverride(other: InfoReliability): Boolean = this in other.overriddenBy
 }

@@ -25,10 +25,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Disposer;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
@@ -59,10 +62,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Nullable
   private Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
+  private LanguageLevel myOldLevel;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myOldLevel = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject()).getLanguageLevel();
     myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
     for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -85,6 +90,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         myCreatedProject = null;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
+        LanguageLevelProjectExtension extension =
+          LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
+        extension.setDefault(null);
+        extension.setLanguageLevel(myOldLevel);
         ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
       });
       SelectTemplateSettings.getInstance().setLastTemplate(null, null);
@@ -96,7 +105,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     }
   }
 
-  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<Step> adjuster) throws IOException {
+  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
     try {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
@@ -115,7 +124,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   @Nullable
-  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<Step> adjuster) throws IOException {
+  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     runWizard(group, name, getProject(), adjuster);
     return createModuleFromWizard();
   }
@@ -124,7 +133,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
   }
 
-  protected void runWizard(@NotNull String group, @Nullable final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
+  protected void runWizard(@NotNull String group, @Nullable final String name, Project project, @Nullable final Consumer<? super Step> adjuster) throws IOException {
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
     if (!step.setSelectedTemplate(group, name)) {
@@ -141,7 +150,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     });
   }
 
-  protected void runWizard(@Nullable Consumer<Step> adjuster) {
+  protected void runWizard(@Nullable Consumer<? super Step> adjuster) {
     while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
@@ -165,7 +174,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
-  protected Project createProject(Consumer<Step> adjuster) throws IOException {
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     createWizard(null);
     runWizard(adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
@@ -194,7 +203,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return importFrom(path, getProject(), null, provider);
   }
 
-  protected Module importProjectFrom(String path, Consumer<Step> adjuster, ProjectImportProvider... providers) {
+  protected Module importProjectFrom(String path, Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
     Module module = importFrom(path, null, adjuster, providers);
     if (module != null) {
       myCreatedProject = module.getProject();
@@ -203,12 +212,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private Module importFrom(String path,
-                            @Nullable Project project, Consumer<Step> adjuster,
+                            @Nullable Project project, Consumer<? super Step> adjuster,
                             final ProjectImportProvider... providers) {
     return computeInWriteSafeContext(() -> doImportModule(path, project, adjuster, providers));
   }
 
-  private Module doImportModule(String path, @Nullable Project project, Consumer<Step> adjuster, ProjectImportProvider[] providers) {
+  private Module doImportModule(String path, @Nullable Project project, Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));

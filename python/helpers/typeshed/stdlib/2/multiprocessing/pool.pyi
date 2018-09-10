@@ -1,11 +1,9 @@
-# Stubs for multiprocessing.pool (Python 2)
-
 from typing import (
-    Any, Callable, ContextManager, Iterable, Mapping, Optional, Dict, List,
-    TypeVar,
+    Any, Callable, ContextManager, Iterable, Optional, Dict, List,
+    TypeVar, Iterator,
 )
 
-_T = TypeVar('_T', bound='Pool')
+_T = TypeVar('_T', bound=Pool)
 
 class AsyncResult():
     def get(self, timeout: Optional[float] = ...) -> Any: ...
@@ -14,6 +12,7 @@ class AsyncResult():
     def successful(self) -> bool: ...
 
 class IMapIterator(Iterable[Any]):
+    def __iter__(self) -> Iterator[Any]: ...
     def next(self, timeout: Optional[float] = ...) -> Any: ...
 
 class Pool(ContextManager[Pool]):

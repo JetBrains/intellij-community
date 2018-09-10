@@ -183,7 +183,12 @@ public class ParenthesesUtils {
     }
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
-      final PsiExpression newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
+      PsiExpression newExpression = ExpressionUtils.replacePolyadicWithParent(parenthesizedExpression, body);
+      if (newExpression == null){
+        CommentTracker commentTracker = new CommentTracker();
+        commentTracker.markUnchanged(body);
+        newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);
+      }
       removeParentheses(newExpression, ignoreClarifyingParentheses);
     }
     else {

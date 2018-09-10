@@ -55,7 +55,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
 
     @JvmStatic
-    fun getPrimaryModule(project: Project) = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
+    fun getPrimaryModule(project: Project): Module? = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
 
     @JvmStatic
     fun getSortedModules(project: Project): List<Module> {

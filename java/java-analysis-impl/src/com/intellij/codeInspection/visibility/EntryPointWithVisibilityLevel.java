@@ -19,15 +19,22 @@ import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiUtil;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Register entry points which visibility can be decreased,
  * e.g. package private test methods in junit 5
  */
 public abstract class EntryPointWithVisibilityLevel extends EntryPoint {
+  protected static final int ACCESS_LEVEL_INVALID = -1;
+  @MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PRIVATE, ACCESS_LEVEL_INVALID})
+  @interface VisibilityLevelResult {}
+
   /**
    * @return minimum accepted modifier (see {@link PsiUtil.AccessLevel}) or -1 when not applicable
    */
+  @VisibilityLevelResult
   public abstract int getMinVisibilityLevel(PsiMember member);
 
   /**
@@ -43,7 +50,7 @@ public abstract class EntryPointWithVisibilityLevel extends EntryPoint {
   /**
    * Don't suggest decreasing visibility for the element, sometimes even if the entry point is disabled.
    */
-  public boolean keepVisibilityLevel(boolean entryPointEnabled, @SuppressWarnings("unused") RefJavaElement refJavaElement) {
+  public boolean keepVisibilityLevel(boolean entryPointEnabled, @NotNull RefJavaElement refJavaElement) {
     return false;
   }
 }

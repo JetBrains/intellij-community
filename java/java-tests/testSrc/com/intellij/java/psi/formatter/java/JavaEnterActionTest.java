@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AbstractEnterActionTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -26,10 +27,8 @@ import java.io.IOException;
 public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   
   public void testEnterInsideAnnotationParameters() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
-    setCodeStyleSettings(settings);
 
     doTextTest("java", 
                "public class T {\n" +
@@ -77,10 +76,8 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testEnterInsideAnnotationParameters_AfterNameValuePairBeforeLparenth() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
-    setCodeStyleSettings(settings);
 
     doTextTest("java",
                "public class T {\n" +
@@ -143,10 +140,9 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
   
   public void testEnter_BetweenAlignedChainedMethodCalls() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaCommon.ALIGN_MULTILINE_CHAINED_METHODS = true;
-    setCodeStyleSettings(settings);
 
     doTextTest("java",
                "class T {\n" +
@@ -171,10 +167,9 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
   
   public void testEnter_AfterLastChainedCall() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaCommon.ALIGN_MULTILINE_CHAINED_METHODS = true;
-    setCodeStyleSettings(settings);
 
     doTextTest("java",
                "class T {\n" +
@@ -197,11 +192,10 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testEnter_NewArgumentWithTabs() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaCommon.getIndentOptions().USE_TAB_CHARACTER = true;
     javaCommon.getIndentOptions().SMART_TABS = true;
-    setCodeStyleSettings(settings);
 
     doTextTest("java",
                "class T {\n" +
@@ -347,12 +341,11 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     }  
   
   public void testEnter_NewArgumentWithTabsNoAlign() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaCommon.getIndentOptions().USE_TAB_CHARACTER = true;
     javaCommon.getIndentOptions().SMART_TABS = true;
     javaCommon.ALIGN_MULTILINE_PARAMETERS = false;
-    setCodeStyleSettings(settings);
 
     doTextTest("java",
                "class T {\n" +
@@ -427,10 +420,9 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testIdea108112() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
-    setCodeStyleSettings(settings);
 
     doTextTest(
       "java",
@@ -455,10 +447,9 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testIdea153628() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
-    setCodeStyleSettings(settings);
 
     doTextTest(
       "java",
@@ -500,10 +491,9 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
   }
 
   public void testIdea115696_Aligned() throws IOException {
-    CodeStyleSettings settings = getCodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
-    setCodeStyleSettings(settings);
 
     doTextTest(
       "java",

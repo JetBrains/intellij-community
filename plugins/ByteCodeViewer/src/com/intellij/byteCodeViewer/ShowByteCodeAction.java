@@ -49,9 +49,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ShowByteCodeAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    e.getPresentation().setIcon(AllIcons.Toolwindows.Documentation);
+    e.getPresentation().setIcon(AllIcons.Actions.Preview);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(CommonDataKeys.EDITOR));
@@ -64,7 +64,7 @@ public class ShowByteCodeAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
     if (project == null) return;

@@ -1,7 +1,6 @@
 package com.intellij.webcore.packaging;
 
 import com.google.common.collect.Lists;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -84,7 +83,7 @@ public class InstalledPackagesPanel extends JPanel {
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
     new TableSpeedSearch(myPackagesTable);
 
-    myUpgradeButton = new AnActionButton("Upgrade", AllIcons.Actions.Download) {
+    myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         upgradeAction();
@@ -575,7 +574,7 @@ public class InstalledPackagesPanel extends JPanel {
       boolean update = column == 2 &&
                        StringUtil.isNotEmpty(availableVersion) &&
                        isUpdateAvailable(version, availableVersion);
-      cell.setIcon(update ? AllIcons.Vcs.Arrow_right : null);
+      cell.setIcon(update ? IconUtil.getMoveUpIcon() : null);
       final Object pyPackage = table.getValueAt(row, 0);
       if (pyPackage instanceof InstalledPackage) {
         cell.setToolTipText(((InstalledPackage) pyPackage).getTooltipText());

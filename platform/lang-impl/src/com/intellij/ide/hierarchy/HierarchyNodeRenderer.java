@@ -17,9 +17,10 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
 /**
@@ -39,16 +40,17 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf,
-                                    final int row, final boolean hasFocus) {
-    if (value instanceof DefaultMutableTreeNode) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      final Object object = node.getUserObject();
-      if (object instanceof HierarchyNodeDescriptor) {
-        final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)object;
-        descriptor.getHighlightedText().customize(this);
-        setIcon(descriptor.getIcon());
-      }
+  public void customizeCellRenderer(@NotNull JTree tree, Object value,
+                                    boolean selected, boolean expanded, boolean leaf,
+                                    int row, boolean hasFocus) {
+    Object userObject = TreeUtil.getUserObject(value);
+    if (userObject instanceof HierarchyNodeDescriptor) {
+      HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)userObject;
+      descriptor.getHighlightedText().customize(this);
+      setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
+    }
+    else {
+      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
     }
   }
 }

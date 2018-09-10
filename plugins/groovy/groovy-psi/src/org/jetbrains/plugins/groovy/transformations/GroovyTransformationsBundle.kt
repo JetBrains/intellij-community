@@ -24,9 +24,9 @@ import org.jetbrains.annotations.PropertyKey
 import java.lang.ref.Reference
 import java.util.*
 
-const val BUNDLE = "org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle"
+const val BUNDLE: String = "org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle"
 
-fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = CommonBundle.message(getBundle(), key, *params)
+fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = CommonBundle.message(getBundle(), key, *params)
 
 private var ourBundle: Reference<ResourceBundle>? = null
 

@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities
  */
 object Notifier {
 
-  val LONG_OPERATION_PREFIX = "<long>"
+  val LONG_OPERATION_PREFIX: String = "<long>"
 
   fun updateStatus(statusMessage: String) {
 

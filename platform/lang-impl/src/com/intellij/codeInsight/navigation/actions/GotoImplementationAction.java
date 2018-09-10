@@ -36,7 +36,7 @@ public class GotoImplementationAction extends BaseCodeInsightAction {
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (!DefinitionsScopedSearch.INSTANCE.hasAnyExecutors()) {
       event.getPresentation().setVisible(false);
     }

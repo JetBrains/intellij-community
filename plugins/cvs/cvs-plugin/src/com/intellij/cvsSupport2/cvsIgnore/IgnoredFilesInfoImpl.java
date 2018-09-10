@@ -68,12 +68,14 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
   };
 
   public static final IgnoredFilesInfo EMPTY_FILTER = new IgnoredFilesInfoImpl(){
+    @Override
     public boolean shouldBeIgnored(String fileName) {
       if (checkPatterns(CvsEntriesManager.getInstance().getUserDirIgnores().getPatterns(), fileName)) return true;
       if (checkPatterns(PREDEFINED_PATTERNS, fileName)) return true;
       return false;
     }
 
+    @Override
     public boolean shouldBeIgnored(VirtualFile file) {
       final String fileName = file.getName();
       if (checkPatterns(CvsEntriesManager.getInstance().getUserDirIgnores().getPatterns(), fileName)) return true;
@@ -128,6 +130,7 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
     myPatterns = getPattensFor(cvsIgnoreFile);
   }
 
+  @Override
   public boolean shouldBeIgnored(String fileName) {
     if (EMPTY_FILTER.shouldBeIgnored(fileName)) return true;
     return checkPatterns(myPatterns, fileName);

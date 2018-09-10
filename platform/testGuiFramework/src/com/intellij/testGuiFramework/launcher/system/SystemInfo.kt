@@ -30,8 +30,8 @@ object SystemInfo {
     }
   }
 
-  fun isMac() = (SystemInfo.getSystemType() == SystemInfo.SystemType.MAC)
-  fun isWin() = (SystemInfo.getSystemType() == SystemInfo.SystemType.WINDOWS)
-  fun isUnix() = (SystemInfo.getSystemType() == SystemInfo.SystemType.UNIX)
+  fun isMac(): Boolean = (SystemInfo.getSystemType() == SystemInfo.SystemType.MAC)
+  fun isWin(): Boolean = (SystemInfo.getSystemType() == SystemInfo.SystemType.WINDOWS)
+  fun isUnix(): Boolean = (SystemInfo.getSystemType() == SystemInfo.SystemType.UNIX)
 
 }

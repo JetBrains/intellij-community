@@ -65,8 +65,8 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myLogData.getCommitDetailsGetter()
-      .loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer, null);
+    myLogData.getCommitDetailsGetter().loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer,
+                                                       Consumer.EMPTY_CONSUMER, null);
   }
 
   @Nullable

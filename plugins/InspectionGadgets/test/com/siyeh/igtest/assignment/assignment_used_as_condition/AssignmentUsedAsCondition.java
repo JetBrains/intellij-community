@@ -4,8 +4,8 @@ public class AssignmentUsedAsCondition {
 
   void foo(boolean b) {
     if (b = fossa()) {
-
     }
+    if ((b = fossa())) {}
   }
 
   boolean fossa() {

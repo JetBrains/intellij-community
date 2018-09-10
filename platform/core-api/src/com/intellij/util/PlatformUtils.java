@@ -17,6 +17,11 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party
  * IDEs not listed here won't be able to get the desired behavior. So <strong>it's strongly not recommended to use methods from this class</strong>.
@@ -43,6 +48,11 @@ public class PlatformUtils {
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
+
+  private static final Set<String> COMMERCIAL_EDITIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX, DBE_PREFIX,
+    RIDER_PREFIX, GOIDE_PREFIX
+  )));
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -123,6 +133,10 @@ public class PlatformUtils {
 
   public static boolean isCommunityEdition() {
     return isIdeaCommunity() || isPyCharmCommunity();
+  }
+
+  public static boolean isCommercialEdition() {
+    return COMMERCIAL_EDITIONS.contains(getPlatformPrefix());
   }
 
   private static boolean is(String idePrefix) {

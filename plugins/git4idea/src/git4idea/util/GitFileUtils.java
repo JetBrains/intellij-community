@@ -17,6 +17,7 @@ package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -31,6 +32,9 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_TEXTCONV;
 
 public class GitFileUtils {
 
@@ -63,7 +67,7 @@ public class GitFileUtils {
     handler.addParameters(additionalOptions);
     handler.endOptions();
     handler.addParameters(paths);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
@@ -132,7 +136,7 @@ public class GitFileUtils {
       handler.addParameters("--ignore-errors", "-A");
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
@@ -167,10 +171,20 @@ public class GitFileUtils {
    * @throws VcsException if there is a problem with running git
    */
   public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
-    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
+    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
+    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
+        Registry.is("git.read.content.with.textconv")) {
+      h.addParameters("--textconv");
+    }
+    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) &&
+             Registry.is("git.read.content.with.filters")) {
+      h.addParameters("--filters");
+    }
+    else {
+      h.addParameters("-p");
+    }
     h.addParameters(revisionOrBranch + ":" + relativePath);
-    h.endOptions();
     return h.run();
   }
 

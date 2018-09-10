@@ -42,13 +42,13 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
    * [component] is permanent. [PyAddSdkStateListener.onComponentChanged] won't
    * be called anyway.
    */
-  override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
+  override fun addStateListener(stateListener: PyAddSdkStateListener): Unit = Unit
 
-  override fun previous() = throw UnsupportedOperationException()
+  override fun previous(): Nothing = throw UnsupportedOperationException()
 
-  override fun next() = throw UnsupportedOperationException()
+  override fun next(): Nothing = throw UnsupportedOperationException()
 
-  override fun complete() = Unit
+  override fun complete(): Unit = Unit
 
   override abstract val panelName: String
   override val icon: Icon = PythonIcons.Python.Python
@@ -58,7 +58,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   override fun getOrCreateSdk(): Sdk? = sdk
 
-  override fun onSelected() = Unit
+  override fun onSelected(): Unit = Unit
 
   override fun validateAll(): List<ValidationInfo> = emptyList()
 

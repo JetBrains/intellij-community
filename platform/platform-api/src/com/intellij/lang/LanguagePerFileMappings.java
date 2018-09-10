@@ -29,11 +29,13 @@ public abstract class LanguagePerFileMappings<T> extends PerFileMappingsBase<T> 
     myProject = project;
   }
 
+  @Override
   @NotNull
   protected Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   protected String getValueAttribute() {
     return "dialect";

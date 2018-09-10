@@ -38,7 +38,7 @@ import java.util.List;
 
 public class ExpressionStatisticsAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     assert project != null;
 

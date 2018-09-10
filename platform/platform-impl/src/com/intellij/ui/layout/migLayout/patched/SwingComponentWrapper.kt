@@ -46,6 +46,7 @@ import javax.swing.JEditorPane
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
 import javax.swing.border.LineBorder
+import javax.swing.border.TitledBorder
 
 /** Debug color for component bounds outline.
  */
@@ -180,8 +181,10 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
   override fun hasBaseline(): Boolean {
     if (hasBaseLine == ThreeState.UNSURE) {
       try {
-        val d = c.minimumSize
-        hasBaseLine = ThreeState.fromBoolean(getBaseline(d.width, d.height) > -1)
+        // do not use component dimensions since it made some components layout themselves to the minimum size
+        // and that stuck after that. E.g. JLabel with HTML content and white spaces would be very tall.
+        // Use large number but don't risk overflow or exposing size bugs with Integer.MAX_VALUE
+        hasBaseLine = ThreeState.fromBoolean(getBaseline(8192, 8192) > -1)
       }
       catch (ignore: Throwable) {
         hasBaseLine = ThreeState.NO
@@ -209,7 +212,7 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     }
 
     val border = component.border ?: return null
-    if (border is LineBorder) {
+    if (border is LineBorder || border is TitledBorder) {
       return null
     }
 

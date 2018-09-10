@@ -46,7 +46,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
-  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
+  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<? super FoldingDescriptor> descriptors) {
     final Queue<ASTNode> toProcess = new LinkedList<>();
     toProcess.add(node);
     while (!toProcess.isEmpty()) {

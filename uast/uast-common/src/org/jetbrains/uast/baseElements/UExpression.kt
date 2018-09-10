@@ -40,7 +40,7 @@ interface UExpression : UElement, UAnnotated {
     visitor.afterVisitElement(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitExpression(this, data)
 }
 
 /**
@@ -92,7 +92,7 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
   override val psi: PsiElement?
     get() = null
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
   override fun hashCode(): Int = uastParent?.hashCode() ?: super.hashCode()
 

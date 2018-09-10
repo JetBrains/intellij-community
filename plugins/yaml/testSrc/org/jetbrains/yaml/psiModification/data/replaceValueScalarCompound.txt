@@ -1,5 +1,5 @@
 foo:
   bar:
     someKey: - bla
-                - bla
+             - bla
   baba: papa

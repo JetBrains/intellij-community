@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import java.util.*
 
 class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: List<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
-  val basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
+  val basePackagesMap: List<Map<Class<*>, String>> = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
 
   internal val typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
   internal val root = ReaderRoot(readerRootClass, typeToTypeHandler)

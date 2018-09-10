@@ -33,6 +33,11 @@ public class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettingsFacade
   }
 
   @Override
+  public boolean isToImportInDemand(String qualifiedName) {
+    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(qualifiedName);
+  }
+
+  @Override
   public boolean useFQClassNames() {
     return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES;
   }

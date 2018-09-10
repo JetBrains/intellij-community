@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -19,7 +20,7 @@ import java.io.IOException;
 
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (!isConvertableProject(project) || Messages.showOkCancelDialog(project,
                                                                    "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
@@ -56,7 +57,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setVisible(isConvertableProject(project));
   }

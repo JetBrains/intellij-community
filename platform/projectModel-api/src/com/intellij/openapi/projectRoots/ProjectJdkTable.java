@@ -38,6 +38,7 @@ public abstract class ProjectJdkTable {
   }
 
   /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} (to be removed in IDEA 2019) */
+  @Deprecated
   public Sdk findMostRecentSdk(@NotNull Condition<Sdk> condition) {
     Sdk found = null;
     for (Sdk each : getAllJdks()) {
@@ -76,11 +77,13 @@ public abstract class ProjectJdkTable {
   /**
    * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
    */
+  @Deprecated
   public abstract void addListener(@NotNull Listener listener);
 
   /**
    * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
    */
+  @Deprecated
   public abstract void removeListener(@NotNull Listener listener);
 
   @NotNull

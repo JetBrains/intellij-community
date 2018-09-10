@@ -35,7 +35,7 @@ import java.awt.*;
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;
 
-  public ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
+  ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
     myCommanderPanel = commanderPanel;
   }
 
@@ -52,11 +52,6 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
   @Override
   protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-      UIUtil.changeBackGround(this, background);
-    }
     Color color = UIUtil.getListForeground();
     SimpleTextAttributes attributes = null;
     String locationString = null;
@@ -74,14 +69,14 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
       if (descriptor instanceof AbstractTreeNode) {
         final AbstractTreeNode treeNode = (AbstractTreeNode)descriptor;
-        final TextAttributesKey attributesKey = treeNode.getAttributesKey();
+        final TextAttributesKey attributesKey = treeNode.getPresentation().getTextAttributesKey();
 
         if (attributesKey != null) {
           final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
           if (textAttributes != null) attributes =  SimpleTextAttributes.fromTextAttributes(textAttributes);
         }
-        locationString = treeNode.getLocationString();
+        locationString = treeNode.getPresentation().getLocationString();
 
         final PresentationData presentation = treeNode.getPresentation();
         if (presentation.hasSeparatorAbove() && !selected) {

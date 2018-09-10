@@ -122,6 +122,7 @@ public class ColoredOutputTypeRegistry {
   /**
    * @deprecated use {@link #getOutputType(String, Key)} instead
    */
+  @Deprecated
   @NotNull
   public Key getOutputKey(@NonNls String attribute) {
     return getOutputType(attribute, ProcessOutputTypes.STDOUT);

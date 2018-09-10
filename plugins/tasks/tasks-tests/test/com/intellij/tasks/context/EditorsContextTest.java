@@ -57,6 +57,7 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
     //contextManager.clearContext();
   }
 
+  @Override
   protected String getBasePath() {
     return "/plugins/tasks/tasks-tests/testData/context";
   }

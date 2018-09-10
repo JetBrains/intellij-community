@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration;
 
 import com.intellij.openapi.application.PathMacroFilter;
+import com.intellij.util.xmlb.Constants;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -14,14 +15,13 @@ public class JavaRunConfigurationPathMacroFilter extends PathMacroFilter {
   public boolean skipPathMacros(@NotNull Attribute attribute) {
     final Element parent = attribute.getParent();
 
-    if (parent.getName().equals("option")) {
-      String optionName = parent.getAttributeValue("name");
-      if ("MAIN_CLASS_NAME".equals(optionName) || "METHOD_NAME".equals(optionName)) {
+    if (parent.getName().equals(Constants.OPTION)) {
+      String optionName = parent.getAttributeValue(Constants.NAME);
+      if ("MAIN_CLASS_NAME".equals(optionName) || "METHOD_NAME".equals(optionName) || "TEST_OBJECT".equals(optionName)) {
         return true;
       }
     }
 
     return false;
   }
-
 }

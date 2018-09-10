@@ -15,11 +15,15 @@
  */
 package com.intellij.util.graph;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Iterator;
 
 public interface OutboundSemiGraph<Node> {
+  @NotNull
   Collection<Node> getNodes();
 
+  @NotNull
   Iterator<Node> getOut(Node n);
 }

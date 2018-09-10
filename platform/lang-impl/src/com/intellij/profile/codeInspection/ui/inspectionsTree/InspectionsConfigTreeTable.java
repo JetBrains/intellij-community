@@ -43,8 +43,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -162,6 +162,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     getTableHeader().setReorderingAllowed(false);
     getTableHeader().setResizingAllowed(false);
     registerKeyboardAction(new ActionListener() {
+                             @Override
                              public void actionPerformed(ActionEvent e) {
                                model.swapInspectionEnableState();
                                updateUI();
@@ -231,7 +232,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     private final Alarm myUpdateAlarm;
 
-    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
+    InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
       myUpdateRunnable = () -> {
@@ -327,7 +328,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final HashSet<HighlightDisplayKey> tools = new HashSet<>();
       final List<InspectionConfigTreeNode> nodes = new ArrayList<>();
 
-      for (TreePath selectionPath : myTreeTable.getTree().getSelectionPaths()) {
+      TreePath[] selectionPaths = myTreeTable.getTree().getSelectionPaths();
+      if (selectionPaths == null) return;
+      for (TreePath selectionPath : selectionPaths) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
         collectInspectionFromNodes(node, tools, nodes);
       }
@@ -368,8 +371,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
     }
 
     private static void collectInspectionFromNodes(final InspectionConfigTreeNode node,
-                                                   final Set<HighlightDisplayKey> tools,
-                                                   final List<InspectionConfigTreeNode> nodes) {
+                                                   final Set<? super HighlightDisplayKey> tools,
+                                                   final List<? super InspectionConfigTreeNode> nodes) {
       if (node == null) {
         return;
       }
@@ -503,7 +506,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       return result;
     }
 
-    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<ScopeToolState> nonDefault) {
+    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<? extends ScopeToolState> nonDefault) {
       putOne(defaultState);
       if (myDefaultScopeName == null) {
         myDefaultScopeName = defaultState.getScopeName();

@@ -9,12 +9,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Random;
 
 
@@ -36,13 +40,16 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return;
-    PsiExpression initializer = field.getInitializer();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     Application application = ApplicationManager.getApplication();
-    Random random = application.isUnitTestMode() ? new Random(42) : new Random();
-    PsiExpression newInitializer = factory.createExpressionFromText(Long.toString(random.nextLong()) + "L", null);
-    if (initializer == null) return;
-    new CommentTracker().replaceAndRestoreComments(initializer, newInitializer);
+    Random random = application.isUnitTestMode() ? new Random(42) : new SecureRandom();
+    PsiExpression newInitializer = factory.createExpressionFromText(random.nextLong() + "L", null);
+    PsiExpression initializer = field.getInitializer();
+    if (initializer != null) {
+      new CommentTracker().replaceAndRestoreComments(initializer, newInitializer);
+    } else {
+      field.setInitializer(newInitializer);
+    }
   }
 
   @Override
@@ -50,6 +57,15 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return false;
     if (!field.getType().equals(PsiType.LONG)) return false;
+    if (field.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiClass aClass = field.getContainingClass();
+      if (aClass == null) return false;
+      boolean initializersHasReferencesToField = Arrays.stream(aClass.getInitializers())
+                        .anyMatch(initializer -> ReferencesSearch.search(field, new LocalSearchScope(initializer)).findFirst() != null);
+      if (initializersHasReferencesToField) {
+        return false;
+      }
+    }
     return "serialVersionUID".equals(field.getName());
   }
 }

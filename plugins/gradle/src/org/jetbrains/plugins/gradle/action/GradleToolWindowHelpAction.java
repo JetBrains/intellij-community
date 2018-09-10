@@ -19,6 +19,7 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 public class GradleToolWindowHelpAction extends ContextHelpAction {
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final Project project = event.getProject();
     if (project == null) {
       event.getPresentation().setVisible(false);

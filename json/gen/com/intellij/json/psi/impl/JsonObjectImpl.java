@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 
 public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
 
-  public JsonObjectImpl(ASTNode node) {
+  public JsonObjectImpl(@NotNull ASTNode node) {
     super(node);
   }
 

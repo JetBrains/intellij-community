@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This action is only needed to change default behaviour of Shift+Enter
@@ -28,10 +29,10 @@ import com.intellij.openapi.project.DumbAwareAction;
  */
 public class OpenElementInNewWindowAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {}
+  public void actionPerformed(@NotNull AnActionEvent e) {}
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     //This is a marker action
     e.getPresentation().setEnabledAndVisible(false);
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testGuiFramework.launcher.GuiTestOptions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
@@ -28,8 +29,6 @@ import static com.intellij.openapi.application.PathManager.PROPERTY_CONFIG_PATH;
 import static com.intellij.openapi.application.PathManager.PROPERTY_SYSTEM_PATH;
 import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.getProjectCreationDirPath;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemPropertyOrEnvironmentVariable;
 import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
@@ -61,6 +60,13 @@ public class IdeTestApplication {
   }
 
   @NotNull
+  public static File getFailedTestVideoDirPath() throws IOException {
+    final File dirPath = new File(getFailedTestScreenshotDirPath(), "video");
+    ensureExists(dirPath);
+    return dirPath;
+  }
+
+  @NotNull
   public static File getTestScreenshotDirPath() throws IOException {
     File dirPath = new File(getGuiTestRootDirPath(), "screenshots");
     ensureExists(dirPath);
@@ -86,8 +92,8 @@ public class IdeTestApplication {
 
   @NotNull
   public static synchronized IdeTestApplication getInstance() throws Exception {
-    String customConfigPath = getSystemPropertyOrEnvironmentVariable(CUSTOM_CONFIG_PATH);
-    String customSystemPath = getSystemPropertyOrEnvironmentVariable(CUSTOM_SYSTEM_PATH);
+    String customConfigPath = GuiTestUtil.INSTANCE.getSystemPropertyOrEnvironmentVariable(CUSTOM_CONFIG_PATH);
+    String customSystemPath = GuiTestUtil.INSTANCE.getSystemPropertyOrEnvironmentVariable(CUSTOM_SYSTEM_PATH);
     File configDirPath = null;
     boolean isDefaultConfig = true;
     if (StringUtil.isEmpty(customConfigPath)) {
@@ -111,7 +117,7 @@ public class IdeTestApplication {
       ourInstance = new IdeTestApplication();
       if (isDefaultConfig) recreateDirectory(configDirPath);
 
-      File newProjectsRootDirPath = getProjectCreationDirPath();
+      File newProjectsRootDirPath = GuiTestOptions.INSTANCE.getProjectDirPath();
       recreateDirectory(newProjectsRootDirPath);
 
       ClassLoader ideClassLoader = ourInstance.getIdeClassLoader();

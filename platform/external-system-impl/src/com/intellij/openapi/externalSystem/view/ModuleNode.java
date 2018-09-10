@@ -46,7 +46,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(getUiAware().getProjectIcon());
 
@@ -67,11 +67,6 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     myChildNodes.addAll((Collection<? extends ExternalSystemNode<?>>)super.doBuildChildren());
     myChildNodes.add(myRunConfigurationsNode);
     return myChildNodes;
-  }
-
-  @Override
-  public String getName() {
-    return myData.getId();
   }
 
   @Nullable

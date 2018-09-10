@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.dependencies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -50,7 +51,8 @@ public class ProjectDependenciesResolver extends TargetBuilder<BuildRootDescript
                     @NotNull CompileContext context) throws ProjectBuildException, IOException {
     context.processMessage(new ProgressMessage("Resolving repository libraries in the project..."));
     try {
-      DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules());
+      DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules(),
+                                                            BuildTargetChunk.forSingleTarget(target));
     }
     catch (Exception e) {
       DependencyResolvingBuilder.reportError(context, "project", e);

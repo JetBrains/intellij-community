@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -49,7 +50,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final boolean projectExists = e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setVisible(projectExists);
@@ -94,7 +95,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
 
   private class MyCvsHandler extends CvsHandler {
 
-    public MyCvsHandler() {
+    MyCvsHandler() {
       super(TITLE, FileSetToBeUpdated.EMPTY);
     }
 

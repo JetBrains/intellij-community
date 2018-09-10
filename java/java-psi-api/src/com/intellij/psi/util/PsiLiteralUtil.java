@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiLiteralUtil {
@@ -102,5 +103,25 @@ public class PsiLiteralUtil {
     integer <<= bitsInRadix;
     integer |= lastDigit;
     return integer;
+  }
+
+  /**
+   * Converts passed character literal (like 'a') to string literal (like "a").
+   *
+   * @param charLiteral character literal to convert.
+   * @return resulting string literal
+   */
+  @NotNull
+  public static String stringForCharLiteral(@NotNull String charLiteral) {
+    if ("'\"'".equals(charLiteral)) {
+      return "\"\\\"\"";
+    }
+    else if ("'\\''".equals(charLiteral)) {
+      return "\"'\"";
+    }
+    else {
+      return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
+             '\"';
+    }
   }
 }

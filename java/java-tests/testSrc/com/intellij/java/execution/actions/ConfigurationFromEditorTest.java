@@ -29,6 +29,7 @@ public class ConfigurationFromEditorTest extends LightCodeInsightFixtureTestCase
   public void setUp() throws Exception {
     super.setUp();
     myFixture.addClass("package org.junit; public @interface Test{}");
+    myFixture.addClass("package org.junit.runner; public @interface RunWith{ Class<?> value();}");
   }
 
   private JUnitConfiguration setupConfigurationContext(final String fileText) {
@@ -75,5 +76,15 @@ public class ConfigurationFromEditorTest extends LightCodeInsightFixtureTestCase
                                                                  "}");
     Set<String> patterns = configuration.getPersistentData().getPatterns();
     assertSameElements(patterns, "MyTest,t1", "MyTest,t2");
+  }
+
+  public void testStaticNestedClassWithAnnotations() {
+    JUnitConfiguration configuration = setupConfigurationContext("import org.junit.runner.RunWith; " +
+                                                                 "@RunWith(Suite.class)\n" +
+                                                                 "public class MyTest {\n" +
+                                                                 "  @RunWith(Suite.class)\n" +
+                                                                 "  public static class Nes<caret>ted {}\n" +
+                                                                 "}");
+    assertEquals("MyTest$Nested", configuration.getPersistentData().getMainClassName());
   }
 }

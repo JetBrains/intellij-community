@@ -45,8 +45,6 @@ public interface EditorColors {
   ColorKey SELECTED_TEARLINE_COLOR = ColorKey.createColorKey("SELECTED_TEARLINE_COLOR");
   ColorKey SEPARATOR_ABOVE_COLOR = ColorKey.createColorKey("SEPARATOR_ABOVE_COLOR");
   ColorKey SEPARATOR_BELOW_COLOR = ColorKey.createColorKey("SEPARATOR_BELOW_COLOR");
-  @Deprecated ColorKey FOLDING_TREE_COLOR = TEARLINE_COLOR;
-  @Deprecated ColorKey SELECTED_FOLDING_TREE_COLOR = SELECTED_TEARLINE_COLOR;
 
   ColorKey ADDED_LINES_COLOR = ColorKey.createColorKey("ADDED_LINES_COLOR");
   ColorKey MODIFIED_LINES_COLOR = ColorKey.createColorKey("MODIFIED_LINES_COLOR");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -77,6 +63,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private static class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
     private CustomizeColoredTreeCellRenderer myCurrentCallback;
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -102,6 +89,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       return this;
     }
 
+    @Override
     @Nullable
     public Object getTag() {
       return myCurrentCallback == null? null : myCurrentCallback.getTag();
@@ -125,13 +113,14 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       return myRight;
     }
 
-    public MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
+    MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
       myLeft = left;
       myRight = right;
 
       myPanel = new MyPanel(new BorderLayout());
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -176,7 +165,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     private class MyPanel extends JPanel implements Accessible {
       private AccessibleContext myDefaultAccessibleContext;
 
-      public MyPanel(LayoutManager layout) {
+      MyPanel(LayoutManager layout) {
         super(layout);
       }
 
@@ -244,6 +233,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     return "";
   }
 
+  @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final ErrorTreeElement element = getElement(value);
     if(element instanceof GroupingElement) {
@@ -270,15 +260,19 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : AllIcons.FileTypes.Any_type;
     }
     else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
-      ErrorTreeElementKind kind = element.getKind();
-      if (ErrorTreeElementKind.ERROR.equals(kind)) {
-        icon = AllIcons.General.Error;
-      }
-      else if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
-        icon = AllIcons.General.Warning;
-      }
-      else if (ErrorTreeElementKind.INFO.equals(kind)) {
-        icon = AllIcons.General.Information;
+      switch (element.getKind()) {
+        case ERROR:
+          icon = AllIcons.General.Error;
+          break;
+        case WARNING:
+          icon = AllIcons.General.Warning;
+          break;
+        case NOTE:
+          icon = AllIcons.General.Note;
+          break;
+        case INFO:
+          icon = AllIcons.General.Information;
+          break;
       }
     }
 

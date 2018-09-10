@@ -36,6 +36,7 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -131,7 +132,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }

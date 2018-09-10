@@ -14,17 +14,18 @@ Groovy script
         PsiElement(Integer)('1')
     PsiElement())(')')
     PsiElement(new line)('\n')
-    PsiErrorElement:Imports are not allowed inside blocks
-      Import statement
-        Modifiers
-          <empty list>
-        PsiElement(import)('import')
-        PsiWhiteSpace(' ')
+    PsiErrorElement:<statement> expected, got 'import'
+      <empty list>
+  Import statement
+    Modifiers
+      <empty list>
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    Reference element
+      Reference element
         Reference element
-          Reference element
-            Reference element
-              PsiElement(identifier)('a')
-            PsiElement(.)('.')
-            PsiElement(identifier)('b')
-          PsiElement(.)('.')
-          PsiElement(identifier)('c')
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(identifier)('c')

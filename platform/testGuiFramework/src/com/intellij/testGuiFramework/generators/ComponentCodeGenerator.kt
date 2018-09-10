@@ -30,6 +30,6 @@ interface ComponentCodeGenerator<ComponentType: Component> {
     fun generate(cmp: ComponentType, me: MouseEvent, cp: Point): String
 
     fun typeSafeCast(cmp: Component): ComponentType = cmp as ComponentType
-    fun generateCode(cmp: Component, me: MouseEvent, cp: Point) = generate(typeSafeCast(cmp), me, cp)
+    fun generateCode(cmp: Component, me: MouseEvent, cp: Point): String = generate(typeSafeCast(cmp), me, cp)
 }
 

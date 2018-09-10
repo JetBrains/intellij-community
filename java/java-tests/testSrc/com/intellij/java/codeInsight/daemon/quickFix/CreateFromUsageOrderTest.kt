@@ -49,15 +49,7 @@ class CreateFromUsageOrderTest : LightCodeInsightFixtureTestCase() {
   }
 
   private fun testWithSettings(theTest: (JavaCodeStyleSettings) -> Unit) {
-    val parentSettings = CodeStyleSettings().getCustomSettings(JavaCodeStyleSettings::class.java)
-    val copy = Element("copy")
     val settings = JavaCodeStyleSettings.getInstance(project)
-    settings.writeExternal(copy, parentSettings)
-    try {
-      theTest(settings)
-    }
-    finally {
-      settings.readExternal(copy)
-    }
+    theTest(settings)
   }
 }

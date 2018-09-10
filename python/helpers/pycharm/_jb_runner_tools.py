@@ -18,12 +18,13 @@ if teamcity_presence_env_var not in os.environ:
 # anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
 # out and err are not in sync, so output may go to wrong test
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
-PROJECT_DIR = os.getcwd()
+# getcwd resolves symlinks, but PWD is not supported by some shells
+PROJECT_DIR = os.getenv('PWD', os.getcwd())
 
 def _parse_parametrized(part):
     """
 
-    Support nose generators / py.test parameters and other functions that provides names like foo(1,2)
+    Support nose generators / pytest parameters and other functions that provides names like foo(1,2)
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses.
     
@@ -248,13 +249,13 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
         test_name_as_list = self._test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
-            args = {"name": testName, "captureStandardOutput": captureStandardOutput}
+            args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo":metainfo}
             if is_suite:
                 self.message("testSuiteStarted", **args)
             else:
@@ -263,7 +264,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = TREE_MANAGER.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
             self.do_command(commands[0], commands[1])
-            self.testStarted(testName, captureStandardOutput)
+            self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))

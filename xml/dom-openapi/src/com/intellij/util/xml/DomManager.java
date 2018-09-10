@@ -132,12 +132,14 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @param description The description in question
    * @deprecated Make your file description an extension (see {@link com.intellij.util.xml.DomFileDescription#EP_NAME})
    */
+  @Deprecated
   public abstract void registerFileDescription(DomFileDescription description);
 
   /**
    * @return {@link com.intellij.util.xml.ConverterManager} instance
    * @deprecated This will be moved at the application level
    */
+  @Deprecated
   public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();

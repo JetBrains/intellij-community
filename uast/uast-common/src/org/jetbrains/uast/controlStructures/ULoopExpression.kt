@@ -26,5 +26,5 @@ interface ULoopExpression : UExpression {
    */
   val body: UExpression
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitLoopExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLoopExpression(this, data)
 }

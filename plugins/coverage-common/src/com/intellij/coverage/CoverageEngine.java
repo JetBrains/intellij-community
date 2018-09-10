@@ -199,15 +199,8 @@ public abstract class CoverageEngine {
                                  @NotNull final PsiFile sourceFile) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
     if (virtualFile != null) {
-      return getQualifiedName(virtualFile, sourceFile);
+      return null;
     }
-    return null;
-  }
-
-  @Deprecated
-  @Nullable
-  public String getQualifiedName(@NotNull final VirtualFile outputFile,
-                                 @NotNull final PsiFile sourceFile) {
     return null;
   }
 
@@ -237,16 +230,8 @@ public abstract class CoverageEngine {
                                                 @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
     if (virtualFile != null) {
-      return includeUntouchedFileInCoverage(qualifiedName, virtualFile, sourceFile, suite);
+      return false;
     }
-    return false;
-  }
-  
-  @Deprecated
-  public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
-                                                @NotNull final VirtualFile outputFile,
-                                                @NotNull final PsiFile sourceFile,
-                                                @NotNull final CoverageSuitesBundle suite) {
     return false;
   }
 
@@ -261,15 +246,8 @@ public abstract class CoverageEngine {
                                                        @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(classFile);
     if (virtualFile != null) {
-      return collectSrcLinesForUntouchedFile(virtualFile, suite);
+      return null;
     }
-    return null;
-  }
-  
-  @Deprecated
-  @Nullable
-  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final VirtualFile classFile,
-                                                       @NotNull final CoverageSuitesBundle suite) {
     return null;
   }
 

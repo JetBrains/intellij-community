@@ -41,7 +41,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   private static final int IS_STATIC_MASK = 0x04;
   private static final int IS_FINAL_MASK = 0x08;
-  private static final int IS_USES_DEPRECATION_MASK = 0x200;
   private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
   private static final int IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK = 0x800;
 
@@ -126,15 +125,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(isStatic, IS_STATIC_MASK);
   }
 
-  @Override
-  public boolean isUsesDeprecatedApi() {
-    return checkFlag(IS_USES_DEPRECATION_MASK);
-  }
-
-  void setUsesDeprecatedApi(boolean usesDeprecatedApi) {
-    setFlag(usesDeprecatedApi, IS_USES_DEPRECATION_MASK);
-  }
-
   void setIsFinal(boolean isFinal) {
     setFlag(isFinal, IS_FINAL_MASK);
   }
@@ -152,8 +142,8 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
+  @NotNull
   @Override
-  @Nullable
   public String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
     if (access_id == ACCESS_PRIVATE) return PsiModifier.PRIVATE;

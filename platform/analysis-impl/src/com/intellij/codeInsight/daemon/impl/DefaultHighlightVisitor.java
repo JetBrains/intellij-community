@@ -117,10 +117,6 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode, myCachedAnnotators);
   }
 
-  @Override
-  public int order() {
-    return 2;
-  }
 
   private void runAnnotators(PsiElement element) {
     List<Annotator> annotators = myCachedAnnotators.get(element.getLanguage().getID());

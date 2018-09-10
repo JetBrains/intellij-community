@@ -34,7 +34,7 @@ import kotlin.collections.HashMap
  */
 open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 
-  override fun canProcessElement(element: PsiElement) = element is GrField
+  override fun canProcessElement(element: PsiElement): Boolean = element is GrField
 
   override fun findReferences(element: PsiElement): Collection<PsiReference> {
     assert(element is GrField)

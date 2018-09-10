@@ -1,7 +1,7 @@
 # Stubs for math
 # See: http://docs.python.org/2/library/math.html
 
-from typing import Tuple, Iterable, Optional, SupportsFloat, SupportsInt
+from typing import Tuple, Iterable, SupportsFloat, SupportsInt
 
 import sys
 

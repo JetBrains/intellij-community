@@ -3,29 +3,23 @@
  */
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
  */
-//todo generic? #UX-1
-public interface SearchEverywhereContributor {
+public interface SearchEverywhereContributor<F> {
 
-  String ALL_CONTRIBUTORS_GROUP_ID = SearchEverywhereContributor.class.getSimpleName() + ".All";
-
-  ExtensionPointName<SearchEverywhereContributor> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
+  ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
   @NotNull
   String getSearchProviderId();
@@ -33,27 +27,81 @@ public interface SearchEverywhereContributor {
   @NotNull
   String getGroupName();
 
+  @Nullable
   String includeNonProjectItemsText();
 
   int getSortWeight();
 
   boolean showInFindResults();
 
-  default ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    return new ContributorSearchResult(Collections.emptyList(), false);
+  default boolean isShownInSeparateTab() {
+    return false;
   }
 
-  default List<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator) {
-    return search(project, pattern, everywhere, progressIndicator, -1).getItems();
+  default int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return 0;
   }
 
-  boolean processSelectedItem(Object selected, int modifiers);
+  void fetchElements(@NotNull String pattern,
+                     boolean everywhere,
+                     @Nullable SearchEverywhereContributorFilter<F> filter,
+                     @NotNull ProgressIndicator progressIndicator,
+                     @NotNull Function<Object, Boolean> consumer);
 
-  ListCellRenderer getElementsRenderer(Project project);
+  @NotNull
+  default ContributorSearchResult<Object> search(@NotNull String pattern,
+                                                 boolean everywhere,
+                                                 @Nullable SearchEverywhereContributorFilter<F> filter,
+                                                 @NotNull ProgressIndicator progressIndicator,
+                                                 int elementsLimit) {
+    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
+    fetchElements(pattern, everywhere, filter, progressIndicator, element -> {
+      if (elementsLimit < 0 || builder.itemsCount() < elementsLimit) {
+        builder.addItem(element);
+        return true;
+      }
+      else {
+        builder.setHasMore(true);
+        return false;
+      }
+    });
 
-  static List<SearchEverywhereContributor> getProvidersSorted() {
-    return Arrays.stream(EP_NAME.getExtensions())
-      .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
-      .collect(Collectors.toList());
+    return builder.build();
+  }
+
+  @NotNull
+  default List<Object> search(@NotNull String pattern,
+                              boolean everywhere,
+                              @Nullable SearchEverywhereContributorFilter<F> filter,
+                              @NotNull ProgressIndicator progressIndicator) {
+    List<Object> res = new ArrayList<>();
+    fetchElements(pattern, everywhere, filter, progressIndicator, o -> res.add(o));
+    return res;
+  }
+
+  boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText);
+
+  @NotNull
+  ListCellRenderer getElementsRenderer(@NotNull JList<?> list);
+
+  @Nullable
+  Object getDataForItem(@NotNull Object element, @NotNull String dataId);
+
+  @NotNull
+  default String filterControlSymbols(@NotNull String pattern) {
+    return pattern;
+  }
+
+  default boolean isMultiselectSupported() {
+    return false;
+  }
+
+  default boolean isDumbModeSupported() {
+    return true;
+  }
+
+  @NotNull
+  static List<SearchEverywhereContributorFactory<?>> getProviders() {
+    return Arrays.asList(EP_NAME.getExtensions());
   }
 }

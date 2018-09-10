@@ -163,7 +163,7 @@ class PrintManager {
     return "unknown";
   }
 
-  private static void addToPsiFileList(PsiDirectory psiDirectory, List<PsiFile> filesList, boolean isRecursive) {
+  private static void addToPsiFileList(PsiDirectory psiDirectory, List<? super PsiFile> filesList, boolean isRecursive) {
     PsiFile[] files = psiDirectory.getFiles();
     Collections.addAll(filesList, files);
     if (isRecursive) {

@@ -81,7 +81,7 @@ public abstract class ColumnInfo <Item, Aspect> {
   }
 
   /**
-   * @see com.intellij.util.ui.table.ComboBoxTableCellEditor
+   * @see ComboBoxTableCellEditor
    */
   @Nullable
   public TableCellEditor getEditor(Item item) {

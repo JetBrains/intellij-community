@@ -15,8 +15,8 @@
  */
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.util.ChooseElementsDialog;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 
 import javax.swing.*;
@@ -31,10 +31,12 @@ public class ChooseArtifactsDialog extends ChooseElementsDialog<Artifact> {
     super(project, items, title, description, true);
   }
 
+  @Override
   protected String getItemText(Artifact item) {
     return item.getName();
   }
 
+  @Override
   protected Icon getItemIcon(Artifact item) {
     return item.getArtifactType().getIcon();
   }

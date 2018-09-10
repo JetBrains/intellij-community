@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -93,15 +92,9 @@ public class SuppressExternalTest extends UsefulTestCase {
     final IntentionAction action = myFixture.getAvailableIntention("Suppress for method", "src/suppressed/" + testName + ".java");
     assertNotNull(action);
     Project project = myFixture.getProject();
-    JavaCodeStyleSettings javaSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
-    boolean oldUseExternalAnnotations = javaSettings.USE_EXTERNAL_ANNOTATIONS;
-    try {
-      javaSettings.USE_EXTERNAL_ANNOTATIONS = true;
-      myFixture.launchAction(action);
-    }
-    finally {
-      javaSettings.USE_EXTERNAL_ANNOTATIONS = oldUseExternalAnnotations;
-    }
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(project);
+    javaSettings.USE_EXTERNAL_ANNOTATIONS = true;
+    myFixture.launchAction(action);
     myFixture.checkResultByFile("content/anno/suppressed/annotations.xml", "content/anno/suppressed/annotations" + testName + "_after.xml", true);
   }
 

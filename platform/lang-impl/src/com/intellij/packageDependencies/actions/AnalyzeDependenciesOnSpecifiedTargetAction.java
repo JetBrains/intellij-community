@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -31,7 +32,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     final GlobalSearchScope targetScope = e.getData(TARGET_SCOPE_KEY);
     if (module == null || targetScope == null) return;
@@ -40,7 +41,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     final GlobalSearchScope scope = e.getData(TARGET_SCOPE_KEY);
     final Presentation presentation = e.getPresentation();

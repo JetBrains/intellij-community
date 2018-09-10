@@ -34,12 +34,12 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       updateName();
     }
 
     @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+    public void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {
       updateName();
     }
 
@@ -184,12 +184,12 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   private class SdkRemoveHandler extends RemoveConfigurableHandler<Sdk> {
-    public SdkRemoveHandler() {
+    SdkRemoveHandler() {
       super(JdkConfigurable.class);
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Sdk> sdks) {
+    public boolean remove(@NotNull Collection<? extends Sdk> sdks) {
       for (Sdk sdk : sdks) {
         myJdksTreeModel.removeSdk(sdk);
         myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, sdk));

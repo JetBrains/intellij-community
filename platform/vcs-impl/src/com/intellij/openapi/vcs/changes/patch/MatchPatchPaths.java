@@ -89,7 +89,7 @@ public class MatchPatchPaths {
                                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
     for (FilePatch patch : newOrWithoutMatches) {
       String afterName = patch.getAfterName();
-      final String[] strings = afterName != null ? afterName.replace('\\', '/').split("/") : ArrayUtil.EMPTY_STRING_ARRAY;
+      final String[] strings = getPathParts(afterName);
       FileBaseMatch best = null;
       boolean bestIsUnique = true;
       for (int i = strings.length - 2; i >= 0; --i) {
@@ -178,7 +178,7 @@ public class MatchPatchPaths {
       final Collection<VirtualFile> files = new ArrayList<>(findFilesFromIndex(directoryDetector, fileName));
       // for directories outside the project scope but under version control
       if (patch.getBeforeName() != null && patch.getBeforeName().startsWith("..")) {
-        final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, patch.getBeforeName().replace('\\', '/').split("/"));
+        final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, getPathParts(patch.getBeforeName()));
         if (relativeFile != null) {
           files.add(relativeFile);
         }
@@ -245,61 +245,134 @@ public class MatchPatchPaths {
     }
 
     public void findAndAddBestVariant(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
-      AbstractFilePatchInProgress best = ContainerUtil.getFirstItem(myVariants);
-      if (best == null) return;
-      if (best instanceof TextFilePatchInProgress) {
-        //only for text patches
-        int maxLines = -100;
-        for (AbstractFilePatchInProgress variant : myVariants) {
-          TextFilePatchInProgress textFilePAch = (TextFilePatchInProgress)variant;
-          if (myUseProjectRootAsPredefinedBase && variantMatchedToProjectDir(textFilePAch)) {
-            best = textFilePAch;
-            break;
-          }
-          final int lines = getMatchingLines(textFilePAch);
-          if (lines > maxLines) {
-            maxLines = lines;
-            best = textFilePAch;
-          }
+      AbstractFilePatchInProgress first = ContainerUtil.getFirstItem(myVariants);
+      if (first == null) return;
+
+      AbstractFilePatchInProgress best = null;
+      if (first instanceof TextFilePatchInProgress) {
+        if (myUseProjectRootAsPredefinedBase) {
+          best = findBestByBaseDir();
         }
-        putSelected(result, myVariants, best);
+        if (best == null) {
+          best = findBestByText();
+        }
       }
       else {
-        int stripCounter = Integer.MAX_VALUE;
-        for (AbstractFilePatchInProgress variant : myVariants) {
-          int currentStrip = variant.getCurrentStrip();
-          //the best variant if several match should be project based variant
-          if (variantMatchedToProjectDir(variant)) {
-            best = variant;
-            break;
-          }
-          else if (currentStrip < stripCounter) {
-            best = variant;
-            stripCounter = currentStrip;
-          }
+        best = findBestByBaseDir();
+        if (best == null) {
+          best = findBestByStrip();
         }
+      }
+
+      if (best != null) {
         putSelected(result, myVariants, best);
       }
     }
+
+    @Nullable
+    private AbstractFilePatchInProgress findBestByBaseDir() {
+      for (AbstractFilePatchInProgress variant : myVariants) {
+        if (variantMatchedToProjectDir(variant)) {
+          return variant;
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private AbstractFilePatchInProgress findBestByText() {
+      AbstractFilePatchInProgress best = null;
+      int bestLines = Integer.MIN_VALUE;
+      boolean bestIsUnique = true;
+
+      AbstractFilePatchInProgress baseDirVariant = null;
+
+      for (AbstractFilePatchInProgress variant : myVariants) {
+        TextFilePatchInProgress current = (TextFilePatchInProgress)variant;
+        final int currentLines = getMatchingLines(current);
+        if (best == null ||
+            isBetterMatch(current, currentLines,
+                          best, bestLines)) {
+          bestLines = currentLines;
+          best = current;
+          bestIsUnique = true;
+        }
+        else if (!isBetterMatch(best, bestLines,
+                                current, currentLines)) {
+          bestIsUnique = false;
+        }
+
+        if (baseDirVariant == null && myBaseDir.equals(current.getBase())) {
+          baseDirVariant = current;
+        }
+      }
+
+      if (!bestIsUnique && baseDirVariant != null) {
+        return baseDirVariant;
+      }
+
+      return best;
+    }
+
+    @Nullable
+    private AbstractFilePatchInProgress findBestByStrip() {
+      AbstractFilePatchInProgress best = null;
+      int bestStrip = Integer.MAX_VALUE;
+
+      for (AbstractFilePatchInProgress current : myVariants) {
+        int currentStrip = current.getCurrentStrip();
+        if (best == null ||
+            currentStrip < bestStrip) {
+          best = current;
+          bestStrip = currentStrip;
+        }
+      }
+      return best;
+    }
+  }
+
+  private boolean isBetterMatch(@NotNull AbstractFilePatchInProgress match, int matchLines,
+                                @NotNull AbstractFilePatchInProgress best, int bestLines) {
+    return matchLines > bestLines ||
+           matchLines == bestLines && myBaseDir.equals(match.getBase());
   }
 
   private boolean variantMatchedToProjectDir(@NotNull AbstractFilePatchInProgress variant) {
-    return variant.getCurrentStrip() == 0 && myProject.getBaseDir().equals(variant.getBase());
+    if (variant.getCurrentStrip() == 0) {
+      return myBaseDir.equals(variant.getBase());
+    }
+
+    int upDirCount = 0;
+    VirtualFile base = myBaseDir;
+
+    for (String part : getPathParts(variant.getOriginalBeforePath())) {
+      if (!part.equals("..")) break;
+
+      upDirCount++;
+      if (base != null) base = base.getParent();
+    }
+
+    return upDirCount == variant.getCurrentStrip() &&
+           base != null && base.equals(variant.getBase());
   }
 
   @Nullable
   private static FileBaseMatch compareNames(final String beforeName, final VirtualFile file) {
     if (beforeName == null) return null;
-    final String[] parts = beforeName.replace('\\', '/').split("/");
+    final String[] parts = getPathParts(beforeName);
     return compareNamesImpl(parts, file.getParent(), parts.length - 2);
+  }
+
+  @NotNull
+  private static String[] getPathParts(@Nullable String relativePath) {
+    if (relativePath == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return relativePath.replace('\\', '/').split("/");
   }
 
   @Nullable
   private static FileBaseMatch compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
-    while ((parent != null) && (idx >= 0)) {
-      if (!parent.getName().equals(parts[idx])) {
-        return new FileBaseMatch(parent, idx + 1);
-      }
+    while (parent != null && idx >= 0 &&
+           parent.getName().equals(parts[idx])) {
       parent = parent.getParent();
       --idx;
     }
@@ -336,7 +409,7 @@ public class MatchPatchPaths {
     @NotNull public final VirtualFile file;
     public final int score;
 
-    public FileBaseMatch(@NotNull VirtualFile file, int score) {
+    FileBaseMatch(@NotNull VirtualFile file, int score) {
       this.file = file;
       this.score = score;
     }

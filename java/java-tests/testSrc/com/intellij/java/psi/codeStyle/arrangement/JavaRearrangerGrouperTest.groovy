@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens
 import org.junit.Test
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.*
@@ -50,6 +51,26 @@ class Test {
   public void setValue(int i) {}
 
   protected void util() {}
+}''',
+      groups: [group(GETTERS_AND_SETTERS)],
+      rules: [rule(PUBLIC)]
+    )
+  }
+
+  void "test getter and multiple setters"() {
+    // Expected that setters even with the same name won't be reordered
+    doTest(
+            initial: '''\
+class Test {
+  public int getValue() { return 1; }
+  public void setValue(int i) {}
+  public void setValue(long i) {}
+}''',
+            expected: '''\
+class Test {
+  public int getValue() { return 1; }
+  public void setValue(int i) {}
+  public void setValue(long i) {}
 }''',
       groups: [group(GETTERS_AND_SETTERS)],
       rules: [rule(PUBLIC)]
@@ -125,6 +146,58 @@ class Sub extends Base {
   void base2() {}
   void test2() {}
 }''')
+  }
+
+  void "test overridden methods with class"() {
+    doTest(
+      initial: '''\
+class C {
+    public void overridden() {}
+    public void foo() {}
+}
+
+class A {
+    
+    static class X1 extends C {
+        @Override
+        public void overridden() {}
+        @Override
+        public void foo() {}
+    }
+    
+    static class X2 extends C {
+        static class X3 {}
+        
+        @Override
+        public void overridden() {}
+    }
+}
+''',
+      groups: [group(OVERRIDDEN_METHODS)],
+      rules: [rule(StdArrangementTokens.EntryType.METHOD), rule(StdArrangementTokens.EntryType.CLASS)],
+      expected: '''\
+class C {
+    public void overridden() {}
+    public void foo() {}
+}
+
+class A {
+    
+    static class X1 extends C {
+        @Override
+        public void overridden() {}
+        @Override
+        public void foo() {}
+    }
+    
+    static class X2 extends C {
+        @Override
+        public void overridden() {}
+        
+        static class X3 {}
+    }
+}
+''')
   }
 
   void "do not test overriden and utility methods"() {
@@ -359,6 +432,58 @@ public class Q {
     void ER() {
     }
 
+}
+''',
+            groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+
+  void "test method references dependant methods"() {
+    doTest(
+            initial: '''
+import java.util.ArrayList;
+
+public class Test {
+    private void top() {
+        new ArrayList<String>().stream()
+                .map(this::first)
+                .map(this::second)
+                .count();
+    }
+
+    private void irrelevant() {
+    }
+
+    private String second(String string) {
+        return string;
+
+    }
+
+    private String first(String string) {
+        return string;
+    }
+}
+''',
+            expected: '''
+import java.util.ArrayList;
+
+public class Test {
+    private void top() {
+        new ArrayList<String>().stream()
+                .map(this::first)
+                .map(this::second)
+                .count();
+    }
+    private String first(String string) {
+        return string;
+    }
+    private String second(String string) {
+        return string;
+
+    }
+    private void irrelevant() {
+    }
 }
 ''',
             groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]

@@ -74,7 +74,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     boolean isInclude;
     private final ArrayList<FileIncludeInfo> myInfos;
 
-    public RngBuilderAdapter(ArrayList<FileIncludeInfo> infos) {
+    RngBuilderAdapter(ArrayList<FileIncludeInfo> infos) {
       myInfos = infos;
     }
 

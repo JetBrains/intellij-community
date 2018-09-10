@@ -148,39 +148,91 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     getSaveRMTree(f, PERSISTENT_RANGE_MARKERS_KEY, myPersistentRangeMarkers);
   }
 
+  // are some range markers retained by strong references?
+  public static boolean areRangeMarkersRetainedFor(@NotNull VirtualFile f) {
+    processQueue();
+    // if a marker is retained then so is its node and the whole tree
+    // (ignore the race when marker is gc-ed right after this call - it's harmless)
+    return SoftReference.dereference(f.getUserData(RANGE_MARKERS_KEY)) != null
+           || SoftReference.dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
+  }
+
   private void getSaveRMTree(@NotNull VirtualFile f,
                              @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key, @NotNull RangeMarkerTree<RangeMarkerEx> tree) {
-    Reference<RangeMarkerTree<RangeMarkerEx>>
-      ref = ((UserDataHolderEx)f).putUserDataIfAbsent(key, new RMTreeReference(tree, f));
-    RangeMarkerTree<RangeMarkerEx> from = ref.get();
-    if (from == tree || from == null) {
+    RMTreeReference freshRef = new RMTreeReference(tree, f);
+    Reference<RangeMarkerTree<RangeMarkerEx>> oldRef;
+    do {
+      oldRef = f.getUserData(key);
+    }
+    while (!f.replace(key, oldRef, freshRef));
+    RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(oldRef);
+
+    if (oldTree == null) {
+      // no tree was saved in virtual file before. happens when created new document.
+      // or the old tree got gc-ed, because no reachable markers retaining it are left alive. good riddance.
       return;
     }
-    from.processAll(r ->{
-      if (r.isValid()) {
+
+    // old tree was saved in the virtual file. Have to transfer markers from there.
+    TextRange myDocumentRange = new TextRange(0, getTextLength());
+    oldTree.processAll(r ->{
+      if (r.isValid() && myDocumentRange.contains(r)) {
         registerRangeMarker(r, r.getStartOffset(), r.getEndOffset(), r.isGreedyToLeft(), r.isGreedyToRight(), 0);
+      }
+      else {
+        ((RangeMarkerImpl)r).invalidate("document was gc-ed and re-created");
       }
       return true;
     });
   }
 
+  private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> rmTreeQueue = new ReferenceQueue<>();
   private static class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
     @NotNull private final VirtualFile virtualFile;
 
     RMTreeReference(@NotNull RangeMarkerTree<RangeMarkerEx> referent, @NotNull VirtualFile virtualFile) {
-      super(referent, copyableInfoQueue);
+      super(referent, rmTreeQueue);
       this.virtualFile = virtualFile;
     }
   }
-  private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> copyableInfoQueue = new ReferenceQueue<>();
   static void processQueue() {
     RMTreeReference ref;
-    while ((ref = (RMTreeReference)copyableInfoQueue.poll()) != null) {
+    while ((ref = (RMTreeReference)rmTreeQueue.poll()) != null) {
       ref.virtualFile.replace(RANGE_MARKERS_KEY, ref, null);
       ref.virtualFile.replace(PERSISTENT_RANGE_MARKERS_KEY, ref, null);
     }
   }
 
+  /**
+   * makes range marker without creating document (which could be expensive)
+   */
+  @NotNull
+  static RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
+                                                     int startOffset,
+                                                     int endOffset,
+                                                     int startLine,
+                                                     int startCol,
+                                                     int endLine,
+                                                     int endCol,
+                                                     boolean persistent) {
+    RangeMarkerImpl marker = persistent
+                             ? new PersistentRangeMarker(file, startOffset, endOffset, startLine, startCol, endLine, endCol, false)
+                             : new RangeMarkerImpl(file, startOffset, endOffset, false);
+    Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key = persistent ? PERSISTENT_RANGE_MARKERS_KEY : RANGE_MARKERS_KEY;
+    RangeMarkerTree<RangeMarkerEx> tree;
+    while (true) {
+      Reference<RangeMarkerTree<RangeMarkerEx>> oldRef = file.getUserData(key);
+      tree = SoftReference.dereference(oldRef);
+      if (tree != null) break;
+      tree = new RangeMarkerTree<>();
+      RMTreeReference reference = new RMTreeReference(tree, file);
+      if (file.replace(key, oldRef, reference)) break;
+    }
+    tree.addInterval(marker, startOffset, endOffset, false, false, false, 0);
+
+    return marker;
+
+  }
   public boolean setAcceptSlashR(boolean accept) {
     try {
       return myAcceptSlashR;
@@ -334,7 +386,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return markAsNeedsStrippingLater;
   }
 
-  private static int getMaxSpacesToLeave(int line, @NotNull List<StripTrailingSpacesFilter> filters) {
+  private static int getMaxSpacesToLeave(int line, @NotNull List<? extends StripTrailingSpacesFilter> filters) {
     for (StripTrailingSpacesFilter filter :  filters) {
       if (filter instanceof SmartStripTrailingSpacesFilter) {
         return ((SmartStripTrailingSpacesFilter)filter).getTrailingSpacesToLeave(line);
@@ -483,6 +535,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void setModificationStamp(long modificationStamp) {
     myModificationStamp = modificationStamp;
+    myFrozen = null;
   }
 
   @Override
@@ -562,7 +615,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private void fireMoveText(int start, int end, int newBase) {
     for (DocumentListener listener : getListeners()) {
       if (listener instanceof PrioritizedInternalDocumentListener) {
-        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(start, end, newBase);
+        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(this, start, end, newBase);
       }
     }
   }
@@ -920,10 +973,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   // this contortion is for avoiding document leak when the listener is leaked
   private static class DocumentListenerDisposable implements Disposable {
-    @NotNull private final LockFreeCOWSortedArray<DocumentListener> myList;
+    @NotNull private final LockFreeCOWSortedArray<? super DocumentListener> myList;
     @NotNull private final DocumentListener myListener;
 
-    DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<DocumentListener> list, @NotNull DocumentListener listener) {
+    DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<? super DocumentListener> list, @NotNull DocumentListener listener) {
       myList = list;
       myListener = listener;
     }
@@ -1143,7 +1196,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       synchronized (myLineSetLock) {
         frozen = myFrozen;
         if (frozen == null) {
-          frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, SoftReference.dereference(myTextString));
+          myFrozen = frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, SoftReference.dereference(myTextString));
         }
       }
     }

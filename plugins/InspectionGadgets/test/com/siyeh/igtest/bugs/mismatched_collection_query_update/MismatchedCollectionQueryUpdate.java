@@ -16,6 +16,7 @@
 package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 
 import java.util.*;
+import java.util.stream.IntStream;
 import java.io.FileInputStream;
 import java.util.concurrent.BlockingQueue;
 
@@ -552,5 +553,29 @@ class UnmodifiableTernaryTest {
 
   List<String> get(boolean b) {
     return Collections.unmodifiableList(b ? myList : myList2);
+  }
+}
+
+class InLambdaTest {
+  void test() {
+    List<String> <warning descr="Contents of collection 'listForLambda' are updated, but never queried">listForLambda</warning> = new ArrayList<>();
+    IntStream.range(0, 100).mapToObj(String::valueOf).forEach(e -> listForLambda.add(e));
+  }
+}
+
+class AssertTest {
+  void test() {
+    List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning> = new ArrayList<>();
+    assert list.isEmpty() : list;
+  }
+}
+
+class SynchronizedTest {
+  void test() {
+    List<String> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<>();
+    list.add("foo");
+    synchronized (list) {
+      System.out.println("hello");
+    }
   }
 }

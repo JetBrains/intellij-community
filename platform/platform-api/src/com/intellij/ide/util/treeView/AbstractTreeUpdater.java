@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -51,17 +50,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 100, component.isShowing(), component) {
-      @Override
-      protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
-        return new Alarm(thread, parent) {
-          @Override
-          protected boolean isEdt() {
-            return AbstractTreeUpdater.this.isEdt();
-          }
-        };
-      }
-    };
+    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 100, component.isShowing(), component);
     myUpdateQueue.setRestartTimerOnAdd(false);
 
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(component, myUpdateQueue);
@@ -76,11 +65,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateQueue.setMergingTimeSpan(delay);
   }
 
-  public void setPassThroughMode(boolean passThroughMode) {
+  void setPassThroughMode(boolean passThroughMode) {
     myUpdateQueue.setPassThrough(passThroughMode);
   }
 
-  public void setModalityStateComponent(JComponent c) {
+  void setModalityStateComponent(JComponent c) {
     myUpdateQueue.setModalityStateComponent(c);
   }
 
@@ -97,23 +86,26 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   /**
-   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
+   * @deprecated use {@link AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
+  @Deprecated
   public synchronized void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
     addSubtreeToUpdate(new TreeUpdatePass(rootNode).setUpdateStamp(-1));
   }
 
   /**
-   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
+   * @deprecated use {@link AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
-  public synchronized void requeue(@NotNull TreeUpdatePass toAdd) {
+  @Deprecated
+  synchronized void requeue(@NotNull TreeUpdatePass toAdd) {
     addSubtreeToUpdate(toAdd.setUpdateStamp(-1));
   }
 
   /**
-   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
+   * @deprecated use {@link AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
-  public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
+  @Deprecated
+  synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
     if (myReleaseRequested) return;
 
     assert !toAdd.isExpired();
@@ -233,14 +225,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateQueue.queue(update);
   }
 
-  /**
-   * @param node
-   * @deprecated use addSubtreeToUpdate instead
-   */
-  protected void updateSubtree(DefaultMutableTreeNode node) {
-    myTreeBuilder.updateSubtree(node);
-  }
-
   public synchronized void performUpdate() {
     if (myRunBeforeUpdate != null) {
       myRunBeforeUpdate.run();
@@ -276,27 +260,25 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   private void maybeRunAfterUpdate() {
-    if (myRunAfterUpdate != null) {
-      final Runnable runnable = new TreeRunnable("AbstractTreeUpdater.maybeRunAfterUpdate") {
-        @Override
-        public void perform() {
-          List<Runnable> runAfterUpdate = null;
-          synchronized (myRunAfterUpdate) {
-            if (!myRunAfterUpdate.isEmpty()) {
-              runAfterUpdate = new ArrayList<>(myRunAfterUpdate);
-              myRunAfterUpdate.clear();
-            }
-          }
-          if (runAfterUpdate != null) {
-            for (Runnable r : runAfterUpdate) {
-              r.run();
-            }
+    final Runnable runnable = new TreeRunnable("AbstractTreeUpdater.maybeRunAfterUpdate") {
+      @Override
+      public void perform() {
+        List<Runnable> runAfterUpdate = null;
+        synchronized (myRunAfterUpdate) {
+          if (!myRunAfterUpdate.isEmpty()) {
+            runAfterUpdate = new ArrayList<>(myRunAfterUpdate);
+            myRunAfterUpdate.clear();
           }
         }
-      };
+        if (runAfterUpdate != null) {
+          for (Runnable r : runAfterUpdate) {
+            r.run();
+          }
+        }
+      }
+    };
 
-      myTreeBuilder.getReady(this).doWhenDone(runnable);
-    }
+    myTreeBuilder.getReady(this).doWhenDone(runnable);
   }
 
   private boolean isReleased() {
@@ -308,21 +290,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   /**
-   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
+   * @deprecated use {@link AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
+  @Deprecated
   public boolean addSubtreeToUpdateByElement(Object element) {
-    return addSubtreeToUpdateByElement(element, false);
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
-   */
-  public boolean addSubtreeToUpdateByElement(Object element, boolean forceResort) {
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
     if (node != null) {
-      myTreeBuilder.queueUpdateFrom(element, forceResort);
+      myTreeBuilder.queueUpdateFrom(element, false);
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -348,11 +325,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     return myUpdateCount;
   }
 
-  public boolean isRerunNeededFor(TreeUpdatePass pass) {
+  boolean isRerunNeededFor(TreeUpdatePass pass) {
     return pass.getUpdateStamp() < getUpdateCount();
   }
 
-  public boolean isInPostponeMode() {
+  boolean isInPostponeMode() {
     return !myUpdateQueue.isActive() && !myUpdateQueue.isPassThrough();
   }
 
@@ -366,28 +343,24 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateQueue.hideNotify();
   }
 
-  protected boolean isEdt() {
-    return Alarm.isEventDispatchThread();
-  }
-
   @NonNls
   @Override
   public synchronized String toString() {
-    return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue.toString() + "] " + " nodeQueue=" + myNodeQueue;
+    return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue + "] " + " nodeQueue=" + myNodeQueue;
   }
 
   public void flush() {
     myUpdateQueue.sendFlush();
   }
 
-  public synchronized boolean isEnqueuedToUpdate(DefaultMutableTreeNode node) {
+  synchronized boolean isEnqueuedToUpdate(DefaultMutableTreeNode node) {
     for (TreeUpdatePass pass : myNodeQueue) {
       if (pass.willUpdate(node)) return true;
     }
     return false;
   }
 
-  public final void queueSelection(final SelectionRequest request) {
+  final void queueSelection(final SelectionRequest request) {
     queue(new Update("UserSelection", Update.LOW_PRIORITY) {
       @Override
       public void run() {

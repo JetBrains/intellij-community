@@ -19,7 +19,7 @@ import com.intellij.psi.*
 
 class FromAbstractTypeMethodsHintProcessor : SignatureHintProcessor() {
 
-  override fun getHintName() = "groovy.transform.stc.FromAbstractTypeMethods"
+  override fun getHintName(): String = "groovy.transform.stc.FromAbstractTypeMethods"
 
   override fun inferExpectedSignatures(method: PsiMethod, substitutor: PsiSubstitutor, options: Array<String>): List<Array<PsiType>> {
     val qname = options.singleOrNull() ?: return emptyList()

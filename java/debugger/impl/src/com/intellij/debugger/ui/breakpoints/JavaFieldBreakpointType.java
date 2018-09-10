@@ -72,12 +72,6 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return AllIcons.Debugger.Db_dep_field_breakpoint;
   }
 
-  @NotNull
-  @Override
-  public Icon getPendingIcon() {
-    return AllIcons.Debugger.Db_pending_field_breakpoint;
-  }
-
   //@Override
   protected String getHelpID() {
     return HelpID.FIELD_WATCHPOINTS;
@@ -126,6 +120,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
+      @Override
       protected boolean validateData() {
         final String className = getClassName();
         if (className.length() == 0) {

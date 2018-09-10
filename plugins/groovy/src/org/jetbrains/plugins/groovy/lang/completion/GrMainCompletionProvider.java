@@ -127,12 +127,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     if (parent instanceof GrVariable) {
       final PsiElement pparent = parent.getParent();
       if (pparent instanceof GrVariableDeclaration) {
-        final PsiElement errorElement = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
-        if (errorElement instanceof PsiErrorElement) {
-          final PsiElement child = errorElement.getFirstChild();
-          if (child instanceof GrTypeParameterList) {
-            return (GrTypeParameterList)child;
-          }
+        PsiElement candidate = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
+        if (candidate instanceof GrTypeParameterList) {
+          return (GrTypeParameterList)candidate;
         }
       }
     }
@@ -262,7 +259,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   private static Runnable addStaticMembers(CompletionParameters parameters,
                                        final PrefixMatcher matcher,
-                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<LookupElement> consumer) {
+                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<? super LookupElement> consumer) {
     final StaticMemberProcessor processor = completeStaticMembers(parameters);
     processor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
       if (member instanceof GrAccessorMethod) {
@@ -410,7 +407,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     GroovyCompletionData.addGroovyDocKeywords(parameters, result);
 

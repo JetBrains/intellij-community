@@ -71,6 +71,11 @@ public class TestPackagingElementBuilder {
     return this;
   }
 
+  public TestPackagingElementBuilder moduleSource(Module module) {
+    myElement.addOrFindChild(getFactory().createModuleSource(module));
+    return this;
+  }
+
   public TestPackagingElementBuilder lib(Library library) {
     myElement.addOrFindChildren(getFactory().createLibraryElements(library));
     return this;

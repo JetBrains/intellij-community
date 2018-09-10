@@ -64,10 +64,12 @@ public class AddModuleWizard extends AbstractProjectWizard {
 
   private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
     myWizardContext.addContextListener(new WizardContext.Listener() {
+      @Override
       public void buttonsUpdateRequested() {
         updateButtons();
       }
 
+      @Override
       public void nextStepRequested() {
         doNextAction();
       }

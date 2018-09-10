@@ -15,6 +15,11 @@ package com.jetbrains.python.packaging.requirement;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see <a href="https://www.python.org/dev/peps/pep-0440/#version-specifiers">PEP-440</a>
+ * @see PyRequirementVersionSpec
+ * @see com.jetbrains.python.packaging.PyRequirement
+ */
 public enum PyRequirementRelation {
 
   LT("<"),
@@ -33,9 +38,11 @@ public enum PyRequirementRelation {
     myValue = value;
   }
 
+  /**
+   * @return representation of this relation that is used in <a href="https://www.python.org/dev/peps/pep-0440/#version-specifiers">PEP-440</a>.
+   */
   @NotNull
-  @Override
-  public String toString() {
+  public String getPresentableText() {
     return myValue;
   }
 }

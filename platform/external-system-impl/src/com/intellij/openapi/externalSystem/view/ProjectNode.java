@@ -43,7 +43,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(getUiAware().getProjectIcon());
   }
@@ -76,12 +76,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   void updateProject() {
     myTooltipCache = makeDescription();
     getStructure().updateFrom(getParent());
-  }
-
-  @Override
-  public String getName() {
-    final ProjectData projectData = getData();
-    return projectData != null ? projectData.getExternalName() : "unspecified";
   }
 
   @Override

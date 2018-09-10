@@ -1,11 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface ExtensionPoint<T> {
   @NotNull
@@ -17,8 +17,14 @@ public interface ExtensionPoint<T> {
 
   void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
 
+  /**
+   * Prefer to use {@link #getExtensionList()}.
+   */
   @NotNull
   T[] getExtensions();
+
+  @NotNull
+  List<T> getExtensionList();
 
   boolean hasAnyExtensions();
 
@@ -28,6 +34,11 @@ public interface ExtensionPoint<T> {
   boolean hasExtension(@NotNull T extension);
 
   void unregisterExtension(@NotNull T extension);
+
+  /**
+   * Unregisters an extension of the specified type.
+   */
+  void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @NotNull Disposable parentDisposable);
 

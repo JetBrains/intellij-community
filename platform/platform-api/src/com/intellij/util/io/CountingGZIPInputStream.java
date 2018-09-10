@@ -48,10 +48,11 @@ public class CountingGZIPInputStream extends GZIPInputStream {
     private final InputStream myInputStream;
     private long myBytesRead = 0;
 
-    public CountingInputStream(@NotNull InputStream inputStream) {
+    CountingInputStream(@NotNull InputStream inputStream) {
       myInputStream = inputStream;
     }
 
+    @Override
     public int read() throws IOException {
       int data = myInputStream.read();
       myBytesRead++;
@@ -72,16 +73,19 @@ public class CountingGZIPInputStream extends GZIPInputStream {
       return bytesRead;
     }
 
+    @Override
     public long skip(long n) throws IOException {
       long bytesSkipped = myInputStream.skip(n);
       myBytesRead += bytesSkipped;
       return bytesSkipped;
     }
 
+    @Override
     public int available() throws IOException {
       return myInputStream.available();
     }
 
+    @Override
     public void close() throws IOException {
       myInputStream.close();
     }

@@ -33,7 +33,7 @@ public class JUnitOpenSourceAtExceptionTest extends LightCodeInsightFixtureTestC
                        "}");
     myFixture.addClass("public class ChildTest extends ATest {}");
 
-    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest/testMe");
     testProxy.setTestFailed("failure", "\tat junit.framework.Assert.fail(Assert.java:57)\n" +
                                        "\tat junit.framework.Assert.failNotEquals(Assert.java:329)\n" +
                                        "\tat junit.framework.Assert.assertEquals(Assert.java:78)\n" +

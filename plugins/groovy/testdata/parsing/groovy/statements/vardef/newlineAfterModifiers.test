@@ -1,0 +1,15 @@
+@Anno
+var
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      Annotation
+        PsiElement(@)('@')
+        Reference element
+          PsiElement(identifier)('Anno')
+        Annotation arguments
+          <empty list>
+    PsiElement(new line)('\n')
+    Variable
+      PsiElement(identifier)('var')

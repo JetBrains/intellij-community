@@ -485,7 +485,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     ASTNode nameElement = myElement.getNameElement();
     newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
@@ -502,7 +502,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
    @Override
-   public boolean isReferenceTo(PsiElement element) {
+   public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
       PsiElement resolveResult = resolve();
@@ -570,7 +570,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
     }
-    return false;
+
+    return PyReferenceCustomTargetChecker.Companion.isReferenceTo(this, element);
   }
 
   private boolean resolvesToSameLocal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner) {

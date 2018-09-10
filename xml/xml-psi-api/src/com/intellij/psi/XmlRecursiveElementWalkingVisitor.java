@@ -55,4 +55,9 @@ public class XmlRecursiveElementWalkingVisitor extends XmlElementVisitor impleme
 
     super.visitFile(file);
   }
+
+  public void stopWalking() {
+    myWalkingState.stopWalking();
+  }
+
 }

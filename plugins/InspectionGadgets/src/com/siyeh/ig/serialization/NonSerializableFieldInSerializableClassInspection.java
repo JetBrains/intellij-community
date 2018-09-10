@@ -15,13 +15,25 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
+import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonSerializableFieldInSerializableClassInspection extends NonSerializableFieldInSerializableClassInspectionBase {
+public class NonSerializableFieldInSerializableClassInspection extends
+                                                               SerializableInspectionBase {
+  @SuppressWarnings({"PublicField"})
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
+
   @Override
   public JComponent createOptionsPanel() {
     return SerializableInspectionUtil.createOptions(this);
@@ -32,5 +44,69 @@ public class NonSerializableFieldInSerializableClassInspection extends NonSerial
   protected JComponent[] createAdditionalOptions() {
     return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.field.in.serializable.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.field.in.serializable.class.problem.descriptor");
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonSerializableFieldInSerializableClassVisitor();
+  }
+
+  private class NonSerializableFieldInSerializableClassVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (field.hasModifierProperty(PsiModifier.TRANSIENT) || field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass aClass = field.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      PsiType fieldType = field.getType();
+      if (SerializationUtils.isProbablySerializable(fieldType)) {
+        return;
+      }
+      PsiClass fieldClass = PsiUtil.resolveClassInClassTypeOnly(fieldType);
+      if (fieldClass != null && isIgnoredSubclass(fieldClass)) {
+        return;
+      }
+      if (SerializationUtils.hasWriteObject(aClass) || SerializationUtils.hasWriteReplace(aClass)) {
+        return;
+      }
+      if (isIgnoredSubclass(aClass)) {
+        return;
+      }
+      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations, 0)) {
+        return;
+      }
+      registerFieldError(field, field);
+    }
   }
 }

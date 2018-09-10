@@ -4,7 +4,10 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 public class DecHelper {
@@ -145,7 +148,7 @@ public class DecHelper {
             if (head == statd) {
               return false;
             }
-            if (!setDest.contains(statd) && post != statd) {
+            if (post != statd && !setDest.contains(statd)) {
               if (post != null) {
                 return false;
               }

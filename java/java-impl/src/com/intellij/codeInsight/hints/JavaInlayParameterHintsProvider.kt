@@ -6,18 +6,16 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiCallExpression
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 
 class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   
   companion object {
-    fun getInstance() = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
+    fun getInstance(): JavaInlayParameterHintsProvider = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
   }
   
   override fun getHintInfo(element: PsiElement): MethodInfo? {
-    if (element is PsiCallExpression) {
+    if (element is PsiCallExpression && element !is PsiEnumConstant) {
       val resolvedElement = (if(JavaMethodCallElement.isCompletionMode(element)) CompletionMemory.getChosenMethod(element) else null)
                             ?: element.resolveMethodGenerics().element
       if (resolvedElement is PsiMethod) {
@@ -28,7 +26,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   }
 
   override fun getParameterHints(element: PsiElement): List<InlayInfo> {
-    if (element is PsiCallExpression) {
+    if (element is PsiCall) {
+      if (element is PsiEnumConstant && !isShowHintsForEnumConstants.get()) return emptyList()
+      if (element is PsiNewExpression && !isShowHintsForNewExpressions.get()) return emptyList()
       return JavaInlayHintsProvider.hints(element).toList()
     }
     return emptyList()
@@ -46,7 +46,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return MethodInfo(fullMethodName, paramNames)
   }
 
-  override fun getDefaultBlackList() = defaultBlackList
+  override fun getDefaultBlackList(): Set<String> = defaultBlackList
 
   private val defaultBlackList = setOf(
       "(begin*, end*)",
@@ -96,29 +96,44 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.Arrays.asList"
   )
   
-  val isDoNotShowIfMethodNameContainsParameterName = Option("java.method.name.contains.parameter.name", 
-                                                            "Do not show if method name contains parameter name", 
-                                                            true)
+  val isDoNotShowIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
+                                                                    "Do not show if method name contains parameter name",
+                                                                    true)
   
-  val isShowForParamsWithSameType = Option("java.multiple.params.same.type", 
-                                           "Show for non-literals in case of multiple params with the same type", 
-                                           false)
+  val isShowForParamsWithSameType: Option = Option("java.multiple.params.same.type",
+                                                   "Show for non-literals in case of multiple params with the same type",
+                                                   false)
   
-  val isDoNotShowForBuilderLikeMethods = Option("java.build.like.method",
-                                                "Do not show for builder-like methods",
-                                                true)
+  val isDoNotShowForBuilderLikeMethods: Option = Option("java.build.like.method",
+                                                        "Do not show for builder-like methods",
+                                                        true)
 
 
-  val ignoreOneCharOneDigitHints = Option("java.simple.sequentially.numbered",
-                                          "Do not show for methods with same-named numbered parameters",
-                                          true)
+  val ignoreOneCharOneDigitHints: Option = Option("java.simple.sequentially.numbered",
+                                                  "Do not show for methods with same-named numbered parameters",
+                                                  true)
+
+  val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
+                                                           "Show hints even when type of expression is clear",
+                                                           false)
+
+  val isShowHintsForEnumConstants: Option = Option("java.enums",
+                                                           "Show hints for enum constants",
+                                                           true)
+
+  val isShowHintsForNewExpressions: Option = Option("java.new.expr",
+                                                    "Show hints for 'new' expressions",
+                                                    true)
 
   override fun getSupportedOptions(): List<Option> {
     return listOf(
       isDoNotShowIfMethodNameContainsParameterName,
       isShowForParamsWithSameType,
       isDoNotShowForBuilderLikeMethods,
-      ignoreOneCharOneDigitHints
+      ignoreOneCharOneDigitHints,
+      isShowHintWhenExpressionTypeIsClear,
+      isShowHintsForEnumConstants,
+      isShowHintsForNewExpressions
     )
   }
 }

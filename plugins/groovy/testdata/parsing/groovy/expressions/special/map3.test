@@ -10,15 +10,10 @@ Groovy script
       Literal
         PsiElement(Integer)('3')
     PsiElement(,)(',')
-    PsiErrorElement:Expression expected
-      <empty list>
     PsiWhiteSpace(' ')
-    PsiElement(wrong token)('#')
-    PsiErrorElement:',' or ']' expected
-      <empty list>
+    PsiErrorElement:<expression> expected, got '#'
+      PsiElement(wrong token)('#')
     PsiElement(:)(':')
-    PsiErrorElement:',' or ']' expected
-      <empty list>
     PsiWhiteSpace(' ')
     Literal
       PsiElement(Integer)('2')

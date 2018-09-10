@@ -31,34 +31,34 @@ Groovy script
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(Gstring)('"Release"')
+          PsiElement(double quoted string)('"Release"')
         PsiElement(:)(':')
       PsiElement(new line)('\n\n        ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n    ')
+      PsiElement(new line)('\n    ')
     Case section
       Case label
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(Gstring)('"Delete"')
+          PsiElement(double quoted string)('"Delete"')
         PsiElement(:)(':')
       PsiElement(new line)('\n\n        ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n    ')
+      PsiElement(new line)('\n    ')
     Case section
       Case label
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(Gstring)('"Hold"')
+          PsiElement(double quoted string)('"Hold"')
         PsiElement(:)(':')
       PsiElement(new line)('\n\n        ')
       BREAK statement
         PsiElement(break)('break')
-    PsiElement(new line)('\n    ')
+      PsiElement(new line)('\n    ')
     Case section
       Case label
         PsiElement(default)('default')
@@ -74,6 +74,6 @@ Groovy script
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
         Literal
-          PsiElement(Gstring)('"Bulk command not recognized"')
-    PsiElement(new line)('\n')
+          PsiElement(double quoted string)('"Bulk command not recognized"')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

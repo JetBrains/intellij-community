@@ -22,6 +22,7 @@ import javax.swing.tree.TreeNode;
  * @deprecated
  * @see com.intellij.ui.treeStructure.Tree  
  */
+@Deprecated
 public class Tree extends com.intellij.ui.treeStructure.Tree {
 
   public Tree() {

@@ -16,6 +16,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26354
+  public void testMutatingFrozenAttrs() {
+    doTest();
+  }
+
   // PY-27398
   public void testOrderAndNotEq() {
     doTest();
@@ -28,6 +33,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
   public void testFieldsOrder() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsFieldsOrder() {
     doTest();
   }
 
@@ -46,8 +56,28 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26354
+  public void testComparisonForOrderedAttrs() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testComparisonForUnorderedAttrs() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testComparisonForOrderedAndUnorderedAttrs() {
+    doTest();
+  }
+
   // PY-27398
   public void testHelpersArgument() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsHelpersArgument() {
     doTest();
   }
 
@@ -71,13 +101,28 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26354
+  public void testUselessDunderAttrsPostInit() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testWrongDunderAttrsPostInitSignature() {
+    doTest();
+  }
+
   // PY-27398
   public void testFieldDefaultAndDefaultFactory() {
     doTest();
   }
 
+  // PY-26354
+  public void testAttrsFieldDefaultAndFactory() {
+    doTest();
+  }
+
   // PY-27398
-  public void testUselessReprEq() {
+  public void testUselessInitReprEq() {
     doTest();
   }
 
@@ -93,6 +138,41 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
   public void testUselessUnsafeHash() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessInitReprStrEq() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessOrder() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessFrozen() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessHash() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsDefaultThroughKeywordAndDecorator() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsInitializersAndValidators() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsLackingTypeAnnotation() {
     doTest();
   }
 

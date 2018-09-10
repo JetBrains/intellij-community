@@ -127,7 +127,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   @Override
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     final PsiDirectory psiDirectory = getPsiDirectory();
 
     data.setPresentableText(myPresentableText);

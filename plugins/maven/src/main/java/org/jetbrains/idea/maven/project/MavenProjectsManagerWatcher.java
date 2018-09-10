@@ -132,14 +132,15 @@ public class MavenProjectsManagerWatcher {
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         Document doc = event.getDocument();
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
 
         if (file == null) return;
         String fileName = file.getName();
         boolean isMavenFile = fileName.equals(MavenConstants.POM_XML) || fileName.equals(MavenConstants.PROFILES_XML) ||
-                              isSettingsFile(file) || fileName.startsWith("pom.") || isPomFile(file.getPath());
+                              isSettingsFile(file) || fileName.startsWith("pom.") || isPomFile(file.getPath()) ||
+                              isMavenOrJvmConfigFile(file.getPath());
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -303,7 +304,7 @@ public class MavenProjectsManagerWatcher {
 
   private class MyRootChangesListener implements ModuleRootListener {
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       // todo is this logic necessary?
       List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
       List<VirtualFile> newFiles = new ArrayList<>();
@@ -347,6 +348,10 @@ public class MavenProjectsManagerWatcher {
     return false;
   }
 
+  private static boolean isMavenOrJvmConfigFile(String path) {
+    return path.endsWith(MavenConstants.JVM_CONFIG_RELATIVE_PATH) || path.endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+  }
+
   private class MyFileChangeListener extends FileChangeListenerBase {
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
@@ -355,7 +360,7 @@ public class MavenProjectsManagerWatcher {
 
     @Override
     protected boolean isRelevant(String path) {
-      return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path);
+      return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path) || isMavenOrJvmConfigFile(path);
     }
 
     @Override
@@ -385,6 +390,12 @@ public class MavenProjectsManagerWatcher {
         if (remove || fileWasChanged(pom, event)) {
           filesToUpdate.add(pom);
         }
+        return;
+      }
+
+      if (isMavenOrJvmConfigFile(file.getPath()) && (remove || fileWasChanged(file, event))) {
+        VirtualFile baseDir = file.getParent().getParent();
+        MavenUtil.streamPomFiles(myProject, baseDir).forEach(filesToUpdate::add);
         return;
       }
 

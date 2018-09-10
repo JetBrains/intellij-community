@@ -31,7 +31,7 @@ import java.util.Set;
 public enum FormattingStateId {
 
   /**
-   * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block, boolean)}.
+   * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block)}.
    * <p/>
    * I.e. the first thing formatter does retrieval of all {@link Block code blocks} from target {@link FormattingModel model}
    * and wrapping them in order to be able to store information about modified white spaces. That processing may trigger

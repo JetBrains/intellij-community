@@ -26,7 +26,7 @@ public class NonFinalUtilityClassInspectionTest extends IGInspectionTestCase {
   private static class DedicatedClassNameImplicitSubclassProvider extends ImplicitSubclassProvider {
     private final String classNameToSubclass;
 
-    public DedicatedClassNameImplicitSubclassProvider(String classNameToSubclass) {
+    DedicatedClassNameImplicitSubclassProvider(String classNameToSubclass) {
       this.classNameToSubclass = classNameToSubclass;
     }
 

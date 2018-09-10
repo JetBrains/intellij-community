@@ -151,9 +151,9 @@ public class UnixProcessManager {
 
   private static void findChildProcesses(final int our_pid,
                                          final int process_pid,
-                                         final Ref<Integer> foundPid,
+                                         final Ref<? super Integer> foundPid,
                                          final ProcessInfo processInfo,
-                                         final List<Integer> childrenPids) {
+                                         final List<? super Integer> childrenPids) {
     final Ref<Boolean> ourPidFound = Ref.create(false);
     processPSOutput(getPSCmd(false), new Processor<String>() {
       @Override
@@ -188,11 +188,11 @@ public class UnixProcessManager {
     }
   }
 
-  public static void processPSOutput(String[] cmd, Processor<String> processor) {
+  public static void processPSOutput(String[] cmd, Processor<? super String> processor) {
     processCommandOutput(cmd, processor, true, true);
   }
 
-  public static void processCommandOutput(String[] cmd, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) {
+  public static void processCommandOutput(String[] cmd, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) {
     try {
       Process p = Runtime.getRuntime().exec(cmd);
       processCommandOutput(p, processor, skipFirstLine, throwOnError);
@@ -202,7 +202,7 @@ public class UnixProcessManager {
     }
   }
 
-  private static void processCommandOutput(Process process, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
+  private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
     BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()));
     try {
       BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -277,10 +277,5 @@ public class UnixProcessManager {
       }
       sendSignal(pid, signal);
     }
-  }
-
-  /** @deprecated to be removed in IDEA 2018 */
-  public static int getProcessPid(@NotNull Process process) {
-    return getProcessId(process);
   }
 }

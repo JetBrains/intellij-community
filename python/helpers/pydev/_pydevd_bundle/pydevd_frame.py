@@ -396,6 +396,7 @@ class PyDBFrame:
     #     cdef bint is_return;
     #     cdef str curr_func_name;
     #     cdef bint exist_result;
+    #     cdef bint stop;
     #     cdef dict frame_skips_cache;
     #     cdef tuple frame_cache_key;
     #     cdef tuple line_cache_key;
@@ -620,7 +621,7 @@ class PyDBFrame:
                     self.do_wait_suspend(thread, frame, event, arg)
                     return self.trace_dispatch
                 else:
-                    if not breakpoint and not is_return:
+                    if breakpoint is None and not (is_return or is_exception_event):
                         # No stop from anyone and no breakpoint found in line (cache that).
                         frame_skips_cache[line_cache_key] = 0
 

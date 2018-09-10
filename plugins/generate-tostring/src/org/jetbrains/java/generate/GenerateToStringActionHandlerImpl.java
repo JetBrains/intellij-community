@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -75,6 +76,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
 
+    @Override
     public void executeActionQuickFix(final Project project, final PsiClass clazz) {
         doExecuteAction(project, clazz, null);
     }
@@ -100,6 +102,11 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 @Override
                 protected String getHelpId() {
                     return "editing.altInsert.tostring";
+                }
+
+                @Override
+                protected boolean isInsertOverrideAnnotationSelected() {
+                    return JavaCodeStyleSettings.getInstance(clazz.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
                 }
             };
         //noinspection DialogTitleCapitalization
@@ -141,7 +148,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
           .toArray(PsiElementClassMember[]::new);
     }
 
-    public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
+    public static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember> dialog) {
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
         dialog.selectElements(getPreselection(clazz, members));
@@ -216,6 +223,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             };
             comboBox.setRenderer(renderer);
             settingsButton.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Configurable composite = new TabbedConfigurable() {
@@ -228,6 +236,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                             return res;
                         }
 
+                        @Override
                         public String getDisplayName() {
                             return "toString() Generation Settings";
                         }

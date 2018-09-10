@@ -12,12 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
+import org.jetbrains.yaml.psi.YAMLBlockScalar;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
+public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAMLBlockScalar {
   protected static final int DEFAULT_CONTENT_INDENT = 2;
   private static final int IMPLICIT_INDENT = -1;
 
@@ -101,6 +102,29 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     return lastNonEmpty == -1 ? Collections.emptyList() : result.subList(0, lastNonEmpty + 1);
   }
 
+  @Override
+  public boolean hasExplicitIndent() {
+    return getExplicitIndent() != IMPLICIT_INDENT;
+  }
+
+  /**
+   * @return Nth child of this scalar block item type ({@link YAMLElementTypes#BLOCK_SCALAR_ITEMS}).
+   *         Child with number 0 is a header. Content children have numbers more than 0.
+   */
+  @Nullable
+  public ASTNode getNthContentTypeChild(int nth) {
+    int number = 0;
+    for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getElementType() == getContentType()) {
+        if (number == nth) {
+          return child;
+        }
+        number++;
+      }
+    }
+    return null;
+  }
+
   /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2793979">8.1.1.1. Block Indentation Indicator</a>*/
   protected final int locateIndent() {
     int indent = getExplicitIndent();
@@ -131,21 +155,6 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     }
 
     return ChompingIndicator.CLIP;
-  }
-
-
-  @Nullable
-  private ASTNode getNthContentTypeChild(int nth) {
-    int number = 0;
-    for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.getElementType() == getContentType()) {
-        if (number == nth) {
-          return child;
-        }
-        number++;
-      }
-    }
-    return null;
   }
 
   private int getExplicitIndent() {

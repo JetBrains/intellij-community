@@ -119,15 +119,22 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'ClassB from foo.bar.baz'");
   }
 
+  // PY-24450
+  public void testAvailableForUnqualifiedDecoratorWithoutArguments() {
+    doMultiFileAutoImportTest("Import 'pytest'");
+  }
+
+  // PY-24450
+  public void testUnavailableForUnqualifiedDecoratorWithArguments() {
+    doMultiFileNegativeTest("Import 'pytest'");
+  }
+
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
     doMultiFileAutoImportTest(hintPrefix, null);
   }
 
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<AutoImportQuickFix> checkQuickfix) {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.configureByFile("main.py");
-    myFixture.checkHighlighting(true, false, false);
+    configureMultiFileProject();
 
     final PsiElement hostUnderCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     final PyReferenceExpression hostRefExpr = PsiTreeUtil.getParentOfType(hostUnderCaret, PyReferenceExpression.class);
@@ -146,5 +153,17 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       myFixture.launchAction(myFixture.findSingleIntention(hintPrefix));
       myFixture.checkResultByFile(getTestName(true) + "/main_after.py", true);
     }
+  }
+
+  private void doMultiFileNegativeTest(@NotNull String hintPrefix) {
+    configureMultiFileProject();
+    assertEmpty(myFixture.filterAvailableIntentions(hintPrefix));
+  }
+
+  private void configureMultiFileProject() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.configureByFile("main.py");
+    myFixture.checkHighlighting(true, false, false);
   }
 }

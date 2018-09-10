@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.propertyInspector.*;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import java.util.ArrayList;
@@ -30,7 +19,8 @@ import java.util.List;
 public class ResetValueAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ResetValueAction");
 
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  @Override
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     final PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();
@@ -38,7 +28,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
     doResetValue(selection, property, editor);
   }
 
-  public static void doResetValue(final List<RadComponent> selection, final Property property, final GuiEditor editor) {
+  public static void doResetValue(final List<? extends RadComponent> selection, final Property property, final GuiEditor editor) {
     try {
       if (!editor.ensureEditable()) return;
       final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(editor).getPropertyInspector();
@@ -62,7 +52,8 @@ public class ResetValueAction extends AbstractGuiEditorAction {
     }
   }
 
-  protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  @Override
+  protected void update(final GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();

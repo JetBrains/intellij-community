@@ -132,7 +132,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   private static class InvalidOrderPartPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
     private final String myOrderPart;
 
-    public InvalidOrderPartPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement, String orderPart) {
+    InvalidOrderPartPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement, String orderPart) {
       super(element, rangeInElement);
       myOrderPart = orderPart;
     }
@@ -141,12 +141,6 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Override
     public PsiElement resolve() {
       return null;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @NotNull
@@ -165,7 +159,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     private final String myReferencedId;
     private final Extension myExtension;
 
-    public OrderReferencedIdPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement,
+    OrderReferencedIdPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement,
                                          @NotNull String referencedId, @NotNull Extension extension) {
       super(element, rangeInElement);
       myReferencedId = referencedId;

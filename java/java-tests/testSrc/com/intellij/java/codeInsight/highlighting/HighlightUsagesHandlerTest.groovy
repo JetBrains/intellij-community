@@ -98,6 +98,20 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
     checkUnselect()
   }
 
+  void testBreakInSwitch() {
+    configureFile()
+    ctrlShiftF7()
+    assertRangeText 'switch', 'break'
+    checkUnselect()
+  }
+
+  void testBreakInDoWhile() {
+    configureFile()
+    ctrlShiftF7()
+    assertRangeText 'break', 'continue', 'while'
+    checkUnselect()
+  }
+
   void testIDEADEV28822() {
     myFixture.configureByText 'Foo.java', '''
       public class Foo {

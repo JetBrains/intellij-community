@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -34,7 +22,6 @@ import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,6 +118,7 @@ public class GitTagDialog extends DialogWrapper {
 
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myGitRootComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         fetchTags();
         validateFields();
@@ -138,13 +126,15 @@ public class GitTagDialog extends DialogWrapper {
     });
     fetchTags();
     myTagNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateFields();
       }
     });
     myCommitTextFieldValidator = new GitReferenceValidator(project, myGitRootComboBox, myCommitTextField, myValidateButton,
                                                            () -> validateFields());
     myForceCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myForceCheckBox.isEnabled()) {
           validateFields();
@@ -266,23 +256,17 @@ public class GitTagDialog extends DialogWrapper {
    */
   private void fetchTags() {
     myExistingTags.clear();
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.TAG);
-    h.setSilent(true);
-    GitCommandResult result = ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(() -> myGit.runCommand(h),
-                                           GitBundle.getString("tag.getting.existing.tags"),
-                                           false,
-                                           myProject);
-    if (!result.success()) {
-      GitUIUtil.showOperationError(myProject, GitBundle.getString("tag.getting.existing.tags"), result.getErrorOutputAsJoinedString());
-      throw new ProcessCanceledException();
+
+    try {
+      myExistingTags.addAll(ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> GitBranchUtil.getAllTags(myProject, getGitRoot()),
+        GitBundle.getString("tag.getting.existing.tags"),
+        false,
+        myProject));
     }
-    for (StringScanner s = new StringScanner(result.getOutputAsJoinedString()); s.hasMoreData(); ) {
-      String line = s.line();
-      if (line.length() == 0) {
-        continue;
-      }
-      myExistingTags.add(line);
+    catch (VcsException e) {
+      GitUIUtil.showOperationError(myProject, GitBundle.getString("tag.getting.existing.tags"), e.getMessage());
+      throw new ProcessCanceledException();
     }
   }
 
@@ -296,6 +280,7 @@ public class GitTagDialog extends DialogWrapper {
   /**
    * {@inheritDoc}
    */
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

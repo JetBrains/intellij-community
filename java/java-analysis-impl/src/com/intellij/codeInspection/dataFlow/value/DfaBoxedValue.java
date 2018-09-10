@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DfaBoxedValue extends DfaValue {
@@ -70,8 +71,7 @@ public class DfaBoxedValue extends DfaValue {
         return ((DfaBoxedValue)value).getWrappedValue();
       }
       if (value instanceof DfaConstValue) {
-        if (value == value.myFactory.getConstFactory().getNull()) return DfaUnknownValue.getInstance();
-        return value;
+        return TypeConversionUtil.isPrimitiveAndNotNull(((DfaConstValue)value).getType()) ? value : DfaUnknownValue.getInstance();
       }
       if (value instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)value;

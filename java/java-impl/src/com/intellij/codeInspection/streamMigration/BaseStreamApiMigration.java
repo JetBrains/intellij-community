@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
@@ -77,7 +78,10 @@ abstract class BaseStreamApiMigration {
     }
     else {
       if (status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
-        ct.delete(initializer);
+        PsiTypeElement typeElement = var.getTypeElement();
+        if (typeElement == null || !typeElement.isInferredType() || PsiTypesUtil.replaceWithExplicitType(typeElement) != null) {
+          ct.delete(initializer);
+        }
       }
       return ct.replaceAndRestoreComments(loopStatement, var.getName() + " = " + replacement + ";");
     }

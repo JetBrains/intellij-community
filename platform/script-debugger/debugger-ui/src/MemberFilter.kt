@@ -16,14 +16,14 @@
 package org.jetbrains.debugger
 
 interface MemberFilter {
-  fun isMemberVisible(variable: Variable) = variable.isReadable
+  fun isMemberVisible(variable: Variable): Boolean = variable.isReadable
 
   val additionalVariables: Collection<Variable>
     get() = emptyList()
 
-  fun rawNameToSource(variable: Variable) = variable.name
+  fun rawNameToSource(variable: Variable): String = variable.name
 
   fun sourceNameToRaw(name: String): String? = null
 
-  fun hasNameMappings() = false
+  fun hasNameMappings(): Boolean = false
 }

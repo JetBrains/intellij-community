@@ -1,12 +1,13 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.tasks;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
-import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public class GithubRepositoryType extends BaseRepositoryType<GithubRepository> {
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksCoreIcons.Github;
+    return AllIcons.Vcs.Vendors.Github;
   }
 
   @NotNull
@@ -48,6 +49,7 @@ public class GithubRepositoryType extends BaseRepositoryType<GithubRepository> {
     return new GithubRepositoryEditor(project, repository, changeListener);
   }
 
+  @Override
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.of(TaskState.OPEN, TaskState.RESOLVED);
   }

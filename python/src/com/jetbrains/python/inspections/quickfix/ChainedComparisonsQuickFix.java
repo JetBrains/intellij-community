@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
@@ -27,6 +14,8 @@ import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -56,11 +45,13 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     myUseRightChildOfLeft = useRightChildOfLeft;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("QFIX.chained.comparison");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PyBinaryExpression expression = as(descriptor.getPsiElement(), PyBinaryExpression.class);
     if (isLogicalAndExpression(expression) && expression.isWritable()) {
@@ -87,7 +78,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     else {
       newLeftExpression = leftExpression;
     }
-    
+
     if (myCommonIsInRightLeft) {
       operator = getLeftestOperator(rightExpression).getText();
       newRightExpression = getLargeRightExpression(rightExpression, project);
@@ -103,9 +94,59 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
       }
     }
     final PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(operator, newLeftExpression, newRightExpression);
-    leftExpression.replace(binaryExpression);
+    leftExpression.replace(makePsiConsistentBinaryExpression(project, binaryExpression));
     rightExpression.delete();
   }
+
+  @NotNull
+  private static PyExpression makePsiConsistentBinaryExpression(@NotNull Project project, @NotNull PyBinaryExpression binaryExpression) {
+    final ArrayList<PyExpression> elements = new ArrayList<>();
+    final ArrayList<String> operators = new ArrayList<>();
+    collectExpressionsDfs(elements, operators, binaryExpression);
+    PyExpression resultExpression = buildResultExpression(project, elements, operators);
+    return ObjectUtils.chooseNotNull(resultExpression, binaryExpression);
+  }
+
+  private static void collectExpressionsDfs(@NotNull ArrayList<PyExpression> elements,
+                                            @NotNull ArrayList<String> operators,
+                                            @NotNull PyBinaryExpression expression) {
+    final PyExpression rightExpr = expression.getRightExpression();
+    if (rightExpr instanceof PyBinaryExpression && isComparisonExpression(rightExpr)) {
+      collectExpressionsDfs(elements, operators, (PyBinaryExpression)rightExpr);
+    }
+    else {
+      elements.add(rightExpr);
+    }
+    if (expression.getPsiOperator() != null) {
+      operators.add(expression.getPsiOperator().getText());
+    }
+    final PyExpression leftExpr = expression.getLeftExpression();
+    if (leftExpr instanceof PyBinaryExpression && isComparisonExpression(leftExpr)) {
+      collectExpressionsDfs(elements, operators, (PyBinaryExpression)leftExpr);
+    }
+    else {
+      elements.add(leftExpr);
+    }
+  }
+
+  @Nullable
+  private static PyExpression buildResultExpression(@NotNull Project project,
+                                                    @NotNull ArrayList<PyExpression> elements,
+                                                    @NotNull ArrayList<String> operators) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    final int size = elements.size();
+    if (elements.isEmpty()) return null;
+    PyExpression currentResult = elements.get(size - 1);
+    int i = size - 2;
+    while (i >= 0) {
+      PyExpression nextElement = elements.get(i);
+      String nextOperator = operators.get(i);
+      currentResult = elementGenerator.createBinaryExpression(nextOperator, currentResult, nextElement);
+      i--;
+    }
+    return currentResult;
+  }
+
 
   @NotNull
   private static PsiElement getLeftestOperator(@NotNull PyBinaryExpression expression) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
@@ -61,7 +62,7 @@ public class PlaybackRunner {
     myStopOnAppDeactivation = stopOnAppDeactivation;
     myAppListener = new ApplicationActivationListener() {
       @Override
-      public void applicationDeactivated(IdeFrame ideFrame) {
+      public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
           myCallback.message(null, "App lost focus, stopping...", StatusCallback.Type.message);
           stop();
@@ -137,10 +138,12 @@ public class PlaybackRunner {
 
           private final long myTimeStamp = myContextTimestamp;
 
+          @Override
           public void pushStage(StageInfo info) {
             myCurrentStageDepth.add(info);
           }
 
+          @Override
           public StageInfo popStage() {
             if (myCurrentStageDepth.size() > 0) {
               return myCurrentStageDepth.remove(myCurrentStageDepth.size() - 1);
@@ -149,6 +152,7 @@ public class PlaybackRunner {
             return null;
           }
 
+          @Override
           public int getCurrentStageDepth() {
             return myCurrentStageDepth.size();
           }
@@ -311,6 +315,7 @@ public class PlaybackRunner {
     abstract class Edt implements StatusCallback {
 
 
+      @Override
       public final void message(final PlaybackContext context,
                                 final String text,
                                 final Type type) {

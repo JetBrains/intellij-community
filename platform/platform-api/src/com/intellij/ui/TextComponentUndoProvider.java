@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
@@ -30,6 +31,7 @@ import javax.swing.undo.UndoManager;
  * @deprecated use {@link com.intellij.util.ui.UIUtil#addUndoRedoActions(javax.swing.text.JTextComponent)}
  * @author yole
  */
+@Deprecated
 public class TextComponentUndoProvider implements Disposable {
   protected final JTextComponent myTextComponent;
   protected final UndoManager myUndoManager = new UndoManager();
@@ -51,26 +53,26 @@ public class TextComponentUndoProvider implements Disposable {
 
     AnAction undoAction = new AnAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(canUndo());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         undo();
       }
     };
 
     AnAction redoAction = new AnAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(canRedo());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         redo();
       }
     };

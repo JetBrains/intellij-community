@@ -134,7 +134,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
   void queueHighlightInfo(@NotNull HighlightInfo info,
                           @NotNull TextRange restrictedRange,
                           int groupId) {
-    myEDTQueue.offer(() -> {
+    applyInEDT(() -> {
       final EditorColorsScheme colorsScheme = getColorsScheme();
       UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), restrictedRange.getStartOffset(),
                                              restrictedRange.getEndOffset(),
@@ -146,7 +146,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter == null) return;
     // that highlighter may have been reused for another info
-    myEDTQueue.offer(() -> {
+    applyInEDT(() -> {
       Object actualInfo = highlighter.getErrorStripeTooltip();
       if (actualInfo == info && info.getHighlighter() == highlighter) highlighter.dispose();
     });

@@ -215,10 +215,19 @@ public class DiffTree<OT, NT> {
     return ThreeElementMatchResult.noMatch;
   }
 
+  // Represents the result of matching among 3 next node children in before and after tree  
   private enum ThreeElementMatchResult {
-    fullStartMatch, drillDownStartMatch, replaceStart,
+    // first children match completely
+    fullStartMatch,
+    // first children match well, PSI instance should be preserved
+    drillDownStartMatch,
+    // PSI instance should be replaced for first children
+    replaceStart,
+    // first 1 or 2 "new" children don't match, report them as inserted and try matching after them
     skipNew1, skipNew2,
+    // first 1 or 2 "old" children don't match, report them as deleted and try matching after them
     skipOld1, skipOld2,
+    // nothing in the 3-children scope matches both the "old" and the "old" first child
     noMatch;
 
     final int skipNewCount() { return this == skipNew1 ? 1 : this == skipNew2 ? 2 : 0; }

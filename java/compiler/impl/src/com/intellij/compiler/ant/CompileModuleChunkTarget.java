@@ -162,7 +162,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
   }
 
   private static String getChunkDependenciesString(ModuleChunk moduleChunk) {
-    final StringBuffer moduleDependencies = new StringBuffer();
+    final StringBuilder moduleDependencies = new StringBuilder();
     final ModuleChunk[] dependencies = moduleChunk.getDependentChunks();
     for (int idx = 0; idx < dependencies.length; idx++) {
       final ModuleChunk dependency = dependencies[idx];

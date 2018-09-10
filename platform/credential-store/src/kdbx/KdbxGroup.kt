@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.util.containers.ContainerUtil
@@ -10,8 +11,8 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
-  @Volatile var name = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
+internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
+  @Volatile var name: String = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
     set(value) {
       if (field != value) {
         field = value
@@ -80,9 +81,9 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     getGroup(name)?.let { removeGroup(it) }
   }
 
-  fun getGroup(name: String) = groups.firstOrNull { it.name == name }
+  fun getGroup(name: String): KdbxGroup? = groups.firstOrNull { it.name == name }
 
-  fun getOrCreateGroup(name: String) = getGroup(name) ?: createGroup(name)
+  fun getOrCreateGroup(name: String): KdbxGroup = getGroup(name) ?: createGroup(name)
 
   fun createGroup(name: String): KdbxGroup {
     val result = createGroup(database, this)
@@ -91,7 +92,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     return result
   }
 
-  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean) = entries.firstOrNull(matcher)
+  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean): KdbxEntry? = entries.firstOrNull(matcher)
 
   fun addEntry(entry: KdbxEntry): KdbxEntry {
     entry.group?.let {
@@ -111,7 +112,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     return entry
   }
 
-  fun getEntry(title: String, userName: String?) = getEntry { it.title == title && (it.userName == userName || userName == null) }
+  fun getEntry(title: String, userName: String?): KdbxEntry? = getEntry { it.title == title && (it.userName == userName || userName == null) }
 
   fun getOrCreateEntry(title: String, userName: String?): KdbxEntry {
     var entry = getEntry(title, userName)
@@ -123,7 +124,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
     return entry
   }
 
-  fun removeEntry(title: String, userName: String?) = getEntry(title, userName)?.let { removeEntry(it) }
+  fun removeEntry(title: String, userName: String?): KdbxEntry? = getEntry(title, userName)?.let { removeEntry(it) }
 
   val path: String
     get() {
@@ -141,7 +142,7 @@ class KdbxGroup(private val element: Element, private val database: KeePassDatab
       return result.toString()
     }
 
-  override fun toString() = path
+  override fun toString(): String = path
 }
 
 internal fun createGroup(db: KeePassDatabase, parent: KdbxGroup?): KdbxGroup {

@@ -50,6 +50,43 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     checkResult("class C { void m() { System.out.println(\"a\"<caret>); System.out.println(\"a\"<caret>); } }");
   }
 
+  public void testGeneric() {
+    configureJava("class C { Comparable<caret> }");
+    type("<String");
+    tabOut();
+    checkResult("class C { Comparable<String><caret> }");
+  }
+
+  public void testArray() {
+    configureJava("class C { int[] ar = new in<caret> }");
+    complete();
+    type("123");
+    tabOut();
+    checkResult("class C { int[] ar = new int[123]<caret> }");
+  }
+
+  public void testWhile() {
+    configureJava("class C { void m() { whil<caret> } }");
+    complete();
+    type("true");
+    tabOut();
+    checkResult("class C { void m() { while (true)<caret>} }");
+  }
+
+  public void testAddImport() {
+    configureJava("class C {\n" +
+                  "  java.util.List<caret>\n" +
+                  "}");
+    type("<ArrayList");
+    runImportClassIntention();
+    tabOut();
+    checkResult("import java.util.ArrayList;\n" +
+                "\n" +
+                "class C {\n" +
+                "  java.util.List<ArrayList><caret>\n" +
+                "}");
+  }
+
   private void tabOut() {
     myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
   }
@@ -60,5 +97,9 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
 
   private void right() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+  }
+
+  private void runImportClassIntention() {
+    myFixture.launchAction(myFixture.findSingleIntention("Import class"));
   }
 }

@@ -48,7 +48,7 @@ public class DelegateMethodsAction extends BaseCodeInsightAction {
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (CodeInsightActions.DELEGATE_METHODS.hasAnyExtensions()) {
       event.getPresentation().setVisible(true);
       super.update(event);

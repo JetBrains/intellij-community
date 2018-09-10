@@ -33,9 +33,12 @@ import java.util.List;
  * @author ik
  */
 public class MethodCandidatesProcessor extends MethodsProcessor{
-  protected boolean myHasAccessibleStaticCorrectCandidate;
+  boolean myHasAccessibleStaticCorrectCandidate;
 
-  public MethodCandidatesProcessor(@NotNull PsiElement place, PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container) {
+  protected MethodCandidatesProcessor(@NotNull PsiElement place,
+                                      PsiFile placeFile,
+                                      @NotNull PsiConflictResolver[] resolvers,
+                                      @NotNull List<CandidateInfo> container) {
     super(resolvers, container, place, placeFile);
   }
 
@@ -51,7 +54,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, boolean staticProblem) {
+  public void addMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean staticProblem) {
     final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
@@ -73,7 +76,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  private boolean isInterfaceStaticMethodAccessibleThroughInheritance(PsiMethod method) {
+  private boolean isInterfaceStaticMethodAccessibleThroughInheritance(@NotNull PsiMethod method) {
     if (method.hasModifierProperty(PsiModifier.STATIC) && 
         !(myCurrentFileContext instanceof PsiImportStaticStatement) && 
         myPlace instanceof PsiMethodCallExpression && 
@@ -84,7 +87,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
-  protected PsiClass getContainingClass(PsiMethod method) {
+  protected PsiClass getContainingClass(@NotNull PsiMethod method) {
     return method.getContainingClass();
   }
 
@@ -98,11 +101,12 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
                                                getTypeArguments(), getLanguageLevel(), varargs);
   }
 
-  protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
-    return argumentList != null ? argumentList.getExpressionTypes() : null;
+  @NotNull
+  private static PsiType[] getExpressionTypes(@NotNull PsiExpressionList argumentList) {
+    return argumentList.getExpressionTypes();
   }
 
-  protected boolean isAccepted(final PsiMethod candidate) {
+  protected boolean isAccepted(@NotNull PsiMethod candidate) {
     if (!isConstructor()) {
       return !candidate.isConstructor() && candidate.getName().equals(getName(ResolveState.initial()));
     }
@@ -117,7 +121,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  protected boolean isShadowed(final PsiMethod candidate) {
+  private boolean isShadowed(@NotNull PsiMethod candidate) {
     if (myCurrentFileContext instanceof PsiImportStaticStatement) {
       for (JavaResolveResult result : getResults()) {
         if (result.getElement() != candidate &&
@@ -128,6 +132,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
+  @NotNull
   public CandidateInfo[] getCandidates() {
     final JavaResolveResult[] resolveResult = getResult();
     if (resolveResult.length == 0) return CandidateInfo.EMPTY_ARRAY;
@@ -142,12 +147,12 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     private final boolean myVarargs;
     private PsiType[] myExpressionTypes;
 
-    public VarargsAwareMethodCandidateInfo(PsiMethod method,
-                                           PsiSubstitutor substitutor,
-                                           boolean accessible,
-                                           boolean staticProblem,
-                                           PsiExpressionList argumentList,
-                                           PsiElement context, PsiType[] arguments, LanguageLevel level, boolean varargs) {
+    VarargsAwareMethodCandidateInfo(@NotNull PsiMethod method,
+                                    @NotNull PsiSubstitutor substitutor,
+                                    boolean accessible,
+                                    boolean staticProblem,
+                                    PsiExpressionList argumentList,
+                                    PsiElement context, PsiType[] arguments, @NotNull LanguageLevel level, boolean varargs) {
       super(method, substitutor, !accessible, staticProblem, argumentList, context, null, arguments, level);
       myArgumentList = argumentList;
       myVarargs = varargs;

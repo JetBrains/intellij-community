@@ -17,17 +17,17 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 
 open class DarculaOptionButtonUI : BasicOptionButtonUI() {
-  protected open val clipXOffset = scale(7)
+  protected open val clipXOffset: Int = scale(7)
 
   private var optionButtonBorder: Border? = null
 
-  override fun configureOptionButton() = super.configureOptionButton().also { optionButtonBorder = optionButton.border }
-  override fun unconfigureOptionButton() = super.unconfigureOptionButton().also {
+  override fun configureOptionButton(): Unit = super.configureOptionButton().also { optionButtonBorder = optionButton.border }
+  override fun unconfigureOptionButton(): Unit = super.unconfigureOptionButton().also {
     optionButton.border = optionButtonBorder
     optionButtonBorder = null
   }
 
-  override fun createMainButton() = object : MainButton() {
+  override fun createMainButton(): MainButton = object : MainButton() {
     override fun paintNotSimple(g: Graphics2D) {
       g.clipRect(0, 0, width - clipXOffset, height)
       paintBackground(g, this)
@@ -36,10 +36,10 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     }
   }
 
-  override fun configureMainButton() = super.configureMainButton().also { mainButton.isOpaque = false }
-  override fun unconfigureMainButton() = super.unconfigureMainButton().also { mainButton.isOpaque = true }
+  override fun configureMainButton(): Unit = super.configureMainButton().also { mainButton.isOpaque = false }
+  override fun unconfigureMainButton(): Unit = super.unconfigureMainButton().also { mainButton.isOpaque = true }
 
-  override fun createArrowButton() = object : ArrowButton() {
+  override fun createArrowButton(): ArrowButton = object : ArrowButton() {
     override fun paintNotSimple(g: Graphics2D) {
       g.clipRect(clipXOffset, 0, width - clipXOffset, height)
       paintBackground(g, this)
@@ -57,12 +57,12 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     g.fill(DarculaComboBoxUI.getArrowShape(b))
   }
 
-  override fun configureArrowButton() = super.configureArrowButton().also { arrowButton.isOpaque = false }
-  override fun unconfigureArrowButton() = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
+  override fun configureArrowButton(): Unit = super.configureArrowButton().also { arrowButton.isOpaque = false }
+  override fun unconfigureArrowButton(): Unit = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
 
-  override val arrowButtonPreferredSize get() = Dimension(getArrowButtonPreferredSize(null).width, optionButton.preferredSize.height)
+  override val arrowButtonPreferredSize: Dimension get() = Dimension(getArrowButtonPreferredSize(null).width, optionButton.preferredSize.height)
 
-  override val showPopupXOffset get() = JBUI.scale(3)
+  override val showPopupXOffset: Int get() = JBUI.scale(3)
 
   override fun paint(g: Graphics, c: JComponent) {
     if (!isSimpleButton) paintSeparatorArea(g as Graphics2D, c)
@@ -88,13 +88,13 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     g.fill(Rectangle2D.Float(x, yOffset, LW.getFloat(), mainButton.height - yOffset * 2))
   }
 
-  override fun updateOptions() = super.updateOptions().also {
+  override fun updateOptions(): Unit = super.updateOptions().also {
     optionButton.border = if (isSimpleButton) optionButtonBorder else mainButton.border
   }
 
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun createUI(c: JComponent) = DarculaOptionButtonUI()
+    fun createUI(c: JComponent): DarculaOptionButtonUI = DarculaOptionButtonUI()
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.FluentIterable;
@@ -64,15 +50,18 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     pyVisitor.visitPyFromImportStatement(this);
   }
 
+  @Override
   public boolean isStarImport() {
     return getStarImportElement() != null;
   }
 
+  @Override
   @Nullable
   public PyReferenceExpression getImportSource() {
     return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens(), 0);
   }
 
+  @Override
   public QualifiedName getImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
@@ -90,6 +79,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return importSource.asQualifiedName();
   }
 
+  @Override
   @NotNull
   public PyImportElement[] getImportElements() {
     return getImportElements(PyElementTypes.IMPORT_ELEMENT, PyTokenTypes.IMPORT_KEYWORD);
@@ -115,11 +105,13 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return result.toArray(new PyImportElement[0]);
   }
 
+  @Override
   @Nullable
   public PyStarImportElement getStarImportElement() {
     return getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
+  @Override
   public int getRelativeLevel() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
@@ -138,6 +130,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return result;
   }
 
+  @Override
   public boolean isFromFuture() {
     final QualifiedName qName = getImportSourceQName();
     return qName != null && qName.matches(PyNames.FUTURE_MODULE);
@@ -153,6 +146,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return findChildByType(PyTokenTypes.RPAR);
   }
 
+  @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull final ResolveState state,
                                      final PsiElement lastParent,
@@ -231,6 +225,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     super.deleteChildInternal(child);
   }
 
+  @Override
   @Nullable
   public PsiFileSystemItem resolveImportSource() {
     return FluentIterable.from(resolveImportSourceCandidates()).filter(PsiFileSystemItem.class).first().orNull();

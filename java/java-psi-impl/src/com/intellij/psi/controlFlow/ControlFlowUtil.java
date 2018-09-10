@@ -191,7 +191,7 @@ public class ControlFlowUtil {
                                          int start,
                                          int end,
                                          final boolean ignoreNotReachingWrites,
-                                         @NotNull Collection<PsiVariable> set) {
+                                         @NotNull Collection<? super PsiVariable> set) {
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions.get(i);
@@ -408,7 +408,7 @@ public class ControlFlowUtil {
 
   private static void processGoto(@NotNull ControlFlow flow, int start, int end,
                                   @NotNull IntArrayList exitPoints,
-                                  @NotNull Collection<PsiStatement> exitStatements,
+                                  @NotNull Collection<? super PsiStatement> exitStatements,
                                   @NotNull BranchingInstruction instruction,
                                   final PsiStatement statement, @NotNull Class... classesFilter) {
     if (statement == null) return;
@@ -417,7 +417,7 @@ public class ControlFlowUtil {
       // process chain of goto's
       gotoOffset = promoteThroughGotoChain(flow, gotoOffset);
 
-      if (!exitPoints.contains(gotoOffset) && (gotoOffset >= end || gotoOffset < start) && gotoOffset > 0) {
+      if (gotoOffset > 0 && (gotoOffset >= end || gotoOffset < start) && !exitPoints.contains(gotoOffset)) {
         exitPoints.add(gotoOffset);
       }
       if (gotoOffset >= end || gotoOffset < start) {
@@ -434,7 +434,7 @@ public class ControlFlowUtil {
     }
   }
 
-  private static void processGotoStatement(@NotNull Collection<PsiStatement> exitStatements,
+  private static void processGotoStatement(@NotNull Collection<? super PsiStatement> exitStatements,
                                            PsiStatement statement, @NotNull Class... classesFilter) {
     if (statement != null && isElementOfClass(statement, classesFilter)) {
       exitStatements.add(statement);
@@ -577,7 +577,7 @@ public class ControlFlowUtil {
       }
 
       @NotNull
-      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<PsiTryStatement> tryStatements, @NotNull List<PsiClassType> thrownExceptions) {
+      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<? extends PsiTryStatement> tryStatements, @NotNull List<? extends PsiClassType> thrownExceptions) {
         final IntArrayList catchOrFinallyOffsets = new IntArrayList();
         for (PsiTryStatement tryStatement : tryStatements) {
           final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -755,7 +755,7 @@ public class ControlFlowUtil {
    * @param targetClassMember member in target class containing code fragment
    * @return true if code fragment can be extracted outside
    */
-  public static boolean collectOuterLocals(@NotNull List<PsiVariable> array, @NotNull PsiElement scope, @NotNull PsiElement member,
+  public static boolean collectOuterLocals(@NotNull List<? super PsiVariable> array, @NotNull PsiElement scope, @NotNull PsiElement member,
                                            @NotNull PsiElement targetClassMember) {
     if (scope instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression call = (PsiMethodCallExpression)scope;
@@ -922,7 +922,7 @@ public class ControlFlowUtil {
       // false if control flow at this offset terminates either by return called or exception thrown
       private final boolean[] isNormalCompletion = new boolean[flow.getSize() + 1];
 
-      public MyVisitor() {
+      MyVisitor() {
         int i;
         final int length = flow.getSize();
         for (i = 0; i < startOffset; i++) {
@@ -1506,7 +1506,7 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(@NotNull List<Instruction> instructions,
+  private static void internalDepthFirstSearch(@NotNull List<? extends Instruction> instructions,
                                                @NotNull InstructionClientVisitor clientVisitor,
                                                int startOffset,
                                                int endOffset) {
@@ -1623,6 +1623,7 @@ public class ControlFlowUtil {
      * Push an arc of the graph (oldOffset -> newOffset)
      */
     void push(int oldOffset, int newOffset) {
+      LOG.assertTrue(oldOffset >= 0, "negative offset is pushed to walk-through stack");
       if (size >= newOffsets.length) {
         oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
         newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);
@@ -1719,7 +1720,7 @@ public class ControlFlowUtil {
       this(Arrays.asList(infos));
     }
 
-    CopyOnWriteList(@NotNull Collection<VariableInfo> infos) {
+    CopyOnWriteList(@NotNull Collection<? extends VariableInfo> infos) {
       list = new SmartList<>(infos);
     }
 

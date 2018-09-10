@@ -6,8 +6,6 @@ import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 
 public interface MergeProvider extends VcsProviderMarker {
   @NotNull
@@ -21,8 +19,9 @@ public interface MergeProvider extends VcsProviderMarker {
   boolean isBinary(@NotNull VirtualFile file);
 
   /**
-   * Called after a multiple file merge operation with the specified list of files has been completed.
+   * Creates a merge dialog customizer used when the default "Resolve conflicts" operation is invoked.
    */
-  default void mergeDone(@NotNull List<VirtualFile> files) {
+  default MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
+    return new MergeDialogCustomizer();
   }
 }

@@ -31,7 +31,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   }
 
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
+  public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
     LineTooltipRenderer bigRenderer = null;
     List<HighlightInfo> infos = new SmartList<>();
     Collection<String> tooltips = new THashSet<>(); //do not show same tooltip twice
@@ -90,7 +90,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull String text, @Nullable TooltipAction action, int width) {
     if (action != null || Registry.is("ide.tooltip.show.with.actions")) {
-      return new DaemonTooltipWithActionRenderer(text, action, width, new Object[]{text});
+      return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
     }
     
     return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, action, width);

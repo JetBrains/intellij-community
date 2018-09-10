@@ -63,7 +63,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
       return;

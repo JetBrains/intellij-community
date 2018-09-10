@@ -112,7 +112,7 @@ public abstract class StickyHeadGetter {
         }
       }
       return myStickyData;
-    }                                           
+    }
   }
 
   public abstract String getHead(final VirtualFile parent, final String name);
@@ -125,9 +125,11 @@ public abstract class StickyHeadGetter {
     final Ref<Boolean> logSuccess = new Ref<>(Boolean.TRUE);
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(new CvsMessagesAdapter(),
       CvsExecutionEnvironment.DUMMY_STOPPER, new ErrorProcessor() {
+      @Override
       public void addError(VcsException ex) {
         logSuccess.set(Boolean.FALSE);
       }
+      @Override
       public List<VcsException> getErrors() {
         return null;
       }

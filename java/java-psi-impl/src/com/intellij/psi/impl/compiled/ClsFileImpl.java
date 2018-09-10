@@ -191,7 +191,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     throw new UnsupportedOperationException("Cannot add imports to compiled classes");
   }
 
@@ -308,17 +308,14 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    //noinspection deprecation
-    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
-      if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
-        try {
-          PsiFile navigationElement = ((ClsCustomNavigationPolicyEx)customNavigationPolicy).getFileNavigationElement(this);
-          if (navigationElement != null) {
-            return navigationElement;
-          }
-        }
-        catch (IndexNotReadyException ignore) { }
+    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+      try {
+        PsiElement navigationElement =
+          navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :
+          navigationPolicy.getNavigationElement(this);
+        if (navigationElement != null) return navigationElement;
       }
+      catch (IndexNotReadyException ignore) { }
     }
 
     return CachedValuesManager.getCachedValue(this, () -> {
@@ -412,6 +409,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiFile:" + getName();
@@ -594,7 +592,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    public FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
+    FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
       super(file, content);
     }
 

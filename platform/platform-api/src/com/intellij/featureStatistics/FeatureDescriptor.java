@@ -31,7 +31,7 @@ public class FeatureDescriptor{
   @NotNull private String myTipFileName;
   @NotNull private String myDisplayName;
   private int myDaysBeforeFirstShowUp;
-  private int myDaysBetweenSuccesiveShowUps;
+  private int myDaysBetweenSuccessiveShowUps;
   private Set<String> myDependencies;
   private int myMinUsageCount;
 
@@ -79,7 +79,7 @@ public class FeatureDescriptor{
     myTipFileName = tipFileName;
     myDisplayName = displayName;
     myDaysBeforeFirstShowUp = daysBeforeFirstShowUp;
-    myDaysBetweenSuccesiveShowUps = daysBetweenSuccessiveShowUps;
+    myDaysBetweenSuccessiveShowUps = daysBetweenSuccessiveShowUps;
     myDependencies = dependencies;
     myMinUsageCount = minUsageCount;
     myProvider = provider;
@@ -90,7 +90,7 @@ public class FeatureDescriptor{
     myTipFileName = element.getAttributeValue(ATTRIBUTE_TIP_FILE);
     myDisplayName = FeatureStatisticsBundle.message(myId);
     myDaysBeforeFirstShowUp = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW), 1);
-    myDaysBetweenSuccesiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
+    myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
     List dependencies = element.getChildren(ELEMENT_DEPENDENCY);
@@ -164,8 +164,8 @@ public class FeatureDescriptor{
     return myDaysBeforeFirstShowUp;
   }
 
-  public int getDaysBetweenSuccesiveShowUps() {
-    return myDaysBetweenSuccesiveShowUps;
+  public int getDaysBetweenSuccessiveShowUps() {
+    return myDaysBetweenSuccessiveShowUps;
   }
 
   public int getMinUsageCount() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.stubs.FileContentHashing
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
@@ -16,28 +17,28 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author traff
  */
-
 abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
   companion object {
-    val CHECK_HASH_COLLISIONS: Boolean = System.getenv("INDEX_GENERATOR_CHECK_HASH_COLLISIONS")?.toBoolean() ?: false
+    const val CHECK_HASH_COLLISIONS_PROPERTY = "idea.index.generator.check.hash.collisions"
+    val CHECK_HASH_COLLISIONS: Boolean = SystemProperties.`is`(CHECK_HASH_COLLISIONS_PROPERTY)
   }
 
-  open val fileFilter
+  open val fileFilter: VirtualFileFilter
     get() = VirtualFileFilter { f -> !f.isDirectory }
 
   data class Stats(val indexed: AtomicInteger, val skipped: AtomicInteger) {
     constructor() : this(AtomicInteger(0), AtomicInteger(0))
   }
 
-  protected fun buildIndexForRoots(roots: List<VirtualFile>) {
+  protected fun buildIndexForRoots(roots: Collection<VirtualFile>) {
     val hashing = FileContentHashing()
 
     val storage = createStorage(indexStorageFilePath)
 
     println("Writing indices to ${storage.baseFile.absolutePath}")
 
-    try {
-      val map = HashMap<HashCode, Pair<String, Value>>()
+    storage.use {
+      val map = HashMap<HashCode, String>()
 
       for (file in roots) {
         println("Processing files in root ${file.path}")
@@ -52,14 +53,11 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
         println("${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
       }
     }
-    finally {
-      storage.close()
-    }
   }
 
   private fun indexFile(file: VirtualFile,
                         hashing: FileContentHashing,
-                        map: HashMap<HashCode, Pair<String, Value>>,
+                        map: MutableMap<HashCode, String>,
                         storage: PersistentHashMap<HashCode, Value>,
                         stats: Stats): Boolean {
     try {
@@ -79,14 +77,12 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
             stats.indexed.incrementAndGet()
 
             if (CHECK_HASH_COLLISIONS) {
-              map.put(hashCode,
-                      Pair(fileContent.contentAsText.toString(), value))
+              map[hashCode] = fileContent.contentAsText.toString()
             }
           }
           else {
-            TestCase.assertEquals(item.first,
-                                  fileContent.contentAsText.toString())
-            TestCase.assertTrue(value == item.second)
+            TestCase.assertEquals(item, fileContent.contentAsText.toString())
+            TestCase.assertTrue(storage.get(hashCode) == value)
           }
         }
         else {

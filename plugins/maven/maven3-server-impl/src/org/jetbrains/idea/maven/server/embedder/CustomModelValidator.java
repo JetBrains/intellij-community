@@ -27,7 +27,7 @@ import org.apache.maven.model.validation.ModelValidator;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 
 /**
  * @author ibessonov
@@ -69,7 +69,7 @@ public class CustomModelValidator extends DefaultModelValidator {
     private final ModelProblemCollector myDelegate;
     private boolean myHasFatalErrors = false;
 
-    public ProxyModelProblemCollector(ModelProblemCollector delegate) {
+    ProxyModelProblemCollector(ModelProblemCollector delegate) {
       myDelegate = delegate;
     }
 
@@ -89,7 +89,7 @@ public class CustomModelValidator extends DefaultModelValidator {
 
   private static class AbortOnFirstErrorProblemsCollector extends ProxyModelProblemCollector {
 
-    public AbortOnFirstErrorProblemsCollector(ModelProblemCollector delegate) {
+    AbortOnFirstErrorProblemsCollector(ModelProblemCollector delegate) {
       super(delegate);
     }
 

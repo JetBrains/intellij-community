@@ -20,5 +20,6 @@ package com.intellij.uiDesigner.ant;
  * @noinspection ClassNameSameAsAncestorName
  * @deprecated
  */
+@Deprecated
 public class Javac2 extends com.intellij.ant.Javac2 {
 }

@@ -61,6 +61,7 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
                   });
 
       FUStatisticsPersistence.clearSessionPersistence(System.currentTimeMillis());
+      FUStatisticsPersistence.clearLegacyStates();
       FUStatisticsPersistence.persistSentData(dataToSend);
       FUStatisticsPersistence.persistDataFromCollectors(allDataFromCollectors.asJsonString());
 

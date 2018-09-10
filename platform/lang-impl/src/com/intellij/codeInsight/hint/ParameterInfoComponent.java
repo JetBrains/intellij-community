@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -34,15 +35,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ParameterInfoComponent extends JPanel {
-  private final Object[] myObjects;
+  private Object[] myObjects;
   private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
   private Object myHighlighted;
   @NotNull private final ParameterInfoHandler myHandler;
 
-  private final OneElementComponent[] myPanels;
-  private final JLabel myShortcutLabel;
+  private final JPanel myMainPanel;
+  private OneElementComponent[] myPanels;
+  private JLabel myShortcutLabel;
+  private final boolean myAllowSwitchLabel;
 
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
@@ -102,32 +105,46 @@ public class ParameterInfoComponent extends JPanel {
     setBackground(HintUtil.getInformationColor());
 
     myHandler = handler;
-    myPanels = new OneElementComponent[myObjects.length];
-    final JPanel panel = new JPanel(new GridBagLayout());
-    for (int i = 0; i < myObjects.length; i++) {
-      myPanels[i] = new OneElementComponent();
-      panel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
-                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                    new Insets(0, 0, 0, 0), 0, 0));
-    }
+    myMainPanel = new JPanel(new GridBagLayout());
+    setPanels();
+
     if (myRequestFocus) {
       AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
     }
 
-    final JScrollPane pane = ScrollPaneFactory.createScrollPane(panel);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel);
     pane.setBorder(null);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     add(pane, BorderLayout.CENTER);
 
+    myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
+    setShortcutLabel();
+    myCurrentParameterIndex = -1;
+  }
+
+  private void setPanels() {
+    myMainPanel.removeAll();
+    myPanels = new OneElementComponent[myObjects.length];
+    for (int i = 0; i < myObjects.length; i++) {
+      myPanels[i] = new OneElementComponent();
+      myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
+                                                          GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                          JBUI.emptyInsets(), 0, 0));
+    }
+  }
+
+  private void setShortcutLabel() {
+    if (myShortcutLabel != null) remove(myShortcutLabel);
+
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
     String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
-    if (!allowSwitchLabel || editor instanceof EditorWindow || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() || 
+    if (!myAllowSwitchLabel || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() ||
         upShortcut.isEmpty() && downShortcut.isEmpty()) {
       myShortcutLabel = null;
     }
     else {
       myShortcutLabel = new JLabel(
-        upShortcut.isEmpty() || downShortcut.isEmpty() 
+        upShortcut.isEmpty() || downShortcut.isEmpty()
         ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
       myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
@@ -136,7 +153,12 @@ public class ParameterInfoComponent extends JPanel {
       myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
       add(myShortcutLabel, BorderLayout.SOUTH);
     }
-    myCurrentParameterIndex = -1;
+  }
+
+  void setDescriptors(Object[] descriptors) {
+    myObjects = descriptors;
+    setPanels();
+    setShortcutLabel();
   }
 
   @Override
@@ -173,7 +195,7 @@ public class ParameterInfoComponent extends JPanel {
     private Function<String, String> myEscapeFunction;
     private final ParameterInfoController.Model result = new ParameterInfoController.Model();
     
-    public MyParameterContext(boolean singleParameterInfo) {
+    MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
     }
 
@@ -338,7 +360,7 @@ public class ParameterInfoComponent extends JPanel {
   private class OneElementComponent extends JPanel {
     private OneLineComponent[] myOneLineComponents;
 
-    public OneElementComponent() {
+    OneElementComponent() {
       super(new GridBagLayout());
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }
@@ -362,7 +384,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String setup(String text,
-                         Function<String, String> escapeFunction,
+                         Function<? super String, String> escapeFunction,
                          int highlightStartOffset,
                          int highlightEndOffset,
                          boolean isDisabled,
@@ -410,14 +432,14 @@ public class ParameterInfoComponent extends JPanel {
       return buf.toString();
     }
 
-    private String escapeString(String line, Function<String, String> escapeFunction) {
+    private String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
     public String setup(final ParameterInfoController.Model result,
                         final String[] texts,
-                        Function<String, String> escapeFunction,
+                        Function<? super String, String> escapeFunction,
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
       StringBuilder buf = new StringBuilder();

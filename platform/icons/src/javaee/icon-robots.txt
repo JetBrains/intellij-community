@@ -1,0 +1,3 @@
+deprecated: dataSourceImport.png; to be removed in IDEA 2020
+deprecated: entityBeanBig.png; to be removed in IDEA 2020
+deprecated: dbSchemaImportBig.png; to be removed in IDEA 2020

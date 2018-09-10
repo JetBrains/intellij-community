@@ -76,14 +76,14 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final int number = currentLine;
     e.getPresentation().setVisible(myEnabled);
     e.getPresentation().setEnabled(myEnabled && number >= 0 && number < myFileAnnotation.getLineCount());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final int actualNumber = currentLine;
     if (actualNumber < 0) return;
 

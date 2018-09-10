@@ -114,4 +114,12 @@ class GroovyMoveLeftRightHandlerTest extends LightGroovyTestCase {
     doTest '<caret>1 + 2 + 3'
     doTest '1 + <caret>2 + 3'
   }
+
+  void 'test for update'() {
+    doTest 'for (;; <caret>1, 2, 3) {}', 'for (;; 2, <caret>1, 3) {}'
+  }
+
+  void 'test array initializer'() {
+    doTest 'new int[]{<caret>1, 2, 3}', 'new int[]{2, <caret>1, 3}'
+  }
 }

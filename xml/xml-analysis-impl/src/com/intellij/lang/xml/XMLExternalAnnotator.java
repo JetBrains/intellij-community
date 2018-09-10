@@ -78,11 +78,6 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
     private final List<Trinity<PsiElement, String, ErrorType>> messages = new ArrayList<>();
 
     @Override
-    public void addMessage(PsiElement context, String message, int type) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {
       messages.add(Trinity.create(context, message, type));
     }

@@ -2,6 +2,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -11,9 +12,9 @@ import java.util.UUID;
 public interface BuildManagerListener {
   Topic<BuildManagerListener> TOPIC = Topic.create("Build Manager", BuildManagerListener.class);
 
-  default void beforeBuildProcessStarted(Project project, UUID sessionId) {}
+  default void beforeBuildProcessStarted(@NotNull Project project, @NotNull UUID sessionId) {}
 
-  default void buildStarted(Project project, UUID sessionId, boolean isAutomake) {}
+  default void buildStarted(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {}
 
-  default void buildFinished(Project project, UUID sessionId, boolean isAutomake) {}
+  default void buildFinished(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {}
 }

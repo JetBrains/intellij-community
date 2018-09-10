@@ -16,6 +16,7 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 
 /**
@@ -24,4 +25,7 @@ import com.intellij.util.Function;
  */
 @Deprecated
 public abstract class ConcurrentWeakFactoryMap<K,V> extends ConcurrentFactoryMap<K,V> {
+  public ConcurrentWeakFactoryMap() {
+    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createWeakMap instead");
+  }
 }

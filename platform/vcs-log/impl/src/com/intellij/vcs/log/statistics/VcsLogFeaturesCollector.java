@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -37,12 +22,10 @@ import java.util.Set;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
-public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
-  public static final GroupDescriptor ID = GroupDescriptor.create("VCS Log Ui Settings");
-
+public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
+  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     if (projectLog != null) {
       VcsLogUiImpl ui = projectLog.getMainLogUi();
@@ -50,28 +33,28 @@ public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
         MainVcsLogUiProperties properties = ui.getProperties();
 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", properties.get(CommonUiProperties.SHOW_DETAILS)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", properties.get(SHOW_LONG_EDGES)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("details", properties.get(CommonUiProperties.SHOW_DETAILS)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("long.edges", properties.get(SHOW_LONG_EDGES)));
 
         PermanentGraph.SortType sortType = properties.get(BEK_SORT_TYPE);
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.linear.bek", sortType.equals(PermanentGraph.SortType.LinearBek)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", sortType.equals(PermanentGraph.SortType.Bek)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.normal", sortType.equals(PermanentGraph.SortType.Normal)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("sort.linear.bek", sortType.equals(PermanentGraph.SortType.LinearBek)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("sort.bek", sortType.equals(PermanentGraph.SortType.Bek)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("sort.normal", sortType.equals(PermanentGraph.SortType.Normal)));
 
         if (ui.getColorManager().isMultipleRoots()) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", properties.get(CommonUiProperties.SHOW_ROOT_NAMES)));
+          usages.add(StatisticsUtilKt.getBooleanUsage("roots", properties.get(CommonUiProperties.SHOW_ROOT_NAMES)));
         }
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", properties.get(COMPACT_REFERENCES_VIEW)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", properties.get(SHOW_TAG_NAMES)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("labels.compact", properties.get(COMPACT_REFERENCES_VIEW)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("labels.showTagNames", properties.get(SHOW_TAG_NAMES)));
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex", properties.get(TEXT_FILTER_REGEX)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase", properties.get(TEXT_FILTER_MATCH_CASE)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("textFilter.regex", properties.get(TEXT_FILTER_REGEX)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("textFilter.matchCase", properties.get(TEXT_FILTER_MATCH_CASE)));
 
-        for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
+        for (VcsLogHighlighterFactory factory: Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
             VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(factory.getId());
-            usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil.ensureProperKey(factory.getId()),
+            usages.add(StatisticsUtilKt.getBooleanUsage("highlighter." + UsageDescriptorKeyValidator.ensureProperKey(factory.getId()),
                                                         properties.exists(property) && properties.get(property)));
           }
         }
@@ -84,7 +67,7 @@ public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   @Override
-  public GroupDescriptor getGroupId() {
-    return ID;
+  public String getGroupId() {
+    return "statistics.vcs.log.ui";
   }
 }

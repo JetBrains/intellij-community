@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -47,6 +34,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
 
   @SuppressWarnings("unchecked")
   public PythonSdkChooserCombo(@Nullable final Project project,
+                               @Nullable final Module module,
                                @NotNull List<Sdk> sdks,
                                @Nullable String newProjectPath,
                                @NotNull final Condition<Sdk> acceptableSdkCondition) {
@@ -57,12 +45,14 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
     comboBox.setRenderer(new PySdkListCellRenderer(null));
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        showOptions(project);
+        showOptions(project, module);
         notifyChanged(e);
       }
     });
     comboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         notifyChanged(e);
         updateTooltip();
@@ -77,13 +67,13 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     getComboBox().setToolTipText(item instanceof Sdk ? ((Sdk)item).getHomePath() : null);
   }
 
-  private void showOptions(@Nullable final Project project) {
+  private void showOptions(@Nullable final Project project, @Nullable Module module) {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
     //noinspection unchecked
     final JComboBox<Sdk> comboBox = getComboBox();
     final Sdk oldSelectedSdk = (Sdk)comboBox.getSelectedItem();
-    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), myNewProjectPath, sdk -> {
+    PythonSdkDetailsStep.show(project, module, sdks, null, this, getButton().getLocationOnScreen(), myNewProjectPath, sdk -> {
       if (sdk == null) return;
       final ProjectSdksModel projectSdksModel = interpreterList.getModel();
       if (projectSdksModel.findSdk(sdk) == null) {

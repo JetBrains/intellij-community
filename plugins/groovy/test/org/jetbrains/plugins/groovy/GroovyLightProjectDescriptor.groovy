@@ -16,17 +16,12 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
-import static org.jetbrains.plugins.groovy.util.TestUtils.*
 
 /**
  * @author Max Medvedev
  */
 @CompileStatic
 class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
-  public static final GroovyLightProjectDescriptor GROOVY_2_1 = new GroovyLightProjectDescriptor(mockGroovy2_1LibraryName)
-  public static final GroovyLightProjectDescriptor GROOVY_2_2 = new GroovyLightProjectDescriptor(mockGroovy2_2LibraryName)
-  public static final GroovyLightProjectDescriptor GROOVY_2_3 = new GroovyLightProjectDescriptor(mockGroovy2_3LibraryName)
-  public static final GroovyLightProjectDescriptor GROOVY_3_0 = new GroovyLightProjectDescriptor(mockGroovy3_0LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_LATEST = new GroovyLightProjectDescriptor(bundledGroovyJar as String)
   public static final GroovyLightProjectDescriptor GROOVY_LATEST_REAL_JDK = new GroovyLightProjectDescriptor(bundledGroovyJar as String) {
     @Override

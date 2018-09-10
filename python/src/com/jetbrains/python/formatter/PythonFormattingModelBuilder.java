@@ -167,11 +167,6 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     return TokenSet.create(IElementType.enumerate(type -> type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage)));
   }
 
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
-  }
-
   private static void printAST(ASTNode node, int indent) {
     while (node != null) {
       for (int i = 0; i < indent; i++) {

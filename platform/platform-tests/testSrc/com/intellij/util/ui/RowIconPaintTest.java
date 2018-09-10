@@ -17,7 +17,7 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
  */
 public class RowIconPaintTest extends LayeredIconPaintTest {
   @Override
-  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
+  protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
     RowIcon icon = new RowIcon(2);
     icon.setIcon(cellIcons[0], 0);
     icon.setIcon(cellIcons[1], 1);

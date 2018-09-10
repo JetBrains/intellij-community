@@ -38,7 +38,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     else {
       val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
-        return qualifier.type.processSpread(processor, state, place)
+        return qualifier.type.processSpread(processor, state, place, place.parent !is GrMethodCall)
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
@@ -80,7 +80,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     else {
       if (!qualifierType.processReceiverType(processor, state, place)) return false
       if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        return qualifierType.processSpread(processor, state, place)
+        return qualifierType.processSpread(processor, state, place, true)
       }
     }
     return true
@@ -90,7 +90,6 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
 fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<out GroovyResolveResult> {
   val processor = GroovyResolverProcessorBuilder.builder()
     .setAllVariants(true)
-    .setUpToArgument(upToArgument)
     .build(this)
   GrReferenceResolveRunner(this, processor).resolveReferenceExpression()
   return processor.candidatesArray
@@ -110,7 +109,7 @@ fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incom
   return processor.candidates
 }
 
-private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementGroovyResult)
+private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementResolveResult)
 
 private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   val facade = JavaPsiFacade.getInstance(project)
@@ -160,7 +159,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
   val qualifier = qualifier
 
   if (qualifier == null) {
-    val localVariable = resolveToLocalVariable(name).singleOrNull()
+    val localVariable = resolveToLocalVariable(name)
     if (localVariable != null) {
       return localVariable
     }
@@ -168,7 +167,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
 
   if (parent !is GrMethodCall) {
     if (qualifier == null || qualifier.isThisExpression()) {
-      val field = resolveToField(name).singleOrNull()
+      val field = resolveToField(name)
       if (field != null && checkCurrentClass(field.element, this)) {
         return field
       }
@@ -194,7 +193,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
  * @receiver call site
  * @return empty collection or a collection with 1 local variable result
  */
-private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementGroovyResult<GrVariable>> {
+private fun PsiElement.resolveToLocalVariable(name: String): ElementResolveResult<GrVariable>? {
   return treeWalkUpAndGet(LocalVariableProcessor(name))
 }
 
@@ -205,7 +204,7 @@ private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementG
  * @receiver call site
  * @return empty collection or a collection with 1 code field result
  */
-private fun PsiElement.resolveToField(name: String): Collection<ElementGroovyResult<GrField>> {
+private fun PsiElement.resolveToField(name: String): ElementResolveResult<GrField>? {
   return treeWalkUpAndGet(CodeFieldProcessor(name, this))
 }
 
@@ -233,13 +232,4 @@ private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReference
   val processor = ReferenceExpressionClassProcessor(name, this)
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)
   return processor.result
-}
-
-internal fun GrReferenceExpression.resolveMethodReference(): Collection<GroovyResolveResult> {
-  val name = referenceName ?: return emptyList()
-  val type = qualifier?.type ?: return emptyList()
-  val place = this
-  val processor = MethodReferenceProcessor(name)
-  type.processReceiverType(processor, ResolveState.initial(), place)
-  return processor.results
 }

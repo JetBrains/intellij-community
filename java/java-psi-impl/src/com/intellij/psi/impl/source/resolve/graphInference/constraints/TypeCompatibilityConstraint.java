@@ -67,25 +67,39 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   }
 
   public static boolean isUncheckedConversion(final PsiType t, final PsiType s) {
-    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw() && s instanceof PsiClassType) {
+    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw()) {
       final PsiClassType.ClassResolveResult tResult = ((PsiClassType)t).resolveGenerics();
-      final PsiClassType.ClassResolveResult sResult = ((PsiClassType)s).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
-      final PsiClass sClass = sResult.getElement();
-      if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
-        final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
-        if (sSubstitutor != null) {
-          if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
+      if (s instanceof PsiClassType && isUncheckedConversion(tClass, (PsiClassType)s)) {
+        return true;
+      }
+      else if (s instanceof PsiIntersectionType) {
+        for (PsiType conjunct : ((PsiIntersectionType)s).getConjuncts()) {
+          if (conjunct instanceof PsiClassType && isUncheckedConversion(tClass, (PsiClassType)conjunct)) {
             return true;
           }
         }
-        else if (tClass instanceof InferenceVariable && ((PsiClassType)s).isRaw() && tClass.isInheritor(sClass, true)) {
+      }
+    }
+    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
+      return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType());
+    }
+    return false;
+  }
+
+  private static boolean isUncheckedConversion(PsiClass tClass, PsiClassType s) {
+    final PsiClassType.ClassResolveResult sResult = s.resolveGenerics();
+    final PsiClass sClass = sResult.getElement();
+    if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
+      final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
+      if (sSubstitutor != null) {
+        if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
           return true;
         }
       }
-    } 
-    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
-      return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType());
+      else if (tClass instanceof InferenceVariable && s.isRaw() && tClass.isInheritor(sClass, true)) {
+        return true;
+      }
     }
     return false;
   }

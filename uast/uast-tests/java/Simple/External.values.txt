@@ -1,5 +1,6 @@
 UFile (package = ) [import java.util.LinkedList...]
     UImportStatement (isOnDemand = false) [import java.util.LinkedList]
+    UImportStatement (isOnDemand = false) [import java.util.Collections.emptyList]
     UClass (name = External) [public class External {...}]
         UMethod (name = foo) [public static fun foo() : boolean {...}]
             UBlockExpression [{...}] = Nothing
@@ -19,3 +20,11 @@ UFile (package = ) [import java.util.LinkedList...]
                     UBinaryExpression (operator = ===) [list === list] = Undetermined (depending on: (var list = external LinkedList()()))
                         USimpleNameReferenceExpression (identifier = list) [list] = (var list = external LinkedList()())
                         USimpleNameReferenceExpression (identifier = list) [list] = (var list = external LinkedList()())
+        UMethod (name = baz) [public static fun baz() : boolean {...}]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return emptyList() === emptyList()] = Nothing
+                    UBinaryExpression (operator = ===) [emptyList() === emptyList()] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] = external emptyList()()
+                            UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] = external emptyList()()
+                            UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]

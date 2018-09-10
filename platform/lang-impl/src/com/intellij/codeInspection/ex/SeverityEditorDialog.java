@@ -65,7 +65,7 @@ public class SeverityEditorDialog extends DialogWrapper {
                           @Nullable HighlightSeverity selectedSeverity,
                           @NotNull SeverityRegistrar severityRegistrar,
                           boolean closeDialogWhenSettingsShown,
-                          @Nullable Consumer<HighlightSeverity> chosenSeverityCallback) {
+                          @Nullable Consumer<? super HighlightSeverity> chosenSeverityCallback) {
     final SeverityEditorDialog dialog = new SeverityEditorDialog(project, selectedSeverity, severityRegistrar, closeDialogWhenSettingsShown);
     if (dialog.showAndGet()) {
       final HighlightInfoType type = dialog.getSelectedType();
@@ -106,6 +106,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         }
       }
     });
+    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> attrs.getSeverity().getName());
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JPanel leftPanel = ToolbarDecorator.createDecorator(myOptionsList)
@@ -170,19 +171,19 @@ public class SeverityEditorDialog extends DialogWrapper {
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity());
         }
       }).setEditActionName("Rename").createPanel();
     ToolbarDecorator.findRemoveButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return !SeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity());
       }
     });
     ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
         if (canMove) {
           SeverityBasedTextAttributes pair =
@@ -201,7 +202,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     });
     ToolbarDecorator.findDownButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
         if (canMove) {
           SeverityBasedTextAttributes pair =
@@ -378,7 +379,7 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   private static class MyTextAttributesDescription extends TextAttributesDescription {
-    public MyTextAttributesDescription(final String name,
+    MyTextAttributesDescription(final String name,
                                        final String group,
                                        final TextAttributes attributes,
                                        final TextAttributesKey type) {

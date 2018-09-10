@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class FilterImagesAction extends AnAction {
   private final Filter myFilter;
@@ -28,12 +29,12 @@ public class FilterImagesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(myFilter.getDisplayName());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
 
     if (view != null) {

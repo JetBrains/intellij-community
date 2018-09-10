@@ -178,7 +178,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     private final Project myProject;
     private final XDebuggerTreePanel myTreePanel;
 
-    public MySelectionListener(Editor editor,
+    MySelectionListener(Editor editor,
                                XStackFrame stackFrame,
                                Project project,
                                XDebuggerTreePanel panel) {
@@ -193,7 +193,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
 
     @Override
-    public void selectionChanged(final SelectionEvent e) {
+    public void selectionChanged(@NotNull final SelectionEvent e) {
       if (!Registry.is("debugger.valueTooltipAutoShowOnSelection") ||
           myEditor.getCaretModel().getCaretCount() > 1 ||
           e.getNewRanges().length != 1 ||

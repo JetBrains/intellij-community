@@ -212,7 +212,7 @@ public class CommonCodeStyleSettings {
   private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
-    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+    SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
                                      final CommonCodeStyleSettings parentObject) {
       super(object, parentObject);
@@ -341,23 +341,7 @@ public class CommonCodeStyleSettings {
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int LAMBDA_BRACE_STYLE = END_OF_LINE;
 
-  /**
-   * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like
-   * <p/>
-   * <pre>
-   *     class Test {
-   *         {
-   *             System.out.println();
-   *         }
-   *     }
-   * </pre>
-   * to
-   * <pre>
-   *     class Test { {
-   *         System.out.println();
-   *     } }
-   * </pre>
-   */
+  @Deprecated
   public boolean USE_FLYING_GEESE_BRACES = false;
 
   public boolean DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
@@ -434,7 +418,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
   public boolean ALIGN_MULTILINE_RESOURCES = true;
   public boolean ALIGN_MULTILINE_FOR = true;
-  /** @deprecated Use {@link org.jetbrains.plugins.ruby.settings.RubyCodeStyleSettings#INDENT_WHEN_CASES} instead */
+
   @Deprecated
   public boolean INDENT_WHEN_CASES = true;
 
@@ -863,6 +847,7 @@ public class CommonCodeStyleSettings {
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
+  @Deprecated
   public int LABELED_STATEMENT_WRAP = WRAP_ALWAYS;
 
   public boolean WRAP_COMMENTS = false;
@@ -989,7 +974,7 @@ public class CommonCodeStyleSettings {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof IndentOptions)) return false;
 
       IndentOptions that = (IndentOptions)o;
 
@@ -1029,7 +1014,7 @@ public class CommonCodeStyleSettings {
     }
 
     @Nullable
-    FileIndentOptionsProvider getFileIndentOptionsProvider() {
+    public FileIndentOptionsProvider getFileIndentOptionsProvider() {
       return myFileIndentOptionsProvider;
     }
 

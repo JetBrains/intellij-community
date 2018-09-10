@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.MultiLineLabelUI
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.button
+import com.intellij.testGuiFramework.impl.checkbox
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.*

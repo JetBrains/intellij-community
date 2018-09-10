@@ -31,7 +31,7 @@ interface UTypeReferenceExpression : UExpression {
   /**
    * Returns the qualified name of the class type, or null if the [type] is not a class type.
    */
-  fun getQualifiedName() = PsiTypesUtil.getPsiClass(type)?.qualifiedName
+  fun getQualifiedName(): String? = PsiTypesUtil.getPsiClass(type)?.qualifiedName
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitTypeReferenceExpression(this)) return
@@ -39,10 +39,10 @@ interface UTypeReferenceExpression : UExpression {
     visitor.afterVisitTypeReferenceExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitTypeReferenceExpression(this, data)
 
-  override fun asLogString() = log("name = ${type.name}")
+  override fun asLogString(): String = log("name = ${type.name}")
 
   override fun asRenderString(): String = type.name
 }

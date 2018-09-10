@@ -21,6 +21,7 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.ScrollingUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,7 +30,7 @@ import javax.swing.*;
  */
 public class RemoveSelectedProjectsAction extends RecentProjectsWelcomeScreenActionBase {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     RecentProjectsManager mgr = RecentProjectsManager.getInstance();
     for (AnAction action : getSelectedElements(e)) {
       if (action instanceof ReopenProjectAction) {
@@ -54,7 +55,7 @@ public class RemoveSelectedProjectsAction extends RecentProjectsWelcomeScreenAct
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(!getSelectedElements(e).isEmpty());
   }
 }

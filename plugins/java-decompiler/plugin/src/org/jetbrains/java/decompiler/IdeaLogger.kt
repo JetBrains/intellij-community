@@ -55,15 +55,15 @@ class IdeaLogger : IFernflowerLogger() {
     myClass = null
   }
 
-  override fun startClass(className: String) = LOG.debug("processing class $className")
+  override fun startClass(className: String): Unit = LOG.debug("processing class $className")
 
-  override fun endClass() = LOG.debug("... class processed")
+  override fun endClass(): Unit = LOG.debug("... class processed")
 
-  override fun startMethod(methodName: String) = LOG.debug("processing method $methodName")
+  override fun startMethod(methodName: String): Unit = LOG.debug("processing method $methodName")
 
-  override fun endMethod() = LOG.debug("... method processed")
+  override fun endMethod(): Unit = LOG.debug("... method processed")
 
-  override fun startWriteClass(className: String) = LOG.debug("writing class $className")
+  override fun startWriteClass(className: String): Unit = LOG.debug("writing class $className")
 
-  override fun endWriteClass() = LOG.debug("... class written")
+  override fun endWriteClass(): Unit = LOG.debug("... class written")
 }

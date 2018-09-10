@@ -50,7 +50,7 @@ class IdeaSVNConfigFile(private val myPath: Path) {
       return result
     }
 
-  val defaultGroup get() = DefaultProxyGroup(myDefaultProperties)
+  val defaultGroup: DefaultProxyGroup get() = DefaultProxyGroup(myDefaultProperties)
 
   @JvmOverloads
   fun updateGroups(force: Boolean = false) {
@@ -112,7 +112,7 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     addProperties(name, addOrModify)
   }
 
-  fun save() = try {
+  fun save(): Unit = try {
     _configFile.store(myPath.toFile())
     updateGroups(true)
   }
@@ -122,14 +122,14 @@ class IdeaSVNConfigFile(private val myPath: Path) {
 
   companion object {
     @JvmField
-    val SERVERS_FILE_NAME = "servers"
+    val SERVERS_FILE_NAME: String = "servers"
     @JvmField
-    val CONFIG_FILE_NAME = "config"
+    val CONFIG_FILE_NAME: String = "config"
 
     @JvmField
-    val DEFAULT_GROUP_NAME = "global"
+    val DEFAULT_GROUP_NAME: String = "global"
     @JvmField
-    val GROUPS_GROUP_NAME = "groups"
+    val GROUPS_GROUP_NAME: String = "groups"
 
     @JvmStatic
     fun getNewGroupName(host: String, configFile: IdeaSVNConfigFile): String {
@@ -194,10 +194,10 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     }
 
     @JvmStatic
-    fun isTurned(value: String?) = value == null || "yes".equals(value, true) || "on".equals(value, true) || "true".equals(value, true)
+    fun isTurned(value: String?): Boolean = value == null || "yes".equals(value, true) || "on".equals(value, true) || "true".equals(value, true)
 
     @JvmStatic
-    fun getValue(files: Couple<IdeaSVNConfigFile>, groupName: String, propertyName: String) =
+    fun getValue(files: Couple<IdeaSVNConfigFile>, groupName: String, propertyName: String): String? =
       files.second.getValue(groupName, propertyName) ?: files.first.getValue(groupName, propertyName)
 
     @JvmStatic
@@ -216,7 +216,7 @@ private class MyIniBuilder(ini: Ini) : IniBuilder() {
     setIni(ini)
   }
 
-  private var isAfterComment = false;
+  private var isAfterComment = false
 
   override fun startSection(sectionName: String) {
     super.startSection(sectionName)

@@ -39,15 +39,6 @@ public abstract class ReferenceProvidersRegistry {
   @NotNull
   public abstract PsiReferenceRegistrar getRegistrar(@NotNull Language language);
 
-  /**
-   * @see #getReferencesFromProviders(PsiElement)
-   */
-  @Deprecated
-  @NotNull
-  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull Class clazz) {
-    return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
-  }
-
   @NotNull
   public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);

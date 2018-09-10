@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.util.ArrayUtil;
@@ -55,17 +56,20 @@ class LoopAnalyzer {
       }
     }
 
+    @NotNull
     @Override
     public Collection<Instruction> getNodes() {
       return Arrays.asList(myFlow.getInstructions());
     }
 
+    @NotNull
     @Override
     public Iterator<Instruction> getIn(Instruction n) {
       int[] ins = myIns.get(n.getIndex());
       return indicesToInstructions(ins);
     }
 
+    @NotNull
     @Override
     public Iterator<Instruction> getOut(Instruction instruction) {
       int fromIndex = instruction.getIndex();

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -414,8 +412,8 @@ public class VfsUtilCore {
     return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
-  public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
-    return ContainerUtil.map2List(scope, file -> virtualToIoFile(file));
+  public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
+    return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
   }
 
   @NotNull
@@ -691,7 +689,7 @@ public class VfsUtilCore {
     return components;
   }
 
-  public static boolean hasInvalidFiles(@NotNull Iterable<VirtualFile> files) {
+  public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
         return true;
@@ -722,6 +720,7 @@ public class VfsUtilCore {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<VirtualFile> processor,
                                              @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {

@@ -17,7 +17,6 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
@@ -53,7 +52,7 @@ public class PushTargetTextField extends TextFieldWithCompletion {
     return new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor() {
       @Override
       public int compare(String item1, String item2) {
-        return Integer.compare(ContainerUtil.indexOf(targetVariants, item1), ContainerUtil.indexOf(targetVariants, item2));
+        return Integer.compare(targetVariants.indexOf(item1), targetVariants.indexOf(item2));
       }
     }, targetVariants);
   }

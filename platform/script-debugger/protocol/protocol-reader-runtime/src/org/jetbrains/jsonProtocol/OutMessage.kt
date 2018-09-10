@@ -28,7 +28,7 @@ import org.jetbrains.io.JsonUtil
 
 open class OutMessage() {
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
-  val writer = JsonWriter(ByteBufUtf8Writer(buffer))
+  val writer: JsonWriter = JsonWriter(ByteBufUtf8Writer(buffer))
 
   private var finalized: Boolean = false
 
@@ -244,9 +244,11 @@ fun OutMessage.writeInt(name: String, value: Int, defaultValue: Int) {
   }
 }
 
-fun OutMessage.writeInt(name: String, value: Int) {
-  beginArguments()
-  writer.name(name).value(value.toLong())
+fun OutMessage.writeInt(name: String, value: Int?) {
+  if (value != null) {
+    beginArguments()
+    writer.name(name).value(value.toLong())
+  }
 }
 
 fun OutMessage.writeBoolean(name: String, value: Boolean, defaultValue: Boolean) {
@@ -255,13 +257,15 @@ fun OutMessage.writeBoolean(name: String, value: Boolean, defaultValue: Boolean)
   }
 }
 
-fun OutMessage.writeBoolean(name: String, value: Boolean) {
-  beginArguments()
-  writer.name(name).value(value)
+fun OutMessage.writeBoolean(name: String, value: Boolean?) {
+  if (value != null) {
+    beginArguments()
+    writer.name(name).value(value)
+  }
 }
 
-fun OutMessage.writeDouble(name: String, value: Double, defaultValue: Double) {
-  if (value != defaultValue) {
+fun OutMessage.writeDouble(name: String, value: Double?, defaultValue: Double?) {
+  if (value != null && value != defaultValue) {
     writeDouble(name, value)
   }
 }

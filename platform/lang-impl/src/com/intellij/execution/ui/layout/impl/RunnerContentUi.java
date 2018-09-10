@@ -208,7 +208,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     myTabs = (JBRunnerTabs)new JBRunnerTabs(myProject, myActionManager, myFocusManager, this).setDataProvider(new DataProvider() {
       @Override
-      public Object getData(@NonNls final String dataId) {
+      public Object getData(@NotNull @NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.is(dataId)) {
           TabInfo info = myTabs.getTargetInfo();
           if (info != null) {
@@ -632,7 +632,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myManager = manager;
     myManager.addContentManagerListener(new ContentManagerListener() {
       @Override
-      public void contentAdded(final ContentManagerEvent event) {
+      public void contentAdded(@NotNull final ContentManagerEvent event) {
         initUi();
         if (event.getContent().getUserData(LIGHTWEIGHT_CONTENT_MARKER) == Boolean.TRUE) {
           myLayoutSettings.setLightWeight(event.getContent());
@@ -667,7 +667,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
 
       @Override
-      public void contentRemoved(final ContentManagerEvent event) {
+      public void contentRemoved(@NotNull final ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(RunnerContentUi.this);
 
         GridImpl grid = (GridImpl)findGridFor(event.getContent());
@@ -683,11 +683,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
 
       @Override
-      public void contentRemoveQuery(final ContentManagerEvent event) {
+      public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       }
 
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         if (isStateBeingRestored()) return;
 
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
@@ -1266,7 +1266,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (AnAction action : myMinimizedViewActions.getChildren(null)) {
       Content content = ((RestoreViewAction)action).getContent();
       if (key.equals(content.getUserData(ViewImpl.ID))) {
-        action.actionPerformed(null);
+        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
         return;
       }
     }
@@ -1362,7 +1362,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
-    public MyComponent(LayoutManager layout) {
+    MyComponent(LayoutManager layout) {
       super(layout);
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
@@ -1371,7 +1371,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (QuickActionProvider.KEY.is(dataId)) {
         return RunnerContentUi.this;
       }
@@ -1627,7 +1627,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     private final JComponent myLeft;
     private final JComponent myRight;
 
-    public CommonToolbarLayout(final JComponent left, final JComponent right) {
+    CommonToolbarLayout(final JComponent left, final JComponent right) {
       myLeft = left;
       myRight = right;
     }
@@ -1743,7 +1743,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     private DragSession mySession;
 
     @Override
-    public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+    public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
       JComponent component = info.getComponent();
       Content[] data = CONTENT_KEY.getData((DataProvider)component);
       assert data != null;
@@ -1763,12 +1763,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
 
     @Override
-    public void processDragOut(MouseEvent event, TabInfo source) {
+    public void processDragOut(@NotNull MouseEvent event, @NotNull TabInfo source) {
       mySession.process(event);
     }
 
     @Override
-    public void dragOutFinished(MouseEvent event, TabInfo source) {
+    public void dragOutFinished(@NotNull MouseEvent event, TabInfo source) {
       final Component component = event.getComponent();
       final IdeFrame window = UIUtil.getParentOfType(IdeFrame.class, component);
       mySession.process(event);
@@ -1790,7 +1790,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     private final List<Content> myContents;
     private final int myWindow;
 
-    public DockableGrid(Image img, Presentation presentation, final Dimension size, List<Content> contents, int window) {
+    DockableGrid(Image img, Presentation presentation, final Dimension size, List<Content> contents, int window) {
       myImg = img;
       myPresentation = presentation;
       myPreferredSize = size;
@@ -1846,7 +1846,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  void fireContentOpened(Content content) {
+  void fireContentOpened(@NotNull Content content) {
     for (Listener each : myDockingListeners) {
       each.contentAdded(content);
     }

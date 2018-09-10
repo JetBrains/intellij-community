@@ -32,20 +32,24 @@ public class XsltStylesheetImpl extends XsltElementImpl implements XsltStyleshee
     super(target);
   }
 
+  @Override
   @NotNull
   public XsltParameter[] getParameters() {
     return convertArray(ResolveUtil.collect(new ParamMatcher(getTag(), null)), XsltParameter.class);
   }
 
+  @Override
   @NotNull
   public XsltVariable[] getVariables() {
     return convertArray(ResolveUtil.collect(new ParamMatcher(getTag(), null) {
+      @Override
       protected boolean isApplicable(XmlTag tag) {
         return XsltSupport.isVariable(tag);
       }
     }), XsltVariable.class);
   }
 
+  @Override
   @NotNull
   public XsltTemplate[] getTemplates() {
     final XmlDocument document = PsiTreeUtil.getParentOfType(getTag(), XmlDocument.class);
@@ -65,18 +69,21 @@ public class XsltStylesheetImpl extends XsltElementImpl implements XsltStyleshee
   }
 
   private class FunctionMatcher extends IncludeAwareMatcher {
-    public FunctionMatcher(XmlDocument document) {
+    FunctionMatcher(XmlDocument document) {
       super(document);
     }
 
+    @Override
     protected boolean matches(XmlTag element) {
       return XsltSupport.isFunction(element);
     }
 
+    @Override
     protected ResolveUtil.Matcher changeDocument(XmlDocument document) {
       return new FunctionMatcher(document);
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
       return new FunctionMatcher(myDocument);
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
@@ -38,10 +39,12 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new MacIntelliJComboBoxUI();
   }
 
+  @Override
   protected void installDarculaDefaults() {
     comboBox.setOpaque(false);
   }
 
+  @Override
   protected void uninstallDarculaDefaults() {}
 
     @Override
@@ -54,7 +57,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
         Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
-        if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
+        if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         } else {
@@ -84,8 +87,13 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    return new Dimension(Math.max(size.width + padding.left, editorWidth + iconWidth),
-                         Math.max(Math.max(iconHeight, size.height), editorHeight));
+    int width = size != null ? size.width : 0;
+    int height = size != null ? size.height : 0;
+
+    width = Math.max(width + padding.left, editorWidth + iconWidth);
+    height = Math.max(Math.max(iconHeight, height), editorHeight);
+
+    return new Dimension(width, height);
   }
 
   @Override
@@ -95,16 +103,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void layoutContainer(Container parent) {
       JComboBox cb = (JComboBox)parent;
 
-      Dimension size = cb.getMinimumSize();
-      Rectangle bounds = cb.getBounds();
-      bounds.height = bounds.height < size.height ? size.height : bounds.height;
-
-      size = cb.getPreferredSize();
-      bounds.height = bounds.height > size.height ? size.height : bounds.height;
-      cb.setBounds(bounds);
-
-      Insets cbInsets = cb.getInsets();
       if (arrowButton != null) {
+        Rectangle bounds = cb.getBounds();
+        Insets cbInsets = cb.getInsets();
         Dimension prefSize = arrowButton.getPreferredSize();
 
         int buttonHeight = bounds.height - (cbInsets.top + cbInsets.bottom);
@@ -164,7 +165,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
     private final ListCellRenderer<Object> myRenderer;
 
-    public ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
       myRenderer = renderer;
     }
 

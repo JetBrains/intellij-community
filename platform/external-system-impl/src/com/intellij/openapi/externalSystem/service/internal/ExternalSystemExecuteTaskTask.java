@@ -70,6 +70,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   /**
    * @deprecated use {@link #ExternalSystemExecuteTaskTask(Project, ExternalSystemTaskExecutionSettings, String)}
    */
+  @Deprecated
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,

@@ -3,12 +3,15 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.CopyableIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.Function;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ObjectUtils;
@@ -30,6 +33,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -519,8 +523,8 @@ public class JBUI {
 
   @NotNull
   public static JBInsets insets(String propName, JBInsets defaultValue) {
-    JBInsets i = (JBInsets)UIManager.getInsets(propName);
-    return i != null ? i : defaultValue;
+    Insets i = UIManager.getInsets(propName);
+    return i != null ? JBInsets.create(i) : defaultValue;
   }
 
   @NotNull
@@ -551,14 +555,6 @@ public class JBUI {
   @NotNull
   public static JBInsets insetsRight(int r) {
     return insets(0, 0, 0, r);
-  }
-
-  /**
-   * @deprecated use JBUI.scale(EmptyIcon.create(size)) instead
-   */
-  @NotNull
-  public static EmptyIcon emptyIcon(int size) {
-    return scale(EmptyIcon.create(size));
   }
 
   @NotNull
@@ -653,6 +649,11 @@ public class JBUI {
     @NotNull
     public static JBFont toolbarFont() {
       return SystemInfo.isMac ? smallFont() : label();
+    }
+
+    @NotNull
+    public static JBFont toolbarSmallComboBoxFont() {
+      return label(11);
     }
   }
 
@@ -831,6 +832,16 @@ public class JBUI {
       return new BaseScaleContext();
     }
 
+    /**
+     * Creates a context from the provided {@code ctx}.
+     */
+    @NotNull
+    public static BaseScaleContext create(@Nullable BaseScaleContext ctx) {
+      BaseScaleContext c = createIdentity();
+      c.update(ctx);
+      return c;
+    }
+
     protected double derivePixScale() {
       return usrScale.value * objScale.value;
     }
@@ -846,6 +857,21 @@ public class JBUI {
         case PIX_SCALE: return pixScale.value;
       }
       return 1f; // unreachable
+    }
+
+    /**
+     * Applies the provided {@code ScaleType}'s to the provided {@code value} and returns the result.
+     */
+    public double apply(double value, @NotNull ScaleType... types) {
+      for (ScaleType t : types) value *= getScale(t);
+      return value;
+    }
+
+    /**
+     * Applies {@code PIX_SCALE} to the provided {@code value} and returns the result.
+     */
+    public double apply(double value) {
+      return value * getScale(PIX_SCALE);
     }
 
     protected boolean onUpdated(boolean updated) {
@@ -908,6 +934,12 @@ public class JBUI {
              that.objScale.value == objScale.value;
     }
 
+    @Override
+    public int hashCode() {
+      return Double.valueOf(usrScale.value).hashCode() * 10 +
+             Double.valueOf(objScale.value).hashCode();
+    }
+
     /**
      * Clears the links.
      */
@@ -961,6 +993,45 @@ public class JBUI {
     public String toString() {
       return usrScale + ", " + objScale + ", " + pixScale;
     }
+
+    /**
+     * A cache for the last usage of a data object matching a scale context.
+     *
+     * @param <D> the data type
+     * @param <S> the context type
+     */
+    public static class Cache<D, S extends BaseScaleContext> {
+      private final Function<? super S, ? extends D> myDataProvider;
+      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
+
+      /**
+       * @param dataProvider provides a data object matching the passed scale context
+       */
+      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
+        this.myDataProvider = dataProvider;
+      }
+
+      /**
+       * Retunrs the data object from the cache if it matches the {@code ctx},
+       * otherwise provides the new data via the provider and caches it.
+       */
+      @Nullable
+      public D getOrProvide(@NotNull S ctx) {
+        Pair<Double, D> data = myData.get();
+        double scale = ctx.getScale(PIX_SCALE);
+        if (data == null || Double.compare(scale, data.first) != 0) {
+          myData.set(data = Pair.create(scale, myDataProvider.fun(ctx)));
+        }
+        return data.second;
+      }
+
+      /**
+       * Clears the cache.
+       */
+      public void clear() {
+        myData.set(null);
+      }
+    }
   }
 
   /**
@@ -998,6 +1069,16 @@ public class JBUI {
     @NotNull
     public static ScaleContext createIdentity() {
       return create(USR_SCALE.of(1), SYS_SCALE.of(1));
+    }
+
+    /**
+     * Creates a context from the provided {@code ctx}.
+     */
+    @NotNull
+    public static ScaleContext create(@Nullable BaseScaleContext ctx) {
+      ScaleContext c = createIdentity();
+      c.update(ctx);
+      return c;
     }
 
     /**
@@ -1146,6 +1227,11 @@ public class JBUI {
     }
 
     @Override
+    public int hashCode() {
+      return Double.valueOf(sysScale.value).hashCode() * 100 + super.hashCode();
+    }
+
+    @Override
     public void dispose() {
       super.dispose();
       if (compRef != null) {
@@ -1165,6 +1251,12 @@ public class JBUI {
     @Override
     public String toString() {
       return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
+
+    public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
+      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
+        super(dataProvider);
+      }
     }
   }
 
@@ -1375,8 +1467,8 @@ public class JBUI {
    * @author tav
    * @author Aleksey Pivovarov
    */
-  public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
-    private CachingScalableJBIcon myScaledIconCache;
+  public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon implements CopyableIcon {
+    private T myScaledIconCache;
 
     protected CachingScalableJBIcon() {}
 
@@ -1389,8 +1481,11 @@ public class JBUI {
      */
     @Override
     @NotNull
-    public Icon scale(float scale) {
-      if (scale == getScale()) return this;
+    public T scale(float scale) {
+      if (scale == getScale()) {
+        //noinspection unchecked
+        return (T)this;
+      }
 
       if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
         myScaledIconCache = copy();
@@ -1399,11 +1494,9 @@ public class JBUI {
       return myScaledIconCache;
     }
 
-    /**
-     * @return a copy of this icon instance
-     */
     @NotNull
-    protected abstract T copy();
+    @Override
+    public abstract T copy();
   }
 
   /**
@@ -1411,13 +1504,52 @@ public class JBUI {
    *
    * @author tav
    */
-  public abstract static class RasterJBIcon extends ScaleContextSupport<ScaleContext> implements Icon {
+  public abstract static class RasterJBIcon extends ScaleContextSupport<ScaleContext> implements CopyableIcon {
     public RasterJBIcon() {
       super(ScaleContext.create());
     }
   }
 
   public static class CurrentTheme {
+    public static class ActionButton {
+      @NotNull
+      public static Color pressedBackground() {
+        return JBColor.namedColor("ActionButton.pressedBackground", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color hoverBackground() {
+        return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
+      }
+    }
+
+    public static class CustomFrameDecorations {
+      @NotNull
+      public static Color separatorForeground() {
+        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+      }
+
+      @NotNull
+      public static Color titlePaneBackground() {
+        return JBColor.namedColor("TitlePane.background", paneBackground());
+      }
+
+      @NotNull
+      public static Color paneBackground() {
+        return JBColor.namedColor("Panel.background", 0xcdcdcd);
+      }
+    }
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
@@ -1470,7 +1602,12 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", scale(3));
+        return getInt("ToolWindow.tab.verticalPadding", 0);
+      }
+
+      @NotNull
+      public static Border tabBorder() {
+        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
       @NotNull
@@ -1568,24 +1705,32 @@ public class JBUI {
       private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
       public static Color focusColor() {
-        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", new JBColor(0x8ab2eb, 0x395d82));
+        return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", 0x8ab2eb);
       }
 
       public static Color defaultButtonColor() {
-        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Focus.defaultButtonBorderColor", new JBColor(0x97c3f3, 0x43688c)) : focusColor();
+        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3) : focusColor();
       }
 
       public static Color errorColor(boolean active) {
-        return active ?
-               JBColor.namedColor("Focus.activeErrorBorderColor", new JBColor(0xe53e4d, 0x8b3c3c)) :
-               JBColor.namedColor("Focus.inactiveErrorBorderColor", new JBColor(0xebbcbc, 0x725252));
+        return active ? JBColor.namedColor("Focus.activeErrorBorderColor", 0xe53e4d) :
+                        JBColor.namedColor("Focus.inactiveErrorBorderColor", 0xebbcbc);
       }
 
       public static Color warningColor(boolean active) {
-        return active ?
-               JBColor.namedColor("Focus.activeWarningBorderColor", new JBColor(0xe2a53a, 0xac7920)) :
-               JBColor.namedColor("Focus.inactiveWarningBorderColor", new JBColor(0xffd385, 0x6e5324));
+        return active ? JBColor.namedColor("Focus.activeWarningBorderColor", 0xe2a53a) :
+                        JBColor.namedColor("Focus.inactiveWarningBorderColor",0xffd385);
       }
+    }
+
+    public static class TabbedPane {
+      public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedColor", 0x4083C9);
+      public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
+      public static final Color DISABLED_TEXT_COLOR = JBColor.namedColor("TabbedPane.disabledText", Gray.x99);
+      public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
+      public static final Color FOCUS_COLOR = JBColor.namedColor("TabbedPane.focusColor", 0xDAE4ED);
+      public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
+      public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
     //todo #UX-1 maybe move to popup
@@ -1602,6 +1747,10 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
       }
 
+      public static Color selectedTabTextColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
+      }
+
       public static Color searchFieldBackground() {
         return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
       }
@@ -1611,7 +1760,33 @@ public class JBUI {
       }
 
       public static Insets searchFieldInsets() {
-        return insets(0, 12, 0, 10);
+        return insets(0, 6, 0, 5);
+      }
+
+      public static int maxListHeight() {
+        return scale(600);
+      }
+
+      public static Color listSeparatorColor() {
+        return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
+    }
+
+    public static class Validator {
+      public static Color errorBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
+      }
+
+      public static Color errorBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
+      }
+
+      public static Color warningBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
+      }
+
+      public static Color warningBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
       }
     }
   }
@@ -1626,5 +1801,11 @@ public class JBUI {
   private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  @NotNull
+  private static Border getBorder(@NotNull String propertyName, @NotNull Border defaultBorder) {
+    Border border = UIManager.getBorder(propertyName);
+    return border == null ? defaultBorder : border;
   }
 }

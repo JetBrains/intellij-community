@@ -16,7 +16,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,16 +28,6 @@ public class PsiSearchScopeUtil {
   @Nullable
   public static SearchScope union(@Nullable SearchScope a, @Nullable SearchScope b) {
     return a == null ? b : b == null ? a : a.union(b);
-  }
-
-  /**
-   * @deprecated
-   * Use com.intellij.psi.search.SearchScope#union(com.intellij.psi.search.SearchScope)
-   */
-  @Deprecated
-  @NotNull
-  public static SearchScope scopesUnion(@NotNull SearchScope scope1, @NotNull SearchScope scope2) {
-    return scope1.union(scope2);
   }
 
   public static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiElement element) {
@@ -57,11 +46,14 @@ public class PsiSearchScopeUtil {
     if (file == null) {
       return true;
     }
-    final PsiElement context = file.getContext();
-    if (context != null) file = context.getContainingFile();
-    if (file == null) return false;
-    VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile == null || globalScope.contains(virtualFile);
+    while (file != null) {
+      if (globalScope.contains(file.getOriginalFile().getViewProvider().getVirtualFile())) {
+        return true;
+      }
+      PsiElement context = file.getContext();
+      file = context == null ? null : context.getContainingFile();
+    }
+    return false;
   }
 
   public static boolean isInScope(@NotNull LocalSearchScope local, @NotNull PsiElement element) {

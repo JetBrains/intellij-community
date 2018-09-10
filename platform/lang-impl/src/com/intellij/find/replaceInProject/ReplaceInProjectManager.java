@@ -79,7 +79,7 @@ public class ReplaceInProjectManager {
     myProject = project;
   }
 
-  private static boolean hasReadOnlyUsages(final Collection<Usage> usages) {
+  private static boolean hasReadOnlyUsages(final Collection<? extends Usage> usages) {
     for (Usage usage : usages) {
       if (usage.isReadOnly()) return true;
     }
@@ -124,22 +124,22 @@ public class ReplaceInProjectManager {
   public void replaceInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
     final FindManager findManager = FindManager.getInstance(myProject);
     final FindModel findModel;
+
+    final boolean isOpenInNewTabEnabled;
+    final boolean toOpenInNewTab;
+    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    if (selectedContent != null && selectedContent.isPinned()) {
+      toOpenInNewTab = true;
+      isOpenInNewTabEnabled = false;
+    }
+    else {
+      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+    }
     if (model == null) {
-      final boolean isOpenInNewTabEnabled;
-      final boolean toOpenInNewTab;
-      final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
-      if (selectedContent != null && selectedContent.isPinned()) {
-        toOpenInNewTab = true;
-        isOpenInNewTabEnabled = false;
-      }
-      else {
-        toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-        isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
-      }
 
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(true);
-      findModel.setOpenInNewTabVisible(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
       FindInProjectUtil.setDirectoryName(findModel, dataContext);
@@ -147,29 +147,39 @@ public class ReplaceInProjectManager {
     }
     else {
       findModel = model;
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     }
 
     findManager.showFindDialog(findModel, () -> {
-      if (!findModel.isProjectScope() &&
-          FindInProjectUtil.getDirectory(findModel) == null &&
-          findModel.getModuleName() == null &&
-          findModel.getCustomScope() == null) {
-        return;
+      if (findModel.isReplaceState()) {
+        replaceInPath(findModel);
+      } else {
+        FindInProjectManager.getInstance(myProject).findInPath(findModel);
       }
-
-      UsageViewManager manager = UsageViewManager.getInstance(myProject);
-
-      if (manager == null) return;
-      findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = findModel.clone();
-
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
-      processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
-
-      UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
-      searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
     });
+  }
+
+  public void replaceInPath(@NotNull FindModel findModel) {
+    FindManager findManager = FindManager.getInstance(myProject);
+    if (!findModel.isProjectScope() &&
+        FindInProjectUtil.getDirectory(findModel) == null &&
+        findModel.getModuleName() == null &&
+        findModel.getCustomScope() == null) {
+      return;
+    }
+
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
+
+    if (manager == null) return;
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = findModel.clone();
+
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
+
+    UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
+    searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
   private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
@@ -489,7 +499,7 @@ public class ReplaceInProjectManager {
 
   private boolean getStringToReplace(int textOffset,
                                      int textEndOffset,
-                                     Document document, FindModel findModel, Ref<String> stringToReplace)
+                                     Document document, FindModel findModel, Ref<? super String> stringToReplace)
     throws FindManager.MalformedReplacementStringException {
     if (textOffset < 0 || textOffset >= document.getTextLength()) {
       return false;
@@ -514,7 +524,7 @@ public class ReplaceInProjectManager {
     return true;
   }
 
-  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @NotNull final Set<Usage> usagesSet) {
+  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @NotNull final Set<? extends Usage> usagesSet) {
     if (usagesSet.isEmpty()) {
       return;
     }
@@ -537,7 +547,7 @@ public class ReplaceInProjectManager {
     replaceContext.invalidateExcludedSetCache();
   }
 
-  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<Usage> selectedUsages) {
+  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<? extends Usage> selectedUsages) {
     Set<VirtualFile> readOnlyFiles = null;
     for (final Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();

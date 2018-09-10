@@ -9,6 +9,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -136,19 +137,23 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   private void updateHistoryEntry(@Nullable final VirtualFile file,
-                                  @Nullable final FileEditor fallbackEditor,
-                                  @Nullable FileEditorProvider fallbackProvider,
+                                  @Nullable final FileEditor fileEditor,
+                                  @Nullable FileEditorProvider fileEditorProvider,
                                   final boolean changeEntryOrderOnly) {
     if (file == null) {
       return;
     }
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
-    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
-    FileEditor[] editors = editorsWithProviders.getFirst();
-    FileEditorProvider[] providers = editorsWithProviders.getSecond();
-    if (editors.length <= 0 && fallbackEditor != null) {
-      editors = new FileEditor[] {fallbackEditor};
-      providers = new FileEditorProvider[] {fallbackProvider};
+    FileEditor[] editors;
+    FileEditorProvider[] providers;
+    if (fileEditor == null || fileEditorProvider == null) {
+      final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
+      editors = editorsWithProviders.getFirst();
+      providers = editorsWithProviders.getSecond();
+    }
+    else {
+      editors = new FileEditor[] {fileEditor};
+      providers = new FileEditorProvider[] {fileEditorProvider};
     }
 
     if (editors.length == 0) {
@@ -161,7 +166,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       // Size of entry list can be less than number of opened editors (some entries can be removed)
       if (file.isValid()) {
         // the file could have been deleted, so the isValid() check is essential
-        fileOpenedImpl(file, fallbackEditor, fallbackProvider);
+        fileOpenedImpl(file, fileEditor, fileEditorProvider);
       }
       return;
     }
@@ -171,7 +176,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       for (int i = editors.length - 1; i >= 0; i--) {
         final FileEditor           editor = editors   [i];
         final FileEditorProvider provider = providers [i];
-        if (provider == null) continue; // can happen if fallbackProvider is null
+        if (provider == null) continue; // can happen if fileEditorProvider is null
         if (!editor.isValid()) {
           // this can happen for example if file extension was changed
           // and this method was called during corresponding myEditor close up
@@ -185,13 +190,13 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
         }
       }
     }
-    final Pair <FileEditor, FileEditorProvider> selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
+    final FileEditorWithProvider selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
     if (selectedEditorWithProvider != null) {
       //LOG.assertTrue(selectedEditorWithProvider != null);
-      entry.setSelectedProvider(selectedEditorWithProvider.getSecond());
+      entry.setSelectedProvider(selectedEditorWithProvider.getProvider());
       LOG.assertTrue(entry.getSelectedProvider() != null);
 
-      if(changeEntryOrderOnly){
+      if (changeEntryOrderOnly) {
         moveOnTop(entry);
       }
     }
@@ -348,7 +353,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     }
     myEntriesList.clear();
   }
-  
+
   /**
    * Updates history
    */

@@ -22,10 +22,10 @@ import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.FUStatisticsService;
-import com.intellij.internal.statistic.service.old.OldConfigurableStatisticsService;
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
+  private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   public static final Object LOCK = new Object();
 
   private StatisticsUploadAssistant(){};
@@ -59,16 +59,11 @@ public class StatisticsUploadAssistant {
   }
 
   public static boolean isSendAllowed(final SentUsagesPersistence settings) {
-    return settings != null && settings.isAllowed();
+    return settings != null && settings.isAllowed() && !Boolean.getBoolean(IDEA_SUPPRESS_REPORT_STATISTICS);
   }
 
   public static void updateSentTime() {
     UsageStatisticsPersistenceComponent.getInstance().setSentTime(System.currentTimeMillis());
-  }
-
-  @Deprecated  // to be removed in 2018.1x
-  public static StatisticsService getOldStatisticsService() {
-    return new OldConfigurableStatisticsService();
   }
 
   public static StatisticsService getApprovedGroupsStatisticsService() {

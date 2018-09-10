@@ -15,7 +15,7 @@ import org.jetbrains.concurrency.rejectedPromise
 import java.util.concurrent.ConcurrentMap
 
 abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
-  override val breakpoints = ContainerUtil.newConcurrentSet<T>()
+  override val breakpoints: MutableSet<T> = ContainerUtil.newConcurrentSet<T>()
 
   protected val breakpointDuplicationByTarget: ConcurrentMap<T, T> = ConcurrentCollectionFactory.createMap<T, T>(object : TObjectHashingStrategy<T> {
     override fun computeHashCode(b: T): Int {
@@ -96,7 +96,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
+  override fun flush(breakpoint: Breakpoint): Promise<*> = (breakpoint as T).flush(this)
 
   override fun enableBreakpoints(enabled: Boolean): Promise<*> = rejectedPromise<Any?>("Unsupported")
 
@@ -116,16 +116,16 @@ class DummyBreakpointManager : BreakpointManager {
     throw UnsupportedOperationException()
   }
 
-  override fun remove(breakpoint: Breakpoint) = nullPromise()
+  override fun remove(breakpoint: Breakpoint): Promise<*> = nullPromise()
 
   override fun addBreakpointListener(listener: BreakpointListener) {
   }
 
-  override fun removeAll() = nullPromise()
+  override fun removeAll(): Promise<*> = nullPromise()
 
-  override fun flush(breakpoint: Breakpoint) = nullPromise()
+  override fun flush(breakpoint: Breakpoint): Promise<*> = nullPromise()
 
-  override fun enableBreakpoints(enabled: Boolean) = nullPromise()
+  override fun enableBreakpoints(enabled: Boolean): Promise<*> = nullPromise()
 
   override fun setBreakOnFirstStatement() {
   }

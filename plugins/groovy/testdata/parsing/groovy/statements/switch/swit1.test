@@ -28,7 +28,7 @@ Groovy script
         PsiElement(+)('+')
         Literal
           PsiElement(Integer)('2')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     Case section
       Case label
         PsiElement(default)('default')
@@ -39,5 +39,5 @@ Groovy script
         PsiWhiteSpace(' ')
         Literal
           PsiElement(false)('false')
-    PsiElement(new line)('\n')
+      PsiElement(new line)('\n')
     PsiElement(})('}')

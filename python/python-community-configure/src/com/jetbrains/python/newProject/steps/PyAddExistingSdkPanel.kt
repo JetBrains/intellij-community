@@ -3,6 +3,7 @@ package com.jetbrains.python.newProject.steps
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
@@ -26,11 +27,12 @@ import java.awt.Component
  * @author vlan
  */
 class PyAddExistingSdkPanel(project: Project?,
+                            module: Module?,
                             existingSdks: List<Sdk>,
                             newProjectPath: String?,
                             preferredSdk: Sdk?) : PyAddSdkPanel() {
 
-  override val panelName = "Existing interpreter"
+  override val panelName: String = "Existing interpreter"
 
   override val sdk: Sdk?
     get() = sdkChooserCombo.comboBox.selectedItem as? Sdk
@@ -55,7 +57,7 @@ class PyAddExistingSdkPanel(project: Project?,
 
   init {
     layout = BorderLayout()
-    sdkChooserCombo = PythonSdkChooserCombo(project, existingSdks, newProjectPath, { it != null && it == preferredSdk }).apply {
+    sdkChooserCombo = PythonSdkChooserCombo(project, module, existingSdks, newProjectPath, { it != null && it == preferredSdk }).apply {
       if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         putClientProperty("JButton.buttonType", null)
       }
@@ -71,7 +73,7 @@ class PyAddExistingSdkPanel(project: Project?,
     update()
   }
 
-  override fun validateAll() =
+  override fun validateAll(): List<ValidationInfo> =
     listOf(validateSdkChooserField(),
            validateRemotePathField())
       .filterNotNull()

@@ -45,6 +45,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     myScope = scope;
     myMaintainStaticContext = maintainStaticContext;
   }
+  @Override
   protected PsiExpression[] defaultOccurrences() {
     return new PsiExpression[]{myMainOccurence};
   }
@@ -53,6 +54,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     return myMainOccurence;
   }
 
+  @Override
   protected PsiExpression[] findOccurrences() {
     if("null".equals(myMainOccurence.getText())) {
       return defaultOccurrences();

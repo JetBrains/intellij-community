@@ -24,7 +24,7 @@ public class OffsetIconPaintTest extends CompositeIconPaintTestHelper {
   }
 
   @Override
-  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
+  protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
     return new OffsetIcon(cellIcons[0].getIconWidth(), cellIcons[0]);
   }
 

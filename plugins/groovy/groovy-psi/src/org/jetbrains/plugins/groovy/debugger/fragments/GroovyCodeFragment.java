@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger.fragments;
 
 import com.intellij.openapi.project.Project;
@@ -176,7 +176,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     return false;
   }
 
@@ -206,8 +206,9 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     myImportCollector.clear();
   }
 
+  @NotNull
   @Override
-  protected GroovyFileImports getImports() {
+  public GroovyFileImports getImports() {
     return myFileImports.getValue();
   }
 }

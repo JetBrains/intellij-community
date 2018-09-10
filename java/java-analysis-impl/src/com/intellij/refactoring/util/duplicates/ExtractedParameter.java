@@ -66,15 +66,10 @@ public class ExtractedParameter {
   }
 
   @NotNull
-  public ExtractedParameter mapPatternToItself(@NotNull Match match) {
-    ExtractableExpressionPart copy = myPattern.copy();
-    ExtractableExpressionPart deepCopy = myPattern.deepCopy();
-
-    ExtractedParameter parameter = new ExtractedParameter(copy, deepCopy, copy.myType);
-    parameter.myPatternUsages.addAll(myPatternUsages);
-
-    match.getExtractedParameters().add(parameter);
-    return parameter;
+  public ExtractedParameter copyWithCandidateUsage(@NotNull PsiExpression candidateUsage) {
+    ExtractedParameter result = new ExtractedParameter(myPattern, ExtractableExpressionPart.fromUsage(candidateUsage, myType), myType);
+    result.myPatternUsages.addAll(myPatternUsages);
+    return result;
   }
 
   @NotNull
@@ -145,7 +140,7 @@ public class ExtractedParameter {
     private final Set<PsiField> myFields;
     private boolean myModified;
 
-    public FieldModificationVisitor(Set<PsiField> fields) {
+    FieldModificationVisitor(Set<PsiField> fields) {
       myFields = fields;
     }
 

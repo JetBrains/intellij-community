@@ -174,7 +174,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     @OptionTag
     @XMap
     @JvmField var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-    @JvmField var SHARED_SETTINGS = SharedSettings()
+    @JvmField var SHARED_SETTINGS: SharedSettings = SharedSettings()
   }
 
   private var myState: State = State()

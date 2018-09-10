@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -39,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
@@ -46,6 +33,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,8 +49,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
@@ -151,7 +139,6 @@ public class CustomizableActionsPanel {
               if (o instanceof String) {
                 DefaultMutableTreeNode current = new DefaultMutableTreeNode(url.getComponent());
                 current.setParent((DefaultMutableTreeNode)node.getParent());
-                editToolbarIcon((String)o, current);
               }
             }
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
@@ -317,24 +304,6 @@ public class CustomizableActionsPanel {
     myRestoreAllDefaultButton.setEnabled(true);
   }
 
-  private void editToolbarIcon(String actionId, DefaultMutableTreeNode node) {
-    final AnAction anAction = ActionManager.getInstance().getAction(actionId);
-    if (isToolbarAction(node) && anAction.getTemplatePresentation().getIcon() == null) {
-      final int exitCode = Messages.showOkCancelDialog(IdeBundle.message("error.adding.action.without.icon.to.toolbar"),
-                                                       IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
-                                                       Messages.getInformationIcon());
-      if (exitCode == Messages.OK) {
-        mySelectedSchema.addIconCustomization(actionId, null);
-        anAction.getTemplatePresentation().setIcon(AllIcons.Toolbar.Unknown);
-        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown));
-        anAction.setDefaultIcon(false);
-        node.setUserObject(Pair.create(actionId, AllIcons.Toolbar.Unknown));
-        myActionsTree.repaint();
-        CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
-      }
-    }
-  }
-
   private void setButtonsDisabled() {
     myRemoveActionButton.setEnabled(false);
     myAddActionButton.setEnabled(false);
@@ -386,6 +355,7 @@ public class CustomizableActionsPanel {
     restorePathsAfterTreeOptimization(treePaths);
     CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
+    TouchBarsManager.reloadAll();
   }
 
   private void restorePathsAfterTreeOptimization(final List<TreePath> treePaths) {
@@ -487,7 +457,7 @@ public class CustomizableActionsPanel {
         }
         else if (userObject instanceof QuickList) {
           setText(((QuickList)userObject).getName());
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
         }
         else if (userObject != null) {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
@@ -504,11 +474,6 @@ public class CustomizableActionsPanel {
       }
       return this;
     }
-  }
-
-  private static boolean isToolbarAction(DefaultMutableTreeNode node) {
-    return node.getParent() != null && ((DefaultMutableTreeNode)node.getParent()).getUserObject() instanceof Group &&
-           ((Group)((DefaultMutableTreeNode)node.getParent()).getUserObject()).getName().equals(ActionsTreeUtil.MAIN_TOOLBAR);
   }
 
   @Nullable
@@ -553,7 +518,6 @@ public class CustomizableActionsPanel {
         mySelectedSchema.removeIconCustomization(actionId);
         final DefaultMutableTreeNode nodeOnToolbar = findNodeOnToolbar(actionId);
         if (nodeOnToolbar != null){
-          editToolbarIcon(actionId, nodeOnToolbar);
           node.setUserObject(nodeOnToolbar.getUserObject());
         }
       }
@@ -626,7 +590,6 @@ public class CustomizableActionsPanel {
           final Icon icon = (Icon)((Pair)userObject).second;
           action.getTemplatePresentation().setIcon(icon);
           action.setDefaultIcon(icon == null);
-          editToolbarIcon(actionId, myNode);
         }
         myActionsTree.repaint();
       }
@@ -685,7 +648,7 @@ public class CustomizableActionsPanel {
       myTextField = createBrowseField();
       myTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           enableSetIconButton(actionManager);
         }
       });
@@ -731,7 +694,6 @@ public class CustomizableActionsPanel {
             Icon icon = (Icon)((Pair)userObject).second;
             action.getTemplatePresentation().setIcon(icon);
             action.setDefaultIcon(icon == null);
-            editToolbarIcon(actionId, mutableNode);
           }
         }
         return true;

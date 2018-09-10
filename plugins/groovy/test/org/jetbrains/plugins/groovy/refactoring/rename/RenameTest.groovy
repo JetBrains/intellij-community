@@ -290,7 +290,7 @@ print new Foo(1)
   }
 
   @Bombed(
-    year = 2018, month = 4, day = 1, user = "Daniil Ovchinnikov",
+    year = 2018, month = 10, day = 1, user = "Daniil Ovchinnikov",
     description = "The fix requires major changes in property resolution and platform renamer"
   )
   void testRecursivePathRename() {

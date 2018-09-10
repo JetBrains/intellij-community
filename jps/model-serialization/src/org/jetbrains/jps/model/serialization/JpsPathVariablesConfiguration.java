@@ -32,6 +32,7 @@ public interface JpsPathVariablesConfiguration extends JpsElement {
   /**
    * @deprecated use {@link #getUserVariableValue(String)} instead
    */
+  @Deprecated
   @Nullable
   String getPathVariable(@NotNull String name);
 
@@ -41,6 +42,7 @@ public interface JpsPathVariablesConfiguration extends JpsElement {
   /**
    * @deprecated use {@link #getAllUserVariables()} instead
    */
+  @Deprecated
   @NotNull
   Map<String, String> getAllVariables();
 

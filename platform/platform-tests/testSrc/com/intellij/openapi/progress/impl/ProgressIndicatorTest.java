@@ -44,6 +44,7 @@ import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
+import org.assertj.core.util.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -361,7 +362,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testProgressPerformance() {
-    PlatformTestUtil.startPerformanceTest("executeProcessUnderProgress", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("executeProcessUnderProgress", 400, () -> {
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       for (int i=0;i<100000;i++) {
         ProgressManager.getInstance().executeProcessUnderProgress(EmptyRunnable.getInstance(), indicator);
@@ -474,11 +475,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     @NotNull
     @Override
     public Stack<String> getText2Stack() {
-      throw new RuntimeException();
-    }
-
-    @Override
-    public int getNonCancelableCount() {
       throw new RuntimeException();
     }
 
@@ -804,9 +800,29 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
+    @VisibleForTesting
     @Override
     public boolean isCancelable() {
       return super.isCancelable();
+    }
+  }
+
+  public void testIndicatorsStillNotThrowInCheckCanceledIfCalledStartNonCancelableSectionBeforeByOldStaleDeprecatedPluginsNotYetPortedToProgressManagerExecuteInNonCancelableSection() {
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new EmptyProgressIndicator());
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new AbstractProgressIndicatorBase());
+  }
+
+  private static void checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(ProgressIndicator indicator) {
+    assertFalse(ProgressManager.getInstance().isInNonCancelableSection());
+    indicator.startNonCancelableSection();
+    indicator.cancel();
+    indicator.checkCanceled();
+    indicator.finishNonCancelableSection();
+    try {
+      indicator.checkCanceled();
+      fail("Must throw");
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

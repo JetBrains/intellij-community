@@ -104,11 +104,21 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
                 (IS_PY3K and sys.version_info[1] >= 3))
 
 
+class ValuesPolicy:
+    SYNC = 0
+    ASYNC = 1
+    ON_DEMAND = 2
+
+
+LOAD_VALUES_POLICY = ValuesPolicy.SYNC
+if os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True':
+    LOAD_VALUES_POLICY = ValuesPolicy.ASYNC
+if os.getenv('PYDEVD_LOAD_VALUES_ON_DEMAND', 'False') == 'True':
+    LOAD_VALUES_POLICY = ValuesPolicy.ON_DEMAND
+DEFAULT_VALUES_DICT = {ValuesPolicy.ASYNC: "__pydevd_value_async", ValuesPolicy.ON_DEMAND: "__pydevd_value_on_demand"}
+
 INTERACTIVE_MODE_AVAILABLE = sys.platform in ('darwin', 'win32') or os.getenv('DISPLAY') is not None
 IS_PYCHARM = True
-
-LOAD_VALUES_ASYNC = os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True'
-DEFAULT_VALUE = "__pydevd_value_async"
 ASYNC_EVAL_TIMEOUT_SEC = 60
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'

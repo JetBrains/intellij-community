@@ -25,13 +25,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     launchBrowser(e.getProject());
   }
 
@@ -90,12 +91,12 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(ApplicationInfoEx.getInstanceEx() != null);
   }
 
   private static boolean isEvaluationLicense() {
-    final LicensingFacade provider = LicensingFacade.getInstance();
-    return provider != null && provider.isEvaluationLicense();
+    final LicensingFacade la = LicensingFacade.getInstance();
+    return la != null && la.isEvaluationLicense();
   }
 }

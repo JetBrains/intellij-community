@@ -85,18 +85,14 @@ public class ChunkExtractor {
     }
   }
 
-  private static final ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>> ourExtractors = new ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>>() {
+  private static final ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>> ourExtractors = ThreadLocal.withInitial(
+    () -> new WeakFactory<Map<PsiFile, ChunkExtractor>>() {
+    @NotNull
     @Override
-    protected WeakFactory<Map<PsiFile, ChunkExtractor>> initialValue() {
-      return new WeakFactory<Map<PsiFile, ChunkExtractor>>() {
-        @NotNull
-        @Override
-        protected Map<PsiFile, ChunkExtractor> create() {
-          return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
-        }
-      };
+    protected Map<PsiFile, ChunkExtractor> create() {
+      return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
     }
-  };
+  });
 
   @NotNull 
   public static TextChunk[] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
@@ -187,7 +183,7 @@ public class ChunkExtractor {
                                       int start,
                                       int end,
                                       boolean selectUsageWithBold,
-                                      @NotNull List<TextChunk> result) {
+                                      @NotNull List<? super TextChunk> result) {
     final Lexer lexer = myHighlighter.getHighlightingLexer();
     final SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
 
@@ -235,7 +231,7 @@ public class ChunkExtractor {
                                         final int hiEnd,
                                         @NotNull final TextAttributesKey[] tokenHighlights,
                                         final boolean selectUsageWithBold,
-                                        @NotNull final List<TextChunk> result) {
+                                        @NotNull final List<? super TextChunk> result) {
     final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
     if (selectUsageWithBold) {
       originalAttrs.setFontType(Font.PLAIN);
@@ -301,7 +297,7 @@ public class ChunkExtractor {
                                @NotNull TextAttributes originalAttrs,
                                boolean bold,
                                @Nullable UsageType usageType,
-                               @NotNull List<TextChunk> result) {
+                               @NotNull List<? super TextChunk> result) {
     if (start >= end) return;
 
     TextAttributes attrs = bold
@@ -331,7 +327,7 @@ public class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(@NotNull List<TextChunk> result, int lineNumber) {
+  private void appendPrefix(@NotNull List<? super TextChunk> result, int lineNumber) {
     result.add(new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), String.valueOf(lineNumber + 1)));
   }
 }

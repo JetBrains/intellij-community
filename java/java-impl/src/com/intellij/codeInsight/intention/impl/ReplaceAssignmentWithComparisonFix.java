@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceAssignmentWithComparisonFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  public ReplaceAssignmentWithComparisonFix(PsiAssignmentExpression expr) {super(expr);}
+  public ReplaceAssignmentWithComparisonFix(@NotNull PsiAssignmentExpression expr) {
+    super(expr);
+  }
 
   @Override
   public void invoke(@NotNull Project project,
@@ -41,7 +43,7 @@ public class ReplaceAssignmentWithComparisonFix extends LocalQuickFixAndIntentio
     PsiExpression rOperand = comparisonExpr.getROperand();
     assert rOperand != null;
     PsiExpression rExpression = assignmentExpression.getRExpression();
-    assert  rExpression != null;
+    assert rExpression != null;
     rOperand.replace(rExpression);
     CodeStyleManager.getInstance(project).reformat(assignmentExpression.replace(comparisonExpr));
   }

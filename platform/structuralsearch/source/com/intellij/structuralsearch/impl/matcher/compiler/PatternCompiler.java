@@ -424,7 +424,6 @@ public class PatternCompiler {
     final int segmentsCount = template.getSegmentsCount();
     final String text = template.getTemplateText();
     int prevOffset = 0;
-    final Set<String> seen = ContainerUtil.newTroveSet();
     final Set<String> variableNames = ContainerUtil.newTroveSet();
 
     for(int i = 0; i < segmentsCount; i++) {
@@ -439,8 +438,12 @@ public class PatternCompiler {
       final String compiledName = prefix + name;
       buf.append(text, prevOffset, offset).append(compiledName);
 
-      variableNames.add(name);
-      if (seen.add(compiledName)) {
+      final boolean repeated = !variableNames.add(name);
+      final SubstitutionHandler existing = (SubstitutionHandler)result.getHandler(compiledName);
+      if (existing != null) {
+        existing.setRepeatedVar(repeated);
+      }
+      else {
         // the same variable can occur multiple times in a single template
         // no need to process it more than once
 
@@ -460,6 +463,7 @@ public class PatternCompiler {
           constraint.getMaxCount(),
           constraint.isGreedy()
         );
+        handler.setRepeatedVar(repeated);
 
         if (constraint.isWithinHierarchy()) {
           handler.setSubtype(true);

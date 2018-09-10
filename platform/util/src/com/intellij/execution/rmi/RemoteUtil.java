@@ -256,7 +256,7 @@ public class RemoteUtil {
     private final Class<?> myClazz;
     private final ClassLoader myLoader;
 
-    public RemoteInvocationHandler(Object remote, Class<?> clazz, ClassLoader loader) {
+    RemoteInvocationHandler(Object remote, Class<?> clazz, ClassLoader loader) {
       myRemote = remote;
       myClazz = clazz;
       myLoader = loader;
@@ -275,8 +275,5 @@ public class RemoteUtil {
         return invokeRemote(method, remoteMethod, myRemote, fixArgs(args, method), myLoader, false);
       }
     }
-  }
-
-  public interface CastableArgument<T> {
   }
 }

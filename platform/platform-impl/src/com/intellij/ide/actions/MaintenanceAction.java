@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class MaintenanceAction extends AnAction implements DumbAware {
 
@@ -29,7 +30,7 @@ public class MaintenanceAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("MaintenanceGroup");
     JBPopupFactory.getInstance().
       createActionGroupPopup("Maintenance", group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true).

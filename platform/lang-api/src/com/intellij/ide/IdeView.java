@@ -16,6 +16,7 @@
 
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * favorites or commander).
  *
  * @since 5.1
- * @see com.intellij.openapi.actionSystem.PlatformDataKeys#IDE_VIEW
+ * @see LangDataKeys#IDE_VIEW
  */
 public interface IdeView {
   /**

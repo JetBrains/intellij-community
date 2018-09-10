@@ -237,7 +237,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     private final String myModuleShortName;
     private final Module myModule;
 
-    public GradleModuleDirectoryNode(Project project,
+    GradleModuleDirectoryNode(Project project,
                                      PsiDirectory psiDirectory,
                                      ViewSettings settings,
                                      Module module,
@@ -254,7 +254,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     }
 
     @Override
-    protected void updateImpl(PresentationData data) {
+    protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
       PsiDirectory psiDirectory = getValue();
       assert psiDirectory != null;
@@ -270,13 +270,13 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     @NotNull
     private final String myModuleShortName;
 
-    public GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
+    GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
       super(project, value, viewSettings);
       myModuleShortName = moduleShortName;
     }
 
     @Override
-    public void update(PresentationData presentation) {
+    public void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setPresentableText(myModuleShortName);
       presentation.addText(myModuleShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

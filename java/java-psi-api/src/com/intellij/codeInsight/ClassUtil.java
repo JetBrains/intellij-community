@@ -82,7 +82,7 @@ public class ClassUtil {
     return null;
   }
 
-  private static boolean add(PsiMethod method, Set<PsiMethod> alreadyImplemented) {
+  private static boolean add(PsiMethod method, Set<? super PsiMethod> alreadyImplemented) {
     boolean already = alreadyImplemented.add(method);
     if (!already) return already;
 

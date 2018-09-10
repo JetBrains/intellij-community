@@ -333,8 +333,8 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (debuggerSettings.isLibrariesFilterEnabled()) {
       environment.put(PYDEVD_FILTER_LIBRARIES, "True");
     }
-    if (debuggerSettings.isLoadValuesAsync()) {
-      environment.put(PyVariableViewSettings.PYDEVD_LOAD_VALUES_ASYNC, "True");
+    if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
+      environment.put(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
     }
 
     PydevConsoleRunnerFactory.putIPythonEnvFlag(project, environment);

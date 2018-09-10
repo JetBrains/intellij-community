@@ -137,6 +137,9 @@ public class MavenFoldersImporter {
     addBuilderHelperPaths("add-source", roots.getModifiable(JavaSourceRootType.SOURCE));
     addBuilderHelperPaths("add-test-source", roots.getModifiable(JavaSourceRootType.TEST_SOURCE));
 
+    addBuilderHelperResourcesPaths("add-resource", roots.getModifiable(JavaResourceRootType.RESOURCE));
+    addBuilderHelperResourcesPaths("add-test-resource", roots.getModifiable(JavaResourceRootType.TEST_RESOURCE));
+
     List<String> addedPaths = new ArrayList<>();
     for (JpsModuleSourceRootType<?> type : roots.keySet()) {
       for (String path : roots.get(type)) {
@@ -154,6 +157,19 @@ public class MavenFoldersImporter {
       if (sourcesElement != null) {
         for (Element element : sourcesElement.getChildren()) {
           folders.add(element.getTextTrim());
+        }
+      }
+    }
+  }
+
+  private void addBuilderHelperResourcesPaths(String goal, Collection<String> folders) {
+    final Element configurationElement = myMavenProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", goal);
+    if (configurationElement != null) {
+      final Element sourcesElement = configurationElement.getChild("resources");
+      if (sourcesElement != null) {
+        for (Element element : sourcesElement.getChildren()) {
+          Element directory = element.getChild("directory");
+          if (directory != null) folders.add(directory.getTextTrim());
         }
       }
     }

@@ -16,9 +16,7 @@
 
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
-import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -34,11 +32,9 @@ public class FoldingPolicy {
   
   private FoldingPolicy() {}
 
-  static boolean isCollapseByDefault(@NotNull PsiElement element) {
-    final Language lang = element.getLanguage();
-    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
+  static boolean isCollapsedByDefault(@NotNull PsiElement element, @NotNull FoldingBuilder foldingBuilder) {
     try {
-      return foldingBuilder != null && foldingBuilder.isCollapsedByDefault(element.getNode());
+      return foldingBuilder.isCollapsedByDefault(element.getNode());
     }
     catch (IndexNotReadyException e) {
       LOG.error(e);

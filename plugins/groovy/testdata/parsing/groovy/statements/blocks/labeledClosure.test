@@ -18,12 +18,8 @@ Groovy script
             PsiElement(identifier)('y')
         PsiWhiteSpace(' ')
         PsiElement(})('}')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:'.' unexpected
     PsiElement(.)('.')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   Method call
     Reference expression
       PsiElement(identifier)('getClass')

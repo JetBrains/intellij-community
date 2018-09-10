@@ -68,6 +68,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     }, mySdkEditor.getComboBox());
 
     myRunEnhancerOnMakeCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         GuiUtils.enableChildren(myRunEnhancerOnMakeCheckBox.isSelected(), myFilesToEnhancePanel);
         if (myRunEnhancerOnMakeCheckBox.isSelected() && myFilesListModel.isEmpty()) {
@@ -100,17 +101,20 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Google App Engine";
   }
 
+  @Override
   @NotNull
   public JComponent createComponent() {
     mySdkEditorPanel.add(BorderLayout.CENTER, mySdkEditor.getMainComponent());
     return myMainPanel;
   }
 
+  @Override
   public boolean isModified() {
     return myRunEnhancerOnMakeCheckBox.isSelected() != myFacetConfiguration.isRunEnhancerOnMake()
            || !mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath())
@@ -126,6 +130,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     return files;
   }
 
+  @Override
   public void apply() {
     myFacetConfiguration.setSdkHomePath(mySdkEditor.getPath());
     myFacetConfiguration.setRunEnhancerOnMake(myRunEnhancerOnMakeCheckBox.isSelected());
@@ -133,6 +138,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myFacetConfiguration.setPersistenceApi(PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
   }
 
+  @Override
   public void reset() {
     mySdkEditor.setPath(myFacetConfiguration.getSdkHomePath());
     if (myContext.isNewFacet() && myFacetConfiguration.getSdkHomePath().length() == 0) {
@@ -150,6 +156,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     }
   }
 
+  @Override
   public void disposeUIResources() {
   }
 

@@ -30,7 +30,7 @@ import javax.swing.*;
  *
  * During indexing, methods are only invoked for renderers implementing {@link com.intellij.openapi.project.DumbAware}.
  *
- * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
+ * @see com.intellij.openapi.editor.markup.RangeHighlighter#setGutterIconRenderer(com.intellij.openapi.editor.markup.GutterIconRenderer)
  */
 public interface GutterMark {
   /**

@@ -105,7 +105,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
 
@@ -283,7 +283,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
-      if (qualifiedName.equals(annotation.getQualifiedName())) {
+      if (annotation.hasQualifiedName(qualifiedName)) {
         return annotation;
       }
     }

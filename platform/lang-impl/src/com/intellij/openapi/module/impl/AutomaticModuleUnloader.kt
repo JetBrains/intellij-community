@@ -120,7 +120,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
     }
   }
 
-  fun createAction(text: String, action: (MutableList<String>) -> Unit) = object : NotificationAction(text) {
+  fun createAction(text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       val unloaded = ArrayList<String>()
       val moduleManager = ModuleManager.getInstance(project)
@@ -136,7 +136,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
     loadedModulesListStorage.modules.addAll(modules)
   }
 
-  override fun getState() = loadedModulesListStorage
+  override fun getState(): LoadedModulesListStorage = loadedModulesListStorage
 
   override fun loadState(state: LoadedModulesListStorage) {
     setLoadedModules(state.modules)
@@ -144,7 +144,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
+    fun getInstance(project: Project): AutomaticModuleUnloader = project.service<AutomaticModuleUnloader>()
 
     private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Automatic Module Unloading")
   }

@@ -265,13 +265,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  @Override
-  public boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor) {
-    return file.getFileSystem() != this
-           || processFile((NewVirtualFile)file, processor);
-  }
-
-  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<VirtualFile> processor) {
+  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<? super VirtualFile> processor) {
     if (!processor.process(file)) return false;
     if (file.isDirectory()) {
       for (VirtualFile child : file.getCachedChildren()) {

@@ -26,11 +26,13 @@ import javax.swing.*;
 
 public class CvsListCellRenderer extends AbstractListCellRenderer {
 
+  @Override
   protected Icon getPresentableIcon(Object value) {
     if (value == null) return null;
     return AllIcons.Providers.Cvs;
   }
 
+  @Override
   protected String getPresentableString(Object value) {
     if (value == null)
       return "";

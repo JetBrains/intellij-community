@@ -30,7 +30,7 @@ public abstract class FileDocumentSynchronizationVetoer {
   public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
     return true;
   }
-  public boolean mayReloadFileContent(VirtualFile file, @NotNull Document document) {
+  public boolean mayReloadFileContent(@NotNull VirtualFile file, @NotNull Document document) {
     return true;
   }
 }

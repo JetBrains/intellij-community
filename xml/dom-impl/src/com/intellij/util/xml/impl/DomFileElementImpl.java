@@ -51,12 +51,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
     @Override
     @Nullable
-    public XmlElement getNameElement(DomElement element) {
-      return null;
-    }
-
-    @Override
-    @Nullable
     public GenericDomValue getNameDomElement(DomElement element) {
       return null;
     }

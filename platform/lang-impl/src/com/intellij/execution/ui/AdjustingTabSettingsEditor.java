@@ -23,7 +23,7 @@ import com.intellij.openapi.options.SettingsEditor;
  * represented by this {@code SettingsEditor} instance is not selected.
  * As a result, no empty space or scrollbars when smaller tab component selected.
  *
- * @see {@link com.intellij.openapi.options.SettingsEditorGroup}
+ * @see com.intellij.openapi.options.SettingsEditorGroup
  */
 public interface AdjustingTabSettingsEditor {
 }

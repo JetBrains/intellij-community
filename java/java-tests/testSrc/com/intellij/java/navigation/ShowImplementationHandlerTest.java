@@ -53,6 +53,20 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(CommonClassNames.JAVA_LANG_RUNNABLE, qualifiedName);
   }
 
+  public void testDisableFunctionalInterfaceReferenceOnWhitespacesInside() {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
+                                                          "    {" +
+                                                          "        Runnable r = ()<caret> -> {};\n" +
+                                                          "    }\n" +
+                                                          "}\n" +
+                                                          "\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement element =
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    assertNull(element);
+  }
+
   public void testFunctionExpressionsOnReference() {
     myFixture.addClass("public interface I {void m();}");
     myFixture.addClass("public class Usage {{I i = () -> {};}}");
