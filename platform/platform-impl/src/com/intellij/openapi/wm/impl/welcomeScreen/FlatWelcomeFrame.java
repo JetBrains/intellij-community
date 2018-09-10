@@ -264,21 +264,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
-      setTransferHandler(new TransferHandler(null) {
-        @Override
-        public boolean canImport(TransferSupport support) {
-          return true;
-        }
-
-        @Override
-        public boolean importData(TransferSupport support) {
-          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
-          if (list != null && list.size() > 0) {
-            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
-          }
-          return false;
-        }
-      });
       setDropTarget(new DropTarget(this, new DropTargetAdapter() {
         @Override
         public void dragEnter(DropTargetDragEvent e) {
@@ -293,6 +278,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public void drop(DropTargetDropEvent e) {
           setDnd(false);
+          e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+          List<File> list = FileCopyPasteUtil.getFileList(e.getTransferable());
+          if (list != null && list.size() > 0) {
+            MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            e.dropComplete(true);
+            return;
+          }
+          e.dropComplete(false);
         }
 
         private void setDnd(boolean dnd) {
