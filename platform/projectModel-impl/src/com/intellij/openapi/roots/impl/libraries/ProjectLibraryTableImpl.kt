@@ -8,10 +8,13 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 
-@State(name = "libraryTable", storages = [(Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter::class))])
-class ProjectLibraryTableImpl(override val project: Project) : LibraryTableBase(), ProjectLibraryTableInterface {
+@State(name = "libraryTable", storages = [(Storage(value = "libraries", stateSplitter = LibraryStateSplitter::class))])
+class ProjectLibraryTableImpl(val parentProject: Project) : LibraryTableBase(), ProjectLibraryTable {
+  override fun getProject(): Project = parentProject
+
   override fun getTableLevel(): String = LibraryTablesRegistrar.PROJECT_LEVEL
   override fun getPresentation(): LibraryTablePresentation = PROJECT_LIBRARY_TABLE_PRESENTATION
+
 }
 
 private val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
