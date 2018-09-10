@@ -45,7 +45,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateURL();
       }
     });

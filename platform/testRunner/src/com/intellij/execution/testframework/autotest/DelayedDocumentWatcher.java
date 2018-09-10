@@ -37,8 +37,8 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
   // All instance fields should be accessed in EDT
   private final Project myProject;
   private final int myDelayMillis;
-  private final Consumer<Integer> myModificationStampConsumer;
-  private final Condition<VirtualFile> myChangedFileFilter;
+  private final Consumer<? super Integer> myModificationStampConsumer;
+  private final Condition<? super VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
 
   private Disposable myDisposable;
@@ -50,8 +50,8 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
 
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
-                                @NotNull Consumer<Integer> modificationStampConsumer,
-                                @Nullable Condition<VirtualFile> changedFileFilter) {
+                                @NotNull Consumer<? super Integer> modificationStampConsumer,
+                                @Nullable Condition<? super VirtualFile> changedFileFilter) {
     myProject = project;
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
@@ -168,8 +168,8 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
-  private void asyncCheckErrors(@NotNull Collection<VirtualFile> files,
-                                @NotNull Consumer<Boolean> errorsFoundConsumer) {
+  private void asyncCheckErrors(@NotNull Collection<? extends VirtualFile> files,
+                                @NotNull Consumer<? super Boolean> errorsFoundConsumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final boolean errorsFound = ReadAction.compute(() -> {
         for (VirtualFile file : files) {

@@ -252,7 +252,7 @@ public class BindingFactory {
     }
 
     public String toString() {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
 
       for (PsiTypeVariable boundVariable : myBoundVariables) {
         final int i = boundVariable.getIndex();

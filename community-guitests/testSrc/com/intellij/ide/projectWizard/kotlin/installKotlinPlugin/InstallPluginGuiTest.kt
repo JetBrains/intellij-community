@@ -13,17 +13,17 @@ import org.junit.Test
 class InstallPluginGuiTest : KotlinGuiTestCase() {
   @Test
   fun installKotlinPlugin() {
-    //TODO: uncomment when new design of Plugins dialog is finished
-//    if (!pluginsDialogScenarios
-//        .isPluginRequiredVersionInstalled(KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full)) {
+    if (pluginsDialogScenarios.isPluginRequiredVersionInstalled(
+        KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full
+      ).not()) {
       pluginsDialogScenarios.actionAndRestart {
         pluginsDialogScenarios.installPluginFromDisk(KotlinTestProperties.kotlin_plugin_install_path)
       }
-//      assertTrue(
-//        actual = pluginsDialogScenarios
-//          .isPluginRequiredVersionInstalled(KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full),
-//        message = "Kotlin plugin `${KotlinTestProperties.kotlin_plugin_version_full}` is not installed")
-//    }
+      assertTrue(
+        actual = pluginsDialogScenarios.isPluginRequiredVersionInstalled(
+          KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full),
+        message = "Kotlin plugin `${KotlinTestProperties.kotlin_plugin_version_full}` is not installed")
+    }
   }
 
   @Test

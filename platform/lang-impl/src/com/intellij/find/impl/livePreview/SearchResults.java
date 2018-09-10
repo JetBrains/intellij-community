@@ -136,7 +136,7 @@ public class SearchResults implements DocumentListener {
 
   public interface SearchResultsListener {
 
-    void searchResultsUpdated(SearchResults sr);
+    void searchResultsUpdated(@NotNull SearchResults sr);
     void cursorMoved();
 
     void updateFinished();
@@ -266,7 +266,7 @@ public class SearchResults implements DocumentListener {
     }
   }
 
-  private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<FindResult> results) {
+  private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<? super FindResult> results) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     // Document can change even while we're holding read lock (example case - console), so we're taking an immutable snapshot of text here
@@ -287,7 +287,7 @@ public class SearchResults implements DocumentListener {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;
-      int newOffset = result.getEndOffset();
+      final int newOffset = result.getEndOffset();
       if (result.getEndOffset() > maxOffset) break;
       if (offset == newOffset) {
         if (offset < maxOffset - 1) {
@@ -300,6 +300,7 @@ public class SearchResults implements DocumentListener {
       }
       else {
         offset = newOffset;
+        if (offset == result.getStartOffset()) ++offset; // skip zero width result
       }
       results.add(result);
     }

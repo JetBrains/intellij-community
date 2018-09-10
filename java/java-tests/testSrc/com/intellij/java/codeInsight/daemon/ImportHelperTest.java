@@ -66,6 +66,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
   @WrapInCommand
   public void testImportsInsertedAlphabetically() {
+    @Language("JAVA")
     @NonNls String text = "class I {}";
     final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
     assertEmpty(highlightErrors());
@@ -107,6 +108,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
   @WrapInCommand
   public void testStaticImportsGrouping() {
+    @Language("JAVA")
     @NonNls String text = "import static java.lang.Math.max;\n" +
                           "import java.util.Map;\n" +
                           "\n" +
@@ -191,7 +193,9 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
   @WrapInCommand
   public void testConflictingClassesFromCurrentPackage() {
-    final PsiFile file = configureByText(StdFileTypes.JAVA, "package java.util; class X{ Date d;}");
+    @Language("JAVA")
+    String text = "package java.util; class X{ Date d;}";
+    final PsiFile file = configureByText(StdFileTypes.JAVA, text);
     assertEmpty(highlightErrors());
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
@@ -208,7 +212,9 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     try {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-      configureByText(StdFileTypes.JAVA, "class X { ArrayList<caret> c; }");
+      @Language("JAVA")
+      String text = "class X { ArrayList<caret> c; }";
+      configureByText(StdFileTypes.JAVA, text);
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
@@ -240,7 +246,9 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     try {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-      configureByText(StdFileTypes.JAVA, "class X { <caret>ArrayList c = new ArrayList(); }");
+      @Language("JAVA")
+      String text = "class X { <caret>ArrayList c = new ArrayList(); }";
+      configureByText(StdFileTypes.JAVA, text);
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
@@ -265,6 +273,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoImportWorksWhenITypeSpaceAfterClassName() {
+    @Language("JAVA")
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(StdFileTypes.JAVA, text);
 
@@ -293,6 +302,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoImportAfterUncomment() {
+    @Language("JAVA")
     @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
     configureByText(StdFileTypes.JAVA, text);
 
@@ -320,6 +330,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testEnsureOptimizeImportsWhenInspectionReportsErrors() {
+    @Language("JAVA")
     @NonNls String text = "import java.util.List; class S { } <caret>";
     configureByText(StdFileTypes.JAVA, text);
     //ensure error will be provided by a local inspection
@@ -362,6 +373,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoImportWorks() {
+    @Language("JAVA")
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(StdFileTypes.JAVA, text);
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
@@ -383,6 +395,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
 
   public void testAutoImportOfGenericReference() {
+    @Language("JAVA")
     @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(StdFileTypes.JAVA, text);
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // make sure editor is visible - auto-import works only for visible area
@@ -412,6 +425,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoOptimizeUnresolvedImports() {
+    @Language("JAVA")
     @NonNls String text = "import xxx.yyy; class S { } <caret> ";
     configureByText(StdFileTypes.JAVA, text);
 
@@ -466,6 +480,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoInsertImportForInnerClass() {
+    @Language("JAVA")
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(StdFileTypes.JAVA, text);
 
@@ -489,11 +504,11 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoInsertImportForInnerClassAllowInnerClassImports() {
+    @Language("JAVA")
     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
     configureByText(StdFileTypes.JAVA, text);
 
     JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getFile()).getCustomSettings(JavaCodeStyleSettings.class);
-    boolean old_imports = javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS;
     javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
@@ -506,12 +521,12 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
     }
     finally {
-      javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = old_imports;
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
     }
   }
 
   public void testAutoImportSkipsClassReferenceInMethodPosition() {
+    @Language("JAVA")
     @NonNls String text =
       "package x; import java.util.HashMap; class S { HashMap<String,String> f(){ return  Hash<caret>Map <String, String >();} }  ";
     configureByText(StdFileTypes.JAVA, text);
@@ -537,6 +552,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoImportDoNotBreakCode() {
+    @Language("JAVA")
     @NonNls String text = "package x; class S {{ S.<caret>\n Runnable r; }}";
     configureByText(StdFileTypes.JAVA, text);
 
@@ -555,6 +571,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAutoImportIgnoresUnresolvedImportReferences() {
+    @Language("JAVA")
     @NonNls String text = "package x; import xxx.yyy.ArrayList; class S {{ ArrayList<caret> r; }}";
     configureByText(StdFileTypes.JAVA, text);
 

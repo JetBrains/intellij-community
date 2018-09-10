@@ -398,7 +398,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private final Lexer myLexer;
 
-    public TemplateHighlighter() {
+    TemplateHighlighter() {
       myLexer = createDefaultLexer();
     }
 

@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.util.ui.JBUI;
 import org.jdesktop.swingx.util.OS;
@@ -47,4 +48,10 @@ public class ScaleInfoUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() { return "statistics.ui.screen.scale"; }
+
+  @NotNull
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
+  }
 }

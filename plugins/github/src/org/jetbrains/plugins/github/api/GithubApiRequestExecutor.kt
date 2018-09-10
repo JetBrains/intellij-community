@@ -81,20 +81,20 @@ sealed class GithubApiRequestExecutor {
     protected fun <T> RequestBuilder.execute(request: GithubApiRequest<T>, indicator: ProgressIndicator): T {
       indicator.checkCanceled()
       try {
+        LOG.debug("Request: ${request.url} ${request.operationName} : Connecting")
         return connect {
           val connection = it.connection as HttpURLConnection
           if (request is GithubApiRequest.WithBody) {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body}")
+            LOG.debug("Request: ${connection.url} ${connection.requestMethod} with body:\n${request.body} : Connected")
             it.write(request.body)
           }
           else {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url}")
+            LOG.debug("Request: ${connection.url} ${connection.requestMethod} : Connected")
           }
           checkResponseCode(connection)
           indicator.checkCanceled()
-
           val result = request.extractResult(createResponse(it, indicator))
-          LOG.debug("Request: ${connection.requestMethod} ${connection.url}: Success")
+          LOG.debug("Request: ${connection.url} ${connection.requestMethod} : Result extracted")
           result
         }
       }

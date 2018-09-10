@@ -177,7 +177,7 @@ public class DiffSideView {
 
     private final EditorMouseMotionListener myMouseMotionListener = new EditorMouseMotionListener() {
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         Editor editor = e.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject && myProject != null/*???*/) return;
         if (!isInMyArea(e)) return;
@@ -187,7 +187,7 @@ public class DiffSideView {
       }
     };
 
-    public MouseLineNumberListener(DiffContent content, Editor editor, DiffSidesContainer container, Project project) {
+    MouseLineNumberListener(DiffContent content, Editor editor, DiffSidesContainer container, Project project) {
       myEditor = editor;
       myContainer = container;
       myContent = content;
@@ -276,7 +276,7 @@ public class DiffSideView {
 
   private class MyState {
     private final boolean isFocused;
-    public MyState() {
+    MyState() {
       isFocused = IJSwingUtilities.hasFocus(getFocusableComponent());
     }
 

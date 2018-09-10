@@ -88,7 +88,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     Object newElement = updateElement();
     if (getElement() != newElement) {
       presentation.setChanged(true);

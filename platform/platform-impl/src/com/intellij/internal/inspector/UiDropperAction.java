@@ -75,12 +75,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myUiDropper != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       if (myUiDropper == null) {
         myUiDropper = new UiDropper();
@@ -409,7 +409,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       setFont(UIUtil.getLabelFont());
     }
 
-    public MyLabel(String text, JComponent glassPane, int width) {
+    MyLabel(String text, JComponent glassPane, int width) {
       super(text);
       myText = text;
       myGlasspane = glassPane;
@@ -553,7 +553,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
       g2d.setColor(getForeground());
 
-      final String sizeString = String.valueOf(myWidth) + " x " + myHeight;
+      final String sizeString = myWidth + " x " + myHeight;
 
       FontMetrics fm = g2d.getFontMetrics();
       int sizeWidth = fm.stringWidth(sizeString);
@@ -704,7 +704,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }
@@ -986,7 +986,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     Component lastComponent;
     MyLabel myLabel;
 
-    public UiDropper() {
+    UiDropper() {
       Toolkit.getDefaultToolkit()
         .addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
       UiDropperActionExtension[] extensions = Extensions.getExtensions(UiDropperActionExtension.EP_NAME);

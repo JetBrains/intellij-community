@@ -27,7 +27,7 @@ class OverriddenDefineSearcher extends CommonElement.Visitor {
   private final XmlFile myLocalFile;
   private final List<Define> myResult;
 
-  public OverriddenDefineSearcher(Define define, XmlFile localFile, List<Define> result) {
+  OverriddenDefineSearcher(Define define, XmlFile localFile, List<Define> result) {
     myLocalFile = localFile;
     myResult = result;
     myDefine = define;

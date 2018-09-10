@@ -459,7 +459,7 @@ public class AnnotationsHighlightUtil {
 
   private static boolean cyclicDependencies(@NotNull PsiClass aClass,
                                             @Nullable PsiType type,
-                                            @NotNull Set<PsiClass> checked,
+                                            @NotNull Set<? super PsiClass> checked,
                                             @NotNull PsiManager manager) {
     final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
     if (resolvedClass != null && resolvedClass.isAnnotationType()) {

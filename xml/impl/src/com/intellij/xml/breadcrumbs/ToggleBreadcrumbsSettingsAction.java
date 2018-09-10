@@ -21,19 +21,19 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 class ToggleBreadcrumbsSettingsAction extends ToggleBreadcrumbsAction {
 
   static final class ShowAbove extends ToggleBreadcrumbsSettingsAction {
-    public ShowAbove() {
+    ShowAbove() {
       super(true, true);
     }
   }
 
   static final class ShowBelow extends ToggleBreadcrumbsSettingsAction {
-    public ShowBelow() {
+    ShowBelow() {
       super(true, false);
     }
   }
 
   static final class HideBoth extends ToggleBreadcrumbsSettingsAction {
-    public HideBoth() {
+    HideBoth() {
       super(false, false);
     }
   }

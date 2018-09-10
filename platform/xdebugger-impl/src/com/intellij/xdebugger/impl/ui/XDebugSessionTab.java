@@ -114,7 +114,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     myUi.addListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         if (mySession != null && content.isSelected() && getWatchesContentId().equals(ViewImpl.ID.get(content))) {
           myRebuildWatchesRunnable.run();
@@ -344,12 +344,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public static void showFramesView(@NotNull XDebugSessionImpl session) {
+  public static void showFramesView(@Nullable XDebugSessionImpl session) {
     showView(session, DebuggerContentInfo.FRAME_CONTENT);
   }
 
-  private static void showView(@NotNull XDebugSessionImpl session, String viewId) {
-    XDebugSessionTab tab = session.getSessionTab();
+  private static void showView(@Nullable XDebugSessionImpl session, String viewId) {
+    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
     if (tab != null) {
       tab.toFront(false, null);
       // restore watches tab if minimized

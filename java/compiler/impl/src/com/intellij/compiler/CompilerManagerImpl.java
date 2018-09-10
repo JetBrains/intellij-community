@@ -522,7 +522,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
       if (!myProject.isDisposed()) {
         myEventPublisher.compilationFinished(aborted, errors, warnings, compileContext);
       }

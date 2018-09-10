@@ -25,7 +25,7 @@ class BreakpointImpl implements Breakpoint {
   private String myTraceMsg;
   private boolean mySuspend;
 
-  public BreakpointImpl(String uri, int line) {
+  BreakpointImpl(String uri, int line) {
     myUri = uri;
     myLine = line;
     myEnabled = true;

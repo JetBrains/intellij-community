@@ -58,6 +58,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -96,7 +98,7 @@ public class MadTestingUtil {
     });
   }
 
-  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<DocumentEvent> eventHandler) throws E {
+  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<? super DocumentEvent> eventHandler) throws E {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
@@ -242,8 +244,8 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
-                                                                  FileFilter fileFilter,
-                                                                  Function<PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
+                                                                 FileFilter fileFilter,
+                                                                 Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -288,6 +290,12 @@ public class MadTestingUtil {
     try {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
+
+      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/").matcher(path);
+      if (rootPackageMatcher.find()) {
+        path = path.substring(rootPackageMatcher.start() + 1);
+      }
+
       VirtualFile existing = fixture.getTempDirFixture().getFile(path);
       if (existing != null) {
         WriteAction.run(() -> existing.delete(fixture));
@@ -305,10 +313,13 @@ public class MadTestingUtil {
    * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
    */
   @NotNull
-  public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
-    return Generator.sampledFrom(new DeleteRange(file),
-                                 new CheckPsiTextConsistency(file),
-                                 new InsertString(file));
+  public static Generator<MadTestingAction> randomEditsWithReparseChecks(@NotNull PsiFile file) {
+    return Generator.sampledFrom(
+      new InsertString(file),
+      new DeleteRange(file),
+      new CommitDocumentAction(file),
+      new CheckPsiTextConsistency(file)
+    );
   }
 
   /**
@@ -317,10 +328,11 @@ public class MadTestingUtil {
    * read accessors on all PSI elements in the file don't throw exceptions when invoked.
    */
   @NotNull
-  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(Condition<? super Method> skipCondition) {
+  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(@NotNull Condition<? super Method> skipCondition) {
     return file -> Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
+      new CommitDocumentAction(file),
       new CheckPsiReadAccessors(file, skipCondition)
     );
   }
@@ -451,7 +463,7 @@ public class MadTestingUtil {
     }
 
     @Nullable
-    private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
+    private File generateRandomFile(DataStructure data, File file, Set<? super File> exhausted) {
       while (true) {
         File[] children = file.listFiles(f -> !exhausted.contains(f) && containsAtLeastOneFileDeep(f) && myFilter.accept(f));
         if (children == null) {

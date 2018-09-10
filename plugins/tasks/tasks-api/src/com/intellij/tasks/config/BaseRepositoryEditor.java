@@ -210,7 +210,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   protected void installListener(JTextField textField) {
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> doApply());
       }
     });

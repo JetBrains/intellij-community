@@ -39,12 +39,12 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
 
     ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<Facet>() {
       @Override
-      public void facetAdded(Facet facet) {
+      public void facetAdded(@NotNull Facet facet) {
         myIndex = null;
       }
 
       @Override
-      public void facetRemoved(Facet facet) {
+      public void facetRemoved(@NotNull Facet facet) {
         myIndex = null;
       }
     }, project);

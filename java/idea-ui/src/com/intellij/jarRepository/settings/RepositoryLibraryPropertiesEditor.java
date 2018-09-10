@@ -72,7 +72,7 @@ public class RepositoryLibraryPropertiesEditor {
   private final SwingActionLink myManageDependenciesLink;
 
   public interface ModelChangeListener {
-    void onChange(RepositoryLibraryPropertiesEditor editor);
+    void onChange(@NotNull RepositoryLibraryPropertiesEditor editor);
   }
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
@@ -80,7 +80,7 @@ public class RepositoryLibraryPropertiesEditor {
                                            RepositoryLibraryDescription description) {
     this(project, model, description, true, new ModelChangeListener() {
       @Override
-      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+      public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
 
       }
     });
@@ -117,7 +117,7 @@ public class RepositoryLibraryPropertiesEditor {
     });
     this.onChangeListener = new ModelChangeListener() {
       @Override
-      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+      public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
         onChangeListener.onChange(editor);
         mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }

@@ -326,7 +326,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     private final MultiMap<PsiElement, String> myConflicts;
     private final Set<PsiElement> myReportedContainers = new HashSet<>();
 
-    public ConflictsCollector(PsiClass classToMove, final MultiMap<PsiElement, String> conflicts) {
+    ConflictsCollector(PsiClass classToMove, final MultiMap<PsiElement, String> conflicts) {
       myClassToMove = classToMove;
       myConflicts = conflicts;
     }

@@ -1090,6 +1090,11 @@
     <keyboard-shortcut first-keystroke="control SPACE" />
   </action>
 
+  <action id="ChangesView.Rename">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
   <action id="DirDiffMenu.SynchronizeDiff">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>

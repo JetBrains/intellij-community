@@ -260,7 +260,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     private final String myName;
     private final VirtualFile myFile;
 
-    public ColorSchemeItem(String name, VirtualFile file) {
+    ColorSchemeItem(String name, VirtualFile file) {
       myName = name;
       myFile = file;
     }

@@ -30,7 +30,8 @@ import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -652,7 +653,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarSmallComboBoxFont() {
-      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+      return label(11);
     }
   }
 
@@ -1000,13 +1001,13 @@ public class JBUI {
      * @param <S> the context type
      */
     public static class Cache<D, S extends BaseScaleContext> {
-      private final Function<S, D> myDataProvider;
+      private final Function<? super S, ? extends D> myDataProvider;
       private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
 
       /**
        * @param dataProvider provides a data object matching the passed scale context
        */
-      public Cache(@NotNull Function<S, D> dataProvider) {
+      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
         this.myDataProvider = dataProvider;
       }
 
@@ -1253,7 +1254,7 @@ public class JBUI {
     }
 
     public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
-      public Cache(@NotNull Function<ScaleContext, D> dataProvider) {
+      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
         super(dataProvider);
       }
     }
@@ -1510,6 +1511,28 @@ public class JBUI {
   }
 
   public static class CurrentTheme {
+    public static class ActionButton {
+      @NotNull
+      public static Color pressedBackground() {
+        return JBColor.namedColor("ActionButton.pressedBackground", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color hoverBackground() {
+        return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
+      }
+    }
+
     public static class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
@@ -1579,7 +1602,12 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", scale(3));
+        return getInt("ToolWindow.tab.verticalPadding", 0);
+      }
+
+      @NotNull
+      public static Border tabBorder() {
+        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
       @NotNull
@@ -1719,6 +1747,10 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
       }
 
+      public static Color selectedTabTextColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
+      }
+
       public static Color searchFieldBackground() {
         return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
       }
@@ -1732,11 +1764,29 @@ public class JBUI {
       }
 
       public static int maxListHeight() {
-        return JBUI.scale(600);
+        return scale(600);
       }
 
       public static Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
+    }
+
+    public static class Validator {
+      public static Color errorBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
+      }
+
+      public static Color errorBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
+      }
+
+      public static Color warningBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
+      }
+
+      public static Color warningBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
       }
     }
   }
@@ -1751,5 +1801,11 @@ public class JBUI {
   private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  @NotNull
+  private static Border getBorder(@NotNull String propertyName, @NotNull Border defaultBorder) {
+    Border border = UIManager.getBorder(propertyName);
+    return border == null ? defaultBorder : border;
   }
 }

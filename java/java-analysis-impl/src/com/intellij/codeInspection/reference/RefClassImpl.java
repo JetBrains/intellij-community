@@ -230,7 +230,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myRefModule;
   }
 
-  private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<PsiClass> visited) {
+  private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<? super PsiClass> visited) {
     if (visited.contains(psiClass)) return true;
 
     visited.add(psiClass);
@@ -382,20 +382,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       ((RefJavaElementImpl)from).addOutTypeReference(this);
       getRefManager().fireNodeMarkedReferenced(this, from, false, false, false);
     }
-  }
-
-  @Override
-  @NotNull
-  public synchronized Set<RefElement> getInstanceReferences() {
-    if (myInstanceReferences == null) return EMPTY_SET;
-    return myInstanceReferences;
-  }
-
-  synchronized void addInstanceReference(RefElement from) {
-    if (myInstanceReferences == null){
-      myInstanceReferences = new THashSet<>(1);
-    }
-    myInstanceReferences.add(from);
   }
 
   @Override

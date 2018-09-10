@@ -860,6 +860,9 @@ public class PyTypeChecker {
     if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
       return true;
     }
+    if (type instanceof PyGenericType) {
+      return ((PyGenericType)type).isDefinition();
+    }
     return false;
   }
 
@@ -976,7 +979,7 @@ public class PyTypeChecker {
     @NotNull
     private final Set<Pair<PyType, PyType>> matching; // mutable
 
-    public MatchContext(@NotNull TypeEvalContext context,
+    MatchContext(@NotNull TypeEvalContext context,
                         @NotNull Map<PyGenericType, PyType> substitutions) {
       this(context, substitutions, true, new HashSet<>());
     }

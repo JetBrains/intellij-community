@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil.findComponentsOfType
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.timing.Timeout
 import org.fest.swing.util.TextMatcher
 import org.junit.Assert.assertNotNull
@@ -37,7 +38,7 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
 
   class ContentFixture(val myParentToolWindow: CustomToolWindowFixture,
                        val myRobot: Robot,
-                       val myContent: Content) : ComponentFixture<ContentFixture, JComponent>(ContentFixture::class.java, myRobot, myContent.component) {
+                       private val myContent: Content) : ComponentFixture<ContentFixture, JComponent>(ContentFixture::class.java, myRobot, myContent.component), ContainerFixture<JComponent> {
 
     private val toolbarButtons: List<ActionButton>
       get() {

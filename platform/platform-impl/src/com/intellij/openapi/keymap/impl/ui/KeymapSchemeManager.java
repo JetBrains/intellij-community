@@ -66,7 +66,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     return copyScheme(scheme, name).getMutable();
   }
 
-  void visitMutableKeymaps(Consumer<Keymap> consumer) {
+  void visitMutableKeymaps(Consumer<? super Keymap> consumer) {
     for (KeymapScheme scheme : list) {
       if (scheme.isMutable()) {
         consumer.accept(scheme.getMutable());
@@ -170,7 +170,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
    * @param predicate a predicate to test a scheme
    * @return a first scheme that belongs to the specified predicate, or {@code null}
    */
-  private KeymapScheme find(@NotNull Predicate<KeymapScheme> predicate) {
+  private KeymapScheme find(@NotNull Predicate<? super KeymapScheme> predicate) {
     for (KeymapScheme scheme : list) {
       if (predicate.test(scheme)) return scheme;
     }

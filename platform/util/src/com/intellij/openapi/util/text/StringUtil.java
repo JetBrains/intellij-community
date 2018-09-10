@@ -384,7 +384,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static int lineColToOffset(@NotNull CharSequence text, int line, int col) {
     int curLine = 0;
     int offset = 0;
@@ -406,25 +405,34 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static int offsetToLineNumber(@NotNull CharSequence text, int offset) {
+    LineColumn lineColumn = offsetToLineColumn(text, offset);
+    return lineColumn != null ? lineColumn.line : -1;
+  }
+
+  @Contract(pure = true)
+  public static LineColumn offsetToLineColumn(@NotNull CharSequence text, int offset) {
     int curLine = 0;
+    int curLineStart = 0;
     int curOffset = 0;
     while (curOffset < offset) {
-      if (curOffset == text.length()) return -1;
+      if (curOffset == text.length()) return null;
       char c = text.charAt(curOffset);
       if (c == '\n') {
         curLine++;
+        curLineStart = curOffset + 1;
       }
       else if (c == '\r') {
         curLine++;
         if (curOffset < text.length() - 1 && text.charAt(curOffset + 1) == '\n') {
           curOffset++;
         }
+        curLineStart = curOffset + 1;
       }
       curOffset++;
     }
-    return curLine;
+
+    return LineColumn.of(curLine, offset - curLineStart);
   }
 
   /**

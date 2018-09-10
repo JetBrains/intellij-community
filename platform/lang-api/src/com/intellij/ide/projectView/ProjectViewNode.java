@@ -104,6 +104,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
   }
 
+  @NotNull
   public static AbstractTreeNode createTreeNode(Class<? extends AbstractTreeNode> nodeClass,
                                                 Project project,
                                                 Object value,

@@ -94,18 +94,18 @@ public abstract class VcsLogPathsForwardIndex
   }
 
   static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> {
-    @Nullable private final List<Collection<Integer>> myOldData;
+    @Nullable private final List<? extends Collection<Integer>> myOldData;
 
-    public VcsLogPathsDiffBuilder(int id, @Nullable List<Collection<Integer>> oldData) {
+    VcsLogPathsDiffBuilder(int id, @Nullable List<? extends Collection<Integer>> oldData) {
       super(id);
       myOldData = oldData;
     }
 
     @Override
     public boolean differentiate(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> newData,
-                                 @NotNull KeyValueUpdateProcessor<Integer, List<VcsLogPathsIndex.ChangeData>> addProcessor,
-                                 @NotNull KeyValueUpdateProcessor<Integer, List<VcsLogPathsIndex.ChangeData>> updateProcessor,
-                                 @NotNull RemovedKeyProcessor<Integer> removeProcessor) throws StorageException {
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> addProcessor,
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> updateProcessor,
+                                 @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
 
       if (myOldData == null) {
         return processNewFiles(newData, addProcessor);
@@ -118,7 +118,7 @@ public abstract class VcsLogPathsForwardIndex
     }
 
     public boolean processNewFiles(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> newData,
-                                   @NotNull KeyValueUpdateProcessor<Integer, List<VcsLogPathsIndex.ChangeData>> addProcessor)
+                                   @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> addProcessor)
       throws StorageException {
       for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeData>> entry : newData.entrySet()) {
         addProcessor.process(entry.getKey(), entry.getValue(), myInputId);

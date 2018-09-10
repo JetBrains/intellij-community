@@ -223,7 +223,7 @@ public class JBTabsDemo {
 
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(new HTMLEditorKit());
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < 50; i ++) {
       buffer.append("1234567890abcdefghijklmnopqrstv1234567890abcdefghijklmnopqrstv1234567890abcdefghijklmnopqrstv<br>");
     }

@@ -181,17 +181,11 @@ abstract class LineStatusTrackerBase<R : Range> {
       after.ourData.innerRanges = before.ourData.innerRanges
     }
 
-    override fun afterRefresh() {
-      checkIfFileUnchanged()
-      calcInnerRanges()
-      updateHighlighters()
-    }
-
     override fun afterRangeChange() {
       updateHighlighters()
     }
 
-    override fun afterExplicitChange() {
+    override fun afterBulkRangeChange() {
       checkIfFileUnchanged()
       calcInnerRanges()
       updateHighlighters()

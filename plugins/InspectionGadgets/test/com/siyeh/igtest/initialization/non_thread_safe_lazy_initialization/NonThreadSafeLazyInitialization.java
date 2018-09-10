@@ -28,7 +28,7 @@ public class NonThreadSafeLazyInitialization {
 
     public void instMethod() {
         if (foo == null) {
-            <warning descr="Lazy initialization of 'static' field 'foo' is not thread-safe">foo</warning> = new Object();
+            (<warning descr="Lazy initialization of 'static' field 'foo' is not thread-safe">foo</warning>) = new Object();
         }
     }
 

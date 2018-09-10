@@ -35,7 +35,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
   private final Project myProject;
   private final TreeUpdater myTreeUpdater;
 
-  public JsonMappingsTableCellEditor(UserDefinedJsonSchemaConfiguration.Item item, Project project, TreeUpdater treeUpdater) {
+  JsonMappingsTableCellEditor(UserDefinedJsonSchemaConfiguration.Item item, Project project, TreeUpdater treeUpdater) {
     myItem = item;
     myProject = project;
     myTreeUpdater = treeUpdater;
@@ -124,7 +124,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     private final JTextField myTextField;
     private final Project myProject;
 
-    public MyFileTextFieldImpl(LocalFsFinder finder, FileChooserDescriptor descriptor, JTextField textField, Project project, Disposable parent) {
+    MyFileTextFieldImpl(LocalFsFinder finder, FileChooserDescriptor descriptor, JTextField textField, Project project, Disposable parent) {
       super(textField, finder, new LocalFsFinder.FileChooserFilter(descriptor, true),
             FileChooserFactoryImpl.getMacroMap(), parent);
       myTextField = textField;

@@ -328,7 +328,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       result.stopHere(); // no word completions at this point
     }
 
-    private static void addSpecialTags(final List<String> result, PsiDocComment comment, String tagName) {
+    private static void addSpecialTags(final List<? super String> result, PsiDocComment comment, String tagName) {
       if ("author".equals(tagName)) {
         result.add(tagName + " " + SystemProperties.getUserName());
         return;

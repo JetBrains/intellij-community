@@ -80,7 +80,7 @@ public abstract class DiffWindowBase {
   }
 
   private static class MyPanel extends JPanel {
-    public MyPanel(@NotNull JComponent content) {
+    MyPanel(@NotNull JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
     }

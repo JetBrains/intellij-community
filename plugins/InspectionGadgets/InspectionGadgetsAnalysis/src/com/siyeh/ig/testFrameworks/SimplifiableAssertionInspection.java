@@ -255,6 +255,13 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       if (lhs == null || rhs == null) {
         return;
       }
+      
+      if (checkTestNG()) {
+        final PsiExpression temp = lhs;
+        lhs = rhs;
+        rhs = temp;
+      }
+      
       @NonNls final StringBuilder newExpression = new StringBuilder();
       final StringBuilder buf = new StringBuilder();
       final PsiType lhsType = lhs.getType();

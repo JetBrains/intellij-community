@@ -18,7 +18,7 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     JsonCodeStyleSettings customSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     SpacingBuilder spacingBuilder = createSpacingBuilder(settings);
-    final JsonBlock block = new JsonBlock(null, element.getNode(), customSettings, null, Indent.getNoneIndent(), null, spacingBuilder);
+    final JsonBlock block = new JsonBlock(null, element.getNode(), customSettings, null, Indent.getSmartIndent(Indent.Type.CONTINUATION), null, spacingBuilder);
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
   }
 

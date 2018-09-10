@@ -116,11 +116,11 @@ public class IfCanBeAssertionInspection extends BaseInspection {
 
   private static class ReplaceWithObjectsNonNullFix extends InspectionGadgetsFix {
     private static class Replacer {
-      private final Consumer<String> myReplacer;
+      private final Consumer<? super String> myReplacer;
       private final PsiExpression myNullComparedExpression;
       private final PsiExpression myMessage;
 
-      private Replacer(@NotNull Consumer<String> replacer, @NotNull PsiExpression nullComparedExpression, @Nullable PsiExpression message) {
+      private Replacer(@NotNull Consumer<? super String> replacer, @NotNull PsiExpression nullComparedExpression, @Nullable PsiExpression message) {
         myReplacer = replacer;
         myNullComparedExpression = nullComparedExpression;
         myMessage = message;
@@ -143,7 +143,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
     private final boolean myIsIfStatement;
 
-    public ReplaceWithObjectsNonNullFix(boolean isIfStatement) {
+    ReplaceWithObjectsNonNullFix(boolean isIfStatement) {
       myIsIfStatement = isIfStatement;
     }
 

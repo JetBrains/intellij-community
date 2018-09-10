@@ -34,7 +34,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, connection);
   }
 
-  public void startReading(final ResponseReader<R> reader) {
+  public void startReading(final ResponseReader<? extends R> reader) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       myThread = Thread.currentThread();
       try {
@@ -111,7 +111,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     }
   }
 
-  public <T extends R> void registerHandler(@NotNull Class<T> responseClass, @NotNull AbstractResponseHandler<T> handler) {
+  public <T extends R> void registerHandler(@NotNull Class<? extends T> responseClass, @NotNull AbstractResponseHandler<T> handler) {
     synchronized (myLock) {
       myClassHandlers.put(responseClass, handler);
     }

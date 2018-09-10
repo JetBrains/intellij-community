@@ -68,7 +68,7 @@ public abstract class ContentRootPanel extends JPanel {
   private static final Color UNSELECTED_TEXT_COLOR = Gray._51;
 
   protected final ActionCallback myCallback;
-  private final List<ModuleSourceRootEditHandler<?>> myModuleSourceRootEditHandlers;
+  private final List<? extends ModuleSourceRootEditHandler<?>> myModuleSourceRootEditHandlers;
   private JComponent myHeader;
   private JComponent myBottom;
   private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<>();
@@ -80,7 +80,7 @@ public abstract class ContentRootPanel extends JPanel {
     void onSourceRootPropertiesChanged(@NotNull SourceFolder folder);
   }
 
-  public ContentRootPanel(ActionCallback callback, List<ModuleSourceRootEditHandler<?>> moduleSourceRootEditHandlers) {
+  public ContentRootPanel(ActionCallback callback, List<? extends ModuleSourceRootEditHandler<?>> moduleSourceRootEditHandlers) {
     super(new GridBagLayout());
     myCallback = callback;
     myModuleSourceRootEditHandlers = moduleSourceRootEditHandlers;
@@ -302,7 +302,7 @@ public abstract class ContentRootPanel extends JPanel {
     private static final float[] DASH = {0, 2, 0, 2};
     private static final Color DASH_LINE_COLOR = new JBColor(Gray._201, Gray._100);
 
-    public UnderlinedPathLabel(JLabel wrappedComponent) {
+    UnderlinedPathLabel(JLabel wrappedComponent) {
       super(wrappedComponent);
       FilePathClipper.install(wrappedComponent, this);
     }

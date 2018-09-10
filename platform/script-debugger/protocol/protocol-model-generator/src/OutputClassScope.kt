@@ -34,8 +34,7 @@ internal class OutputClassScope(generator: DomainGenerator, classNamePath: NameP
           defaultValue = descriptor.default!!
         }
         else {
-          // todo generic solution to specify default value
-          defaultValue = if (descriptor.name() == "enabled") "true" else if (descriptor.name() == "maxStringLength") "100" else type.defaultValue ?: "null"
+          defaultValue = type.defaultValue ?: "null"
           if (defaultValue == "null") {
             out.append('?')
           }
@@ -51,8 +50,8 @@ internal class OutputClassScope(generator: DomainGenerator, classNamePath: NameP
     out.append(if (allowNullableString) "writeNullableString" else type.writeMethodName).append('(')
     out.quote(descriptor.name()).comma().append(valueRefName)
 
-    if (!allowNullableString && descriptor.optional && type.defaultValue != null && descriptor.name() != "depth" && type != BoxableType.MAP) {
-      out.comma().append(if (descriptor.name() == "enabled") "true" else if (descriptor.name() == "maxStringLength") "100" else type.defaultValue!!)
+    if (!allowNullableString && descriptor.optional && type.defaultValue != null && type != BoxableType.MAP) {
+      out.comma().append(type.defaultValue!!)
     }
 
     out.append(')')

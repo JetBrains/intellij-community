@@ -74,9 +74,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
     default void setRenderer(ListCellRenderer renderer) {}
 
-    void setItemChosenCallback(Consumer<T> callback);
+    void setItemChosenCallback(Consumer<? super T> callback);
 
-    void setItemsChosenCallback(Consumer<Set<T>> callback);
+    void setItemsChosenCallback(Consumer<? super Set<T>> callback);
 
     JScrollPane createScrollPane();
 
@@ -99,7 +99,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       throw new UnsupportedOperationException("Not supported for this popup type");
     }
 
-    default void setItemSelectedCallback(Consumer<T> c) {
+    default void setItemSelectedCallback(Consumer<? super T> c) {
       throw new UnsupportedOperationException("Not supported for this popup type");
     }
 
@@ -181,7 +181,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback) {
+  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback) {
     myChooserComponent.setItemsChosenCallback(callback);
     return this;
   }
@@ -544,7 +544,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
+  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c) {
     myChooserComponent.setItemSelectedCallback(c);
     return this;
   }

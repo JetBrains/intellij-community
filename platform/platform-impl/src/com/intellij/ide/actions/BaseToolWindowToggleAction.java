@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseToolWindowToggleAction extends ToggleAction implements DumbAware {
 
   @Override
-  public final boolean isSelected(AnActionEvent e) {
+  public final boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || project.isDisposed()) {
       return false;
@@ -45,7 +45,7 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
   protected abstract boolean isSelected(ToolWindow window);
 
   @Override
-  public final void setSelected(AnActionEvent e, boolean state) {
+  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project == null) {
       return;

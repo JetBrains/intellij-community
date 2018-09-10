@@ -77,7 +77,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     return ArrayUtil.toStringArray(list);
   }
 
-  private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor, boolean forCompletion) {
+  private boolean processEnumeration(XmlElement context, PairProcessor<? super PsiElement, ? super String> processor, boolean forCompletion) {
     if (getDeclaration() == null) return false;
 
     XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, false) : null;
@@ -102,7 +102,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   private boolean processEnumerationImpl(final XmlTag declaration,
                                          @Nullable ComplexTypeDescriptor type,
-                                         final PairProcessor<PsiElement, String> pairProcessor,
+                                         final PairProcessor<? super PsiElement, ? super String> pairProcessor,
                                          boolean forCompletion) {
     XmlAttribute name = declaration.getAttribute("name");
     if (name != null && "boolean".equals(name.getValue()) && type != null) {

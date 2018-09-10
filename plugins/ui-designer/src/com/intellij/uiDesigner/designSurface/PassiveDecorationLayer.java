@@ -29,7 +29,7 @@ import java.util.Set;
 class PassiveDecorationLayer extends JComponent{
   @NotNull private final GuiEditor myEditor;
 
-  public PassiveDecorationLayer(@NotNull final GuiEditor editor) {
+  PassiveDecorationLayer(@NotNull final GuiEditor editor) {
     myEditor = editor;
   }
 

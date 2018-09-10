@@ -89,6 +89,11 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     return myFragment.getTextRange();
   }
 
+  @Nullable
+  public ElementsRange getElementsRange() {
+    return myFragment.getElementsRange();
+  }
+
   private static int getLineNumber(@NotNull Document document, int offset) {
     if (document.getTextLength() == 0) return 0;
     if (offset >= document.getTextLength()) return document.getLineCount();

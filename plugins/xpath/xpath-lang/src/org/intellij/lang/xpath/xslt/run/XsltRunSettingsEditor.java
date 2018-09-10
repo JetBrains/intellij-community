@@ -111,7 +111,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private final AnyXMLDescriptor myXmlDescriptor;
     private final FileChooserDescriptor myXsltDescriptor;
 
-    public Editor(final Project project) {
+    Editor(final Project project) {
       final PsiManager psiManager = PsiManager.getInstance(project);
 
       myXsltDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
@@ -145,7 +145,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         final FileAssociationsManager associationsManager = FileAssociationsManager.getInstance(project);
 
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
           final Object oldXml = getXmlInputFile();
@@ -500,7 +500,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         public String name;
         public String value;
 
-        public Param(String name, String value) {
+        Param(String name, String value) {
           this.name = name;
           this.value = value;
         }
@@ -523,10 +523,10 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       private final List<Param> myParams = new ArrayList<>();
 
-      public ParamTableModel() {
+      ParamTableModel() {
       }
 
-      public ParamTableModel(List<Pair<String, String>> params) {
+      ParamTableModel(List<Pair<String, String>> params) {
         for (Pair<String, String> pair : params) {
           myParams.add(new Param(pair.getFirst(), pair.getSecond()));
         }
@@ -603,7 +603,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     }
   }
 
-  public XsltRunSettingsEditor(Project project) {
+  XsltRunSettingsEditor(Project project) {
     myProject = project;
   }
 

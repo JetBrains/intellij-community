@@ -165,7 +165,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         })
         .addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             myActivePopupRef = null;
           }
         })

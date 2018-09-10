@@ -453,7 +453,7 @@ public class TypeEvaluator {
     private final PsiSubstitutor mySubst;
 
 
-    public SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
+    SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
       mySubst = subst;
       myMapping = new HashMap<>();
       myMethod = method;

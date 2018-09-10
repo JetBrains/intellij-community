@@ -34,7 +34,7 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
-@SuppressWarnings({"Duplicates", "deprecation", "DeprecatedIsStillUsed"})
+@SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
   private static final String INDENT_LABEL = ApplicationBundle.message("editbox.indent.indent");
   private static final String TAB_SIZE_LABEL = ApplicationBundle.message("editbox.indent.tab.size");

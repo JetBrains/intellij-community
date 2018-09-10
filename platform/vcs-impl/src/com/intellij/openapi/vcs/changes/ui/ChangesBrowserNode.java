@@ -329,7 +329,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   private static class Tag {
     @NotNull private final String myKey;
 
-    public Tag(@NotNull String key) {
+    Tag(@NotNull String key) {
       myKey = key;
     }
 

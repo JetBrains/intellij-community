@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Java Compatibility">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/java-compatibility.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

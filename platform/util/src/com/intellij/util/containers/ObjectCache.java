@@ -266,10 +266,10 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
   }
 
   protected class ObjectCacheIterator<K,V> implements Iterator<V> {
-    private final ObjectCache<K, V> myCache;
+    private final ObjectCache<? super K, ? extends V> myCache;
     private int myCurrentEntry;
 
-    public ObjectCacheIterator(ObjectCache<K, V> cache) {
+    public ObjectCacheIterator(ObjectCache<? super K, ? extends V> cache) {
       myCache = cache;
       myCurrentEntry = 0;
       cache.myCache[0].next = cache.myTop;

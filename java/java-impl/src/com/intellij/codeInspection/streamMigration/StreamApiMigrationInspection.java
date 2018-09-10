@@ -379,7 +379,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 
-    public StreamApiMigrationVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    StreamApiMigrationVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
     }

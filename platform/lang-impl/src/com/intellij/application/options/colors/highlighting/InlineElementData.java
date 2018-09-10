@@ -59,7 +59,7 @@ public class InlineElementData extends HighlightData {
   }
 
   @Override
-  public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
+  public void addToCollection(@NotNull Collection<? super HighlightData> list, boolean highlighted) {
     list.add(new InlineElementData(getStartOffset(), getHighlightKey(), myText, highlighted, getAdditionalColorKey()));
   }
 

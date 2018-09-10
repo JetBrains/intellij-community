@@ -36,6 +36,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
@@ -213,8 +214,9 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
         String[] lines = StringUtil.splitByLinesKeepSeparators(text);
 
         int offset = element.getTextOffset();
-        int lineNumber = StringUtil.offsetToLineNumber(text, offset);
-        int column = offset - StringUtil.lineColToOffset(text, lineNumber, 0);
+        LineColumn position = StringUtil.offsetToLineColumn(text, offset);
+        int lineNumber = position != null ? position.line : -1;
+        int column = position != null ? position.column : 0;
 
         String line = StringUtil.trimTrailing(lines[lineNumber]);
         // Sanitize: expand indentation tabs, replace the rest with a single space

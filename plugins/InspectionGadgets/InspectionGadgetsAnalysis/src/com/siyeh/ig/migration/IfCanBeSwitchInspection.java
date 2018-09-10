@@ -53,7 +53,7 @@ import java.util.List;
 public class IfCanBeSwitchInspection extends BaseInspection {
 
   @NonNls private static final String ONLY_SAFE = "onlySuggestNullSafe";
-  
+
   @SuppressWarnings("PublicField")
   public int minimumBranches = 3;
 
@@ -100,7 +100,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final Document document = valueField.getDocument();
     document.addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent e) {
+      public void textChanged(@NotNull DocumentEvent e) {
         try {
           valueField.commitEdit();
           minimumBranches =
@@ -147,7 +147,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
 
-    public IfCanBeSwitchFix() {}
+    IfCanBeSwitchFix() {}
 
     @Override
     @NotNull

@@ -84,11 +84,11 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
             path = path.replace(CONTENT_ROOT_VARIABLE, contentRoot.getPath());
           }
           if (path.contains(PROJECT_ROOT_VARIABLE)) {
-            final VirtualFile baseDir = project.getBaseDir();
+            String baseDir = project.getBasePath();
             if (baseDir == null) {
               return null;
             }
-            path = path.replace(PROJECT_ROOT_VARIABLE, baseDir.getPath());
+            path = path.replace(PROJECT_ROOT_VARIABLE, baseDir);
           }
           return path;
         }

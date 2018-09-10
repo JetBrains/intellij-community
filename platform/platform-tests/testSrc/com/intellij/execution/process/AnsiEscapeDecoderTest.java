@@ -62,6 +62,13 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     ));
   }
 
+  public void testPrivateSequence() {
+    check(new ColoredText("\u001B[0;32mgreen\u001B[0m\u001B[0K\u001B[?25l\n", ProcessOutputTypes.STDOUT)
+            .addExpected("green", "\u001B[0;32m")
+            .addExpected("\n", STDOUT_KEY)
+    );
+  }
+
   public void testIncompleteEscapeSequences() {
     check(true, ContainerUtil.newArrayList(
       new ColoredText("\u001B", ProcessOutputTypes.STDOUT),
@@ -222,7 +229,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     private final List<Pair<String, String>> myExpectedColoredChunks = new ArrayList<>();
     private final Key myOutputType;
 
-    public ColoredText(@NotNull String rawText, @NotNull Key outputType) {
+    ColoredText(@NotNull String rawText, @NotNull Key outputType) {
       myRawText = rawText;
       myOutputType = outputType;
     }

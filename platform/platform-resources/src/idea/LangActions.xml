@@ -35,6 +35,7 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
       <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction" text="Generate by Pattern..."/>
+      <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
@@ -1109,6 +1110,9 @@
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
         </group>
+        <group id="TouchBarDefault_ctrl" text="Default with Ctrl key">
+          <separator/>
+        </group>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
           <reference ref="SelectInProjectView"/>
           <separator text="type.flexible"/>
@@ -1166,10 +1170,10 @@
     </group>
 
     <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
-      <add-to-group group-id="Internal" anchor="last"/>
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
     <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
-      <add-to-group group-id="Internal" anchor="last"/>
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

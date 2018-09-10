@@ -112,7 +112,7 @@ public class ScopePanel extends JPanel implements Disposable{
 
         myDirectory.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
-            protected void textChanged(DocumentEvent e) {
+            protected void textChanged(@NotNull DocumentEvent e) {
                 firePropertyChange("scope", null, getSelectedScope());
             }
         });

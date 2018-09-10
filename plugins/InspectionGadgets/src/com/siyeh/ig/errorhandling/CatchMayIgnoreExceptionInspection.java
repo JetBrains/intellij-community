@@ -148,7 +148,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     private final @NotNull List<PsiMethod> myMethods;
     private final @NotNull DfaVariableValue myExceptionVar;
 
-    public IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
+    IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
                                    @NotNull PsiCodeBlock block,
                                    @NotNull PsiClass exceptionClass,
                                    @NotNull DfaVariableValue exceptionVar) {

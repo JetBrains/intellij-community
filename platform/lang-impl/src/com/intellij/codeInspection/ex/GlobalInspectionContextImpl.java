@@ -117,7 +117,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         if (event.getContent() == myContent) {
           if (myView != null) {
             close(false);
@@ -164,7 +164,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void launchInspectionsOffline(@NotNull final AnalysisScope scope,
                                        @Nullable final String outputPath,
                                        final boolean runGlobalToolsOnly,
-                                       @NotNull final List<File> inspectionsResults) {
+                                       @NotNull final List<? super File> inspectionsResults) {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
@@ -172,7 +172,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                              final boolean runGlobalToolsOnly,
                                                              final boolean isOfflineInspections,
                                                              @Nullable final String outputPath,
-                                                             @NotNull final List<File> inspectionsResults) {
+                                                             @NotNull final List<? super File> inspectionsResults) {
     cleanupTools();
     setCurrentScope(scope);
 
@@ -194,7 +194,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private void exportResults(@NotNull List<File> inspectionsResults, @Nullable String outputPath) {
+  private void exportResults(@NotNull List<? super File> inspectionsResults, @Nullable String outputPath) {
     @NonNls final String ext = ".xml";
     final Map<Element, Tools> globalTools = new HashMap<>();
     for (Map.Entry<String,Tools> entry : getTools().entrySet()) {
@@ -516,8 +516,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private void inspectFile(@NotNull final PsiFile file,
                            @NotNull final TextRange range,
                            @NotNull final InspectionManager inspectionManager,
-                           @NotNull List<Tools> localTools,
-                           @NotNull List<Tools> globalSimpleTools,
+                           @NotNull List<? extends Tools> localTools,
+                           @NotNull List<? extends Tools> globalSimpleTools,
                            @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
@@ -553,12 +553,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       if (cause == null) {
         throw e;
       }
-      LOG.error("In file: " + file, cause);
+
+      System.err.println("In file: " + file);cause.printStackTrace();
+      LOG.error("In file: " + file.getName(), cause);
     }
     catch (IndexNotReadyException e) {
       throw e;
     }
     catch (Throwable e) {
+      System.err.println("In file: " + file);e.printStackTrace();
       LOG.error("In file: " + file.getName(), e);
     }
     finally {
@@ -574,9 +577,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @NotNull
   private Future<?> startIterateScopeInBackground(@NotNull final AnalysisScope scope,
-                                                  @Nullable final Collection<VirtualFile> localScopeFiles,
+                                                  @Nullable final Collection<? super VirtualFile> localScopeFiles,
                                                   final boolean headlessEnvironment,
-                                                  @NotNull final BlockingQueue<PsiFile> outFilesToInspect,
+                                                  @NotNull final BlockingQueue<? super PsiFile> outFilesToInspect,
                                                   @NotNull final ProgressIndicator progressIndicator) {
     Task.Backgroundable task = new Task.Backgroundable(getProject(), "Scanning Files to Inspect") {
       @Override
@@ -628,7 +631,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, progressIndicator, null);
   }
 
-  private Document shouldProcess(@NotNull PsiFile file, boolean headlessEnvironment, @Nullable Collection<VirtualFile> localScopeFiles) {
+  private Document shouldProcess(@NotNull PsiFile file, boolean headlessEnvironment, @Nullable Collection<? super VirtualFile> localScopeFiles) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     if (isBinary(file)) return null; //do not inspect binary files
@@ -726,9 +729,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return app.getInvokator().invokeLater(createView);
   }
 
-  private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
-                                                     @NotNull List<Tools> globalSimpleTools,
-                                                     @NotNull List<Tools> localTools) {
+  private void appendPairedInspectionsForUnfairTools(@NotNull List<? super Tools> globalTools,
+                                                     @NotNull List<? super Tools> globalSimpleTools,
+                                                     @NotNull List<? super Tools> localTools) {
     Tools[] larray = localTools.toArray(new Tools[0]);
     for (Tools tool : larray) {
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
@@ -767,7 +770,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @NotNull
-  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<Tools> localTools,
+  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
                                                                                 @NotNull PsiFile file,
                                                                                 boolean includeDoNotShow) {
     final List<T> lTools = new ArrayList<>();
@@ -804,7 +807,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @NotNull
-  private static Map<String, InspectionToolWrapper> getInspectionWrappersMap(@NotNull List<Tools> tools) {
+  private static Map<String, InspectionToolWrapper> getInspectionWrappersMap(@NotNull List<? extends Tools> tools) {
     Map<String, InspectionToolWrapper> name2Inspection = new HashMap<>(tools.size());
     for (Tools tool : tools) {
       InspectionToolWrapper toolWrapper = tool.getTool();

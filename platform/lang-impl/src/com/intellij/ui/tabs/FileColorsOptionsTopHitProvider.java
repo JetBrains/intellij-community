@@ -60,7 +60,7 @@ public final class FileColorsOptionsTopHitProvider extends OptionsTopHitProvider
   private static class Option extends PublicMethodBasedOptionDescription {
     private final FileColorManager myManager;
 
-    public Option(FileColorManager manager, String option, String getter, String setter) {
+    Option(FileColorManager manager, String option, String getter, String setter) {
       super(option, "reference.settings.ide.settings.file-colors", getter, setter);
       myManager = manager;
     }

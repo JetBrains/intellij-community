@@ -73,7 +73,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     private final ExtensionPoint<T> myEp;
     private T[] myExtensions;
 
-    public BlockExtensions(ExtensionPoint<T> extensionPoint) {
+    BlockExtensions(ExtensionPoint<T> extensionPoint) {
       myEp = extensionPoint;
       block();
     }

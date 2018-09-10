@@ -212,7 +212,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     private final MavenProject myMavenProject;
     private final String myGoal;
 
-    public MavenGoalAction(MavenProject mavenProject, String goal) {
+    MavenGoalAction(MavenProject mavenProject, String goal) {
       myMavenProject = mavenProject;
       myGoal = goal;
       Presentation template = getTemplatePresentation();

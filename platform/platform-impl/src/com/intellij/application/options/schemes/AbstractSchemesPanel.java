@@ -168,7 +168,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     removeAll();
   }
 
-  public final void editCurrentSchemeName(@NotNull BiConsumer<T,String> newSchemeNameConsumer) {
+  public final void editCurrentSchemeName(@NotNull BiConsumer<? super T, ? super String> newSchemeNameConsumer) {
     T currentScheme = getSelectedScheme();
     if (currentScheme != null) {
       String currentName = currentScheme.getName();
@@ -183,7 +183,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
-  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
     String name =
       SchemeNameGenerator.getUniqueName(preferredName, schemeName -> getModel().containsScheme(schemeName, isProjectScheme));
     mySchemesCombo.startEdit(name, isProjectScheme, nameConsumer);
@@ -279,7 +279,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
 
-    ShowSchemesActionsListAction(Collection<AnAction> actions) {
+    ShowSchemesActionsListAction(Collection<? extends AnAction> actions) {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText("Show Scheme Actions");

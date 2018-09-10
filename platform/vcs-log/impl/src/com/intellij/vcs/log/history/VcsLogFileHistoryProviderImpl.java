@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
-import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
@@ -61,7 +60,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
                                                    new FileHistoryUiFactory(path, hash), true);
     }
 
-    if (hash != null && fileHistoryUi.getFilterUi().getFilters().get(VcsLogFilterCollection.REVISION_FILTER) == null) {
+    if (hash != null) {
       fileHistoryUi.jumpToNearestCommit(hash);
     }
   }

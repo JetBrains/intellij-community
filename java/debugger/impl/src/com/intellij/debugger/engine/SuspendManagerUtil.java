@@ -123,7 +123,7 @@ public class SuspendManagerUtil {
     final boolean myIsFrozen;
     final Set<ThreadReferenceProxyImpl> myResumedThreads;
 
-    public ResumeData(boolean isFrozen, Set<ThreadReferenceProxyImpl> resumedThreads) {
+    ResumeData(boolean isFrozen, Set<ThreadReferenceProxyImpl> resumedThreads) {
       myIsFrozen = isFrozen;
       myResumedThreads = resumedThreads;
     }

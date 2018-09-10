@@ -71,14 +71,14 @@ public class RefactoringUIUtil {
 
   public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = editor -> editor.addFocusListener(new FocusChangeListener() {
     @Override
-    public void focusGained(Editor editor) {
+    public void focusGained(@NotNull Editor editor) {
       if (LookupManager.getActiveLookup(editor) == null) {
         editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
       }
     }
 
     @Override
-    public void focusLost(Editor editor) {
+    public void focusLost(@NotNull Editor editor) {
     }
   });
 }

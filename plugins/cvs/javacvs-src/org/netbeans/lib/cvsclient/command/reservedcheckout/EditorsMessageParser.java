@@ -48,7 +48,7 @@ final class EditorsMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public EditorsMessageParser(IEventSender eventManager, final ICvsFileSystem cvsFileSystem, ICvsFiles cvsFiles) {
+	EditorsMessageParser(IEventSender eventManager, final ICvsFileSystem cvsFileSystem, ICvsFiles cvsFiles) {
 		this.eventManager = eventManager;
 		this.cvsFileSystem = cvsFileSystem;
 

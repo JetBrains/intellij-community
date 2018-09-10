@@ -144,7 +144,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
                                            final Key outputType,
                                            final ServiceMessageVisitor visitor) throws ParseException {
     // service message parser expects line like "##teamcity[ .... ]" without whitespaces in the end.
-    final ServiceMessage message = ServiceMessage.parse(text.trim());
+    final ServiceMessage message;
+    try {
+      message = ServiceMessage.parse(text.trim());
+    } catch (ParseException e) {
+      LOG.error("Failed to parse service message", e, text);
+      return false;
+    }
     if (message != null) {
       message.visit(visitor);
     }

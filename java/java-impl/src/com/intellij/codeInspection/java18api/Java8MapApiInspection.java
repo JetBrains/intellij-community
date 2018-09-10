@@ -270,8 +270,9 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
 
             if(mapKeyType != null && keyType != null && keyType.isAssignableFrom(mapKeyType)) {
               PsiElement target = ((PsiReferenceExpression)key).resolve();
-              refs = StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
-                .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(target)).toList();
+              refs = target == null ? Collections.emptyList() :
+                     StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
+                       .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(target)).toList();
               if (!refs.isEmpty()) {
                 nameCandidate = getNameCandidate(((PsiReferenceExpression)key).getReferenceName());
               }

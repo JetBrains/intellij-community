@@ -295,7 +295,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
     private Object[][] myTableData;
 
-    public MyListTableModel() {
+    MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
       setSortable(false);
     }

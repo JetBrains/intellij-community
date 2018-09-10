@@ -181,7 +181,7 @@ abstract class GitImplBase implements Git {
     private int myExitCode = 0;
     private boolean myStartFailed = false;
 
-    public GitCommandResultListener(OutputCollector outputCollector) {
+    GitCommandResultListener(OutputCollector outputCollector) {
       myOutputCollector = outputCollector;
     }
 
@@ -201,7 +201,7 @@ abstract class GitImplBase implements Git {
     }
 
     @Override
-    public void startFailed(Throwable t) {
+    public void startFailed(@NotNull Throwable t) {
       myStartFailed = true;
       myOutputCollector.errorLineReceived("Failed to start Git process " + t.getLocalizedMessage());
     }

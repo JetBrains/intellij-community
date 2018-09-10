@@ -165,7 +165,7 @@ public class GitLineHandler extends GitTextHandler {
 
     @NotNull private final BufferingTextSplitter myOutputProcessor;
 
-    public LineReader(@NotNull Reader reader,
+    LineReader(@NotNull Reader reader,
                       @NotNull SleepingPolicy sleepingPolicy,
                       @NotNull BufferingTextSplitter outputProcessor,
                       @NotNull String presentableName) {

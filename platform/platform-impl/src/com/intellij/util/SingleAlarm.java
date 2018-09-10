@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SingleAlarm extends Alarm {
   private final Runnable task;
@@ -25,9 +26,7 @@ public class SingleAlarm extends Alarm {
   private final ModalityState myModalityState;
 
   public SingleAlarm(@NotNull Runnable task, int delay) {
-    this.task = task;
-    this.delay = delay;
-    myModalityState = ModalityState.NON_MODAL;
+    this(task, delay, ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL, null);
   }
 
   public SingleAlarm(@NotNull Runnable task, int delay, @NotNull Disposable parentDisposable) {
@@ -46,13 +45,13 @@ public class SingleAlarm extends Alarm {
                       int delay,
                       @NotNull ThreadToUse threadToUse,
                       ModalityState modalityState,
-                      @NotNull Disposable parentDisposable) {
+                      @Nullable Disposable parentDisposable) {
     super(threadToUse, parentDisposable);
 
     this.task = task;
     this.delay = delay;
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
-      throw new IllegalArgumentException("modalityState must be not null");
+      throw new IllegalArgumentException("modalityState must be not null if threadToUse == ThreadToUse.SWING_THREAD");
     }
     myModalityState = modalityState;
   }
@@ -79,6 +78,6 @@ public class SingleAlarm extends Alarm {
   }
 
   private void addRequest(int delay) {
-    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? myModalityState : null);
+    _addRequest(task, delay, myModalityState);
   }
 }

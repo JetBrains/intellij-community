@@ -142,7 +142,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   private static class ProjectOnlyFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
-    public ProjectOnlyFileChooserDescriptor() {
+    ProjectOnlyFileChooserDescriptor() {
       super(true);
       setTitle(IdeBundle.message("title.open.project"));
     }
@@ -153,7 +153,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     private final FileChooserDescriptor myStandardDescriptor =
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false);
 
-    public ProjectOrFileChooserDescriptor() {
+    ProjectOrFileChooserDescriptor() {
       super(true);
       setTitle(IdeBundle.message("title.open.file.or.project"));
     }

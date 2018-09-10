@@ -383,6 +383,7 @@ class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
   }
 }
 
+@Suppress("unused")
 private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
     return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectStoreImpl::class.java

@@ -33,7 +33,7 @@ public class StringDescriptorManager {
     myModule = module;
     bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {
           myPropertiesFileCache.clear();
         }

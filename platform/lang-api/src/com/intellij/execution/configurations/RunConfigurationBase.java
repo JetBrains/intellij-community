@@ -8,17 +8,19 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +42,18 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private final Project myProject;
   private String myName;
 
-  private RunConfigurationOptions myOptions = createOptions();
+  private RunConfigurationOptions myOptions;
 
   private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
 
-  private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
+  private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
-  protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, String name) {
+  protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, @Nullable String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
+    // must be after factory because factory is used to get options class
+    myOptions = createOptions();
   }
 
   @NotNull
@@ -64,12 +68,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   @NotNull
   @Transient
-  public List<BeforeRunTask> getBeforeRunTasks() {
+  public List<BeforeRunTask<?>> getBeforeRunTasks() {
     return myBeforeRunTasks;
   }
 
   @Override
-  public void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+  public void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
     myBeforeRunTasks = value;
   }
 
@@ -80,7 +84,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
-  public final void setName(final String name) {
+  public final void setName(String name) {
     myName = name;
   }
 
@@ -96,10 +100,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return myFactory == null ? null : myFactory.getIcon();
   }
 
+  @NotNull
   @Override
   @Transient
   public final String getName() {
-    return myName;
+    // a lot of clients not ready that name can be null and in most cases it is not convenient - just add more work to handle null value
+    // in any case for run configuration empty name it is the same as null, we don't need to bother clients and use null
+    return StringUtilRt.notNullize(myName);
   }
 
   public final int hashCode() {
@@ -208,17 +215,47 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myOptions = XmlSerializer.deserialize(element, getOptionsClass());
   }
 
+  @ApiStatus.Experimental
+  public void setState(@NotNull BaseState state) {
+    myOptions = (RunConfigurationOptions)state;
+  }
+
+  // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
+  /**
+   * Do not override this method, use {@link ConfigurationFactory#getOptionsClass()}.
+   */
   protected Class<? extends RunConfigurationOptions> getOptionsClass() {
-    if (this instanceof PersistentStateComponent) {
+    Class<? extends BaseState> result = myFactory == null ? null : myFactory.getOptionsClass();
+    if (result != null) {
+      //noinspection unchecked
+      return (Class<? extends RunConfigurationOptions>)result;
+    }
+    else if (this instanceof PersistentStateComponent) {
       PersistentStateComponent instance = (PersistentStateComponent)this;
       return ComponentSerializationUtil.getStateClass(instance.getClass());
     }
+    else {
+      return getDefaultOptionsClass();
+    }
+  }
+
+  /**
+   * Do not override this method, it is intended to support old (not migrated to options class) run configurations.
+   */
+  @NotNull
+  protected Class<? extends RunConfigurationOptions> getDefaultOptionsClass() {
     return RunConfigurationOptions.class;
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    JDOMExternalizerUtil.addChildren(element, PREDEFINED_LOG_FILE_ELEMENT, myPredefinedLogFiles);
+    for (PredefinedLogFile child : myPredefinedLogFiles) {
+      if (child != null) {
+        Element element1 = new Element(PREDEFINED_LOG_FILE_ELEMENT);
+        child.writeExternal(element1);
+        element.addContent(element1);
+      }
+    }
     XmlSerializer.serializeObjectInto(myOptions, element);
   }
 
@@ -285,5 +322,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Deprecated
   protected boolean isNewSerializationUsed() {
     return false;
+  }
+
+  /**
+   * Called when configuration created via UI (Add Configuration).
+   * Suitable to perform some initialization tasks (in most cases it is indicator that you do something wrong, so, please override this method with care and only if really need).
+   */
+  public void onNewConfigurationCreated() {
+  }
+
+  public void onConfigurationCopied() {
   }
 }

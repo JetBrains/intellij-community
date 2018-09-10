@@ -2,12 +2,13 @@
 package com.intellij.testGuiFramework.fixtures.extended
 
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException
+import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
@@ -17,7 +18,7 @@ import org.fest.swing.fixture.JTreeFixture
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-open class ExtendedJTreePathFixture(
+  open class ExtendedJTreePathFixture(
   val tree: JTree,
   private val stringPath: List<String>,
   private val predicate: FinderPredicate = Predicate.equality,
@@ -32,7 +33,7 @@ open class ExtendedJTreePathFixture(
     robot: Robot = GuiRobotHolder.robot,
     driver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
   ) :
-    this(tree, path.getPathStrings(), predicate, robot, driver)
+    this(tree, path.getPathStrings(tree), predicate, robot, driver)
 
   init {
     replaceDriverWith(myDriver)
@@ -101,7 +102,7 @@ open class ExtendedJTreePathFixture(
         GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
-              .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
+              .findMatchingPathByPredicate(predicate = predicate, pathStrings = partialList)
             partialPath != null
           }
           catch (e: Exception) {
@@ -171,8 +172,10 @@ open class ExtendedJTreePathFixture(
    * Returns list of visible strings not including the first invisible item
    *
    * Note: code `this.path.joinToString()` always includes the first invisible item
+   * @param extendedValue if true return full text for each path item
    * */
-  fun TreePath.getPathStrings(): List<String> {
-    val pathStrings = this.path.map { it.toString() }
-    return if (pathStrings.first().isEmpty()) pathStrings.drop(1) else pathStrings
+  fun TreePath.getPathStrings(jTree: JTree, extendedValue: Boolean = false): List<String> {
+    val cellReader = ExtendedJTreeCellReader()
+    val pathStrings = this.path.map { cellReader.valueAtExtended(jTree, it, extendedValue) ?: throw Exception("Unable to read value (value is null) for a tree")}
+    return if (pathStrings.first().isEmpty() || !jTree.isRootVisible) pathStrings.drop(1) else pathStrings
   }

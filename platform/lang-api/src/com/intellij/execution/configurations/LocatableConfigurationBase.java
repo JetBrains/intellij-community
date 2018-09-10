@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,13 +19,18 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
     super(project, factory, name);
   }
 
+  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory) {
+    super(project, factory, null);
+  }
+
   @Override
   protected LocatableRunConfigurationOptions getOptions() {
     return (LocatableRunConfigurationOptions)super.getOptions();
   }
 
+  @NotNull
   @Override
-  protected Class<? extends LocatableRunConfigurationOptions> getOptionsClass() {
+  protected Class<? extends LocatableRunConfigurationOptions> getDefaultOptionsClass() {
     return LocatableRunConfigurationOptions.class;
   }
 
@@ -38,7 +44,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
    * Renames the configuration to its suggested name.
    */
   public void setGeneratedName() {
-    setName(suggestedName());
+    setName(StringUtilRt.notNullize(suggestedName()));
     getOptions().setNameGenerated(true);
   }
 

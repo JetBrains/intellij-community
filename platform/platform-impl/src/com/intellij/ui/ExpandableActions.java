@@ -11,9 +11,9 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
 public abstract class ExpandableActions extends DumbAwareAction {
-  private final Consumer<Expandable> consumer;
+  private final Consumer<? super Expandable> consumer;
 
-  private ExpandableActions(Consumer<Expandable> consumer) {
+  private ExpandableActions(Consumer<? super Expandable> consumer) {
     setEnabledInModalContext(true);
     this.consumer = consumer;
   }

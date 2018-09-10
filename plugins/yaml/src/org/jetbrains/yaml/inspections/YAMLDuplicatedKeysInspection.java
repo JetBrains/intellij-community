@@ -24,6 +24,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
     return new YamlPsiElementVisitor() {
       @Override
       public void visitMapping(@NotNull YAMLMapping mapping) {
+
         MultiMap<String, YAMLKeyValue> occurrences = new MultiMap<>();
 
         for (YAMLKeyValue keyValue : mapping.getKeyValues()) {
@@ -41,7 +42,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
           if (entry.getValue().size() > 1) {
             entry.getValue().forEach((duplicatedKey) -> {
               assert duplicatedKey.getKey() != null;
-              assert duplicatedKey.getParentMapping() != null : "This key is get from mapping";
+              assert duplicatedKey.getParentMapping() != null : "This key is gotten from mapping";
 
               holder.registerProblem(duplicatedKey.getKey(),
                                      YAMLBundle.message("YAMLDuplicatedKeysInspection.duplicated.key", entry.getKey()),
@@ -56,7 +57,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
   private static class RemoveDuplicatedKeyQuickFix implements LocalQuickFix {
     private final SmartPsiElementPointer<YAMLKeyValue> myKeyValueHolder;
 
-    public RemoveDuplicatedKeyQuickFix(@NotNull final YAMLKeyValue keyValue) {
+    RemoveDuplicatedKeyQuickFix(@NotNull final YAMLKeyValue keyValue) {
       myKeyValueHolder = SmartPointerManager.getInstance(keyValue.getProject()).createSmartPsiElementPointer(keyValue);
     }
 

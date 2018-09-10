@@ -202,7 +202,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
 
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         fireChangeEvent();
         updateBox();
       }

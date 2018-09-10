@@ -119,7 +119,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myProgressIcon.isDisposed()) return;
           ApplicationManager.getApplication().invokeLater(() -> {
@@ -286,7 +286,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     final Version ver;
     final String coord;
 
-    public LibItem(String coord) {
+    LibItem(String coord) {
       this.coord = coord;
       final JpsMavenRepositoryLibraryDescriptor desc = new JpsMavenRepositoryLibraryDescriptor(coord);
       prefix = desc.getGroupId() + ":" + desc.getArtifactId();

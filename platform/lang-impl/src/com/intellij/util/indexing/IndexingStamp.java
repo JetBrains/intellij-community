@@ -88,7 +88,7 @@ public class IndexingStamp {
       ourLastStamp = Math.max(modificationCount, ourLastStamp);
     }
 
-    public IndexVersion(DataInput in) throws IOException {
+    IndexVersion(DataInput in) throws IOException {
       myModificationCount = DataInputOutputUtil.readTIME(in);
       advanceIndexStamp(myModificationCount);
     }

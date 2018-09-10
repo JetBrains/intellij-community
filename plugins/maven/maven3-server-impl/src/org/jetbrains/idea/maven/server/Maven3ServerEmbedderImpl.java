@@ -3,12 +3,11 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.*;
@@ -38,8 +37,8 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.project.*;
+import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -78,8 +77,8 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
+import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -575,8 +574,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles)
-    throws RemoteException, MavenServerProcessCanceledException {
+                                                               @NotNull Collection<String> inactiveProfiles) throws RemoteException {
     final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
     Collection<MavenExecutionResult> results =
@@ -589,9 +587,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
           return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
         }
         catch (RemoteException e) {
-          ExceptionUtilRt.rethrowAllAsUnchecked(e);
+          throw new RuntimeException(e);
         }
-        return null;
       }
     });
   }
@@ -1212,7 +1209,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     final String mavenVersion = getMavenVersion();
     // org.eclipse.aether.RepositorySystem.newResolutionRepositories() method doesn't exist in aether-api-0.9.0.M2.jar used before maven 3.2.5
     // see https://youtrack.jetbrains.com/issue/IDEA-140208 for details
-    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING || StringUtil.compareVersionNumbers(mavenVersion, "3.2.5") < 0) {
+    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING || VersionComparatorUtil.compare(mavenVersion, "3.2.5") < 0) {
       MavenExecutionRequest request = new DefaultMavenExecutionRequest();
       request.setRemoteRepositories(repos);
       try {

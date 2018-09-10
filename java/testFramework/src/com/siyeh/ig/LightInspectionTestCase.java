@@ -116,6 +116,9 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       else if (text.startsWith("!")) {
         newText.append("<error descr=\"").append(text.substring(1)).append("\">");
       }
+      else if (text.startsWith(" ")) {
+        newText.append("/*").append(text).append("*/");
+      }
       else {
         newText.append("<warning descr=\"").append(text).append("\">");
       }

@@ -340,7 +340,7 @@ public class MethodBytecodeUtil {
   }
 
   private static class ByteArrayBuilderOutputStream extends ByteArrayOutputStream {
-    public ByteArrayBuilderOutputStream(int size) {
+    ByteArrayBuilderOutputStream(int size) {
       super(size);
     }
 

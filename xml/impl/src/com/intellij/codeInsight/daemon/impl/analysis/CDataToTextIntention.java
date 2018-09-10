@@ -29,7 +29,7 @@ public class CDataToTextIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert CData to text";
+    return "Convert CDATA to text";
   }
 
   @Override

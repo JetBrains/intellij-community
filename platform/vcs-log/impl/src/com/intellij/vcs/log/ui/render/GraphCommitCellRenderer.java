@@ -143,7 +143,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private int myHeight;
     private AffineTransform myAffineTransform;
 
-    public MyComponent(@NotNull VcsLogData data,
+    MyComponent(@NotNull VcsLogData data,
                        @NotNull GraphCellPainter painter,
                        @NotNull VcsLogGraphTable table,
                        @NotNull LabelIconCache iconCache,

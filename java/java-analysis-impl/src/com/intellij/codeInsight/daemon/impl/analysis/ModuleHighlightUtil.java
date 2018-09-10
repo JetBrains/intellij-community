@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -29,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -105,10 +103,10 @@ public class ModuleHighlightUtil {
     return results;
   }
 
-  private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<T> statements,
-                                                                  Function<T, String> ref,
+  private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<? extends T> statements,
+                                                                  Function<? super T, String> ref,
                                                                   @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
-                                                                  List<HighlightInfo> results) {
+                                                                  List<? super HighlightInfo> results) {
     Set<String> filter = ContainerUtil.newTroveSet();
     for (T statement : statements) {
       String refText = ref.apply(statement);
@@ -226,16 +224,21 @@ public class ModuleHighlightUtil {
       Module module = findModuleForFile(file);
       if (module != null) {
         PsiElement target = refElement.resolve();
-        PsiDirectory[] directories = target instanceof PsiPackage ? ((PsiPackage)target).getDirectories(module.getModuleScope(false)) : null;
+        PsiDirectory[] directories = PsiDirectory.EMPTY_ARRAY;
+        if (target instanceof PsiPackage) {
+          boolean inTests = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(file.getVirtualFile());
+          directories = ((PsiPackage)target).getDirectories(module.getModuleScope(inTests));
+        }
         String packageName = statement.getPackageName();
-        HighlightInfoType type = statement.getRole() == Role.OPENS ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-        if (directories == null || directories.length == 0) {
+        boolean opens = statement.getRole() == Role.OPENS;
+        HighlightInfoType type = opens ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+        if (directories.length == 0) {
           String message = JavaErrorMessages.message("package.not.found", packageName);
           HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, factory().createCreateClassInPackageInModuleFix(module, packageName));
           return info;
         }
-        if (packageName != null && PsiUtil.isPackageEmpty(directories, packageName)) {
+        if (packageName != null && isPackageEmpty(directories, packageName, opens)) {
           String message = JavaErrorMessages.message("package.is.empty", packageName);
           HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, factory().createCreateClassInPackageInModuleFix(module, packageName));
@@ -245,6 +248,15 @@ public class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  private static boolean isPackageEmpty(PsiDirectory[] directories, String packageName, boolean anyFile) {
+    if (anyFile) {
+      return Arrays.stream(directories).noneMatch(dir -> dir.getFiles().length > 0);
+    }
+    else {
+      return PsiUtil.isPackageEmpty(directories, packageName);
+    }
   }
 
   @NotNull

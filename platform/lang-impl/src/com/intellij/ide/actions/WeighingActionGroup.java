@@ -40,7 +40,7 @@ public abstract class WeighingActionGroup extends ActionGroup {
 
   protected abstract ActionGroup getDelegate();
 
-  private static void getAllChildren(@Nullable AnActionEvent e, ActionGroup group, List<AnAction> result) {
+  private static void getAllChildren(@Nullable AnActionEvent e, ActionGroup group, List<? super AnAction> result) {
     for (final AnAction action : group.getChildren(e)) {
       if (action == null) {
         LOG.error("Null child for " + group + " of class " + group.getClass());

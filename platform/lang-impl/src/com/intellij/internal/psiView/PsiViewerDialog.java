@@ -138,7 +138,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private static class ExtensionComparator implements Comparator<String> {
     private final String myOnTop;
 
-    public ExtensionComparator(String onTop) {
+    ExtensionComparator(String onTop) {
       myOnTop = onTop;
     }
 
@@ -759,7 +759,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private class MyPsiTreeSelectionListener implements TreeSelectionListener {
     private final TextAttributes myAttributes;
 
-    public MyPsiTreeSelectionListener() {
+    MyPsiTreeSelectionListener() {
       myAttributes = new TextAttributes();
       myAttributes.setEffectColor(BOX_COLOR);
       myAttributes.setEffectType(EffectType.ROUNDED_BOX);

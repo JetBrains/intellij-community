@@ -272,14 +272,14 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     }
 
     private static class Set<K> extends CollectionWrapper<K> implements java.util.Set<K> {
-      public Set(Collection<K> delegate) {
+      Set(Collection<K> delegate) {
         super(delegate);
       }
     }
 
     protected static class EntryWrapper<K, V> implements Entry<K, V> {
-      final Entry<K, V> myEntry;
-      private EntryWrapper(Entry<K, V> entry) {
+      final Entry<? extends K, V> myEntry;
+      private EntryWrapper(Entry<? extends K, V> entry) {
         myEntry = entry;
       }
 

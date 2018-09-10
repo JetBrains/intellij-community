@@ -547,7 +547,7 @@ public class JavaBuilderUtil {
   private static class NegationFileFilter implements FileFilter {
     private final FileFilter myFilter;
 
-    public NegationFileFilter(FileFilter filter) {
+    NegationFileFilter(FileFilter filter) {
       myFilter = filter;
     }
 

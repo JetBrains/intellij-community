@@ -106,7 +106,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     final boolean includeRuntimeDependencies;
     final Collection<Module> modules;
 
-    public ModulesBuildSettings(boolean isIncrementalBuild,
+    ModulesBuildSettings(boolean isIncrementalBuild,
                                 boolean includeDependentModules,
                                 boolean includeRuntimeDependencies,
                                 Collection<Module> modules) {

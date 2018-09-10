@@ -321,7 +321,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myProject != null) {
       ProjectManagerListener listener = new ProjectManagerListener() {
         @Override
-        public void projectClosing(Project project) {
+        public void projectClosing(@NotNull Project project) {
           releaseEditor(myEditor);
           myEditor = null;
         }

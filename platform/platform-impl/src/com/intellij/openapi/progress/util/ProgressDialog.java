@@ -19,6 +19,8 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +92,7 @@ class ProgressDialog implements Disposable {
   DialogWrapper myPopup;
   private final Window myParentWindow;
 
-  public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
+  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
     myProgressWindow = progressWindow;
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     if (parentWindow == null) {
@@ -101,7 +103,7 @@ class ProgressDialog implements Disposable {
     initDialog(shouldShowBackground, cancelText);
   }
 
-  public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
+  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
     myProgressWindow = progressWindow;
     myParentWindow = UIUtil.getWindow(parent);
     initDialog(shouldShowBackground, cancelText);
@@ -175,11 +177,11 @@ class ProgressDialog implements Disposable {
   void enableCancelButtonIfNeeded(boolean enable) {
     if (!myProgressWindow.myShouldShowCancel || myDisableCancelAlarm.isDisposed()) return;
 
-    myDisableCancelAlarm.cancelAllRequests();
-    myDisableCancelAlarm.addRequest(enable ? this::setCancelButtonEnabledInEDT : this::setCancelButtonDisabledInEDT, 500);
+    (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
   }
 
-  private final Alarm myDisableCancelAlarm = new Alarm(this);
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500,this);
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500,this);
 
   private void createCenterPanel() {
     // Cancel button (if any)
@@ -204,12 +206,12 @@ class ProgressDialog implements Disposable {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false;
-        SwingUtilities.invokeLater(myRepaintRunnable);
+        EdtExecutorService.getInstance().submit(myRepaintRunnable);
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          SwingUtilities.invokeLater(() -> {
+          EdtExecutorService.getInstance().submit(() -> {
             if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
               myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
             }
@@ -281,13 +283,13 @@ class ProgressDialog implements Disposable {
   private class MyDialogWrapper extends DialogWrapper {
     private final boolean myIsCancellable;
 
-    public MyDialogWrapper(Project project, final boolean cancellable) {
+    MyDialogWrapper(Project project, final boolean cancellable) {
       super(project, false);
       init();
       myIsCancellable = cancellable;
     }
 
-    public MyDialogWrapper(Component parent, final boolean cancellable) {
+    MyDialogWrapper(Component parent, final boolean cancellable) {
       super(parent, false);
       init();
       myIsCancellable = cancellable;

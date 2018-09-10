@@ -28,7 +28,7 @@ abstract class UpdateTask<Type> {
   private final Set<Type> myItemsBeingIndexed = ContainerUtil.newConcurrentSet();
   private static final boolean DEBUG = false;
 
-  final boolean processAll(Collection<Type> itemsToProcess, Project project) {
+  final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {
     if (DEBUG) trace("enter processAll");
     try {
       boolean hasMoreToProcess;

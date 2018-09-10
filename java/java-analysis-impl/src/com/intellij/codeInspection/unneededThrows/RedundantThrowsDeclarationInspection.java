@@ -170,7 +170,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     private final ProblemDescriptionsProcessor myProcessor;
     private final String myHint;
 
-    public MyQuickFix(final ProblemDescriptionsProcessor processor, final String hint) {
+    MyQuickFix(final ProblemDescriptionsProcessor processor, final String hint) {
       myProcessor = processor;
       myHint = hint;
     }
@@ -252,7 +252,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
     private void removeException(RefMethod refMethod,
                                  PsiType exceptionType,
-                                 List<PsiElement> refsToDelete,
+                                 List<? super PsiElement> refsToDelete,
                                  PsiMethod psiMethod) {
       ContainerUtil.addAll(refsToDelete, MethodThrowsFix.Remove.extractRefsToRemove(psiMethod, exceptionType));
 

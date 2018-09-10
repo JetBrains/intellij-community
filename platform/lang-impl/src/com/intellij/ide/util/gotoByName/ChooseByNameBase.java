@@ -82,8 +82,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
@@ -539,7 +539,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         SelectionPolicy toSelect = currentChosenInfo != null && currentChosenInfo.hasSamePattern(ChooseByNameBase.this)
                                    ? PreserveSelection.INSTANCE : SelectMostRelevant.INSTANCE;
         rebuildList(toSelect, myRebuildDelay, ModalityState.current(), null);
@@ -648,6 +648,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
+        if (checkDisposed()) {
+          return;
+        }
+
         chosenElementMightChange();
         updateDocumentation();
 
@@ -1099,7 +1103,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private MyTextField() {
       super(40);
       // Set UI and border for Darcula and all except Win10, Mac and GTK
-      if (!UIUtil.isUnderGTKLookAndFeel() && !UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
+      if (!UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
         if (!(getUI() instanceof DarculaTextFieldUI)) {
           setUI(DarculaTextFieldUI.createUI(this));
         }
@@ -1537,7 +1541,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
-    public ShowFindUsagesAction() {
+    ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.Pin_tab);
     }
 

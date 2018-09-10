@@ -166,7 +166,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                CompilerBundle.message("generate.ant.build.title"));
     }
     else {
-      StringBuffer filesString = new StringBuffer();
+      StringBuilder filesString = new StringBuilder();
       for (int idx = 0; idx < _generated.size(); idx++) {
         final File file = _generated.get(idx);
         if (idx > 0) {
@@ -183,7 +183,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
   }
 
-  private boolean backup(final File file, final Project project, GenerationOptions genOptions, List<File> filesToRefresh) {
+  private boolean backup(final File file, final Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) {
     if (!genOptions.backupPreviouslyGeneratedFiles || !file.exists()) {
       return true;
     }
@@ -210,7 +210,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     return ok;
   }
 
-  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
+  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final File destFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
@@ -272,7 +272,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
   }
 
-  public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
+  public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<>();

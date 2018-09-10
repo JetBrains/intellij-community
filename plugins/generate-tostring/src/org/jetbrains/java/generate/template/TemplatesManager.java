@@ -112,7 +112,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         myState.defaultTempalteName = res.getFileName();
     }
 
-    public void setTemplates(List<TemplateResource> items) {
+    public void setTemplates(List<? extends TemplateResource> items) {
         myState.templates.clear();
         for (TemplateResource item : items) {
             if (!item.isDefault()) {

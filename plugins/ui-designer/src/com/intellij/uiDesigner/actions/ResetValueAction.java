@@ -20,7 +20,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ResetValueAction");
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     final PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();
@@ -28,7 +28,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
     doResetValue(selection, property, editor);
   }
 
-  public static void doResetValue(final List<RadComponent> selection, final Property property, final GuiEditor editor) {
+  public static void doResetValue(final List<? extends RadComponent> selection, final Property property, final GuiEditor editor) {
     try {
       if (!editor.ensureEditable()) return;
       final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(editor).getPropertyInspector();
@@ -53,7 +53,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(final GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();

@@ -59,6 +59,6 @@ public interface FileSystemTree extends Disposable {
   void showHiddens(boolean showHidden);
 
   interface Listener {
-    void selectionChanged(List<VirtualFile> selection);
+    void selectionChanged(@NotNull List<? extends VirtualFile> selection);
   }
 }

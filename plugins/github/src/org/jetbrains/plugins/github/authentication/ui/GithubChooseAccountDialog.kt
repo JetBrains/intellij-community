@@ -21,7 +21,7 @@ import javax.swing.JTextArea
 class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
                                 accounts: Collection<GithubAccount>,
                                 descriptionText: String?, showHosts: Boolean, allowDefault: Boolean,
-                                title: String, okText: String)
+                                title: String = "Choose Github Account", okText: String = "Choose")
   : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
 
   private val description: JTextArea? = descriptionText?.let {

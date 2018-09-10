@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -198,14 +197,14 @@ public class FindDialog extends DialogWrapper implements FindUI {
   @NotNull
   @Override
   protected Action[] createActions() {
-    FindModel myModel = myHelper.getModel();
-    if (!myModel.isMultipleFiles() && !myModel.isReplaceState() && myModel.isFindAllEnabled()) {
-      return new Action[] { getFindAllAction(), getOKAction(), getCancelAction(), getHelpAction() };
+    Action[] actions = super.createActions();
+    FindModel model = myHelper.getModel();
+    if (!model.isMultipleFiles() && !model.isReplaceState() && model.isFindAllEnabled()) {
+      actions = ArrayUtil.prepend(getFindAllAction(), actions);
     }
-    return new Action[] { getOKAction(), getCancelAction(), getHelpAction() };
+    return actions;
   }
 
-  @NotNull
   private Action getFindAllAction() {
     return myFindAllAction = new AbstractAction(FindBundle.message("find.all.button")) {
       @Override
@@ -285,7 +284,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
         final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
         final DocumentAdapter documentAdapter = new DocumentAdapter() {
           @Override
-          protected void textChanged(javax.swing.event.DocumentEvent e) {
+          protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
             handleAnyComboBoxValueChanged(comboBox);
           }
         };
@@ -837,10 +836,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
   }
 
   @Override
-  public void doHelpAction() {
-    FindModel myModel = myHelper.getModel();
-    String id = myModel.isReplaceState() ? HelpID.REPLACE_IN_PATH : HelpID.FIND_IN_PATH;
-    HelpManager.getInstance().invokeHelp(id);
+  protected String getHelpId() {
+    return myHelper.getModel().isReplaceState() ? HelpID.REPLACE_IN_PATH : HelpID.FIND_IN_PATH;
   }
 
   @NotNull

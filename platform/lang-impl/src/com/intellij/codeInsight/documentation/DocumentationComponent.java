@@ -20,8 +20,10 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +35,7 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -143,7 +146,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-  private final JPanel myControlPanel;
+  private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
@@ -246,12 +249,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
     };
-    DataProvider helpDataProvider = new DataProvider() {
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
-      }
-    };
+    DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myEditorPane.setEditable(false);
@@ -409,7 +407,35 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
     new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    toolbarActions.add(actions);
+    toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
+    toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
+    toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
+    toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
+    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true,
+                                      DataManager.getInstance(), ActionManagerEx.getInstanceEx(), KeymapManagerEx.getInstanceEx()) {
+      Point initialClick;
+
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
+          initialClick = e.getPoint();
+        }
+        super.processMouseEvent(e);
+      }
+
+      @Override
+      protected void processMouseMotionEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
+          Point location = myHint.getLocationOnScreen();
+          myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
+          e.consume();
+          return;
+        }
+        super.processMouseMotionEvent(e);
+      }
+    };
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -443,7 +469,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     DefaultActionGroup gearActions = new MyGearActionGroup();
     gearActions.add(new ShowAsToolwindowAction());
-    gearActions.add(new MyShowSettingsAction());
+    gearActions.add(new MyShowSettingsAction(false));
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
@@ -461,11 +487,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
     add(layeredPane, BorderLayout.CENTER);
 
-    myControlPanel = new JPanel(new BorderLayout(5, 5));
+    myControlPanel = myToolBar.getComponent();
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-
-    myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-    myControlPanel.add(new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
     HyperlinkListener hyperlinkListener = new HyperlinkListener() {
@@ -502,7 +525,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public AnAction getFontSizeAction() {
-    return new MyShowSettingsAction();
+    return new MyShowSettingsAction(false);
   }
 
   public void removeCornerMenu() {
@@ -1521,25 +1544,20 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyShowSettingsButton extends ActionButton {
-
-    MyShowSettingsButton() {
-      this(new MyGearActionGroup(new ShowAsToolwindowAction(),
-                                 new MyShowSettingsAction(),
-                                 new ShowToolbarAction(),
-                                 new RestoreDefaultSizeAction()),
-           new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    }
-
-    private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
-      super(action, presentation, place, minimumSize);
-      myPresentation.setIcon(AllIcons.General.GearPlain);
-    }
-  }
-
   private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    MyShowSettingsAction() {
+    private final boolean myOnToolbar;
+
+    MyShowSettingsAction(boolean onToolbar) {
       super("Adjust font size...");
+      myOnToolbar = onToolbar;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (myOnToolbar && myManager.myToolWindow != null) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
     }
 
     @Override
@@ -1639,12 +1657,20 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (myManager.myToolWindow != null) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return Registry.get("documentation.show.toolbar").asBoolean();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
       showHint();

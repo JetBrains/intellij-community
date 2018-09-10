@@ -258,7 +258,7 @@ public class GitFileHistory {
     @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
+    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
                                 @NotNull Consumer<VcsException> exceptionConsumer) {
       myExceptionConsumer = exceptionConsumer;
       myRevisionConsumer = revisionConsumer;

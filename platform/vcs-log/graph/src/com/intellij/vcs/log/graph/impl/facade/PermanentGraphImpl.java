@@ -168,12 +168,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     List<Integer> headIds = ContainerUtil.map(heads, head -> myPermanentCommitsInfo.getNodeId(head));
     if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
       final TIntHashSet branchNodes = new TIntHashSet();
-      myReachableNodes.walk(headIds, node -> branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node)));
+      myReachableNodes.walkDown(headIds, node -> branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node)));
       return new IntContainedInBranchCondition<>(branchNodes);
     }
     else {
       final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
-      myReachableNodes.walk(headIds, node -> branchNodes.add(myPermanentCommitsInfo.getCommitId(node)));
+      myReachableNodes.walkDown(headIds, node -> branchNodes.add(myPermanentCommitsInfo.getCommitId(node)));
       return new ContainedInBranchCondition<>(branchNodes);
     }
   }
@@ -222,7 +222,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
     private final TIntHashSet myBranchNodes;
 
-    public IntContainedInBranchCondition(TIntHashSet branchNodes) {
+    IntContainedInBranchCondition(TIntHashSet branchNodes) {
       myBranchNodes = branchNodes;
     }
 
@@ -235,7 +235,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private static class ContainedInBranchCondition<CommitId> implements Condition<CommitId> {
     private final Set<CommitId> myBranchNodes;
 
-    public ContainedInBranchCondition(Set<CommitId> branchNodes) {
+    ContainedInBranchCondition(Set<CommitId> branchNodes) {
       myBranchNodes = branchNodes;
     }
 

@@ -127,7 +127,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       @NotNull private final Collection<VcsRef> myReferences;
       private boolean myIsFavorite;
 
-      public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
+      BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
         super(value);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
@@ -173,7 +173,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   private class MyBranchLogSpeedSearchPopup extends BranchLogSpeedSearchPopup {
     private PopupListElementRendererWithIcon myListElementRenderer;
 
-    public MyBranchLogSpeedSearchPopup() {
+    MyBranchLogSpeedSearchPopup() {
       super(BranchFilterPopupComponent.this.createActionGroup(), DataManager.getInstance().getDataContext(BranchFilterPopupComponent.this));
     }
 

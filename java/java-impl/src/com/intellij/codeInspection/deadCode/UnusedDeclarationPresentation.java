@@ -156,7 +156,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
-                            @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
+                            @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
     if (!myFixedElements.containsKey(refEntity) && filter.accepts((RefJavaElement)refEntity)) {

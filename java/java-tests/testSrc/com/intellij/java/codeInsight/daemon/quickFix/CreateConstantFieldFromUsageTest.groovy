@@ -124,4 +124,14 @@ class Test {
 '''
   }
 
+  void "test no constant suggestion when name is not upper cased"() {
+    myFixture.configureByText "a.java", '''
+class Foo {
+   {
+     B<caret>ar
+   }
+}
+'''
+    assertEmpty myFixture.filterAvailableIntentions("Create constant field")
+  }
 }

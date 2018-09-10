@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -57,6 +58,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
@@ -122,7 +124,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });
@@ -214,8 +216,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
+    private boolean inDnd;
 
-    public FlatWelcomeScreen() {
+    FlatWelcomeScreen() {
       super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
@@ -276,6 +279,27 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           return false;
         }
       });
+      setDropTarget(new DropTarget(this, new DropTargetAdapter() {
+        @Override
+        public void dragEnter(DropTargetDragEvent e) {
+          setDnd(true);
+        }
+
+        @Override
+        public void dragExit(DropTargetEvent e) {
+          setDnd(false);
+        }
+
+        @Override
+        public void drop(DropTargetDropEvent e) {
+          setDnd(false);
+        }
+
+        private void setDnd(boolean dnd) {
+          inDnd = dnd;
+          repaint();
+        }
+      }));
 
       TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
@@ -283,6 +307,31 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @Override
     public JComponent getWelcomePanel() {
       return mySlidingPanel;
+    }
+
+    @SuppressWarnings("UseJBColor")
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      if (inDnd) {
+        Rectangle bounds = getBounds();
+        Color background = UIManager.getColor("DragAndDrop.backgroundColor");
+        g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+        g.setColor(UIManager.getColor("DragAndDrop.backgroundBorderColor"));
+        g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
+        g.setColor(UIManager.getColor("DragAndDrop.foregroundColor"));
+
+        Font labelFont = UIUtil.getLabelFont();
+        Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
+        String drop = "Drop files here to open";
+        g.setFont(font);
+        int dropWidth = g.getFontMetrics().stringWidth(drop);
+        int dropHeight = g.getFontMetrics().getHeight();
+        g.drawString(drop, bounds.x + (bounds.width - dropWidth) / 2, (int)(bounds.y + (bounds.height - dropHeight) * 0.45));
+      }
     }
 
     private JComponent createBody() {
@@ -403,7 +452,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       link.setPaintUnderline(false);
       link.setNormalColor(getLinkNormalColor());
       JActionLinkPanel panel = new JActionLinkPanel(link);
-      panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
+      panel.setBorder(JBUI.Borders.empty(4, 6));
       panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
@@ -692,7 +741,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private class IconsFreeActionGroup extends ActionGroup {
       private final ActionGroup myGroup;
 
-      public IconsFreeActionGroup(ActionGroup group) {
+      IconsFreeActionGroup(ActionGroup group) {
         super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
       }
@@ -930,12 +979,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     };
     list.addListSelectionListener(selectionListener);
     if (backAction != null) {
-      new AnAction() {
+      new DumbAwareAction() {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StackingPopupDispatcher.getInstance().isPopupFocused());
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           backAction.run();
         }
-      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
+      }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, main, parentDisposable);
     }
     installQuickSearch(list);
 

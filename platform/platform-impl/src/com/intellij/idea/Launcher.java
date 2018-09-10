@@ -44,7 +44,7 @@ public class Launcher {
         private final InputStream myInput;
         private final PrintStream myOutput;
 
-        public Redirector(InputStream input, PrintStream output) {
+        Redirector(InputStream input, PrintStream output) {
             myInput = input;
             myOutput = output;
         }

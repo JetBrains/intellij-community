@@ -16,16 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,18 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightInspectionTestCase {
-
-  static final LightProjectDescriptor DESCRIPTOR = new DefaultLightProjectDescriptor() {
-      @Override
-      public Sdk getSdk() {
-        return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
-      }
-
-      @Override
-      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_9);
-      }
-    };
 
   public void testLoopConditionNotUpdatedInsideLoop() {
     doTest();
@@ -58,7 +37,7 @@ public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightInspec
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return DESCRIPTOR;
+    return JAVA_9_ANNOTATED;
   }
 
   @Override

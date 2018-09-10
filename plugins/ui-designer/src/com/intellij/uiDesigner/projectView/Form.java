@@ -23,7 +23,7 @@ public class Form implements Navigatable {
     myFormFiles = FormClassIndex.findFormsBoundToClass(classToBind.getProject(), classToBind);
   }
 
-  public Form(PsiClass classToBind, Collection<PsiFile> formFiles) {
+  public Form(PsiClass classToBind, Collection<? extends PsiFile> formFiles) {
     myClassToBind = classToBind;
     myFormFiles = new HashSet<>(formFiles);
   }

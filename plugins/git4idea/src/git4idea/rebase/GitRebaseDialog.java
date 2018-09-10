@@ -239,7 +239,7 @@ public class GitRebaseDialog extends DialogWrapper {
   private void setupBranches() {
     GitUIUtil.getTextField(myOntoComboBox).getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateFields();
       }
     });

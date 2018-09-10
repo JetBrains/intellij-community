@@ -87,14 +87,13 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
+import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -272,6 +271,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
 
       getRepositoryManager(myProject).updateRepository(root);
+      if (isSubmodule(repository)) {
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
+      }
     }
     catch (VcsException e) {
       exceptions.add(e);
@@ -336,7 +338,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(myProject, root, excludedStagedChanges, exceptions);
+          restoreExcluded(myProject, root, excludedStagedChanges);
         }
       }
     }
@@ -692,13 +694,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<CommitChange> changes,
-                                      @NotNull List<VcsException> exceptions) throws VcsException {
+                                      @NotNull Collection<CommitChange> changes) {
+    List<VcsException> restoreExceptions = new ArrayList<>();
+
     Set<FilePath> toAdd = new HashSet<>();
     Set<FilePath> toRemove = new HashSet<>();
 
     for (CommitChange change : changes) {
-      if (addAsCaseOnlyRename(project, root, change)) continue;
+      if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue;
 
       addIfNotNull(toAdd, change.afterPath);
       addIfNotNull(toRemove, change.beforePath);
@@ -706,10 +709,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     toRemove.removeAll(toAdd);
 
     LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove));
-    updateIndex(project, root, toAdd, toRemove, exceptions);
+    updateIndex(project, root, toAdd, toRemove, restoreExceptions);
+
+    for (VcsException e : restoreExceptions) {
+      LOG.warn(e);
+    }
   }
 
-  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change) {
+  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change,
+                                             @NotNull List<VcsException> exceptions) {
     try {
       if (!isCaseOnlyRename(change)) return false;
 
@@ -723,7 +731,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return true;
     }
     catch (VcsException e) {
-      LOG.warn(e);
+      exceptions.add(e);
       return false;
     }
   }
@@ -1129,8 +1137,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAuthorNotificationBuilder = JBPopupFactory.getInstance().
         createBalloonBuilder(new JLabel(GitBundle.getString("commit.author.diffs"))).
         setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")).
-        setBorderColor(BALLOON_WARNING_BORDER).
-        setFillColor(BALLOON_WARNING_BACKGROUND).
+        setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor()).
+        setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor()).
         setHideOnClickOutside(true).
         setHideOnFrameResize(false);
       myAuthorField.addHierarchyListener(new HierarchyListener() {
@@ -1210,7 +1218,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
         super(project, manager, panel);
         myAmend.addActionListener(new ActionListener() {
           @Override
@@ -1390,7 +1398,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable public final String changelistId;
     @Nullable public final VirtualFile virtualFile;
 
-    public CommitChange(@NotNull Change change) {
+    CommitChange(@NotNull Change change) {
       this.beforePath = getBeforePath(change);
       this.afterPath = getAfterPath(change);
 
@@ -1414,12 +1422,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath) {
       this(beforePath, afterPath, null, null, null, null);
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath,
                         @Nullable VcsRevisionNumber beforeRevision,
                         @Nullable VcsRevisionNumber afterRevision,

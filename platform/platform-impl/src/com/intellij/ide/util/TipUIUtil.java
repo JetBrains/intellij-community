@@ -171,7 +171,7 @@ public class TipUIUtil {
         String path = img.substring(srcIndex + 5, endIndex);
         URL url;
         try {
-          url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new URL("file://" + FileUtil.join(tipPath, path));
+          url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
         }
         catch (MalformedURLException e) {
           url = null;
@@ -361,7 +361,7 @@ public class TipUIUtil {
     private WebView myWebView;
     private String myRecentText = "";
 
-    public JFXBrowser() {
+    JFXBrowser() {
       setLayout(new GridLayout(1, 1));
       setBackground(UIUtil.getTextFieldBackground());
       Long mask = ReflectionUtil.getField(Component.class, this, long.class, "eventMask");

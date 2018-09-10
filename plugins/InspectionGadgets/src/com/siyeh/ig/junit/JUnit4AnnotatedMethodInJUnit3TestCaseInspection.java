@@ -114,7 +114,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
 
   private static class RemoveIgnoreAndRename extends RenameFix {
 
-    public RemoveIgnoreAndRename(@NonNls PsiMethod method) {
+    RemoveIgnoreAndRename(@NonNls PsiMethod method) {
       super("_" + method.getName());
     }
 
@@ -287,7 +287,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
   private static class RemoveTestAnnotationFix extends RenameFix {
     private final String myNewName;
 
-    public RemoveTestAnnotationFix(String newName) {
+    RemoveTestAnnotationFix(String newName) {
       super(newName);
       myNewName = newName;
     }

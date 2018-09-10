@@ -69,13 +69,11 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
                                                                       @Nullable RunnerAndConfigurationSettings configuration) {
     ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
 
-    ProgramRunner runner =
-      RunnerRegistry.getInstance().getRunner(executor.getId(), configuration != null ? configuration.getConfiguration() : null);
+    ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), configuration);
     if (runner == null && configuration != null) {
       LOG.error("Cannot find runner for " + configuration.getName());
     }
     else if (runner != null) {
-      assert configuration != null;
       builder.runnerAndSettings(runner, configuration);
     }
     return builder;
@@ -86,12 +84,12 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static void start(@NotNull ExecutionEnvironment environment) {
+  private static void restart(@NotNull ExecutionEnvironment environment) {
     //start() can be called during restartRunProfile() after pretty long 'awaitTermination()' so we have to check if the project is still here
     if (environment.getProject().isDisposed()) return;
 
     RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), environment.getExecutionId() == 0);
+    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
   }
 
   private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
@@ -420,8 +418,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           }
         }
         myAwaitingRunProfiles.remove(environment.getRunProfile());
-        environment.setExecutionId(0);// At restart we have to assign new execution ID and therefore reuse 'just stopped' contents if any
-        start(environment);
+        restart(environment);
       }
     }, 50);
   }

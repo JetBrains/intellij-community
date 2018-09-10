@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -70,7 +71,7 @@ public class AddNamespaceDialog extends DialogWrapper {
             if (component instanceof JTextField) {
                 ((JTextField)component).getDocument().addDocumentListener(new DocumentAdapter() {
                     @Override
-                    protected void textChanged(DocumentEvent e) {
+                    protected void textChanged(@NotNull DocumentEvent e) {
                         updateOkAction();
                     }
                 });

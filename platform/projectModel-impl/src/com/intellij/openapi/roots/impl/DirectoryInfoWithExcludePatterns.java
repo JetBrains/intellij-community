@@ -17,13 +17,13 @@ import org.jetbrains.annotations.Nullable;
 public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
   @Nullable private final FileTypeAssocTable<Boolean> myContentExcludePatterns;
-  @Nullable private final Condition<VirtualFile> myLibraryExcludeCondition;
+  @Nullable private final Condition<? super VirtualFile> myLibraryExcludeCondition;
 
   public DirectoryInfoWithExcludePatterns(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot,
                                           @Nullable SourceFolder sourceFolder, VirtualFile libraryClassRoot, boolean inModuleSource, 
                                           boolean inLibrarySource, boolean isExcluded,
                                           @Nullable FileTypeAssocTable<Boolean> contentExcludePatterns,
-                                          @Nullable Condition<VirtualFile> libraryExcludeCondition,
+                                          @Nullable Condition<? super VirtualFile> libraryExcludeCondition,
                                           @Nullable String unloadedModuleName) {
     super(root, module, contentRoot, sourceRoot, sourceFolder, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, unloadedModuleName);
     myContentExcludePatterns = contentExcludePatterns;
@@ -37,7 +37,7 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
     return myInLibrarySource && !isExcludedByCondition(file, myLibraryExcludeCondition);
   }
 
-  private boolean isExcludedByCondition(@NotNull VirtualFile file, @Nullable Condition<VirtualFile> condition) {
+  private boolean isExcludedByCondition(@NotNull VirtualFile file, @Nullable Condition<? super VirtualFile> condition) {
     if (condition == null) return false;
 
     VirtualFile current = getPhysicalFile(file);

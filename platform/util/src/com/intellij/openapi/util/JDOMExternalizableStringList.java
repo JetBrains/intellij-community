@@ -41,7 +41,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
     readList(this, element);
   }
 
-  public static void readList(@NotNull List<String> strings, Element element) {
+  public static void readList(@NotNull List<? super String> strings, Element element) {
     strings.clear();
 
     Class callerClass = null;

@@ -66,8 +66,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode.updateUpHierarchy;
 import static com.intellij.util.containers.ContainerUtil.exists;
@@ -1166,7 +1166,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
-    public ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
+    ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
       GridBagConstraints optionsLabelConstraints = new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(0, 2, 0, 0), 0, 0);

@@ -119,7 +119,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
   }
 
   private static class MyLiteralTextEscaper extends LiteralTextEscaper<YAMLScalarImpl> {
-    public MyLiteralTextEscaper(YAMLScalarImpl scalar) {
+    MyLiteralTextEscaper(YAMLScalarImpl scalar) {
       super(scalar);
     }
 

@@ -63,7 +63,7 @@ class TBItemAnActionButton extends TBItemButton {
 
   void setLinkedButtons(@Nullable List<TBItemAnActionButton> linkedButtons) { myLinkedButtons = linkedButtons; }
 
-  @NotNull Presentation updateAnAction() {
+  @NotNull Presentation updateAnAction(boolean forceUseCached) {
     final Presentation presentation = myAnAction.getTemplatePresentation().clone();
 
     if (ApplicationManager.getApplication() == null) {
@@ -86,7 +86,7 @@ class TBItemAnActionButton extends TBItemButton {
     );
 
     try {
-      ActionUtil.performFastUpdate(false, myAnAction, e);
+      ActionUtil.performFastUpdate(false, myAnAction, e, forceUseCached);
     } catch (IndexNotReadyException e1) {
       presentation.setEnabled(false);
       presentation.setVisible(false);

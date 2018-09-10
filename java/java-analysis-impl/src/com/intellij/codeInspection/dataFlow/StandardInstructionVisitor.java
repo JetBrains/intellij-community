@@ -61,7 +61,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       memState.push(dfaDest);
       return nextInstruction(instruction, runner, memState);
     }
-    dropLocality(dfaSource, memState);
+    if (!(dfaDest instanceof DfaVariableValue &&
+          ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
+          dfaSource instanceof DfaVariableValue &&
+          ControlFlowAnalyzer.isTempVariable((DfaVariableValue)dfaSource))) {
+      dropLocality(dfaSource, memState);
+    }
 
     PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression());
     PsiExpression rValue = instruction.getRExpression();
@@ -600,6 +605,25 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Override
+  public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    DfaValue dfaValue = memState.pop();
+
+    DfaMemoryState falseState = memState.createCopy();
+    DfaValueFactory factory = runner.getFactory();
+    List<DfaInstructionState> result = new ArrayList<>(2);
+    if (memState.applyCondition(dfaValue.createNegated())) {
+      pushExpressionResult(factory.getBoolean(true), instruction, memState);
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+    }
+    if (falseState.applyCondition(dfaValue)) {
+      pushExpressionResult(factory.getBoolean(false), instruction, falseState);
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), falseState));
+    }
+
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
@@ -693,7 +717,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (expression instanceof PsiBinaryExpression) {
       PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (TypeUtils.isJavaLangString(left.getType()) || TypeUtils.isJavaLangString(right.getType()));
+      return right != null && (TypeUtils.isJavaLangString(left.getType()) && TypeUtils.isJavaLangString(right.getType()));
     }
     return false;
   }

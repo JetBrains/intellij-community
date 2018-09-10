@@ -53,7 +53,7 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull final AnActionEvent e, boolean state) {
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {

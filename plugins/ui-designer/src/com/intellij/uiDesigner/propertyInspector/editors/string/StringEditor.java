@@ -64,7 +64,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     textField.getDocument().addDocumentListener(
       new DocumentAdapter() {
         @Override
-        protected void textChanged(final DocumentEvent e) {
+        protected void textChanged(@NotNull final DocumentEvent e) {
           // Order of document listeners invocation is not defined in Swing. In practice, custom listeners like this one are invoked
           // before internal JTextField listeners, so at this point the internal state of JTextField can be inconsistent.
           // That's the reason for using 'invokeLater' here.

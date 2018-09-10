@@ -98,11 +98,11 @@ public abstract class Decompressor<Stream> {
     //</editor-fold>
   }
 
-  private Condition<String> myFilter = null;
+  private Condition<? super String> myFilter = null;
   private boolean myOverwrite = true;
-  private Consumer<File> myConsumer;
+  private Consumer<? super File> myConsumer;
 
-  public Decompressor<Stream> filter(@Nullable Condition<String> filter) {
+  public Decompressor<Stream> filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
     return this;
   }
@@ -112,7 +112,7 @@ public abstract class Decompressor<Stream> {
     return this;
   }
 
-  public Decompressor<Stream> postprocessor(@Nullable Consumer<File> consumer) {
+  public Decompressor<Stream> postprocessor(@Nullable Consumer<? super File> consumer) {
     myConsumer = consumer;
     return this;
   }
@@ -166,7 +166,7 @@ public abstract class Decompressor<Stream> {
     private final String name;
     private final boolean isDirectory;
 
-    public Entry(String name, boolean isDirectory) {
+    Entry(String name, boolean isDirectory) {
       this.name = name;
       this.isDirectory = isDirectory;
     }

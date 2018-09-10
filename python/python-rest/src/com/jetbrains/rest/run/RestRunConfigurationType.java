@@ -18,12 +18,11 @@ import javax.swing.*;
 /**
  * User : catherine
  */
-public class RestRunConfigurationType implements ConfigurationType {
+public final class RestRunConfigurationType implements ConfigurationType {
   public final ConfigurationFactory DOCUTILS_FACTORY = new DocutilsRunConfigurationFactory(this);
   public final ConfigurationFactory SPHINX_FACTORY = new SphinxRunConfigurationFactory(this);
 
-  private final String myId = "docs";
-
+  @NotNull
   @Override
   public String getDisplayName() {
     return RestBundle.message("runcfg.docutils.display_name");
@@ -46,7 +45,8 @@ public class RestRunConfigurationType implements ConfigurationType {
   @Override
   @NotNull
   public String getId() {
-    return myId;
+    String id = "docs";
+    return id;
   }
 
   @Override
@@ -54,14 +54,20 @@ public class RestRunConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[] {DOCUTILS_FACTORY, SPHINX_FACTORY};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.docs";
+  }
+
   private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
     private final String myName;
 
-    public RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull String name) {
+    RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull String name) {
       super(type);
       myName = name;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myName;
@@ -75,7 +81,7 @@ public class RestRunConfigurationType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new DocutilsRunConfiguration(project, this);
     }
   }
@@ -87,7 +93,7 @@ public class RestRunConfigurationType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new SphinxRunConfiguration(project, this);
     }
   }

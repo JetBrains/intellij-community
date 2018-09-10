@@ -40,7 +40,7 @@ public abstract class FilteringGotoByModel<T> extends ContributorsBasedGotoByMod
    * Set file types
    * @param filterItems a file types to set
    */
-  public synchronized void setFilterItems(Collection<T> filterItems) {
+  public synchronized void setFilterItems(Collection<? extends T> filterItems) {
     // get and set method are called from different threads
     myFilterItems = new HashSet<>(filterItems);
   }

@@ -8,6 +8,7 @@ import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.util.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -70,7 +71,7 @@ public class GitReferenceValidator {
     });
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         // note that checkOkButton is called in other listener
         myButton.setEnabled(myTextField.getText().trim().length() != 0);
       }

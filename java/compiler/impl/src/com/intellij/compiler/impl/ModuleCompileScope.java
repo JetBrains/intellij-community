@@ -52,7 +52,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     this(project, Arrays.asList(modules), Collections.emptyList(), includeDependentModules, includeRuntimeDependencies);
   }
 
-  public ModuleCompileScope(Project project, final Collection<Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps) {
+  public ModuleCompileScope(Project project, final Collection<? extends Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps) {
     myProject = project;
     myIncludedUnloadedModules = includedUnloadedModules;
     myScopeModules = new HashSet<>();

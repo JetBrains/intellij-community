@@ -139,7 +139,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     myBuilder.queueUpdate().doWhenDone(() -> myBuilder.select(library));
   }
 
-  private boolean processSelection(final Processor<Library> processor) {
+  private boolean processSelection(final Processor<? super Library> processor) {
     for (Object element : myBuilder.getSelectedElements()) {
       if (element instanceof Library) {
         if (!processor.process((Library)element)) return false;
@@ -274,7 +274,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       //todo[nik] this is workaround for bug in getTemplatePresentation().setIcons()
       presentation.setIcon(getTemplatePresentation().getIcon(false));
     }
@@ -357,7 +357,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private class MyStructure extends AbstractTreeStructure {
     private final Project myProject;
 
-    public MyStructure(Project project) {
+    MyStructure(Project project) {
       myProject = project;
     }
 

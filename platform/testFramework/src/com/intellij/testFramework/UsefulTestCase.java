@@ -101,6 +101,13 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public UsefulTestCase() {
+  }
+
+  public UsefulTestCase(String name) {
+    super(name);
+  }
+
   protected boolean shouldContainTempFiles() {
     return true;
   }
@@ -286,6 +293,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     Runnable runnable = () -> {
       try {
+        TestLoggerFactory.onTestStarted();
         super.runTest();
         TestLoggerFactory.onTestFinished(true);
       }
@@ -639,7 +647,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static <T> Throwable accepts(@NotNull Consumer<T> condition, final T actual) {
+  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
     try {
       condition.consume(actual);
       return null;
@@ -675,7 +683,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOneOf(T value, @NotNull T... values) {
     boolean found = false;
     for (T v : values) {
-      if (value == v || value != null && value.equals(v)) {
+      if (Objects.equals(value, v)) {
         found = true;
       }
     }

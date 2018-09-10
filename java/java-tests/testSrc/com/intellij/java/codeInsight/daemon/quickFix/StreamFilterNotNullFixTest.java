@@ -19,22 +19,11 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class StreamFilterNotNullFixTest extends LightQuickFixParameterizedTestCase {
-  private static final LightProjectDescriptor DESCRIPTOR = new LightProjectDescriptor() {
-    @Nullable
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
@@ -48,7 +37,7 @@ public class StreamFilterNotNullFixTest extends LightQuickFixParameterizedTestCa
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return DESCRIPTOR;
+    return LightCodeInsightFixtureTestCase.JAVA_8_ANNOTATED;
   }
 
   @Override

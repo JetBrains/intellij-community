@@ -1,43 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="36" height="42" viewBox="0 0 36 42">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="21" viewBox="0 0 18 21">
   <defs>
-    <linearGradient id="comborighteditabledisabled@2x-b" x1="50%" x2="50%" y1="0%" y2="100%">
+    <linearGradient id="comborighteditabledisabled@2x-a" x1="50%" x2="50%" y1="0%" y2="100%">
       <stop offset="0%" stop-color="#D2D2D2"/>
       <stop offset="100%" stop-color="#C3C3C3"/>
     </linearGradient>
-    <path id="comborighteditabledisabled@2x-a" d="M0,0 L28,0 C32.418278,-8.11624501e-16 36,3.581722 36,8 L36,34 C36,38.418278 32.418278,42 28,42 L0,42 L0,0 Z"/>
   </defs>
   <g fill="none" fill-rule="evenodd">
-    <use fill="#F1F1F1" xlink:href="#comborighteditabledisabled@2x-a"/>
-    <path stroke="url(#comborighteditabledisabled@2x-b)" d="M0.5,0.5 L0.5,41.5 L28,41.5 C32.1421356,41.5 35.5,38.1421356 35.5,34 L35.5,8 C35.5,3.85786438 32.1421356,0.5 28,0.5 L0.5,0.5 Z"/>
-    <g transform="translate(10 18)">
-      <rect width="1" height="1" fill="#B1B1B1"/>
-      <rect width="1" height="1" x="14" fill="#B1B1B1"/>
-      <rect width="1" height="1" x="2" fill="#CACACA"/>
-      <rect width="1" height="1" x="3" y="1" fill="#CACACA"/>
-      <rect width="1" height="1" x="4" y="2" fill="#CACACA"/>
-      <rect width="1" height="1" x="5" y="3" fill="#CACACA"/>
-      <rect width="1" height="1" x="6" y="4" fill="#CACACA"/>
-      <rect width="1" height="1" y="2" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="1" y="3" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="2" y="4" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="3" y="5" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="4" y="6" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="5" y="7" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="6" y="8" fill="#BDBDBD"/>
-      <rect width="1" height="1" x="14" y="2" fill="#BDBDBD" transform="matrix(-1 0 0 1 29 0)"/>
-      <rect width="1" height="1" x="13" y="3" fill="#BDBDBD" transform="matrix(-1 0 0 1 27 0)"/>
-      <rect width="1" height="1" x="12" y="4" fill="#BDBDBD" transform="matrix(-1 0 0 1 25 0)"/>
-      <rect width="1" height="1" x="11" y="5" fill="#BDBDBD" transform="matrix(-1 0 0 1 23 0)"/>
-      <rect width="1" height="1" x="10" y="6" fill="#BDBDBD" transform="matrix(-1 0 0 1 21 0)"/>
-      <rect width="1" height="1" x="9" y="7" fill="#BDBDBD" transform="matrix(-1 0 0 1 19 0)"/>
-      <rect width="1" height="1" x="8" y="8" fill="#BDBDBD" transform="matrix(-1 0 0 1 17 0)"/>
-      <rect width="1" height="1" x="12" fill="#CACACA" transform="matrix(-1 0 0 1 25 0)"/>
-      <rect width="1" height="1" x="11" y="1" fill="#CACACA" transform="matrix(-1 0 0 1 23 0)"/>
-      <rect width="1" height="1" x="10" y="2" fill="#CACACA" transform="matrix(-1 0 0 1 21 0)"/>
-      <rect width="1" height="1" x="9" y="3" fill="#CACACA" transform="matrix(-1 0 0 1 19 0)"/>
-      <rect width="1" height="1" x="8" y="4" fill="#CACACA" transform="matrix(-1 0 0 1 17 0)"/>
-      <rect width="1" height="1" x="7" y="5" fill="#CACACA" transform="matrix(-1 0 0 1 15 0)"/>
-    </g>
-    <path fill="#919191" d="M24,20 L24,21 L23,21 L23,22 L22,22 L22,23 L21,23 L21,24 L20,24 L20,25 L19,25 L19,26 L18,26 L18,27 L17,27 L17,26 L16,26 L16,25 L15,25 L15,24 L14,24 L14,23 L13,23 L13,22 L12,22 L12,21 L11,21 L11,20 L10,20 L10,19 L11,19 L11,18 L12,18 L12,19 L13,19 L13,20 L14,20 L14,21 L15,21 L15,22 L16,22 L16,23 L17,23 L17,24 L18,24 L18,23 L19,23 L19,22 L20,22 L20,21 L21,21 L21,20 L22,20 L22,19 L23,19 L23,18 L24,18 L24,19 L25,19 L25,20 L24,20 Z"/>
+    <path fill="#F1F1F1" stroke="url(#comborighteditabledisabled@2x-a)" stroke-width=".5" d="M0.25,0.25 L0.25,20.75 L14,20.75 C16.0710678,20.75 17.75,19.0710678 17.75,17 L17.75,4 C17.75,1.92893219 16.0710678,0.25 14,0.25 L0.25,0.25 Z"/>
+    <path fill="#A6A6A6" fill-rule="nonzero" d="M11.5232082,8.55822002 C11.7671965,8.29489517 12.1784551,8.27921982 12.44178,8.52320817 C12.7051048,8.76719651 12.7207802,9.17845512 12.4767918,9.44177998 L9.22679183,12.9493483 C8.96955187,13.226975 8.53044813,13.226975 8.27320817,12.9493483 L5.02320817,9.44177998 C4.77921982,9.17845512 4.79489517,8.76719651 5.05822002,8.52320817 C5.32154488,8.27921982 5.73280349,8.29489517 5.97679183,8.55822002 L8.75,11.5512099 L11.5232082,8.55822002 Z"/>
   </g>
 </svg>

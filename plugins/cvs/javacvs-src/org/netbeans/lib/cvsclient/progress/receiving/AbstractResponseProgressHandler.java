@@ -123,7 +123,7 @@ public class AbstractResponseProgressHandler {
 
 		// Setup ==================================================================
 
-		public FileObjectsCount() {
+		FileObjectsCount() {
 		}
 
 		// Implemented ============================================================

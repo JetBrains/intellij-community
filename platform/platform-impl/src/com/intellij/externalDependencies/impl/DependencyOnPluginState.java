@@ -24,10 +24,10 @@ import com.intellij.util.xmlb.annotations.Tag;
  */
 @Tag("plugin")
 class DependencyOnPluginState {
-  public DependencyOnPluginState() {
+  DependencyOnPluginState() {
   }
 
-  public DependencyOnPluginState(DependencyOnPlugin dependency) {
+  DependencyOnPluginState(DependencyOnPlugin dependency) {
     myId = dependency.getPluginId();
     myMinVersion = dependency.getMinVersion();
     myMaxVersion = dependency.getMaxVersion();

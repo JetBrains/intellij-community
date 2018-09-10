@@ -58,7 +58,7 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
   private static class PromptReceiver extends SocketServer.Protocol {
     @Nullable HgPromptHandler myHandler;
 
-    public PromptReceiver(@Nullable HgPromptHandler handler) {
+    PromptReceiver(@Nullable HgPromptHandler handler) {
       myHandler = handler;
     }
 

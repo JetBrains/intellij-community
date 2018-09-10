@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,8 +131,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           if (roots.length > 0) {
             VirtualFile virtualFile = roots[0];
             ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
-              final ProjectView projectView = ProjectView.getInstance(project);
-              projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
+              StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+                final ProjectView projectView = ProjectView.getInstance(project);
+                projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
+              });
             });
           }
         }

@@ -135,7 +135,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
     private List<String> myAffectingFields = ContainerUtil.newArrayList();
 
-    public FilterFieldsTask(@NotNull Collection<String> fields) {
+    FilterFieldsTask(@NotNull Collection<String> fields) {
       myAllFields = fields;
       myIterator = fields.iterator();
       myTotalFieldsNumber = fields.size();
@@ -239,7 +239,7 @@ class CompositeSequentialTask implements SequentialTask {
   private String myProgressText;
   private String myProgressText2;
 
-  public CompositeSequentialTask(@NotNull SequentialModalProgressTask progressTask) {
+  CompositeSequentialTask(@NotNull SequentialModalProgressTask progressTask) {
     myProgressTask = progressTask;
   }
 

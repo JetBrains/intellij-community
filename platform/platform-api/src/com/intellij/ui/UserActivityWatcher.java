@@ -23,7 +23,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     @Override
-    public void textChanged(DocumentEvent event) {
+    public void textChanged(@NotNull DocumentEvent event) {
       fireUIChanged();
     }
   };

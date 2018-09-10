@@ -29,7 +29,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myManager;
   public static long CAN_BE_FINAL_MASK;
 
-  public CanBeFinalAnnotator(@NotNull RefManager manager) {
+  CanBeFinalAnnotator(@NotNull RefManager manager) {
     myManager = manager;
   }
 

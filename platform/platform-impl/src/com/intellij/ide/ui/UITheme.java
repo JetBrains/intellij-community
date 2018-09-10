@@ -7,11 +7,16 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -39,6 +44,7 @@ public class UITheme {
   private Map<String, Object> background;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
+  private SVGLoader.SvgColorPatcher colorPatcher;
 
   private UITheme() {
   }
@@ -85,8 +91,81 @@ public class UITheme {
           return theme.providerClassLoader;
         }
       };
+      Object palette = theme.icons.get("ColorPalette");
+      if (palette instanceof Map) {
+        Map colors = (Map)palette;
+        Map<String, String> newPalette = new HashMap<>();
+        for (Object o : colors.keySet()) {
+          String key = toColorString(o.toString(), theme.isDark());
+          Object v = colors.get(o.toString());
+          if (v instanceof String) {
+            String value = (String)v;
+            if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
+              newPalette.put(key, value);
+            }
+          }
+        }
+
+        theme.colorPatcher = new SVGLoader.SvgColorPatcher() {
+          @Override
+          public void patchColors(Element svg) {
+            String fill = svg.getAttribute("fill");
+            if (fill != null) {
+              String newFill = newPalette.get(StringUtil.toLowerCase(fill));
+              if (newFill != null) {
+                svg.setAttribute("fill", newFill);
+              }
+            }
+            NodeList nodes = svg.getChildNodes();
+            int length = nodes.getLength();
+            for (int i = 0; i < length; i++) {
+              Node item = nodes.item(i);
+              if (item instanceof Element) {
+                patchColors((Element)item);
+              }
+            }
+
+          }
+        };
+      }
     }
     return theme;
+  }
+
+  private static String toColorString(String fillValue, boolean darkTheme) {
+    if (darkTheme && fillValue.startsWith("Actions.") && !fillValue.endsWith(".Dark")) {
+      fillValue += ".Dark";
+    }
+    String color = colorPalette.get(fillValue);
+    if (color != null) {
+      return StringUtil.toLowerCase(color);
+    }
+    return StringUtil.toLowerCase(fillValue);
+  }
+
+  private static final Map<String, String> colorPalette = new HashMap<>();
+  static {
+    colorPalette.put("Actions.Red", "#DB5860");
+    colorPalette.put("Actions.Red.Dark", "#C75450");
+    colorPalette.put("Actions.Yellow", "#EDA200");
+    colorPalette.put("Actions.Yellow.Dark", "#F0A732");
+    colorPalette.put("Actions.Green", "#59A869");
+    colorPalette.put("Actions.Green.Dark", "#499C54");
+    colorPalette.put("Actions.Blue", "#389FD6");
+    colorPalette.put("Actions.Blue.Dark", "#3592C4");
+    colorPalette.put("Actions.Grey", "#6E6E6E");
+    colorPalette.put("Actions.Grey.Dark", "#AFB1B3");
+    colorPalette.put("Objects.Grey", "#9AA7B0");
+    colorPalette.put("Objects.Blue", "#40B6E0");
+    colorPalette.put("Objects.Green", "#62B543");
+    colorPalette.put("Objects.Yellow", "#F4AF3D");
+    colorPalette.put("Objects.YellowDark", "#D9A343");
+    colorPalette.put("Objects.Purple", "#B99BF8");
+    colorPalette.put("Objects.Pink", "#F98B9E");
+    colorPalette.put("Objects.Red", "#F26522");
+    colorPalette.put("Objects.RedStatus", "#E05555");
+    colorPalette.put("Objects.GreenAndroid", "#A4C639");
+    colorPalette.put("Objects.BlackText", "#231F20");
   }
 
   public String getId() {
@@ -114,6 +193,10 @@ public class UITheme {
     return patcher;
   }
 
+  public SVGLoader.SvgColorPatcher getColorPatcher() {
+    return colorPatcher;
+  }
+
   @NotNull
   public ClassLoader getProviderClassLoader() {
     return providerClassLoader;
@@ -130,12 +213,10 @@ public class UITheme {
         String tail = key.substring(1);
         Object finalValue = value;
 
-        //please DO NOT invoke forEach on UIDefaults directly
-        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
-          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
-            defaults.put(e.getKey(), finalValue);
-          }
-        });
+        //please DO NOT stream on UIDefaults directly
+        ((UIDefaults)defaults.clone()).keySet().stream()
+          .filter(k -> k instanceof String && ((String)k).endsWith(tail))
+          .forEach(k -> defaults.put(k, finalValue));
       } else {
         defaults.put(key, value);
       }
@@ -153,8 +234,17 @@ public class UITheme {
       return parseInsets(value);
     } else if (key.endsWith("Border") || key.endsWith("border")) {
       try {
-        if (StringUtil.split(value, ",").size() == 4) {
+        List<String> ints = StringUtil.split(value, ",");
+        if (ints.size() == 4) {
           return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+        } else if (ints.size() == 5) {
+          return JBUI.Borders.customLine(ColorUtil.fromHex(ints.get(4)),
+                                         Integer.parseInt(ints.get(0)),
+                                         Integer.parseInt(ints.get(1)),
+                                         Integer.parseInt(ints.get(2)),
+                                         Integer.parseInt(ints.get(3)));
+        } else if (ColorUtil.fromHex(value, null) != null) {
+          return JBUI.Borders.customLine(ColorUtil.fromHex(value), 1);
         } else {
           return Class.forName(value).newInstance();
         }

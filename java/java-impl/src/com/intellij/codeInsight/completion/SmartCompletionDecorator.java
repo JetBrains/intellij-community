@@ -30,10 +30,10 @@ import java.util.Set;
 * @author peter
 */
 public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
-  @NotNull private final Collection<ExpectedTypeInfo> myExpectedTypeInfos;
+  @NotNull private final Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
   private PsiElement myPosition;
 
-  public SmartCompletionDecorator(LookupElement item, @NotNull Collection<ExpectedTypeInfo> expectedTypeInfos) {
+  public SmartCompletionDecorator(LookupElement item, @NotNull Collection<? extends ExpectedTypeInfo> expectedTypeInfos) {
     super(item);
     myExpectedTypeInfos = expectedTypeInfos;
   }

@@ -94,7 +94,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   private static class MyIFileElementType extends IFileElementType {
-    public MyIFileElementType() {
+    MyIFileElementType() {
       super("test.java.file", JavaLanguage.INSTANCE);
     }
 

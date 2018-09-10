@@ -404,7 +404,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     private ImplementationViewComponent myComponent;
     private PsiElement myElement;
 
-    public ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
+    ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
       myComponent = component;
       myElement = element;
     }
@@ -415,7 +415,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     @Override
-    public void replaceModel(@NotNull List<PsiElement> data) {
+    public void replaceModel(@NotNull List<? extends PsiElement> data) {
       final PsiElement[] elements = myComponent.getElements();
       final int includeSelfIdx = myElement instanceof PomTargetPsiElement ? 0 : 1;
       final int startIdx = elements.length - includeSelfIdx;

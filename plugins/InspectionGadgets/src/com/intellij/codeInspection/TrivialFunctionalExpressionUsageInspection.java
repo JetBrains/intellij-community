@@ -109,7 +109,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       }
 
       private void doCheckMethodCallOnFunctionalExpression(PsiElement expression,
-                                                           Predicate<PsiMethodCallExpression> elementContainerPredicate) {
+                                                           Predicate<? super PsiMethodCallExpression> elementContainerPredicate) {
         final PsiTypeCastExpression parent =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiTypeCastExpression.class);
         if (parent != null) {
@@ -120,7 +120,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         }
       }
 
-      private void doCheckMethodCallOnFunctionalExpression(Predicate<PsiMethodCallExpression> elementContainerPredicate,
+      private void doCheckMethodCallOnFunctionalExpression(Predicate<? super PsiMethodCallExpression> elementContainerPredicate,
                                                            PsiExpression qualifier,
                                                            PsiType interfaceType,
                                                            LocalQuickFix fix) {

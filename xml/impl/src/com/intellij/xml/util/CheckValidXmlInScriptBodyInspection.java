@@ -44,7 +44,7 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
   private static class InsertQuotedCharacterQuickFix extends LocalQuickFixOnPsiElement {
     private final int startInElement;
 
-    public InsertQuotedCharacterQuickFix(PsiElement psiElement, int startInElement) {
+    InsertQuotedCharacterQuickFix(PsiElement psiElement, int startInElement) {
       super(psiElement);
       this.startInElement = startInElement;
     }

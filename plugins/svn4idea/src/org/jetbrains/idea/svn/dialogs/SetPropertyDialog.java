@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,16 +61,9 @@ public class SetPropertyDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+  protected String getHelpId() {
+    return HELP_ID;
   }
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
 
   @Override
   public JComponent getPreferredFocusedComponent() {
@@ -124,7 +116,7 @@ public class SetPropertyDialog extends DialogWrapper {
       JTextField jTextField = (JTextField)editor;
       jTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           String name = getPropertyName();
           updatePropertyValue(name);
           getOKAction().setEnabled(name != null && !"".equals(name.trim()));

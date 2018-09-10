@@ -216,7 +216,7 @@
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
               icon="AllIcons.General.Filter"/>
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
-              icon="AllIcons.Actions.ShowChangesOnly"/>
+              icon="AllIcons.Actions.Preview"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangeListAction"
               icon="AllIcons.Actions.Rollback"/>
@@ -292,6 +292,10 @@
     </group>
 
     <group id="Vcs.CommitExecutor.Actions"/>
+
+    <group id="ChangesView.CommitToolbar">
+      <reference id="Vcs.MessageActionGroup"/>
+    </group>
 
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction" text="VCS Label"/>
 

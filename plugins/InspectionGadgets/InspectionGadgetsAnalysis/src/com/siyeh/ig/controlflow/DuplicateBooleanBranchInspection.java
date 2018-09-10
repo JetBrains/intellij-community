@@ -96,7 +96,7 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
       }
     }
 
-    private static void collectConditions(PsiExpression condition, Collection<PsiExpression> conditions, IElementType tokenType) {
+    private static void collectConditions(PsiExpression condition, Collection<? super PsiExpression> conditions, IElementType tokenType) {
       if (condition == null) {
         return;
       }

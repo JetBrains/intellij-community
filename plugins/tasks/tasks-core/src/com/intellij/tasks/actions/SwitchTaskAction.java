@@ -150,6 +150,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       public boolean hasSubstep(List<TaskListItem> selectedValues) {
         return selectedValues.size() > 1 || selectedValues.get(0).getTask() != null;
       }
+
+      @Override
+      public boolean isSpeedSearchEnabled() {
+        return true;
+      }
     };
 
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);

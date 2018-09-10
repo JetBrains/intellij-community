@@ -264,7 +264,7 @@ public class NavBarListener
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     updateModel();
   }
 
@@ -299,7 +299,7 @@ public class NavBarListener
     }
   }
   @Override
-  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
     if (shouldSkipAction(action)) return;
 
     if (myPanel.isInFloatingMode()) {
@@ -358,7 +358,7 @@ public class NavBarListener
   }
 
   @Override
-  public void lookAndFeelChanged(LafManager source) {
+  public void lookAndFeelChanged(@NotNull LafManager source) {
     myPanel.getNavBarUI().clearItems();
     myPanel.revalidate();
     myPanel.repaint();
@@ -379,7 +379,7 @@ public class NavBarListener
   public void keyReleased(KeyEvent e) {}
 
   @Override
-  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {}
+  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {}
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {}

@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -86,7 +87,7 @@ public class CopyHandler {
     }
   }
 
-  static void updateSelectionInActiveProjectView(PsiElement newElement, Project project, boolean selectInActivePanel) {
+  static void updateSelectionInActiveProjectView(@NotNull PsiElement newElement, Project project, boolean selectInActivePanel) {
     String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
     if (id != null) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(id);

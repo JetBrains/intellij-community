@@ -69,7 +69,7 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
   @Override
   protected JComponent createNorthPanel() {
     class MyTextField extends JTextField {
-      public MyTextField() {
+      MyTextField() {
         super("");
         addFocusListener(new FocusAdapter() {
           @Override
@@ -123,7 +123,7 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
         boolean inSync;
 
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (inSync) return;
           inSync = true;
           String s = "<invalid>";

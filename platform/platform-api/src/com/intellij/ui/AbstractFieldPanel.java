@@ -212,7 +212,7 @@ public abstract class AbstractFieldPanel extends JPanel {
       myTextArea.setLineWrap(true);
       myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        public void textChanged(DocumentEvent event) {
+        public void textChanged(@NotNull DocumentEvent event) {
           if (myChangeListener != null) {
             myChangeListener.run();
           }

@@ -25,7 +25,7 @@ import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 
 class ParamReference extends AttributeReference implements PsiPolyVariantReference {
-    public ParamReference(XmlAttribute source, ResolveUtil.Matcher matcher) {
+    ParamReference(XmlAttribute source, ResolveUtil.Matcher matcher) {
         super(source, matcher, true);
     }
 

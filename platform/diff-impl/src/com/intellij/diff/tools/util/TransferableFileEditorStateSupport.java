@@ -208,7 +208,7 @@ public class TransferableFileEditorStateSupport {
   private static class ToggleSynchronousEditorStatesAction extends ToggleActionButton implements DumbAware {
     @NotNull private final TransferableFileEditorStateSupport mySupport;
 
-    public ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
+    ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
       super("Synchronize Editors Settings", AllIcons.Actions.SyncPanels);
       mySupport = support;
     }
@@ -236,7 +236,7 @@ public class TransferableFileEditorStateSupport {
     private final Map<String, Map<String, String>> myMap = new HashMap<>();
     private final int myMasterIndex;
 
-    public MyState(int masterIndex) {
+    MyState(int masterIndex) {
       myMasterIndex = masterIndex;
     }
 

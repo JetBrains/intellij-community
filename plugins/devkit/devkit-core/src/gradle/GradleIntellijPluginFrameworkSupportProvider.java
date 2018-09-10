@@ -184,14 +184,13 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
     RunManager runManager = RunManager.getInstance(module.getProject());
     ConfigurationFactory configurationFactory = new GradleExternalTaskConfigurationType().getConfigurationFactories()[0];
     String configurationName = DevKitBundle.message("run.configuration.title");
-    RunnerAndConfigurationSettings configuration = runManager.createRunConfiguration(configurationName, configurationFactory);
+    RunnerAndConfigurationSettings configuration = runManager.createConfiguration(configurationName, configurationFactory);
     RunConfiguration runConfiguration = configuration.getConfiguration();
     if (runConfiguration instanceof ExternalSystemRunConfiguration) {
       ExternalSystemTaskExecutionSettings settings = ((ExternalSystemRunConfiguration)runConfiguration).getSettings();
       settings.setTaskNames(Collections.singletonList(":runIde"));
       settings.setExternalProjectPath(contentRootPath);
     }
-    configuration.setSingleton(true);
     runManager.addConfiguration(configuration);
     runManager.setSelectedConfiguration(configuration);
   }

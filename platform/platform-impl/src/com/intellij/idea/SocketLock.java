@@ -294,12 +294,12 @@ public final class SocketLock {
     private enum State {HEADER, CONTENT}
 
     private final String[] myLockedPaths;
-    private final AtomicReference<Consumer<List<String>>> myActivateListener;
+    private final AtomicReference<? extends Consumer<List<String>>> myActivateListener;
     private final String myToken;
     private State myState = State.HEADER;
 
-    public MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                                   @NotNull AtomicReference<Consumer<List<String>>> activateListener,
+    MyChannelInboundHandler(@NotNull String[] lockedPaths,
+                                   @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
                                    @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;

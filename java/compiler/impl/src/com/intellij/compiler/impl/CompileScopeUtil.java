@@ -48,9 +48,9 @@ public class CompileScopeUtil {
     setBaseScopeForExternalBuild(scope, resourceScopes);
   }
 
-  public static void addScopesForModules(Collection<Module> modules,
+  public static void addScopesForModules(Collection<? extends Module> modules,
                                          Collection<String> unloadedModules,
-                                         List<TargetTypeBuildScope> scopes,
+                                         List<? super TargetTypeBuildScope> scopes,
                                          boolean forceBuild) {
     if (!modules.isEmpty() || !unloadedModules.isEmpty()) {
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {

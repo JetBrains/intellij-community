@@ -88,7 +88,7 @@ public class AssertFocused extends AbstractCommand {
       untested.put(eachKey, actual.get(eachKey));
     }
 
-    StringBuffer untestedText = new StringBuffer();
+    StringBuilder untestedText = new StringBuilder();
     for (String each : untested.keySet()) {
       if (untestedText.length() > 0) {
         untestedText.append(",");

@@ -460,7 +460,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     private final PyDebugProcess myProcess;
     private final String myText;
 
-    public WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
+    WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
       super("", "Enables watching executed functions return values", null);
       myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
       myProcess = debugProcess;
@@ -476,12 +476,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myWatchesReturnValues;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean watch) {
+    public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       myWatchesReturnValues = watch;
       PyDebuggerSettings.getInstance().setWatchReturnValues(watch);
       final Project project = e.getProject();

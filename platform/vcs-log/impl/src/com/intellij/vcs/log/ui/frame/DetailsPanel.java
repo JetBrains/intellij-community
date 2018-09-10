@@ -279,7 +279,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   }
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
-    public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
+    CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
       super(graphTable, DetailsPanel.this.myLogData.getMiniDetailsGetter());
     }
 

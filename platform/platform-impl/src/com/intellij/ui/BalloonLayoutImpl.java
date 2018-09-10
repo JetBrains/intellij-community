@@ -148,7 +148,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     if (myLafListener == null && layoutData != null) {
       myLafListener = new LafManagerListener() {
         @Override
-        public void lookAndFeelChanged(LafManager source) {
+        public void lookAndFeelChanged(@NotNull LafManager source) {
           for (BalloonLayoutData layoutData : myLayoutData.values()) {
             if (layoutData.lafHandler != null) {
               layoutData.lafHandler.run();

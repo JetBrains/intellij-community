@@ -43,7 +43,7 @@ public abstract class DirDiffAction extends ToggleAction implements ShortcutProv
   protected abstract void updateState(boolean state);
 
   @Override
-  public final void setSelected(AnActionEvent e, boolean state) {
+  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     updateState(state);
     if (isReloadNeeded()) {
       if (isFullReload()) {

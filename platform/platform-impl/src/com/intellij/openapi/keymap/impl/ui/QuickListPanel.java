@@ -45,7 +45,7 @@ class QuickListPanel {
   private JPanel myListPanel;
   QuickList item;
 
-  public QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
+  QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
     actionsModel = new CollectionListModel<>();
     myActionsList = new JBList(actionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());

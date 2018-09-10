@@ -136,7 +136,7 @@ public class PythonPathEditor extends SdkPathEditor {
     private final OrderRootType myOrderRootType;
     private final Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
 
-    public PathListModel(OrderRootType orderRootType, DefaultListModel listModel) {
+    PathListModel(OrderRootType orderRootType, DefaultListModel listModel) {
       myOrderRootType = orderRootType;
       myListModel = listModel;
     }
@@ -296,7 +296,7 @@ public class PythonPathEditor extends SdkPathEditor {
   private class PythonPathListCellRenderer extends ListCellRendererWrapper<VirtualFile> {
     private final PathListModel model;
 
-    public PythonPathListCellRenderer(final ListCellRenderer listCellRenderer, PathListModel model) {
+    PythonPathListCellRenderer(final ListCellRenderer listCellRenderer, PathListModel model) {
       super();
       this.model = model;
     }

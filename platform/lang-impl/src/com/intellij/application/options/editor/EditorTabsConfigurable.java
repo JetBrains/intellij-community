@@ -261,7 +261,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   }
 
   private static final class MyTabsPlacementComboBoxRenderer extends ListCellRendererWrapper<Integer> {
-    public MyTabsPlacementComboBoxRenderer() {
+    MyTabsPlacementComboBoxRenderer() {
       super();
     }
 

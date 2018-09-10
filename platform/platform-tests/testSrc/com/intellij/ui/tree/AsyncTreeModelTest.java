@@ -484,7 +484,7 @@ public final class AsyncTreeModelTest {
       runOnSwingThread(() -> {
         tree.getModel().addTreeModelListener(new TreeModelAdapter() {
           @Override
-          protected void process(TreeModelEvent event, EventType type) {
+          protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
             assertEquals("unexpected tree path", path, event.getTreePath());
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(ModelTest.this::done);

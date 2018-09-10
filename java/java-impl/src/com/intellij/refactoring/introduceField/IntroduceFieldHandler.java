@@ -174,7 +174,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return myInplaceIntroduceFieldPopup;
   }
 
-  private static boolean isInSuperOrThis(PsiExpression occurrence) {
+  static boolean isInSuperOrThis(PsiExpression occurrence) {
     return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence) || !NotInThisCallFilter.INSTANCE.isOK(occurrence);
   }
 

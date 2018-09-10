@@ -113,7 +113,7 @@ public class VcsCommitStyleFactory {
      * @param background background color or null if unspecified.
      * @param textStyle  text style or null if unspecified
      */
-    public VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background, @Nullable VcsLogHighlighter.TextStyle textStyle) {
+    VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background, @Nullable VcsLogHighlighter.TextStyle textStyle) {
       myForeground = foreground;
       myBackground = background;
       myTextStyle = textStyle;

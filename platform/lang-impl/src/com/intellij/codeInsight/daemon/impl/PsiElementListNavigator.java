@@ -89,7 +89,7 @@ public class PsiElementListNavigator {
   }
 
   @Nullable
-  private static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
+  public static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
                                                final String title,
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
@@ -179,7 +179,7 @@ public class PsiElementListNavigator {
       ListComponentUpdater popupUpdater = builder.getBackgroundUpdater();
       listUpdaterTask.init(popup, new ListComponentUpdater() {
         @Override
-        public void replaceModel(@NotNull List<PsiElement> data) {
+        public void replaceModel(@NotNull List<? extends PsiElement> data) {
           updatedTargetsList.set(data.toArray(new NavigatablePsiElement[0]));
           popupUpdater.replaceModel(data);
         }

@@ -107,10 +107,10 @@ public class VcsLogTabsWatcher implements Disposable {
   @NotNull
   private List<String> getTabs() {
     return StreamEx.of(myRefresher.getLogWindows())
-                   .select(VcsLogTab.class)
-                   .map(VcsLogTab::getTabId)
-                   .filter(tabId -> !VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(tabId))
-                   .toList();
+      .select(VcsLogTab.class)
+      .map(VcsLogTab::getTabId)
+      .filter(tabId -> !VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(tabId))
+      .toList();
   }
 
   @Override
@@ -136,6 +136,11 @@ public class VcsLogTabsWatcher implements Disposable {
     public String getTabId() {
       return myTabId;
     }
+
+    @Override
+    public String toString() {
+      return "VcsLogTab \'" + myTabId + '\'';
+    }
   }
 
   private class MyRefreshPostponedEventsListener extends ContentManagerAdapter
@@ -152,12 +157,13 @@ public class VcsLogTabsWatcher implements Disposable {
       VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
                                                   window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
+        LOG.debug("Selected log window \'" + logWindow + "\'");
         myRefresher.refresherActivated(logWindow.getRefresher(), false);
       }
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
         String tabId = VcsLogContentUtil.getId(event.getContent());
         if (tabId != null) {
@@ -167,7 +173,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
       if (content instanceof TabbedContent) {
         content.addPropertyChangeListener(this);
@@ -175,7 +181,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
       if (content instanceof TabbedContent) {
         content.removePropertyChangeListener(this);

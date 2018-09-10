@@ -153,7 +153,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     reformatText(file, formatRanges, null, true);
   }
 
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
     FormatTextRanges formatRanges = new FormatTextRanges();
     ranges.forEach((range) -> formatRanges.add(range, true));
     reformatText(file, formatRanges, editor, false);

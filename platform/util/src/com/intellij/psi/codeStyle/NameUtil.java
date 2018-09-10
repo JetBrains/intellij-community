@@ -348,7 +348,7 @@ public class NameUtil {
     return i;
   }
 
-  private static void addAllWords(@NotNull String text, @NotNull List<String> result) {
+  private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
     int start = 0;
     while (start < text.length()) {
       int next = nextWord(text, start);
@@ -452,7 +452,7 @@ public class NameUtil {
   }
 
   @NotNull
-  public static String splitWords(@NotNull String text, char separator, @NotNull Function<String, String> transformWord) {
+  public static String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
     final String[] words = nameToWords(text);
     boolean insertSeparator = false;
     final StringBuilder buf = new StringBuilder();

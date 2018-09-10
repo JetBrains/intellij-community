@@ -126,7 +126,7 @@ public abstract class NonCodeMembersContributor {
   private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
     public boolean wantMore = true;
 
-    public MyDelegatingScopeProcessor(PsiScopeProcessor delegate) {
+    MyDelegatingScopeProcessor(PsiScopeProcessor delegate) {
       super(delegate);
     }
 

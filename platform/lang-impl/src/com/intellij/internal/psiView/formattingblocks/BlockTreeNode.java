@@ -45,7 +45,7 @@ public class BlockTreeNode extends SimpleNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     String name = myBlock.getDebugName();
     if (name == null) name = myBlock.getClass().getSimpleName();
     if (myBlock instanceof DataLanguageBlockWrapper) {
@@ -61,11 +61,11 @@ public class BlockTreeNode extends SimpleNode {
       Color color = new JBColor(Color.HSBtoRGB(1.0f * d, .3f, .7f),
                                 Color.HSBtoRGB(1.0f * d, .3f, .8f));
       presentation
-        .addText(" " + String.valueOf(myBlock.getAlignment()), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, color));
+        .addText(" " + myBlock.getAlignment(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, color));
     }
     if (myBlock.getWrap() != null) {
       presentation
-        .addText(" " + String.valueOf(myBlock.getWrap()), new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, PlatformColors.BLUE));
+        .addText(" " + myBlock.getWrap(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, PlatformColors.BLUE));
     }
   }
 

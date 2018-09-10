@@ -102,7 +102,7 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<PsiDirectory> dirs)  {
+  public static List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<? extends PsiDirectory> dirs)  {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     Collection<Change> changes = ContainerUtil.newArrayList();
 
@@ -114,7 +114,7 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<Change> changes) {
+  public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<? extends Change> changes) {
     Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
       private final PsiManager myPsiManager = PsiManager.getInstance(project);
 
@@ -150,7 +150,7 @@ public class FormatChangedTextUtil {
   @NotNull
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     return Arrays.stream(changes).map(Change::getVirtualFile).filter(Objects::nonNull)
                  .flatMap(file -> elementsConvertor.convert(file).stream()).filter(Objects::nonNull)
                  .collect(Collectors.toList());

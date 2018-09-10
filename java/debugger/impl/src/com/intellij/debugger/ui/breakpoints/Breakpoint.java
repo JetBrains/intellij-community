@@ -508,7 +508,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       @Override
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         removeBreakpoint();
       }
 

@@ -118,7 +118,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class SkipFile extends AbstractAction {
-    public SkipFile() {
+    SkipFile() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.skip"));
     }
 
@@ -129,7 +129,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class GetFile extends AbstractAction {
-    public GetFile() {
+    GetFile() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.get"));
     }
 
@@ -141,7 +141,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class SkipAll extends AbstractAction {
-    public SkipAll() {
+    SkipAll() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.skip.all"));
     }
 
@@ -153,7 +153,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   private class GetAll extends AbstractAction {
-    public GetAll() {
+    GetAll() {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.get.all"));
     }
 

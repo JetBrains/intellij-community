@@ -131,7 +131,7 @@ public class MicrodataUtil {
   }
 
   public static PsiReference[] getReferencesForAttributeValue(@Nullable XmlAttributeValue element,
-                                                              PairFunction<String, Integer, PsiReference> refFun) {
+                                                              PairFunction<? super String, ? super Integer, ? extends PsiReference> refFun) {
     if (element == null) {
       return PsiReference.EMPTY_ARRAY;
     }

@@ -569,7 +569,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   }
 
   private class TestNGMethodBrowser extends MethodBrowser {
-    public TestNGMethodBrowser(Project project) {
+    TestNGMethodBrowser(Project project) {
       super(project);
     }
 

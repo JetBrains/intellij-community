@@ -353,7 +353,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @throws IllegalArgumentException if the initial capacity of
    *                                  elements is negative
    */
-  public ConcurrentIntObjectHashMap(int initialCapacity) {
+  ConcurrentIntObjectHashMap(int initialCapacity) {
     if (initialCapacity < 0) {
       throw new IllegalArgumentException();
     }
@@ -378,7 +378,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *                                  elements is negative or the load factor is nonpositive
    * @since 1.6
    */
-  public ConcurrentIntObjectHashMap(int initialCapacity, float loadFactor) {
+  ConcurrentIntObjectHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 1);
   }
 
@@ -770,6 +770,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *
    * @return the set view
    */
+  @Override
+  @NotNull
   public Set<Entry<V>> entrySet() {
     EntrySetView<V> es;
     return (es = entrySet) != null ? es : (entrySet = new EntrySetView<V>(this));
@@ -857,7 +859,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           return false;
         }
       }
-      for (Entry e : m.entries()) {
+      for (Entry e : m.entrySet()) {
         int mk = e.getKey();
         Object mv;
         Object v;
@@ -2365,7 +2367,9 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         throw new IllegalStateException();
       }
       lastReturned = null;
-      map.replaceNode(p.key, null, null);
+      // IJ patched:
+      // see https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8078645
+      map.replaceNode(p.key, null, p.val);
     }
   }
 
@@ -2412,18 +2416,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       final V v = p.val;
       lastReturned = p;
       advance();
-      return new Entry<V>() {
-        @Override
-        public int getKey() {
-          return k;
-        }
-
-        @NotNull
-        @Override
-        public V getValue() {
-          return v;
-        }
-      };
+      return new SimpleEntry<V>(k, v);
     }
   }
 
@@ -2669,12 +2662,6 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     public final boolean addAll(@NotNull Collection<? extends V> c) {
       throw new UnsupportedOperationException();
     }
-  }
-
-  @NotNull
-  @Override
-  public Iterable<Entry<V>> entries() {
-    return new EntrySetView<V>(this);
   }
 
   /**

@@ -95,7 +95,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     if (newExpression != null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
 
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       buf.append("new ").append(myNewType.getCanonicalText());
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       final PsiType newExpressionType = newExpression.getType();

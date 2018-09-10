@@ -68,7 +68,7 @@ public class BackgroundTaskUtil {
     */
   @NotNull
   @CalledInAwt
-  public static ProgressIndicator executeAndTryWait(@NotNull Function<ProgressIndicator, /*@NotNull*/ Runnable> backgroundTask,
+  public static ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                     @Nullable Runnable onSlowAction,
                                                     long waitMillis,
                                                     boolean forceEDT) {
@@ -122,7 +122,7 @@ public class BackgroundTaskUtil {
    */
   @Nullable
   @CalledInAwt
-  public static <T> T tryComputeFast(@NotNull Function<ProgressIndicator, T> backgroundTask,
+  public static <T> T tryComputeFast(@NotNull Function<? super ProgressIndicator, ? extends T> backgroundTask,
                                      long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       backgroundTask,
@@ -162,8 +162,8 @@ public class BackgroundTaskUtil {
    */
   @NotNull
   @CalledInAny
-  private static <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<ProgressIndicator, T> task,
-                                                                              @NotNull PairConsumer<T, ProgressIndicator> asyncCallback,
+  private static <T> Pair<T, ProgressIndicator> computeInBackgroundAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends T> task,
+                                                                              @NotNull PairConsumer<? super T, ? super ProgressIndicator> asyncCallback,
                                                                               @NotNull ModalityState modality,
                                                                               long waitMillis) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);

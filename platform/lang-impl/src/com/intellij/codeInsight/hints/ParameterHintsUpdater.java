@@ -209,7 +209,7 @@ public class ParameterHintsUpdater {
     public final boolean relatesToPrecedingText;
     public final HintWidthAdjustment widthAdjustment;
 
-    public InlayUpdateInfo(int offset, @Nullable Inlay current, @Nullable ParameterHintsPass.HintData newHintData) {
+    InlayUpdateInfo(int offset, @Nullable Inlay current, @Nullable ParameterHintsPass.HintData newHintData) {
       this.offset = offset;
       inlay = current;
       oldText = inlay == null ? null : ParameterHintsPresentationManager.getInstance().getHintText(inlay);
