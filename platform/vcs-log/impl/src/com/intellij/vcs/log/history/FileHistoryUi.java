@@ -43,7 +43,6 @@ import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcsUtil.VcsUtil;
@@ -161,11 +160,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
     if (names.isEmpty()) return Collections.singleton(myPath);
     return names;
-  }
-
-  @NotNull                                    
-  public List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList, boolean onlyRelevant) {
-    return VcsLogUtil.collectChanges(detailsList, details -> onlyRelevant ? collectRelevantChanges(details) : details.getChanges());
   }
 
   @Override
