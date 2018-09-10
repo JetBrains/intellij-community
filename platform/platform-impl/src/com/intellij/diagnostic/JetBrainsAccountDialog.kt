@@ -33,8 +33,6 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
     // if user name set, but no password, so, previously was stored without password
     !credentials.password.isNullOrEmpty()
   }
-
-    credentials?.userName == null || !credentials.password.isNullOrEmpty()
   val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), isSelected)
 
   val panel = panel {

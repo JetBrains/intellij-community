@@ -198,7 +198,7 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
     @NotNull private final YamlMetaType myType;
     @Nullable private final Field myField;
 
-    public DocumentationElement(@NotNull PsiManager manager,
+    DocumentationElement(@NotNull PsiManager manager,
                                 @NotNull YamlMetaType type,
                                 @Nullable Field field) {
       super(manager, YAMLLanguage.INSTANCE);

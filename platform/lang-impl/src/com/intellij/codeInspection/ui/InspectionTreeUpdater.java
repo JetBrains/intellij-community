@@ -35,7 +35,7 @@ public class InspectionTreeUpdater {
   }
 
   private class MyTreeUpdate extends Update {
-    public MyTreeUpdate() {
+    MyTreeUpdate() {
       super("inspection.view.update");
     }
 

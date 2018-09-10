@@ -303,7 +303,7 @@ public class SyncScrollSupport {
 
     @Nullable private Anchor myAnchor;
 
-    public ScrollHelper(@NotNull List<? extends Editor> editors,
+    ScrollHelper(@NotNull List<? extends Editor> editors,
                         int masterIndex,
                         int slaveIndex,
                         @NotNull SyncScrollable scrollable,
@@ -328,7 +328,7 @@ public class SyncScrollSupport {
     }
 
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
       if (getMaster().isDisposed() || getSlave().isDisposed()) return;
 
@@ -511,7 +511,7 @@ public class SyncScrollSupport {
     public final int slaveStartOffset;
     public final int slaveEndOffset;
 
-    public Anchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
+    Anchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
       this.masterStartOffset = masterStartOffset;
       this.masterEndOffset = masterEndOffset;
       this.slaveStartOffset = slaveStartOffset;

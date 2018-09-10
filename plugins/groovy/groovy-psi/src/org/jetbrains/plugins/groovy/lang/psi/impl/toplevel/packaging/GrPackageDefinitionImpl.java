@@ -14,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -44,10 +43,8 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
     if (stub != null) {
       return stub.getPackageName();
     }
-
     GrCodeReferenceElement ref = getPackageReference();
-    if (ref == null) return "";
-    return PsiUtil.getQualifiedReferenceText(ref);
+    return ref == null ? "" : ref.getQualifiedReferenceName();
   }
 
   @Override

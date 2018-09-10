@@ -157,7 +157,7 @@ public class FluentIterableConversionUtil {
   }
 
   static class TransformAndConcatConversionRule extends GuavaTypeConversionDescriptor {
-    public TransformAndConcatConversionRule(PsiExpression context) {
+    TransformAndConcatConversionRule(PsiExpression context) {
       super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)", context);
     }
 
@@ -255,7 +255,7 @@ public class FluentIterableConversionUtil {
   }
 
   private static class GuavaFilterInstanceOfConversionDescriptor extends TypeConversionDescriptor {
-    public GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
+    GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
       super("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "(" + filterClassQName + ".class::isInstance)." + StreamApiConstants.MAP + "(" + filterClassQName + ".class::cast)");
     }
   }
@@ -297,7 +297,7 @@ public class FluentIterableConversionUtil {
   }
 
   static class CopyIntoConversionDescriptor extends TypeConversionDescriptor {
-    public CopyIntoConversionDescriptor() {
+    CopyIntoConversionDescriptor() {
       super("$it$.copyInto($c$)", null);
     }
 

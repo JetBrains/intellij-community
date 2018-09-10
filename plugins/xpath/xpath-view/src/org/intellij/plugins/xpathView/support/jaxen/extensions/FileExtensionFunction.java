@@ -22,7 +22,7 @@ import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.Nullable;
 
 class FileExtensionFunction extends BasicFileInfoFunction {
-    public FileExtensionFunction() {
+    FileExtensionFunction() {
         super("file-ext", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 

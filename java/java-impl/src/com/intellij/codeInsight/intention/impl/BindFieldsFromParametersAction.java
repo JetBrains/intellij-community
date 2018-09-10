@@ -286,7 +286,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   private static void processParameter(final Project project,
                                        final PsiParameter parameter,
-                                       final Set<String> usedNames) {
+                                       final Set<? super String> usedNames) {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     final PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);

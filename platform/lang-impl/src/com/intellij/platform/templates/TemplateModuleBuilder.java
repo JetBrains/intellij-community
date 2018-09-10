@@ -325,7 +325,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @SuppressWarnings("UseOfPropertiesAsHashtable")
   @Nullable
-  private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<VelocityException> exceptionConsumer)
+  private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<? super VelocityException> exceptionConsumer)
     throws IOException {
     String patchedContent = content;
     if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {

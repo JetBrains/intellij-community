@@ -311,7 +311,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       super(message);
     }
   }
-  private static void patchLeaves(@NotNull List<PlaceInfo> placeInfos,
+  private static void patchLeaves(@NotNull List<? extends PlaceInfo> placeInfos,
                                   @NotNull InjectedFileViewProvider viewProvider,
                                   @NotNull ASTNode parsedNode,
                                   @NotNull CharSequence documentText) throws PatchException {

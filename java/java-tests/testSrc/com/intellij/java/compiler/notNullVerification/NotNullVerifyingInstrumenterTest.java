@@ -317,7 +317,7 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private static class MyClassLoader extends ClassLoader {
-    public MyClassLoader(ClassLoader parent) {
+    MyClassLoader(ClassLoader parent) {
       super(parent);
     }
 

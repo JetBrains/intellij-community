@@ -40,7 +40,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
 
   private Label myAssertLabel;
 
-  public InstrumentationAdapter(PatternValidationInstrumenter instrumenter,
+  InstrumentationAdapter(PatternValidationInstrumenter instrumenter,
                                 MethodVisitor methodvisitor,
                                 Type[] argTypes,
                                 Type returnType,
@@ -217,7 +217,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
     private final AnnotationVisitor av;
     private final PatternValue myPatternValue;
 
-    public MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
+    MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
       super(Opcodes.API_VERSION);
       av = annotationvisitor;
       myPatternValue = v;

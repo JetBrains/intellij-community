@@ -43,7 +43,7 @@ import java.util.*;
 public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
   protected JBPopup myPopup;
   private ListComponentUpdater myUpdater;
-  private Ref<UsageView> myUsageView;
+  private Ref<? extends UsageView> myUsageView;
   private final Collection<PsiElement> myData;
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -63,7 +63,7 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
     return myUpdater;
   }
 
-  public void init(@NotNull JBPopup popup, @NotNull ListComponentUpdater updater, @NotNull Ref<UsageView> usageView) {
+  public void init(@NotNull JBPopup popup, @NotNull ListComponentUpdater updater, @NotNull Ref<? extends UsageView> usageView) {
     myPopup = popup;
     myUpdater = updater;
     myUsageView = usageView;
@@ -71,7 +71,7 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
 
   public abstract String getCaption(int size);
 
-  protected void replaceModel(@NotNull List<PsiElement> data) {
+  protected void replaceModel(@NotNull List<? extends PsiElement> data) {
     myUpdater.replaceModel(data);
   }
 
@@ -79,7 +79,7 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
     myUpdater.paintBusy(paintBusy);
   }
 
-  protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator comparator) {
+  protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator<? super PsiElement> comparator) {
     return (o1, o2) -> {
       int diff = comparator.compare(o1, o2);
       if (diff == 0) {

@@ -280,7 +280,7 @@ public class DfaValueFactory {
       loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
       if (loopElement == DfaUnknownValue.getInstance()) break;
     }
-    return loopElement == null ? DfaUnknownValue.getInstance() : getExpressionFactory().boxUnbox(loopElement, targetType);
+    return loopElement == null ? DfaUnknownValue.getInstance() : DfaUtil.boxUnbox(loopElement, targetType);
   }
 
   private static class ClassInitializationInfo {

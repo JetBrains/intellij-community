@@ -373,11 +373,11 @@ public class PropertiesComponent extends JPanel {
   private class FollowSelectionAction extends DumbAwareToggleAction {
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myIsFollowSelection;
     }
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state && !myIsFollowSelection) {
         updateSelection(e);
       }

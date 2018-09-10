@@ -79,7 +79,7 @@ public class ControlFlowUtil {
   /**
    * Process control flow graph in depth first order
    */
-  public static boolean process(final Instruction[] flow, final int start, final Processor<Instruction> processor){
+  public static boolean process(final Instruction[] flow, final int start, final Processor<? super Instruction> processor){
     final int length = flow.length;
     boolean[] visited = new boolean[length];
     Arrays.fill(visited, false);
@@ -110,7 +110,7 @@ public class ControlFlowUtil {
    */
   public static void iteratePrev(final int startInstruction,
                                  @NotNull final Instruction[] instructions,
-                                 @NotNull final Function<Instruction, Operation> closure) {
+                                 @NotNull final Function<? super Instruction, Operation> closure) {
     final IntStack stack = new IntStack(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 

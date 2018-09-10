@@ -6,7 +6,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.UIUtilities;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -198,7 +198,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
       g.setFont(font);
       g.setColor(DISABLED_TEXT_COLOR);
-      SwingUtilities2.drawStringUnderlineCharAt(tabPane, g, title, mnemIndex, textRect.x, textRect.y + metrics.getAscent());
+      UIUtilities.drawStringUnderlineCharAt(tabPane, g, title, mnemIndex, textRect.x, textRect.y + metrics.getAscent());
     }
   }
 
@@ -292,7 +292,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       } else {
         // plain text
         String title = tabPane.getTitleAt(tabIndex);
-        width += SwingUtilities2.stringWidth(tabPane, metrics, title);
+        width += UIUtilities.stringWidth(tabPane, metrics, title);
       }
     }
     return width;

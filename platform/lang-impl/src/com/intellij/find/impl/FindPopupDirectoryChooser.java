@@ -154,12 +154,12 @@ public class FindPopupDirectoryChooser extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myHelper.getModel().isWithSubdirectories();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myHelper.getModel().setWithSubdirectories(state);
       myFindPopupPanel.scheduleResultsUpdate();
     }

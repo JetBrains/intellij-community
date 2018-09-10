@@ -71,7 +71,7 @@ public class AssertHint {
   }
 
   public static AssertHint create(PsiMethodCallExpression expression,
-                                  Function<String, Integer> methodNameToParamCount,
+                                  Function<? super String, Integer> methodNameToParamCount,
                                   boolean checkTestNG) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
@@ -122,7 +122,7 @@ public class AssertHint {
   }
 
   public static AssertHint create(PsiMethodReferenceExpression methodExpression,
-                                  Function<String, Integer> methodNameToParamCount,
+                                  Function<? super String, Integer> methodNameToParamCount,
                                   boolean checkTestNG) {
     @NonNls final String methodName = methodExpression.getReferenceName();
     Integer minimumParamCount = methodNameToParamCount.apply(methodName);

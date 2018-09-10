@@ -111,7 +111,7 @@ public class AddImportHelper {
     private final ImportPriority myPriority;
     private final String myDescription;
 
-    public ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
+    ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
       myPriority = priority;
       myDescription = description;
     }

@@ -240,7 +240,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     final State myState;
     final String myDescription;
 
-    public DebuggerSessionState(State state, String description) {
+    DebuggerSessionState(State state, String description) {
       myState = state;
       myDescription = description;
     }
@@ -440,7 +440,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {
     private final DebugProcessImpl myDebugProcess;
 
-    public MyDebugProcessListener(final DebugProcessImpl debugProcess) {
+    MyDebugProcessListener(final DebugProcessImpl debugProcess) {
       myDebugProcess = debugProcess;
     }
 
@@ -692,12 +692,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
 
     @Override
-    public void threadStarted(DebugProcess proc, ThreadReference thread) {
+    public void threadStarted(@NotNull DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
     }
 
     @Override
-    public void threadStopped(DebugProcess proc, ThreadReference thread) {
+    public void threadStopped(@NotNull DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
       ThreadReferenceProxyImpl steppingThread = mySteppingThroughThread.get();
       if (steppingThread != null && steppingThread.getThreadReference() == thread) {

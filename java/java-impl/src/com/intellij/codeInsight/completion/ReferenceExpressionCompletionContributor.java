@@ -91,7 +91,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   @Nullable 
-  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
+  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<? super LookupElement> result) {
     final PsiElement element = parameters.getPosition();
     if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
     if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;

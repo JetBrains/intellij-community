@@ -219,7 +219,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     if (myTagComponents != null) {
       for (TagComponent component : myTagComponents) {
         //noinspection unchecked
-        component.setListener(searchListener, "tag:" + component.getText());
+        component.setListener(searchListener, SearchQueryParser.getTagQuery(component.getText()));
       }
       myTagComponents = null;
     }

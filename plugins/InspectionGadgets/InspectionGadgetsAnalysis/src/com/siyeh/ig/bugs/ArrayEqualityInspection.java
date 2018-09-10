@@ -59,7 +59,7 @@ public class ArrayEqualityInspection extends BaseInspection {
 
     private final boolean deepEquals;
 
-    public ArrayEqualityFix(boolean deepEquals) {
+    ArrayEqualityFix(boolean deepEquals) {
       this.deepEquals = deepEquals;
     }
 

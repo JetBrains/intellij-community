@@ -42,13 +42,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -608,7 +606,7 @@ public class JavaDocInfoGenerator {
     generateLinkToParentIfNeeded(buffer, field);
     generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
     buffer.append(DocumentationMarkup.DEFINITION_END);
-    
+
 
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
@@ -617,7 +615,7 @@ public class JavaDocInfoGenerator {
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
     }
-   
+
     ColorUtil.appendColorPreview(field, buffer);
     new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
 
@@ -753,8 +751,7 @@ public class JavaDocInfoGenerator {
     String htmlText = packageHtmlFile.getText();
 
     try {
-      final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(htmlText.getBytes(CharsetToolkit.UTF8_CHARSET)));
-      final Element rootTag = document.getRootElement();
+      final Element rootTag = JDOMUtil.load(htmlText);
       final Element subTag = rootTag.getChild("body");
       if (subTag != null) {
         htmlText = subTag.getValue();

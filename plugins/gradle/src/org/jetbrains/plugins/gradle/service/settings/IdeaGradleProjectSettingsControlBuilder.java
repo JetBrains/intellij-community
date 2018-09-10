@@ -293,7 +293,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   public IdeaGradleProjectSettingsControlBuilder addGradleJdkComponents(PaintAwarePanel content, int indentLevel) {
     if(!dropGradleJdkComponents) {
       myGradleJdkLabel = new JBLabel(GradleBundle.message("gradle.settings.text.jvm.path"));
-      myGradleJdkComboBox = new ExternalSystemJdkComboBox().withoutJre();
+      myGradleJdkComboBox = new ExternalSystemJdkComboBox();
+      Sdk internalJdk = ExternalSystemJdkUtil.getJdk(null, ExternalSystemJdkUtil.USE_INTERNAL_JAVA);
+      if (internalJdk == null || !ExternalSystemJdkUtil.isValidJdk(internalJdk.getHomePath())) {
+        myGradleJdkComboBox.withoutJre();
+      }
 
       content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
       myGradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));

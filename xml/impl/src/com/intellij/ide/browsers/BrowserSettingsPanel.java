@@ -147,7 +147,7 @@ final class BrowserSettingsPanel {
 
   private String customPathValue;
 
-  public BrowserSettingsPanel() {
+  BrowserSettingsPanel() {
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
     defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
 

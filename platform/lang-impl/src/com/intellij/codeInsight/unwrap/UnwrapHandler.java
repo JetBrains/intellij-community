@@ -115,6 +115,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .createPopupChooserBuilder(model)
       .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
       .setMovable(false)
+      .setNamerForFiltering(item -> item.name)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setResizable(false)
       .setRequestFocus(true)
@@ -129,7 +130,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dropHighlight();
         }
       })
@@ -139,7 +140,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private static class MyItem {
     final String name;
     final int index;
-    public MyItem(String name, int index) {
+    MyItem(String name, int index) {
       this.name = name;
       this.index = index;
     }

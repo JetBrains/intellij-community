@@ -17,12 +17,13 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 
 class JavaUCompositeQualifiedExpression(
   override val psi: PsiElement,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
+) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
 
   lateinit internal var receiverInitializer: () -> UExpression
 
@@ -35,6 +36,9 @@ class JavaUCompositeQualifiedExpression(
     get() = (resolve() as? PsiNamedElement)?.name
 
   override fun resolve(): PsiElement? = (selector as? UResolvable)?.resolve()
+
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+    (selector as? UMultiResolvable)?.multiResolve(incompleteCode) ?: emptyList()
 
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE

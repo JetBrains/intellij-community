@@ -69,7 +69,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     node.setParent(this);
   }
 
-  protected void setChildren(Collection<AbstractTreeNode> children) {
+  protected void setChildren(Collection<? extends AbstractTreeNode> children) {
     clearChildren();
     for (AbstractTreeNode node : children) {
       myChildren.add((CachingChildrenTreeNode)node);
@@ -80,7 +80,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private static class CompositeComparator implements java.util.Comparator<CachingChildrenTreeNode> {
     private final Sorter[] mySorters;
 
-    public CompositeComparator(final Sorter[] sorters) {
+    CompositeComparator(final Sorter[] sorters) {
       mySorters = sorters;
     }
 
@@ -161,7 +161,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     setChildren(result);
   }
 
-  private void processUngrouped(@NotNull List<AbstractTreeNode<TreeElement>> ungrouped, @NotNull Grouper grouper) {
+  private void processUngrouped(@NotNull List<? extends AbstractTreeNode<TreeElement>> ungrouped, @NotNull Grouper grouper) {
     Map<TreeElement,AbstractTreeNode> ungroupedObjects = collectValues(ungrouped);
     Collection<Group> groups = grouper.group(this, ungroupedObjects.keySet());
 
@@ -189,7 +189,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return new TreeElementWrapper(getProject(), child, myTreeModel);
   }
 
-  private static Map<TreeElement, AbstractTreeNode> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
+  private static Map<TreeElement, AbstractTreeNode> collectValues(List<? extends AbstractTreeNode<TreeElement>> ungrouped) {
     Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<>();
     for (final AbstractTreeNode<TreeElement> node : ungrouped) {
       objects.put(node.getValue(), node);
@@ -197,7 +197,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return objects;
   }
 
-  private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<Group> groups) {
+  private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
     Map<Group, GroupWrapper> result = new THashMap<>();
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));

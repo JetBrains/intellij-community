@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.CharSequenceReader;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jdom.Document;
@@ -60,7 +47,7 @@ public class LoggerFactory implements Logger.Factory {
 
       File logXmlFile = PathManager.findBinFileWithException("log.xml");
 
-      String text = FileUtil.loadFile(logXmlFile);
+      String text = FileUtilRt.loadFile(logXmlFile);
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
       text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));
@@ -70,7 +57,9 @@ public class LoggerFactory implements Logger.Factory {
         System.err.println("Cannot create log directory: " + file);
       }
 
-      Document document = JDOMUtil.loadDocument(text);
+      // DOMConfigurator really wants Document
+      @SuppressWarnings("deprecation")
+      Document document = JDOMUtil.loadDocument(new CharSequenceReader(text));
       Element element = new DOMOutputter().output(document).getDocumentElement();
       new DOMConfigurator().doConfigure(element, LogManager.getLoggerRepository());
 

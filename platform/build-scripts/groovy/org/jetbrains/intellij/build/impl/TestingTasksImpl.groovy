@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -158,6 +159,14 @@ class TestingTasksImpl extends TestingTasks {
       if (agentJar == null) context.messages.error("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
+
+      def excludeRoots = new LinkedHashSet<String>()
+      context.projectModel.global.getLibraryCollection()
+        .getLibraries(JpsJavaSdkType.INSTANCE)
+        .each { excludeRoots.add(it.getProperties().getHomePath()) }
+      excludeRoots.add(context.paths.buildOutputRoot)
+      excludeRoots.add("$context.paths.projectHome/out".toString())
+
       additionalSystemProperties.putAll(
         [
           "test.discovery.listener"                 : "com.intellij.TestDiscoveryBasicListener",
@@ -165,6 +174,8 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
+          "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
+          "test.discovery.excluded.roots"           : excludeRoots.collect { FileUtilRt.toSystemDependentName(it) }.join(";"),
         ] as Map<String, String>)
     }
   }

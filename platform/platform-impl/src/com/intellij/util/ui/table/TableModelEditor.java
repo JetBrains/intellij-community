@@ -191,7 +191,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     private List<T> items;
     private DataChangedListener<T> dataChangedListener;
 
-    public MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items) {
+    MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items) {
       super(columns, items);
 
       this.items = items;

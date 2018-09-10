@@ -137,7 +137,7 @@ public class AboutPopup {
     private float myShowCopyAlpha;
     private final Alarm myAlarm = new Alarm();
 
-    public InfoSurface(Icon image, final boolean showDebugInfo) {
+    InfoSurface(Icon image, final boolean showDebugInfo) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
 
       myImage = image;
@@ -432,7 +432,7 @@ public class AboutPopup {
 
       public class OverflowException extends Exception { }
 
-      public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
+      TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;
         this.yBase = yBase;
         this.w = w;
@@ -535,17 +535,17 @@ public class AboutPopup {
       private boolean myKeepWithNext;
       private final Runnable myRunnable;
 
-      public AboutBoxLine(final String text, final boolean bold) {
+      AboutBoxLine(final String text, final boolean bold) {
         myText = text;
         myBold = bold;
         myRunnable = null;
       }
 
-      public AboutBoxLine(final String text) {
+      AboutBoxLine(final String text) {
         this(text, false);
       }
 
-      public AboutBoxLine(final String text, @NotNull Runnable runnable) {
+      AboutBoxLine(final String text, @NotNull Runnable runnable) {
         myText = text;
         myBold = false;
         myRunnable = runnable;

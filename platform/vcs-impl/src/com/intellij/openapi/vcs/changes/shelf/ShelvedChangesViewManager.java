@@ -546,7 +546,7 @@ public class ShelvedChangesViewManager implements Disposable {
       };
     private static final Icon DisabledToDeleteIcon = IconUtil.desaturate(AllIcons.Actions.GC);
 
-    public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
+    ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
@@ -760,13 +760,13 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private class MyToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
       myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
   }
@@ -776,7 +776,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull private final DiffShelvedChangesActionProvider.PatchesPreloader myPreloader;
     @Nullable private ShelvedWrapper myCurrentShelvedElement;
 
-    public MyShelvedPreviewProcessor(@NotNull Project project) {
+    MyShelvedPreviewProcessor(@NotNull Project project) {
       super(project);
       myPreloader = new DiffShelvedChangesActionProvider.PatchesPreloader(project);
       Disposer.register(project, this);
@@ -873,7 +873,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private static class ShelvedListNode extends DefaultMutableTreeNode {
     @NotNull private final ShelvedChangeList myList;
 
-    public ShelvedListNode(@NotNull ShelvedChangeList list) {
+    ShelvedListNode(@NotNull ShelvedChangeList list) {
       super(list);
       myList = list;
     }
@@ -885,7 +885,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private class MyContentUpdater extends Update {
-    public MyContentUpdater() {
+    MyContentUpdater() {
       super("ShelfContentUpdate");
     }
 

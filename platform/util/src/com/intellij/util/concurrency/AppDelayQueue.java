@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.DelayQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -45,13 +44,12 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
               LOG.trace("Took "+BoundedTaskExecutor.info(task));
             }
             if (!task.isDone()) {  // can be cancelled already
-              ExecutorService backendExecutorService = task.getBackendExecutorService();
               try {
-                backendExecutorService.execute(task);
+                task.executeMeInBackendExecutor();
               }
               catch (Throwable e) {
                 try {
-                  LOG.error("Error executing "+task+" in "+backendExecutorService, e);
+                  LOG.error("Error executing "+task, e);
                 }
                 catch (Throwable ignored) {
                   // do not let it stop the thread

@@ -26,7 +26,7 @@ public abstract class KeyWithDefaultValue<T> extends Key<T> {
   }
 
   @NotNull
-  public static <T> KeyWithDefaultValue<T> create(@NotNull @NonNls String name, @NotNull final Factory<T> factory) {
+  public static <T> KeyWithDefaultValue<T> create(@NotNull @NonNls String name, @NotNull final Factory<? extends T> factory) {
     return new KeyWithDefaultValue<T>(name) {
       @Override
       public T getDefaultValue() {

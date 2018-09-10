@@ -122,7 +122,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   @Nullable
-  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<Module> moduleConsumer) {
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<? super Module> moduleConsumer) {
     final Ref<Module> result = Ref.create();
 
     VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor() {

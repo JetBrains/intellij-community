@@ -101,7 +101,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return infos.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  protected static List<UsageInfo> filterUsages(List<UsageInfo> infos) {
+  protected static List<UsageInfo> filterUsages(List<? extends UsageInfo> infos) {
     Map<PsiElement, MoveRenameUsageInfo> moveRenameInfos = new HashMap<>();
     Set<PsiElement> usedElements = new HashSet<>();
 

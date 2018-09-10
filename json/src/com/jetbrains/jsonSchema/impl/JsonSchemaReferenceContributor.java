@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Irina.Chernushina on 3/31/2016.
  */
 public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
-  private static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref");
+  public static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref");
   public static final PsiElementPattern.Capture<JsonStringLiteral> PROPERTY_NAME_PATTERN = createPropertyNamePattern();
   public static final PsiElementPattern.Capture<JsonStringLiteral> REQUIRED_PROP_PATTERN = createRequiredPropPattern();
 
@@ -53,7 +54,7 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         if (element instanceof JsonValue) {
           final JsonValue value = (JsonValue) element;
-          if (!JsonSchemaService.isSchemaFile(value.getContainingFile())) return false;
+          if (!JsonSchemaService.isSchemaFile(CompletionUtil.getOriginalOrSelf(value.getContainingFile()))) return false;
 
           if (value.getParent() instanceof JsonProperty && ((JsonProperty)value.getParent()).getValue() == element) {
             return propertyName.equals(((JsonProperty)value.getParent()).getName());

@@ -177,7 +177,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return table;
   }
 
-  private static void loadKeywords(Element element, Set<String> keywords) {
+  private static void loadKeywords(Element element, Set<? super String> keywords) {
     String value = element.getAttributeValue(ELEMENT_KEYWORDS);
     if (value != null) {
       StringTokenizer tokenizer = new StringTokenizer(value, SEMICOLON);

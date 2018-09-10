@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -59,12 +58,7 @@ public class CommandLineProcessor {
   private static Project doOpenFile(VirtualFile file, int line, boolean tempProject) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
-      EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-      if (tempProject) {
-        options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
-        options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
-      }
-      Project project = PlatformProjectOpenProcessor.getInstance().doOpenProject(file, null, line, options);
+      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
       if (project == null) {
         Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       }

@@ -403,6 +403,13 @@ public class PsiImplUtil {
     PsiModifierList modifierList = member.getModifierList();
     int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC || accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
+      if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
+        PsiClass containingClass = member.getContainingClass();
+        if (containingClass != null) {
+          //constructors cannot be overridden so their use scope can't be wider than their class's
+          return containingClass.getUseScope();
+        }
+      }
       return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
@@ -461,7 +468,7 @@ public class PsiImplUtil {
   public static PsiAnnotationMemberValue setDeclaredAttributeValue(@NotNull PsiAnnotation psiAnnotation,
                                                                    @Nullable String attributeName,
                                                                    @Nullable PsiAnnotationMemberValue value,
-                                                                   @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+                                                                   @NotNull PairFunction<? super Project, ? super String, ? extends PsiAnnotation> annotationCreator) {
     PsiAnnotationMemberValue existing = psiAnnotation.findDeclaredAttributeValue(attributeName);
     if (value == null) {
       if (existing == null) {
@@ -494,7 +501,7 @@ public class PsiImplUtil {
 
   private static PsiNameValuePair createNameValuePair(@NotNull PsiAnnotationMemberValue value,
                                                      @NotNull String namePrefix,
-                                                     @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+                                                     @NotNull PairFunction<? super Project, ? super String, ? extends PsiAnnotation> annotationCreator) {
     return annotationCreator.fun(value.getProject(), "@A(" + namePrefix + value.getText() + ")").getParameterList().getAttributes()[0];
   }
 

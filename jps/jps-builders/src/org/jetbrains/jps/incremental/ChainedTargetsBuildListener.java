@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -35,12 +36,12 @@ import java.io.IOException;
 class ChainedTargetsBuildListener implements BuildListener {
   private final CompileContextImpl myContext;
 
-  public ChainedTargetsBuildListener(CompileContextImpl context) {
+  ChainedTargetsBuildListener(CompileContextImpl context) {
     myContext = context;
   }
 
   @Override
-  public void filesGenerated(FileGeneratedEvent event) {
+  public void filesGenerated(@NotNull FileGeneratedEvent event) {
     final ProjectDescriptor pd = myContext.getProjectDescriptor();
     final BuildFSState fsState = pd.fsState;
     for (Pair<String, String> pair : event.getPaths()) {
@@ -61,7 +62,7 @@ class ChainedTargetsBuildListener implements BuildListener {
   }
 
   @Override
-  public void filesDeleted(FileDeletedEvent event) {
+  public void filesDeleted(@NotNull FileDeletedEvent event) {
     final BuildFSState state = myContext.getProjectDescriptor().fsState;
     final BuildRootIndex rootsIndex = myContext.getProjectDescriptor().getBuildRootIndex();
     for (String path : event.getFilePaths()) {

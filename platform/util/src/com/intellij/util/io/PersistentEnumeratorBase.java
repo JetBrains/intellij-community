@@ -619,7 +619,7 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   }
 
   private static class FlyweightKey extends CacheKey {
-    public FlyweightKey() {
+    FlyweightKey() {
       super(null, null);
     }
 

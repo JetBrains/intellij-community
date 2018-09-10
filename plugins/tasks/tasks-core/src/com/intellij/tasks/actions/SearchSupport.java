@@ -213,13 +213,13 @@ public abstract class SearchSupport<T extends Task> {
     final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
       @Override
-      public void beforeShown(LightweightWindowEvent event) {
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
         myTextField
           .registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
       }
 
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myTextField.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
       }
     });

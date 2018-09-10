@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleTextAttributes
@@ -10,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.table.DefaultTableColumnModel
@@ -17,18 +19,26 @@ import javax.swing.table.TableColumn
 import javax.swing.table.TableColumnModel
 
 class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
-  : JBTable(model, createColumnModel()) {
+  : JBTable(model, createColumnModel()), DataProvider {
 
   init {
     setShowVerticalLines(false)
     setShowHorizontalLines(false)
     setShowColumns(false)
+    columnSelectionAllowed = false
     intercellSpacing = JBUI.emptySize()
     setTableHeader(InvisibleResizableHeader())
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
 
     ScrollingUtil.installActions(this, false)
     resetDefaultFocusTraversalKeys()
+  }
+
+  override fun getData(dataId: String): Any? {
+    return if (GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId))
+      if (selectedRow >= 0) model.getValueAt(selectedRow, 0)
+      else null
+    else null
   }
 
   companion object {
@@ -50,7 +60,7 @@ class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
       }
 
     private abstract class PullRequestsTableCellRenderer(private val strikeOutOnClosed: Boolean = false) : ColoredTableCellRenderer() {
-      override fun customizeCellRenderer(table: JTable?, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+      override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
         value as GithubSearchedIssue
         val textAttributes = if (value.state == GithubIssueState.closed) {
           SimpleTextAttributes(if (strikeOutOnClosed) SimpleTextAttributes.STYLE_STRIKEOUT else SimpleTextAttributes.STYLE_PLAIN,
@@ -60,6 +70,11 @@ class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
           SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
         append(getTextualValue(value), textAttributes)
+        border = null
+        background = if (selected)
+          if (table.hasFocus()) UIUtil.getListSelectionBackground() else UIUtil.getListUnfocusedSelectionBackground()
+        else
+          UIUtil.getListBackground()
       }
 
       protected abstract fun getTextualValue(pullRequest: GithubSearchedIssue): String

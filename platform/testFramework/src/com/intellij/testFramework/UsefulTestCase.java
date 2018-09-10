@@ -293,6 +293,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     Runnable runnable = () -> {
       try {
+        TestLoggerFactory.onTestStarted();
         super.runTest();
         TestLoggerFactory.onTestFinished(true);
       }
@@ -646,7 +647,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static <T> Throwable accepts(@NotNull Consumer<T> condition, final T actual) {
+  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
     try {
       condition.consume(actual);
       return null;

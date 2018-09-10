@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
-import com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction;
+import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
@@ -19,6 +19,7 @@ import com.intellij.util.io.PowerStatus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,7 +89,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
                                  boolean expanded,
                                  boolean hasFocus) {
     if (!Registry.is("show.affected.tests.in.changelists")) return;
-    if (!ShowDiscoveredTestsAction.isEnabled(myProject)) return;
+    if (!ShowAffectedTestsAction.isEnabled(myProject)) return;
     if (changeList.getChanges().isEmpty()) return;
     if (!myCache.contains(changeList.getId())) return;
 
@@ -96,13 +97,13 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     renderer.append("show affected tests", new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(renderer.getTree());
       Change[] changes = ArrayUtil.toObjectArray(changeList.getChanges(), Change.class);
-      ShowDiscoveredTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);
+      ShowAffectedTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);
     });
   }
 
   private void scheduleUpdate() {
     if (!Registry.is("show.affected.tests.in.changelists")) return;
-    if (!ShowDiscoveredTestsAction.isEnabled(myProject)) return;
+    if (!ShowAffectedTestsAction.isEnabled(myProject)) return;
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> update(), updateDelay());
   }
@@ -111,12 +112,14 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     myCache.clear();
     List<LocalChangeList> lists = myChangeListManager.getChangeLists();
     for (LocalChangeList list : lists) {
-      if (list.getChanges().isEmpty()) continue;
+      Collection<Change> changes = list.getChanges();
+      if (changes.isEmpty()) continue;
 
-      PsiMethod[] methods = ShowDiscoveredTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(list.getChanges(), Change.class));
-      if (methods.length == 0) continue;
+      PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
+      List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
+      if (methods.length == 0 && paths.isEmpty()) continue;
       ReadAction.run(
-        () -> ShowDiscoveredTestsAction.processMethods(myProject, methods, (clazz, method, parameter) -> {
+        () -> ShowAffectedTestsAction.processMethods(myProject, methods, paths, (clazz, method, parameter) -> {
           myCache.add(list.getId());
           return false;
         }, () -> ChangesViewManager.getInstance(myProject).scheduleRefresh()));

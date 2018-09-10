@@ -31,7 +31,6 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.xmlb.JDOMXIncluder
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -418,9 +417,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
     try {
-      val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
-      getPathMacroManagerForDefaults()?.expandPaths(documentElement)
-      return deserializeState(documentElement, stateClass, null)
+      val element = JDOMUtil.load(url)
+      getPathMacroManagerForDefaults()?.expandPaths(element)
+      return deserializeState(element, stateClass, null)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state from $url", e)

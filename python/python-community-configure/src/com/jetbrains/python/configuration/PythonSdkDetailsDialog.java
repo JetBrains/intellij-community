@@ -148,7 +148,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void addListeners() {
     myListener = new SdkModel.Listener() {
       @Override
-      public void sdkChanged(Sdk sdk, String previousName) {
+      public void sdkChanged(@NotNull Sdk sdk, String previousName) {
         refreshSdkList();
       }
     };
@@ -398,7 +398,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
-    public ToggleVirtualEnvFilterButton() {
+    ToggleVirtualEnvFilterButton() {
       super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
@@ -416,7 +416,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
-    public ShowPathButton() {
+    ShowPathButton() {
       super(PyBundle.message("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
     }
 
@@ -463,7 +463,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     private final List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
 
-    public PyRemotePathEditor(Sdk sdk) {
+    PyRemotePathEditor(Sdk sdk) {
       super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
       mySdk = sdk;
       myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();

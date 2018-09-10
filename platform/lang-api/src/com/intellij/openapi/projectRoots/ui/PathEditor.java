@@ -80,7 +80,7 @@ public class PathEditor {
     return roots;
   }
 
-  public void resetPath(@NotNull List<VirtualFile> paths) {
+  public void resetPath(@NotNull List<? extends VirtualFile> paths) {
     keepSelectionState();
     clearList();
     setEnabled(true);

@@ -173,7 +173,7 @@ class VcsVirtualFileContentRevision(private val vcsVirtualFile: VcsVirtualFile) 
   }
 
   override fun getContentAsBytes(): ByteArray? {
-    return vcsVirtualFile.fileRevision?.content
+    return vcsVirtualFile.fileRevision?.loadContent()
   }
 
   override fun getFile(): FilePath {

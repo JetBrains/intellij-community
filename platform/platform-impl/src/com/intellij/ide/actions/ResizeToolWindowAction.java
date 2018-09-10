@@ -57,7 +57,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
       myListenerInstalled = true;
       ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void projectClosed(Project project) {
+        public void projectClosed(@NotNull Project project) {
           setDisabled(null);
         }
       });

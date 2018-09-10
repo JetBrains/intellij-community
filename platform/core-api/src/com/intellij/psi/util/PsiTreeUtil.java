@@ -694,8 +694,8 @@ public class PsiTreeUtil {
 
   @NotNull
   public static <T extends PsiElement> List<T> collectParents(@NotNull PsiElement element,
-                                                              @NotNull Class<T> parent,
-                                                              boolean includeMyself, @NotNull Predicate<PsiElement> stopCondition) {
+                                                              @NotNull Class<? extends T> parent,
+                                                              boolean includeMyself, @NotNull Predicate<? super PsiElement> stopCondition) {
     if (!includeMyself) {
       element = element.getParent();
     }
@@ -721,7 +721,7 @@ public class PsiTreeUtil {
   public static PsiElement findSiblingForward(@NotNull final PsiElement element,
                                               @NotNull final IElementType elementType,
                                               boolean strict,
-                                              @Nullable final Consumer<PsiElement> consumer) {
+                                              @Nullable final Consumer<? super PsiElement> consumer) {
     for (PsiElement e = strict ? element.getNextSibling() : element; e != null; e = e.getNextSibling()) {
       if (elementType.equals(e.getNode().getElementType())) {
         return e;
@@ -742,7 +742,7 @@ public class PsiTreeUtil {
   public static PsiElement findSiblingBackward(@NotNull final PsiElement element,
                                                @NotNull final IElementType elementType,
                                                boolean strict,
-                                               @Nullable final Consumer<PsiElement> consumer) {
+                                               @Nullable final Consumer<? super PsiElement> consumer) {
     for (PsiElement e = strict ? element.getPrevSibling() : element; e != null; e = e.getPrevSibling()) {
       if (elementType.equals(e.getNode().getElementType())) {
         return e;

@@ -205,7 +205,7 @@ public final class FloatingDecorator extends JDialog {
     private Point myLastPoint;
     private boolean myDragging;
 
-    public BorderItem(final int anchor){
+    BorderItem(final int anchor){
       myAnchor=anchor;
       enableEvents(MouseEvent.MOUSE_EVENT_MASK|MouseEvent.MOUSE_MOTION_EVENT_MASK);
     }

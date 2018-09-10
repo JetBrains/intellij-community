@@ -3,7 +3,7 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
@@ -18,12 +18,17 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.wm.StatusBar.StandardWidgets.POSITION_PANEL;
 
-public class DisablePCEAction extends DumbAwareAction {
+public class DisablePCEAction extends DumbAwareToggleAction {
   private static final String STATUS_BAR_WIDGET_ID = "PCEDisabledStatus";
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    changePCEEnabledStatus(false);
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    return !CoreProgressManager.ENABLED;
+  }
+
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    changePCEEnabledStatus(!state);
   }
 
   private static void changePCEEnabledStatus(boolean enabled) {

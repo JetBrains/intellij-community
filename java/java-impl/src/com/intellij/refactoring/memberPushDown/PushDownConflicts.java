@@ -238,7 +238,7 @@ public class PushDownConflicts {
   private class UsedMovedMembersConflictsCollector extends ClassMemberReferencesVisitor {
     private final PsiElement mySource;
 
-    public UsedMovedMembersConflictsCollector(PsiElement source) {
+    UsedMovedMembersConflictsCollector(PsiElement source) {
       super(myClass);
       mySource = source;
     }

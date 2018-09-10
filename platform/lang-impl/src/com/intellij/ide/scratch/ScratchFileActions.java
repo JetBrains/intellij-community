@@ -285,7 +285,7 @@ public class ScratchFileActions {
     protected void actionPerformedImpl(@NotNull AnActionEvent e,
                                        @NotNull Project project,
                                        @NotNull String title,
-                                       @NotNull JBIterable<VirtualFile> files) {
+                                       @NotNull JBIterable<? extends VirtualFile> files) {
       ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
       LRUPopupBuilder.forFileLanguages(project, title, files, mapping)

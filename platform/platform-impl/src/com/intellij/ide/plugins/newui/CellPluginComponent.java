@@ -184,7 +184,7 @@ public abstract class CellPluginComponent extends JPanel {
     myIconLabel.addMouseListener(myHoverNameListener);
   }
 
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull java.util.List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
   }
 
   public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {

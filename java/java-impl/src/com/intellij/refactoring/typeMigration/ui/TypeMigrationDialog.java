@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -112,8 +111,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.typeMigrationDialog");
+  protected String getHelpId() {
+    return "reference.typeMigrationDialog";
   }
 
   public static class MultipleElements extends TypeMigrationDialog {
@@ -322,7 +321,4 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return true;
     }
   }
-
-
-
 }

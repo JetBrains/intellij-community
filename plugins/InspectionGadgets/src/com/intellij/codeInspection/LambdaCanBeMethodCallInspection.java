@@ -112,7 +112,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
     private final String myDisplayReplacement;
     private final String myReplacement;
 
-    public ReplaceWithFunctionCallFix(String replacement, String displayReplacement) {
+    ReplaceWithFunctionCallFix(String replacement, String displayReplacement) {
       myReplacement = replacement;
       myDisplayReplacement = displayReplacement;
     }

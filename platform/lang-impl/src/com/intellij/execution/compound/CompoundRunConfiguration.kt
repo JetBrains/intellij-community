@@ -194,7 +194,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
         }
 
         val settings = manager.findConfigurationByTypeAndName(configuration.type, configuration.name)
-        if (settings != null && settings.isSingleton && configuration == s.configuration) {
+        if (settings != null && !settings.configuration.isAllowRunningInParallel && configuration == s.configuration) {
           return@getRunningDescriptors true
         }
       }

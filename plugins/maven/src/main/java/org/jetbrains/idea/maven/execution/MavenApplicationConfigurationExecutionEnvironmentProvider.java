@@ -164,7 +164,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
 
     private final ApplicationConfiguration myApplicationConfiguration;
 
-    public MyExecRunConfiguration(Project project, ConfigurationFactory configurationFactory,
+    MyExecRunConfiguration(Project project, ConfigurationFactory configurationFactory,
                                   ApplicationConfiguration applicationConfiguration) {
       super(project, configurationFactory, applicationConfiguration.getName());
       myApplicationConfiguration = applicationConfiguration;

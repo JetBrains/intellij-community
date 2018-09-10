@@ -37,7 +37,7 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public RedundantEscapeVisitor(ProblemsHolder holder) {
+    RedundantEscapeVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

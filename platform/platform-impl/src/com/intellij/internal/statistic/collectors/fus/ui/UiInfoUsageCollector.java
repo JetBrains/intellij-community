@@ -5,6 +5,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -44,6 +45,9 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     add(set, "Recent.Files[15_30]", 15 < recent() && recent() < 31 ? 1 : 0);
     add(set, "Recent.Files[30_50]", 30 < recent() && recent() < 51 ? 1 : 0);
     add(set, "Recent.Files[more.than.50]", 50 < recent() ? 1 : 0);
+
+    set.add(new UsageDescriptor("recent.files", 1, FUSUsageContext.create(recentPeriod(recent()))));
+
     add(set, "Block.cursor", EditorSettingsExternalizable.getInstance().isBlockCursor() ? 1 : 0);
     add(set, "Line.Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown() ? 1 : 0);
     add(set, "Gutter.Icons", EditorSettingsExternalizable.getInstance().areGutterIconsShown() ? 1 : 0);
@@ -58,6 +62,13 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     set.add(getBooleanUsage("Allow.merging.buttons", UISettings.getInstance().getAllowMergeButtons()));
 
     return set;
+  }
+
+  private static String recentPeriod(int recent) {
+    if (recent < 15) return "less.than.15";
+    if (16 < recent && recent < 31) return "[15_30]";
+    if (30 < recent && recent < 51) return "[30_50]";
+    return "[more.than.50]";
   }
 
   @NotNull
@@ -92,5 +103,10 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   private static boolean navbar() {
     return UISettings.getInstance().getShowNavigationBar();
+  }
+
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

@@ -141,7 +141,7 @@ public class Patch {
     }
   }
 
-  private static void writeActions(DataOutputStream dataOut, List<PatchAction> actions) throws IOException {
+  private static void writeActions(DataOutputStream dataOut, List<? extends PatchAction> actions) throws IOException {
     dataOut.writeInt(actions.size());
 
     for (PatchAction each : actions) {
@@ -386,7 +386,7 @@ public class Patch {
     return new PatchFileCreator.ApplicationResult(true, appliedActions);
   }
 
-  public void revert(List<PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
+  public void revert(List<? extends PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
     Runner.logger().info("Reverting... [" + actions.size() + " actions]");
     ui.startProcess("Reverting...");
 
@@ -400,7 +400,7 @@ public class Patch {
     }
   }
 
-  private static void forEach(List<PatchAction> actions,
+  private static void forEach(List<? extends PatchAction> actions,
                               String title,
                               UpdaterUI ui,
                               ActionsProcessor processor) throws OperationCancelledException, IOException {

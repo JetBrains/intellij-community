@@ -46,7 +46,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
   private static class MyFilter implements Filter, FilterMixin {
     private final ExceptionInfoCache myCache;
 
-    public MyFilter(@NotNull final GlobalSearchScope scope) {
+    MyFilter(@NotNull final GlobalSearchScope scope) {
       myCache = new ExceptionInfoCache(scope);
     }
 

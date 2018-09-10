@@ -199,7 +199,7 @@ public abstract class JavaCodeStyleManager {
    * @return the generated unique name
    */
   @NotNull
-  public abstract String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused);
+  public abstract String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused);
 
   /**
    * Suggests a unique name for the variable used at the specified location.

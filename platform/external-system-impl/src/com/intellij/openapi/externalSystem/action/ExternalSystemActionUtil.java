@@ -63,7 +63,7 @@ public class ExternalSystemActionUtil {
     return module != null ? module : LangDataKeys.MODULE_CONTEXT.getData(context);
   }
 
-  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<? extends E> all, Collection<E> selected, Comparator<? super E> comparator) {
     List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<>(comparator);

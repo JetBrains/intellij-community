@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.search
 
+import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
@@ -16,9 +17,7 @@ class GithubPullRequestSearchModel {
 
   private val stateEventDispatcher = EventDispatcher.create(StateListener::class.java)
 
-  fun addStateListener(listener: StateListener) = stateEventDispatcher.addListener(listener)
-
-  fun removeStateListener(listener: StateListener) = stateEventDispatcher.removeListener(listener)
+  fun addListener(listener: StateListener, disposable: Disposable) = stateEventDispatcher.addListener(listener, disposable)
 
   interface StateListener : EventListener {
     fun queryChanged()

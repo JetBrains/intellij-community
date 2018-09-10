@@ -320,7 +320,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements BaseComponen
     return myResolvingContext;
   }
 
-  public List<ArtifactImpl> getArtifactsList() {
+  public List<? extends ArtifactImpl> getArtifactsList() {
     return myModel.myArtifactsList;
   }
 
@@ -419,10 +419,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements BaseComponen
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {
-    private List<ArtifactImpl> myArtifactsList = new ArrayList<>();
+    private List<? extends ArtifactImpl> myArtifactsList = new ArrayList<>();
     private Artifact[] mySortedArtifacts;
 
-    public void setArtifactsList(List<ArtifactImpl> artifactsList) {
+    public void setArtifactsList(List<? extends ArtifactImpl> artifactsList) {
       myArtifactsList = artifactsList;
       artifactsChanged();
     }

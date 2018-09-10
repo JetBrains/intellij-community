@@ -129,9 +129,9 @@ public class CombinePropertiesFilesAction extends AnAction {
   }
 
   private static class MyInputValidator implements InputValidatorEx {
-    private final List<PropertiesFile> myPropertiesFiles;
+    private final List<? extends PropertiesFile> myPropertiesFiles;
 
-    private MyInputValidator(final List<PropertiesFile> propertiesFiles) {
+    private MyInputValidator(final List<? extends PropertiesFile> propertiesFiles) {
       myPropertiesFiles = propertiesFiles;
     }
 

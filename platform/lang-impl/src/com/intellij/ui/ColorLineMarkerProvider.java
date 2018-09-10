@@ -64,7 +64,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
     private final Color myColor;
 
-    public MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
+    MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element,
             element.getTextRange(),
             JBUI.scale(new ColorIcon(12, color)),

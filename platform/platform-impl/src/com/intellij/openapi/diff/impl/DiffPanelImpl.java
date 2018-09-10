@@ -171,7 +171,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     myVisibleAreaListener = new VisibleAreaListener() {
       @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
+      public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
         Editor editor1 = getEditor1();
         if (editor1 != null) {
           editor1.getComponent().repaint();
@@ -530,7 +530,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   @Override
-  public void onContentChangedIn(EditorSource source) {
+  public void onContentChangedIn(@NotNull EditorSource source) {
     myDiffUpdater.contentRemoved(source);
     final EditorEx editor = source.getEditor();
     if (myIsHorizontal && source.getSide() == FragmentSide.SIDE1 && editor != null) {
@@ -837,7 +837,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private class DiffNavigatable implements Navigatable {
     private final DiffSideView mySide;
 
-    public DiffNavigatable(DiffSideView side) {
+    DiffNavigatable(DiffSideView side) {
       mySide = side;
     }
 

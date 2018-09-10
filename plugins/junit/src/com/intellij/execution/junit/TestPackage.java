@@ -105,7 +105,7 @@ public class TestPackage extends TestObject {
   }
 
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> names) throws CantRunException {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> names) throws CantRunException {
      if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
        //junit 5 process tests automatically
        return;
@@ -154,8 +154,8 @@ public class TestPackage extends TestObject {
   }
 
   protected void collectClassesRecursively(TestClassFilter classFilter,
-                                           Condition<PsiClass> acceptClassCondition,
-                                           Set<PsiClass> classes) throws CantRunException {
+                                           Condition<? super PsiClass> acceptClassCondition,
+                                           Set<? super PsiClass> classes) throws CantRunException {
     PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
     if (aPackage != null) {
       GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
@@ -165,8 +165,8 @@ public class TestPackage extends TestObject {
 
   private static void collectClassesRecursively(PsiPackage aPackage,
                                                 GlobalSearchScope scope,
-                                                Condition<PsiClass> acceptAsTest,
-                                                Set<PsiClass> classes) {
+                                                Condition<? super PsiClass> acceptAsTest,
+                                                Set<? super PsiClass> classes) {
     PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
     for (PsiPackage psiPackage : psiPackages) {
       collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
@@ -177,7 +177,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  protected static void collectInnerClasses(PsiClass aClass, Condition<PsiClass> acceptAsTest, Set<PsiClass> classes) {
+  protected static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<? super PsiClass> classes) {
     if (Registry.is("junit4.accept.inner.classes", true)) {
       classes
         .addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));

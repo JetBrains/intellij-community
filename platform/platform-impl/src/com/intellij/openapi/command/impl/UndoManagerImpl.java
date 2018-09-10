@@ -127,13 +127,13 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
       private boolean myStarted;
 
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         if (project != null && project.isDisposed() || myStarted) return;
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         if (project != null && project.isDisposed() || myStarted) return;
         onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
       }

@@ -280,11 +280,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         return getSelectedNavigatable(descriptor);
       }
 
+      @NotNull
       @Override
       public String getNextOccurenceActionName() {
         return InspectionsBundle.message("inspection.action.go.next");
       }
 
+      @NotNull
       @Override
       public String getPreviousOccurenceActionName() {
         return InspectionsBundle.message("inspection.action.go.prev");
@@ -345,11 +347,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
@@ -477,14 +481,31 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
     final JPanel editorPanel = new JPanel();
     editorPanel.setLayout(new BorderLayout());
+    final JPanel actionsPanel = new JPanel(new BorderLayout());
+    editorPanel.add(actionsPanel, BorderLayout.NORTH);
     final int problemCount = myTree.getSelectedProblemCount(true);
     JComponent previewPanel = null;
     final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
-    if (tool != null && refEntity != null && refEntity.isValid()) {
+    if (tool != null) {
+      final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
       final TreePath path = myTree.getSelectionPath();
-      if (path == null || !(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
-        final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
-        previewPanel = presentation.getCustomPreviewPanel(refEntity);
+      if (path != null) {
+        Object last = path.getLastPathComponent();
+        if (last instanceof ProblemDescriptionNode) {
+          CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)last).getDescriptor();
+          if (descriptor != null) {
+            previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
+            JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
+            if (customActions != null) {
+              actionsPanel.add(customActions, BorderLayout.EAST);
+            }
+          }
+        }
+        else {
+          if (refEntity != null && refEntity.isValid()) {
+            previewPanel = presentation.getCustomPreviewPanel(refEntity);
+          }
+        }
       }
     }
     EditorEx previewEditor = null;
@@ -503,7 +524,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
-        editorPanel.add(fixToolbar, BorderLayout.NORTH);
+        actionsPanel.add(fixToolbar, BorderLayout.WEST);
       }
     }
     if (previewEditor != null) {
@@ -699,11 +720,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     }
   }
 
-  public void addTools(Collection<Tools> tools) {
+  public void addTools(Collection<? extends Tools> tools) {
     myTreeUpdater.submit(() -> addToolsSynchronously(tools));
   }
 
-  private void addToolsSynchronously(Collection<Tools> tools) {
+  private void addToolsSynchronously(Collection<? extends Tools> tools) {
     if (isDisposed()) return;
     synchronized (myTreeStructureUpdateLock) {
       InspectionProfileImpl profile = myInspectionProfile;
@@ -922,7 +943,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return hasProblems(myGlobalInspectionContext.getTools().values(), myGlobalInspectionContext, myProvider);
   }
 
-  public static boolean hasProblems(@NotNull Collection<Tools> tools,
+  public static boolean hasProblems(@NotNull Collection<? extends Tools> tools,
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {

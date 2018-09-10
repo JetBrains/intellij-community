@@ -57,7 +57,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     if (getValue() == null || !getValue().isValid()) {
       setValue(null);
     } else {

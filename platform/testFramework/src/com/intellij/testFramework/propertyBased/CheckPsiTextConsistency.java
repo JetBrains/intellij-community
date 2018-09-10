@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CheckPsiTextConsistency extends ActionOnFile {
 
-  public CheckPsiTextConsistency(PsiFile file) {
+  public CheckPsiTextConsistency(@NotNull PsiFile file) {
     super(file);
   }
 

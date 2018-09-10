@@ -73,7 +73,7 @@ class XsContentDFA extends XmlContentDFA {
     return new XsContentDFA(decl, parentTag);
   }
 
-  public XsContentDFA(@NotNull XSElementDeclaration decl, final XmlTag parentTag) {
+  XsContentDFA(@NotNull XSElementDeclaration decl, final XmlTag parentTag) {
     XSComplexTypeDecl definition = (XSComplexTypeDecl)decl.getTypeDefinition();
     myContentModel = definition.getContentModel(new CMBuilder(new CMNodeFactory()));
     myHandler = new SubstitutionGroupHandler(new MyXSElementDeclHelper());

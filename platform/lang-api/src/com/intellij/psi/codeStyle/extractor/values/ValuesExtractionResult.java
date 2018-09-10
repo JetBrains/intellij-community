@@ -32,7 +32,7 @@ public interface ValuesExtractionResult {
 
   void applySelected();
 
-  void applyConditioned(Condition<Value> c, Map<Value, Object> backup);
+  void applyConditioned(Condition<? super Value> c, Map<Value, Object> backup);
 
   ValuesExtractionResult apply(boolean retPrevValue);
 }

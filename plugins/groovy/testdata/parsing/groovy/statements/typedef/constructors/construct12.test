@@ -21,13 +21,13 @@ Groovy script
         Modifiers
           <empty list>
         PsiElement(identifier)('Greet')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
             PsiElement(identifier)('who')
-        PsiElement())(')')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')

@@ -32,7 +32,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -41,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashSet;
@@ -51,8 +53,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
 import static java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK;
-import static java.awt.event.MouseEvent.MOUSE_ENTERED;
-import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
@@ -1509,6 +1510,7 @@ public class AbstractPopup implements JBPopup {
           }
           break;
         case MOUSE_MOVED:
+        case MOUSE_PRESSED:
           if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
             if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
               cancel();
@@ -1774,12 +1776,12 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void addListener(final JBPopupListener listener) {
+  public void addListener(@NotNull final JBPopupListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeListener(final JBPopupListener listener) {
+  public void removeListener(@NotNull final JBPopupListener listener) {
     myListeners.remove(listener);
   }
 

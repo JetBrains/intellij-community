@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.ui.treeStructure.Tree;
 import icons.XsltDebuggerIcons;
 import org.intellij.plugins.xsltDebugger.ui.GeneratedStructureModel;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({ "ComponentNotRegistered" })
 public class HideWhitespaceAction extends ToggleAction {
@@ -36,12 +37,12 @@ public class HideWhitespaceAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myEventModel.isFilterWhitespace();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final TreeState treeState = TreeState.createOn(myStructureTree);
     myEventModel.setFilterWhitespace(state);
     treeState.applyTo(myStructureTree);

@@ -466,11 +466,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static class AnnotationTextCollector extends AnnotationVisitor {
     private final StringBuilder myBuilder = new StringBuilder();
     private final Function<String, String> myMapping;
-    private final Consumer<String> myCallback;
+    private final Consumer<? super String> myCallback;
     private boolean hasPrefix;
     private boolean hasParams;
 
-    private AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<String> callback) {
+    private AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<? super String> callback) {
       super(ASM_API);
       myMapping = mapping;
       myCallback = callback;
@@ -673,7 +673,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Nullable
-  private static String constToString(@Nullable Object value, @Nullable String type, boolean anno, Function<String, String> mapping) {
+  private static String constToString(@Nullable Object value, @Nullable String type, boolean anno, Function<? super String, String> mapping) {
     if (value == null) return null;
 
     if (value instanceof String) {
@@ -747,7 +747,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return null;
   }
 
-  private static String toJavaType(Type type, Function<String, String> mapping) {
+  private static String toJavaType(Type type, Function<? super String, String> mapping) {
     int dimensions = 0;
     if (type.getSort() == Type.ARRAY) {
       dimensions = type.getDimensions();
@@ -841,7 +841,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return canonicalText.replace('/', '.');
   };
 
-  public static AnnotationVisitor getAnnotationTextCollector(String desc, Consumer<String> consumer) {
+  public static AnnotationVisitor getAnnotationTextCollector(String desc, Consumer<? super String> consumer) {
     return new AnnotationTextCollector(desc, GUESSING_MAPPER, consumer);
   }
 }

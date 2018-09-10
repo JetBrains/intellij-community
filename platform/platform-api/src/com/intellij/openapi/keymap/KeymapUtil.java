@@ -397,7 +397,7 @@ public class KeymapUtil {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
       ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
         @Override
-        public void afterValueChanged(RegistryValue value) {
+        public void afterValueChanged(@NotNull RegistryValue value) {
           updateTooltipRequestKey(value);
         }
       }, Disposer.get("ui"));

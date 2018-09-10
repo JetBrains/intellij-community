@@ -63,8 +63,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
-import static com.intellij.util.JdomKt.loadElement;
-
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
  * injection settings as well as the annotations to use for injection, pattern
@@ -353,7 +351,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
     final List<Element> elements = new ArrayList<>();
-    final Element rootElement = loadElement(is);
+    final Element rootElement = JDOMUtil.load(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
       state = rootElement;
@@ -385,8 +383,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     replaceInjections(newInjections, originalInjections, true);
   }
 
-  static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
-                               final Collection<BaseInjection> originalInjections, final Collection<BaseInjection> newInjections) {
+  static void importInjections(final Collection<? extends BaseInjection> existingInjections, final Collection<? extends BaseInjection> importingInjections,
+                               final Collection<? super BaseInjection> originalInjections, final Collection<? super BaseInjection> newInjections) {
     final MultiValuesMap<InjectionPlace, BaseInjection> placeMap = new MultiValuesMap<>();
     for (BaseInjection exising : existingInjections) {
       for (InjectionPlace place : exising.getInjectionPlaces()) {
@@ -467,7 +465,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return false;
   }
 
-  protected void setInjections(Collection<BaseInjection> injections) {
+  protected void setInjections(Collection<? extends BaseInjection> injections) {
     for (BaseInjection injection : injections) {
       myInjections.get(injection.getSupportId()).add(injection);
     }

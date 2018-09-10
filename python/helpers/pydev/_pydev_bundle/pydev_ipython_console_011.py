@@ -50,7 +50,7 @@ def show_in_pager(self, strng, *args, **kwargs):
         strng = strng['text/plain']
     print(strng)
 
-def create_editor_hook(pydev_host, pydev_client_port):
+def create_editor_hook(rpc_client):
 
     def call_editor(filename, line=0, wait=True):
         """ Open an editor in PyDev """
@@ -65,8 +65,7 @@ def create_editor_hook(pydev_host, pydev_client_port):
         # sys.__stderr__.write('Calling editor at: %s:%s\n' % (pydev_host, pydev_client_port))
 
         # Tell PyDev to open the editor
-        server = xmlrpclib.Server('http://%s:%s' % (pydev_host, pydev_client_port))
-        server.IPythonEditor(filename, str(line))
+        rpc_client.IPythonEditor(filename, str(line))
 
         if wait:
             try:
@@ -455,20 +454,20 @@ class _PyDevFrontEnd:
 
 class _PyDevFrontEndContainer:
     _instance = None
-    _last_host_port = None
+    _last_rpc_client = None
 
 
-def get_pydev_frontend(pydev_host, pydev_client_port):
+def get_pydev_frontend(rpc_client):
     if _PyDevFrontEndContainer._instance is None:
         _PyDevFrontEndContainer._instance = _PyDevFrontEnd()
 
-    if _PyDevFrontEndContainer._last_host_port != (pydev_host, pydev_client_port):
-        _PyDevFrontEndContainer._last_host_port = pydev_host, pydev_client_port
+    if _PyDevFrontEndContainer._last_rpc_client != rpc_client:
+        _PyDevFrontEndContainer._last_rpc_client = rpc_client
 
         # Back channel to PyDev to open editors (in the future other
         # info may go back this way. This is the same channel that is
         # used to get stdin, see StdIn in pydev_console_utils)
-        _PyDevFrontEndContainer._instance.ipython.hooks['editor'] = create_editor_hook(pydev_host, pydev_client_port)
+        _PyDevFrontEndContainer._instance.ipython.hooks['editor'] = create_editor_hook(rpc_client)
 
         # Note: setting the callback directly because setting it with set_hook would actually create a chain instead
         # of ovewriting at each new call).

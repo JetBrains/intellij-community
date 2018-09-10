@@ -95,7 +95,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private DefaultListModel<String> listModel;
     private Splitter previewSplitter;
 
-    public ThumbnailViewUI(ThumbnailViewImpl thumbnailView) {
+    ThumbnailViewUI(ThumbnailViewImpl thumbnailView) {
         super(new BorderLayout());
 
         this.thumbnailView = thumbnailView;
@@ -637,7 +637,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final class ThumbnailNavigatable implements Navigatable {
         private final VirtualFile file;
 
-        public ThumbnailNavigatable(VirtualFile file) {
+        ThumbnailNavigatable(VirtualFile file) {
             this.file = file;
         }
 

@@ -27,7 +27,7 @@ import java.util.List;
 class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.Variable {
   private final Debugger.Variable myVariable;
 
-  public RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
+  RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
     myVariable = variable;
   }
 

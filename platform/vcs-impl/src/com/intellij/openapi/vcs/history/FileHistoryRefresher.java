@@ -116,7 +116,7 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     private final int myDelayMillis;
     @Nullable Future<?> myLastTask;
 
-    public RefreshRequest(int delayMillis, @NotNull Disposable parent) {
+    RefreshRequest(int delayMillis, @NotNull Disposable parent) {
       myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
       myDelayMillis = delayMillis;
     }

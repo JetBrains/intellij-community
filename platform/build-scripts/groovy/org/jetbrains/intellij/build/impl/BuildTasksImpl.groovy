@@ -240,8 +240,8 @@ idea.fatal.error.notification=disabled
       @Override
       String run(BuildContext context) {
         def builder = factory.apply(context)
-        if (builder != null && context.shouldBuildDistributionForOS(builder.osTargetId)) {
-          return context.messages.block("Build $builder.osName Distribution") {
+        if (builder != null && context.shouldBuildDistributionForOS(builder.targetOs.osId)) {
+          return context.messages.block("Build $builder.targetOs.osName Distribution") {
             def distDirectory = builder.copyFilesForOsDistribution()
             builder.buildArtifacts(distDirectory)
             distDirectory
@@ -261,8 +261,7 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
-    def bundledPlugins = productLayout.bundledPluginModules as Set<String>
-    def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
+    def moduleNames = productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
                       DistributionJARsBuilder.getPlatformApiModules(productLayout) +
                       DistributionJARsBuilder.getPlatformImplModules(productLayout) +
                       DistributionJARsBuilder.getProductApiModules(productLayout) +
@@ -319,7 +318,7 @@ idea.fatal.error.notification=disabled
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
+        def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
         def moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
         new MavenArtifactsBuilder(buildContext).generateMavenArtifacts(moduleNames)
       }
@@ -450,6 +449,10 @@ idea.fatal.error.notification=disabled
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
     def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
+    for (osFamily in OsFamily.values()) {
+      checkPluginModules(layout.bundledOsPluginModules[osFamily],
+                         "productProperties.productLayout.bundledOsPluginModules[$osFamily]", optionalModules)
+    }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
     if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
@@ -480,7 +483,8 @@ idea.fatal.error.notification=disabled
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    nonTrivialPlugins.findAll {layout.bundledPluginModules.contains(it.mainModule)}.each { plugin ->
+    def allBundledPlugins = layout.allBundledPluginsModules
+    nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
@@ -512,6 +516,9 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
+    if (!pluginModules) {
+      return
+    }
     checkModules(pluginModules, fieldName)
     def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
@@ -621,10 +628,6 @@ idea.fatal.error.notification=disabled
     jarsBuilder.buildJARs()
     layoutShared()
 
-    //todo[nik]
-    buildContext.ant.copy(todir: "$targetDirectory/lib/libpty/") {
-      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/")
-    }
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
     def propertiesFile = patchIdeaPropertiesFile()

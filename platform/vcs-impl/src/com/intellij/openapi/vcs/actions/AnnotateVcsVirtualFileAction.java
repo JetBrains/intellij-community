@@ -187,7 +187,7 @@ public class AnnotateVcsVirtualFileAction {
     @NotNull public final FilePath filePath;
     @NotNull public final VcsRevisionNumber revisionNumber;
 
-    public AnnotationData(@NotNull AbstractVcs vcs,
+    AnnotationData(@NotNull AbstractVcs vcs,
                           @NotNull FilePath filePath,
                           @NotNull VcsRevisionNumber revisionNumber) {
       this.vcs = vcs;

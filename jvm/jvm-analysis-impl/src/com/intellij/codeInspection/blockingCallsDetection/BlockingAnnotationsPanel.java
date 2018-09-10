@@ -1,34 +1,36 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.util.ui.JBUI.Borders.empty;
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
 class BlockingAnnotationsPanel {
   private final Project myProject;
@@ -41,15 +43,15 @@ class BlockingAnnotationsPanel {
   private final String myCustomAddLinkText;
 
   BlockingAnnotationsPanel(Project project,
-                                  String name,
-                                  String defaultAnnotation,
-                                  List<String> annotations,
-                                  String[] defaultAnnotations,
-                                  String customEmptyText,
-                                  String customAddLinkText) {
+                           String name,
+                           String defaultAnnotation,
+                           List<String> annotations,
+                           List<String> defaultAnnotations,
+                           String customEmptyText,
+                           String customAddLinkText) {
     myProject = project;
     myDefaultAnnotation = defaultAnnotation;
-    myDefaultAnnotations = new HashSet<>(Arrays.asList(defaultAnnotations));
+    myDefaultAnnotations = new HashSet<>(defaultAnnotations);
     myCustomEmptyText = customEmptyText;
     myCustomAddLinkText = customAddLinkText;
     myTableModel = new ListWrappingTableModel(annotations, name) {
@@ -93,16 +95,14 @@ class BlockingAnnotationsPanel {
             .appendSecondaryText(myCustomAddLinkText, SimpleTextAttributes.LINK_ATTRIBUTES, e -> chooseAnnotation(name));
 
           ShortcutSet shortcutSet = CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD);
-          Shortcut shortcut = ArrayUtil.getFirstElement(shortcutSet.getShortcuts());
-          if (shortcut != null) {
-            emptyText.appendSecondaryText(" (" + KeymapUtil.getShortcutText(shortcut) + ")", StatusText.DEFAULT_ATTRIBUTES, null);
-          }
+          String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(shortcutSet);
+          emptyText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
         }
         return emptyText;
       }
     };
 
-    final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable).disableUpDownActions()
+    final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(b -> chooseAnnotation(name))
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -118,9 +118,11 @@ class BlockingAnnotationsPanel {
 
     final JPanel panel = toolbarDecorator.createPanel();
     myComponent = new JPanel(new BorderLayout());
-    myComponent.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(10)));
-    myComponent.add(new JLabel(name), BorderLayout.NORTH);
-    myComponent.add(panel, BorderLayout.CENTER);
+
+    final BorderLayoutPanel withBorder = simplePanel()
+      .addToTop(simplePanel(new JLabel(name + ":")).withBorder(empty(10, 0)))
+      .addToCenter(panel);
+    myComponent.add(withBorder, BorderLayout.CENTER);
     myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -154,7 +156,7 @@ class BlockingAnnotationsPanel {
       .createNoInnerClassesScopeChooser("Choose " + title, GlobalSearchScope.allScope(myProject), new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {
-          return aClass.isAnnotationType();
+          return PsiAnnotation.TargetType.METHOD.equals(AnnotationTargetUtil.findAnnotationTarget(aClass, PsiAnnotation.TargetType.METHOD));
         }
       }, null);
     chooser.showDialog();

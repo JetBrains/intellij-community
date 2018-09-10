@@ -55,7 +55,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     private final DebugProcessImpl myDebugProcess;
     int invokesN;
 
-    public InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
+    InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
       myDebuggerCommand = debuggerCommand;
       myDebugProcess = debugProcess;
     }
@@ -479,12 +479,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private static class DelayedEventsProcessListener implements DebugProcessListener {
     private final DebugProcessAdapterImpl myTarget;
 
-    public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
+    DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
       myTarget = target;
     }
 
     @Override
-    public void paused(final SuspendContext suspendContext) {
+    public void paused(@NotNull final SuspendContext suspendContext) {
       pauseExecution();
       myTarget.paused(suspendContext);
     }
@@ -496,12 +496,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     @Override
-    public void processDetached(final DebugProcess process, final boolean closedByUser) {
+    public void processDetached(@NotNull final DebugProcess process, final boolean closedByUser) {
       myTarget.processDetached(process, closedByUser);
     }
 
     @Override
-    public void processAttached(final DebugProcess process) {
+    public void processAttached(@NotNull final DebugProcess process) {
       myTarget.processAttached(process);
     }
 

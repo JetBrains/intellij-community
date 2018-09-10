@@ -85,7 +85,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     private JRadioButton myRbMoveMembers;
     private final String myClassName;
 
-    public SelectInnerOrMembersRefactoringDialog(final PsiClass innerClass, Project project) {
+    SelectInnerOrMembersRefactoringDialog(final PsiClass innerClass, Project project) {
       super(project, true);
       setTitle(RefactoringBundle.message("select.refactoring.title"));
       myClassName = innerClass.getName();

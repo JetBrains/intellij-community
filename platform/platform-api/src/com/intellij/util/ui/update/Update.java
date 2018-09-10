@@ -35,7 +35,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   private boolean myRejected;
   private final boolean myExecuteInWriteAction;
 
-  private int myPriority = LOW_PRIORITY;
+  private final int myPriority;
 
   public Update(@NonNls Object identity) {
     this(identity, false);

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dennis.Ushakov
  */
 class MoveLineHandler extends BaseMoveHandler {
-  public MoveLineHandler(boolean down) {
+  MoveLineHandler(boolean down) {
     super(down);
   }
 

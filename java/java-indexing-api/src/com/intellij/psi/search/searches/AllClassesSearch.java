@@ -36,13 +36,13 @@ public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClasse
   public static class SearchParameters {
     private final SearchScope myScope;
     private final Project myProject;
-    private final Condition<String> myShortNameCondition;
+    private final Condition<? super String> myShortNameCondition;
 
     public SearchParameters(@NotNull SearchScope scope, @NotNull Project project) {
       this(scope, project, Conditions.alwaysTrue());
     }
 
-    public SearchParameters(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<String> shortNameCondition) {
+    public SearchParameters(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<? super String> shortNameCondition) {
       myScope = scope;
       myProject = project;
       myShortNameCondition = shortNameCondition;

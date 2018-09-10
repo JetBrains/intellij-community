@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -40,7 +41,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, final boolean state) {
+  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
     super.setSelected(e, state);
     if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myProperties)) {
       restoreMergedCoverage();
@@ -50,7 +51,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return super.isSelected(e) && CoverageDataManager.getInstance(myProperties.getProject()).isSubCoverageActive();
   }
 
@@ -140,7 +141,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private class MyTreeSelectionListener implements TreeSelectionListener {
     private final Alarm myUpdateCoverageAlarm;
 
-    public MyTreeSelectionListener() {
+    MyTreeSelectionListener() {
       myUpdateCoverageAlarm = new Alarm(myModel);
     }
 

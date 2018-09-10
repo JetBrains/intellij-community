@@ -13,7 +13,7 @@ import java.awt.*;
 class InputDialogWithCheckbox extends Messages.InputDialog {
   private JCheckBox myCheckBox;
 
-  public InputDialogWithCheckbox(String message,
+  InputDialogWithCheckbox(String message,
                                  @Nls(capitalization = Nls.Capitalization.Title) String title,
                                  String checkboxText,
                                  boolean checked,

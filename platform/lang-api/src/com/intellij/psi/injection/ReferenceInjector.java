@@ -44,7 +44,7 @@ public abstract class ReferenceInjector extends Injectable {
   @NotNull
   public abstract PsiReference[] getReferences(@NotNull PsiElement element, @NotNull final ProcessingContext context, @NotNull TextRange range);
 
-  public static ReferenceInjector findById(final String id) {
+  public static ReferenceInjector findById(@NotNull String id) {
     return ContainerUtil.find(EXTENSION_POINT_NAME.getExtensions(), injector -> id.equals(injector.getId()));
   }
 }

@@ -143,7 +143,6 @@
     <vcs.commitMessageProvider implementation="com.intellij.tasks.impl.TaskCommitMessageProvider"/>
     <!-- YouTrack support -->
     <!--<annotator language="TEXT" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>-->
-    <fileTypeFactory implementation="com.intellij.tasks.youtrack.lang.YouTrackFileTypeFactory"/>
     <lang.parserDefinition language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackParserDefinition"/>
     <completion.contributor language="YouTrack"
                             implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>

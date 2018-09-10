@@ -1,9 +1,9 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.blockingMethodChecker"
+    <extensionPoint qualifiedName="com.intellij.codeInsight.blockingMethodChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker"/>
-    <extensionPoint qualifiedName="com.intellij.nonblockingMethodChecker"
-                    interface="com.intellij.codeInspection.blockingCallsDetection.NonblockingContextChecker"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
+                    interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
@@ -13,8 +13,15 @@
     <localInspection language="UAST" shortName="BlockingMethodInNonBlockingContext"
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" groupKey="jvm.inspections.group.name"
                      enabledByDefault="true" level="WARNING"
-                     key="method.name.contains.blocking.word.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     key="jvm.inspections.blocking.method.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
+    <!-- TODO enable by default -->
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="ScheduledForRemoval"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.scheduled.for.removal.display.name"
+                     implementationClass="com.intellij.codeInspection.ScheduledForRemovalInspection"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
   </extensions>
 </idea-plugin>

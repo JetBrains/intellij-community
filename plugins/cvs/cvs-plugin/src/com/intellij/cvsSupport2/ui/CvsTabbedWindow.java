@@ -56,7 +56,7 @@ public class CvsTabbedWindow implements Disposable {
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         final JComponent component = event.getContent().getComponent();
         final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
                                             ((CvsTabbedWindowComponent)component).getComponent() : component;
@@ -171,7 +171,7 @@ public class CvsTabbedWindow implements Disposable {
   }
 
   private static class GlobalCvsSettingsAction extends AnAction {
-    public GlobalCvsSettingsAction() {
+    GlobalCvsSettingsAction() {
       super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
     }
 
@@ -182,7 +182,7 @@ public class CvsTabbedWindow implements Disposable {
   }
 
   private class ReconfigureCvsRootAction extends AnAction {
-    public ReconfigureCvsRootAction() {
+    ReconfigureCvsRootAction() {
       super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
     }
 

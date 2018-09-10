@@ -11,15 +11,18 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -136,17 +139,25 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private void calcPositionAndShow(Project project, JBPopup balloon) {
     Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY, project);
 
+    //for first show and short mode popup should be shifted to the top screen half
+    if (savedLocation == null && mySearchEverywhereUI.getViewType() == SearchEverywhereUI.ViewType.SHORT) {
+      Window window = project != null
+                      ? WindowManager.getInstance().suggestParentWindow(project)
+                      : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      Component parent = UIUtil.findUltimateParent(window);
+
+      if (parent != null) {
+        Dimension balloonSize = balloon.getContent().getPreferredSize();
+        RelativePoint showPoint = new RelativePoint(parent, new Point((parent.getSize().width - balloonSize.width) / 2, parent.getHeight() / 4 - balloonSize.height / 2));
+        balloon.show(showPoint);
+        return;
+      }
+    }
+
     if (project != null) {
       balloon.showCenteredInCurrentWindow(project);
     } else {
       balloon.showInFocusCenter();
-    }
-
-    //for first show and short mode popup should be shifted to the top screen half
-    if (savedLocation == null && mySearchEverywhereUI.getViewType() == SearchEverywhereUI.ViewType.SHORT) {
-      Point location = balloon.getLocationOnScreen();
-      location.y /= 2;
-      balloon.setLocation(location);
     }
   }
 
@@ -274,7 +285,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       private final String searchText;
       private final String contributorID;
 
-      public HistoryItem(String searchText, String contributorID) {
+      HistoryItem(String searchText, String contributorID) {
         this.searchText = searchText;
         this.contributorID = contributorID;
       }
@@ -354,7 +365,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     private final List<String> list;
     private int index;
 
-    public HistoryIterator(String id, List<String> list) {
+    HistoryIterator(String id, List<String> list) {
       contributorID = id;
       this.list = list;
       index = -1;

@@ -33,7 +33,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
   private final ConcurrentMap<KeyReference<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
-  private final TObjectHashingStrategy<K> myHashingStrategy;
+  private final TObjectHashingStrategy<? super K> myHashingStrategy;
 
   interface KeyReference<K, V> {
     K get();
@@ -48,7 +48,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @NotNull
-  abstract KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
+  abstract KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<? super K> hashingStrategy);
 
   private static final HardKey NULL_KEY = new HardKey() {
     @Override
@@ -109,15 +109,15 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     this(initialCapacity, loadFactor, 4, THIS);
   }
 
-  ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, 2, hashingStrategy);
   }
 
   ConcurrentRefHashMap(int initialCapacity,
                        float loadFactor,
                        int concurrencyLevel,
-                       @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
+                       @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
+    myHashingStrategy = hashingStrategy == THIS ? (TObjectHashingStrategy)this : hashingStrategy;
     myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }
 

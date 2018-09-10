@@ -663,7 +663,7 @@ public class ScopeEditorPanel {
   private final class ChooseScopeTypeAction extends ComboBoxAction{
     private final Runnable myUpdate;
 
-    public ChooseScopeTypeAction(final Runnable update) {
+    ChooseScopeTypeAction(final Runnable update) {
       myUpdate = update;
     }
 
@@ -695,19 +695,19 @@ public class ScopeEditorPanel {
   private final class FilterLegalsAction extends ToggleAction {
     private final Runnable myUpdate;
 
-    public FilterLegalsAction(final Runnable update) {
+    FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
             IdeBundle.message("action.description.show.included.only"), AllIcons.General.Filter);
       myUpdate = update;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
       myUpdate.run();

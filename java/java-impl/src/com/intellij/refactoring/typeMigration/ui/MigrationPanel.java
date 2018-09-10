@@ -17,6 +17,7 @@ package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +43,8 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -61,8 +64,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -94,11 +95,13 @@ public class MigrationPanel extends JPanel implements Disposable {
     myLabeler = labeler;
     myProject = project;
 
-    myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
-
     final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, roots, previewUsages);
-    builder.setRoot(currentRoot);
+    myRootsTree = new MyTree();
+    TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
+    structure.setRoots(currentRoot);
+    StructureTreeModel model = new StructureTreeModel(structure, AlphaComparator.INSTANCE);
+    myRootsTree.setModel(new AsyncTreeModel(model));
+
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -136,16 +139,9 @@ public class MigrationPanel extends JPanel implements Disposable {
     add(conflictsSplitter, BorderLayout.CENTER);
     Disposer.register(this, myConflictsPanel);
 
-    builder.addSubtreeToUpdate((DefaultMutableTreeNode)myRootsTree.getModel().getRoot(), () -> SwingUtilities.invokeLater(() -> {
-      if (builder.isDisposed()) return;
-      myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
-      final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
-      if (!children.isEmpty()) {
-        builder.select(children.iterator().next());
-      }
-    }));
+    model.invalidate();
 
-    Disposer.register(this, builder);
+    Disposer.register(this, model);
   }
 
   private void selectionChanged() {
@@ -297,8 +293,8 @@ public class MigrationPanel extends JPanel implements Disposable {
   }
 
   private static class MyTree extends Tree implements DataProvider {
-    private MyTree(final TreeModel treemodel) {
-      super(treemodel);
+    private MyTree() {
+      super();
     }
 
     @Override
@@ -339,7 +335,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   }
 
   private class ExcludeAction extends ExcludeIncludeActionBase {
-    public ExcludeAction() {
+    ExcludeAction() {
       super(RefactoringBundle.message("type.migration.exclude.action.text"));
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myRootsTree);
     }
@@ -351,7 +347,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   }
 
   private class IncludeAction extends ExcludeIncludeActionBase {
-    public IncludeAction() {
+    IncludeAction() {
       super(RefactoringBundle.message("type.migration.include.action.text"));
       registerCustomShortcutSet(CommonShortcuts.INSERT, myRootsTree);
     }

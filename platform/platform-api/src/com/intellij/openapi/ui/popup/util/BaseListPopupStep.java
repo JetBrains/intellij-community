@@ -30,7 +30,7 @@ import java.util.List;
 public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T> {
   private String myTitle;
   private List<T> myValues;
-  private List<Icon> myIcons;
+  private List<? extends Icon> myIcons;
   private int myDefaultOptionIndex = -1;
 
   @SafeVarargs
@@ -61,7 +61,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
 
   protected BaseListPopupStep() { }
 
-  protected final void init(@Nullable String title, @NotNull List<? extends T> values, @Nullable List<Icon> icons) {
+  protected final void init(@Nullable String title, @NotNull List<? extends T> values, @Nullable List<? extends Icon> icons) {
     myTitle = title;
     myValues = new ArrayList<>(values);
     myIcons = icons;

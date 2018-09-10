@@ -118,7 +118,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     private final boolean isPrev;
     private boolean wrapAround;
 
-    public MyFindAction(AnAction origAction, boolean isPrev) {
+    MyFindAction(AnAction origAction, boolean isPrev) {
       this.origAction = origAction;
       this.isPrev = isPrev;
 

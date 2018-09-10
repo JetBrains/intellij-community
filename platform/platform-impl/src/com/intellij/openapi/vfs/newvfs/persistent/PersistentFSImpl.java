@@ -29,7 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
@@ -1041,14 +1040,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   public void clearIdCache() {
     // remove all except roots
-    for (IntObjectMap.Entry<VirtualFileSystemEntry> e : myIdToDirCache.entries()) {
-      // leave root in the map
-      VirtualFileSystemEntry dir = e.getValue();
-      if (dir.getParent() != null) {
-        int id = e.getKey();
-        myIdToDirCache.remove(id, dir);
-      }
-    }
+    myIdToDirCache.entrySet().removeIf(e -> e.getValue().getParent() != null);
   }
 
   @Override

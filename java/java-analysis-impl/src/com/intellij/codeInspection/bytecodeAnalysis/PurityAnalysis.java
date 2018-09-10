@@ -275,7 +275,7 @@ abstract class EffectQuantum {
 
   static final class FieldReadQuantum extends EffectQuantum {
     final EKey key;
-    public FieldReadQuantum(EKey key) {
+    FieldReadQuantum(EKey key) {
       super(key.hashCode());
       this.key = key;
     }
@@ -299,7 +299,7 @@ abstract class EffectQuantum {
 
   static final class ReturnChangeQuantum extends EffectQuantum {
     final EKey key;
-    public ReturnChangeQuantum(EKey key) {
+    ReturnChangeQuantum(EKey key) {
       super(key.hashCode());
       this.key = key;
     }
@@ -323,7 +323,7 @@ abstract class EffectQuantum {
 
   static final class ParamChangeQuantum extends EffectQuantum {
     final int n;
-    public ParamChangeQuantum(int n) {
+    ParamChangeQuantum(int n) {
       super(n);
       this.n = n;
     }
@@ -344,7 +344,7 @@ abstract class EffectQuantum {
     final EKey key;
     final DataValue[] data;
     final boolean isStatic;
-    public CallQuantum(EKey key, DataValue[] data, boolean isStatic) {
+    CallQuantum(EKey key, DataValue[] data, boolean isStatic) {
       super((key.hashCode() * 31 + Arrays.hashCode(data)) * 31 + (isStatic ? 1 : 0));
       this.key = key;
       this.data = data;

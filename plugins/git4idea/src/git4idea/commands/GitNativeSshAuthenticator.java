@@ -5,9 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Handles "ask passphrase" requests from ssh
+ * Handles interactive input requests from ssh, such as a passphrase request, an unknown server key confirmation, etc.
  */
 public interface GitNativeSshAuthenticator {
   @Nullable
-  String askPassphrase(@NotNull String description);
+  String handleInput(@NotNull String description);
 }

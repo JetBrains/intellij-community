@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.DumbAwareToggleInvertedBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -173,11 +174,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
@@ -195,7 +198,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     private TestFrameworkRunningModel myModel;
 
-    public SortByDurationAction(TestConsoleProperties properties) {
+    SortByDurationAction(TestConsoleProperties properties) {
       super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
             ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
             AllIcons.RunConfigurations.SortbyDuration, properties,

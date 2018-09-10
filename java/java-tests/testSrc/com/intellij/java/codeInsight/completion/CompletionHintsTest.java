@@ -1460,6 +1460,26 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>int a</b></html>");
   }
 
+  public void testOverloadSwitchToMoreParametersWithVirtualComma() {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    showParameterInfo();
+    methodOverloadDown();
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\",def:\"/>) } }");
+  }
+
+  public void testOverloadSwitchToLessParametersWithVirtualComma() {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { Character.to<caret> } }");
+    complete("toChars(int codePoint, char[] dst, int dstIndex)");
+    showParameterInfo();
+    methodOverloadUp();
+    checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>) } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
@@ -1482,6 +1502,10 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void up() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+  }
+
+  private void methodOverloadUp() {
+    myFixture.performEditorAction(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
   }
 
   private void methodOverloadDown() {

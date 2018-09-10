@@ -210,7 +210,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   private static class InspectionCustomization implements EditorCustomization {
     @NotNull private final Project myProject;
 
-    public InspectionCustomization(@NotNull Project project) {
+    InspectionCustomization(@NotNull Project project) {
       myProject = project;
     }
 
@@ -229,7 +229,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   private static class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
-    public ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document, @Nullable PsiFile file) {
+    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document, @Nullable PsiFile file) {
       super(project, document, file);
     }
 

@@ -480,7 +480,7 @@ public class JShellHandler {
   }
 
   private static class MyConsoleView extends ConsoleViewImpl {
-    public MyConsoleView(Project project) {
+    MyConsoleView(Project project) {
       super(project, GlobalSearchScope.allScope(project), true, new ConsoleState.NotStartedStated() {
         @NotNull
         @Override
@@ -494,11 +494,11 @@ public class JShellHandler {
   }
 
   private static final class ExecException extends Exception {
-    public ExecException(String message) {
+    ExecException(String message) {
       super(message);
     }
 
-    public ExecException(String message, Throwable cause) {
+    ExecException(String message, Throwable cause) {
       super(message, cause);
     }
 

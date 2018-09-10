@@ -261,11 +261,11 @@ public class CppModelBuilder implements ModelBuilderService {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
         ToolSearchResult toolSearchResult;
         if (IS_410_OR_BETTER) {
-          Method locateToolMethod = toolProvider.getClass().getDeclaredMethod("locateTool", ToolType.class);
-          toolSearchResult = (ToolSearchResult)locateToolMethod.invoke(toolProvider, ToolType.CPP_COMPILER);
+          toolSearchResult = toolProvider.locateTool(ToolType.CPP_COMPILER);
         }
         else {
-          toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
+          Method isToolAvailableMethod = toolProvider.getClass().getDeclaredMethod("isToolAvailable", ToolType.class);
+          toolSearchResult = (ToolSearchResult)isToolAvailableMethod.invoke(toolProvider, ToolType.CPP_COMPILER);
         }
         if (toolSearchResult.isAvailable()) {
           if (toolSearchResult instanceof CommandLineToolSearchResult) {

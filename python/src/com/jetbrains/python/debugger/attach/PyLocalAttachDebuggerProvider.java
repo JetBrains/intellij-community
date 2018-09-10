@@ -112,12 +112,12 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
     private final String mySdkHome;
     @NotNull private final String myName;
 
-    public PyLocalAttachDebugger(@NotNull Sdk sdk) {
+    PyLocalAttachDebugger(@NotNull Sdk sdk) {
       mySdkHome = sdk.getHomePath();
       myName = PythonSdkType.getInstance().getVersionString(sdk) + " (" + mySdkHome + ")";
     }
 
-    public PyLocalAttachDebugger(@NotNull String sdkHome) {
+    PyLocalAttachDebugger(@NotNull String sdkHome) {
       mySdkHome = sdkHome;
       myName = "Python Debugger";
     }

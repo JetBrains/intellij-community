@@ -178,13 +178,13 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   @Order(ExternalSystemNode.BUILTIN_DEPENDENCIES_DATA_NODE_ORDER)
   private static class MyDependenciesNode extends ExternalSystemNode {
-    public MyDependenciesNode(ExternalProjectsView externalProjectsView) {
+    MyDependenciesNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked
       super(externalProjectsView, null, null);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.PpLibFolder);
     }
@@ -197,7 +197,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static abstract class DependencyDataExternalSystemNode<T extends DependencyData> extends ExternalSystemNode<T> {
 
-    public DependencyDataExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
+    DependencyDataExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
                                             @Nullable ExternalSystemNode parent,
                                             @Nullable DataNode<T> dataNode) {
       super(externalProjectsView, parent, dataNode);
@@ -275,12 +275,12 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static class ModuleDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<ModuleDependencyData> {
 
-    public ModuleDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<ModuleDependencyData> dataNode) {
+    ModuleDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<ModuleDependencyData> dataNode) {
       super(externalProjectsView, null, dataNode);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(getUiAware().getProjectIcon());
 
@@ -293,12 +293,12 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static class LibraryDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<LibraryDependencyData> {
 
-    public LibraryDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<LibraryDependencyData> dataNode) {
+    LibraryDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<LibraryDependencyData> dataNode) {
       super(externalProjectsView, null, dataNode);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.PpLib);
 

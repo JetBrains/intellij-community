@@ -281,6 +281,24 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, true);
   }
 
+  public void testEditingRecentFilesRegardlessExtensions() {
+    NonProjectFileWritingAccessProvider.enableChecksInTests(true, getProject());
+    
+    VirtualFile nonProjectFile = createProjectFile();
+
+    List<VirtualFile> denied = new ArrayList<>();
+    registerAccessCheckExtension(Collections.emptyList(), denied);
+    
+    denied.add(nonProjectFile);
+    typeAndCheck(nonProjectFile, false);
+
+    denied.clear();
+    typeAndCheck(nonProjectFile, true);
+
+    denied.add(nonProjectFile);
+    typeAndCheck(nonProjectFile, true); // still can edit since it's a recently edited file
+  }
+
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
     final Set<VirtualFile> requested = new LinkedHashSet<>();
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {

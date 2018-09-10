@@ -39,11 +39,11 @@ public class CollectionFactoryInliner implements CallInliner {
     final int mySize;
     final SpecialField mySizeField;
 
-    public FactoryInfo(int size, SpecialField sizeField) {
+    FactoryInfo(int size, SpecialField sizeField) {
       this(size, sizeField, false);
     }
 
-    public FactoryInfo(int size, SpecialField sizeField, boolean notNull) {
+    FactoryInfo(int size, SpecialField sizeField, boolean notNull) {
       mySize = size;
       mySizeField = sizeField;
       myNotNull = notNull;

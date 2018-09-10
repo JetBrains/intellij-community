@@ -44,7 +44,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return name1.compareToIgnoreCase(name2);
   };
 
-  public AntExplorerTreeStructure(final Project project) {
+  AntExplorerTreeStructure(final Project project) {
     myProject = project;
   }
 
@@ -152,7 +152,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private final class RootNodeDescriptor extends AntNodeDescriptor {
-    public RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+    RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
       super(project, parentDescriptor);
     }
 
@@ -174,7 +174,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends AntNodeDescriptor {
-    public TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
+    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.blue;

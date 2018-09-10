@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,49 +65,41 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter, ProgressIndicator progressIndicator, int elementsLimit) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
-      return ContributorSearchResult.empty();
+      return;
     }
 
     String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
     String searchString = filterControlSymbols(pattern) + suffix;
     FilteringGotoByModel<F> model = createModel(myProject);
-    model.setFilterItems(filter.getSelectedElements());
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
-    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
-    ApplicationManager.getApplication().runReadAction(() -> {
-      popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator,
-                                         o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
-      );
-    });
-    Disposer.dispose(popup);
-
-    return builder.build();
-  }
-
-  protected boolean addFoundElement(Object element, ChooseByNameModel model, ContributorSearchResult.Builder<Object> resultBuilder,
-                                    ProgressIndicator progressIndicator, int elementsLimit) {
-    if (progressIndicator.isCanceled()) return false;
-    if (element == null) {
-      LOG.error("Null returned from " + model + " in " + this);
-      return true;
+    if (filter != null) {
+      model.setFilterItems(filter.getSelectedElements());
     }
-
-    if (resultBuilder.itemsCount() < elementsLimit ) {
-      resultBuilder.addItem(element);
-      return true;
-    } else {
-      resultBuilder.setHasMore(true);
-      return false;
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
+    try {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
+          if (progressIndicator.isCanceled()) return false;
+          if (element == null) {
+            LOG.error("Null returned from " + model + " in " + this);
+            return true;
+          }
+          return consumer.apply(element);
+        });
+      });
+    } finally {
+      Disposer.dispose(popup);
     }
   }
 
   //todo param is unnecessary #UX-1
   protected abstract FilteringGotoByModel<F> createModel(Project project);
 
+  @NotNull
   @Override
-  public String filterControlSymbols(String pattern) {
+  public String filterControlSymbols(@NotNull String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
     }
@@ -130,7 +122,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiElement) {
       if (!((PsiElement)selected).isValid()) {
         LOG.warn("Cannot navigate to invalid PsiElement");
@@ -154,7 +146,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && element instanceof PsiElement) {
       return element;
     }
@@ -167,8 +159,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return true;
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
     return new SearchEverywherePsiRenderer(list) {
       @Override
       public String getElementText(PsiElement element) {
@@ -182,8 +175,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     };
   }
 
-  protected boolean isDumbModeSupported() {
-    return false;
+  @Override
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return 50;
   }
 
   @Nullable

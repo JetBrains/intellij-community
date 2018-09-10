@@ -100,7 +100,7 @@ class ModuleIdentifierImpl implements ModuleIdentifier {
   @NotNull private final String myGroup;
   @NotNull private final String myModule;
 
-  public ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
+  ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
     myGroup = group;
     myModule = module;
   }

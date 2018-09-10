@@ -50,7 +50,7 @@ public final class ModuleCompilerUtil {
   }
 
   @NotNull
-  public static List<Chunk<Module>> getSortedModuleChunks(@NotNull Project project, @NotNull List<Module> modules) {
+  public static List<Chunk<Module>> getSortedModuleChunks(@NotNull Project project, @NotNull List<? extends Module> modules) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
     final List<Chunk<Module>> chunks = getSortedChunks(createModuleGraph(allModules));
 
@@ -82,7 +82,7 @@ public final class ModuleCompilerUtil {
     return GraphAlgorithms.getInstance().computeSCCGraph(graph);
   }
 
-  public static void sortModules(final Project project, final List<Module> modules) {
+  public static void sortModules(final Project project, final List<? extends Module> modules) {
     ApplicationManager.getApplication().runReadAction(() -> {
       Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
       Collections.sort(modules, comparator);
@@ -99,7 +99,7 @@ public final class ModuleCompilerUtil {
   }
 
   @NotNull
-  public static List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<Module> modules) {
+  public static List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<? extends Module> modules) {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<>(modules);
     return ContainerUtil.filter(chunks, chunk -> {
@@ -155,7 +155,7 @@ public final class ModuleCompilerUtil {
     return removeSingleElementChunks(removeDummyNodes(filterDuplicates(removeSingleElementChunks(chunks)), provider));
   }
 
-  private static List<Chunk<ModuleSourceSet>> removeDummyNodes(List<Chunk<ModuleSourceSet>> chunks, ModulesProvider modulesProvider) {
+  private static List<Chunk<ModuleSourceSet>> removeDummyNodes(List<? extends Chunk<ModuleSourceSet>> chunks, ModulesProvider modulesProvider) {
     List<Chunk<ModuleSourceSet>> result = new ArrayList<>(chunks.size());
     for (Chunk<ModuleSourceSet> chunk : chunks) {
       Set<ModuleSourceSet> nodes = new LinkedHashSet<>();
@@ -180,7 +180,7 @@ public final class ModuleCompilerUtil {
     return true;
   }
 
-  private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<Chunk<ModuleSourceSet>> chunks) {
+  private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<? extends Chunk<ModuleSourceSet>> chunks) {
     return ContainerUtil.filter(chunks, chunk -> chunk.getNodes().size() > 1);
   }
 
@@ -188,7 +188,7 @@ public final class ModuleCompilerUtil {
    * Remove cycles in tests included in cycles between production parts
    */
   @NotNull
-  private static List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<Chunk<ModuleSourceSet>> sourceSetCycles) {
+  private static List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<? extends Chunk<ModuleSourceSet>> sourceSetCycles) {
     final List<Set<Module>> productionCycles = new ArrayList<>();
 
     for (Chunk<ModuleSourceSet> cycle : sourceSetCycles) {
@@ -208,7 +208,7 @@ public final class ModuleCompilerUtil {
   }
 
   @Nullable
-  private static ModuleSourceSet.Type getCommonType(@NotNull Chunk<ModuleSourceSet> cycle) {
+  private static ModuleSourceSet.Type getCommonType(@NotNull Chunk<? extends ModuleSourceSet> cycle) {
     ModuleSourceSet.Type type = null;
     for (ModuleSourceSet set : cycle.getNodes()) {
       if (type == null) {

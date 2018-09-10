@@ -1233,7 +1233,7 @@ public class EditorPainter implements TextDrawingCallback {
     private int currentLeadingEdge;
     private int currentTrailingEdge;
 
-    public LineWhitespacePaintingStrategy(EditorSettings settings) {
+    LineWhitespacePaintingStrategy(EditorSettings settings) {
       myWhitespaceShown = settings.isWhitespacesShown();
       myLeadingWhitespaceShown = settings.isLeadingWhitespaceShown();
       myInnerWhitespaceShown = settings.isInnerWhitespaceShown();

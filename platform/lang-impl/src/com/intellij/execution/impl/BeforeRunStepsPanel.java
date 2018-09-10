@@ -352,7 +352,7 @@ class BeforeRunStepsPanel extends JPanel {
   interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
 
-    void titleChanged(String title);
+    void titleChanged(@NotNull String title);
   }
 
   private class MyListCellRenderer extends JBList.StripedListCellRenderer {

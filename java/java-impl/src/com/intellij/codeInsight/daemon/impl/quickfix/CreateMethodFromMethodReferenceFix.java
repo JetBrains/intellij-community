@@ -89,6 +89,15 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   @Override
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    PsiMethodReferenceExpression reference = getMethodReference();
+    if (reference != null && reference.isConstructor()) {
+      return false;
+    }
+    return super.canBeTargetClass(psiClass);
+  }
+
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     if (targetClass == null) return;
     PsiMethodReferenceExpression expression = getMethodReference();

@@ -53,7 +53,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
   private static class FieldSearcher extends GrDelegatingScopeProcessorWithHints {
     final PsiClass myCollectionClass;
 
-    public FieldSearcher(PsiScopeProcessor processor, PsiClass collectionClass) {
+    FieldSearcher(PsiScopeProcessor processor, PsiClass collectionClass) {
       super(processor, null, RESOLVE_KINDS_PROPERTY);
       myCollectionClass = collectionClass;
     }

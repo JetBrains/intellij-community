@@ -63,7 +63,7 @@ public abstract class GitPushSource implements PushSource {
   private static class DetachedHead extends GitPushSource {
     @NotNull private final String myRevision;
 
-    public DetachedHead(@NotNull String revision) {
+    DetachedHead(@NotNull String revision) {
       myRevision = revision;
     }
 

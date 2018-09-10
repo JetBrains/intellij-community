@@ -39,6 +39,10 @@ fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationReq
   }
 }
 
+fun createModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> =
+  createActions { it.createChangeModifierActions(target, request) }
+
+@Deprecated("use createModifierActions(JvmModifiersOwner, ChangeModifierRequest)")
 fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)

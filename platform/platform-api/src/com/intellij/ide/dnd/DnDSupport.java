@@ -31,8 +31,8 @@ import java.awt.*;
  */
 public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private final JComponent myComponent;
-  private final Function<DnDActionInfo, DnDDragStartBean> myBeanProvider;
-  private final Function<DnDActionInfo, DnDImage> myImageProvider;
+  private final Function<? super DnDActionInfo, ? extends DnDDragStartBean> myBeanProvider;
+  private final Function<? super DnDActionInfo, ? extends DnDImage> myImageProvider;
   private final @Nullable DnDDropHandler myHandler;
   private final @Nullable DnDTargetChecker myChecker;
   private final Runnable myDropEndedCallback;
@@ -42,8 +42,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private final boolean myAsSource;
 
   private DnDSupport(JComponent component,
-                     Function<DnDActionInfo, DnDDragStartBean> beanProvider,
-                     Function<DnDActionInfo, DnDImage> imageProvider,
+                     Function<? super DnDActionInfo, ? extends DnDDragStartBean> beanProvider,
+                     Function<? super DnDActionInfo, ? extends DnDImage> imageProvider,
                      DnDDropHandler handler,
                      DnDTargetChecker checker,
                      Runnable dropEndedCallback,

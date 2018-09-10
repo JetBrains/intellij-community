@@ -94,7 +94,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, myDescriptor.isIncludeTransitiveDependencies(), myDescriptor.getExcludedDependencies());
   }
 
-  private String call(Function<JpsMavenRepositoryLibraryDescriptor, String> method) {
+  private String call(Function<? super JpsMavenRepositoryLibraryDescriptor, String> method) {
     final JpsMavenRepositoryLibraryDescriptor descriptor = myDescriptor;
     return descriptor != null ? method.apply(descriptor) : null;
   }

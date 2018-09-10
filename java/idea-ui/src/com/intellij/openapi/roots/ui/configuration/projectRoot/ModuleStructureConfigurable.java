@@ -206,7 +206,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+  protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
     return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
 
@@ -309,7 +309,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @NotNull
-  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper(Predicate<MyNode> nodeToBeMovedFilter) {
+  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper(Predicate<? super MyNode> nodeToBeMovedFilter) {
     ModuleGrouper grouper = getModuleGrouper();
     ModuleGroupingImplementation<Module> grouping = ModuleGroupingTreeHelper.createDefaultGrouping(grouper);
     return ModuleGroupingTreeHelper.forTree(myRoot, node -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
@@ -621,7 +621,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private class ModuleNode extends MyNode implements ModuleGroupNode {
     private final ModuleGroup myModuleAsGroup;
 
-    public ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
+    ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
       super(configurable);
       myModuleAsGroup = moduleAsGroup;
     }
@@ -719,7 +719,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Facet> facets) {
+    public boolean remove(@NotNull Collection<? extends Facet> facets) {
       for (Facet facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
         FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
@@ -734,7 +734,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Module> modules) {
+    public boolean remove(@NotNull Collection<? extends Module> modules) {
       ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
       List<Module> deleted = modulesConfigurator.deleteModules(modules);
       if (deleted.isEmpty()) {
@@ -820,12 +820,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myHideModuleGroups;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myHideModuleGroups = state;
       regroupModules();
     }
@@ -1047,9 +1047,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private static class MergingComparator<T> implements Comparator<T> {
-    private final List<Comparator<T>> myDelegates;
+    private final List<? extends Comparator<T>> myDelegates;
 
-    MergingComparator(final List<Comparator<T>> delegates) {
+    MergingComparator(final List<? extends Comparator<T>> delegates) {
       myDelegates = delegates;
     }
 

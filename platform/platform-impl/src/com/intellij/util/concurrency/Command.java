@@ -36,7 +36,7 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
     /**
      * Lets the specified consumer to accept the given value on the foreground thread.
      */
-    public <T> void consume(Consumer<T> consumer, T value) {
+    public <T> void consume(Consumer<? super T> consumer, T value) {
       if (consumer != null) foreground.runOrInvokeLater(() -> consumer.accept(value));
     }
 

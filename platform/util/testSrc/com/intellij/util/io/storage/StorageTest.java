@@ -33,7 +33,7 @@ public class StorageTest extends StorageTestBase {
   }
 
   public void testStress() throws Exception {
-    StringBuffer data = new StringBuffer();
+    StringBuilder data = new StringBuilder();
     for (int i = 0; i < 100; i++) {
       data.append("Hello ");
     }

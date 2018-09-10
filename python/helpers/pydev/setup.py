@@ -121,7 +121,6 @@ args = dict(
         'pydev_app_engine_debug_startup',
         # 'pydev_coverage', -- Not needed for debugger
         # 'pydev_pysrc', -- Not needed for debugger
-        'pydev_run_in_console',
         'pydevconsole',
         'pydevd_file_utils',
         'pydevd',

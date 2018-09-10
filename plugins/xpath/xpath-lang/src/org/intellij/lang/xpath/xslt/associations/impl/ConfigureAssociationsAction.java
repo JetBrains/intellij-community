@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 class ConfigureAssociationsAction extends AnAction {
-    public ConfigureAssociationsAction() {
+    ConfigureAssociationsAction() {
         super("Configure...");
     }
 

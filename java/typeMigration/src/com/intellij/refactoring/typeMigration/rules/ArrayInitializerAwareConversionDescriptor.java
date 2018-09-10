@@ -24,7 +24,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class ArrayInitializerAwareConversionDescriptor extends TypeConversionDescriptor {
-  public ArrayInitializerAwareConversionDescriptor(String stringToReplace,
+  ArrayInitializerAwareConversionDescriptor(String stringToReplace,
                                                    String replaceByString,
                                                    PsiExpression expression) {
     super(stringToReplace, replaceByString, expression);

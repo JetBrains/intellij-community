@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -174,7 +171,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     Project project = method.getProject();
     ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
     manager.deannotate(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract, mutates);
+    PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(project, pure, contract, mutates);
     if (mockAnno != null) {
       try {
         manager.annotateExternally(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),

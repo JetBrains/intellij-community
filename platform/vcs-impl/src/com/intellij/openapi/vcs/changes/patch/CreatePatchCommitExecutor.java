@@ -81,7 +81,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
     private CommitContext myCommitContext;
 
-    public CreatePatchCommitSession() {
+    CreatePatchCommitSession() {
     }
 
     @Override

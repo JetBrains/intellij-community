@@ -6,7 +6,6 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
@@ -145,15 +144,16 @@ public class SingleConfigurableEditor extends DialogWrapper {
     if (myShowApplyButton) {
       actions.add(new ApplyAction());
     }
-    if (myConfigurable.getHelpTopic() != null) {
+    if (getHelpId() != null) {
       actions.add(getHelpAction());
     }
     return actions.toArray(new Action[0]);
   }
 
+  @Nullable
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myConfigurable.getHelpTopic());
+  protected String getHelpId() {
+    return myConfigurable.getHelpTopic();
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -82,14 +81,8 @@ public class PathMacroEditor extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(PathMacroConfigurable.HELP_ID);
+  protected String getHelpId() {
+    return PathMacroConfigurable.HELP_ID;
   }
 
   @Override

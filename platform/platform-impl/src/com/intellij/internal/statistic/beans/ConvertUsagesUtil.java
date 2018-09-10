@@ -38,7 +38,7 @@ public class ConvertUsagesUtil {
   // @NotNull
   public static <T extends UsageDescriptor> String convertUsages(Map<String, Set<T>> map) {
     assert map != null;
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (Map.Entry<String, Set<T>> entry : map.entrySet()) {
       String value = convertValueMap(entry.getValue());
       if (!StringUtil.isEmptyOrSpaces(value)) {
@@ -56,7 +56,7 @@ public class ConvertUsagesUtil {
   public static String convertValueMap(Set<? extends UsageDescriptor> descriptors) {
     assert descriptors != null;
     if (descriptors.isEmpty()) return "";
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     for (UsageDescriptor usageDescriptor : descriptors) {
       int value = usageDescriptor.getValue();
       if (value != 0) {
@@ -119,7 +119,7 @@ public class ConvertUsagesUtil {
     public final String first;
     public final String second;
 
-    public StringPair(String first, String second) {
+    StringPair(String first, String second) {
       this.first = first;
       this.second = second;
     }

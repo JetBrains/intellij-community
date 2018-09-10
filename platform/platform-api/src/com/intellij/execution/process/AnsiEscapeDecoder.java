@@ -223,11 +223,26 @@ public class AnsiEscapeDecoder {
     return lastMatchedColorEscSeqEndInd;
   }
 
+  /**
+   * @implSpec {@code The ESC [ is followed by any number (including none) of "parameter bytes" in the
+   * range 0x30–0x3F (ASCII 0–9:;<=>?), then by any number of "intermediate bytes" in the range 0x20–0x2F (ASCII space and
+   * !"#$%&'()*+,-./), then finally by a single "final byte" in the range 0x40–0x7E (ASCII @A–Z[\]^_`a–z{|}~).}
+   * @implNote Also, there are different sequences, <a href="http://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences">aside CSI</a>
+   */
   private static int findEscSeqEndIndex(@NotNull String text, int escSeqBeginInd) {
     int parameterEndInd = escSeqBeginInd + CSI.length();
     while (parameterEndInd < text.length()) {
       char ch = text.charAt(parameterEndInd);
-      if (Character.isDigit(ch) || ch == ';') {
+      if (0x30 <= ch && ch <= 0x3F) {
+        parameterEndInd++;
+      }
+      else {
+        break;
+      }
+    }
+    while (parameterEndInd < text.length()) {
+      char ch = text.charAt(parameterEndInd);
+      if (0x20 <= ch && ch <= 0x2F) {
         parameterEndInd++;
       }
       else {
@@ -237,7 +252,8 @@ public class AnsiEscapeDecoder {
     if (parameterEndInd == text.length()) {
       return encodeUnhandledSuffixLength(text, escSeqBeginInd);
     }
-    return StringUtil.containsChar("ABCDEFGHJKSTfmisu", text.charAt(parameterEndInd)) ? parameterEndInd : -1;
+    char lastChar = text.charAt(parameterEndInd);
+    return 0x40 <= lastChar && lastChar <= 0x7E ? parameterEndInd : -1;
   }
 
   private static int encodeUnhandledSuffixLength(@NotNull String text, int suffixStartInd) {

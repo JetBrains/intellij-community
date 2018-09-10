@@ -6,6 +6,7 @@ import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,7 +84,8 @@ public class TestDiscoverySearchHelper {
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
                                       byte frameworkId) {
-    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, (c, m, p) -> {
+    List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(classFQName, methodName));
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, Collections.emptyList(), (c, m, p) -> {
       patterns.add(c + "," + m);
       return true;
     });

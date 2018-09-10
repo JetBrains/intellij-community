@@ -64,7 +64,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    @NonNls StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
     for (String description : myConflictDescriptions) {
       buf.append(description);
       buf.append("<br><br>");
@@ -88,7 +88,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
 */
 
   private class CancelAction extends AbstractAction {
-    public CancelAction() {
+    CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
     }
 
@@ -99,7 +99,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
   }
 
   private class ViewUsagesAction extends AbstractAction {
-    public ViewUsagesAction() {
+    ViewUsagesAction() {
       super(RefactoringBundle.message("view.usages"));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }

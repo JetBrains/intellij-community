@@ -32,6 +32,7 @@ public class DummyCompileContext implements CompileContext {
 
   private static final DummyCompileContext OUR_INSTANCE = new DummyCompileContext();
 
+  @NotNull
   public static DummyCompileContext getInstance() {
     return OUR_INSTANCE;
   }

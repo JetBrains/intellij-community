@@ -94,7 +94,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @NotNull
   public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
                                                                 @NotNull PsiMethod method,
-                                                                @NotNull List<ParameterInfoImpl> parameterInfos,
+                                                                @NotNull List<? extends ParameterInfoImpl> parameterInfos,
                                                                 final boolean allowDelegation,
                                                                 final PsiReferenceExpression refExpr) {
     return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
@@ -103,10 +103,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @NotNull
   public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
                                                                 @NotNull PsiMethod method,
-                                                                @NotNull List<ParameterInfoImpl> parameterInfos,
+                                                                @NotNull List<? extends ParameterInfoImpl> parameterInfos,
                                                                 final boolean allowDelegation,
                                                                 final PsiReferenceExpression refExpr,
-                                                                @Nullable Consumer<List<ParameterInfoImpl>> callback) {
+                                                                @Nullable Consumer<? super List<ParameterInfoImpl>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {

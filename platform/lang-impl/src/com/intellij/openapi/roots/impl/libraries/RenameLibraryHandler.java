@@ -80,7 +80,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Library myLibrary;
-    public MyInputValidator(Project project, Library library) {
+    MyInputValidator(Project project, Library library) {
       myProject = project;
       myLibrary = library;
     }

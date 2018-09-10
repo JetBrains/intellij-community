@@ -71,7 +71,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
 
     final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createRunConfiguration("test", factory);
+      RunManager.getInstance(project).createConfiguration("test", factory);
 
     myRunConfiguration = (PythonRunConfiguration)settings.getConfiguration();
 

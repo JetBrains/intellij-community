@@ -78,7 +78,7 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
@@ -237,7 +237,7 @@ public class ExecutionNode extends CachingSimpleNode {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<Icon> iconProvider) {
+  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<Icon>() {
       @Nullable
       @Override

@@ -35,7 +35,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
     val newData = loadData()
     storageDataRef.set(newData)

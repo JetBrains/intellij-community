@@ -72,7 +72,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     if (module != null) {
       RunManager runManager = RunManager.getInstance(project);
       RunnerAndConfigurationSettings configuration =
-        runManager.createRunConfiguration(DevKitBundle.message("run.configuration.title"), new PluginConfigurationType().getConfigurationFactories()[0]);
+        runManager.createConfiguration(DevKitBundle.message("run.configuration.title"), new PluginConfigurationType().getConfigurationFactories()[0]);
       runManager.addConfiguration(configuration);
       runManager.setSelectedConfiguration(configuration);
     }

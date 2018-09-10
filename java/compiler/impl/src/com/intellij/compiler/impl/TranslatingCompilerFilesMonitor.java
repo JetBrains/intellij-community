@@ -18,6 +18,7 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -52,6 +54,7 @@ import java.util.List;
  * 2. corresponding source file has been deleted
  */
 public class TranslatingCompilerFilesMonitor implements BulkFileListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   private final BuildManager myBuildManager;
 
   public TranslatingCompilerFilesMonitor(MessageBus bus, BuildManager buildManager) {
@@ -119,7 +122,10 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
     Collection<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
-        collectPaths(event.getFile(), filesDeleted);
+        final VirtualFile file = event.getFile();
+        if (file != null) {
+          collectPaths(file, filesDeleted);
+        }
       }
     }
     notifyFilesDeleted(filesDeleted);
@@ -127,8 +133,8 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    Collection<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-    Collection<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (VFileEvent event : events) {
       if (event instanceof VFilePropertyChangeEvent) {
         handlePropChange((VFilePropertyChangeEvent)event, filesDeleted, filesChanged);
@@ -140,8 +146,48 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
         }
       }
     }
+
+    checkIntersection(filesChanged, filesDeleted);
+
     notifyFilesChanged(filesChanged);
     notifyFilesDeleted(filesDeleted);
+  }
+
+  // todo: temporary check to verify events correctess
+  private static void checkIntersection(Set<File> changed, Set<File> deleted) {
+    if (intersect(changed, deleted)) {
+      final StringBuilder message = new StringBuilder("Changed and deleted paths in the same even block must not intersect!");
+      message.append("\nChanged paths:");
+      for (File file : changed) {
+        message.append("\n\t").append(file.getPath());
+      }
+      message.append("\nDeleted paths:");
+      for (File file : deleted) {
+        message.append("\n\t").append(file.getPath());
+      }
+      message.append("\n");
+      LOG.error(message.toString());
+    }
+  }
+
+  private static <T> boolean intersect(Set<T> s1, Set<T> s2) {
+    if (!s1.isEmpty() && !s2.isEmpty()) {
+      final Set<T> min, other;
+      if (s1.size() < s2.size()) {
+        min = s1;
+        other = s2;
+      }
+      else {
+        min = s2;
+        other = s1;
+      }
+      for (T e : min) {
+        if (other.contains(e)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static void handlePropChange(@NotNull VFilePropertyChangeEvent event,
@@ -220,13 +266,13 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
         FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
   }
 
-  private void notifyFilesChanged(@NotNull Collection<File> paths) {
+  private void notifyFilesChanged(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
       myBuildManager.notifyFilesChanged(paths);
     }
   }
 
-  private void notifyFilesDeleted(@NotNull Collection<File> paths) {
+  private void notifyFilesDeleted(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
       myBuildManager.notifyFilesDeleted(paths);
     }

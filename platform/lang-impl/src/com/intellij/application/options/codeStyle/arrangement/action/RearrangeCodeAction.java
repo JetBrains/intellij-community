@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -39,7 +40,7 @@ public class RearrangeCodeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    boolean enabled = file != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null;
+    boolean enabled = file != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null && CodeStyle.isFormattingEnabled(file);
     e.getPresentation().setEnabled(enabled);
   }
 

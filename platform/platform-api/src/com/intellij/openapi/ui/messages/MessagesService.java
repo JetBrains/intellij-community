@@ -52,7 +52,7 @@ public interface MessagesService {
                                     int defaultOptionIndex,
                                     int focusedOptionIndex,
                                     Icon icon,
-                                    PairFunction<Integer, JCheckBox, Integer> exitFunc);
+                                    PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc);
 
   String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator);
 
@@ -90,8 +90,8 @@ public interface MessagesService {
   void showTextAreaDialog(JTextField textField,
                           String title,
                           String dimensionServiceKey,
-                          Function<String, List<String>> parser,
-                          Function<List<String>, String> lineJoiner);
+                          Function<? super String, ? extends List<String>> parser,
+                          Function<? super List<String>, String> lineJoiner);
 
   static MessagesService getInstance() {
     if (ApplicationManager.getApplication() != null) {

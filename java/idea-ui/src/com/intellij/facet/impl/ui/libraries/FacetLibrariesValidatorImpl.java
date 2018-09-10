@@ -118,7 +118,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
     private final CustomLibraryDescription myDescription;
 
-    public LibrariesQuickFix(CustomLibraryDescription description) {
+    LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("button.fix"));
       myDescription = description;
     }

@@ -267,7 +267,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       for (String tag : tags) {
         TagComponent component = myTagBuilder.createTagComponent(tag);
         //noinspection unchecked
-        component.setListener(mySearchListener, "tag:" + tag);
+        component.setListener(mySearchListener, SearchQueryParser.getTagQuery(tag));
         tagPanel.add(component);
       }
     }
@@ -414,6 +414,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   public void hideProgress(boolean success) {
+    assert myIndicator != null;
     myCenterPanel.remove(myIndicator.getComponent());
     myIndicator = null;
 

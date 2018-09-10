@@ -88,7 +88,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     };
     bus.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         queueUpdate(true);
       }
     });
@@ -104,12 +104,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
 
       @Override
-      public void listAdded(String listName) {
+      public void listAdded(@NotNull String listName) {
         updateFromRoot();
       }
 
       @Override
-      public void listRemoved(String listName) {
+      public void listRemoved(@NotNull String listName) {
         updateFromRoot();
       }
     };

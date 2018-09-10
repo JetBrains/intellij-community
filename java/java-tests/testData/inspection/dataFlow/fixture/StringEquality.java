@@ -77,4 +77,17 @@ class StringEquality {
       System.out.println("invalid parameter");
     }
   }
+
+  interface X {
+    Object getY();
+  }
+
+  void testWithCanonicalization(Object obj) {
+    if(obj instanceof X) {
+      X x = (X)obj;
+      if (x.getY() instanceof String) {
+        System.out.println("oops");
+      }
+    }
+  }
 }

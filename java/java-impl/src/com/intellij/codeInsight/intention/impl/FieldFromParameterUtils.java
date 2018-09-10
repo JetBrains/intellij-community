@@ -136,7 +136,7 @@ public final class FieldFromParameterUtils {
   }
 
   public static int findFieldAssignmentAnchor(final PsiStatement[] statements,
-                                              final @Nullable Ref<Pair<PsiField, Boolean>> anchorRef,
+                                              final @Nullable Ref<? super Pair<PsiField, Boolean>> anchorRef,
                                               final PsiClass targetClass,
                                               final PsiParameter myParameter) {
     int i = 0;

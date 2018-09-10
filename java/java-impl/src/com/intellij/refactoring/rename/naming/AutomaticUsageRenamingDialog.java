@@ -301,7 +301,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   }
 
   private class MyTableModel extends AbstractTableModel {
-    public MyTableModel() {
+    MyTableModel() {
       InputMap inputMap = myTable.getInputMap();
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
       myTable.getActionMap().put("enable_disable", new MySpaceAction());

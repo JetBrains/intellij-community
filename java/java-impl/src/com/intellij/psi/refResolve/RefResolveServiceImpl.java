@@ -643,7 +643,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     int forwardSize = 0;
     int backwardSize = 0;
     final TIntObjectHashMap<TIntArrayList> fileToBackwardIds = new TIntObjectHashMap<>(fileToForwardIds.size());
-    for (IntObjectMap.Entry<int[]> entry : fileToForwardIds.entries()) {
+    for (IntObjectMap.Entry<int[]> entry : fileToForwardIds.entrySet()) {
       int fileId = entry.getKey();
       int[] forwardIds = entry.getValue();
       forwardSize += forwardIds.length;

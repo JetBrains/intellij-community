@@ -16,6 +16,7 @@
 package com.intellij.util.config;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,12 +29,12 @@ public class ToggleInvertedBooleanProperty extends ToggleBooleanProperty {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return !getProperty().get(getProperties()).booleanValue();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     getProperty().set(getProperties(), Boolean.valueOf(!state));
   }
 

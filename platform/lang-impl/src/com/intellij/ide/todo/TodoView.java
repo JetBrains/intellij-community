@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -114,8 +113,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        AllTodosTreeBuilder builder = createAllTodoBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        AllTodosTreeBuilder builder = createAllTodoBuilder(tree, project);
         builder.init();
         return builder;
       }
@@ -138,8 +137,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
     CurrentFileTodosPanel currentFileTodos = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(tree, project);
         builder.init();
         return builder;
       }
@@ -151,8 +150,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
     ChangeListTodosPanel changeListTodos = new ChangeListTodosPanel(myProject, state.current, myChangeListTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, project);
         builder.init();
         return builder;
       }
@@ -243,8 +242,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   @NotNull
-  protected AllTodosTreeBuilder createAllTodoBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-    return new AllTodosTreeBuilder(tree, treeModel, project);
+  protected AllTodosTreeBuilder createAllTodoBuilder(JTree tree, Project project) {
+    return new AllTodosTreeBuilder(tree, project);
   }
 
   private final class MyVcsListener implements VcsListener {
@@ -340,8 +339,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content content = ContentFactory.SERVICE.getInstance().createContent(null, title, true);
     final ChangeListTodosPanel panel = new ChangeListTodosPanel(myProject, settings, content) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        TodoTreeBuilder todoTreeBuilder = factory.createTreeBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        TodoTreeBuilder todoTreeBuilder = factory.createTreeBuilder(tree, project);
         todoTreeBuilder.init();
         return todoTreeBuilder;
       }
