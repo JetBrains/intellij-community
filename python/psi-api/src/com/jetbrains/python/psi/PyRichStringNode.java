@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * A common interface containing utility methods shared among both plain string literals
@@ -17,81 +16,87 @@ import java.util.Set;
  */
 public interface PyRichStringNode extends PsiElement {
 
-  enum Modifier {
-    UNICODE,
-    BYTES,
-    RAW,
-    FORMATTED
-  }
-
   /**
-   * @return string prefix, e.g. "UR", "b" etc.
+   * Returns string prefix, e.g. "UR", "b", "f", etc.
+   *
+   * @see #getPrefixLength()
    */
   @NotNull
   String getPrefix();
 
+  /**
+   * Returns the length of the prefix.
+   *
+   * @see #getPrefix()
+   */
   int getPrefixLength();
 
   /**
-   * @return the same text as {@code getNode().getText().substring(getPrefixLength())}
-   */
-  @NotNull
-  String getTextWithoutPrefix();
-
-  /**
-   * @return <em>relative</em> range of the content (excluding prefix and quotes)
-   * @see #getAbsoluteContentRange()
+   * Returns <em>relative</em> range of this element actual content that contributes to {@link StringLiteralExpression#getStringValue()},
+   * i.e. excluding prefix and quotes.
+   *
+   * @see #getContent()
    */
   @NotNull
   TextRange getContentRange();
 
   /**
-   * @return <em>absolute</em> content range that accounts offset of the {@link #getNode() node} in the document
-   */
-  @NotNull
-  TextRange getAbsoluteContentRange();
-
-  /**
-   * @return content of the string node between quotes
+   * Returns the content of the string node between quotes
+   * 
+   * @see #getContentRange() 
    */
   @NotNull
   String getContent();
 
+  /**
+   * Has the same meaning as {@link PyStringLiteralExpression#getDecodedFragments()} but applied to individual string literals
+   * composing it. 
+   * 
+   * @see PyStringLiteralExpression#getDecodedFragments() 
+   */
   @NotNull
   List<Pair<TextRange, String>> getDecodedFragments();
 
+  /**
+   * Returns starting quotes of the string literal, regardless of whether it's properly terminated or not.
+   *
+   * @see #isTerminated()
+   */
   @NotNull
   String getQuote();
 
   /**
-   * @return the first character of {@link #getQuote()}
+   * Returns whether this string literal is enclosed in triple quotes and thus can contain unescaped line breaks.
    */
-  char getQuoteChar();
-
   boolean isTripleQuoted();
 
   /**
-   * @return true if string literal ends with starting quote
+   * Returns whether this string literal is properly terminated with the same type of quotes it begins with.
    */
   boolean isTerminated();
 
-  @NotNull
-  Set<Modifier> getModifiers();
-
   /**
-   * @return true if given string node contains "u" or "U" prefix
+   * Returns whether this string literal contains "u" or "U" prefix.
+   * <p>
+   * It's unrelated to which type the corresponding string literal expression actually has at runtime.
    */
   boolean isUnicode();
 
   /**
-   * @return true if given string node contains "r" or "R" prefix
+   * Returns whether this string literal contains "r" or "R" prefix.
    */
   boolean isRaw();
 
   /**
-   * @return true if given string node contains "b" or "B" prefix
+   * Returns whether this string literal contains "b" or "B" prefix.
    */
   boolean isBytes();
 
+  /**
+   * Returns whether this string literal contains "f" or "F" prefix.
+   * <p>
+   * It can be used as a counterpart for {@code this isinstance PyFormattedStringNode}, since only this implementation
+   * is allowed to have such prefix.
+   */
   boolean isFormatted();
 }
