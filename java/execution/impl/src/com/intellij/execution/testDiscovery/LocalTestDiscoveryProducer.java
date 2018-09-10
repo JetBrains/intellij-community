@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
@@ -25,5 +26,11 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public boolean isRemote() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) {
+    return Collections.emptyList();
   }
 }

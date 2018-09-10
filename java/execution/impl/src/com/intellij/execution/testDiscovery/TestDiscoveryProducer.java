@@ -7,12 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,17 @@ public interface TestDiscoveryProducer {
             if (!processor.process(className, couple.first, couple.second)) return;
           }
         }
+      }
+    }
+  }
+
+  @NotNull
+  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) throws IOException;
+
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<String> testFqns, @NotNull Consumer<? super String> pathsConsumer) throws IOException {
+    for (TestDiscoveryProducer extension : EP.getExtensions()) {
+      for (String path : extension.getAffectedFilePaths(project, testFqns)) {
+        pathsConsumer.consume(path);
       }
     }
   }

@@ -16,9 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -73,6 +71,19 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public boolean isRemote() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) throws IOException {
+    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
+    return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
+      r.write(testFqns.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
+      return Arrays.stream(new ObjectMapper().readValue(r.getInputStream(), TestDetails[].class))
+        .map(details -> details.files)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    });
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -139,6 +150,64 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     }
 
     public TestsSearchResult setMessage(String message) {
+      this.message = message;
+      return this;
+    }
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  private static class TestDetails {
+    @Nullable
+    private String method;
+
+    @SerializedName("class")
+    @JsonProperty("class")
+    @Nullable
+    private String className;
+
+    @Nullable
+    private List<String> files = ContainerUtil.newSmartList();
+
+    @Nullable
+    private String message;
+
+    @Nullable
+    public String getMethod() {
+      return method;
+    }
+
+    public TestDetails setMethod(String method) {
+      this.method = method;
+      return this;
+    }
+
+    @Nullable
+    public String getClassName() {
+      return className;
+    }
+
+    public TestDetails setClassName(String name) {
+      this.className = name;
+      return this;
+    }
+
+    @NotNull
+    public List<String> getFiles() {
+      if (files == null) return Collections.emptyList();
+      return files;
+    }
+
+    public TestDetails setFiles(@NotNull final List<String> files) {
+      this.files = files;
+      return this;
+    }
+
+    @Nullable
+    public String getMessage() {
+      return message;
+    }
+
+    public TestDetails setMessage(String message) {
       this.message = message;
       return this;
     }
