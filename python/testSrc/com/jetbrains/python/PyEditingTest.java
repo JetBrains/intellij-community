@@ -103,10 +103,21 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("f'{}'", doTestTyping("f''", 2, '{'));
   }
 
-  public void testEnterInFStringFragment() {
+  public void testEnterInMultilineFStringFragment() {
     doTestEnter("f'''{1 +<caret> 2}'''",
                 "f'''{1 +\n" +
                 "     2}'''");
+  }
+
+  public void testEnterInSingleLineFStringFragment() {
+    doTestEnter("f'foo{1 +<caret> 2}bar'",
+                "f'foo{1 +\n" +
+                "2}bar'");
+  }
+
+  public void testEnterInFStringTextPart() {
+    doTestEnter("f'foo<caret>bar'", "f'foo' \\\n" +
+                                    "    f'bar'");
   }
 
   public void testOvertypeFromInside() {
