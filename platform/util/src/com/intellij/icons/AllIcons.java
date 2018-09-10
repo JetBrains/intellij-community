@@ -1548,7 +1548,6 @@ public class AllIcons {
     public static final Icon ExcludedFromCompile = IconLoader.getIcon("/nodes/excludedFromCompile.svg"); // 16x16
     public static final Icon ExtractedFolder = IconLoader.getIcon("/nodes/extractedFolder.svg"); // 16x16
     public static final Icon Favorite = IconLoader.getIcon("/nodes/favorite.svg"); // 16x16
-    public static final Icon FavoriteOnHover = IconLoader.getIcon("/nodes/favoriteOnHover.png"); // 16x16
     public static final Icon Field = IconLoader.getIcon("/nodes/field.svg"); // 16x16
     public static final Icon FieldPK = IconLoader.getIcon("/nodes/fieldPK.svg"); // 16x16
     public static final Icon FinalMark = IconLoader.getIcon("/nodes/finalMark.svg"); // 16x16
@@ -1669,6 +1668,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ExpandNode = AllIcons.Nodes.TreeRightArrow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon FavoriteOnHover = AllIcons.Nodes.Favorite;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
