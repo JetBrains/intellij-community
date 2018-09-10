@@ -47,20 +47,14 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
     filter {
-      val call = it.getUCallExpression()
-      when (call) {
-        is UCallExpressionExMultiResolve ->
-          call.getArgumentForParameter(parameterIndex, true, false) == it
-        is UCallExpressionEx ->
-          call.getArgumentForParameter(parameterIndex) == it
-        else -> false
-      } && callPattern.accepts(call)
+      val call = it.getUCallExpression() as? UCallExpressionEx ?: return@filter false
+      call.getArgumentForParameter(parameterIndex) == it && callPattern.accepts(call)
     }
 
   fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex, callExpression().constructor(classFQN))
 
   fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
-    callParameter(parameterIndex, callExpression().withAnyResolvedMethod(methodPattern))
+    callParameter(parameterIndex, callExpression().withResolvedMethod(methodPattern))
 
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
@@ -72,11 +66,8 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun withMethodName(methodName : String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
 
-  fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter { uCallExpression ->
-    when (uCallExpression) {
-      is UMultiResolvable -> uCallExpression.multiResolve(false).any { method.accepts(it.element) }
-      else -> uCallExpression.resolve().let { method.accepts(it) }
-    }
+  fun withResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter {
+    it.resolve()?.let { method.accepts(it) } ?: false
   }
 
   fun withMethodName(namePattern: ElementPattern<String>): UCallExpressionPattern = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
