@@ -61,6 +61,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
           return it
         }
       }
+      // we cannot use here configuration.type.id because it will break previously stored list of stored settings
       @Suppress("DEPRECATION")
       return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
     }

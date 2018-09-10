@@ -892,7 +892,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? {
-    return allSettings.firstOrNull { it.configuration === configuration } ?: findConfigurationByName(configuration.name)
+    val id = RunnerAndConfigurationSettingsImpl.getUniqueIdFor(configuration)
+    lock.read {
+      return idToSettings.get(id)
+    }
   }
 
   override fun isTemplate(configuration: RunConfiguration): Boolean {
