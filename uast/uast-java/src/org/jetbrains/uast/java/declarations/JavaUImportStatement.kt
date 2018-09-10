@@ -31,6 +31,6 @@ class JavaUImportStatement(
     get() = psi.isOnDemand
   override val importReference: JavaDumbUElement? by lz { psi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
   override fun resolve(): PsiElement? = psi.resolve()
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    psi.importReference?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()
 }

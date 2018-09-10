@@ -35,7 +35,7 @@ class JavaUCallableReferenceExpression(
 
   override fun resolve(): PsiElement? = psi.resolve()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = psi.multiResolve(incompleteCode).asIterable()
+  override fun multiResolve(): Iterable<ResolveResult> = psi.multiResolve(false).asIterable()
 
   override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
 }

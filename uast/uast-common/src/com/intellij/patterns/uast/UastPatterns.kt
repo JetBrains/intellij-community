@@ -47,14 +47,8 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
     filter {
-      val call = it.getUCallExpression()
-      when (call) {
-        is UCallExpressionExMultiResolve ->
-          call.getArgumentForParameter(parameterIndex, true, false) == it
-        is UCallExpressionEx ->
-          call.getArgumentForParameter(parameterIndex) == it
-        else -> false
-      } && callPattern.accepts(call)
+      val call = it.getUCallExpression() as? UCallExpressionEx ?: return@filter false
+      call.getArgumentForParameter(parameterIndex) == it && callPattern.accepts(call)
     }
 
   fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex, callExpression().constructor(classFQN))
@@ -74,7 +68,7 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter { uCallExpression ->
     when (uCallExpression) {
-      is UMultiResolvable -> uCallExpression.multiResolve(false).any { method.accepts(it.element) }
+      is UMultiResolvable -> uCallExpression.multiResolve().any { method.accepts(it.element) }
       else -> uCallExpression.resolve().let { method.accepts(it) }
     }
   }
