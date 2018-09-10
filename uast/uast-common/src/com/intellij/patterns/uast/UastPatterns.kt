@@ -54,7 +54,7 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
   fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex, callExpression().constructor(classFQN))
 
   fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
-    callParameter(parameterIndex, callExpression().withResolvedMethod(methodPattern))
+    callParameter(parameterIndex, callExpression().withAnyResolvedMethod(methodPattern))
 
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
@@ -66,8 +66,11 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun withMethodName(methodName : String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
 
-  fun withResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter {
-    it.resolve()?.let { method.accepts(it) } ?: false
+  fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter { uCallExpression ->
+    when (uCallExpression) {
+      is UMultiResolvable -> uCallExpression.multiResolve().any { method.accepts(it.element) }
+      else -> uCallExpression.resolve().let { method.accepts(it) }
+    }
   }
 
   fun withMethodName(namePattern: ElementPattern<String>): UCallExpressionPattern = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
