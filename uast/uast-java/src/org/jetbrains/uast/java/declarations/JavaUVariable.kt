@@ -108,7 +108,7 @@ open class JavaULocalVariable(
 open class JavaUEnumConstant(
   psi: PsiEnumConstant,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionExMultiResolve, PsiEnumConstant by psi, UMultiResolvable {
+) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionEx, PsiEnumConstant by psi, UMultiResolvable {
   override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
   override val psi: PsiEnumConstant
@@ -139,7 +139,7 @@ open class JavaUEnumConstant(
     } ?: emptyList()
   }
 
-  override fun getArgumentForParameter(i: Int, multiResolve: Boolean, incompleteCode: Boolean): UExpression? = valueArguments.getOrNull(i)
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override val returnType: PsiType?
     get() = psi.type
