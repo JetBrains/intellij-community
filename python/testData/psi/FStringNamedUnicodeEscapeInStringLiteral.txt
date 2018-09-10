@@ -6,7 +6,7 @@ PyFile:FStringNamedUnicodeEscapeInStringLiteral.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {"\N{LATIN SMALL LETTER A}"}
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')

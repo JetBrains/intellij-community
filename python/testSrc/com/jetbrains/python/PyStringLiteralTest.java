@@ -179,6 +179,6 @@ public class PyStringLiteralTest extends PyTestCase {
 
   public void testRichStringNodes() {
     final PyStringLiteralExpression string = createLiteralFromText("'foo' 'bar' 'baz'");
-    assertSize(3, string.getGluedStringNodes());
+    assertSize(3, string.getStringElements());
   }
 }

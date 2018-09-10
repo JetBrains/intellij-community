@@ -6,7 +6,7 @@ PyFile:FStringTerminatedByQuoteInsideFStringLiteralInFormatPart.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {42:{f"}}'
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
@@ -17,7 +17,7 @@ PyFile:FStringTerminatedByQuoteInsideFStringLiteralInFormatPart.py
             PyFStringFragment
               PsiElement(Py:FSTRING_FRAGMENT_START)('{')
               PyStringLiteralExpression: 
-                PyFormattedStringNode
+                PyFormattedStringElement
                   PsiElement(Py:FSTRING_START)('f"')
                   PsiErrorElement:" expected
                     <empty list>

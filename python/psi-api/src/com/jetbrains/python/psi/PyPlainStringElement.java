@@ -15,5 +15,5 @@ package com.jetbrains.python.psi;
  * <li>{@code '\u0041 \x41 \N{LATIN CAPITAL LETTER A}'}</li>
  * </ul>
  */
-public interface PyLiteralStringNode extends PyRichStringNode {
+public interface PyPlainStringElement extends PyStringElement {
 }

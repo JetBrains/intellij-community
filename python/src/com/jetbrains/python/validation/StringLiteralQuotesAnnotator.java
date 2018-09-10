@@ -26,7 +26,7 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     final List<ASTNode> stringNodes = node.getStringNodes();
     for (ASTNode stringNode : stringNodes) {
-      // TODO Migrate to newer PyRichStringNode API
+      // TODO Migrate to newer PyStringElement API
       if (stringNode.getElementType() == PyElementTypes.FSTRING_NODE) {
         continue;
       }

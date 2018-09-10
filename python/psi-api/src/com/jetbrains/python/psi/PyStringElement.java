@@ -11,10 +11,10 @@ import java.util.List;
  * A common interface containing utility methods shared among both plain string literals
  * (i.e. those that don't have "f" prefix) and formatted literals (f-strings).
  *
- * @see PyLiteralStringNode
- * @see PyFormattedStringNode
+ * @see PyPlainStringElement
+ * @see PyFormattedStringElement
  */
-public interface PyRichStringNode extends PsiElement {
+public interface PyStringElement extends PsiElement {
 
   /**
    * Returns string prefix, e.g. "UR", "b", "f", etc.
@@ -95,7 +95,7 @@ public interface PyRichStringNode extends PsiElement {
   /**
    * Returns whether this string literal contains "f" or "F" prefix.
    * <p>
-   * It can be used as a counterpart for {@code this isinstance PyFormattedStringNode}, since only this implementation
+   * It can be used as a counterpart for {@code this isinstance PyFormattedStringElement}, since only this implementation
    * is allowed to have such prefix.
    */
   boolean isFormatted();

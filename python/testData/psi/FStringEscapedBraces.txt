@@ -6,7 +6,7 @@ PyFile:FStringEscapedBraces.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {} {{42}} } {
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('{{}} {{')
         PyFStringFragment

@@ -6,7 +6,7 @@ PyFile:SingleLineFStringContainsCommentInsteadOfExpression.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {# comment}'
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')

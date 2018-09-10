@@ -83,7 +83,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
       final int elementStart = getTextRange().getStartOffset();
-      final List<TextRange> ranges = StreamEx.of(getGluedStringNodes())
+      final List<TextRange> ranges = StreamEx.of(getStringElements())
         .map(node -> {
           final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
           return node.getContentRange().shiftRight(nodeRelativeOffset);
@@ -100,7 +100,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final int elementStart = getTextRange().getStartOffset();
     List<Pair<TextRange, String>> result = myDecodedFragments;
     if (result == null) {
-      final List<Pair<TextRange, String>> combined = StreamEx.of(getGluedStringNodes())
+      final List<Pair<TextRange, String>> combined = StreamEx.of(getStringElements())
         .flatMap(node -> StreamEx.of(node.getDecodedFragments())
           .map(pair -> {
             final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
@@ -127,10 +127,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   @NotNull
   @Override
-  public List<PyRichStringNode> getGluedStringNodes() {
+  public List<PyStringElement> getStringElements() {
     return StreamEx.of(getStringNodes())
       .map(ASTNode::getPsi)
-      .select(PyRichStringNode.class)
+      .select(PyStringElement.class)
       .toList();
   }
 

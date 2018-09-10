@@ -16,7 +16,7 @@ public class PythonASTFactory extends ASTFactory {
   @Override
   public LeafElement createLeaf(@NotNull IElementType type, CharSequence text) {
     if (PyTokenTypes.STRING_NODES.contains(type)) {
-      return new PyLiteralStringNodeImpl(type, text);
+      return new PyPlainStringElementImpl(type, text);
     }
     return super.createLeaf(type, text);
   }

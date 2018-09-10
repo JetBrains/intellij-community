@@ -6,7 +6,7 @@ PyFile:FStringFragmentWithLiteralFormatPart.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {42:foo}
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')

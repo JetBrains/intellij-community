@@ -6,7 +6,7 @@ PyFile:UnterminatedFStringWithTrailingBackslashInLiteralPart.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: \
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('\')
         PsiErrorElement:' expected

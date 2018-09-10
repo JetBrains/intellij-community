@@ -7,13 +7,13 @@ PyFile:FStringTerminatedByEscapedLineBreakInNestedStringLiteral.py
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {f'''{'\
 '}'''}
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f"')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyStringLiteralExpression: {'\
 '}
-            PyFormattedStringNode
+            PyFormattedStringElement
               PsiElement(Py:FSTRING_START)('f'''')
               PyFStringFragment
                 PsiElement(Py:FSTRING_FRAGMENT_START)('{')

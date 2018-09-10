@@ -13,22 +13,22 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFStringFragment;
-import com.jetbrains.python.psi.PyFormattedStringNode;
+import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyFormattedStringNodeImpl extends PyElementImpl implements PyFormattedStringNode {
+public class PyFormattedStringElementImpl extends PyElementImpl implements PyFormattedStringElement {
 
-  public PyFormattedStringNodeImpl(ASTNode astNode) {
+  public PyFormattedStringElementImpl(ASTNode astNode) {
     super(astNode);
   }
 
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-    pyVisitor.visitPyFormattedStringNode(this);
+    pyVisitor.visitPyFormattedStringElement(this);
   }
 
   @NotNull

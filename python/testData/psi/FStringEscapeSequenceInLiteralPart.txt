@@ -7,7 +7,7 @@ PyFile:FStringEscapeSequenceInLiteralPart.py
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
 {42}\
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('\n')
         PyFStringFragment

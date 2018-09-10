@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Represents an f-string, a special kind of interpolated string literal introduced in Python 3.6.
  * 
- * Unlike {@link PyLiteralStringNode} these elements are composite and consist of several kinds of tokens
+ * Unlike {@link PyPlainStringElement} these elements are composite and consist of several kinds of tokens
  * and normal PSI trees for embedded expressions.
  * 
  * @see com.jetbrains.python.PyTokenTypes#FSTRING_START
@@ -17,7 +17,7 @@ import java.util.List;
  * @see PyFStringFragment
  * @see com.jetbrains.python.PyTokenTypes#FSTRING_END
  */
-public interface PyFormattedStringNode extends PyRichStringNode, PyElement {
+public interface PyFormattedStringElement extends PyStringElement, PyElement {
   /**
    * Returns a list of replacement fields containing expressions which values should be embedded into this literal content.
    * <p>
@@ -33,7 +33,7 @@ public interface PyFormattedStringNode extends PyRichStringNode, PyElement {
    * expression fragments.
    * <p>
    * These ranges don't include literal format specifier parts of fragments and should be completely
-   * covered by {@link PyRichStringNode#getContentRange()}.
+   * covered by {@link PyStringElement#getContentRange()}.
    * <p>
    * For instance, for the following f-string:
    * <p>
