@@ -3,6 +3,7 @@ deprecated: disabledPointcut.svg; to be removed in IDEA 2020
 deprecated: expandNode.png -> /nodes/treeRightArrow.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow
 deprecated: newException.svg; to be removed in IDEA 2020
 deprecated: newFolder.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: pinToolWindow.svg -> /nodes/tabPin.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TabPin
 deprecated: pluginUpdate.svg; to be removed in IDEA 2020
 deprecated: pointcut.svg; to be removed in IDEA 2020
 deprecated: ppFile.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder

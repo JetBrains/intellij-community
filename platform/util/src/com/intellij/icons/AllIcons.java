@@ -1605,7 +1605,6 @@ public class AllIcons {
     public static final Icon Package = IconLoader.getIcon("/nodes/package.svg"); // 16x16
     public static final Icon Padlock = IconLoader.getIcon("/nodes/padlock.svg"); // 16x16
     public static final Icon Parameter = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
-    public static final Icon PinToolWindow = IconLoader.getIcon("/nodes/pinToolWindow.svg"); // 13x13
     public static final Icon Plugin = IconLoader.getIcon("/nodes/plugin.svg"); // 16x16
     public static final Icon PluginJB = IconLoader.getIcon("/nodes/pluginJB.svg"); // 16x16
     public static final Icon PluginLogo = IconLoader.getIcon("/nodes/pluginLogo.svg"); // 32x32
@@ -1680,6 +1679,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon NewFolder = AllIcons.Nodes.Folder;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TabPin */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon PinToolWindow = AllIcons.Nodes.TabPin;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
