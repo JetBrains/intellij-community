@@ -1642,8 +1642,6 @@ public class AllIcons {
     public static final Icon TestGroup = IconLoader.getIcon("/nodes/testGroup.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/nodes/testIgnored.svg"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/nodes/testSourceFolder.svg"); // 16x16
-    public static final Icon TreeDownArrow = IconLoader.getIcon("/nodes/treeDownArrow.png"); // 11x11
-    public static final Icon TreeRightArrow = IconLoader.getIcon("/nodes/treeRightArrow.png"); // 11x11
     public static final Icon Undeploy = IconLoader.getIcon("/nodes/undeploy.svg"); // 16x16
     public static final Icon UnknownJdk = IconLoader.getIcon("/nodes/unknownJdk.svg"); // 16x16
     public static final Icon UpFolder = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16
@@ -1654,20 +1652,20 @@ public class AllIcons {
     public static final Icon Weblistener = IconLoader.getIcon("/nodes/weblistener.svg"); // 16x16
     public static final Icon Write_access = IconLoader.getIcon("/nodes/write-access.svg"); // 16x16
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseNode = AllIcons.Nodes.TreeDownArrow;
+    public static final Icon CollapseNode = AllIcons.General.ArrowDown;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandNode = AllIcons.Nodes.TreeRightArrow;
+    public static final Icon ExpandNode = AllIcons.General.ArrowRight;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
     @SuppressWarnings("unused")
@@ -1719,20 +1717,30 @@ public class AllIcons {
     @Deprecated
     public static final Icon TreeClosed = AllIcons.Nodes.Folder;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeCollapseNode = AllIcons.Nodes.TreeDownArrow;
+    public static final Icon TreeCollapseNode = AllIcons.General.ArrowDown;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeExpandNode = AllIcons.Nodes.TreeRightArrow;
+    public static final Icon TreeDownArrow = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TreeExpandNode = AllIcons.General.ArrowRight;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon TreeOpen = AllIcons.Nodes.Folder;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TreeRightArrow = AllIcons.General.ArrowRight;
 
   }
 
