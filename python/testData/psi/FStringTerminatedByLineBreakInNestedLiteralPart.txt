@@ -6,12 +6,12 @@ PyFile:FStringTerminatedByLineBreakInNestedLiteralPart.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {f'foo
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f"')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyStringLiteralExpression: foo
-            PyFormattedStringNode
+            PyFormattedStringElement
               PsiElement(Py:FSTRING_START)('f'')
               PsiElement(Py:FSTRING_TEXT)('foo')
               PsiErrorElement:' expected

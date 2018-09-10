@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyRichStringNode;
+import com.jetbrains.python.psi.PyStringElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +59,9 @@ public class PyStringLiteralDecoder {
     return map;
   }
 
-  private final PyRichStringNode myNode;
+  private final PyStringElement myNode;
 
-  public PyStringLiteralDecoder(@NotNull PyRichStringNode node) {
+  public PyStringLiteralDecoder(@NotNull PyStringElement node) {
     myNode = node;
   }
 

@@ -10,7 +10,7 @@ PyFile:FStringGluedWithLiteralStringNodes.py
       PyStringLiteralExpression: foo{42} {True}bar
         PsiElement(Py:SINGLE_QUOTED_STRING)(''foo'')
         PsiWhiteSpace('\n     ')
-        PyFormattedStringNode
+        PyFormattedStringElement
           PsiElement(Py:FSTRING_START)('f'')
           PyFStringFragment
             PsiElement(Py:FSTRING_FRAGMENT_START)('{')

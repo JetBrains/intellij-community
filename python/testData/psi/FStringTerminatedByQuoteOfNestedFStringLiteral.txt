@@ -6,12 +6,12 @@ PyFile:FStringTerminatedByQuoteOfNestedFStringLiteral.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {f"{f
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyStringLiteralExpression: {f
-            PyFormattedStringNode
+            PyFormattedStringElement
               PsiElement(Py:FSTRING_START)('f"')
               PyFStringFragment
                 PsiElement(Py:FSTRING_FRAGMENT_START)('{')

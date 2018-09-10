@@ -1917,7 +1917,7 @@ public class PyUtil {
 
     public StringNodeInfo(@NotNull ASTNode node) {
       final IElementType nodeType = node.getElementType();
-      // TODO Migrate to newer PyRichStringNode API
+      // TODO Migrate to newer PyStringElement API
       if (!PyTokenTypes.STRING_NODES.contains(nodeType) && nodeType != PyElementTypes.FSTRING_NODE) {
         throw new IllegalArgumentException("Node must be valid Python string literal token, but " + nodeType + " was given");
       }

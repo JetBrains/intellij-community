@@ -9,25 +9,25 @@ PyFile:EmptyFStrings.py
       PsiElement(Py:LPAR)('(')
       PyTupleExpression
         PyStringLiteralExpression: 
-          PyFormattedStringNode
+          PyFormattedStringElement
             PsiElement(Py:FSTRING_START)('f'')
             PsiElement(Py:FSTRING_END)(''')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace('\n     ')
         PyStringLiteralExpression: 
-          PyFormattedStringNode
+          PyFormattedStringElement
             PsiElement(Py:FSTRING_START)('F"')
             PsiElement(Py:FSTRING_END)('"')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace('\n     ')
         PyStringLiteralExpression: 
-          PyFormattedStringNode
+          PyFormattedStringElement
             PsiElement(Py:FSTRING_START)('rf"""')
             PsiElement(Py:FSTRING_END)('"""')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace('\n     ')
         PyStringLiteralExpression: 
-          PyFormattedStringNode
+          PyFormattedStringElement
             PsiElement(Py:FSTRING_START)('FR'''')
             PsiElement(Py:FSTRING_END)(''''')
         PsiElement(Py:COMMA)(',')

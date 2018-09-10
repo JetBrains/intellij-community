@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.psi.PyLiteralStringNode;
+import com.jetbrains.python.psi.PyPlainStringElement;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +14,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteralStringNode {
-  public PyLiteralStringNodeImpl(@NotNull IElementType type, CharSequence text) {
+public class PyPlainStringElementImpl extends LeafPsiElement implements PyPlainStringElement {
+  public PyPlainStringElementImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 

@@ -6,7 +6,7 @@ PyFile:FStringIncompleteNamedUnicodePrecedingFragment.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: \N{LATIN SMALL LETTER A{42}
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('\N{LATIN SMALL LETTER A')
         PyFStringFragment

@@ -213,7 +213,7 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
-  public void visitPyFormattedStringNode(PyFormattedStringNode node) {
+  public void visitPyFormattedStringElement(PyFormattedStringElement node) {
     visitPyElement(node);
   }
 

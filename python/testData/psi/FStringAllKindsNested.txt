@@ -6,25 +6,25 @@ PyFile:FStringAllKindsNested.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 1{f'''2{f"3{f'4'}"}'''}
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f"""')
         PsiElement(Py:FSTRING_TEXT)('1')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyStringLiteralExpression: 2{f"3{f'4'}"}
-            PyFormattedStringNode
+            PyFormattedStringElement
               PsiElement(Py:FSTRING_START)('f'''')
               PsiElement(Py:FSTRING_TEXT)('2')
               PyFStringFragment
                 PsiElement(Py:FSTRING_FRAGMENT_START)('{')
                 PyStringLiteralExpression: 3{f'4'}
-                  PyFormattedStringNode
+                  PyFormattedStringElement
                     PsiElement(Py:FSTRING_START)('f"')
                     PsiElement(Py:FSTRING_TEXT)('3')
                     PyFStringFragment
                       PsiElement(Py:FSTRING_FRAGMENT_START)('{')
                       PyStringLiteralExpression: 4
-                        PyFormattedStringNode
+                        PyFormattedStringElement
                           PsiElement(Py:FSTRING_START)('f'')
                           PsiElement(Py:FSTRING_TEXT)('4')
                           PsiElement(Py:FSTRING_END)(''')

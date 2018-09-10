@@ -6,7 +6,7 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_END)(''')
   PsiWhiteSpace(' \n')
@@ -17,7 +17,7 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('fr'')
         PsiElement(Py:FSTRING_END)(''')
   PsiWhiteSpace('\n')
@@ -28,7 +28,7 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('rf'')
         PsiElement(Py:FSTRING_END)(''')
   PsiWhiteSpace('\n')
@@ -39,7 +39,7 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('F'')
         PsiElement(Py:FSTRING_END)(''')
   PsiWhiteSpace('\n')
@@ -50,7 +50,7 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('bf'')
         PsiElement(Py:FSTRING_END)(''')
   PsiWhiteSpace('\n')
@@ -61,7 +61,7 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('uf'')
         PsiElement(Py:FSTRING_END)(''')
   PsiWhiteSpace('\n')
@@ -72,6 +72,6 @@ PyFile:FStrings.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: 
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('ufr'')
         PsiElement(Py:FSTRING_END)(''')

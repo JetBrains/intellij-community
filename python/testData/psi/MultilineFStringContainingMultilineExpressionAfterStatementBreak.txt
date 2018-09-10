@@ -5,7 +5,7 @@ PyFile:MultilineFStringContainingMultilineExpressionAfterStatementBreak.py
   PyExpressionStatement
     PyStringLiteralExpression: {1 + 
 2}
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'''')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')

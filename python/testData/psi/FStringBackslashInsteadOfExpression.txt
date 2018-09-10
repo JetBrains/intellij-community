@@ -6,7 +6,7 @@ PyFile:FStringBackslashInsteadOfExpression.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: foo{\}bar
-      PyFormattedStringNode
+      PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('foo')
         PyFStringFragment

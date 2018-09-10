@@ -37,17 +37,17 @@ import java.util.List;
  * a "raw" bytes literal {@code rb'\bar'} using apostrophes as quotes and a formatted string literal
  * {@code f'{baz}'} containing the value of the expression {@code baz}.
  * <p>
- * PSI elements representing each of these parts can be acquired using {@link #getGluedStringNodes()} method.
- * Both plain and formatted literals forming a whole string literal expression implement {@link PyRichStringNode}
+ * PSI elements representing each of these parts can be acquired using {@link #getStringElements()} method.
+ * Both plain and formatted literals forming a whole string literal expression implement {@link PyStringElement}
  * interface containing methods for retrieving general information about them such as quote types, prefixes,
  * decoded value, etc.
  *
  * @see <a href="https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation">
  *   https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation</a>
- * @see #getGluedStringNodes()
- * @see PyRichStringNode
- * @see PyLiteralStringNode
- * @see PyFormattedStringNode
+ * @see #getStringElements()
+ * @see PyStringElement
+ * @see PyPlainStringElement
+ * @see PyFormattedStringElement
  */
 public interface PyStringLiteralExpression extends PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
   @NotNull
@@ -57,7 +57,7 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
    * Returns a list of implicitly concatenated string elements composing this literal expression.  
    */
   @NotNull
-  List<PyRichStringNode> getGluedStringNodes();
+  List<PyStringElement> getStringElements();
 
   int valueOffsetToTextOffset(int valueOffset);
 

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
-import com.jetbrains.python.psi.PyFormattedStringNode;
+import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.List;
@@ -70,7 +70,7 @@ public class FStringsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyFormattedStringNode(PyFormattedStringNode node) {
+  public void visitPyFormattedStringElement(PyFormattedStringElement node) {
     final String wholeNodeText = node.getText();
     for (TextRange textRange : node.getLiteralPartRanges()) {
       int i = textRange.getStartOffset();
