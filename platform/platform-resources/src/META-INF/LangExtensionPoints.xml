@@ -668,6 +668,8 @@
     <extensionPoint name="usageContextPanelProvider"
                     interface="com.intellij.usages.UsageContextPanel$Provider"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="usageViewFactory"
+                    interface="com.intellij.usages.impl.UsageViewFactory"/>
 
     <extensionPoint name="treeStructureProvider"
                     interface="com.intellij.ide.projectView.TreeStructureProvider"
