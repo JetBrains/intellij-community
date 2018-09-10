@@ -135,7 +135,7 @@ public class GroovycRunner {
     final ClassLoader[] ref = new ClassLoader[1];
     new Runnable() {
       public void run() {
-        ref[0] = UrlClassLoader.build().urls(urls).useCache().get();
+        ref[0] = UrlClassLoader.build().urls(urls).useCache().allowLock().get();
       }
     }.run();
     return ref[0];
