@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -44,6 +43,7 @@ import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcsUtil.VcsUtil;
@@ -165,13 +165,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @NotNull                                    
   public List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList, boolean onlyRelevant) {
-    List<Change> changes = ContainerUtil.newArrayList();
-    List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-    for (VcsFullCommitDetails details : detailsListReversed) {
-      changes.addAll(onlyRelevant ? collectRelevantChanges(details) : details.getChanges());
-    }
-
-    return CommittedChangesTreeBrowser.zipChanges(changes);
+    return VcsLogUtil.collectChanges(detailsList, details -> onlyRelevant ? collectRelevantChanges(details) : details.getChanges());
   }
 
   @Override

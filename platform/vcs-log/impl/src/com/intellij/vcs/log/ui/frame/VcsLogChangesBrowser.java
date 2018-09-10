@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -36,6 +35,7 @@ import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -180,13 +180,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
       }
     }
     else {
-      List<Change> changes = ContainerUtil.newArrayList();
-      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-      for (VcsFullCommitDetails detail : detailsListReversed) {
-        changes.addAll(detail.getChanges());
-      }
-
-      myChanges.addAll(CommittedChangesTreeBrowser.zipChanges(changes));
+      myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
       myViewer.setEmptyText("");
     }
 
