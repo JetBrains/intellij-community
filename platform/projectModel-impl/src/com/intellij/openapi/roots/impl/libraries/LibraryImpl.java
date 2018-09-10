@@ -246,7 +246,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private VirtualFilePointerListener getListener() {
-    Project project = myLibraryTable instanceof ProjectLibraryTableInterface ? ((ProjectLibraryTableInterface)myLibraryTable).getProject() : null;
+    Project project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
     return myRootModel != null ? ((RootModelImpl)myRootModel).getRootsChangedListener() : project != null ? ProjectRootManagerImpl
       .getInstanceImpl(project).getRootsValidityChangedListener() : ProjectJdkImpl.getGlobalVirtualFilePointerListener();
   }
@@ -371,7 +371,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       Module module = getModule();
       Project project;
       if (module == null) {
-        project = myLibraryTable instanceof ProjectLibraryTableInterface ? ((ProjectLibraryTableInterface)myLibraryTable).getProject() : null;
+        project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
       }
       else {
         project = module.getProject();
