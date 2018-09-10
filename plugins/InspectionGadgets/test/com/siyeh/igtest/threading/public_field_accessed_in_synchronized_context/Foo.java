@@ -15,8 +15,8 @@ public class Foo {
   private List<Bar2> myBars;
 
   synchronized public void setSingle() {
-    myBar.field1 = "bar";
-    myBar.setField2("bar");
+    <warning descr="Non-private field 'myBar' accessed in synchronized context">myBar</warning>.field1 = "bar";
+    <warning descr="Non-private field 'myBar' accessed in synchronized context">myBar</warning>.setField2("bar");
   }
 
   synchronized public void setViaList() {

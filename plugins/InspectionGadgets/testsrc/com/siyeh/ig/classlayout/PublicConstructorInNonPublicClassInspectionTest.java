@@ -4,12 +4,13 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicConstructorInNonPublicClassInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/classlayout/public_constructor_in_non_public_class";
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classlayout/public_constructor_in_non_public_class";
   }
 
   @NotNull
@@ -34,5 +35,4 @@ public class PublicConstructorInNonPublicClassInspectionTest extends LightCodeIn
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
-
 }
