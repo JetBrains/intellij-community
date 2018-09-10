@@ -27,6 +27,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
@@ -904,7 +905,7 @@ public class PluginManagerCore {
         int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
         if (oldIndex >= 0) {
           IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
-          if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
+          if (VersionComparatorUtil.compare(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
             if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
               getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
             }
