@@ -208,7 +208,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myList.getSelectedIndex();
   }
 
-  protected void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
+  public void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
     myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
   }
 
@@ -413,7 +413,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 
-  protected boolean isSelectionVisible() {
+  public boolean isSelectionVisible() {
     return ScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
@@ -478,6 +478,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     if (!writableOk) {
+      fireBeforeItemSelected(null, completionChar);
       doHide(false, true);
       fireItemSelected(null, completionChar);
       return;
@@ -493,6 +494,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         item.getObject() instanceof DeferredUserLookupValue &&
         item.as(LookupItem.CLASS_CONDITION_KEY) != null &&
         !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), myProject)) {
+      fireBeforeItemSelected(null, completionChar);
       doHide(false, true);
       fireItemSelected(null, completionChar);
       return;
@@ -509,15 +511,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     myFinishing = true;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myEditor.getDocument().startGuardedBlockChecking();
-      try {
-        insertLookupString(item, getPrefixLength(item));
-      }
-      finally {
-        myEditor.getDocument().stopGuardedBlockChecking();
-      }
-    });
+    if (fireBeforeItemSelected(item, completionChar)) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myEditor.getDocument().startGuardedBlockChecking();
+        try {
+          insertLookupString(item, getPrefixLength(item));
+        }
+        finally {
+          myEditor.getDocument().stopGuardedBlockChecking();
+        }
+      });
+    }
 
     if (myDisposed) { // any document listeners could close us
       return;
@@ -843,6 +847,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return itmBounds;
   }
 
+  private boolean fireBeforeItemSelected(@Nullable final LookupElement item, char completionChar) {
+    boolean result = true;
+    if (!myListeners.isEmpty()){
+      LookupEvent event = new LookupEvent(this, item, completionChar);
+      for (LookupListener listener : myListeners) {
+        try {
+          if (!listener.beforeItemSelected(event)) result = false;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    }
+    return result;
+  }
+
   public void fireItemSelected(@Nullable final LookupElement item, char completionChar){
     if (item != null && item.requiresCommittedDocuments()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -883,6 +903,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       }
     }
     myPreview.updatePreview(currentItem);
+  }
+
+  private void fireUiRefreshed() {
+    for (LookupListener listener : myListeners) {
+      listener.uiRefreshed();
+    }
   }
 
   public void replacePrefix(final String presentPrefix, final String newPrefix) {
@@ -1074,6 +1100,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     finally {
       myUpdating = false;
       fireCurrentItemChanged(prevItem, getCurrentItem());
+      fireUiRefreshed();
     }
   }
 

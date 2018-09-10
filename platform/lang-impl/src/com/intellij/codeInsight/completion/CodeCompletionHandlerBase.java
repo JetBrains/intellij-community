@@ -66,6 +66,12 @@ public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private static final Key<Boolean> CARET_PROCESSED = Key.create("CodeCompletionHandlerBase.caretProcessed");
 
+  /**
+   * If this key is set for a lookup element, the framework will only call handleInsert() on the lookup element when it is selected,
+   * and will not perform any additional processing such as multicaret handling or insertion of completion character.
+   */
+  public static final Key<Boolean> DIRECT_INSERTION = Key.create("CodeCompletionHandlerBase.directInsertion");
+
   @NotNull final CompletionType completionType;
   final boolean invokedExplicitly;
   final boolean synchronous;
@@ -412,7 +418,12 @@ public class CodeCompletionHandlerBase {
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
-      context = insertItemHonorBlockSelection(indicator, item, completionChar, update);
+      if (item.getUserData(DIRECT_INSERTION) != null) {
+        context = callHandleInsert(indicator, item, completionChar);
+      }
+      else {
+        context = insertItemHonorBlockSelection(indicator, item, completionChar, update);
+      }
       update.trackStatistics(context);
     }
     finally {
@@ -443,9 +454,7 @@ public class CodeCompletionHandlerBase {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
-    final int idEndOffset = indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
-                            indicator.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) :
-                            CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
+    final int idEndOffset = calcIdEndOffset(indicator);
     final int idEndOffsetDelta = idEndOffset - caretOffset;
 
     WatchingInsertionContext context;
@@ -493,6 +502,12 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
+  private static int calcIdEndOffset(CompletionProcessEx indicator) {
+    return indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
+        indicator.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) :
+        CompletionInitializationContext.calcDefaultIdentifierEnd(indicator.getEditor(), indicator.getCaret().getOffset());
+  }
+
   private static void checkPsiTextConcistency(CompletionProcessEx indicator) {
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
     if (psiFile != null) {
@@ -538,15 +553,8 @@ public class CodeCompletionHandlerBase {
                                                      final int idEndOffset,
                                                      final OffsetMap offsetMap) {
     editor.getCaretModel().moveToOffset(caretOffset);
+    WatchingInsertionContext context = createInsertionContext(lookup, item, completionChar, editor, psiFile, caretOffset, idEndOffset, offsetMap);
     int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
-
-    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
-    offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
-    offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
-
-    WatchingInsertionContext context = new WatchingInsertionContext(offsetMap, psiFile, completionChar,
-                                                                    lookup != null ? lookup.getItems() : Collections.emptyList(),
-                                                                    editor);
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         if (caretOffset < idEndOffset && completionChar == Lookup.REPLACE_SELECT_CHAR) {
@@ -571,6 +579,38 @@ public class CodeCompletionHandlerBase {
     });
     if (lookup != null) {
       update.addSparedChars(lookup, item, context);
+    }
+    return context;
+  }
+
+  @NotNull
+  private static WatchingInsertionContext createInsertionContext(@Nullable Lookup lookup, LookupElement item, char completionChar, Editor editor, PsiFile psiFile, int caretOffset, int idEndOffset, OffsetMap offsetMap) {
+    int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
+
+    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
+    offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
+    offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
+
+    WatchingInsertionContext context = new WatchingInsertionContext(offsetMap, psiFile, completionChar,
+        lookup != null ? lookup.getItems() : Collections.emptyList(),
+        editor);
+    return context;
+  }
+
+  private WatchingInsertionContext callHandleInsert(CompletionProgressIndicator indicator, LookupElement item, char completionChar) {
+    final Editor editor = indicator.getEditor();
+
+    final int caretOffset = indicator.getCaret().getOffset();
+    final int idEndOffset = calcIdEndOffset(indicator);
+    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, indicator.getProject());
+
+    WatchingInsertionContext context = createInsertionContext(indicator.getLookup(), item, completionChar, editor, psiFile,
+        caretOffset, idEndOffset, indicator.getOffsetMap());
+    try {
+      item.handleInsert(context);
+    }
+    finally {
+      context.stopWatching();
     }
     return context;
   }
