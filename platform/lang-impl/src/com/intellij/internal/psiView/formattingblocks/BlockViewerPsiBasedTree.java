@@ -172,9 +172,9 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
   private TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
-    Function<Object, BlockTreeNode> converter = el -> {
-      return el instanceof DefaultMutableTreeNode ? (BlockTreeNode)((DefaultMutableTreeNode)el).getUserObject() : null;
-    };
+    Function<Object, BlockTreeNode> converter = el -> el instanceof DefaultMutableTreeNode ?
+                                                      (BlockTreeNode)((DefaultMutableTreeNode)el).getUserObject() :
+                                                      null;
     Set<SimpleNode> parents = ContainerUtil.newHashSet();
     SimpleNode parent = currentBlockNode.getParent();
     while (parent != null) {
@@ -187,7 +187,6 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
       @Override
       protected boolean contains(@NotNull BlockTreeNode pathComponent, @NotNull BlockTreeNode thisComponent) {
-        //noinspection SuspiciousMethodCalls
         return parents.contains(pathComponent);
       }
     };
