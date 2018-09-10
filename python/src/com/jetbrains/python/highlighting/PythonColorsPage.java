@@ -38,7 +38,9 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor("Parentheses", PyHighlighter.PY_PARENTHS),
     new AttributesDescriptor("Brackets", PyHighlighter.PY_BRACKETS),
     new AttributesDescriptor("Braces", PyHighlighter.PY_BRACES),
-    new AttributesDescriptor("f-string expression braces", PyHighlighter.PY_FSTRING_EXPRESSION_BRACES),
+    new AttributesDescriptor("f-string expression braces", PyHighlighter.PY_FSTRING_FRAGMENT_BRACES),
+    new AttributesDescriptor("f-string type conversion", PyHighlighter.PY_FSTRING_FRAGMENT_TYPE_CONVERSION),
+    new AttributesDescriptor("f-string format specifier start", PyHighlighter.PY_FSTRING_FRAGMENT_COLON),
     new AttributesDescriptor("Comma", PyHighlighter.PY_COMMA),
     new AttributesDescriptor("Dot", PyHighlighter.PY_DOT),
     new AttributesDescriptor("Function definition", PyHighlighter.PY_FUNC_DEFINITION),
@@ -120,7 +122,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "" +
       RainbowHighlighter.generatePaletteExample("\n        ") + "\n" +
       "    \"\"\"</docComment>\n" +
-      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>}')   # Comment\n" +
+      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{\"foo\"}}')   # Comment\n" +
       "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower()</mcall>)\n" +
       "\n" +
       "class <classDef>Foo</classDef>:\n" +
