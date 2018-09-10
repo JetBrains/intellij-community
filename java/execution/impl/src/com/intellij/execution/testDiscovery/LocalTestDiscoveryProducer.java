@@ -14,7 +14,8 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @NotNull
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull List<Couple<String>> classesAndMethods,
-                                                     byte frameworkId) {
+                                                     byte frameworkId,
+                                                     @NotNull List<String> filePaths) {
     MultiMap<String, String> result = new MultiMap<>();
     TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
     classesAndMethods.forEach(couple -> result.putAllValues(couple.second == null ?
@@ -26,6 +27,12 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public boolean isRemote() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public MultiMap<String, String> getDiscoveredTests(@NotNull Project project, @NotNull List<String> filePaths) {
+    return MultiMap.empty();
   }
 
   @NotNull

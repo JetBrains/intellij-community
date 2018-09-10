@@ -27,7 +27,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull List<Couple<String>> classesAndMethods,
-                                                     byte frameworkId) {
+                                                     byte frameworkId,
+                                                     @NotNull List<String> filePaths) {
     if (!ApplicationManager.getApplication().isInternal()) {
       return MultiMap.empty();
     }
@@ -71,6 +72,18 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public boolean isRemote() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public MultiMap<String, String> getDiscoveredTests(@NotNull Project project, @NotNull List<String> filePaths) {
+    try {
+      return request(filePaths, s -> "\"" + s + "\"", "files");
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
+    return MultiMap.empty();
   }
 
   @NotNull

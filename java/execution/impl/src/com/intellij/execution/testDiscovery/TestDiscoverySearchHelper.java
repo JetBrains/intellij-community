@@ -85,7 +85,7 @@ public class TestDiscoverySearchHelper {
                                       @NotNull String methodName,
                                       byte frameworkId) {
     List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(classFQName, methodName));
-    TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, (c, m, p) -> {
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, Collections.emptyList(), (c, m, p) -> {
       patterns.add(c + "," + m);
       return true;
     });

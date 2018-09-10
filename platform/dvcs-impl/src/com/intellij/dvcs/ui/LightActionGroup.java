@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,6 +19,10 @@ import java.util.List;
  */
 public class LightActionGroup extends ActionGroup {
   private final List<AnAction> myChildren = new ArrayList<>();
+
+  public LightActionGroup() {
+    this(false);
+  }
 
   public LightActionGroup(boolean popup) {
     super(null, popup);
@@ -43,7 +47,7 @@ public class LightActionGroup extends ActionGroup {
   }
 
   public final void addAll(@NotNull AnAction... actions) {
-    ContainerUtil.addAll(myChildren, actions);
+    myChildren.addAll(Arrays.asList(actions));
   }
 
   public final void addAll(@NotNull List<? extends AnAction> actions) {

@@ -675,7 +675,7 @@ public class PsiVFSListener implements BulkFileListener {
       boolean fireImmediately = !(event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent);
       if (fireImmediately) {
         if (prev != null) {
-          fireForGrouped(events, prevI, i);
+          fireForGrouped(events.subList(prevI, i));
         }
         if (event instanceof VFileCopyEvent) {
           VFileCopyEvent ce = (VFileCopyEvent)event;
@@ -705,7 +705,7 @@ public class PsiVFSListener implements BulkFileListener {
         prev = event;
       }
       else {
-        fireForGrouped(events, prevI, i);
+        fireForGrouped(events.subList(prevI, i));
         prev = null;
         prevI = i;
       }
@@ -713,8 +713,7 @@ public class PsiVFSListener implements BulkFileListener {
     myReportedUnloadedPsiChange = false;
   }
 
-  private void fireForGrouped(@NotNull List<? extends VFileEvent> events, int prevI, int i) {
-    List<? extends VFileEvent> subList = events.subList(prevI, i);
+  private void fireForGrouped(@NotNull List<? extends VFileEvent> subList) {
     VFileEvent first = subList.get(0);
     if (first instanceof VFileDeleteEvent) {
       filesDeleted(subList);

@@ -55,7 +55,7 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
       
       if (inComments) advanceTodoItemCountsInToken();
     }
-    else if (!XmlFilterLexer.ourNoWordsTokenSet.contains(tokenType)) {
+    else if (!XmlFilterLexer.NO_WORDS_TOKEN_SET.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 

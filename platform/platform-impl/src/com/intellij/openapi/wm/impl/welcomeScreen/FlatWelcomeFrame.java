@@ -39,6 +39,7 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -49,7 +50,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
@@ -264,21 +264,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
-      setTransferHandler(new TransferHandler(null) {
-        @Override
-        public boolean canImport(TransferSupport support) {
-          return true;
-        }
-
-        @Override
-        public boolean importData(TransferSupport support) {
-          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
-          if (list != null && list.size() > 0) {
-            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
-          }
-          return false;
-        }
-      });
       setDropTarget(new DropTarget(this, new DropTargetAdapter() {
         @Override
         public void dragEnter(DropTargetDragEvent e) {
@@ -293,6 +278,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public void drop(DropTargetDropEvent e) {
           setDnd(false);
+          e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+          List<File> list = FileCopyPasteUtil.getFileList(e.getTransferable());
+          if (list != null && list.size() > 0) {
+            MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            e.dropComplete(true);
+            return;
+          }
+          e.dropComplete(false);
         }
 
         private void setDnd(boolean dnd) {
@@ -315,15 +308,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       super.paint(g);
       if (inDnd) {
         Rectangle bounds = getBounds();
-        Color background = UIManager.getColor("DragAndDrop.backgroundColor");
+        Color background = ObjectUtils.notNull(UIManager.getColor("DragAndDrop.backgroundColor"), new Color(225, 235, 245));
         g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        g.setColor(UIManager.getColor("DragAndDrop.backgroundBorderColor"));
+        Color backgroundBorder = ObjectUtils.notNull(UIManager.getColor("DragAndDrop.backgroundBorderColor"), new Color(137, 178, 222));
+        g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
-        g.setColor(UIManager.getColor("DragAndDrop.foregroundColor"));
 
+        Color foreground = ObjectUtils.notNull(UIManager.getColor("DragAndDrop.foregroundColor"), Gray._120);
+        g.setColor(foreground);
         Font labelFont = UIUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
         String drop = "Drop files here to open";
