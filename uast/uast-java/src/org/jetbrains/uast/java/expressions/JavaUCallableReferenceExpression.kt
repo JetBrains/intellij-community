@@ -27,7 +27,6 @@ class JavaUCallableReferenceExpression(
   override val psi: PsiMethodReferenceExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression {
-  override fun getFunctionalInterfaceType(): PsiType? = psi.functionalInterfaceType
 
   override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
 

@@ -8,6 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastMetaLanguage;
@@ -79,7 +80,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
     languages.removeIf(l -> l.isKindOf("Groovy"));
 
     // TODO enable it in production when will be ready
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (Registry.is("batch.jvm.inspections") || !ApplicationManager.getApplication().isUnitTestMode()) {
       languages.removeIf(l -> l.isKindOf("kotlin"));
     }
     return languages;

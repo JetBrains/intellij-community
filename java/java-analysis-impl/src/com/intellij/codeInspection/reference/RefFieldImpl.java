@@ -118,16 +118,16 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
       if (uField.getUastInitializer() != null || uField instanceof UEnumConstant) {
         setInitializerMasks();
       }
-      else if (RefUtil.isImplicitWrite(uField)) {
+      else if (RefUtil.isImplicitWrite(uField.getJavaPsi())) {
         putUserData(IMPLICITLY_WRITTEN, true);
         setInitializerMasks();
       }
 
-      if (RefUtil.isImplicitRead(uField)) {
+      if (RefUtil.isImplicitRead(uField.getJavaPsi())) {
         putUserData(IMPLICITLY_READ, true);
       }
 
-      refUtil.addTypeReference(uField, uField.getType(), getRefManager(), this);
+      refUtil.addTypeReference((UElement)uField, uField.getType(), getRefManager(), this);
       getRefManager().fireBuildReferences(this);
     }
   }

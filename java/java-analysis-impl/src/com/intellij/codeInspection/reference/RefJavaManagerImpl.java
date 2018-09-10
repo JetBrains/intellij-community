@@ -503,7 +503,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
       if (node instanceof UComment) {
         PsiElement psi = node.getSourcePsi();
         if (psi instanceof PsiDocComment) {
-          //TODO generalize
+          //TODO support suppressions in kotlin
           final PsiDocTag[] tags = ((PsiDocComment)psi).getTags();
           for (PsiDocTag tag : tags) {
             if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
@@ -533,7 +533,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
     @Override
     public boolean visitVariable(@NotNull UVariable variable) {
-      myRefUtil.addTypeReference(variable, variable.getType(), myRefManager);
+      myRefUtil.addTypeReference((UElement)variable, variable.getType(), myRefManager);
       if (variable instanceof UParameter) {
         final RefElement reference = myRefManager.getReference(variable.getSourcePsi());
         if (reference instanceof RefParameterImpl) {
@@ -549,7 +549,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
       if (Comparing.strEqual(qualifiedName, BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME) ||
           Comparing.strEqual(qualifiedName, "kotlin.Suppress")) {
         UAnnotated annotated = UastUtils.getParentOfType(annotation, UAnnotated.class);
-        // TODO
+        // TODO support kotlin suppressions
         if (annotated == null) {
           UElement parent = annotation.getUastParent();
           if (parent == null) {

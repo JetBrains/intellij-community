@@ -4,8 +4,8 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.AnalysisUastUtil;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class RefJavaUtilImpl extends RefJavaUtil{
+  private static final Logger LOG = Logger.getInstance(RefJavaUtilImpl.class);
+
   @Override
   public void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn) {
     UDeclaration decl = UastContextKt.toUElement(psiFrom, UDeclaration.class);
@@ -169,7 +171,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
               if (reference != null) {
                 PsiElement constructorClass = reference.resolve();
                 if (constructorClass instanceof PsiClass) {
-                  //TODO kotlin plugin
                   processClassReference((PsiClass)constructorClass, refFrom, decl, true);
                 }
               }
@@ -178,8 +179,9 @@ public class RefJavaUtilImpl extends RefJavaUtil{
           try {
             node.getTypeArguments().forEach(this::visitTypeRefs);
           }
-          catch (UnsupportedOperationException ignored) {
-            //TODO kotlin plugin
+          catch (UnsupportedOperationException e) {
+            //TODO happens somewhere in kotlin plugin. Please assign those exception for Dmitry Batkovich
+            LOG.error(e);
           }
           return false;
         }
@@ -195,26 +197,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
           else if (node instanceof UUnaryExpression) {
             psiResolved = ((UUnaryExpression)node).resolveOperator();
           }
-          //TODO hacks see KtLightParameter
-          if (psiResolved instanceof LightElement) {
-            psiResolved = psiResolved.getOriginalElement();
-          }
-          if (psiResolved instanceof LightElement) {
-            psiResolved = psiResolved.getNavigationElement();
-          }
-          //TODO see KT-25524
-          if (psiResolved == null && node instanceof UCallExpression && "invoke".equals(((UCallExpression)node).getMethodName())) {
-            UIdentifier identifier = ((UCallExpression)node).getMethodIdentifier();
-            if (identifier != null) {
-              String name = identifier.getName();
-              if (decl instanceof UMethod) {
-                UParameter parameter = ((UMethod)decl).getUastParameters().stream().filter(p -> name.equals(p.getName())).findAny().orElse(null);
-                if (parameter != null) {
-                  psiResolved = parameter.getSourcePsi();
-                }
-              }
-            }
-          }
+          psiResolved = psiResolved == null ? tryFindKotlinParameter(node, decl) : null;
           RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
           boolean writing = AnalysisUastUtil.isAccessedForWriting(node);
           boolean reading = AnalysisUastUtil.isAccessedForReading(node);
@@ -224,16 +207,10 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             updateRefMethod(psiResolved, refResolved, node, decl, refFrom);
           }
 
-          // TODO
-          //if (psiResolved instanceof PsiMember && result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
-          //  final PsiClass containingClass = ((PsiMember)psiResolved).getContainingClass();
-          //  if (containingClass != null) {
-          //    RefElement refContainingClass = refFrom.getRefManager().getReference(containingClass);
-          //    if (refContainingClass != null) {
-          //      refFrom.addReference(refContainingClass, containingClass, decl, false, true, node);
-          //    }
-          //  }
-          //}
+          if (psiResolved instanceof PsiMember) {
+            //TODO support kotlin
+            addClassReferenceForStaticImport(node, (PsiMember)psiResolved, refFrom, decl);
+          }
         }
 
         @Override
@@ -335,7 +312,42 @@ public class RefJavaUtilImpl extends RefJavaUtil{
         }
       );
     }
+  }
 
+  private static void addClassReferenceForStaticImport(UExpression node,
+                                                       PsiMember psiResolved,
+                                                       RefJavaElementImpl refFrom, UDeclaration decl) {
+    PsiElement sourcePsi = node.getSourcePsi();
+    if (sourcePsi instanceof PsiReferenceExpression) {
+      JavaResolveResult result = ((PsiReferenceExpression)sourcePsi).advancedResolve(false);
+      if (result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+        final PsiClass containingClass = psiResolved.getContainingClass();
+        if (containingClass != null) {
+          RefElement refContainingClass = refFrom.getRefManager().getReference(containingClass);
+          if (refContainingClass != null) {
+            refFrom.addReference(refContainingClass, containingClass, decl, false, true, node);
+          }
+        }
+      }
+    }
+  }
+
+  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node,
+                                                   @NotNull UDeclaration decl) {
+    //TODO see KT-25524
+    if (node instanceof UCallExpression && "invoke".equals(((UCallExpression)node).getMethodName())) {
+      UIdentifier identifier = ((UCallExpression)node).getMethodIdentifier();
+      if (identifier != null) {
+        String name = identifier.getName();
+        if (decl instanceof UMethod) {
+          UParameter parameter = ((UMethod)decl).getUastParameters().stream().filter(p -> name.equals(p.getName())).findAny().orElse(null);
+          if (parameter != null) {
+            return parameter.getSourcePsi();
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private void updateRefMethod(PsiElement psiResolved,
