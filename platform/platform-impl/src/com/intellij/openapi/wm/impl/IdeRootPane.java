@@ -94,7 +94,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
-      if (!isDecoratedMenu()) {
+      if (!JBUI.isCustomFrameDecoration()) {
         menuBar = new IdeMenuBar(actionManager, dataManager);
         getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
         if (frame instanceof IdeFrameEx) {
@@ -349,7 +349,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
         rd = parent.getSize();
       }
       Dimension mbd;
-      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !isDecoratedMenu()) {
+      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !JBUI.isCustomFrameDecoration()) {
         mbd = menuBar.getPreferredSize();
       }
       else {
@@ -427,9 +427,5 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
         contentPane.setBounds(0, contentY, w, h - contentY);
       }
     }
-  }
-
-  private boolean isDecoratedMenu() {
-    return getUI() instanceof DarculaRootPaneUI && JBUI.isCustomFrameDecoration();
   }
 }

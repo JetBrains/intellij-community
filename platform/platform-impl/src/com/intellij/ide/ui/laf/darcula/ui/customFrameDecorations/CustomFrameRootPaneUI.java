@@ -2,19 +2,26 @@
 package com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations;
 
 import com.intellij.ide.ui.laf.darcula.ui.CustomFrameTitlePane;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.utils.RdIdeaKt;
+import com.intellij.ui.FrameState;
+import com.intellij.ui.Gray;
+import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.WindowResizeListener;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.rider.util.lifetime.Lifetime;
+import com.jetbrains.rider.util.lifetime.LifetimeDefinition;
+import kotlin.Unit;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicRootPaneUI;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,13 +45,9 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
 
   protected Window myCurrentWindow;
 
-  protected HierarchyListener myHierarchyListener;
-
   protected ComponentListener myWindowComponentListener;
 
   protected GraphicsConfiguration currentRootPaneGC;
-
-  protected PropertyChangeListener myPropertyChangeListener;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent comp) {
@@ -53,10 +56,10 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
 
   @Override
   public void installUI(JComponent c) {
+    myRootPane = (JRootPane)c;
     super.installUI(c);
 
     if (JBUI.isCustomFrameDecoration()) {
-      myRootPane = (JRootPane)c;
       int style = myRootPane.getWindowDecorationStyle();
       if (style != JRootPane.NONE) {
         installClientDecorations(myRootPane);
@@ -124,6 +127,9 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
                 if (view instanceof Frame) {
                   Frame frame = (Frame)view;
                   int state = frame.getExtendedState();
+
+                 // System.out.println(view.getBounds());
+
                   if (FrameState.isMaximized(state)) {
                     frame.setExtendedState((state & ~Frame.MAXIMIZED_BOTH));
                     updateFrameBounds(frame, event);
@@ -136,7 +142,7 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
             private void updateFrameBounds(Frame frame, MouseEvent event) {
               Point mouse = event.getLocationOnScreen();
 
-              Rectangle screenBounds = getScreenBounds(myRootPane.getTopLevelAncestor());
+              Rectangle screenBounds = frame.getMaximizedBounds();
               Rectangle frameBounds = frame.getBounds();
 
               int x = mouse.x - (frameBounds.width / 2);
@@ -177,7 +183,6 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
         myTitlePane.addMouseMotionListener(myTitleMouseInputListener);
         myTitlePane.addMouseListener(myTitleMouseInputListener);
       }
-      setMaximized();
     }
   }
 
@@ -200,128 +205,41 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
     root.setLayout(myLayoutManager);
   }
 
+  private LifetimeDefinition myLifetimeDefinition = null;
+
   @Override
   protected void installListeners(final JRootPane root) {
     super.installListeners(root);
+    myLifetimeDefinition = Lifetime.Companion.getEternal().createNestedDef();
 
-    myHierarchyListener = new HierarchyListener() {
-      @Override
-      public void hierarchyChanged(HierarchyEvent e) {
-        Component parent = root.getParent();
-        if (parent == null) {
-          return;
-        }
-        if (parent.getClass().getName().startsWith("org.jdesktop.jdic.tray")
-            || (parent.getClass().getName().compareTo("javax.swing.Popup$HeavyWeightWindow") == 0)) {
-
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
-            root.removeHierarchyListener(myHierarchyListener);
-            myHierarchyListener = null;
-          });
-        }
-
-        Window currWindow = UIUtil.getWindow(parent);
-        if (myWindowListener != null) {
-          myCurrentWindow.removeWindowListener(myWindowListener);
-          myWindowListener = null;
-        }
-        if (myWindowComponentListener != null) {
-          myCurrentWindow.removeComponentListener(myWindowComponentListener);
-          myWindowComponentListener = null;
-        }
-        if (currWindow != null) {
-          myWindowListener = new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(() -> {
-                Frame[] frames = Frame.getFrames();
-                for (Frame frame : frames) {
-                  if (frame.isDisplayable()) {
-                    return;
-                  }
-                }
-              });
-            }
-          };
-
-          if (!(parent instanceof JInternalFrame)) {
-            currWindow.addWindowListener(myWindowListener);
+    Lifetime lt = myLifetimeDefinition.getLifetime();
+    RdIdeaKt.window(root).advise(lt, window -> {
+      myWindow = window;
+      if(window != null) {
+        RdIdeaKt.screenInfo(myWindow).advise(lt, screenInfo -> {
+          if (window instanceof JFrame) {
+            ((JFrame)window).setMaximizedBounds(screenInfo == null ? null : screenInfo.getInnerBounds());
+            //((JFrame)window).setMaximizedBounds(null);
           }
-
-          myWindowComponentListener = new ComponentAdapter() {
-            @Override
-            public void componentMoved(ComponentEvent e) {
-              processNewPosition();
-            }
-
-            @Override
-            public void componentResized(ComponentEvent e) {
-              processNewPosition();
-            }
-
-            private void processNewPosition() {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(() -> {
-                if (myWindow == null) {
-                  return;
-                }
-
-                if (!myWindow.isShowing() || !myWindow.isDisplayable()) {
-                  currentRootPaneGC = null;
-                  return;
-                }
-
-                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                GraphicsDevice[] gds = ge.getScreenDevices();
-                if (gds.length == 1) {
-                  return;
-                }
-                Point midLoc = new Point(myWindow.getLocationOnScreen().x + myWindow.getWidth() / 2,
-                                         myWindow.getLocationOnScreen().y + myWindow.getHeight() / 2);
-
-                for (GraphicsDevice gd : gds) {
-                  GraphicsConfiguration gc = gd.getDefaultConfiguration();
-                  Rectangle bounds = gc.getBounds();
-                  if (bounds.contains(midLoc)) {
-                    if (gc != currentRootPaneGC) {
-                      currentRootPaneGC = gc;
-                      setMaximized();
-                    }
-                    break;
-                  }
-                }
-              });
-            }
-          };
-
-          if (parent instanceof JFrame) {
-            currWindow.addComponentListener(myWindowComponentListener);
-          }
-
-          myWindow = currWindow;
-        }
-        myCurrentWindow = currWindow;
+          return Unit.INSTANCE;
+        });
       }
-    };
-    root.addHierarchyListener(myHierarchyListener);
-    root.addPropertyChangeListener(myPropertyChangeListener);
+      return Unit.INSTANCE;
+    }
+    );
   }
 
   @Override
   protected void uninstallListeners(JRootPane root) {
+    if(myLifetimeDefinition != null && !myLifetimeDefinition.isTerminated())
+    myLifetimeDefinition.terminate();
+
     if (myWindow != null) {
       myWindow.removeWindowListener(myWindowListener);
       myWindowListener = null;
       myWindow.removeComponentListener(myWindowComponentListener);
       myWindowComponentListener = null;
     }
-    root.removeHierarchyListener(myHierarchyListener);
-    myHierarchyListener = null;
-
-    root.removePropertyChangeListener(myPropertyChangeListener);
-    myPropertyChangeListener = null;
 
     super.uninstallListeners(root);
   }
@@ -398,21 +316,7 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
     myTitlePane = titlePane;
   }
 
-  public void setMaximized() {
-    if (Registry.is("darcula.fix.maximized.frame.bounds") &&
-        !JBUI.isCustomFrameDecoration()) return;
-
-    Component tla = myRootPane.getTopLevelAncestor();
-    if (tla instanceof JFrame) {
-      ((JFrame)tla).setMaximizedBounds(getScreenBounds(tla, true));
-    }
-  }
-
-  private Rectangle getScreenBounds(Component component) {
-    return getScreenBounds(component, false);
-  }
-
-  private Rectangle getScreenBounds(Component component, boolean normalize) {
+/*  private Rectangle getScreenBounds(Component component, boolean normalize) {
     GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC : component.getGraphicsConfiguration();
     Rectangle screenBounds = gc.getBounds();
     if (normalize) {
@@ -424,7 +328,7 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
                          screenBounds.y + screenInsets.top,
                          screenBounds.width - (screenInsets.left + screenInsets.right),
                          screenBounds.height - (screenInsets.top + screenInsets.bottom));
-  }
+  }*/
 
   public JComponent getTitlePane() {
     return myTitlePane;
@@ -669,7 +573,7 @@ public class CustomFrameRootPaneUI extends BasicRootPaneUI {
     }
   }
 
-  private static int max(int a, int b, int...others) {
+  private static int max(int a, int b, int... others) {
     int result = Math.max(a, b);
     for (int other : others) {
       result = Math.max(result, other);
