@@ -31,8 +31,8 @@ class JavaUSimpleNameReferenceExpression(
 ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
   override fun resolve(): PsiElement? = (reference ?: psi as? PsiReference)?.resolve()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    (reference as? PsiPolyVariantReference ?: psi as? PsiPolyVariantReference)?.multiResolve(incompleteCode)?.asIterable()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    (reference as? PsiPolyVariantReference ?: psi as? PsiPolyVariantReference)?.multiResolve(false)?.asIterable()
     ?: listOfNotNull(resolve()?.let { CandidateInfo(it, PsiSubstitutor.EMPTY) })
 
   override val resolvedName: String?
@@ -75,7 +75,7 @@ class JavaClassUSimpleNameReferenceExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
   override fun resolve(): PsiElement? = ref.resolve()
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = ref.multiResolve(incompleteCode).asIterable()
+  override fun multiResolve(): Iterable<ResolveResult> = ref.multiResolve(false).asIterable()
 
   override val resolvedName: String?
     get() = (ref.resolve() as? PsiNamedElement)?.name

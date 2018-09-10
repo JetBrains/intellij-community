@@ -49,6 +49,6 @@ class JavaUObjectLiteralExpression(
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    psi.classReference?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.classReference?.multiResolve(false)?.asIterable() ?: emptyList()
 }

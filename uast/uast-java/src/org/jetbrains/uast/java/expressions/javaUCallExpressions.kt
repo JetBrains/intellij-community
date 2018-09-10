@@ -42,7 +42,7 @@ class JavaUCallExpression(
   override val valueArguments: List<UExpression> by lz { psi.argumentList.expressions.map { JavaConverter.convertOrEmpty(it, this) } }
 
   override fun getArgumentForParameter(i: Int): UExpression? {
-    val resolved = multiResolve(false).mapNotNull { it.element as? PsiMethod }
+    val resolved = multiResolve().mapNotNull { it.element as? PsiMethod }
     for (psiMethod in resolved) {
       val isVarArgs = psiMethod.parameterList.parameters.getOrNull(i)?.isVarArgs ?: continue
       if (isVarArgs) {
@@ -67,8 +67,8 @@ class JavaUCallExpression(
     get() = psi.methodExpression.referenceName
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = psi.methodExpression.multiResolve(
-    incompleteCode).asIterable()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.methodExpression.multiResolve(false).asIterable()
 
   override fun getStartOffset(): Int =
     psi.methodExpression.referenceNameElement?.textOffset ?: psi.methodExpression.textOffset
@@ -175,8 +175,8 @@ class JavaConstructorUCallExpression(
     get() = null
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    psi.classReference?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.classReference?.multiResolve(false)?.asIterable() ?: emptyList()
 }
 
 class JavaArrayInitializerUCallExpression(
@@ -210,7 +210,7 @@ class JavaArrayInitializerUCallExpression(
     get() = UastCallKind.NESTED_ARRAY_INITIALIZER
 
   override fun resolve(): Nothing? = null
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> = emptyList()
 
   override val receiver: UExpression?
     get() = null
@@ -256,7 +256,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
     get() = null
 
   override fun resolve(): Nothing? = null
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> = emptyList()
 
   override val receiver: UExpression?
     get() = null

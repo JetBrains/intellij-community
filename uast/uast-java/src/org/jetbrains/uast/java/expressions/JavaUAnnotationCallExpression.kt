@@ -67,5 +67,5 @@ class JavaUAnnotationCallExpression(
 
   override fun resolve(): PsiMethod? = uAnnotation.resolve()?.constructors?.firstOrNull()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = uAnnotation.multiResolve(incompleteCode)
+  override fun multiResolve(): Iterable<ResolveResult> = uAnnotation.multiResolve()
 }

@@ -68,5 +68,5 @@ class JavaUAssertExpression(
 
   override fun resolve(): Nothing? = null
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> = emptyList()
 }

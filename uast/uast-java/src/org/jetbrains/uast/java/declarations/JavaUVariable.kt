@@ -146,7 +146,7 @@ open class JavaUEnumConstant(
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+  override fun multiResolve(): Iterable<ResolveResult> =
     listOfNotNull(psi.resolveMethodGenerics())
 
   override val methodName: String?
@@ -157,7 +157,7 @@ open class JavaUEnumConstant(
     givenParent: UElement?
   ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
     override fun resolve() = psi.containingClass
-    override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+    override fun multiResolve(): Iterable<ResolveResult> =
       listOfNotNull(resolve()?.let { PsiTypesUtil.getClassType(it).resolveGenerics() })
 
     override val resolvedName: String?

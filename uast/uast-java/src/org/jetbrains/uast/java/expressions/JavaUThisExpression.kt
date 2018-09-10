@@ -34,6 +34,6 @@ class JavaUThisExpression(
     get() = psi.qualifier?.let { UIdentifier(it, this) }
 
   override fun resolve(): PsiElement? = psi.qualifier?.resolve()
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    psi.qualifier?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.qualifier?.multiResolve(false)?.asIterable() ?: emptyList()
 }

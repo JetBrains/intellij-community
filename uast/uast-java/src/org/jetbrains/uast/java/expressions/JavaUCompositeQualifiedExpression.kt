@@ -37,8 +37,8 @@ class JavaUCompositeQualifiedExpression(
 
   override fun resolve(): PsiElement? = (selector as? UResolvable)?.resolve()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    (selector as? UMultiResolvable)?.multiResolve(incompleteCode) ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    (selector as? UMultiResolvable)?.multiResolve() ?: emptyList()
 
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE

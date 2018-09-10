@@ -42,8 +42,8 @@ class JavaUAnnotation(
 
   override fun resolve(): PsiClass? = psi.nameReferenceElement?.resolve() as? PsiClass
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    psi.nameReferenceElement?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
 
   override fun findAttributeValue(name: String?): UExpression? {
     val context = getUastContext()
