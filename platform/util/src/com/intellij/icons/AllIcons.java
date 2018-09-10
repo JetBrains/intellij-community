@@ -1634,7 +1634,6 @@ public class AllIcons {
     public static final Icon Servlet = IconLoader.getIcon("/nodes/servlet.svg"); // 16x16
     public static final Icon Shared = IconLoader.getIcon("/nodes/shared.svg"); // 16x16
     public static final Icon SortBySeverity = IconLoader.getIcon("/nodes/sortBySeverity.svg"); // 16x16
-    public static final Icon SourceFolder = IconLoader.getIcon("/nodes/sourceFolder.svg"); // 16x16
     public static final Icon Static = IconLoader.getIcon("/nodes/static.svg"); // 16x16
     public static final Icon StaticMark = IconLoader.getIcon("/nodes/staticMark.svg"); // 16x16
     public static final Icon Symlink = IconLoader.getIcon("/nodes/symlink.svg"); // 16x16
@@ -1701,6 +1700,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon PpWebLogo = IconLoader.getIcon("/nodes/ppWebLogo.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SourceFolder = AllIcons.Nodes.Package;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")

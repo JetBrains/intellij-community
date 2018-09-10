@@ -7,6 +7,7 @@ deprecated: pluginUpdate.svg; to be removed in IDEA 2020
 deprecated: pointcut.svg; to be removed in IDEA 2020
 deprecated: ppFile.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
 deprecated: ppWebLogo.png; to be removed in IDEA 2020
+deprecated: sourceFolder.png -> /nodes/package.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Package
 deprecated: TreeClosed.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
 deprecated: treeCollapseNode.png -> /nodes/treeDownArrow.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow
 #deprecated: treeDownArrow.png -> /nodes/treeDownArrow.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
