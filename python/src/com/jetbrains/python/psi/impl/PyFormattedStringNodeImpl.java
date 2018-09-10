@@ -18,9 +18,7 @@ import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 public class PyFormattedStringNodeImpl extends PyElementImpl implements PyFormattedStringNode {
 
@@ -65,25 +63,16 @@ public class PyFormattedStringNodeImpl extends PyElementImpl implements PyFormat
 
   @NotNull
   @Override
-  public String getTextWithoutPrefix() {
-    final String text = getText();
-    return text.substring(PyStringLiteralUtil.getPrefixLength(text));
-  }
-
-  @NotNull
-  @Override
   public TextRange getContentRange() {
-    return getAbsoluteContentRange().shiftLeft(getTextRange().getStartOffset());
-  }
-
-  @NotNull
-  @Override
-  public TextRange getAbsoluteContentRange() {
+    final TextRange textRange = getTextRange();
+    final int startOffset = textRange.getStartOffset();
+    final int endOffset = textRange.getEndOffset();
+    
     final PsiElement startToken = findNotNullChildByType(PyTokenTypes.FSTRING_START);
     final PsiElement endToken = findChildByType(PyTokenTypes.FSTRING_END);
-    return TextRange.create(startToken.getTextRange().getEndOffset(),
-                            endToken != null ? endToken.getTextRange().getStartOffset() : getTextRange().getEndOffset());
-
+    final TextRange absoluteRange = TextRange.create(startToken.getTextRange().getEndOffset(),
+                                                     endToken != null ? endToken.getTextRange().getStartOffset() : endOffset);
+    return absoluteRange.shiftLeft(startOffset);
   }
 
   @NotNull
@@ -140,11 +129,6 @@ public class PyFormattedStringNodeImpl extends PyElementImpl implements PyFormat
   }
 
   @Override
-  public char getQuoteChar() {
-    return getQuote().charAt(0);
-  }
-
-  @Override
   public boolean isTripleQuoted() {
     return getQuote().length() == 3;
   }
@@ -152,25 +136,6 @@ public class PyFormattedStringNodeImpl extends PyElementImpl implements PyFormat
   @Override
   public boolean isTerminated() {
     return findChildrenByType(PyTokenTypes.FSTRING_END) != null;
-  }
-
-  @NotNull
-  @Override
-  public Set<Modifier> getModifiers() {
-    final EnumSet<Modifier> result = EnumSet.noneOf(Modifier.class);
-    if (isUnicode()) {
-      result.add(Modifier.UNICODE);
-    }
-    if (isBytes()) {
-      result.add(Modifier.BYTES);
-    }
-    if (isRaw()) {
-      result.add(Modifier.RAW);
-    }
-    if (isFormatted()) {
-      result.add(Modifier.FORMATTED);
-    }
-    return result;
   }
 
   @Override

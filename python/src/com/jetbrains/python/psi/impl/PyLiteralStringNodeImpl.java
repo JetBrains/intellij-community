@@ -9,9 +9,7 @@ import com.jetbrains.python.psi.PyLiteralStringNode;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Mikhail Golubev
@@ -46,25 +44,8 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
 
   @NotNull
   @Override
-  public String getTextWithoutPrefix() {
-    return getText().substring(getPrefixLength());
-  }
-
-  @NotNull
-  @Override
   public TextRange getContentRange() {
     return PyStringLiteralUtil.getContentRange(getText());
-  }
-
-  @NotNull
-  @Override
-  public TextRange getAbsoluteContentRange() {
-    return getContentRange().shiftRight(getStartOffset());
-  }
-
-  @Override
-  public char getQuoteChar() {
-    return getQuote().charAt(0);
   }
 
   @NotNull
@@ -80,28 +61,9 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
 
   @Override
   public boolean isTerminated() {
-    final String unprefixed = getTextWithoutPrefix();
+    final String text = getText();
     final String quote = getQuote();
-    return unprefixed.length() >= quote.length() * 2 && unprefixed.endsWith(quote);
-  }
-
-  @NotNull
-  @Override
-  public Set<Modifier> getModifiers() {
-    final EnumSet<Modifier> result = EnumSet.noneOf(Modifier.class);
-    if (isUnicode()) {
-      result.add(Modifier.UNICODE);
-    }
-    if (isBytes()) {
-      result.add(Modifier.BYTES);
-    }
-    if (isRaw()) {
-      result.add(Modifier.RAW);
-    }
-    if (isFormatted()) {
-      result.add(Modifier.FORMATTED);
-    }
-    return result;
+    return text.length() >= getPrefixLength() +  quote.length() * 2 && text.endsWith(quote);
   }
 
   @Override
