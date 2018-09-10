@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author Mikhail Golubev
+ * A common interface containing utility methods shared among both plain string literals
+ * (i.e. those that don't have "f" prefix) and formatted literals (f-strings).
+ *
+ * @see PyLiteralStringNode
+ * @see PyFormattedStringNode
  */
 public interface PyRichStringNode extends PsiElement {
 
