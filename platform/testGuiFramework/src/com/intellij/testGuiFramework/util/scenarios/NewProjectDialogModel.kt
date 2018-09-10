@@ -257,44 +257,6 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
 }
 
 /**
- * Creates a new project from Java Enterprise group (ultimate only)
- * @param projectPath - path where the project is going to be created
- * @param libs - path to additional library/framework that should be checked
- * Note: only one library/framework can be checked!
- * */
-fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
-  with(guiTestCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    with(connectDialog()) {
-      selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
-      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
-      else {
-        button(buttonNext).click()
-        if (template.isNotEmpty()) {
-          waitForPageTransitionFinished {
-            checkbox(checkCreateProjectFromTemplate).target().locationOnScreen
-          }
-          val checkboxTemplate = checkbox(checkCreateProjectFromTemplate)
-          if (!checkboxTemplate.isSelected) checkboxTemplate.click()
-          jList(template).clickItem(template)
-        }
-      }
-      button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
-    }
-    ideFrame {
-      this.waitForBackgroundTasksToFinish()
-      waitAMoment()
-    }
-  }
-}
-
-/**
  * Waits for transition animation finished
  * When transition animation occurs components on the appearing page
  * change their [locationOnScreen] coordinates and at the same time their [x] and [y]
@@ -548,43 +510,13 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * @param projectPath - path where the project is going to be created
  * @param libs - set of additional libraries/frameworks that should be checked
  * */
-internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
+fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
                                                         libs: LibrariesSet) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(group)
-      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
-      button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
-    }
-    ideFrame {
-      this.waitForBackgroundTasksToFinish()
-      waitAMoment()
-    }
-  }
-}
-
-fun NewProjectDialogModel.createJBossProject(projectPath: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.JBoss, projectPath, libs)
-}
-
-fun NewProjectDialogModel.createSpringProject(projectPath: String, createSpringConfig: Boolean, libs: LibrariesSet) {
-  with(guiTestCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    with(connectDialog()) {
-      selectProjectGroup(NewProjectDialogModel.Groups.Spring)
-      val checkSpringConfig = checkbox("Create empty spring-config.xml")
-      if(createSpringConfig != checkSpringConfig.isSelected){
-        checkSpringConfig.click()
-      }
-      ScreenshotOnFailure.takeScreenshot("screen1")
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
@@ -614,38 +546,6 @@ fun NewProjectDialogModel.waitLoadingTemplates() {
     GuiRobotHolder.robot,
     progressTitle = progressLoadingTemplates
   )
-}
-
-fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath: String) {
-  with(connectDialog()) {
-    selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
-    guiTestCase.logUIStep("Add a new application server")
-    combobox(textApplicationServer)
-    buttons(buttonNew)[1].click()
-    popupMenu(serverKind).clickSearchedItem()
-    guiTestCase.dialog(serverKind) {
-      typeText(serverInstallPath)
-      button(buttonOk).click()
-      GuiTestUtilKt.waitProgressDialogUntilGone(
-        GuiRobotHolder.robot,
-        progressTitle = progressSearchingForAppServerLibraries
-      )
-
-    }
-    button(buttonCancel).click()
-  }
-}
-
-fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
-  with(connectDialog()) {
-    selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
-    guiTestCase.logUIStep("Check that a application server `$serverName` exists")
-    val cmb = combobox(textApplicationServer)
-    assert(combobox(textApplicationServer)
-             .listItems()
-             .contains(serverName)) { "Appserver `$serverName` doesn't exist" }
-    button(buttonCancel).click()
-  }
 }
 
 fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
