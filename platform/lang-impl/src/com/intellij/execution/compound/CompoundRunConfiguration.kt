@@ -26,8 +26,9 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
-    val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
-      compareTypesForUi(o1.type, o2.type)
+    internal val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
+      val compareTypeResult = compareTypesForUi(o1.type, o2.type)
+      if (compareTypeResult == 0) o1.name.compareTo(o2.name) else compareTypeResult
     }
   }
 
