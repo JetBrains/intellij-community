@@ -212,7 +212,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   }
 
   private void updateArgsText(@NotNull JDKVersionItem vi) {
-    //myAutoRestart.setVisible(myModeCombo.getSelectedItem() == Mode.LISTEN);
+    myAutoRestart.setVisible(myModeCombo.getSelectedItem() == Mode.LISTEN);
     boolean useSockets = myTransportCombo.getSelectedItem() == Transport.SOCKET;
 
     RemoteConnection connection = new RemoteConnection(useSockets, myHostName.getText().trim(),
