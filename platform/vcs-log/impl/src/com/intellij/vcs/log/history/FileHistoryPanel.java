@@ -163,7 +163,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty()) return null;
       VcsFullCommitDetails detail = notNull(getFirstItem(details));
-      Object revision = myUi.createVcsVirtualFile(detail);
+      Object revision = FileHistoryUtil.createVcsVirtualFile(myUi.createRevision(detail));
       if (revision != null) return revision;
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {

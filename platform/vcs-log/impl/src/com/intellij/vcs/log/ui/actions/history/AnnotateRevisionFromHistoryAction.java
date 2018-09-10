@@ -61,7 +61,7 @@ public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAc
     VcsKey vcsKey = e.getRequiredData(VcsDataKeys.VCS);
 
     VcsFileRevision revision = ui.createRevision(detail);
-    VirtualFile vcsVirtualFile = ui.createVcsVirtualFile(detail);
+    VirtualFile vcsVirtualFile = FileHistoryUtil.createVcsVirtualFile(revision);
 
     if (!VcsHistoryUtil.isEmpty(revision) && vcsVirtualFile != null) {
       AnnotateRevisionActionBase.annotate(vcsVirtualFile, revision,

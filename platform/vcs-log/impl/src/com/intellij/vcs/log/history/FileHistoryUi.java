@@ -107,12 +107,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Nullable
-  public VirtualFile createVcsVirtualFile(@NotNull VcsFullCommitDetails details) {
-    VcsFileRevision revision = createRevision(details);
-    return FileHistoryUtil.createVcsVirtualFile(revision);
-  }
-
-  @Nullable
   public VcsFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
