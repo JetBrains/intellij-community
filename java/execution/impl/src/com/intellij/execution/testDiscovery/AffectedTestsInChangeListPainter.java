@@ -78,6 +78,12 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     myChangeListManager.removeChangeListListener(myChangeListListener);
   }
 
+  private void scheduleRefresh() {
+    if (!myProject.isDisposed()) {
+      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+    }
+  }
+
   private static int updateDelay() {
     return PowerStatus.getPowerStatus() == PowerStatus.AC ? 50 : 300;
   }
@@ -122,7 +128,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
         () -> ShowAffectedTestsAction.processMethods(myProject, methods, paths, (clazz, method, parameter) -> {
           myCache.add(list.getId());
           return false;
-        }, () -> ChangesViewManager.getInstance(myProject).scheduleRefresh()));
+        }, this::scheduleRefresh));
     }
   }
 }
