@@ -42,14 +42,17 @@ class JavaUCallExpression(
   override val valueArguments: List<UExpression> by lz { psi.argumentList.expressions.map { JavaConverter.convertOrEmpty(it, this) } }
 
   override fun getArgumentForParameter(i: Int): UExpression? {
-    val psiMethod = resolve() ?: return null
-    val isVarArgs = psiMethod.parameterList.parameters.getOrNull(i)?.isVarArgs ?: return null
-    if (isVarArgs) {
-      return JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this).apply {
-        expressions = valueArguments.drop(i)
+    val resolved = multiResolve(false).mapNotNull { it.element as? PsiMethod }
+    for (psiMethod in resolved) {
+      val isVarArgs = psiMethod.parameterList.parameters.getOrNull(i)?.isVarArgs ?: continue
+      if (isVarArgs) {
+        return JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this).apply {
+          expressions = valueArguments.drop(i)
+        }
       }
+      return valueArguments.getOrNull(i)
     }
-    return valueArguments.getOrNull(i)
+    return null
   }
 
   override val typeArgumentCount: Int by lz { psi.typeArguments.size }
