@@ -30,12 +30,14 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.history.FileNamesData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +194,13 @@ public class IndexDataGetter {
 
   @NotNull
   private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
-    return executeAndCatch(() -> myIndexStorage.paths.getCommitsForPaths(paths), new TIntHashSet());
+    return executeAndCatch(() -> {
+      TIntHashSet result = new TIntHashSet();
+      for (FilePath path : paths) {
+        TroveUtil.addAll(result, createFileNamesData(path).getCommits());
+      }
+      return result;
+    }, new TIntHashSet());
   }
 
   @NotNull
@@ -261,12 +269,7 @@ public class IndexDataGetter {
 
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
-    return executeAndCatch(() -> {
-      // todo add renames
-      Set<FilePath> result = ContainerUtil.newHashSet();
-      result.add(path);
-      return result;
-    }, Collections.emptySet());
+    return executeAndCatch(() -> createFileNamesData(path).getFiles(), Collections.emptySet());
   }
 
   @NotNull
@@ -317,6 +320,23 @@ public class IndexDataGetter {
   @Nullable
   public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<Couple<FilePath>> accept) {
     return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
+  }
+
+  @NotNull
+  public FileNamesData createFileNamesData(@NotNull FilePath path) {
+    return new FileNamesData(path) {
+      @NotNull
+      @Override
+      public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+        return IndexDataGetter.this.getAffectedCommits(path);
+      }
+
+      @Nullable
+      @Override
+      public Couple<FilePath> findRename(int parent, int child, @NotNull Function1<? super Couple<FilePath>, Boolean> accept) {
+        return IndexDataGetter.this.findRename(parent, child, couple -> accept.invoke(couple));
+      }
+    };
   }
 
   //

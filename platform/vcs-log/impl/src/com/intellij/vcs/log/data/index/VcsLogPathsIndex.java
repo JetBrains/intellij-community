@@ -17,7 +17,6 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,7 +24,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
@@ -41,7 +43,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TByteObjectHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,21 +139,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @NotNull
-  public TIntHashSet getCommitsForPaths(@NotNull Collection<FilePath> paths) throws IOException, StorageException {
-    TIntHashSet result = new TIntHashSet();
-
-    Set<Integer> allPathIds = getPathIds(paths);
-    for (Integer key : allPathIds) {
-      iterateCommitIdsAndValues(key, (value, commit) -> {
-        result.add(commit);
-      });
-    }
-    // todo add renames
-
-    return result;
-  }
-
-  @NotNull
   public Set<FilePath> getPathsChangedInCommit(int commit, int parentIndex) throws IOException {
     List<Collection<Integer>> keysForCommit = getKeysForCommit(commit);
     if (keysForCommit == null || keysForCommit.size() <= parentIndex) return Collections.emptySet();
@@ -165,15 +151,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
 
     return paths;
-  }
-
-  @NotNull
-  private Set<Integer> getPathIds(@NotNull Collection<FilePath> paths) throws IOException {
-    Set<Integer> allPathIds = ContainerUtil.newHashSet();
-    for (FilePath path : paths) {
-      allPathIds.add(myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path)));
-    }
-    return allPathIds;
   }
 
   public void iterateCommits(@NotNull FilePath path,

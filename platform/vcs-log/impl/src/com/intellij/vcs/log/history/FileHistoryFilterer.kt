@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -33,7 +32,6 @@ import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -52,7 +50,6 @@ import com.intellij.vcs.log.visible.VcsLogFilterer
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
-import gnu.trove.TIntObjectHashMap
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   private val project = logData.project
@@ -177,7 +174,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                 sortType: PermanentGraph.SortType,
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
-      val data = MyFileNamesData()
+      val data = indexDataGetter.createFileNamesData(filePath)
 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {
@@ -195,16 +192,6 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
       if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)
       return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
-    }
-
-    inner class MyFileNamesData : FileNamesData(filePath) {
-      override fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>? {
-        return indexDataGetter.findRename(parent, child, accept)
-      }
-
-      override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>> {
-        return indexDataGetter.getAffectedCommits(path)
-      }
     }
 
     private fun reindexFirstCommitsIfNeeded(graph: VisibleGraph<Int>) {

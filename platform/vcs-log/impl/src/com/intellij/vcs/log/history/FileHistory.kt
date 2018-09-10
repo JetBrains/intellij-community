@@ -208,6 +208,8 @@ abstract class FileNamesData(filePath: FilePath) {
     get() = affectedCommits.isEmpty()
   val hasRenames: Boolean
     get() = !commitToRename.isEmpty
+  val files: Set<FilePath>
+    get() = affectedCommits.keys
 
   init {
     val newPaths = mutableSetOf(filePath)
