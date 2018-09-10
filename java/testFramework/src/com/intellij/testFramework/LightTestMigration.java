@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -30,23 +31,28 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Year;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * A helper class to aid migration from {@link InspectionTestCase} to {@link LightCodeInsightFixtureTestCase}
+ * A helper class to aid migration from {@link InspectionTestCase} to {@link LightCodeInsightFixtureTestCase}.
+ * This class has a global state which is not thread-safe and intended to be used from single thread only.
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class LightTestMigration {
+  private static final boolean TREAT_MULTI_FILES_AS_MULTIPLE_TESTS = false;
   private final String myName;
   private final Class<? extends InspectionTestCase> myTestClass;
   private final Path myDir;
   private final List<InspectionToolWrapper<?, ?>> myTools;
   private final Sdk mySdk;
-  private static final List<String> ourTestNames = new ArrayList<>();
+  private final List<String> myTestNames = new ArrayList<>();
+
+  private static LightTestMigration ourPrevious;
+
+  static {
+    Runtime.getRuntime().addShutdownHook(new Thread(LightTestMigration::flush));
+  }
 
   private static final Map<String, String> JDK_MAP = EntryStream.of(
     "java 1.7", "JAVA_1_7",
@@ -71,7 +77,20 @@ class LightTestMigration {
 
   void tryMigrate() throws Exception {
     myBasePath = Paths.get(JavaTestUtil.getJavaTestDataPath());
-    Path javaFile = getSoleJavaFile(myDir);
+    List<Path> files = TREAT_MULTI_FILES_AS_MULTIPLE_TESTS ? getJavaFiles(myDir) : Collections.singletonList(getSoleJavaFile(myDir));
+    List<Pair<Path, String>> resultFiles = new ArrayList<>();
+    for (Path file : files) {
+      resultFiles.add(processSingleFileTest(file));
+    }
+    FileUtil.delete(myDir.toFile());
+    Files.createDirectories(myDir);
+    for (Pair<Path, String> file : resultFiles) {
+      Files.write(file.getFirst(), file.getSecond().getBytes(StandardCharsets.UTF_8));
+      System.out.println("Written: " + file.getFirst());
+    }
+  }
+
+  private Pair<Path, String> processSingleFileTest(Path javaFile) throws Exception {
     String fileText = new String(Files.readAllBytes(javaFile), StandardCharsets.UTF_8);
     String testName = myName.isEmpty() ? javaFile.getFileName().toString().replaceFirst(".java$", "") : myName;
     myBaseDir = myName.isEmpty() ? myDir : myDir.getParent();
@@ -100,15 +119,9 @@ class LightTestMigration {
       }
     }
     String expectedText = getExpectedText(javaFile, fileText, javaFixture);
-    FileUtil.delete(myDir.toFile());
-    Files.createDirectories(myDir);
-    Files.write(targetFile, expectedText.getBytes(StandardCharsets.UTF_8));
-    System.out.println("Written: " + targetFile);
-    if (ourTestNames.isEmpty()) {
-      Runtime.getRuntime().addShutdownHook(new Thread(this::generateClassTemplate));
-    }
-    ourTestNames.add(testName);
+    enqueue(this, testName);
     javaFixture.tearDown();
+    return Pair.create(targetFile, expectedText);
   }
 
   private void generateClassTemplate() {
@@ -144,7 +157,7 @@ class LightTestMigration {
       }
     }
     String imports = generateImports(importedClasses);
-    String testMethods = ourTestNames.stream().map(name -> "  public void test"+name+"() {\n    doTest();\n  }\n\n").collect(Collectors.joining());
+    String testMethods = myTestNames.stream().map(name -> "  public void test"+name+"() {\n    doTest();\n  }\n\n").collect(Collectors.joining());
     String inspections =
       myTools.stream().map(InspectionToolWrapper::getTool).map(InspectionProfileEntry::getClass).map(Class::getSimpleName)
         .map(name -> "new " + name + "()").collect(Collectors.joining(", "));
@@ -212,14 +225,35 @@ class LightTestMigration {
   }
 
   private static Path getSoleJavaFile(Path dir) throws IOException {
+    List<Path> javaFiles = getJavaFiles(dir);
+    if (javaFiles.size() > 1) {
+      throw new RuntimeException("Unable to migrate: more than one Java file found in " + dir);
+    }
+    return javaFiles.get(0);
+  }
+
+  @NotNull
+  private static List<Path> getJavaFiles(Path dir) throws IOException {
     List<Path> javaFiles = Files.walk(dir).filter(p -> p.toString().endsWith(".java")).filter(p -> Files.isRegularFile(p))
       .collect(Collectors.toList());
     if (javaFiles.isEmpty()) {
       throw new RuntimeException("Unable to migrate: no Java files found in " + dir);
     }
-    if (javaFiles.size() > 1) {
-      throw new RuntimeException("Unable to migrate: more than one Java file found in " + dir);
+    return javaFiles;
+  }
+
+  private static void enqueue(LightTestMigration migration, String testName) {
+    if (ourPrevious == null || !ourPrevious.myTestClass.equals(migration.myTestClass)) {
+      flush();
+      ourPrevious = migration;
     }
-    return javaFiles.get(0);
+    ourPrevious.myTestNames.add(testName);
+  }
+
+  private static void flush() {
+    if (ourPrevious != null) {
+      ourPrevious.generateClassTemplate();
+      ourPrevious = null;
+    }
   }
 }
