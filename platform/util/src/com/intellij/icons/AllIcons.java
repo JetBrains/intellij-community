@@ -1530,7 +1530,6 @@ public class AllIcons {
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.svg"); // 16x16
     public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.svg"); // 16x16
-    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.svg"); // 16x16
     public static final Icon Ejb = IconLoader.getIcon("/nodes/ejb.svg"); // 16x16
     public static final Icon EjbBusinessMethod = IconLoader.getIcon("/nodes/ejbBusinessMethod.svg"); // 16x16
     public static final Icon EjbCmpField = IconLoader.getIcon("/nodes/ejbCmpField.svg"); // 16x16
@@ -1615,7 +1614,6 @@ public class AllIcons {
     public static final Icon Pluginobsolete = IconLoader.getIcon("/nodes/pluginobsolete.svg"); // 16x16
     public static final Icon PluginRestart = IconLoader.getIcon("/nodes/pluginRestart.svg"); // 16x16
     public static final Icon PluginUpdate = IconLoader.getIcon("/nodes/pluginUpdate.svg"); // 16x16
-    public static final Icon Pointcut = IconLoader.getIcon("/nodes/pointcut.svg"); // 16x16
     public static final Icon PpInvalid = IconLoader.getIcon("/nodes/ppInvalid.svg"); // 16x16
     public static final Icon PpJar = IconLoader.getIcon("/nodes/ppJar.svg"); // 16x16
     public static final Icon PpJdk = IconLoader.getIcon("/nodes/ppJdk.svg"); // 16x16
@@ -1667,6 +1665,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon CollapseNode = AllIcons.Nodes.TreeDownArrow;
 
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.svg");
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1676,6 +1679,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon NewFolder = AllIcons.Nodes.Folder;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Pointcut = IconLoader.getIcon("/nodes/pointcut.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")

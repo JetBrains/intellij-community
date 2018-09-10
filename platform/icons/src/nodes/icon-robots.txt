@@ -1,6 +1,8 @@
 deprecated: collapseNode.png -> /nodes/treeDownArrow.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow
+deprecated: disabledPointcut.svg; to be removed in IDEA 2020
 deprecated: expandNode.png -> /nodes/treeRightArrow.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow
 deprecated: newFolder.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: pointcut.svg; to be removed in IDEA 2020
 deprecated: ppFile.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
 deprecated: TreeClosed.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
 deprecated: treeCollapseNode.png -> /nodes/treeDownArrow.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow
