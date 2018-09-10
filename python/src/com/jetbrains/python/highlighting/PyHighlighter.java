@@ -105,7 +105,9 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
   
-  public static final TextAttributesKey PY_FSTRING_EXPRESSION_BRACES = TextAttributesKey.createTextAttributesKey("PY.FSTRING_EXPRESSION_BRACES", PY_BRACES);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_BRACES = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_BRACES", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_COLON = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_COLON", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_TYPE_CONVERSION = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_TYPE_CONVERSION", VALID_STRING_ESCAPE);
 
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
@@ -129,11 +131,11 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(PyTokenTypes.FSTRING_START, PY_UNICODE_STRING);
     keys.put(PyTokenTypes.FSTRING_END, PY_UNICODE_STRING);
     keys.put(PyTokenTypes.FSTRING_TEXT, PY_UNICODE_STRING);
-    keys.put(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION, PY_UNICODE_STRING);
-    keys.put(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START, PY_UNICODE_STRING);
     
-    keys.put(PyTokenTypes.FSTRING_FRAGMENT_START, PY_FSTRING_EXPRESSION_BRACES);
-    keys.put(PyTokenTypes.FSTRING_FRAGMENT_END, PY_FSTRING_EXPRESSION_BRACES);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION, PY_FSTRING_FRAGMENT_TYPE_CONVERSION);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START, PY_FSTRING_FRAGMENT_COLON);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_START, PY_FSTRING_FRAGMENT_BRACES);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_END, PY_FSTRING_FRAGMENT_BRACES);
 
     keys.put(PyTokenTypes.DOCSTRING, PY_DOC_COMMENT);
 
