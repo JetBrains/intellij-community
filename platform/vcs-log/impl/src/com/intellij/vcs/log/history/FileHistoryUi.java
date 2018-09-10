@@ -6,14 +6,16 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.DataPackBase;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -37,12 +39,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
   @NotNull private final FilePath myPath;
   @NotNull private final VirtualFile myRoot;
   @Nullable private final Hash myRevision;
 
+  @NotNull private final VcsLogDiffHandler myDiffHandler;
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
@@ -63,6 +68,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myRevision = revision;
 
     myUiProperties = uiProperties;
+    myDiffHandler = notNull(logData.getLogProvider(root).getDiffHandler());
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
@@ -89,21 +95,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Nullable
-  public VcsFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
-    if (details != null && !(details instanceof LoadingDetails)) {
-      List<Change> changes = collectRelevantChanges(details);
-      for (Change change : changes) {
-        ContentRevision revision = change.getAfterRevision();
-        if (revision != null) {
-          return new VcsLogFileRevision(details, revision, revision.getFile());
-        }
-      }
-      if (!changes.isEmpty()) {
-        // file was deleted
-        return VcsFileRevision.NULL;
-      }
-    }
-    return null;
+  public VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
+    if (commit == null) return null;
+    if (isFileDeletedInCommit(commit.getId())) return VcsFileRevision.NULL;
+    FilePath path = getPathInCommit(commit.getId());
+    if (path == null) return null;
+    return new VcsLogFileRevision(commit, myDiffHandler.createContentRevision(path, commit.getId()), path);
   }
 
   @Nullable
@@ -128,12 +125,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return FileHistoryUtil.collectRelevantChanges(details,
                                                   change -> filePath.isDirectory()
                                                             ? FileHistoryUtil.affectsDirectory(change, filePath)
-                                                            : FileHistoryUtil.affectsFile(change, filePath, isFileDeletedInCommit(details.getId())));
+                                                            : FileHistoryUtil
+                                                              .affectsFile(change, filePath, isFileDeletedInCommit(details.getId())));
   }
 
   @Override
-  protected <T> void handleCommitNotFound(@NotNull T commitId,
-                                          boolean commitExists,
+  protected <T> void handleCommitNotFound(@NotNull T commitId, boolean commitExists,
                                           @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
     if (!commitExists) {
       super.handleCommitNotFound(commitId, false, rowGetter);
