@@ -76,6 +76,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
       }
     }
+    ProjectTypeStep.resetGroupForTests();
   }
 
   @Override
