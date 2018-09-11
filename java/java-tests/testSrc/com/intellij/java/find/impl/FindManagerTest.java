@@ -70,6 +70,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -102,7 +103,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindString() throws InterruptedException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-
+    @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = myFindManager.findString(text, 0, findModel);
     assertTrue(findResult.isStringFound());
@@ -609,6 +610,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInCommentsInJsInsideHtml() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("@param t done");
 
+    @Language("HTML")
     String text = "<script>\n" +
                   "/**\n" +
                   " * @param t done\n" +
@@ -828,6 +830,38 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     FindResult findResult = myFindManager.findString(text, prefix.length(), findModel, file);
     assertTrue(findResult.isStringFound());
+  }
+
+  public void testRegExpInString2() throws Exception {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("\\b");
+    String text = "\"abc def\"";
+
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
+    findModel.setRegularExpressions(true);
+    LightVirtualFile file = new LightVirtualFile("A.java", text);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(1, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(4, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(5, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(8, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(!findResult.isStringFound());
+
+    createFile(myModule, "A.java", text);
+    List<UsageInfo> usagesInProject = findInProject(findModel);
+    assertEquals(4, usagesInProject.size());
   }
 
   public void testFindExceptComments() {

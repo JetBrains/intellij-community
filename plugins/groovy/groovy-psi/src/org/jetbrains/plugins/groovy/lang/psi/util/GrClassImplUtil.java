@@ -146,7 +146,7 @@ public class GrClassImplUtil {
     return allMethods;
   }
 
-  private static void getAllMethodsInner(PsiClass clazz, List<PsiMethod> allMethods, HashSet<PsiClass> visited) {
+  private static void getAllMethodsInner(PsiClass clazz, List<? super PsiMethod> allMethods, HashSet<? super PsiClass> visited) {
     if (visited.contains(clazz)) return;
     visited.add(clazz);
 

@@ -24,8 +24,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 
-import static com.intellij.util.ui.UIUtil.useSafely;
-
 /**
  * @author nik
  */
@@ -39,11 +37,12 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
-  public XDebuggerTreeRenderer() {
+  XDebuggerTreeRenderer() {
     getIpad().right = 0;
     myLink.getIpad().left = 0;
   }
 
+  @Override
   public void customizeCellRenderer(@NotNull final JTree tree,
                                     final Object value,
                                     final boolean selected,
@@ -196,7 +195,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     private String myText;
     private Project myProject;
 
-    public MyLongTextHyperlink() {
+    MyLongTextHyperlink() {
       super(XDebuggerBundle.message("node.test.show.full.value"));
     }
 

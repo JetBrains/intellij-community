@@ -42,6 +42,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
     myBunch = bunch;
   }
 
+  @Override
   public void run() {
     SvnBranchConfigurationNew configuration = getDefaultConfiguration();
 

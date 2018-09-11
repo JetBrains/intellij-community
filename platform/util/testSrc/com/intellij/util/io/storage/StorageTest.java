@@ -33,7 +33,7 @@ public class StorageTest extends StorageTestBase {
   }
 
   public void testStress() throws Exception {
-    StringBuffer data = new StringBuffer();
+    StringBuilder data = new StringBuilder();
     for (int i = 0; i < 100; i++) {
       data.append("Hello ");
     }
@@ -69,7 +69,7 @@ public class StorageTest extends StorageTestBase {
         out = new DataOutputStream(myStorage.appendStream(r));
       }
     }
-    
+
     out.close();
 
 
@@ -79,7 +79,7 @@ public class StorageTest extends StorageTestBase {
       }
     }
   }
-  
+
   public void testAppender2() throws Exception {
     int r = myStorage.createNewRecord();
     appendNBytes(r, 64);
@@ -87,6 +87,7 @@ public class StorageTest extends StorageTestBase {
     appendNBytes(r, 512);
   }
 
+  @Override
   protected void appendNBytes(final int r, final int len) throws IOException {
     DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
     for (int i = 0; i < len; i++) {

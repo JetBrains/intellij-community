@@ -21,24 +21,31 @@ import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
  * author: lesya
  */
 public class CvsMessagesAdapter implements CvsMessagesListener{
+  @Override
   public void addMessage(MessageEvent event) {
   }
 
+  @Override
   public void commandFinished(String commandName, long time) {
   }
 
+  @Override
   public void addFileMessage(FileMessage message) {
   }
 
+  @Override
   public void commandStarted(String command) {
   }
 
+  @Override
   public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot, boolean warning) {
   }
 
+  @Override
   public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
   }
 
+  @Override
   public void addMessage(String message) {
   }
 }

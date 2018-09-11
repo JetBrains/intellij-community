@@ -24,7 +24,7 @@ class FileInfo {
   private final VirtualFile myFile;
   private final ListWithSelection<HandleType> myHandleType = new ListWithSelection<>();
 
-  public FileInfo(VirtualFile file, Project project) {
+  FileInfo(VirtualFile file, Project project) {
     myFile = file;
     myHandleType.add(HandleType.USE_FILE_SYSTEM);
     myHandleType.selectFirst();

@@ -15,9 +15,8 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
-import org.intellij.lang.xpath.psi.PrefixedName;
-
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.psi.PrefixedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,10 +33,12 @@ public class PrefixedNameImpl implements PrefixedName {
         this(null, node);
     }
 
+    @Override
     public String getPrefix() {
         return prefixNode != null ? prefixNode.getText() : null;
     }
 
+    @Override
     @NotNull
     public String getLocalName() {
         return localNode.getText();

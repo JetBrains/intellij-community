@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.progress.receiving;
 
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -20,8 +21,8 @@ public class AbstractResponseProgressHandler {
 
 	// Fields =================================================================
 
-	private final Set fileObjects = new HashSet(2000);
-	private final Map directoryPaths = new HashMap(200);
+	private final Set<FileObject> fileObjects = new HashSet<>(2000);
+	private final Map<String, FileObjectsCount> directoryPaths = new HashMap<>(200);
 	private final IProgressViewer progressViewer;
 	private final int maxCount;
 	private int count;
@@ -36,12 +37,16 @@ public class AbstractResponseProgressHandler {
 		this.progressViewer = progressViewer;
 
 		cvsFiles.visit(new ICvsFilesVisitor() {
-			public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
+			@Override
+                        public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
 				fileObjects.add(fileObject);
-				addDirectory(fileObject.getParent());
+				final DirectoryObject parent = fileObject.getParent();
+				assert parent != null;
+				addDirectory(parent);
 			}
 
-			public void handleDirectory(DirectoryObject directoryObject) {
+			@Override
+                        public void handleDirectory(DirectoryObject directoryObject) {
 			}
 		});
 
@@ -79,11 +84,11 @@ public class AbstractResponseProgressHandler {
 	// Utils ==================================================================
 
 	private FileObjectsCount getFileObjectsCount(String directoryPath) {
-		return (FileObjectsCount)directoryPaths.get(directoryPath);
+		return directoryPaths.get(directoryPath);
 	}
 
 	private FileObjectsCount removeFileObjectsCount(String directoryPath) {
-		return (FileObjectsCount)directoryPaths.remove(directoryPath);
+		return directoryPaths.remove(directoryPath);
 	}
 
 	private void putFileObjectsCount(String directoryPath, FileObjectsCount fileObjectsCount) {
@@ -120,7 +125,7 @@ public class AbstractResponseProgressHandler {
 
 		// Setup ==================================================================
 
-		public FileObjectsCount() {
+		FileObjectsCount() {
 		}
 
 		// Implemented ============================================================

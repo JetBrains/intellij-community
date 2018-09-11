@@ -259,6 +259,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   private void cleanupVfs() {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
         for (VirtualFile file : myFixture.getTempDirFixture().getFile("").getChildren()) {

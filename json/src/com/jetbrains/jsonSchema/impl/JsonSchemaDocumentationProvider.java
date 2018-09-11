@@ -127,9 +127,13 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (preferShort && !StringUtil.isEmptyOrSpaces(title)) {
       return plainTextPostProcess(title);
     } else if (!StringUtil.isEmptyOrSpaces(htmlDescription)) {
-      return htmlDescription;
+      String desc = htmlDescription;
+      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
+      return desc;
     } else if (!StringUtil.isEmptyOrSpaces(description)) {
-      return plainTextPostProcess(description);
+      String desc = plainTextPostProcess(description);
+      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
+      return desc;
     }
     return null;
   }

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HotSwapAction extends AnAction{
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
@@ -40,6 +41,7 @@ public class HotSwapAction extends AnAction{
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {

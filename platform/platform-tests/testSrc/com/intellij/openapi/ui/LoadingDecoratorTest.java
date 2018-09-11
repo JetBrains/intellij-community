@@ -23,6 +23,7 @@ public class LoadingDecoratorTest {
 
     final JCheckBox loadingCheckBox = new JCheckBox("Loading");
     loadingCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (loadingTree.isLoading()) {
           loadingTree.stopLoading();

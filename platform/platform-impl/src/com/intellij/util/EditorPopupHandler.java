@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class EditorPopupHandler implements EditorMouseListener {
   public abstract void invokePopup(EditorMouseEvent event);
@@ -16,17 +17,17 @@ public abstract class EditorPopupHandler implements EditorMouseListener {
   }
 
   @Override
-  public void mouseClicked(EditorMouseEvent e) {
+  public void mouseClicked(@NotNull EditorMouseEvent e) {
     handle(e);
   }
 
   @Override
-  public void mousePressed(EditorMouseEvent e) {
+  public void mousePressed(@NotNull EditorMouseEvent e) {
     handle(e);
   }
 
   @Override
-  public void mouseReleased(EditorMouseEvent e) {
+  public void mouseReleased(@NotNull EditorMouseEvent e) {
     handle(e);
   }
 }

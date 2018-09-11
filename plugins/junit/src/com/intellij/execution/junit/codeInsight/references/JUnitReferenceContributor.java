@@ -34,14 +34,17 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotation, paramName)));
   }
 
+  @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, "value"), new PsiReferenceProvider() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new MethodSourceReference[]{new MethodSourceReference((PsiLiteral)element)};
       }
     });
     registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, "resources"), new PsiReferenceProvider() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return FileReferenceSet.createSet(element, false, false, false).getAllReferences();
@@ -54,11 +57,12 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     private final String myAnnotation;
     private final String myParameterName;
 
-    public TestAnnotationFilter(String annotation, @NotNull @NonNls String parameterName) {
+    TestAnnotationFilter(String annotation, @NotNull @NonNls String parameterName) {
       myAnnotation = annotation;
       myParameterName = parameterName;
     }
 
+    @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
       if (pair == null) return false;
@@ -69,6 +73,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
       return myAnnotation.equals(annotation.getQualifiedName());
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return PsiLiteral.class.isAssignableFrom(hintClass);
     }

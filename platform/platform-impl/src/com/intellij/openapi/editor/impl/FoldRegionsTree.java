@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -212,23 +213,8 @@ abstract class FoldRegionsTree {
       return null;
     }
 
-    int start = 0;
-    int end = ends.length - 1;
-
-    while (start <= end) {
-      int i = (start + end) / 2;
-      if (offset < starts[i]) {
-        end = i - 1;
-      }
-      else if (offset > ends[i]) {
-        start = i + 1;
-      }
-      else {
-        return cachedData.topLevelRegions[i];
-      }
-    }
-
-    return null;
+    int i = ObjectUtils.binarySearch(0, ends.length, mid-> ends[mid] < offset ? -1 : starts[mid] > offset ? 1 : 0);
+    return i < 0 ? null : cachedData.topLevelRegions[i];
   }
 
   @Nullable
@@ -313,22 +299,8 @@ abstract class FoldRegionsTree {
     if (endOffsets == null) return -1;
 
     offset--; // end offsets are decremented in cache
-    int start = 0;
-    int end = endOffsets.length - 1;
-
-    while (start <= end) {
-      int i = (start + end) / 2;
-      if (offset < endOffsets[i]) {
-        end = i - 1;
-      } else if (offset > endOffsets[i]) {
-        start = i + 1;
-      }
-      else {
-        return i;
-      }
-    }
-
-    return end;
+    int i = Arrays.binarySearch(endOffsets, offset);
+    return i < 0 ? - i - 2 : i;
   }
 
   @Nullable

@@ -16,9 +16,9 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -27,14 +27,17 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,21 +53,25 @@ import java.util.Set;
  * 1. corresponding source file has been scheduled for recompilation (see above)
  * 2. corresponding source file has been deleted
  */
-public class TranslatingCompilerFilesMonitor {
+public class TranslatingCompilerFilesMonitor implements BulkFileListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
+  private final BuildManager myBuildManager;
 
-  public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, Application application) {
-    vfsManager.addVirtualFileListener(new MyVfsListener(), application);
+  public TranslatingCompilerFilesMonitor(MessageBus bus, BuildManager buildManager) {
+    myBuildManager = buildManager;
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
   }
 
+  @FunctionalInterface
   private interface FileProcessor {
-    void execute(VirtualFile file);
+    void execute(@NotNull VirtualFile file);
   }
 
-  private static void processRecursively(final VirtualFile fromFile, final boolean dbOnly, final FileProcessor processor) {
+  private static void processRecursively(@NotNull VirtualFile fromFile, final boolean dbOnly, @NotNull FileProcessor processor) {
     if (!(fromFile.getFileSystem() instanceof LocalFileSystem)) {
       return;
     }
@@ -109,97 +116,135 @@ public class TranslatingCompilerFilesMonitor {
     }
     return false;
   }
-  
-  private static class MyVfsListener implements VirtualFileListener {
-    @Override
-    public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
-      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-        final VirtualFile eventFile = event.getFile();
-        if (isInContentOfOpenedProject(eventFile)) {
-          final VirtualFile parent = event.getParent();
-          if (parent != null) {
-            final String oldName = (String)event.getOldValue();
-            final String root = parent.getPath() + "/" + oldName;
-            final Set<File> toMark = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-            if (eventFile.isDirectory()) {
-              VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
-                private final StringBuilder filePath = new StringBuilder(root);
 
-                @Override
-                public boolean visitFile(@NotNull VirtualFile child) {
-                  if (child.isDirectory()) {
-                    if (!Comparing.equal(child, eventFile)) {
-                      filePath.append("/").append(child.getName());
-                    }
-                  }
-                  else {
-                    String childPath = filePath.toString();
-                    if (!Comparing.equal(child, eventFile)) {
-                      childPath += "/" + child.getName();
-                    }
-                    toMark.add(new File(childPath));
-                  }
-                  return true;
-                }
+  @Override
+  public void before(@NotNull List<? extends VFileEvent> events) {
+    Collection<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    for (VFileEvent event : events) {
+      if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+        final VirtualFile file = event.getFile();
+        if (file != null) {
+          collectPaths(file, filesDeleted);
+        }
+      }
+    }
+    notifyFilesDeleted(filesDeleted);
+  }
 
-                @Override
-                public void afterChildrenVisited(@NotNull VirtualFile file) {
-                  if (file.isDirectory() && !Comparing.equal(file, eventFile)) {
-                    filePath.delete(filePath.length() - file.getName().length() - 1, filePath.length());
-                  }
-                }
-              });
-            }
-            else {
-              toMark.add(new File(root));
-            }
-            notifyFilesDeleted(toMark);
-          }
-          collectPathsAndNotify(eventFile, TranslatingCompilerFilesMonitor::notifyFilesChanged);
+  @Override
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    final Set<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    for (VFileEvent event : events) {
+      if (event instanceof VFilePropertyChangeEvent) {
+        handlePropChange((VFilePropertyChangeEvent)event, filesDeleted, filesChanged);
+      }
+      else if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent || event instanceof VFileContentChangeEvent || event instanceof VFileCopyEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null) {
+          collectPaths(file, filesChanged);
         }
       }
     }
 
-    @Override
-    public void contentsChanged(@NotNull final VirtualFileEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesChanged);
-    }
+    checkIntersection(filesChanged, filesDeleted);
 
-    @Override
-    public void fileCreated(@NotNull final VirtualFileEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesChanged);
-    }
+    notifyFilesChanged(filesChanged);
+    notifyFilesDeleted(filesDeleted);
+  }
 
-    @Override
-    public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesChanged);
-    }
-
-    @Override
-    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesChanged);
-    }
-
-    @Override
-    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesDeleted);
-    }
-
-    @Override
-    public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesDeleted);
+  // todo: temporary check to verify events correctess
+  private static void checkIntersection(Set<File> changed, Set<File> deleted) {
+    if (intersect(changed, deleted)) {
+      final StringBuilder message = new StringBuilder("Changed and deleted paths in the same even block must not intersect!");
+      message.append("\nChanged paths:");
+      for (File file : changed) {
+        message.append("\n\t").append(file.getPath());
+      }
+      message.append("\nDeleted paths:");
+      for (File file : deleted) {
+        message.append("\n\t").append(file.getPath());
+      }
+      message.append("\n");
+      LOG.error(message.toString());
     }
   }
 
-  private static void collectPathsAndNotify(final VirtualFile file, final Consumer<Collection<File>> notification) {
+  private static <T> boolean intersect(Set<T> s1, Set<T> s2) {
+    if (!s1.isEmpty() && !s2.isEmpty()) {
+      final Set<T> min, other;
+      if (s1.size() < s2.size()) {
+        min = s1;
+        other = s2;
+      }
+      else {
+        min = s2;
+        other = s1;
+      }
+      for (T e : min) {
+        if (other.contains(e)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static void handlePropChange(@NotNull VFilePropertyChangeEvent event,
+                                       @NotNull Collection<? super File> filesDeleted,
+                                       @NotNull Collection<? super File> filesChanged) {
+    if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      final VirtualFile eventFile = event.getFile();
+      if (isInContentOfOpenedProject(eventFile)) {
+        final VirtualFile parent = eventFile.getParent();
+        if (parent != null) {
+          final String oldName = (String)event.getOldValue();
+          final String root = parent.getPath() + "/" + oldName;
+          if (eventFile.isDirectory()) {
+            VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
+              private final StringBuilder filePath = new StringBuilder(root);
+
+              @Override
+              public boolean visitFile(@NotNull VirtualFile child) {
+                if (child.isDirectory()) {
+                  if (!Comparing.equal(child, eventFile)) {
+                    filePath.append("/").append(child.getName());
+                  }
+                }
+                else {
+                  String childPath = filePath.toString();
+                  if (!Comparing.equal(child, eventFile)) {
+                    childPath += "/" + child.getName();
+                  }
+                  filesDeleted.add(new File(childPath));
+                }
+                return true;
+              }
+
+              @Override
+              public void afterChildrenVisited(@NotNull VirtualFile file) {
+                if (file.isDirectory() && !Comparing.equal(file, eventFile)) {
+                  filePath.delete(filePath.length() - file.getName().length() - 1, filePath.length());
+                }
+              }
+            });
+          }
+          else {
+            filesDeleted.add(new File(root));
+          }
+        }
+        collectPaths(eventFile, filesChanged);
+      }
+    }
+  }
+
+  private static void collectPaths(@NotNull VirtualFile file, @NotNull Collection<? super File> outFiles) {
     if (!isIgnoredOrUnderIgnoredDirectory(file)) {
-      final Set<File> pathsToMark = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-      processRecursively(file, !isInContentOfOpenedProject(file), f -> pathsToMark.add(new File(f.getPath())));
-      notification.consume(pathsToMark);
+      processRecursively(file, !isInContentOfOpenedProject(file), f -> outFiles.add(new File(f.getPath())));
     }
   }
 
-  private static boolean isIgnoredOrUnderIgnoredDirectory(final VirtualFile file) {
+  private static boolean isIgnoredOrUnderIgnoredDirectory(@NotNull VirtualFile file) {
     if (isIgnoredByBuild(file)) {
       return true;
     }
@@ -214,23 +259,22 @@ public class TranslatingCompilerFilesMonitor {
     return false;
   }
 
-  private static boolean isIgnoredByBuild(VirtualFile file) {
+  private static boolean isIgnoredByBuild(@NotNull VirtualFile file) {
     return
         FileTypeManager.getInstance().isFileIgnored(file) ||
         ProjectUtil.isProjectOrWorkspaceFile(file)        ||
         FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
   }
 
-  private static void notifyFilesChanged(Collection<File> paths) {
+  private void notifyFilesChanged(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
-      BuildManager.getInstance().notifyFilesChanged(paths);
+      myBuildManager.notifyFilesChanged(paths);
     }
   }
 
-  private static void notifyFilesDeleted(Collection<File> paths) {
+  private void notifyFilesDeleted(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
-      BuildManager.getInstance().notifyFilesDeleted(paths);
+      myBuildManager.notifyFilesDeleted(paths);
     }
   }
-
 }

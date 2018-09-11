@@ -204,7 +204,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @NotNull
-  public static <K, V> Map<K, V> createMap(@NotNull final Function<K, V> computeValue, @NotNull final Producer<Map<K,V>> mapCreator) {
+  public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends Map<K, V>> mapCreator) {
     //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable

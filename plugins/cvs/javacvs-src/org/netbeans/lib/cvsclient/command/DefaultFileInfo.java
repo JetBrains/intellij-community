@@ -40,13 +40,14 @@ public final class DefaultFileInfo
 
 	// Implemented ============================================================
 
-	public FileObject getFileObject() {
+	@Override
+        public FileObject getFileObject() {
         return fileObject;
 	}
 
 	@SuppressWarnings({"HardCodedStringLiteral"})
         public String toString() {
-		final StringBuffer buffer = new StringBuffer();
+		final StringBuilder buffer = new StringBuilder();
 		if (isDirectory()) {
 			buffer.append("Directory ");
 		}

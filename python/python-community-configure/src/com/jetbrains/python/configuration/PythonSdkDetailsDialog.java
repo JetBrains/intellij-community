@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -62,8 +48,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.configuration.PythonSdkDetailsDialog");
@@ -162,12 +148,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void addListeners() {
     myListener = new SdkModel.Listener() {
       @Override
-      public void sdkChanged(Sdk sdk, String previousName) {
+      public void sdkChanged(@NotNull Sdk sdk, String previousName) {
         refreshSdkList();
       }
     };
     myProjectSdksModel.addListener(myListener);
     mySdkList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent event) {
         updateOkButton();
       }
@@ -411,7 +398,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
-    public ToggleVirtualEnvFilterButton() {
+    ToggleVirtualEnvFilterButton() {
       super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
@@ -429,7 +416,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
-    public ShowPathButton() {
+    ShowPathButton() {
       super(PyBundle.message("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
     }
 
@@ -476,7 +463,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     private final List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
 
-    public PyRemotePathEditor(Sdk sdk) {
+    PyRemotePathEditor(Sdk sdk) {
       super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
       mySdk = sdk;
       myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();

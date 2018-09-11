@@ -155,6 +155,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
   }
 
+  @Override
   public void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     final HashMap<PsiFile, String> relativePathsMap = new HashMap<>();
@@ -241,6 +242,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return false;
   }
 
+  @Override
   public void doClone(PsiElement element) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     PsiClass[] classes = getTopLevelClasses(element);
@@ -267,7 +269,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                       final Object targetDirectory,
                                       final PsiDirectory defaultTargetDirectory,
                                       final String commandName,
-                                      final boolean selectInActivePanel, 
+                                      final boolean selectInActivePanel,
                                       final boolean openInEditor) {
     final boolean[] result = new boolean[] {false};
     Runnable command = () -> {
@@ -361,7 +363,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
 
-    
+
     for (PsiFile file : files) {
       try {
         PsiDirectory finalTarget = targetDirectory;
@@ -478,7 +480,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   private static void rebindExternalReferences(PsiElement element,
                                                Map<PsiClass, PsiElement> oldToNewMap,
-                                               Set<PsiElement> rebindExpressions) {
+                                               Set<? super PsiElement> rebindExpressions) {
      final LocalSearchScope searchScope = new LocalSearchScope(element);
      for (PsiClass aClass : oldToNewMap.keySet()) {
        final PsiElement newClass = oldToNewMap.get(aClass);
@@ -489,7 +491,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
    }
 
 
-  private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
+  private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<? super PsiElement> rebindExpressions) {
     final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<>();
     element.accept(new JavaRecursiveElementVisitor(){
       @Override

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,8 +31,9 @@ public abstract class IconWithTextAction extends AnAction implements CustomCompo
     }
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(final Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull final Presentation presentation) {
     return createCustomComponentImpl(this, presentation);
   }
 

@@ -137,7 +137,7 @@ class DirectoryPathMatcher {
 
   }
 
-  private void processProjectFilesUnder(VirtualFile root, Processor<VirtualFile> consumer) {
+  private void processProjectFilesUnder(VirtualFile root, Processor<? super VirtualFile> consumer) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myModel.getProject());
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Object>() {
 

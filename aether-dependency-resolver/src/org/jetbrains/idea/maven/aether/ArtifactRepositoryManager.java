@@ -30,7 +30,10 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import org.eclipse.aether.util.graph.visitor.FilteringDependencyVisitor;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.eclipse.aether.util.version.GenericVersionScheme;
-import org.eclipse.aether.version.*;
+import org.eclipse.aether.version.InvalidVersionSpecificationException;
+import org.eclipse.aether.version.Version;
+import org.eclipse.aether.version.VersionConstraint;
+import org.eclipse.aether.version.VersionScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +71,7 @@ public class ArtifactRepositoryManager {
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
     locator.setErrorHandler(new DefaultServiceLocator.ErrorHandler() {
+      @Override
       public void serviceCreationFailed(Class<?> type, Class<?> impl, Throwable exception) {
         if (exception != null) {
           throw new RuntimeException(exception);
@@ -95,6 +99,7 @@ public class ArtifactRepositoryManager {
       session.setTransferListener((TransferListener)Proxy
         .newProxyInstance(session.getClass().getClassLoader(), new Class[]{TransferListener.class}, new InvocationHandler() {
           private final EnumSet<TransferEvent.EventType> checkCancelEvents = EnumSet.of(TransferEvent.EventType.INITIATED, TransferEvent.EventType.STARTED, TransferEvent.EventType.PROGRESSED);
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
           final Object event = args[0];
           if (event instanceof TransferEvent) {
@@ -303,7 +308,7 @@ public class ArtifactRepositoryManager {
   private static class ArtifactWithChangedClassifier extends DelegatingArtifact {
     private final String myClassifier;
 
-    public ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
+    ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
       super(artifact);
       myClassifier = classifier;
     }
@@ -326,10 +331,11 @@ public class ArtifactRepositoryManager {
     private final ArtifactKind myKind;
     private final List<ArtifactRequest> myRequests = new ArrayList<>();
 
-    public ArtifactRequestBuilder(ArtifactKind kind) {
+    ArtifactRequestBuilder(ArtifactKind kind) {
       myKind = kind;
     }
 
+    @Override
     public boolean visitEnter(DependencyNode node) {
       final Dependency dep = node.getDependency();
       if (dep != null) {
@@ -342,6 +348,7 @@ public class ArtifactRepositoryManager {
       return true;
     }
 
+    @Override
     public boolean visitLeave(DependencyNode node) {
       return true;
     }
@@ -355,7 +362,7 @@ public class ArtifactRepositoryManager {
   private static class ExcludeDependenciesFilter implements DependencyFilter {
     private final HashSet<String> myExcludedDependencies;
 
-    public ExcludeDependenciesFilter(List<String> excludedDependencies) {
+    ExcludeDependenciesFilter(List<String> excludedDependencies) {
       myExcludedDependencies = new HashSet<>(excludedDependencies);
     }
 
@@ -378,7 +385,7 @@ public class ArtifactRepositoryManager {
   private static class ArtifactDependencyTreeBuilder implements DependencyVisitor {
     private final List<List<ArtifactDependencyNode>> myCurrentChildren = new ArrayList<>();
 
-    public ArtifactDependencyTreeBuilder() {
+    ArtifactDependencyTreeBuilder() {
       myCurrentChildren.add(new ArrayList<>());
     }
 

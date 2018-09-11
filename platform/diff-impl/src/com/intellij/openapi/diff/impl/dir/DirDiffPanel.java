@@ -464,6 +464,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return myTable;
   }
 
+  @Override
   public void dispose() {
     myModel.stopUpdating();
     PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, mySplitPanel.getDividerLocation(), DIVIDER_PROPERTY_DEFAULT_VALUE);
@@ -591,7 +592,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private class MyDiffRequestProcessor extends CacheDiffRequestProcessor<ElementWrapper> {
-    public MyDiffRequestProcessor(@Nullable Project project) {
+    MyDiffRequestProcessor(@Nullable Project project) {
       super(project, DiffPlaces.DIR_DIFF);
     }
 
@@ -659,7 +660,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     @Nullable public final DiffElement sourceElement;
     @Nullable public final DiffElement targetElement;
 
-    public ElementWrapper(@NotNull DirDiffElementImpl element) {
+    ElementWrapper(@NotNull DirDiffElementImpl element) {
       sourceElement = element.getSource();
       targetElement = element.getTarget();
     }
@@ -686,7 +687,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private class MyFilterComponent extends FilterComponent {
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("dir.diff.filter", 15, false);
 
       DumbAwareAction.create(e -> userTriggeredFilter())

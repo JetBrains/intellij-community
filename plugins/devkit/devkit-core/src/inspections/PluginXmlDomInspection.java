@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -33,6 +19,8 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -48,6 +36,7 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.xml.CommonXmlStrings;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nls;
@@ -88,6 +77,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return new FormBuilder().addComponentFillVertically(panel, 0).getPanel();
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "PluginXmlValidity";
@@ -98,8 +88,11 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     super.checkDomElement(element, holder, helper);
 
     if (element instanceof IdeaPlugin) {
-      annotateIdeaPlugin((IdeaPlugin)element, holder);
-      checkJetBrainsPlugin((IdeaPlugin)element, holder);
+      Module module = element.getModule();
+      if (module != null) {
+        annotateIdeaPlugin((IdeaPlugin)element, holder, module);
+        checkJetBrainsPlugin((IdeaPlugin)element, holder, module);
+      }
     }
     else if (element instanceof Extension) {
       annotateExtension((Extension)element, holder);
@@ -152,7 +145,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
+  private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(ideaPlugin.getIdeaPluginVersion(), holder);
     //noinspection deprecation
@@ -160,15 +153,46 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       //noinspection deprecation
       highlightDeprecated(ideaPlugin.getUseIdeaClassloader(), "Deprecated", holder, true, true);
     }
+
+    checkMaxLength(ideaPlugin.getUrl(), 255, holder);
+
+    checkMaxLength(ideaPlugin.getId(), 255, holder);
+
+    checkTemplateText(ideaPlugin.getName(), "Plugin display name here", holder);
+    checkTemplateTextContains(ideaPlugin.getName(), "plugin", holder);
+    checkMaxLength(ideaPlugin.getName(), 255, holder);
+
+
+    checkMaxLength(ideaPlugin.getDescription(), 65535, holder);
+    checkHasRealText(ideaPlugin.getDescription(), 40, holder);
+    checkTemplateTextContains(ideaPlugin.getDescription(), "Enter short description for your plugin here.", holder);
+    checkTemplateTextContains(ideaPlugin.getDescription(), "most HTML tags may be used", holder);
+
+    checkMaxLength(ideaPlugin.getChangeNotes(), 65535, holder);
+    checkHasRealText(ideaPlugin.getChangeNotes(), 40, holder);
+    checkTemplateTextContains(ideaPlugin.getChangeNotes(), "Add change notes here", holder);
+    checkTemplateTextContains(ideaPlugin.getChangeNotes(), "most HTML tags may be used", holder);
+
+    if (!hasRealPluginId(ideaPlugin)) return;
+
+    if (!DomUtil.hasXml(ideaPlugin.getVersion())) {
+      holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.version.must.be.specified"),
+                           new AddDomElementQuickFix<>(ideaPlugin.getVersion()));
+    }
+    checkMaxLength(ideaPlugin.getVersion(), 64, holder);
+
+
+    if (PsiUtil.isIdeaProject(module.getProject())) return;
+    if (!DomUtil.hasXml(ideaPlugin.getVendor())) {
+      holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.vendor.must.be.specified"),
+                           new AddDomElementQuickFix<>(ideaPlugin.getVendor()));
+    }
   }
 
-  private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
-    final Module module = ideaPlugin.getModule();
-    if (module == null) return;
+  private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
     if (!PsiUtil.isIdeaProject(module.getProject())) return;
 
-    String pluginId = ideaPlugin.getPluginId();
-    if (pluginId == null || pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID)) return;
+    if (!hasRealPluginId(ideaPlugin)) return;
 
     XmlTag xmlTag = ideaPlugin.getXmlTag();
     if (xmlTag == null) return;
@@ -188,6 +212,11 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
     }
+  }
+
+  private static boolean hasRealPluginId(IdeaPlugin ideaPlugin) {
+    String pluginId = ideaPlugin.getPluginId();
+    return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
   private void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
@@ -306,6 +335,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(ideaVersion.getMax(), holder);
     highlightUntilBuild(ideaVersion, holder);
+
+    GenericAttributeValue<String> sinceBuild = ideaVersion.getSinceBuild();
+    GenericAttributeValue<String> untilBuild = ideaVersion.getUntilBuild();
+    if (!DomUtil.hasXml(sinceBuild) ||
+        !DomUtil.hasXml(untilBuild)) {
+      return;
+    }
+
+    BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild.getStringValue());
+    BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild.getStringValue());
+    int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
+    if (compare > 0) {
+      holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build"));
+    }
   }
 
   private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
@@ -419,18 +462,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(vendor.getLogo(), holder);
-  }
 
-  private static void highlightAttributeNotUsedAnymore(GenericAttributeValue attributeValue,
-                                                       DomElementAnnotationHolder holder) {
-    if (!DomUtil.hasXml(attributeValue)) return;
-    highlightDeprecated(
-      attributeValue, DevKitBundle.message("inspections.plugin.xml.attribute.not.used.anymore", attributeValue.getXmlElementName()),
-      holder, true, true);
+    checkTemplateText(vendor, "YourCompany", holder);
+    checkMaxLength(vendor, 255, holder);
+
+    checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder);
+    checkMaxLength(vendor.getUrl(), 255, holder);
+
+    checkTemplateText(vendor.getEmail(), "support@yourcompany.com", holder);
+    checkMaxLength(vendor.getEmail(), 255, holder);
   }
 
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {
@@ -532,6 +575,14 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static void highlightAttributeNotUsedAnymore(GenericAttributeValue attributeValue,
+                                                       DomElementAnnotationHolder holder) {
+    if (!DomUtil.hasXml(attributeValue)) return;
+    highlightDeprecated(
+      attributeValue, DevKitBundle.message("inspections.plugin.xml.attribute.not.used.anymore", attributeValue.getXmlElementName()),
+      holder, true, true);
+  }
+
   private static void highlightDeprecated(DomElement element, String message, DomElementAnnotationHolder holder,
                                           boolean useRemoveQuickfix, boolean highlightWholeElement) {
     DomElementProblemDescriptor problem;
@@ -546,10 +597,50 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static void checkTemplateText(GenericDomValue<String> domValue,
+                                        String templateText,
+                                        DomElementAnnotationHolder holder) {
+    if (templateText.equals(domValue.getValue())) {
+      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.do.not.use.template.text", templateText));
+    }
+  }
+
+  private static void checkTemplateTextContains(GenericDomValue<String> domValue,
+                                                String containsText,
+                                                DomElementAnnotationHolder holder) {
+    String text = domValue.getStringValue();
+    if (text != null && StringUtil.containsIgnoreCase(text, containsText)) {
+      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", containsText));
+    }
+  }
+
+  private static void checkMaxLength(GenericDomValue<String> domValue,
+                                     int maxLength,
+                                     DomElementAnnotationHolder holder) {
+    String value = domValue.getStringValue();
+    if (value != null && value.length() > maxLength) {
+      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.value.exceeds.max.length", maxLength));
+    }
+  }
+
+  private static void checkHasRealText(GenericDomValue<String> domValue,
+                                       int minimumLength,
+                                       DomElementAnnotationHolder holder) {
+    if (!DomUtil.hasXml(domValue)) return;
+
+    String value = StringUtil.notNullize(StringUtil.removeHtmlTags(domValue.getStringValue()));
+    value = StringUtil.replace(value, CommonXmlStrings.CDATA_START, "");
+    value = StringUtil.replace(value, CommonXmlStrings.CDATA_END, "");
+
+    if (StringUtil.isEmptyOrSpaces(value) || value.length() < minimumLength) {
+      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.value.must.have.minimum.length", minimumLength));
+    }
+  }
+
   private static class CorrectUntilBuildAttributeFix implements LocalQuickFix {
     private final String myCorrectValue;
 
-    public CorrectUntilBuildAttributeFix(String correctValue) {
+    CorrectUntilBuildAttributeFix(String correctValue) {
       myCorrectValue = correctValue;
     }
 

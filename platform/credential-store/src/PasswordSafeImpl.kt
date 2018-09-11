@@ -88,7 +88,10 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
-    (currentProvider as? KeePassCredentialStore)?.save()
+    val provider = _currentProvider
+    if (provider.isInitialized()) {
+      (provider.value as? KeePassCredentialStore)?.save()
+    }
   }
 
   fun clearPasswords() {

@@ -46,7 +46,8 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
     }
 
     Registry.get(key).addListener(new RegistryValueListener.Adapter() {
-      public void afterValueChanged(RegistryValue value) {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
         if (value.asBoolean()) {
           ourConnection = app.getMessageBus().connect();
           ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
@@ -56,12 +57,14 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
       }
     }, app);
   }
-  
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     new UnscrambleDialog(project).show();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getProject();

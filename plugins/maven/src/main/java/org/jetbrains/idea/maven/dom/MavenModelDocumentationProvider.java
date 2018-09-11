@@ -33,10 +33,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
+  @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     element = getMavenElement(element);
     if (element == null) return null;
@@ -48,14 +50,17 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
     return Collections.singletonList("http://maven.apache.org/ref/2.2.1/maven-model/maven.html");
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDoc(element, true);
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
@@ -65,6 +70,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 
+  @Override
   public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
     return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
   }

@@ -108,7 +108,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     clearModifiers(method);
 
-    @NonNls StringBuffer call = new StringBuffer();
+    @NonNls StringBuilder call = new StringBuilder();
 
     PsiModifierList modifierList = null;
 
@@ -359,7 +359,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   private static void collectTargetsInClass(PsiElement element,
                                             final PsiClass targetClass,
                                             final PsiClass aClass,
-                                            List<PsiElementClassMember> result) {
+                                            List<? super PsiElementClassMember> result) {
     final PsiField[] fields = aClass.getAllFields();
     PsiResolveHelper helper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (PsiField field : fields) {

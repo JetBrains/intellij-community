@@ -72,7 +72,7 @@ public class DissociateResourceBundleAction extends AnAction {
     }
   }
 
-  public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
+  public static void dissociate(final Collection<? extends ResourceBundle> resourceBundles, final Project project) {
     final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<>();
     for (ResourceBundle resourceBundle : resourceBundles) {
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {

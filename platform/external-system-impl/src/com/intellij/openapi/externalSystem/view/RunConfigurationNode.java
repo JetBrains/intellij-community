@@ -48,7 +48,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(ProgramRunnerUtil.getConfigurationIcon(mySettings, false));
 
@@ -83,6 +83,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
     return mySettings.getName();
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return true;
   }

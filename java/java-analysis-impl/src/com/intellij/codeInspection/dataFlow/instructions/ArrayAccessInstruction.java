@@ -37,6 +37,7 @@ public class ArrayAccessInstruction extends Instruction implements ExpressionPus
     return myValue;
   }
 
+  @Override
   @NotNull
   public PsiArrayAccessExpression getExpression() {
     return myExpression;

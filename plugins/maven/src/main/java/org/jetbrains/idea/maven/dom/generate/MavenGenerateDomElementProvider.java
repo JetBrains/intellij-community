@@ -35,6 +35,7 @@ public class MavenGenerateDomElementProvider extends AbstractDomGenerateProvider
     myParentFunction = parentFunction;
   }
 
+  @Override
   protected DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file) {
     MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
 

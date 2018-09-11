@@ -3,6 +3,9 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,9 +16,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VcsPushDialog extends DialogWrapper {
+public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
 
   private static final String ID = "Vcs.Push.Dialog";
 
@@ -37,7 +43,7 @@ public class VcsPushDialog extends DialogWrapper {
   private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
 
   private Action myPushAction;
-  @Nullable private ForcePushAction myForcePushAction;
+  @NotNull private final List<ActionWrapper> myAdditionalActions;
 
   public VcsPushDialog(@NotNull Project project,
                        @NotNull List<? extends Repository> selectedRepositories,
@@ -47,6 +53,12 @@ public class VcsPushDialog extends DialogWrapper {
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
+
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Push.Actions");
+    myAdditionalActions = StreamEx.
+      of(group.getChildren(null)).
+      select(PushActionBase.class).
+      map(action -> new ActionWrapper(myProject, this, action)).toList();
 
     init();
     updateOkActions();
@@ -99,10 +111,7 @@ public class VcsPushDialog extends DialogWrapper {
   @NotNull
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<>();
-    myForcePushAction = new ForcePushAction();
-    myForcePushAction.setEnabled(canForcePush());
-    myForcePushAction.putValue(Action.NAME, "&Force Push");
-    myPushAction = new ComplexPushAction(myForcePushAction);
+    myPushAction = new ComplexPushAction(myAdditionalActions);
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myPushAction);
     actions.add(getCancelAction());
@@ -110,12 +119,15 @@ public class VcsPushDialog extends DialogWrapper {
     return actions.toArray(new Action[0]);
   }
 
+  @Override
   public boolean canPush() {
     return myController.isPushAllowed();
   }
 
-  private boolean canForcePush() {
-    return myController.getProhibitedTarget() == null && myController.isPushAllowed();
+  @Override
+  @NotNull
+  public Map<PushSupport, Collection<PushInfo>> getSelectedPushSpecs() {
+    return myController.getSelectedPushSpecs();
   }
 
   @Nullable
@@ -135,33 +147,41 @@ public class VcsPushDialog extends DialogWrapper {
     return ID;
   }
 
+  @Override
   @CalledInAwt
   public void push(boolean forcePush) {
+    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, "Pushing...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        myController.push(forcePush);
+      }
+    });
+  }
+
+  @Override
+  @CalledInAwt
+  public void executeAfterRunningPrePushHandlers(@NotNull Task.Backgroundable activity) {
+    PrePushHandler.Result result = runPrePushHandlersInModalTask();
+    if (result == PrePushHandler.Result.OK) {
+      activity.queue();
+      close(OK_EXIT_CODE);
+    }
+    else if (result == PrePushHandler.Result.ABORT_AND_CLOSE) {
+      doCancelAction();
+    }
+    else if (result == PrePushHandler.Result.ABORT) {
+      // cancel push and leave the push dialog open
+    }
+  }
+
+  @CalledInAwt
+  public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
     new Task.Modal(myController.getProject(), "Checking Commits...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(myController.executeHandlers(indicator));
-      }
-
-      @Override
-      public void onSuccess() {
-        super.onSuccess();
-        if (result.get() == PrePushHandler.Result.OK) {
-          doPush();
-        }
-        else if (result.get() == PrePushHandler.Result.ABORT_AND_CLOSE) {
-          doCancelAction();
-        }
-        else if (result.get() == PrePushHandler.Result.ABORT) {
-          // cancel push and leave the push dialog open
-        }
-      }
-
-      private void doPush() {
-        myController.push(forcePush);
-        close(OK_EXIT_CODE);
       }
 
       @Override
@@ -208,23 +228,20 @@ public class VcsPushDialog extends DialogWrapper {
                                         "&Push Anyway",
                                         "&Cancel",
                                         UIUtil.getWarningIcon()) == Messages.OK) {
-          doPush();
+          result.set(PrePushHandler.Result.OK);
+        }
+        else {
+          result.set(PrePushHandler.Result.ABORT);
         }
       }
     }.queue();
+    return result.get();
   }
 
   public void updateOkActions() {
     myPushAction.setEnabled(canPush());
-    if (myForcePushAction != null) {
-      boolean canForcePush = canForcePush();
-      myForcePushAction.setEnabled(canForcePush);
-      String tooltip = null;
-      PushTarget target = myController.getProhibitedTarget();
-      if (!canForcePush && target != null) {
-        tooltip = "Force push to <b>" + target.getPresentation() + "</b> is prohibited";
-      }
-      myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);
+    for (ActionWrapper wrapper : myAdditionalActions) {
+      wrapper.update();
     }
   }
 
@@ -232,31 +249,28 @@ public class VcsPushDialog extends DialogWrapper {
     myPushAction.setEnabled(value);
   }
 
+  @Override
   @Nullable
   public VcsPushOptionValue getAdditionalOptionValue(@NotNull PushSupport support) {
     VcsPushOptionsPanel panel = myAdditionalPanels.get(support);
     return panel == null ? null : panel.getValue();
   }
 
-  private class ForcePushAction extends AbstractAction {
-    ForcePushAction() {
-      super("&Force Push");
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (VcsPushUi.VCS_PUSH_DIALOG.is(dataId)) {
+      return this;
     }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      if (myController.ensureForcePushIsNeeded()) {
-        push(true);
-      }
-    }
+    return null;
   }
 
   private class ComplexPushAction extends AbstractAction implements OptionAction {
-    private final Action[] myOptions;
+    private final List<ActionWrapper> myOptions;
 
-    private ComplexPushAction(Action additionalAction) {
+    private ComplexPushAction(@NotNull List<ActionWrapper> additionalActions) {
       super("&Push");
-      myOptions = new Action[]{additionalAction};
+      myOptions = additionalActions;
     }
 
     @Override
@@ -275,7 +289,33 @@ public class VcsPushDialog extends DialogWrapper {
     @NotNull
     @Override
     public Action[] getOptions() {
-      return myOptions;
+      return ArrayUtil.toObjectArray(myAdditionalActions, ActionWrapper.class);
+    }
+  }
+
+  private static class ActionWrapper extends AbstractAction {
+
+    @NotNull private final Project myProject;
+    @NotNull private final VcsPushUi myDialog;
+    @NotNull private final PushActionBase myRealAction;
+
+    ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
+      super(realAction.getTemplatePresentation().getTextWithMnemonic());
+      myProject = project;
+      myDialog = dialog;
+      myRealAction = realAction;
+      putValue(OptionAction.AN_ACTION, realAction);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myRealAction.actionPerformed(myProject, myDialog);
+    }
+
+    public void update() {
+      boolean enabled = myRealAction.isEnabled(myDialog);
+      setEnabled(enabled);
+      putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
   }
 }

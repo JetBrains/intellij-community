@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.lang.BracePair;
@@ -16,15 +17,18 @@ public class YAMLPairedBraceMatcher implements PairedBraceMatcher, YAMLTokenType
             new BracePair(LBRACKET, RBRACKET, true),
     };
 
+    @Override
     @NotNull
     public BracePair[] getPairs() {
         return PAIRS;
     }
 
+    @Override
     public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType iElementType, @Nullable IElementType iElementType1) {
         return true;
     }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
     return openingBraceOffset;
   }

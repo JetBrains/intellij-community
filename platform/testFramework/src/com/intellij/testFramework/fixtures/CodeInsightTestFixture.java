@@ -562,7 +562,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param consumer the callback in which the actual testing of the structure view is performed.
    */
-  void testStructureView(@NotNull Consumer<StructureViewComponent> consumer);
+  void testStructureView(@NotNull Consumer<? super StructureViewComponent> consumer);
 
   /**
    * By default, if the caret in the text passed to {@link #configureByFile(String)} or {@link #configureByText} has an injected fragment

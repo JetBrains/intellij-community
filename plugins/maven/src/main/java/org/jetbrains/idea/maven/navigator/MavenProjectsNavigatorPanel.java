@@ -50,8 +50,8 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
   private final Project myProject;
@@ -61,6 +61,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     private Map<String, Integer> standardGoalOrder;
 
+    @Override
     public int compare(String o1, String o2) {
       return getStandardGoalOrder(o1) - getStandardGoalOrder(o2);
     }
@@ -96,6 +97,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     setTransferHandler(new MyTransferHandler(project));
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
         if (id != null) {
@@ -126,6 +128,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     });
   }
 
+  @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";

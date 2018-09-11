@@ -47,9 +47,9 @@ class EnterPasswordComponent {
   }
 
   @NotNull
-  private final Function<String, Boolean> myPasswordConsumer;
+  private final Function<? super String, Boolean> myPasswordConsumer;
 
-  public EnterPasswordComponent(@NotNull Function<String, Boolean> passwordConsumer) {
+  EnterPasswordComponent(@NotNull Function<? super String, Boolean> passwordConsumer) {
     myIconLabel.setText("");
     myIconLabel.setIcon(AllIcons.General.PasswordLock);
     myIconLabel.setDisabledIcon(AllIcons.General.PasswordLock);

@@ -63,6 +63,7 @@ var downloadJRE
 
 ${UnStrStr}
 ${StrStr}
+${StrLoc}
 ${UnStrLoc}
 ${UnStrRep}
 ${StrRep}
@@ -361,7 +362,7 @@ Function ConfirmDesktopShortcut
 
   ; if jre x86 for the build is available then add checkbox to Installation Options dialog
   StrCmp "${LINK_TO_JRE}" "null" custom_pre_actions 0
-  inetc::head /SILENT /TOSTACK ${LINK_TO_JRE} "" /END
+  inetc::head /SILENT /TOSTACK /CONNECTTIMEOUT 2 ${LINK_TO_JRE} "" /END
   Pop $0
   ${If} $0 == "OK"
     ; download jre x86: optional if OS is not 32-bit
@@ -513,9 +514,11 @@ silent_mode:
   IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
 silent_config:
   Call silentConfigReader
-  Goto set_reg_key
+  Goto validate_install_dir
 custom_silent_config:
   Call customSilentConfigReader
+validate_install_dir:
+  Call silentInstallDirValidate
 set_reg_key:
   StrCpy $baseRegKey "HKCU"
   StrCmp $silentMode "admin" uac_elevate done
@@ -549,6 +552,23 @@ uac_all_users:
   StrCpy $baseRegKey "HKLM"
 done:
 ;  !insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+
+function silentInstallDirValidate
+; use current user path as install dir if installation run in user mode
+  push $0
+  ${If} $silentMode == "user"
+    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
+    StrCmp $0 "" check_if_install_dir_contains_PROGRAMFILES64 update_install_dir
+check_if_install_dir_contains_PROGRAMFILES64:
+    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
+    StrCmp $0 "" done update_install_dir
+update_install_dir:
+    StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  ${EndIf}
+done:
+  pop $0
 FunctionEnd
 
 

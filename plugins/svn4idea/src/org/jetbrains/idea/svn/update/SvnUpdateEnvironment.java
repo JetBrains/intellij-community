@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -28,20 +28,24 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     super(vcs);
   }
 
+  @Override
   protected AbstractUpdateIntegrateCrawler createCrawler(final UpdateEventHandler eventHandler,
-                                        final boolean totalUpdate,
-                                        final ArrayList<VcsException> exceptions, final UpdatedFiles updatedFiles) {
+                                                         final boolean totalUpdate,
+                                                         final ArrayList<VcsException> exceptions, final UpdatedFiles updatedFiles) {
     return new UpdateCrawler(myVcs, eventHandler, totalUpdate, exceptions, updatedFiles);
   }
 
+  @Override
   public Configurable createConfigurable(final Collection<FilePath> collection) {
     if (collection.isEmpty()) return null;
     return new SvnUpdateConfigurable(myVcs.getProject()){
 
+      @Override
       public String getDisplayName() {
         return SvnBundle.message("update.switch.configurable.name");
       }
 
+      @Override
       protected AbstractSvnUpdatePanel createPanel() {
 
         return new SvnUpdatePanel(myVcs, collection);
@@ -55,10 +59,12 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       super(totalUpdate, postUpdateFiles, exceptions, handler, vcs);
     }
 
+    @Override
     protected void showProgressMessage(final ProgressIndicator progress, final File root) {
       progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
     }
 
+    @Override
     protected long doUpdate(final File root) throws SvnBindException {
       final long rev;
 
@@ -92,6 +98,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return updateClient;
     }
 
+    @Override
     protected boolean isMerge() {
       return false;
     }
@@ -103,6 +110,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     return svnInfo != null ? svnInfo.getURL() : null;
   }
 
+  @Override
   public boolean validateOptions(final Collection<FilePath> roots) {
     // TODO: Check if this logic is useful and needs to be uncommented.
     // TODO: Also Check if setXxx() in UpdateRootInfo are thread safe.

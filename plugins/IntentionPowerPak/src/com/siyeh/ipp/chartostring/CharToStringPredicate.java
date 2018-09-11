@@ -27,6 +27,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 class CharToStringPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiLiteralExpression)) {
       return false;

@@ -328,9 +328,12 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
       override fun editorCreated(event: EditorFactoryEvent) {
         if (!isPipFileEditor(event.editor)) return
         val listener = object : DocumentListener {
-          override fun documentChanged(event: DocumentEvent?) {
-            val module = event?.document?.virtualFile?.getModule(project) ?: return
-            notifyPipFileChanged(module)
+          override fun documentChanged(event: DocumentEvent) {
+            val document = event?.document ?: return
+            val module = document.virtualFile?.getModule(project) ?: return
+            if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+              notifyPipFileChanged(module)
+            }
           }
         }
         with(event.editor.document) {
@@ -384,6 +387,9 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
               runInEdt {
                 Messages.showErrorDialog(project, e.toString(), "Error Running Pipenv")
               }
+            }
+            finally {
+              sdk.associatedModule?.baseDir?.refresh(true, false)
             }
           }
         }

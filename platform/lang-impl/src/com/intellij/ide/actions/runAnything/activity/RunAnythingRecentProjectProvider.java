@@ -19,6 +19,7 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
     return Arrays.stream(RecentProjectsManager.getInstance().getRecentProjectsActions(false)).collect(Collectors.toList());
   }
 
+  @Override
   @NotNull
   public String getCompletionGroupTitle() {
     return IdeBundle.message("run.anything.recent.project.completion.group.title");

@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.impl.compareTypesForUi
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -17,7 +18,7 @@ import org.jdom.Element
 import java.util.*
 import javax.swing.Icon
 
-data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
+internal data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
 
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
@@ -25,12 +26,9 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
-    val COMPARATOR: Comparator<RunConfiguration> = Comparator<RunConfiguration> { o1, o2 ->
-      val i = o1.type.displayName.compareTo(o2.type.displayName)
-      when {
-        i != 0 -> i
-        else -> o1.name.compareTo(o2.name)
-      }
+    internal val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
+      val compareTypeResult = compareTypesForUi(o1.type, o2.type)
+      if (compareTypeResult == 0) o1.name.compareTo(o2.name) else compareTypeResult
     }
   }
 
@@ -193,8 +191,8 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
           return@getRunningDescriptors true
         }
 
-        val settings = manager.findConfigurationByTypeAndName(configuration.type, configuration.name)
-        if (settings != null && settings.isSingleton && configuration == s.configuration) {
+        val settings = manager.findSettings(configuration)
+        if (settings != null && !settings.configuration.isAllowRunningInParallel && configuration == s.configuration) {
           return@getRunningDescriptors true
         }
       }

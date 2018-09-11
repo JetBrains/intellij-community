@@ -17,7 +17,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
   private final SourceFolder sourceRootFolder;
-  
+
   protected final boolean myInModuleSource;
   protected final boolean myInLibrarySource;
   protected final boolean myExcluded;
@@ -69,24 +69,29 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return !isExcluded(file);
   }
 
+  @Override
   public boolean isIgnored() {
     return false;
   }
 
+  @Override
   @Nullable
   public VirtualFile getSourceRoot() {
     return sourceRoot;
   }
 
+  @Override
   @Nullable
   public SourceFolder getSourceRootFolder() {
     return sourceRootFolder;
   }
 
+  @Override
   public VirtualFile getLibraryClassRoot() {
     return libraryClassRoot;
   }
 
+  @Override
   @Nullable
   public VirtualFile getContentRoot() {
     return contentRoot;
@@ -96,6 +101,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myInModuleSource;
   }
 
+  @Override
   public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return myInLibrarySource;
   }
@@ -114,6 +120,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myInModuleSource;
   }
 
+  @Override
   public Module getModule() {
     return module;
   }

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventListener {
-  Topic<XBreakpointListener> TOPIC = new Topic<>("Project open and close events", XBreakpointListener.class);
+  Topic<XBreakpointListener> TOPIC = new Topic<>("XBreakpointManager events", XBreakpointListener.class);
 
   default void breakpointAdded(@NotNull B breakpoint) {
   }

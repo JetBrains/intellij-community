@@ -35,10 +35,12 @@ public final class AntBuildFilePropertiesAction extends AnAction {
     registerCustomShortcutSet(CommonShortcuts.ALT_ENTER, myAntExplorer);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     myAntExplorer.setBuildFileProperties();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(myAntExplorer.isBuildFileSelected());

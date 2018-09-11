@@ -24,6 +24,7 @@ import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveMembersHandler extends MoveHandlerDelegate {
+  @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     for(PsiElement element: elements) {
       if (!isFieldOrStaticMethod(element)) return false;
@@ -31,14 +32,17 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
     return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
+  @Override
   public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
     return targetElement instanceof PsiClass && !(targetElement instanceof PsiAnonymousClass);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     MoveMembersImpl.doMove(project, elements, targetContainer, callback);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isFieldOrStaticMethod(element)) {

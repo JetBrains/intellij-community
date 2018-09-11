@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.protocol;
 
 import com.google.gson.Gson;
@@ -32,6 +33,7 @@ public class IpnbConnectionV3 extends IpnbConnection {
     myChannelsThread.start();
   }
 
+  @Override
   protected void notifyOpen() {
     if (!myIsOpened) {
       myIsOpened = true;
@@ -39,6 +41,7 @@ public class IpnbConnectionV3 extends IpnbConnection {
     }
   }
 
+  @Override
   @NotNull
   public String execute(@NotNull String code) {
     final String messageId = UUID.randomUUID().toString();
@@ -46,10 +49,12 @@ public class IpnbConnectionV3 extends IpnbConnection {
     return messageId;
   }
 
+  @Override
   public void shutdown() {
     myChannelsClient.close();
   }
 
+  @Override
   public void close() throws IOException, InterruptedException {
     myChannelsThread.join();
     shutdownKernel();

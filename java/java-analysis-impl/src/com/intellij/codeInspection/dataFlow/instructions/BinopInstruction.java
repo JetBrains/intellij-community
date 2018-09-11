@@ -51,6 +51,7 @@ public class BinopInstruction extends BranchingInstruction implements Expression
   /**
    * @return range inside the anchor which evaluates this instruction, or null if the whole anchor evaluates this instruction
    */
+  @Override
   @Nullable
   public TextRange getExpressionRange() {
     if (myLastOperand != -1 && getPsiAnchor() instanceof PsiPolyadicExpression) {

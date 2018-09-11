@@ -59,7 +59,7 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     List<TaskData> tasks = getTasks(e);
     if (state) {
       addTasks(getTaskActivator(e), tasks);

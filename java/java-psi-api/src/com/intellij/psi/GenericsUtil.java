@@ -213,7 +213,7 @@ public class GenericsUtil {
     return supers.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers, Set<PsiClass> visited) {
+  private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers, Set<? super PsiClass> visited) {
     if (bClass.isInheritor(aClass, true)) {
       addSuper(supers, aClass);
     }
@@ -576,7 +576,7 @@ public class GenericsUtil {
   @NotNull
   public static List<PsiType> getExpectedTypeArguments(PsiElement context,
                                                        PsiClass aClass,
-                                                       Iterable<PsiTypeParameter> typeParams,
+                                                       Iterable<? extends PsiTypeParameter> typeParams,
                                                        PsiClassType expectedType) {
     PsiClassType.ClassResolveResult resolve = expectedType.resolveGenerics();
     PsiClass expectedClass = resolve.getElement();

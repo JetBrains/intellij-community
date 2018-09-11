@@ -79,6 +79,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new IntroduceVariableFix(true);
   }
 
+  @Override
   protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
@@ -115,6 +116,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
   }
 
+  @Override
   @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
@@ -165,7 +167,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
-  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<JCheckBox> consumer) {
+  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<? super JCheckBox> consumer) {
     JCheckBox box = new JCheckBox(wrapInHtml(text));
     box.setVerticalTextPosition(TOP);
     box.setSelected(selected);

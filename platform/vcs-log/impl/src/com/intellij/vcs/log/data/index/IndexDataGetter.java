@@ -29,7 +29,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.FileNamesData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
+import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
@@ -195,36 +195,39 @@ public class IndexDataGetter {
 
   @NotNull
   private TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter) {
-    if (!filter.isRegex()) {
+    if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
       TIntHashSet resultByTrigrams = executeAndCatch(() -> {
 
-        TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(filter.getText());
-        if (commitsForSearch != null) {
-          TIntHashSet result = new TIntHashSet();
-          commitsForSearch.forEach(commit -> {
-            try {
-              String value = myIndexStorage.messages.get(commit);
-              if (value != null) {
-                if (VcsLogTextFilterImpl.matches(filter, value)) {
-                  result.add(commit);
-                }
-              }
-            }
-            catch (IOException e) {
-              myFatalErrorsConsumer.consume(this, e);
-              return false;
-            }
-            return true;
-          });
-          return result;
+        List<String> trigramSources = filter instanceof VcsLogMultiplePatternsTextFilter ?
+                                      ((VcsLogMultiplePatternsTextFilter)filter).getPatterns() :
+                                      Collections.singletonList(filter.getText());
+        TIntHashSet commitsForSearch = new TIntHashSet();
+        for (String string : trigramSources) {
+          TIntHashSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
+          if (commits == null) return null;
+          TroveUtil.addAll(commitsForSearch, commits);
         }
-        return null;
+        TIntHashSet result = new TIntHashSet();
+        commitsForSearch.forEach(commit -> {
+          try {
+            String value = myIndexStorage.messages.get(commit);
+            if (value != null && filter.matches(value)) {
+              result.add(commit);
+            }
+          }
+          catch (IOException e) {
+            myFatalErrorsConsumer.consume(this, e);
+            return false;
+          }
+          return true;
+        });
+        return result;
       });
 
       if (resultByTrigrams != null) return resultByTrigrams;
     }
 
-    return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
+    return filter(myIndexStorage.messages, filter::matches);
   }
 
   @NotNull
@@ -296,6 +299,7 @@ public class IndexDataGetter {
   }
 
   private class MyFileNamesData extends FileNamesData {
+    @Override
     @NotNull
     protected FilePath getPathById(int pathId) {
       return notNull(myIndexStorage.paths.getPath(pathId));
@@ -339,7 +343,7 @@ public class IndexDataGetter {
   }
 
   private static class CorruptedDataException extends RuntimeException {
-    public CorruptedDataException(@NotNull String message) {
+    CorruptedDataException(@NotNull String message) {
       super(message);
     }
   }

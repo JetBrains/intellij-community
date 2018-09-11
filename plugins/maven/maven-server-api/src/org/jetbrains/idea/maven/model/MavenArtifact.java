@@ -78,14 +78,17 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     myStubbed = stubbed;
   }
 
+  @Override
   public String getGroupId() {
     return myGroupId;
   }
 
+  @Override
   public String getArtifactId() {
     return myArtifactId;
   }
 
+  @Override
   public String getVersion() {
     return myVersion;
   }

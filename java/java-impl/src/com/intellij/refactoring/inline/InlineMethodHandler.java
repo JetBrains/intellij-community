@@ -36,10 +36,12 @@ class InlineMethodHandler extends JavaInlineActionHandler {
   private InlineMethodHandler() {
   }
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
+  @Override
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
     PsiMethod method = (PsiMethod)element.getNavigationElement();
     final PsiCodeBlock methodBody = method.getBody();

@@ -24,7 +24,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,6 +59,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     super(project, breakpoint);
   }
 
+  @Override
   public Key<MethodBreakpoint> getCategory() {
     return MethodBreakpoint.CATEGORY;
   }
@@ -70,10 +70,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     setMethodName(methodName);
   }
 
+  @Override
   public String getClassName() {
     return getClassPattern();
   }
 
+  @Override
   public @Nullable String getShortClassName() {
     return getClassName();
   }
@@ -87,10 +89,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     MethodBreakpointBase.disableEmulation(this);
   }
 
+  @Override
   public PsiClass getPsiClass() {
     return ReadAction.compute(() -> getClassName() != null ? DebuggerUtils.findClass(getClassName(), myProject, GlobalSearchScope.allScope(myProject)) : null);
   }
 
+  @Override
   public String getDisplayName() {
     if (!isValid()) {
       return DebuggerBundle.message("status.breakpoint.invalid");
@@ -98,6 +102,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return getClassPattern() + "." + getMethodName() + "()";
   }
 
+  @Override
   public Icon getIcon() {
     if (!isEnabled()) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
@@ -106,28 +111,30 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return AllIcons.Debugger.Db_method_breakpoint;
   }
 
+  @Override
   public void reload() {
   }
 
+  @Override
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     return (isEmulated() || matchesMethod(event.location().method())) && super.evaluateCondition(context, event);
   }
 
+  @Override
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!shouldCreateRequest(debugProcess)) {
       return;
     }
     if (isEmulated()) {
-      VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-      if (!virtualMachineProxy.canGetBytecodes() || !virtualMachineProxy.canGetConstantPool()) {
+      if (!MethodBreakpointBase.canBeEmulated(debugProcess)) {
         disableEmulation();
         return;
       }
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
       Pattern pattern = PatternUtil.fromMask(getClassPattern());
-      virtualMachineProxy.allClasses().stream()
+      debugProcess.getVirtualMachineProxy().allClasses().stream()
                   .filter(c -> pattern.matcher(c.name()).matches())
                   .filter(ReferenceType::isPrepared)
                   .forEach(aList -> processClassPrepare(debugProcess, aList));
@@ -164,6 +171,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
+  @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
     if (isEmulated()) {
       MethodBreakpoint.createRequestForPreparedClassEmulated(this, (DebugProcessImpl)debugProcess, refType, true);
@@ -173,10 +181,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
+  @Override
   public String getEventMessage(@NotNull LocatableEvent event) {
     return MethodBreakpoint.getEventMessage(event, "");
   }
 
+  @Override
   public boolean isValid() {
     return !StringUtil.isEmpty(getClassPattern()) && !StringUtil.isEmpty(getMethodName());
   }
@@ -192,10 +202,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   //  }
   //}
 
+  @Override
   public PsiElement getEvaluationElement() {
     return null;
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
 
@@ -255,10 +267,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return getProperties().EMULATED;
   }
 
+  @Override
   public boolean isWatchEntry() {
     return getProperties().WATCH_ENTRY;
   }
 
+  @Override
   public boolean isWatchExit() {
     return getProperties().WATCH_EXIT;
   }

@@ -190,7 +190,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   private static class MockDocumentationComponent extends DocumentationComponent {
     private String myText;
 
-    public MockDocumentationComponent(DocumentationManager manager) {
+    MockDocumentationComponent(DocumentationManager manager) {
       super(manager);
     }
 
@@ -203,6 +203,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
       myText = text;
     }
 
+    @Override
     public String getText() {
       return myText;
     }

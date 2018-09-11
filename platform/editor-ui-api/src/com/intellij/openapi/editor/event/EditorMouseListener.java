@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.event;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -20,7 +22,7 @@ public interface EditorMouseListener extends EventListener {
    *
    * @param e the event containing information about the mouse press.
    */
-  default void mousePressed(EditorMouseEvent e) {
+  default void mousePressed(@NotNull EditorMouseEvent event) {
   }
 
   /**
@@ -28,7 +30,7 @@ public interface EditorMouseListener extends EventListener {
    *
    * @param e the event containing information about the mouse click.
    */
-  default void mouseClicked(EditorMouseEvent e) {
+  default void mouseClicked(@NotNull EditorMouseEvent event) {
   }
 
   /**
@@ -36,7 +38,7 @@ public interface EditorMouseListener extends EventListener {
    *
    * @param e the event containing information about the mouse release.
    */
-  default void mouseReleased(EditorMouseEvent e) {
+  default void mouseReleased(@NotNull EditorMouseEvent event) {
   }
 
   /**
@@ -44,7 +46,7 @@ public interface EditorMouseListener extends EventListener {
    *
    * @param e the event containing information about the mouse movement.
    */
-  default void mouseEntered(EditorMouseEvent e) {
+  default void mouseEntered(@NotNull EditorMouseEvent event) {
   }
 
   /**
@@ -52,6 +54,6 @@ public interface EditorMouseListener extends EventListener {
    *
    * @param e the event containing information about the mouse movement.
    */
-  default void mouseExited(EditorMouseEvent e) {
+  default void mouseExited(@NotNull EditorMouseEvent event) {
   }
 }

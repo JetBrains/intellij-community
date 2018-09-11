@@ -50,10 +50,12 @@ public class ArtifactsWorkspaceSettings implements PersistentStateComponent<Arti
     Collections.sort(myState.myArtifactsToBuild);
   }
 
+  @Override
   public ArtifactsWorkspaceSettingsState getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull ArtifactsWorkspaceSettingsState state) {
     myState = state;
   }

@@ -282,6 +282,7 @@ public class MavenUtil {
     return (collection instanceof Set ? collection : new THashSet<>(collection));
   }
 
+  @NotNull
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
     return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
@@ -414,6 +415,7 @@ public class MavenUtil {
     final Error[] errorEx = new Error[1];
 
     ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+      @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
           task.run(new MavenProgressIndicator(i));
@@ -456,6 +458,7 @@ public class MavenUtil {
     if (isNoBackgroundMode()) {
       runnable.run();
       return new MavenTaskHandler() {
+        @Override
         public void waitFor() {
         }
       };
@@ -463,6 +466,7 @@ public class MavenUtil {
     else {
       final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
       final MavenTaskHandler handler = new MavenTaskHandler() {
+        @Override
         public void waitFor() {
           try {
             future.get();
@@ -475,6 +479,7 @@ public class MavenUtil {
       invokeLater(project, () -> {
         if (future.isDone()) return;
         new Task.Backgroundable(project, title, cancellable) {
+          @Override
           public void run(@NotNull ProgressIndicator i) {
             indicator.setIndicator(i);
             handler.waitFor();

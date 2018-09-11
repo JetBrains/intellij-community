@@ -13,6 +13,7 @@ import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
+import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 
@@ -27,27 +28,23 @@ val GuiTestCase.pluginsDialogScenarios: PluginsDialogScenarios by PluginsDialogS
 fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
-    if (pluginsDialogModel.isPluginInstalled(pluginName)) {
-      val uninstallButton = pluginsDialogModel.getUninstallButton(pluginName)
-      if (uninstallButton != null) {
-        logTestStep("Uninstall `$pluginName` plugin")
-        uninstallButton.click()
-        pluginsDialogModel.pressOk()
+    pluginDialog {
+      pluginDetails(pluginName) {
+        if (isPluginInstalled()) {
+          logTestStep("Uninstall `$pluginName` plugin")
+          uninstall()
+        }
       }
-      else {
-        pluginsDialogModel.pressCancel()
-      }
-      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+      ok()
     }
-    else
-      pluginsDialogModel.pressCancel()
+    dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
   }
 }
 
 fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
   val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
-  if (testCase.guiTestRule.getTestName() == GuiTestOptions.getResumeTestName() &&
-      GuiTestOptions.getResumeInfo() == PLUGINS_INSTALLED) {
+  if (testCase.guiTestRule.getTestName() == GuiTestOptions.resumeTestName &&
+      GuiTestOptions.resumeInfo == PLUGINS_INSTALLED) {
     testCase.logInfo("Restart succeeded")
   }
   else {
@@ -66,17 +63,39 @@ fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
 fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
-    pluginsDialogModel.installPluginFromDisk(pluginFileName)
+    pluginDialog {
+      showInstallPluginFromDiskDialog()
+      installPluginFromDiskDialog {
+        setPath(pluginFileName)
+        clickOk()
+      }
+      ok()
+    }
     dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
   }
 }
 
 fun PluginsDialogScenarios.isPluginRequiredVersionInstalled(pluginName: String, pluginVersion: String): Boolean {
-  var result = false
+  var version = ""
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
-    result = pluginsDialogModel.isPluginRequiredVersionInstalled(pluginName, pluginVersion)
-    pluginsDialogModel.pressCancel()
+    pluginDialog {
+      showInstalledPlugins()
+      cancel()
+    }
+    welcomePageDialogModel.openPluginsDialog()
+    testCase.logUIStep("Get version of `$pluginName` plugin")
+    pluginDialog {
+      if (isPluginInstalled(pluginName)) {
+        pluginDetails(pluginName) {
+          version = pluginVersion()
+          testCase.logInfo("Found `$version` version of `$pluginName` plugin")
+        }
+      }
+      else
+        testCase.logInfo("No `$pluginName` plugin")
+      cancel()
+    }
   }
-  return result
+  return version == pluginVersion
 }

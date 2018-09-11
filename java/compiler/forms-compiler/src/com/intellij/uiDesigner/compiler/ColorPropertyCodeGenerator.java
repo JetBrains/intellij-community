@@ -35,6 +35,7 @@ public class ColorPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Method ourInitMethod = Method.getMethod("void <init>(int)");
   private static final Method ourGetColorMethod = new Method("getColor", ourColorType, new Type[] { ourObjectType } );
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     ColorDescriptor descriptor = (ColorDescriptor) value;
     if (descriptor.getColor() != null) {

@@ -55,6 +55,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
     this(Options.REMOVE_ACTION);
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final Project project = context.getProject();
     final boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
@@ -113,6 +114,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
     return result;
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.mark.as.deleted");
   }

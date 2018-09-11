@@ -43,7 +43,7 @@ public class ShowConfigurationsAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return true;
 
@@ -51,7 +51,7 @@ public class ShowConfigurationsAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project == null) return;
 

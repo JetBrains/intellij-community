@@ -30,7 +30,6 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -213,7 +212,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     private final MavenProject myMavenProject;
     private final String myGoal;
 
-    public MavenGoalAction(MavenProject mavenProject, String goal) {
+    MavenGoalAction(MavenProject mavenProject, String goal) {
       myMavenProject = mavenProject;
       myGoal = goal;
       Presentation template = getTemplatePresentation();
@@ -221,6 +220,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       template.setIcon(MavenIcons.Phase);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final DataContext context = e.getDataContext();
       final Project project = MavenActionUtil.getProject(context);

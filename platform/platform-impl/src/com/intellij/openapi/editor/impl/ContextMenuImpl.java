@@ -49,7 +49,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
     editor.addEditorMouseListener(new EditorMouseListener() {
       @Override
-      public void mouseExited(final EditorMouseEvent e) {
+      public void mouseExited(@NotNull final EditorMouseEvent e) {
         if (!isInsideActivationArea(container, e.getMouseEvent().getPoint())) {
           toggleContextToolbar(false);
         }
@@ -58,7 +58,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
     editor.addEditorMouseMotionListener(new EditorMouseMotionListener() {
       @Override
-      public void mouseMoved(final EditorMouseEvent e) {
+      public void mouseMoved(@NotNull final EditorMouseEvent e) {
         toggleContextToolbar(isInsideActivationArea(container, e.getMouseEvent().getPoint()));
       }
     });

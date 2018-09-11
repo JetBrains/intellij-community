@@ -26,6 +26,7 @@ import com.intellij.execution.testframework.Printer;
  * ignored message for ignored state
  */
 public abstract class AbstractState implements Printable, TestStateInfo {
+  @Override
   public void printOn(final Printer printer) {
     // Do nothing by default
   }

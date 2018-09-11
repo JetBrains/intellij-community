@@ -43,11 +43,13 @@ public class TargetActionStub extends AnAction implements Disposable {
     Disposer.register(project, this);
   }
 
+  @Override
   public void dispose() {
     ActionManager.getInstance().unregisterAction(myActionId);
     myProject = null;
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     if (myProject == null) {
       return;
@@ -55,6 +57,7 @@ public class TargetActionStub extends AnAction implements Disposable {
     try {
       final AntConfiguration config = AntConfiguration.getInstance(myProject);  // this call will also lead to ant configuration loading
       final AntConfigurationListener listener = new AntConfigurationListener() {
+        @Override
         public void configurationLoaded() {
           config.removeAntConfigurationListener(this);
           invokeAction(e);
@@ -68,7 +71,7 @@ public class TargetActionStub extends AnAction implements Disposable {
       Disposer.dispose(this);
     }
   }
-  
+
   private void invokeAction(final AnActionEvent e) {
     final AnAction action = ActionManager.getInstance().getAction(myActionId);
     if (action == null || action instanceof TargetActionStub) {
@@ -84,7 +87,7 @@ public class TargetActionStub extends AnAction implements Disposable {
       action.actionPerformed(e);
     }
   }
-  
+
   private static class ListenerRemover implements Disposable {
     private AntConfiguration myConfig;
     private AntConfigurationListener myListener;
@@ -94,6 +97,7 @@ public class TargetActionStub extends AnAction implements Disposable {
       myListener = listener;
     }
 
+    @Override
     public void dispose() {
       final AntConfiguration configuration = myConfig;
       final AntConfigurationListener listener = myListener;

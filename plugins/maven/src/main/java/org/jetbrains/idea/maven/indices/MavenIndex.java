@@ -667,7 +667,7 @@ public class MavenIndex {
 
     private final int indexId;
 
-    public IndexData(File dir) throws MavenIndexException {
+    IndexData(File dir) throws MavenIndexException {
       try {
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
@@ -729,6 +729,7 @@ public class MavenIndex {
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {
+    @Override
     public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
       s.writeInt(set.size());
       for (String each : set) {
@@ -736,6 +737,7 @@ public class MavenIndex {
       }
     }
 
+    @Override
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
       Set<String> result = new THashSet<>(count);
@@ -747,7 +749,7 @@ public class MavenIndex {
   }
 
   public interface IndexListener {
-    void indexIsBroken(MavenIndex index);
+    void indexIsBroken(@NotNull MavenIndex index);
   }
 
   private class MyIndexRepositoryIdsProvider implements CachedValueProvider<String> {

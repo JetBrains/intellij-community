@@ -74,12 +74,12 @@ public class AutoPopupController implements Disposable {
   private void setupListeners() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         cancelAllRequests();
       }
 
       @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         cancelAllRequests();
       }
     });
@@ -112,7 +112,7 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
-    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);
     }

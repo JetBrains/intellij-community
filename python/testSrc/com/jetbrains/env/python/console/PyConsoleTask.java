@@ -140,8 +140,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @NotNull
-  private Future<Void> disposeConsoleAsync() {
-    Future<Void> shutdownFuture;
+  private Future<?> disposeConsoleAsync() {
+    Future<?> shutdownFuture;
     if (myCommunication != null) {
       shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
@@ -187,7 +187,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     consoleRunner.addConsoleListener(new PydevConsoleRunnerImpl.ConsoleListener() {
       @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+      public void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView) {
         myConsoleInitSemaphore.release();
       }
     });

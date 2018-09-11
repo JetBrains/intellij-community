@@ -48,33 +48,40 @@ public abstract class MavenPsiReference implements PsiReference {
     myRange = range;
   }
 
+  @Override
   @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public TextRange getRangeInElement() {
     return myRange;
   }
 
+  @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return null;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 
+  @Override
   public boolean isSoft() {
     return true;
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -104,15 +103,15 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     return "#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog";
   }
 
-  @Override
   @NotNull
+  @Override
   protected Action[] createActions() {
-    return new Action[] {getCancelAction(), getHelpAction()};
+    return new Action[]{getCancelAction(), getHelpAction()};
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("editing.productivityGuide");
+  protected String getHelpId() {
+    return "editing.productivityGuide";
   }
 
   @Override

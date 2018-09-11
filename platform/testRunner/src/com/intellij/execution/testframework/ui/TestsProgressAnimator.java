@@ -74,6 +74,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
     return myCurrentTestCase;
   }
 
+  @Override
   public void run() {
     if (myCurrentTestCase != null) {
       final long time = System.currentTimeMillis();
@@ -99,6 +100,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
   }
 
 
+  @Override
   public void dispose() {
     myTreeBuilder = null;
     myCurrentTestCase = null;

@@ -29,6 +29,7 @@ public class JavaCodeFragmentTableCellEditor extends CodeFragmentTableCellEditor
     super(project, StdFileTypes.JAVA);
   }
 
+  @Override
   public boolean stopCellEditing() {
     final Editor editor = myEditorTextField.getEditor();
     if (editor != null) {

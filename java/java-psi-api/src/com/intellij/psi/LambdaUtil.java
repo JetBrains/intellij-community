@@ -438,7 +438,7 @@ public class LambdaUtil {
     return null;
   }
 
-  public static boolean processParentOverloads(PsiFunctionalExpression functionalExpression, final Consumer<PsiType> overloadProcessor) {
+  public static boolean processParentOverloads(PsiFunctionalExpression functionalExpression, final Consumer<? super PsiType> overloadProcessor) {
     LOG.assertTrue(PsiTypesUtil.getExpectedTypeByParent(functionalExpression) == null);
     PsiElement parent = functionalExpression.getParent();
     PsiElement expr = functionalExpression;
@@ -820,7 +820,7 @@ public class LambdaUtil {
 
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
                                                             final PsiSubstitutor substitutor,
-                                                            final Producer<T> producer) {
+                                                            final Producer<? extends T> producer) {
     try {
       for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
@@ -841,7 +841,7 @@ public class LambdaUtil {
     }
   }
 
-  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<T> producer) {
+  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<? extends T> producer) {
     try {
       getFunctionalTypeMap().put(lambdaExpression, targetType);
       return producer.produce();
@@ -887,7 +887,7 @@ public class LambdaUtil {
   }
 
   private static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda,
-                                                 @NotNull Function<PsiLambdaExpression, PsiExpression> replacer) {
+                                                 @NotNull Function<? super PsiLambdaExpression, ? extends PsiExpression> replacer) {
     PsiElement body = lambda.getBody();
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
@@ -931,7 +931,7 @@ public class LambdaUtil {
    *                            lazy computed for lambdas in invocation context only.
    *                            Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiExpression> newFunctionSupplier) {
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<? extends PsiExpression> newFunctionSupplier) {
     return isSafeLambdaReplacement(lambda, l -> {
       PsiExpression replacement = newFunctionSupplier.get();
       return replacement == null ? null : (PsiExpression)l.replace(replacement);
@@ -969,7 +969,7 @@ public class LambdaUtil {
    *                        lazy computed for lambdas in invocation context only.
    *                        Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiElement> newBodySupplier) {
+  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<? extends PsiElement> newBodySupplier) {
     return isSafeLambdaReplacement(lambda, l -> {
       PsiElement oldBody = l.getBody();
       PsiElement newBody = newBodySupplier.get();

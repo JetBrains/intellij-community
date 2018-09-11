@@ -277,6 +277,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    LOG.debug("Disposing VcsLogUi \'" + myId + "\'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;

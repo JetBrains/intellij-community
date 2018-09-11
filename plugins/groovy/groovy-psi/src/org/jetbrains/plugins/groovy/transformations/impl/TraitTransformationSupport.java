@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -41,11 +27,12 @@ public class TraitTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    if (context.getCodeClass().isInterface() && !context.getCodeClass().isTrait()) return;
+    final GrTypeDefinition codeClass = context.getCodeClass();
+    if (codeClass.isInterface() && !codeClass.isTrait()) return;
 
-    if (context.getCodeClass().isTrait()) {
-      for (GrField field : context.getCodeClass().getCodeFields()) {
-        context.addField(new GrTraitField(field, context.getCodeClass(), PsiSubstitutor.EMPTY));
+    if (codeClass.isTrait() && codeClass.getQualifiedName() != null) {
+      for (GrField field : codeClass.getCodeFields()) {
+        context.addField(new GrTraitField(field, codeClass, PsiSubstitutor.EMPTY));
       }
     }
 
@@ -54,25 +41,25 @@ public class TraitTransformationSupport implements AstTransformationSupport {
         for (PsiMethod method : trait.getMethods()) {
           if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
               !method.getModifierList().hasExplicitModifier(PsiModifier.PRIVATE)) {
-            context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
+            context.addMethods(getExpandingMethods(codeClass, method, substitutor));
           }
         }
         for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
-          context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
+          context.addField(new GrTraitField(field, codeClass, substitutor));
         }
       }
       else if (trait instanceof ClsClassImpl) {
         for (PsiMethod method : GrTraitUtil.getCompiledTraitConcreteMethods((ClsClassImpl)trait)) {
-          context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
+          context.addMethods(getExpandingMethods(codeClass, method, substitutor));
         }
         for (GrField field : GrTraitUtil.getCompiledTraitFields((ClsClassImpl)trait)) {
-          context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
+          context.addField(new GrTraitField(field, codeClass, substitutor));
         }
       }
     });
   }
 
-  private static void process(@NotNull TransformationContext context, @NotNull PairConsumer<PsiClass, PsiSubstitutor> consumer) {
+  private static void process(@NotNull TransformationContext context, @NotNull PairConsumer<? super PsiClass, ? super PsiSubstitutor> consumer) {
     Deque<Pair<PsiClass, PsiSubstitutor>> stack = new ArrayDeque<>();
 
     for (PsiClassType superType : context.getSuperTypes()) {

@@ -31,7 +31,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   }
 
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
+  public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
     LineTooltipRenderer bigRenderer = null;
     List<HighlightInfo> infos = new SmartList<>();
     Collection<String> tooltips = new THashSet<>(); //do not show same tooltip twice

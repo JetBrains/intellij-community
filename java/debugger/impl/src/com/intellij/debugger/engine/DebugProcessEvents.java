@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -19,7 +20,6 @@ import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
-import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,10 +33,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -73,8 +75,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
     super.commitVM(vm);
     if(vm != null) {
       vmAttached();
-      myEventThread = new DebuggerEventThread();
-      ApplicationManager.getApplication().executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", myEventThread));
+      if (vm.canBeModified()) {
+        myEventThread = new DebuggerEventThread();
+        ApplicationManager.getApplication().executeOnPooledThread(
+          ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", myEventThread));
+      }
     }
   }
 
@@ -107,10 +112,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       text = DebuggerBundle.message("status.process.terminated");
     }
     else if (event instanceof VMDisconnectEvent) {
-      final RemoteConnection connection = getConnection();
-      final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
-      final String transportName = DebuggerBundle.getTransportName(connection);
-      text = DebuggerBundle.message("status.disconnected", addressDisplayName, transportName);
+      text = DebuggerBundle.message("status.disconnected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection()));
     }
     return text;
   }
@@ -323,25 +325,28 @@ public class DebugProcessEvents extends DebugProcessImpl {
     LOG.assertTrue(!isAttached());
     if (myState.compareAndSet(State.INITIAL, State.ATTACHED)) {
       final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
-      final EventRequestManager requestManager = machineProxy.eventRequestManager();
+      boolean canBeModified = machineProxy.canBeModified();
+      if (canBeModified) {
+        final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
-      if (machineProxy.canGetMethodReturnValues()) {
-        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
+        if (machineProxy.canGetMethodReturnValues()) {
+          myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
+        }
+
+        enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
+                                   event -> {
+                                     ThreadReference thread = ((ThreadStartEvent)event).thread();
+                                     getVirtualMachineProxy().threadStarted(thread);
+                                     myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
+                                   });
+
+        enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
+                                   event -> {
+                                     ThreadReference thread = ((ThreadDeathEvent)event).thread();
+                                     getVirtualMachineProxy().threadStopped(thread);
+                                     myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
+                                   });
       }
-
-      enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
-                                 event -> {
-                                   ThreadReference thread = ((ThreadStartEvent)event).thread();
-                                   getVirtualMachineProxy().threadStarted(thread);
-                                   myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
-                                 });
-
-      enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
-                                 event -> {
-                                   ThreadReference thread = ((ThreadDeathEvent)event).thread();
-                                   getVirtualMachineProxy().threadStopped(thread);
-                                   myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
-                                 });
 
       // fill position managers
       ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
@@ -355,8 +360,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
-      createStackCapturingBreakpoints();
-      AsyncStacksUtils.setupAgent(this);
+      if (canBeModified) {
+        createStackCapturingBreakpoints();
+        AsyncStacksUtils.setupAgent(this);
+      }
 
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -366,14 +373,22 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       });
 
-      if (Registry.is("debugger.track.instrumentation", true)) {
+      if (Registry.is("debugger.track.instrumentation", true) && canBeModified) {
         trackClassRedefinitions();
       }
 
-      final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
-      final String transportName = DebuggerBundle.getTransportName(getConnection());
-      showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
+      showStatusText(DebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
       LOG.debug("leave: processVMStartEvent()");
+
+      if (!canBeModified) {
+        XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
+        if (session != null) {
+          session.setReadOnly(true);
+          session.setPauseActionSupported(false);
+        }
+        myDebugProcessDispatcher.getMulticaster().paused(getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0));
+        UIUtil.invokeLaterIfNeeded(() -> XDebugSessionTab.showFramesView(session));
+      }
     }
   }
 

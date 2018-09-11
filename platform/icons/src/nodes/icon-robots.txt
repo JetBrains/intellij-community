@@ -1,4 +1,18 @@
+deprecated: collapseNode.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: disabledPointcut.svg; to be removed in IDEA 2020
+deprecated: expandNode.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
+deprecated: favoriteOnHover.png -> /nodes/favorite.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite
+deprecated: newException.svg; to be removed in IDEA 2020
 deprecated: newFolder.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: pinToolWindow.svg -> /nodes/tabPin.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TabPin
+deprecated: pluginUpdate.svg; to be removed in IDEA 2020
+deprecated: pointcut.svg; to be removed in IDEA 2020
 deprecated: ppFile.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: ppWebLogo.png; to be removed in IDEA 2020
+deprecated: sourceFolder.png -> /nodes/package.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Package
 deprecated: TreeClosed.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: treeCollapseNode.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: treeDownArrow.png; to be removed in IDEA 2020
+deprecated: treeExpandNode.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
 deprecated: TreeOpen.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: treeRightArrow.png; to be removed in IDEA 2020

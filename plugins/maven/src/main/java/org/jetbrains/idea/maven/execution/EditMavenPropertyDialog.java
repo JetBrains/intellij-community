@@ -70,6 +70,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
 
   private void installPropertySelectionListener() {
     myNameBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() != ItemEvent.SELECTED) return;
         String key = (String)e.getItem();
@@ -85,6 +86,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
     myNameBox.setModel(new DefaultComboBoxModel(keys));
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return contentPane;

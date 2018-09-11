@@ -115,7 +115,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     private final Module myModule;
     private final ArtifactEditorContext myContext;
 
-    public ModuleSourceItemPresentation(@NotNull Module module, ArtifactEditorContext context) {
+    ModuleSourceItemPresentation(@NotNull Module module, ArtifactEditorContext context) {
       myModule = module;
       myContext = context;
     }

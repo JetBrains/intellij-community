@@ -26,7 +26,8 @@ public class ConsentsTest extends TestCase{
 
   private static String createUpgradeJson(String id, boolean isAccepted) {
     final long tstamp = System.currentTimeMillis();
-    return "[{\"consentId\":\""+id+"\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":"+String.valueOf(isAccepted)+",\"deleted\":false,\"acceptanceTime\":"+tstamp+"}]";
+    return "[{\"consentId\":\"" + id + "\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":" +
+           isAccepted + ",\"deleted\":false,\"acceptanceTime\":" + tstamp + "}]";
   }
 
   public void testUpdateDefaultsAndConfirmedFromServer() throws InterruptedException {
@@ -93,7 +94,7 @@ public class ConsentsTest extends TestCase{
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
 
     options.applyServerUpdates(JSON_MINOR_UPGRADE_CONSENTS_DATA);
-    
+
     final Pair<List<Consent>, Boolean> afterUpdate = options.getConsents();
     assertFalse("Consents should NOT require confirmation", afterUpdate.second);
     assertEquals(2, afterUpdate.first.size());
@@ -235,7 +236,7 @@ public class ConsentsTest extends TestCase{
       changedByUser.add(consent.derive(!consent.isAccepted()));
     }
     options.setConsents(changedByUser);
-    
+
     final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
     assertFalse("Consents should NOT require confirmation", afterConfirm.second);
     assertEquals(2, afterConfirm.first.size());
@@ -284,29 +285,34 @@ public class ConsentsTest extends TestCase{
     String myDefaults = "";
     String myConfirmed = "";
 
-    public MemoryIOBackend(@NotNull String defs, @NotNull String bundled) {
+    MemoryIOBackend(@NotNull String defs, @NotNull String bundled) {
       myDefaults = defs;
       myBundled = bundled;
     }
 
+    @Override
     public void writeDefaultConsents(@NotNull String data) {
       myDefaults = data;
     }
 
+    @Override
     @NotNull
     public String readDefaultConsents() {
       return myDefaults;
     }
 
+    @Override
     @NotNull
     public String readBundledConsents() {
       return myBundled;
     }
 
+    @Override
     public void writeConfirmedConsents(@NotNull String data) {
       myConfirmed = data;
     }
 
+    @Override
     @NotNull
     public String readConfirmedConsents() {
       return myConfirmed;

@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.context.functions;
 
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.XPathVersion;
@@ -360,6 +359,7 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
     decls.put(Pair.create(new QName(namespace, value.getName()), value.getParameters().length), value);
   }
 
+  @Override
   public boolean allowsExtensions() {
     return false;
   }

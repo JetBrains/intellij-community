@@ -45,6 +45,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
     myLink.getIpad().left = 0;
   }
 
+  @Override
   public void customizeCellRenderer(@NotNull final JTree tree,
                                     final Object value,
                                     final boolean selected,

@@ -175,11 +175,11 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="381ee" class="javax.swing.JLabel">
+              <component id="381ee" class="javax.swing.JLabel" binding="myOnPatchCreationLabel">
                 <constraints/>
                 <properties>
                   <labelFor value="aec57"/>
-                  <text value="Show patch in Explorer after creation:"/>
+                  <text resource-bundle="messages/VcsBundle" key="combobox.show.patch.in.explorer.after.creation"/>
                 </properties>
               </component>
               <component id="aec57" class="javax.swing.JComboBox" binding="myOnPatchCreation">

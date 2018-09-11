@@ -31,6 +31,7 @@ public class HashSet<E> extends java.util.HashSet<E> {
     super(i);
   }
 
+  @Override
   public void clear() {
     if (size() == 0) return; // optimization
     super.clear();

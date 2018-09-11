@@ -159,7 +159,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     private final ElementFilter myFilter;
     private final Class<? extends PsiMetaData> myDataClass;
 
-    public MyBinding(@NotNull ElementFilter filter, @NotNull Class<? extends PsiMetaData> dataClass) {
+    MyBinding(@NotNull ElementFilter filter, @NotNull Class<? extends PsiMetaData> dataClass) {
       myFilter = filter;
       myDataClass = dataClass;
     }

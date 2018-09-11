@@ -242,7 +242,6 @@
     <keyboard-shortcut first-keystroke="meta shift B"/>
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="meta shift button1"/>
-    <mouse-shortcut keystroke="shift button2"/>
   </action>
 
   <action id="EditorJoinLines">
@@ -502,6 +501,14 @@
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+    <keyboard-shortcut first-keystroke="control LEFT"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+    <keyboard-shortcut first-keystroke="control RIGHT"/>
+  </action>
   <action id="EditorCodeBlockStart">
     <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>
   </action>
@@ -526,11 +533,11 @@
   </action>
 
   <action id="NextProjectWindow">
-    <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta alt BACK_QUOTE"/>
   </action>
 
   <action id="PreviousProjectWindow">
-    <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta shift alt BACK_QUOTE"/>
   </action>
 
   <action id="EditorCutLineEnd">

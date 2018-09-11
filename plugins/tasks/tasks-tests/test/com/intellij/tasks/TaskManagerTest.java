@@ -44,7 +44,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     final Ref<Integer> count = Ref.create(0);
     TaskListener listener = new TaskListenerAdapter() {
       @Override
-      public void taskActivated(LocalTask task) {
+      public void taskActivated(@NotNull LocalTask task) {
         count.set(count.get() + 1);
       }
     };

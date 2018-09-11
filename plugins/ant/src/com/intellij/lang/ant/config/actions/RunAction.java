@@ -33,6 +33,7 @@ public final class RunAction extends AnAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ExecutionHandler.runBuild(
       myAntBuildMessageView.getBuildFile(),
@@ -41,6 +42,7 @@ public final class RunAction extends AnAction {
       e.getDataContext(), myAntBuildMessageView.getAdditionalProperties(), AntBuildListener.NULL);
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(myAntBuildMessageView.isStopped());

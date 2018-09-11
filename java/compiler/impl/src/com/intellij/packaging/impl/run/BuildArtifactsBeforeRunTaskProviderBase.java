@@ -79,6 +79,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return true;
   }
 
+  @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
     Set<ArtifactPointer> pointers = new THashSet<>();
@@ -104,6 +105,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return false;
   }
 
+  @Override
   public T createTask(@NotNull RunConfiguration runConfiguration) {
     if (myProject.isDefault()) return null;
     return doCreateTask(myProject);
@@ -119,6 +121,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return false;
   }
 
+  @Override
   public boolean executeTask(DataContext context,
                              @NotNull RunConfiguration configuration,
                              @NotNull final ExecutionEnvironment env,

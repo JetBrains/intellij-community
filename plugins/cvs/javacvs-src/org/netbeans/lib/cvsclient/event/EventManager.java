@@ -18,10 +18,10 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
 import org.netbeans.lib.cvsclient.file.FileObject;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.io.UnsupportedEncodingException;
 
 /**
  * This class is responsible for firing CVS events to registered listeners.
@@ -35,12 +35,12 @@ public final class EventManager
 
         // Fields =================================================================
 
-        private final List terminationListeners = new ArrayList();
-        private final List messageListener = new ArrayList();
-        private final List moduleExpansionListeners = new ArrayList();
-        private final List fileInfoListeners = new ArrayList();
-        private final List entryListeners = new ArrayList();
-        private final List directoryListeners = new ArrayList();
+        private final List<ITerminationListener> terminationListeners = new ArrayList<>();
+        private final List<IMessageListener> messageListener = new ArrayList<>();
+        private final List<IModuleExpansionListener> moduleExpansionListeners = new ArrayList<>();
+        private final List<IFileInfoListener> fileInfoListeners = new ArrayList<>();
+        private final List<IEntryListener> entryListeners = new ArrayList<>();
+        private final List<IDirectoryListener> directoryListeners = new ArrayList<>();
 	    private final String myCharset;
 
 	// Setup ==================================================================
@@ -51,60 +51,73 @@ public final class EventManager
 
         // Accessing ==============================================================
 
+        @Override
         public synchronized void addTerminationListener(ITerminationListener listener) {
                 terminationListeners.add(listener);
         }
 
+        @Override
         public synchronized void removeTerminationListener(ITerminationListener listener) {
                 terminationListeners.remove(listener);
         }
 
+        @Override
         public synchronized void addMessageListener(IMessageListener listener) {
                 messageListener.add(listener);
         }
 
+        @Override
         public synchronized void removeMessageListener(IMessageListener listener) {
                 messageListener.remove(listener);
         }
 
+        @Override
         public synchronized void addModuleExpansionListener(IModuleExpansionListener listener) {
                 moduleExpansionListeners.add(listener);
         }
 
+        @Override
         public synchronized void removeModuleExpansionListener(IModuleExpansionListener listener) {
                 moduleExpansionListeners.remove(listener);
         }
 
+        @Override
         public void addEntryListener(IEntryListener listener) {
                 entryListeners.add(listener);
         }
 
+        @Override
         public void removeEntryListener(IEntryListener listener) {
                 entryListeners.remove(listener);
         }
 
+        @Override
         public synchronized void addFileInfoListener(IFileInfoListener listener) {
                 fileInfoListeners.add(listener);
         }
 
+        @Override
         public synchronized void removeFileInfoListener(IFileInfoListener listener) {
                 fileInfoListeners.remove(listener);
         }
 
+        @Override
         public synchronized void addDirectoryListener(IDirectoryListener listener) {
                 directoryListeners.add(listener);
         }
 
+        @Override
         public synchronized void removeDirectoryListener(IDirectoryListener listener) {
                 directoryListeners.remove(listener);
         }
 
         // Actions ================================================================
 
+        @Override
         public void notifyTerminationListeners(boolean error) {
                 final ITerminationListener[] copiedListeners;
                 synchronized (this) {
-                        if (terminationListeners.size() == 0) {
+                  if (terminationListeners.isEmpty()) {
                                 return;
                         }
 
@@ -112,15 +125,16 @@ public final class EventManager
                         terminationListeners.toArray(copiedListeners);
                 }
 
-                for (int i = 0; i < copiedListeners.length; i++) {
-                        copiedListeners[i].commandTerminated(error);
-                }
+          for (ITerminationListener copiedListener : copiedListeners) {
+            copiedListener.commandTerminated(error);
+          }
         }
 
+        @Override
         public void notifyMessageListeners(byte[] message, boolean error, boolean tagged) {
                 final IMessageListener[] copiedListeners;
                 synchronized (this) {
-                        if (messageListener.size() == 0) {
+                  if (messageListener.isEmpty()) {
                                 return;
                         }
 
@@ -130,10 +144,10 @@ public final class EventManager
           try {
 
                 String stringMessage = new String(message, myCharset);
-                for (int i = 0; i < copiedListeners.length; i++) {
+            for (IMessageListener copiedListener : copiedListeners) {
 
-                    copiedListeners[i].messageSent(stringMessage, message, error, tagged);
-                }
+              copiedListener.messageSent(stringMessage, message, error, tagged);
+            }
           }
           catch (UnsupportedEncodingException e) {
             //
@@ -141,10 +155,11 @@ public final class EventManager
 
         }
 
+        @Override
         public void notifyModuleExpansionListeners(String module) {
                 final IModuleExpansionListener[] copiedListeners;
                 synchronized (this) {
-                        if (moduleExpansionListeners.size() == 0) {
+                  if (moduleExpansionListeners.isEmpty()) {
                                 return;
                         }
 
@@ -152,15 +167,16 @@ public final class EventManager
                         moduleExpansionListeners.toArray(copiedListeners);
                 }
 
-                for (int i = 0; i < copiedListeners.length; i++) {
-                        copiedListeners[i].moduleExpanded(module);
-                }
+          for (IModuleExpansionListener copiedListener : copiedListeners) {
+            copiedListener.moduleExpanded(module);
+          }
         }
 
+        @Override
         public void notifyFileInfoListeners(Object fileInfoContainer) {
                 final IFileInfoListener[] copiedListeners;
                 synchronized (this) {
-                        if (fileInfoListeners.size() == 0) {
+                  if (fileInfoListeners.isEmpty()) {
                                 return;
                         }
 
@@ -168,15 +184,16 @@ public final class EventManager
                         fileInfoListeners.toArray(copiedListeners);
                 }
 
-                for (int i = 0; i < copiedListeners.length; i++) {
-                        copiedListeners[i].fileInfoGenerated(fileInfoContainer);
-                }
+          for (IFileInfoListener copiedListener : copiedListeners) {
+            copiedListener.fileInfoGenerated(fileInfoContainer);
+          }
         }
 
+        @Override
         public void notifyFileInfoListeners(byte[] bytes) {
           final IMessageListener[] copiedListeners;
           synchronized (this) {
-                  if (messageListener.size() == 0) {
+            if (messageListener.isEmpty()) {
                           return;
                   }
 
@@ -184,17 +201,18 @@ public final class EventManager
                   messageListener.toArray(copiedListeners);
           }
 
-          for (int i = 0; i < copiedListeners.length; i++) {
-                  copiedListeners[i].binaryMessageSent(bytes);
+          for (IMessageListener copiedListener : copiedListeners) {
+            copiedListener.binaryMessageSent(bytes);
           }
 
 
         }
 
+  @Override
   public void notifyEntryListeners(FileObject fileObject, Entry entry) {
                 final IEntryListener[] copiedListeners;
                 synchronized (this) {
-                        if (entryListeners.size() == 0) {
+                  if (entryListeners.isEmpty()) {
                                 return;
                         }
 
@@ -202,15 +220,16 @@ public final class EventManager
                         entryListeners.toArray(copiedListeners);
                 }
 
-                for (int i = 0; i < copiedListeners.length; i++) {
-                        copiedListeners[i].gotEntry(fileObject, entry);
-                }
+    for (IEntryListener copiedListener : copiedListeners) {
+      copiedListener.gotEntry(fileObject, entry);
+    }
         }
 
+        @Override
         public void notifyDirectoryListeners(DirectoryObject directoryObject, boolean setStatic) {
-                for (Iterator it = directoryListeners.iterator(); it.hasNext();) {
-                        final IDirectoryListener directoryListener = (IDirectoryListener)it.next();
-                        directoryListener.processingDirectory(directoryObject);
-                }
+          for (Object directoryListener1 : directoryListeners) {
+            final IDirectoryListener directoryListener = (IDirectoryListener)directoryListener1;
+            directoryListener.processingDirectory(directoryObject);
+          }
         }
 }

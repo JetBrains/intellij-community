@@ -196,7 +196,7 @@ public class TestTextFieldAction extends DumbAwareAction {
       update(field -> center.add(field, gbc));
     }
 
-    private void update(Consumer<JTextField> consumer) {
+    private void update(Consumer<? super JTextField> consumer) {
       fields.forEach(consumer);
       center.revalidate();
       center.repaint();

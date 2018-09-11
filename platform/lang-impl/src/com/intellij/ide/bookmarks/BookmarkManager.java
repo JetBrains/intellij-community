@@ -359,7 +359,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   private class MyEditorMouseListener implements EditorMouseListener {
     @Override
-    public void mouseClicked(final EditorMouseEvent e) {
+    public void mouseClicked(@NotNull final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
       if (e.getMouseEvent().isPopupTrigger()) return;
       if ((e.getMouseEvent().getModifiers() & (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;
@@ -383,7 +383,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void beforeDocumentChange(DocumentEvent e) {
+    public void beforeDocumentChange(@NotNull DocumentEvent e) {
       Document doc = e.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
       if (file != null) {
@@ -399,7 +399,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (!ApplicationManager.getApplication().isDispatchThread()) {
         return;// Changes in lightweight documents are irrelevant to bookmarks and have to be ignored
       }

@@ -87,7 +87,7 @@ public class GitLogProvider implements VcsLogProvider {
     // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
     int commitCount = requirements.getCommitCount() * 2;
 
-    String[] params = new String[]{"HEAD", "--branches", "--remotes", "--max-count=" + commitCount};
+    String[] params = new String[]{GitUtil.HEAD, "--branches", "--remotes", "--max-count=" + commitCount};
     // NB: not specifying --tags, because it introduces great slowdown if there are many tags,
     // but makes sense only if there are heads without branch or HEAD labels (rare case). Such cases are partially handled below.
 
@@ -136,7 +136,7 @@ public class GitLogProvider implements VcsLogProvider {
       validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
     }
 
-    return new LogDataImpl(allRefs, sortedCommits);
+    return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
   }
 
   private static void validateDataAndReportError(@NotNull final VirtualFile root,
@@ -301,7 +301,7 @@ public class GitLogProvider implements VcsLogProvider {
     List<String> parameters = new ArrayList<>(GitLogUtil.LOG_ALL);
     parameters.add("--date-order");
 
-    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
+    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
     Set<VcsUser> userRegistry = newHashSet();
     Set<VcsRef> refs = newHashSet();
     GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
@@ -379,7 +379,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root));
     }
     sw.report();
     return refs;
@@ -433,7 +433,7 @@ public class GitLogProvider implements VcsLogProvider {
         Collection<GitBranch> branches = ContainerUtil
           .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
         Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = ContainerUtil.list("HEAD");
+        Collection<String> predefinedNames = ContainerUtil.list(GitUtil.HEAD);
 
         for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
           if (branchFilter.matches(branchName)) {
@@ -470,19 +470,11 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    boolean regexp = true;
-    boolean caseSensitive = false;
     VcsLogTextFilter textFilter = filterCollection.get(VcsLogFilterCollection.TEXT_FILTER);
-    if (textFilter != null) {
-      regexp = textFilter.isRegex();
-      caseSensitive = textFilter.matchesCase();
-      String text = textFilter.getText();
-      filterParameters.add(prepareParameter("grep", text));
-    }
-    filterParameters.add(regexp ? "--extended-regexp" : "--fixed-strings");
-    if (!caseSensitive) {
-      filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
-    }
+    String text = textFilter != null ? textFilter.getText() : null;
+    boolean regexp = textFilter == null || textFilter.isRegex();
+    boolean caseSensitive = textFilter != null && textFilter.matchesCase();
+    appendTextFilterParameters(text, regexp, caseSensitive, filterParameters);
 
     VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
     if (userFilter != null) {
@@ -525,6 +517,17 @@ public class GitLogProvider implements VcsLogProvider {
     return commits;
   }
 
+  public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,
+                                                @NotNull List<String> filterParameters) {
+    if (text != null) {
+      filterParameters.add(prepareParameter("grep", text));
+    }
+    filterParameters.add(regexp ? "--extended-regexp" : "--fixed-strings");
+    if (!caseSensitive) {
+      filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+    }
+  }
+
   @Nullable
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) {
@@ -544,7 +547,7 @@ public class GitLogProvider implements VcsLogProvider {
     if (repository == null) return null;
     String currentBranchName = repository.getCurrentBranchName();
     if (currentBranchName == null && repository.getCurrentRevision() != null) {
-      return "HEAD";
+      return GitUtil.HEAD;
     }
     return currentBranchName;
   }

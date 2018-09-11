@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 class MethodCallChainPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (getCallChainRoot(element) == null) {
       return false;

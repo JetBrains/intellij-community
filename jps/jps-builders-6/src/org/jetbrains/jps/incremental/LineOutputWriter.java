@@ -180,7 +180,7 @@ public abstract class LineOutputWriter extends Writer {
     protected final int myStart;
     protected final int myEnd;
 
-    public CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
+    CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
       if (start < 0 || end > chars.length || start > end) {
         throw new IndexOutOfBoundsException("chars.length:" + chars.length + ", start:" + start + ", end:" + end);
       }
@@ -215,14 +215,16 @@ public abstract class LineOutputWriter extends Writer {
   private static final class SingleCharSequence implements CharSequence {
     private final char myCh;
 
-    public SingleCharSequence(char ch) {
+    SingleCharSequence(char ch) {
       myCh = ch;
     }
 
+    @Override
     public int length() {
       return 1;
     }
 
+    @Override
     public char charAt(int index) {
       if (index != 0) {
         throw new IndexOutOfBoundsException("Index out of bounds: " + index);
@@ -230,6 +232,7 @@ public abstract class LineOutputWriter extends Writer {
       return myCh;
     }
 
+    @Override
     public CharSequence subSequence(int start, int end) {
       throw new RuntimeException("Method subSequence not implemented");
     }

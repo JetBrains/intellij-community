@@ -87,11 +87,13 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
            property instanceof TableColumnProperty;
   }
 
+  @Override
   @Nullable
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
   }

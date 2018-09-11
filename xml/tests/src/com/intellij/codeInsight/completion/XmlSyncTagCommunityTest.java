@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
@@ -156,14 +157,14 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     type("v");
     myFixture.checkResult("<divv></divv>");
   }
-  
+
   public void testDoNotFireDocumentChangeEventIfTagWasNotChanged() {
     myFixture.configureByText(XmlFileType.INSTANCE, "<di<caret>></di>");
     type("v");
     Ref<Boolean> eventSent = Ref.create(false);
     myFixture.getEditor().getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         eventSent.set(true);
       }
     }, myFixture.getTestRootDisposable());

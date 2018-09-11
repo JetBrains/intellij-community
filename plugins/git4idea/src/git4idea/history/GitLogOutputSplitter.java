@@ -41,7 +41,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   @NotNull private final StringBuilder myErrors = new StringBuilder();
   @Nullable private VcsException myException = null;
 
-  public GitLogOutputSplitter(@NotNull GitLineHandler handler,
+  GitLogOutputSplitter(@NotNull GitLineHandler handler,
                               @NotNull GitLogParser parser,
                               @NotNull Consumer<GitLogRecord> recordConsumer) {
     myHandler = handler;
@@ -113,7 +113,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   }
 
   @Override
-  public void startFailed(Throwable exception) {
+  public void startFailed(@NotNull Throwable exception) {
     myException = new VcsException(exception);
   }
 

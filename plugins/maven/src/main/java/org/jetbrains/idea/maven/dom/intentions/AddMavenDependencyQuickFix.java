@@ -50,16 +50,19 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     myRef = ref;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Add Maven Dependency...";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myRef.isValid() && MavenDomUtil.findContainingProject(file) != null && looksLikeClassName(getReferenceText());
   }
@@ -70,6 +73,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     return CLASSNAME_PATTERN.matcher(text).matches();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!myRef.isValid()) return;
 
@@ -114,6 +118,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     return result.getQualifiedName();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

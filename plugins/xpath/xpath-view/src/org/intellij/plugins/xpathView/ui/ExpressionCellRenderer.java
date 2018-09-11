@@ -34,6 +34,7 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
         this.project = project;
     }
 
+    @Override
     public Component getTableCellRendererComponent(final JTable jtable, Object obj, boolean flag, boolean flag1, int i, int j) {
         super.getTableCellRendererComponent(jtable, "", flag, flag1, i, j);
 
@@ -48,14 +49,16 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
 
     private class MyEditorTextField extends EditorTextField {
 
-        public MyEditorTextField(Document document, Project project, FileType fileType) {
+        MyEditorTextField(Document document, Project project, FileType fileType) {
             super(document, project, fileType, false);
         }
 
+        @Override
         protected boolean shouldHaveBorder() {
             return false;
         }
 
+        @Override
         protected EditorEx createEditor() {
             final EditorEx editor = super.createEditor();
             editor.setBackgroundColor(ExpressionCellRenderer.this.getBackground());

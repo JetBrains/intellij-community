@@ -14,10 +14,11 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.commit;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.DualListener;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
@@ -30,7 +31,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.Date;
@@ -65,7 +65,8 @@ public final class CommitCommand extends AbstractCommand {
 	 *               services to this command, including the ability to actually
 	 *               process all the requests
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                  AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -99,7 +100,8 @@ public final class CommitCommand extends AbstractCommand {
 		}
 	}
 
-	protected boolean isModified(FileObject fileObject, Date entryLastModified, IClientEnvironment clientEnvironment) {
+	@Override
+        protected boolean isModified(FileObject fileObject, Date entryLastModified, IClientEnvironment clientEnvironment) {
 		if (isForceCommit()) {
 			return true;
 		}
@@ -111,7 +113,8 @@ public final class CommitCommand extends AbstractCommand {
 	 * Example: checkout -p CvsCommand.java
 	 * @return <command's name> [<parameters>] files/dirs
 	 */
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("commit ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
@@ -123,7 +126,8 @@ public final class CommitCommand extends AbstractCommand {
 	 * After calling this method, the command should have no switches defined
 	 * and should behave defaultly.
 	 */
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setMessage(null);
 		setRecursive(true);

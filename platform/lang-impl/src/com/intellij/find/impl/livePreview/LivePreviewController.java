@@ -64,7 +64,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private final DocumentListener myDocumentListener = new DocumentListener() {
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public void documentChanged(@NotNull final DocumentEvent e) {
       if (!myTrackingDocument) {
         myChanged = true;
         return;

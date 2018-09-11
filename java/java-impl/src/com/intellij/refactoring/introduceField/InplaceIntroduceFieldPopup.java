@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -76,8 +75,9 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
   }
 
+  @Override
   protected PsiField createFieldToStartTemplateOn(final String[] names,
-                                                final PsiType defaultType) {
+                                                  final PsiType defaultType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     final PsiField field = WriteAction.compute(() -> {
       PsiField field1 = elementFactory.createField(chooseName(names, getParentClass().getLanguage()), defaultType);
@@ -118,6 +118,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return VariableKind.FIELD;
   }
 
+  @Override
   public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
     myIntroduceFieldPanel.setReplaceAllOccurrences(replaceAllOccurrences);
   }
@@ -202,6 +203,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
       return myIntroduceFieldPanel.getInitializerPlace();
     }
 
+    @Override
     protected void performIntroduce() {
       ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
       final PsiType forcedType = getType();

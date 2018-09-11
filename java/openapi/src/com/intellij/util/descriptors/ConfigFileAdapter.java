@@ -16,6 +16,8 @@
 
 package com.intellij.util.descriptors;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Gregory.Shrago
  */
@@ -23,15 +25,18 @@ public abstract class ConfigFileAdapter implements ConfigFileListener {
   protected void configChanged(ConfigFile configFile) {
   }
 
-  public void configFileAdded(ConfigFile configFile) {
+  @Override
+  public void configFileAdded(@NotNull ConfigFile configFile) {
     configChanged(configFile);
   }
 
-  public void configFileRemoved(ConfigFile configFile) {
+  @Override
+  public void configFileRemoved(@NotNull ConfigFile configFile) {
     configChanged(configFile);
   }
 
-  public void configFileChanged(ConfigFile configFile) {
+  @Override
+  public void configFileChanged(@NotNull ConfigFile configFile) {
     configChanged(configFile);
   }
 }

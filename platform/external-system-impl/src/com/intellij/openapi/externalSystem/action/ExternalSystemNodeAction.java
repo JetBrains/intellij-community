@@ -42,6 +42,7 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     myExternalDataClazz = externalDataClazz;
   }
 
+  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && getSystemId(e) != null && getExternalData(e, myExternalDataClazz) != null;
   }

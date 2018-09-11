@@ -407,7 +407,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                          @Override
                                                          public void off(Integer integer) {
                                                            if (integer == 0) return;
-                                                           myDiffDetails.clear(); // TODO: we may want to keep it in memory
+                                                           myDiffDetails.clear();
                                                            mySplitter.skipNextLayout();
                                                            myDetailsSplitter.getComponent().skipNextLayout();
                                                            Dimension dialogSize = getSize();
@@ -1135,12 +1135,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private class CommitExecutorAction extends AbstractAction {
     @Nullable private final CommitExecutor myCommitExecutor;
 
-    public CommitExecutorAction(@NotNull AnAction anAction) {
+    CommitExecutorAction(@NotNull AnAction anAction) {
       putValue(OptionAction.AN_ACTION, anAction);
       myCommitExecutor = null;
     }
 
-    public CommitExecutorAction(@NotNull CommitExecutor commitExecutor) {
+    CommitExecutorAction(@NotNull CommitExecutor commitExecutor) {
       super(commitExecutor.getActionText());
       myCommitExecutor = commitExecutor;
     }
@@ -1161,7 +1161,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
-    public DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
+    DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
       super(project);
       getEditorField().setDocument(commitMessage.getEditorField().getDocument());
     }
@@ -1180,7 +1180,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
-    public MyChangeProcessor(@NotNull Project project, boolean enablePartialCommit) {
+    MyChangeProcessor(@NotNull Project project, boolean enablePartialCommit) {
       super(project, DiffPlaces.COMMIT_DIALOG);
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
@@ -1222,7 +1222,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     private final int myMinOptionsWidth;
     private final int myMaxOptionsWidth;
 
-    public MyOptionsLayout(@NotNull JComponent panel, @NotNull JComponent options, int minOptionsWidth, int maxOptionsWidth) {
+    MyOptionsLayout(@NotNull JComponent panel, @NotNull JComponent options, int minOptionsWidth, int maxOptionsWidth) {
       myPanel = panel;
       myOptions = options;
       myMinOptionsWidth = minOptionsWidth;

@@ -40,6 +40,7 @@ public class StructureTree extends Tree implements TypeSafeDataProvider {
     PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure", ActionManager.getInstance());
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(CommonDataKeys.NAVIGATABLE)) {
       final TreePath selection = getSelectionPath();

@@ -147,6 +147,7 @@ public class PatternDescriptor implements FileSetDescriptor {
     return pattern == null || pattern.matcher(str).matches();
   }
 
+  @Override
   public String getPattern() {
     return myRawPattern;
   }

@@ -80,6 +80,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return result;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     if (myConstructor != null) {
@@ -92,6 +93,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
   private List<PsiElement> myNonNewConstructorUsages;
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
@@ -131,6 +133,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
 
@@ -192,6 +195,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
 
     try {
@@ -309,6 +313,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
 
+  @Override
   @NotNull
   protected String getCommandName() {
     if (myConstructor != null) {

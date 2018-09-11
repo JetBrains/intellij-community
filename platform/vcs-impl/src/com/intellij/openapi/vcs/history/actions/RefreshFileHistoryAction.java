@@ -15,6 +15,7 @@ public class RefreshFileHistoryAction extends RefreshAction implements DumbAware
     super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.description.refresh"), AllIcons.Actions.Refresh);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FileHistoryRefresherI refresher = e.getRequiredData(VcsInternalDataKeys.FILE_HISTORY_REFRESHER);
     refresher.refresh(false);

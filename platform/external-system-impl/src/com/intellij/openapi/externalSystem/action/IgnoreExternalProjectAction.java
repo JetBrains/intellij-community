@@ -50,7 +50,7 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ProjectSystemId projectSystemId = getSystemId(e);
     final ExternalSystemNode<ExternalConfigPathAware> projectNode = getProjectNode(e);
     if (projectSystemId == null || projectNode == null || projectNode.getData() == null) return;

@@ -37,15 +37,18 @@ public class ValueNodeDnD {
     myTree = tree;
 
     DnDManager.getInstance().registerSource(new DnDSource() {
+      @Override
       public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
         return getNodesToDrag().length > 0;
       }
 
+      @Override
       public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
         DebuggerTreeNodeImpl[] nodes = getNodesToDrag();
         return new DnDDragStartBean(nodes);
       }
 
+      @Override
       @Nullable
       public Pair<Image, Point> createDraggedImage(final DnDAction action, final Point dragOrigin) {
         DebuggerTreeNodeImpl[] nodes = getNodesToDrag();
@@ -60,9 +63,11 @@ public class ValueNodeDnD {
         return image;
       }
 
+      @Override
       public void dragDropEnd() {
       }
 
+      @Override
       public void dropActionChanged(final int gestureModifiers) {
       }
     }, tree);
@@ -70,6 +75,7 @@ public class ValueNodeDnD {
 
   private DebuggerTreeNodeImpl[] getNodesToDrag() {
     return myTree.getSelectedNodes(DebuggerTreeNodeImpl.class, new Tree.NodeFilter<DebuggerTreeNodeImpl>() {
+      @Override
       public boolean accept(final DebuggerTreeNodeImpl node) {
         return node.getDescriptor() instanceof ValueDescriptorImpl;
       }

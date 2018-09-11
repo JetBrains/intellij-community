@@ -20,8 +20,8 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallHandler;
@@ -245,6 +245,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return true;
     }
 
+    @Override
     default void applyFix(@NotNull Project project, PsiElement element) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
       if (call != null) {
@@ -320,6 +321,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       myMethodName = methodName;
     }
 
+    @Override
     @NotNull
     public String getMessage() {
       return myQualifierCall + ".stream() can be replaced with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
@@ -434,7 +436,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myReplacementMethod;
     private final boolean myChangeSemantics;
 
-    public ReplaceForEachMethodFix(String streamMethod, String replacementMethod, boolean changeSemantics) {
+    ReplaceForEachMethodFix(String streamMethod, String replacementMethod, boolean changeSemantics) {
       myStreamMethod = streamMethod;
       myReplacementMethod = replacementMethod;
       myChangeSemantics = changeSemantics;
@@ -454,6 +456,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
+    @Override
     @NotNull
     public String getMessage() {
       return "The 'stream()." + myStreamMethod +
@@ -504,7 +507,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myStreamSequenceStripped;
     private final boolean myChangeSemantics;
 
-    public ReplaceCollectorFix(String collector, String streamSequence, boolean changeSemantics) {
+    ReplaceCollectorFix(String collector, String streamSequence, boolean changeSemantics) {
       myCollector = collector;
       myStreamSequence = streamSequence;
       myStreamSequenceStripped = streamSequence.replaceAll("\\([^)]+\\)", "()");
@@ -633,6 +636,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return "Replace "+myFrom+" with "+myTo+"(...)";
     }
 
+    @Override
     public String getMessage() {
       return myFrom+" can be replaced with "+myTo+"(...)";
     }
@@ -719,7 +723,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     private final String myReplacement;
 
-    public SimplifyCollectionCreationFix(String replacement) {
+    SimplifyCollectionCreationFix(String replacement) {
       myReplacement = replacement;
     }
 
@@ -833,7 +837,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return false;
     }
 
-    public SimpleStreamOfFix(ReplacementMode mode) {
+    SimpleStreamOfFix(ReplacementMode mode) {
       myMode = mode;
     }
 
@@ -1079,7 +1083,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     private final String myName;
 
-    public ReplaceWithElementIterationFix(IndexedContainer container, String name) {
+    ReplaceWithElementIterationFix(IndexedContainer container, String name) {
       PsiExpression qualifier = container.getQualifier();
       String qualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       PsiType type = qualifier.getType();
@@ -1233,7 +1237,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   private static class RemoveBooleanIdentityFix implements CallChainSimplification {
     private final boolean myInvert;
 
-    public RemoveBooleanIdentityFix(boolean invert) {
+    RemoveBooleanIdentityFix(boolean invert) {
       myInvert = invert;
     }
 
@@ -1397,7 +1401,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myQualifierText;
     private final boolean myParallel;
 
-    public ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
+    ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
       myQualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       myParallel = parallel;
     }
@@ -1623,7 +1627,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   static class AnyMatchContainsFix implements CallChainSimplification {
     final SmartPsiElementPointer<PsiExpression> myValuePointer;
 
-    public AnyMatchContainsFix(@NotNull PsiExpression value) {
+    AnyMatchContainsFix(@NotNull PsiExpression value) {
       myValuePointer = SmartPointerManager.createPointer(value);
     }
 

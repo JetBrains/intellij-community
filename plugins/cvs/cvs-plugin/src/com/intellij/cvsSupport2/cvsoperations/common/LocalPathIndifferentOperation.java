@@ -51,6 +51,7 @@ public abstract class LocalPathIndifferentOperation extends CvsCommandOperation 
     myEnvironment = environment;
   }
 
+  @Override
   protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(getCvsRootProvider());
   }
@@ -65,14 +66,17 @@ public abstract class LocalPathIndifferentOperation extends CvsCommandOperation 
     return someFile.getAbsoluteFile().getParentFile();
   }
 
+  @Override
   protected ILocalFileReader createLocalFileReader() {
     return ConstantLocalFileReader.FOR_EXISTING_FILE;
   }
 
+  @Override
   protected boolean shouldMakeChangesOnTheLocalFileSystem() {
     return false;
   }
 
+  @Override
   public String getLastProcessedCvsRoot() {
     return myEnvironment.getCvsRootAsString();
   }

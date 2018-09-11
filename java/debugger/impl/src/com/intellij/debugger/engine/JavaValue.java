@@ -248,7 +248,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     private final String myError;
     private final ValueDescriptorImpl myValueDescriptor;
 
-    public JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error, ValueDescriptorImpl valueDescriptor) {
+    JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error, ValueDescriptorImpl valueDescriptor) {
       myValue = value;
       myType = type;
       myError = error;

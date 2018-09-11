@@ -40,6 +40,7 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
   public SelectExternalProjectDialog(@NotNull ProjectSystemId systemId, Project project, final ProjectData current) {
     super(systemId, project, String.format("Select %s Project", systemId.getReadableName()), ProjectNode.class,
           new SelectExternalSystemNodeDialog.NodeSelector() {
+            @Override
             public boolean shouldSelect(SimpleNode node) {
               if (node instanceof ProjectNode) {
                 return ((ProjectNode)node).getData() == current;
@@ -55,6 +56,7 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
   @Override
   protected Action[] createActions() {
     Action selectNoneAction = new AbstractAction("&None") {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
         myResult = null;

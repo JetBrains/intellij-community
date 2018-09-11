@@ -36,6 +36,7 @@ import java.util.List;
 public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(JavaEncapsulateFieldHelper.class);
 
+  @Override
   @Nullable
   public EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
                                                @NotNull FieldDescriptor fieldDescriptor,
@@ -96,6 +97,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return false;
   }
 
+  @Override
   public boolean processUsage(@NotNull EncapsulateFieldUsageInfo usage,
                               @NotNull EncapsulateFieldsDescriptor descriptor,
                               PsiMethod setter,

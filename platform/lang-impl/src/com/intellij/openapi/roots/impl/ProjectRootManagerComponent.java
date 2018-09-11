@@ -236,7 +236,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     return Pair.create(recursive, flat);
   }
 
-  private void addRootsFromModulesTo(@NotNull Set<String> recursive, @NotNull Set<String> flat) {
+  private void addRootsFromModulesTo(@NotNull Set<? super String> recursive, @NotNull Set<? super String> flat) {
     Set<String> urls = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {

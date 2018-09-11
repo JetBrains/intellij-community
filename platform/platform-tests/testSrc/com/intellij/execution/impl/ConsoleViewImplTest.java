@@ -47,6 +47,8 @@ import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +59,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsoleViewImplTest extends LightPlatformTestCase {
   private ConsoleViewImpl myConsole;
@@ -137,19 +137,20 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       //System.out.println("Attempt #" + i);
       console.clear(); // 1-st clear
       CountDownLatch latch = new CountDownLatch(1);
-      JobScheduler.getScheduler().execute(() -> {
+      Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
         console.clear(); // 2-nd clear
         console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
         latch.countDown();
       });
       UIUtil.dispatchAllInvocationEvents(); // flush 1-st clear request
-      assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+      assertTrue(latch.await(30, TimeUnit.SECONDS));
       UIUtil.dispatchAllInvocationEvents(); // flush 2-nd clear request
       while (console.hasDeferredOutput()) {
         UIUtil.dispatchAllInvocationEvents();
         TimeoutUtil.sleep(1);
       }
       assertEquals("iteration " + i, "Test", console.getText());
+      future.get();
     }
   }
 
@@ -271,7 +272,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).assertTiming());
   }
 
-  private static void withCycleConsoleNoFolding(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
+  private static void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
     ExtensionPoint<ConsoleFolding> point = Extensions.getRootArea().getExtensionPoint(ConsoleFolding.EP_NAME);
     ConsoleFolding[] extensions = point.getExtensions();
     for (ConsoleFolding extension : extensions) {
@@ -393,10 +394,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     Editor editor = consoleView.getEditor();
     Set<Shortcut> backShortcuts = new THashSet<>(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts()));
     List<AnAction> actions = ActionUtil.getActions(consoleView.getEditor().getContentComponent());
-    AnAction handler = actions.stream()
-      .filter(a -> new THashSet<>(Arrays.asList(a.getShortcutSet().getShortcuts())).equals(backShortcuts))
-      .findFirst()
-      .get();
+    AnAction handler = ContainerUtil.find(actions,
+      a -> new THashSet<>(Arrays.asList(a.getShortcutSet().getShortcuts())).equals(backShortcuts));
     CommandProcessor.getInstance().executeCommand(getProject(),
                                                   () -> EditorTestUtil.executeAction(editor, true, handler),
                                                   "", null, editor.getDocument());

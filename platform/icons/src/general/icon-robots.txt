@@ -1,8 +1,19 @@
+deprecated: arrowDown_white.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
 deprecated: autohideOff.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
 deprecated: autohideOffInactive.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
 deprecated: autohideOffPressed.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
 deprecated: collapseAll.png -> /actions/collapseall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Collapseall
 deprecated: collapseAllHover.png -> /actions/collapseall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Collapseall
+deprecated: combo.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: combo2.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: combo3.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: comboArrow.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: comboArrowDown.png -> /general/arrowDownSmall.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDownSmall
+deprecated: comboArrowLeft.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
+deprecated: comboArrowLeftPassive.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
+deprecated: comboArrowRight.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
+deprecated: comboArrowRightPassive.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
+deprecated: comboBoxButtonArrow.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
 deprecated: configurableDefault.png; to be removed in IDEA 2020
 deprecated: Configure.png -> /general/settings.svg; to be removed in IDEA 2020 - AllIcons.General.Settings
 deprecated: createNewProject.png -> /welcome/createNewProject.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject
@@ -28,5 +39,12 @@ deprecated: projectConfigurableSelected.png -> /general/projectConfigurable.svg;
 deprecated: projectSettings.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
 deprecated: readHelp.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: recursive.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
+deprecated: run.png; to be removed in IDEA 2020
 deprecated: secondaryGroup.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
+deprecated: splitCenterH.png -> /general/arrowSplitCenterH.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterH
+deprecated: splitCenterV.png -> /general/arrowSplitCenterV.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterV
+deprecated: splitUp.png -> /general/arrowUp.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowUp
+deprecated: splitDown.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
+deprecated: splitLeft.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
+deprecated: splitRight.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
 deprecated: uninstallPlugin.png; to be removed in IDEA 2020

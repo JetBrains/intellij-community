@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * @see ImageEditor#getZoomModel
  */
 public final class ZoomOutAction extends AnAction implements DumbAware {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
         if (decorator != null) {
@@ -39,6 +40,7 @@ public final class ZoomOutAction extends AnAction implements DumbAware {
         }
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (ImageEditorActionUtil.setEnabled(e)) {

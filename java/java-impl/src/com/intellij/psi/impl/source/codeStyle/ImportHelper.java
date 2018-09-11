@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.codeInsight.ImportFilter;
@@ -156,7 +142,7 @@ public class ImportHelper{
     }
   }
 
-  public static void collectOnDemandImports(@NotNull List<Pair<String, Boolean>> resultList,
+  public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
     TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<>();
@@ -197,7 +183,7 @@ public class ImportHelper{
     packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
   }
 
-  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
+  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<? extends Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
     int[] entryForName = ArrayUtil.newIntArray(names.size());
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for(int i = 0; i < names.size(); i++){
@@ -224,7 +210,7 @@ public class ImportHelper{
 
   @NotNull
   private static Set<String> findSingleImports(@NotNull final PsiJavaFile file,
-                                               @NotNull Collection<Pair<String,Boolean>> names,
+                                               @NotNull Collection<? extends Pair<String, Boolean>> names,
                                                @NotNull final Set<String> onDemandImports) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
     final String thisPackageName = file.getPackageName();
@@ -375,7 +361,7 @@ public class ImportHelper{
   }
 
   @NotNull
-  private static StringBuilder buildImportListText(@NotNull List<Pair<String, Boolean>> names,
+  private static StringBuilder buildImportListText(@NotNull List<? extends Pair<String, Boolean>> names,
                                                    @NotNull final Set<String> packagesOrClassesToImportOnDemand,
                                                    @NotNull final Set<String> namesToUseSingle) {
     final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<>();
@@ -439,7 +425,7 @@ public class ImportHelper{
     String packageName = getPackageOrClassName(className);
     String shortName = PsiNameHelper.getShortClassName(className);
 
-    findUnusedSingleImport(file, shortName).ifPresent(PsiElement::delete);
+    findUnusedSingleImport(file, shortName, className).ifPresent(PsiElement::delete);
     PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
     if (conflictSingleRef != null && !forceReimport){
       return className.equals(conflictSingleRef.getQualifiedName());
@@ -532,12 +518,13 @@ public class ImportHelper{
     return true;
   }
 
-  private static Optional<PsiImportStatement> findUnusedSingleImport(PsiJavaFile file, String name) {
+  private static Optional<PsiImportStatement> findUnusedSingleImport(PsiJavaFile file, String shortName, String fqName) {
     PsiImportList importList = file.getImportList();
     if (importList != null) {
       for (PsiImportStatement statement : importList.getImportStatements()) {
         PsiJavaCodeReferenceElement ref = statement.getImportReference();
-        if (!statement.isOnDemand() && ref != null && name.equals(ref.getReferenceName())) {
+        if (!statement.isOnDemand() && ref != null && shortName.equals(ref.getReferenceName()) &&
+            !fqName.equals(statement.getQualifiedName())) {
           PsiElement target = statement.resolve();
           if (target instanceof PsiClass) {
             Collection<PsiReference> all = ReferencesSearch.search(target, new LocalSearchScope(file)).findAll();

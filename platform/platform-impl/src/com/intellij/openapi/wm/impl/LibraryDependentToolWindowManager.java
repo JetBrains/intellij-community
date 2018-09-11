@@ -38,7 +38,7 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
 
     final ModuleRootListener rootListener = new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         checkToolWindowStatuses(project);
       }
     };

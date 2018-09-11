@@ -42,7 +42,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                      @Nullable Editor editor,
-                                                     @NotNull final List<HighlightInfo> infos,
+                                                     @NotNull final List<? extends HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange,
                                                      final int groupId) {
@@ -79,7 +79,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                       @Nullable Editor editor,
-                                                      @NotNull final List<HighlightInfo> infos,
+                                                      @NotNull final List<? extends HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange, final int groupId) {
     final PsiFile psiFile = session.getPsiFile();
@@ -106,14 +106,14 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
-                                               @Nullable List<HighlightInfo> infos) {
+                                               @Nullable List<? extends HighlightInfo> infos) {
     PsiFile psiFile = session.getPsiFile();
     killAbandonedHighlightsUnder(psiFile, elementRange, infos, session);
   }
 
   private static void killAbandonedHighlightsUnder(@NotNull PsiFile psiFile,
                                                    @NotNull final TextRange range,
-                                                   @Nullable final List<HighlightInfo> infos,
+                                                   @Nullable final List<? extends HighlightInfo> infos,
                                                    @NotNull final HighlightingSession highlightingSession) {
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);

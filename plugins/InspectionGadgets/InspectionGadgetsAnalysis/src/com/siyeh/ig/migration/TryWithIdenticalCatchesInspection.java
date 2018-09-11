@@ -140,7 +140,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   @Nullable
   static CatchSectionIndices[] getCatchSectionIndices(@NotNull CatchSectionWrapper[] sections,
                                                       @NotNull boolean[][] canSwap,
-                                                      @NotNull BiPredicate<CatchSectionWrapper, CatchSectionWrapper> equals) {
+                                                      @NotNull BiPredicate<? super CatchSectionWrapper, ? super CatchSectionWrapper> equals) {
     final CatchSectionIndices[] indices = new CatchSectionIndices[sections.length];
     for (int index = 0; index < sections.length; index++) {
       indices[index] = new CatchSectionIndices(index);
@@ -243,13 +243,13 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     @NotNull final PsiCatchSection myCatchSection;
     @NotNull final PsiCodeBlock myCodeBlock;
     @NotNull final PsiParameter myParameter;
-    @NotNull final List<PsiClassType> myTypes;
+    @NotNull final List<? extends PsiClassType> myTypes;
     @NotNull final DuplicatesFinder myFinder;
 
     private CatchSectionWrapper(@NotNull PsiCatchSection catchSection,
                                 @NotNull PsiCodeBlock codeBlock,
                                 @NotNull PsiParameter parameter,
-                                @NotNull List<PsiClassType> types,
+                                @NotNull List<? extends PsiClassType> types,
                                 @NotNull DuplicatesFinder finder) {
       myCatchSection = catchSection;
       myCodeBlock = codeBlock;

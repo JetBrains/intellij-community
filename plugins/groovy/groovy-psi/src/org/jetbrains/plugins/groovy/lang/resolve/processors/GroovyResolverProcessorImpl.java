@@ -20,43 +20,41 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     super(ref, kinds, forceRValue);
   }
 
+  @Override
   @NotNull
   public List<GroovyResolveResult> getCandidates() {
-    List<GroovyResolveResult> candidates;
-
-    candidates = getCandidates(GroovyResolveKind.VARIABLE);
-    if (!candidates.isEmpty()) {
-      return candidates;
+    final List<GroovyResolveResult> variables = getCandidates(GroovyResolveKind.VARIABLE);
+    if (!variables.isEmpty()) {
+      return variables;
     }
 
-    candidates = getCandidates(GroovyResolveKind.METHOD);
-    if (!candidates.isEmpty()) {
-      return filterMethodCandidates(candidates);
+    final List<GroovyResolveResult> methods = getCandidates(GroovyResolveKind.METHOD);
+    if (!methods.isEmpty()) {
+      return filterMethodCandidates(methods);
     }
 
-    candidates = getCandidates(GroovyResolveKind.ENUM_CONST);
-    if (!candidates.isEmpty()) {
-      return candidates;
+    final List<GroovyResolveResult> enumConstants = getCandidates(GroovyResolveKind.ENUM_CONST);
+    if (!enumConstants.isEmpty()) {
+      return enumConstants;
     }
 
-    candidates = getCandidates(GroovyResolveKind.PROPERTY);
-    if (!candidates.isEmpty()) {
-      return candidates.size() <= 1 ? candidates : ContainerUtil.newSmartList(candidates.get(0));
+    final List<GroovyResolveResult> properties = getCandidates(GroovyResolveKind.PROPERTY);
+    if (!properties.isEmpty()) {
+      return properties.size() <= 1 ? properties : ContainerUtil.newSmartList(properties.get(0));
     }
 
-    candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (!candidates.isEmpty()) {
-      return candidates;
+    final List<GroovyResolveResult> fields = getCandidates(GroovyResolveKind.FIELD);
+    if (!fields.isEmpty()) {
+      return fields;
     }
 
-    candidates = getCandidates(GroovyResolveKind.PROPERTY);
-    if (!candidates.isEmpty()) {
-      return candidates;
+    if (!properties.isEmpty()) {
+      return properties;
     }
 
-    candidates = getCandidates(GroovyResolveKind.BINDING);
-    if (!candidates.isEmpty()) {
-      return candidates;
+    final List<GroovyResolveResult> bindings = getCandidates(GroovyResolveKind.BINDING);
+    if (!bindings.isEmpty()) {
+      return bindings;
     }
 
     for (GroovyResolveKind kind : myAcceptableKinds) {

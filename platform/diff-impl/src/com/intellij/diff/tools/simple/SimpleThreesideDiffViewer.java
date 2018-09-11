@@ -269,7 +269,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
     @NotNull private final Side mySide;
 
-    public MyDividerPaintable(@NotNull Side side) {
+    MyDividerPaintable(@NotNull Side side) {
       mySide = side;
     }
 

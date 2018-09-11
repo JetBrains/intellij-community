@@ -43,7 +43,7 @@ import java.util.EnumSet;
 /**
  * @author max
  */
-public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
@@ -90,9 +90,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
+  @Override
   @Nullable
-  public Project doOpenProject(@NotNull VirtualFile file, @Nullable Project projectToClose, int line, @NotNull EnumSet<Option> options) {
-    return doOpenProject(file, projectToClose, line, null, options);
+  public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
+    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+    if (tempProject) {
+      options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
+      options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+    }
+
+    return doOpenProject(file, null, line, null, options);
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */

@@ -38,10 +38,12 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
   private static final ColumnInfo[] INNER_CLASS_COLUMNS = new ColumnInfo[]{
     new MyColumnInfo(ApplicationBundle.message("do.not.import.inner.classes.for")) {
+      @Override
       public String valueOf(final InnerClassItem innerClass) {
         return innerClass.getName();
       }
 
+      @Override
       public void setValue(final InnerClassItem innerClass, final String name) {
         innerClass.setName(name);
       }
@@ -149,16 +151,18 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {
-    public MyColumnInfo(final String name) {
+    MyColumnInfo(final String name) {
       super(name);
     }
 
+    @Override
     public TableCellEditor getEditor(final InnerClassItem item) {
       final JTextField textField = new JTextField();
       textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
       return new DefaultCellEditor(textField);
     }
 
+    @Override
     public boolean isCellEditable(final InnerClassItem innerClass) {
       return true;
     }
@@ -167,7 +171,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private static class InnerClassItem {
     private String myName;
 
-    public InnerClassItem(String name) {
+    InnerClassItem(String name) {
       myName = name;
     }
 

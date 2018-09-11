@@ -40,8 +40,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -94,6 +94,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     });
 
     myAddArchetypeButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doAddArchetype();
       }
@@ -105,6 +106,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     myArchetypesTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     myArchetypesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         updateArchetypeDescription();
         archetypeMayBeChanged();
@@ -303,6 +305,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   private static class MyRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,

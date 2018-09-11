@@ -370,7 +370,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   private static class CommentRange {
-    public CommentRange(@NotNull PsiElement first, @NotNull PsiElement last) {
+    CommentRange(@NotNull PsiElement first, @NotNull PsiElement last) {
       this.first = first;
       this.last = last;
       LOG.assertTrue(first.getContainingFile() == last.getContainingFile());

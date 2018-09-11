@@ -40,18 +40,22 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
     this.propertyChangeSupport = propertyChangeSupport;
   }
 
+  @Override
   public boolean isShowDefault() {
     return showDefault;
   }
 
+  @Override
   public int getCellSize() {
     return cellSize;
   }
 
+  @Override
   public Color getWhiteColor() {
     return whiteColor;
   }
 
+  @Override
   public Color getBlackColor() {
     return blackColor;
   }
@@ -94,6 +98,7 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
     }
   }
 
+  @Override
   public void inject(TransparencyChessboardOptions options) {
     setShowDefault(options.isShowDefault());
     setCellSize(options.getCellSize());
@@ -101,6 +106,7 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
     setBlackColor(options.getBlackColor());
   }
 
+  @Override
   public boolean setOption(String name, Object value) {
     if (ATTR_SHOW_DEFAULT.equals(name)) {
       setShowDefault((Boolean)value);
@@ -120,6 +126,7 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
     return true;
   }
 
+  @Override
   public void readExternal(Element element) {
     setShowDefault(JDOMExternalizer.readBoolean(element, ATTR_SHOW_DEFAULT));
     setCellSize(JDOMExternalizer.readInteger(element, ATTR_CELL_SIZE, DEFAULT_CELL_SIZE));
@@ -127,6 +134,7 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
     setBlackColor(JDOMExternalizerEx.readColor(element, ATTR_BLACK_COLOR, DEFAULT_BLACK_COLOR));
   }
 
+  @Override
   public void writeExternal(Element element) {
     JdomKt.addOptionTag(element, ATTR_SHOW_DEFAULT, Boolean.toString(showDefault), "setting");
     JdomKt.addOptionTag(element, ATTR_CELL_SIZE, Integer.toString(cellSize), "setting");

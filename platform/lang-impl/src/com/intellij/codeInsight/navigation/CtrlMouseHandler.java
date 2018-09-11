@@ -150,7 +150,7 @@ public class CtrlMouseHandler {
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       disposeHighlighter();
       cancelPreviousTooltip();
     }
@@ -158,7 +158,7 @@ public class CtrlMouseHandler {
 
   private final EditorMouseListener myEditorMouseAdapter = new EditorMouseListener() {
     @Override
-    public void mouseReleased(EditorMouseEvent e) {
+    public void mouseReleased(@NotNull EditorMouseEvent e) {
       disposeHighlighter();
       cancelPreviousTooltip();
     }
@@ -166,7 +166,7 @@ public class CtrlMouseHandler {
 
   private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionListener() {
     @Override
-    public void mouseMoved(final EditorMouseEvent e) {
+    public void mouseMoved(@NotNull final EditorMouseEvent e) {
       if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {
         return;
       }
@@ -223,7 +223,7 @@ public class CtrlMouseHandler {
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
         eventMulticaster.addCaretListener(new CaretListener() {
           @Override
-          public void caretPositionChanged(CaretEvent e) {
+          public void caretPositionChanged(@NotNull CaretEvent e) {
             if (myHint != null) {
               myDocumentationManager.updateToolwindowContext();
             }
@@ -393,12 +393,12 @@ public class CtrlMouseHandler {
   private static class InfoSingle extends Info {
     @NotNull private final PsiElement myTargetElement;
 
-    public InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
+    InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
       super(elementAtPointer);
       myTargetElement = targetElement;
     }
 
-    public InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
+    InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
       super(ref.getElement(), ReferenceRange.getAbsoluteRanges(ref));
       myTargetElement = targetElement;
     }
@@ -431,11 +431,11 @@ public class CtrlMouseHandler {
   }
 
   private static class InfoMultiple extends Info {
-    public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
+    InfoMultiple(@NotNull final PsiElement elementAtPointer) {
       super(elementAtPointer);
     }
 
-    public InfoMultiple(@NotNull final PsiElement elementAtPointer, @NotNull PsiReference ref) {
+    InfoMultiple(@NotNull final PsiElement elementAtPointer, @NotNull PsiReference ref) {
       super(elementAtPointer, ReferenceRange.getAbsoluteRanges(ref));
     }
 
@@ -607,7 +607,7 @@ public class CtrlMouseHandler {
   }
 
   private void updateText(@NotNull String updatedText,
-                          @NotNull Consumer<String> newTextConsumer,
+                          @NotNull Consumer<? super String> newTextConsumer,
                           @NotNull LightweightHint hint,
                           @NotNull Editor editor) {
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -810,7 +810,7 @@ public class CtrlMouseHandler {
       myHint = hint;
       hint.addHintListener(new HintListener() {
         @Override
-        public void hintHidden(EventObject event) {
+        public void hintHidden(@NotNull EventObject event) {
           myHint = null;
         }
       });
@@ -823,14 +823,14 @@ public class CtrlMouseHandler {
 
     private void updateOnPsiChanges(@NotNull LightweightHint hint,
                                     @NotNull Info info,
-                                    @NotNull Consumer<String> textConsumer,
+                                    @NotNull Consumer<? super String> textConsumer,
                                     @NotNull String oldText,
                                     @NotNull Editor editor) {
       if (!hint.isVisible()) return;
       Disposable hintDisposable = Disposer.newDisposable("CtrlMouseHandler.TooltipProvider.updateOnPsiChanges");
       hint.addHintListener(new HintListener() {
         @Override
-        public void hintHidden(EventObject event) {
+        public void hintHidden(@NotNull EventObject event) {
           Disposer.dispose(hintDisposable);
         }
       });
@@ -915,12 +915,12 @@ public class CtrlMouseHandler {
 
 
   private class HighlightersSet {
-    @NotNull private final List<RangeHighlighter> myHighlighters;
+    @NotNull private final List<? extends RangeHighlighter> myHighlighters;
     @NotNull private final Editor myHighlighterView;
     @NotNull private final Cursor myStoredCursor;
     @NotNull private final Info myStoredInfo;
 
-    private HighlightersSet(@NotNull List<RangeHighlighter> highlighters,
+    private HighlightersSet(@NotNull List<? extends RangeHighlighter> highlighters,
                             @NotNull Editor highlighterView,
                             @NotNull Cursor storedCursor,
                             @NotNull Info storedInfo) {

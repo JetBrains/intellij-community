@@ -16,10 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
@@ -33,7 +30,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final String icoPath
 
   WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties, File patchedApplicationInfo) {
-    super(BuildOptions.OS_WINDOWS, "Windows", buildContext)
+    super(buildContext)
     this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
     this.ideaProperties = ideaProperties
@@ -41,9 +38,14 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
+  OsFamily getTargetOs() {
+    return OsFamily.WINDOWS
+  }
+
+  @Override
   String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for Windows")
-    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.win"
+    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -55,9 +57,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "yjpagent*.dll")
         }
       }
-    }
-    buildContext.ant.copy(todir: "$winDistPath/lib/libpty/win") {
-      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/win")
     }
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")

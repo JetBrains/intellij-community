@@ -60,9 +60,9 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     });
   }
 
-  private static void appendPropertiesFilesNodes(@NotNull List<PropertiesFile> files,
+  private static void appendPropertiesFilesNodes(@NotNull List<? extends PropertiesFile> files,
                                                  @NotNull Project project,
-                                                 @NotNull Consumer<AbstractTreeNode> nodeConsumer,
+                                                 @NotNull Consumer<? super AbstractTreeNode> nodeConsumer,
                                                  ViewSettings settings) {
     ResourceBundleManager manager = ResourceBundleManager.getInstance(project);
 

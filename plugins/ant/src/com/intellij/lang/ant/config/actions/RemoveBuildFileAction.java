@@ -29,6 +29,7 @@ public final class RemoveBuildFileAction extends AnAction {
     myAntExplorer = antExplorer;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     myAntExplorer.removeSelectedBuildFiles();
   }

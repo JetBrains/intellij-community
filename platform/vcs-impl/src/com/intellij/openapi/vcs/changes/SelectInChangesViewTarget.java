@@ -48,10 +48,12 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     }
   }
 
+  @Override
   public String getToolWindowId() {
     return ChangesViewContentManager.TOOLWINDOW_ID;
   }
 
+  @Override
   public float getWeight() {
     return 9;
   }

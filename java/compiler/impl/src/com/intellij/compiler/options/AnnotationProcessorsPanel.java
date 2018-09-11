@@ -50,8 +50,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -165,7 +165,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     splitter.setSecondComponent(myProfilePanel);
   }
 
-  public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<ProcessorConfigProfile> moduleProfiles) {
+  public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<? extends ProcessorConfigProfile> moduleProfiles) {
     myDefaultProfile.initFrom(defaultProfile);
     myModuleProfiles.clear();
     for (ProcessorConfigProfile profile : moduleProfiles) {
@@ -199,7 +199,7 @@ public class AnnotationProcessorsPanel extends JPanel {
   }
 
   private class MyTreeModel extends DefaultTreeModel implements EditableTreeModel{
-    public MyTreeModel() {
+    MyTreeModel() {
       super(new RootNode());
     }
 
@@ -254,6 +254,7 @@ public class AnnotationProcessorsPanel extends JPanel {
       removeNodes(Collections.singleton(nodePath));
     }
 
+    @Override
     public void removeNodes(Collection<TreePath> paths) {
       final List<ProcessorConfigProfile> toRemove = new SmartList<>();
       for (TreePath path : paths) {
@@ -313,7 +314,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     private final ProcessorConfigProfile myProfile;
     private final boolean myIsDefault;
 
-    public ProfileNode(ProcessorConfigProfile profile, RootNode parent, boolean isDefault) {
+    ProfileNode(ProcessorConfigProfile profile, RootNode parent, boolean isDefault) {
       super(profile);
       setParent(parent);
       myIsDefault = isDefault;
@@ -354,7 +355,7 @@ public class AnnotationProcessorsPanel extends JPanel {
   }
 
   private static class MyModuleNode extends DefaultMutableTreeNode {
-    public MyModuleNode(Module module, ProfileNode parent) {
+    MyModuleNode(Module module, ProfileNode parent) {
       super(module);
       setParent(parent);
       setAllowsChildren(false);

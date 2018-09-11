@@ -1069,6 +1069,10 @@ class X {
     doBasicTest()
   }
 
+  void testClassNameBeforeParentheses2() {
+    doBasicTest()
+  }
+
   void testNewClassGenerics() {
     checkSingleItemCompletion 'new ArrayLi<caret>', 'new ArrayList<<caret>>()'
   }

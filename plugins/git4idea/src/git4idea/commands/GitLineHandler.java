@@ -92,6 +92,7 @@ public class GitLineHandler extends GitTextHandler {
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
+  @Override
   protected void processTerminated(final int exitCode) {}
 
   public void addLineListener(GitLineHandlerListener listener) {
@@ -99,6 +100,7 @@ public class GitLineHandler extends GitTextHandler {
     myLineListeners.addListener(listener);
   }
 
+  @Override
   protected void onTextAvailable(String text, Key outputType) {
     notifyLine(text, outputType);
   }
@@ -163,7 +165,7 @@ public class GitLineHandler extends GitTextHandler {
 
     @NotNull private final BufferingTextSplitter myOutputProcessor;
 
-    public LineReader(@NotNull Reader reader,
+    LineReader(@NotNull Reader reader,
                       @NotNull SleepingPolicy sleepingPolicy,
                       @NotNull BufferingTextSplitter outputProcessor,
                       @NotNull String presentableName) {

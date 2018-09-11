@@ -49,7 +49,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   }
 
   protected abstract void processIntention(@NotNull PsiElement element);
-  
+
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
     processIntention(element);
   }
@@ -84,12 +84,12 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
         return;
       }
     }
-    
+
     PsiElement insertedElement = tracker.replaceAndRestoreComments(expressionToReplace, newCall);
     CodeStyleManager.getInstance(project).reformat(insertedElement);
   }
 
-  
+
   @Nullable
   PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
     while (element != null) {
@@ -142,6 +142,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     return IntentionPowerPackBundle.message(getPrefix() + ".name");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     //noinspection UnresolvedPropertyKey

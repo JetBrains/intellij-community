@@ -39,8 +39,9 @@ public abstract class DiffPanelComboBoxAction<T> extends ComboBoxAction implemen
     myActions.put(key, action);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(final Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull final Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel(getActionName());
     label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));

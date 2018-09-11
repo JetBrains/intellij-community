@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.application.ModalityState;
@@ -50,6 +50,7 @@ import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
+  @Override
   public void doCheckout(@NotNull final Project project, Listener listener) {
     // TODO: Several dialogs is invoked while dialog.show() - seems code should be rewritten to be more transparent
     CheckoutDialog dialog = new CheckoutDialog(project, listener);
@@ -110,6 +111,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                                                                                message("message.title.check.out"), true,
                                                                                VcsConfiguration.getInstance(project).getCheckoutOption()) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
         SvnVcs vcs = SvnVcs.getInstance(project);
@@ -131,6 +133,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         onSuccess();
       }
 
+      @Override
       public void onSuccess() {
         if (exception[0] != null) {
           showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("message.title.check.out"));
@@ -262,6 +265,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
+  @Override
   public String getVcsName() {
     return "_Subversion";
   }

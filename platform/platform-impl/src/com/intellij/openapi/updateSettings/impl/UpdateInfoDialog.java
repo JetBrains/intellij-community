@@ -166,7 +166,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     List<ButtonInfo> buttons = myNewBuild.getButtons();
     for (ButtonInfo info : buttons) {
-      if (!info.isDownload() || myPatches == null) {
+      if (!info.isDownload() || myPatches == null && myTestPatch == null) {
         actions.add(new ButtonAction(info));
       }
     }
@@ -312,7 +312,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JEditorPane myLicenseArea;
     private JBScrollPane myScrollPane;
 
-    public UpdateInfoPanel() {
+    UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
@@ -337,6 +337,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       if (myPatches != null && !StringUtil.isEmptyOrSpaces(myPatches.getSize())) {
         myPatchInfo.setText(myPatches.getSize() + " MB");
+      }
+      else if (myTestPatch != null) {
+        myPatchInfo.setText(Math.max(1, myTestPatch.length() >> 20) + " MB");
       }
       else {
         myPatchLabel.setVisible(false);

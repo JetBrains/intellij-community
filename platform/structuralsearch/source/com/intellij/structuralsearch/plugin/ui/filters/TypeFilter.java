@@ -60,6 +60,7 @@ public class TypeFilter extends FilterAction {
         "<p>The type of the matched expression is checked against the provided \"|\"-separated patterns. " +
         "<p>Use \"!\" to invert the pattern.");
 
+      @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
@@ -67,23 +68,24 @@ public class TypeFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createParallelGroup()
-                .addGroup(
-                  layout.createSequentialGroup()
-                        .addComponent(myTypeLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addComponent(myHierarchyCheckBox)
+            .addGroup(
+              layout.createSequentialGroup()
+                .addComponent(myTypeLabel)
+                .addComponent(myTextField)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+                .addComponent(myHelpLabel)
+            )
+            .addComponent(myHierarchyCheckBox)
         );
         layout.setVerticalGroup(
           layout.createSequentialGroup()
-                .addGroup(
-                  layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myTypeLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addComponent(myHierarchyCheckBox)
+            .addGroup(
+              layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(myTypeLabel)
+                .addComponent(myTextField)
+                .addComponent(myHelpLabel)
+            )
+            .addComponent(myHierarchyCheckBox)
         );
       }
 

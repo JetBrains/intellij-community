@@ -63,6 +63,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected abstract String getTestDataPath();
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
@@ -83,9 +84,9 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
   }
 
-  protected void initCompiler() {
+  protected final void initCompiler() {
     try {
-      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]));
+      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]), myProject);
     }
     catch (Throwable e) {
       fail(e.getMessage());
@@ -97,14 +98,10 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return (root != null ? new File(root, ".m2/repository") : new File(".m2/repository")).getAbsolutePath();
   }
 
+  @Override
   public void tearDown() throws Exception {
     try {
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
-
-      if (myCompilerTester != null) {
-        myCompilerTester.tearDown();
-      }
-
       ProjectManager.getInstance().closeProject(myProject);
       WriteAction.run(() -> Disposer.dispose(myProject));
 

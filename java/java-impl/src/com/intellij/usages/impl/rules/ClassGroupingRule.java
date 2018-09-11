@@ -111,7 +111,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
     private final String myQName;
     private final Icon myIcon;
 
-    public ClassUsageGroup(@NotNull PsiClass aClass) {
+    ClassUsageGroup(@NotNull PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
       myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);

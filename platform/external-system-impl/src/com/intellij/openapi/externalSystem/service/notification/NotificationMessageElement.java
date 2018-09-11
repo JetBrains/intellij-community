@@ -45,6 +45,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
                                     String rendererTextPrefix) {
     super(kind, parent, message, navigatable, exportText, rendererTextPrefix);
     myLeftTreeCellRenderer = new CustomizeColoredTreeCellRenderer() {
+      @Override
       public void customizeCellRenderer(SimpleColoredComponent renderer,
                                         JTree tree,
                                         Object value,
@@ -127,8 +128,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
       }
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel() ||
-        tree != null && WideSelectionTreeUI.isWideSelection(tree)) {
+    if (tree != null && WideSelectionTreeUI.isWideSelection(tree)) {
       editorPane.setOpaque(false);
     }
     else {

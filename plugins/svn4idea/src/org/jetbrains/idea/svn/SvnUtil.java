@@ -201,6 +201,7 @@ public class SvnUtil {
         }
       }
 
+      @Override
       public void checkCancelled() {
       }
     };
@@ -263,6 +264,7 @@ public class SvnUtil {
         }
       }
 
+      @Override
       public void checkCancelled() {
       }
     };
@@ -771,7 +773,7 @@ public class SvnUtil {
       ensureTempFolder();
     }
 
-    public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
+    SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
       myDbFile = dbFile;
     }
 

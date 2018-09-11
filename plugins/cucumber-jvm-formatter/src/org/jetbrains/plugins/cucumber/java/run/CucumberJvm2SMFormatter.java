@@ -39,36 +39,42 @@ public class CucumberJvm2SMFormatter implements Formatter {
   }
 
   private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
+    @Override
     public void receive(TestCaseStarted event) {
       CucumberJvm2SMFormatter.this.handleTestCaseStarted(event);
     }
   };
 
   private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
+    @Override
     public void receive(TestCaseFinished event) {
       handleTestCaseFinished(event);
     }
   };
 
   private final EventHandler<TestRunFinished> testRunFinishedHandler = new EventHandler<TestRunFinished>() {
+    @Override
     public void receive(TestRunFinished event) {
       CucumberJvm2SMFormatter.this.handleTestRunFinished(event);
     }
   };
 
   private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
+    @Override
     public void receive(TestStepStarted event) {
       handleTestStepStarted(event);
     }
   };
 
   private final EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
+    @Override
     public void receive(TestStepFinished event) {
       handleTestStepFinished(event);
     }
   };
 
   private final EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
+    @Override
     public void receive(TestSourceRead event) {
       CucumberJvm2SMFormatter.this.handleTestSourceRead(event);
     }
@@ -173,7 +179,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
         Field definitionMatchField = step.getClass().getSuperclass().getDeclaredField("definitionMatch");
         definitionMatchField.setAccessible(true);
         Object definitionMatchFieldValue = definitionMatchField.get(step);
-        
+
         Field hookDefinitionField = definitionMatchFieldValue.getClass().getDeclaredField("hookDefinition");
         hookDefinitionField.setAccessible(true);
         Object hookDefinitionFieldValue = hookDefinitionField.get(definitionMatchFieldValue);

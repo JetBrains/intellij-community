@@ -40,8 +40,9 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myPanel.add(myLabel);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return myPanel;
   }
 

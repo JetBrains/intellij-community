@@ -98,10 +98,12 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon implements MenuBarIcon
     }
   }
 
+  @Override
   public int getIconWidth() {
     return (int)ceil(scaleVal(myWidth));
   }
 
+  @Override
   public int getIconHeight() {
     return (int)ceil(scaleVal(myHeight));
   }

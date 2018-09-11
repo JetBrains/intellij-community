@@ -9,9 +9,9 @@ import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import java.util.*
 
 class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
 
@@ -20,6 +20,15 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     val declaration = target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
+  }
+
+  override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
+    val declaration = target as PsiModifierListOwner
+    if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+    val fix = object : ModifierFix(declaration.modifierList, renderer.render(request.modifier), request.shouldBePresent(), false) {
+      override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
+    }
+    return listOf(fix)
   }
 
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
@@ -33,7 +42,7 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
 
     val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
-    if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
+    if (constantRequested || request.fieldName.toUpperCase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {

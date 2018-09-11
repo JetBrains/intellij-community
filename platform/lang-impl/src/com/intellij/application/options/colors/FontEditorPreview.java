@@ -35,11 +35,11 @@ import java.util.function.Supplier;
 public class FontEditorPreview implements PreviewPanel{
   private final EditorEx myEditor;
 
-  private final Supplier<EditorColorsScheme> mySchemeSupplier;
+  private final Supplier<? extends EditorColorsScheme> mySchemeSupplier;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public FontEditorPreview(final Supplier<EditorColorsScheme> schemeSupplier, boolean editable) {
+  public FontEditorPreview(final Supplier<? extends EditorColorsScheme> schemeSupplier, boolean editable) {
     mySchemeSupplier = schemeSupplier;
 
     @Nls String text = getIDEDemoText();

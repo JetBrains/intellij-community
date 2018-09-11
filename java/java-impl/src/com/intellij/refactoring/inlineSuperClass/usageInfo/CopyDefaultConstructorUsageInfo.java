@@ -33,6 +33,7 @@ public class CopyDefaultConstructorUsageInfo extends FixableUsageInfo{
     myConstructor = constructor;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiCodeBlock body = myConstructor.getBody();
     assert body != null;

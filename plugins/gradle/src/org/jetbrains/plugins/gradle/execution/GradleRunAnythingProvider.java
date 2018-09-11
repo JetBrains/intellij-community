@@ -175,6 +175,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     return new RunAnythingHelpItem(placeholder, commandPrefix, getHelpDescription(), getHelpIcon());
   }
 
+  @Override
   @NotNull
   public String getCompletionGroupTitle() {
     return "Gradle tasks";

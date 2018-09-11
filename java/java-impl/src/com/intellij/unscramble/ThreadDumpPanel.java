@@ -89,7 +89,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     myFilterField = new SearchTextField();
     myFilterField.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateThreadList();
       }
     });
@@ -145,7 +145,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     if (editor != null) {
       editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
           String filter = myFilterField.getText();
           if (StringUtil.isNotEmpty(filter)) {
             highlightOccurrences(filter, project, editor);
@@ -358,12 +358,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myFilterPanel.isVisible();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myFilterPanel.setVisible(state);
       if (state) {
         IdeFocusManager.getInstance(getEventProject(e)).requestFocus(myFilterField, true);
@@ -379,12 +379,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return UISettings.getInstance().getMergeEqualStackTraces();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       UISettings.getInstance().setMergeEqualStackTraces(state);
       updateThreadList();
     }

@@ -10,7 +10,7 @@ class Test {
   void test() {
     doSmth(RES);
     doSmth(<weak_warning descr="Value 'xyz' is always 'null'">xyz</weak_warning>);
-    System.out.println(process(<weak_warning descr="Value 'xyz' is always 'null'">xyz</weak_warning>).<warning descr="Method invocation 'hashCode' will produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(process(<weak_warning descr="Value 'xyz' is always 'null'">xyz</weak_warning>).<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>());
     Integer x = TEST;
     System.out.println(TEST);
     System.out.println(x);

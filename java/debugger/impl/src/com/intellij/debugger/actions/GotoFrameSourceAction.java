@@ -25,6 +25,7 @@ import java.util.Objects;
  * @author lex
  */
 public abstract class GotoFrameSourceAction extends DebuggerAction{
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     doAction(dataContext);
@@ -53,6 +54,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(getStackFrameDescriptor(e.getDataContext()) != null);
   }

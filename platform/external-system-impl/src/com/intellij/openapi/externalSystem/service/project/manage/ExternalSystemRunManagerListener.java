@@ -34,7 +34,7 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
   private final ExternalProjectsManagerImpl myManager;
   private final ConcurrentIntObjectMap<Pair<String, RunnerAndConfigurationSettings>> myMap;
 
-  public ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
+  ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
     myManager = (ExternalProjectsManagerImpl)manager;
     myMap = ContainerUtil.createConcurrentIntObjectMap();
   }
@@ -107,16 +107,16 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
   }
 
   @Override
-  public void stateLoaded() {
+  public void stateLoaded(@NotNull RunManager runManager, boolean isFirstLoadState) {
     myMap.clear();
 
     for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
-      final AbstractExternalSystemTaskConfigurationType configurationType =
-        ExternalSystemUtil.findConfigurationType(systemManager.getSystemId());
-      if (configurationType == null) continue;
-      final List<RunnerAndConfigurationSettings> configurationSettingsList =
-        RunManager.getInstance(myManager.getProject()).getConfigurationSettingsList(configurationType);
-      for (RunnerAndConfigurationSettings configurationSettings : configurationSettingsList) {
+      AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(systemManager.getSystemId());
+      if (configurationType == null) {
+        continue;
+      }
+
+      for (RunnerAndConfigurationSettings configurationSettings : runManager.getConfigurationSettingsList(configurationType)) {
         add(myMap, configurationSettings);
       }
     }

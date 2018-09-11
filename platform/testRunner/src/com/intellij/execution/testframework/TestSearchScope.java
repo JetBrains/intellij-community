@@ -19,6 +19,7 @@ public interface TestSearchScope {
   SourceScope getSourceScope(ModuleBasedConfiguration configuration);
 
   TestSearchScope WHOLE_PROJECT = new TestSearchScope() {
+    @Override
     public SourceScope getSourceScope(final ModuleBasedConfiguration configuration) {
       return SourceScope.wholeProject(configuration.getProject());
     }
@@ -30,6 +31,7 @@ public interface TestSearchScope {
   };
 
   TestSearchScope SINGLE_MODULE = new TestSearchScope() {
+    @Override
     public SourceScope getSourceScope(final ModuleBasedConfiguration configuration) {
       return SourceScope.modules(configuration.getModules());
     }
@@ -41,6 +43,7 @@ public interface TestSearchScope {
   };
 
   TestSearchScope MODULE_WITH_DEPENDENCIES = new TestSearchScope() {
+    @Override
     public SourceScope getSourceScope(final ModuleBasedConfiguration configuration) {
       return SourceScope.modulesWithDependencies(configuration.getModules());
     }
@@ -58,6 +61,7 @@ public interface TestSearchScope {
     @NonNls private static final String SINGLE_MODULE_NAME = "singleModule";
     @NonNls private static final String MODULE_WITH_DEPENDENCIES_NAME = "moduleWithDependencies";
 
+    @Override
     public void readExternal(final Element element) throws InvalidDataException {
       final String value = element.getAttributeValue(DEFAULT_NAME);
       if (SINGLE_MODULE_NAME.equals(value)) myScope = SINGLE_MODULE;
@@ -65,6 +69,7 @@ public interface TestSearchScope {
       else myScope = WHOLE_PROJECT;
     }
 
+    @Override
     public void writeExternal(final Element element) throws WriteExternalException {
       String name = WHOLE_PROJECT_NAE;
       if (myScope == SINGLE_MODULE) name = SINGLE_MODULE_NAME;

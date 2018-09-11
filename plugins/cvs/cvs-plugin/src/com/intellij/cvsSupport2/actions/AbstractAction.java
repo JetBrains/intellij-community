@@ -65,6 +65,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
 
   protected void beforeActionPerformed(VcsContext context) {}
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformed(CvsContextWrapper.createCachedInstance(e));
   }
@@ -185,12 +186,13 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
     private final CvsHandler myHandler;
     private final CvsOperationExecutor myExecutor;
 
-    public MyCvsOperationExecutorCallback(CvsContext context, CvsHandler handler, CvsOperationExecutor executor) {
+    MyCvsOperationExecutorCallback(CvsContext context, CvsHandler handler, CvsOperationExecutor executor) {
       myContext = context;
       myHandler = handler;
       myExecutor = executor;
     }
 
+    @Override
     public void executeInProgressAfterAction(ModalityContext modalityContext) {
       startAction(myContext);
       FileSetToBeUpdated files = myHandler.getFiles();
@@ -198,12 +200,14 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
       files.refreshFilesAsync(() -> endAction());
     }
 
+    @Override
     public void executionFinished(boolean successfully) {
       CvsTabbedWindow tabbedWindow = myExecutor.openTabbedWindow(myHandler);
       onActionPerformed(myContext, tabbedWindow, successfully, myHandler);
     }
 
 
+    @Override
     public void executionFinishedSuccessfully() {
     }
   }

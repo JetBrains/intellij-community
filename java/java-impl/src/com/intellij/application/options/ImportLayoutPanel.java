@@ -69,6 +69,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false, JBUI.emptyInsets()));
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (areStaticImportsEnabled()) {
           boolean found = false;
@@ -98,9 +99,9 @@ public abstract class ImportLayoutPanel extends JPanel {
         refresh();
       }
     });
-    
+
     add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
-    
+
     JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
       .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
         @Override
@@ -147,8 +148,8 @@ public abstract class ImportLayoutPanel extends JPanel {
       })
       .setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"), "Remove", "Up", "Down")
       .setPreferredSize(new Dimension(-1, 100)).createPanel();
-    
-    
+
+
     add(importLayoutPanel, BorderLayout.CENTER);
   }
 
@@ -240,14 +241,17 @@ public abstract class ImportLayoutPanel extends JPanel {
     };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
+      @Override
       public int getColumnCount() {
         return names.length + (panel.areStaticImportsEnabled() ? 1 : 0);
       }
 
+      @Override
       public int getRowCount() {
         return packageTable.getEntryCount();
       }
 
+      @Override
       @Nullable
       public Object getValueAt(int row, int col) {
         PackageEntry entry = packageTable.getEntryAt(row);
@@ -265,12 +269,14 @@ public abstract class ImportLayoutPanel extends JPanel {
         throw new IllegalArgumentException(String.valueOf(col));
       }
 
+      @Override
       public String getColumnName(int column) {
         if (panel.areStaticImportsEnabled() && column == 0) return "Static";
         column -= panel.areStaticImportsEnabled() ? 1 : 0;
         return names[column];
       }
 
+      @Override
       public Class getColumnClass(int col) {
         col += panel.areStaticImportsEnabled() ? 0 : 1;
         if (col == 0) {
@@ -285,11 +291,13 @@ public abstract class ImportLayoutPanel extends JPanel {
         throw new IllegalArgumentException(String.valueOf(col));
       }
 
+      @Override
       public boolean isCellEditable(int row, int col) {
         PackageEntry packageEntry = packageTable.getEntryAt(row);
         return !packageEntry.isSpecial();
       }
 
+      @Override
       public void setValueAt(Object aValue, int row, int col) {
         PackageEntry packageEntry = packageTable.getEntryAt(row);
         col += panel.areStaticImportsEnabled() ? 0 : 1;
@@ -325,12 +333,14 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     TableCellEditor beditor = result.getDefaultEditor(Boolean.class);
     beditor.addCellEditorListener(new CellEditorListener() {
+      @Override
       public void editingStopped(ChangeEvent e) {
         if (panel.areStaticImportsEnabled()) {
           result.repaint(); // add/remove static keyword
         }
       }
 
+      @Override
       public void editingCanceled(ChangeEvent e) {
       }
     });

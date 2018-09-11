@@ -91,7 +91,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       final Document document = e.getDocument();
       if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
         myUnsavedDocuments.add(document);

@@ -197,6 +197,7 @@ public class CalloutComponent {
     myKeyboardFocusManager.addKeyEventDispatcher(myKeyEventDispatcher);
 
     myMulticastListener = new AWTEventListener() {
+      @Override
       public void eventDispatched(AWTEvent event) {
         switch (event.getID()) {
           case MouseEvent.MOUSE_PRESSED:
@@ -208,48 +209,59 @@ public class CalloutComponent {
     Toolkit.getDefaultToolkit().addAWTEventListener(myMulticastListener, AWTEvent.MOUSE_EVENT_MASK );
 
     myComponentListener = new ComponentListener() {
+      @Override
       public void componentHidden(ComponentEvent e) {
         dispose();
       }
 
+      @Override
       public void componentMoved(ComponentEvent e) {
         dispose();
       }
 
+      @Override
       public void componentResized(ComponentEvent e) {
         dispose();
       }
 
+      @Override
       public void componentShown(ComponentEvent e) {
         dispose();
       }
     };
 
     myWindowListener = new WindowListener() {
+      @Override
       public void windowActivated(WindowEvent e) {
         dispose();
       }
 
+      @Override
       public void windowClosed(WindowEvent e) {
         dispose();
       }
 
+      @Override
       public void windowClosing(WindowEvent e) {
         dispose();
       }
 
+      @Override
       public void windowDeactivated(WindowEvent e) {
         dispose();
       }
 
+      @Override
       public void windowDeiconified(WindowEvent e) {
         dispose();
       }
 
+      @Override
       public void windowIconified(WindowEvent e) {
         dispose();
       }
 
+      @Override
       public void windowOpened(WindowEvent e) {
         dispose();
       }
@@ -257,6 +269,7 @@ public class CalloutComponent {
     myTargetWindow.addWindowListener(myWindowListener);
 
     myWindowStateListener = new WindowStateListener() {
+      @Override
       public void windowStateChanged(WindowEvent e) {
         dispose();
       }
@@ -301,12 +314,13 @@ public class CalloutComponent {
 
   private class Wrapper extends NonOpaquePanel {
 
-    public Wrapper(JComponent component) {
+    Wrapper(JComponent component) {
       setBorder(BorderFactory.createEmptyBorder(2, 3, 2, 3));
       setLayout(new BorderLayout());
       add(component, BorderLayout.CENTER);
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
       Graphics2D g2 = (Graphics2D) g;
 
@@ -325,10 +339,11 @@ public class CalloutComponent {
   private class Pointer extends NonOpaquePanel {
     private final int myOrientation;
 
-    public Pointer(int orientation) {
+    Pointer(int orientation) {
       myOrientation = orientation;
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
       Graphics2D g2 = (Graphics2D) g;
 

@@ -16,8 +16,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.openapi.vcs.FilePath;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.tag.TagCommand;
@@ -38,6 +38,7 @@ public class BranchOperation extends CvsOperationOnFiles{
     }
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final TagCommand tagCommand = new TagCommand();
     tagCommand.setMakeBranchTag(true);
@@ -50,6 +51,7 @@ public class BranchOperation extends CvsOperationOnFiles{
     return tagCommand;
   }
 
+  @Override
   protected String getOperationName() {
     return "branch";
   }

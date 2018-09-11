@@ -124,7 +124,7 @@ public class TreeModelBuilder {
     myLibraryNodes.put(scopeType, new HashMap<>());
   }
 
-  public static synchronized TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+  public static synchronized TreeModel createTreeModel(Project project, boolean showProgress, Set<? extends PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     return new TreeModelBuilder(project, true, marker, settings).build(files, showProgress);
   }
 
@@ -168,6 +168,7 @@ public class TreeModelBuilder {
       myFileIndex.iterateContent(new ContentIterator() {
         PackageDependenciesNode lastParent;
         VirtualFile dir;
+        @Override
         public boolean processFile(@NotNull VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
             if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
@@ -236,7 +237,7 @@ public class TreeModelBuilder {
     }
   }
 
-  private TreeModel build(final Set<PsiFile> files, boolean showProgress) {
+  private TreeModel build(final Set<? extends PsiFile> files, boolean showProgress) {
     if (files.size() == 1) {
       myShowFiles = true;
     }

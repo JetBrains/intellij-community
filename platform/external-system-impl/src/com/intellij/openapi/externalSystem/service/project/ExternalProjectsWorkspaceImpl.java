@@ -47,10 +47,12 @@ public class ExternalProjectsWorkspaceImpl implements PersistentStateComponent<E
 
   private State myState = new State();
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state == null ? new State() : state;
   }

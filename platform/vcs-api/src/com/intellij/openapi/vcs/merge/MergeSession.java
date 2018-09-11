@@ -22,8 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the state of a multiple file merge operation.
  *
- * @author yole
- * @see com.intellij.openapi.vcs.merge.MergeProvider2#createMergeSession
+ * @see MergeProvider2#createMergeSession
  * @since 8.1
  */
 public interface MergeSession {
@@ -41,10 +40,16 @@ public interface MergeSession {
   ColumnInfo[] getMergeInfoColumns();
 
   /**
-   * Returns true if a merge operation can be invoked for the specified virtual file, false otherwise.
+   * Returns true if the given virtual file can be merged by its content.
+   * <br/><br/>
+   * It means that the Merge dialog can be shown for this file, and Accept Yours/Theirs can be called on this file.
+   * <br/><br/>
+   * Note that {@link MergeSessionEx} can be used to Accept Yours/Theirs via a custom procedure,
+   * for example, via calling a VCS command. In this case this flag is ignored for Accept Yours/Theirs functionality,
+   * but it still allows or disallows to press Merge and show the Merge dialog.
    *
-   * @param file a file shown in the dialog.
-   * @return true if the merge dialog can be shown, false otherwise.
+   * @param file a file with conflicts shown in the dialog.
+   * @return true if the merge dialog can be shown for this file, false otherwise.
    */
   boolean canMerge(@NotNull VirtualFile file);
 

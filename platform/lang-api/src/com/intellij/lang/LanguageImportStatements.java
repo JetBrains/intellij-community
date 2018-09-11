@@ -19,9 +19,12 @@
  */
 package com.intellij.lang;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +38,10 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
 
   @NotNull
   public Set<ImportOptimizer> forFile(@NotNull PsiFile file) {
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    if (settings.getExcludedFiles().contains(file)) {
+      return Collections.emptySet();
+    }
     Set<ImportOptimizer> optimizers = new HashSet<>();
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       List<ImportOptimizer> langOptimizers = allForLanguage(psiFile.getLanguage());

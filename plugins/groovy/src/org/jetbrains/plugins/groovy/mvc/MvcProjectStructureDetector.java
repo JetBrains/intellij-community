@@ -66,7 +66,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
   }
 
   private class GroovyMvcProjectRoot extends DetectedProjectRoot {
-    public GroovyMvcProjectRoot(File dir) {
+    GroovyMvcProjectRoot(File dir) {
       super(dir);
     }
 

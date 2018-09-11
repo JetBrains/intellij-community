@@ -149,7 +149,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     if (presentation != null) {
       presentation.setChanged(presentation.isChanged() || changed);
       changed = false;

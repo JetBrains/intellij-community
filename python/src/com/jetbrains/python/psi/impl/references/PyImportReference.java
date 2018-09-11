@@ -162,7 +162,7 @@ public class PyImportReference extends PyReferenceImpl {
     private final List<Object> myObjects;
     @NotNull private final TypeEvalContext myContext;
 
-    public ImportVariantCollector(@NotNull TypeEvalContext context) {
+    ImportVariantCollector(@NotNull TypeEvalContext context) {
       myContext = context;
       PsiFile currentFile = myElement.getContainingFile();
       currentFile = currentFile.getOriginalFile();
@@ -298,6 +298,7 @@ public class PyImportReference extends PyReferenceImpl {
 
     private static final String IMPORT_KWD = " import ";
 
+    @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       final Editor editor = context.getEditor();
       final Document document = editor.getDocument();

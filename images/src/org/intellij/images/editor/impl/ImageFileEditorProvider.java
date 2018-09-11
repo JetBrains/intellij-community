@@ -57,7 +57,7 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
       editor.getEditor().getDocument().addDocumentListener(new DocumentListener() {
         Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, editor);
         @Override
-        public void documentChanged(DocumentEvent event) {
+        public void documentChanged(@NotNull DocumentEvent event) {
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(() -> ((ImageEditorImpl)viewer.getImageEditor()).setValue(new LightVirtualFile("preview.svg", file.getFileType(), event.getDocument().getText())),
                              500);

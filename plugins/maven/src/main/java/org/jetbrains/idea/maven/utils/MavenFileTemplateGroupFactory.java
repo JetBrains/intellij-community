@@ -25,6 +25,7 @@ public class MavenFileTemplateGroupFactory implements FileTemplateGroupDescripto
   public static final String MAVEN_PROFILES_XML_TEMPLATE = "Maven Profiles.xml";
   public static final String MAVEN_SETTINGS_XML_TEMPLATE = "Maven Settings.xml";
 
+  @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor("Maven", MavenIcons.MavenLogo);
 

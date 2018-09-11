@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,22 +96,27 @@ public class RefreshVFsSynchronously {
   private static class RollbackChangeWrapper implements ChangeWrapper {
     private static final RollbackChangeWrapper ourInstance = new RollbackChangeWrapper();
 
+    @Override
     public boolean beforeNull(Change change) {
       return change.getAfterRevision() == null;
     }
 
+    @Override
     public boolean afterNull(Change change) {
       return change.getBeforeRevision() == null;
     }
 
+    @Override
     public File getBeforeFile(Change change) {
       return beforeNull(change) ? null : change.getAfterRevision().getFile().getIOFile();
     }
 
+    @Override
     public File getAfterFile(Change change) {
       return afterNull(change) ? null : change.getBeforeRevision().getFile().getIOFile();
     }
 
+    @Override
     public boolean movedOrRenamedOrReplaced(Change change) {
       return change.isMoved() || change.isRenamed() || change.isIsReplaced();
     }
@@ -134,24 +125,29 @@ public class RefreshVFsSynchronously {
   private static class DirectChangeWrapper implements ChangeWrapper {
     private static final DirectChangeWrapper ourInstance = new DirectChangeWrapper();
 
+    @Override
     public boolean beforeNull(Change change) {
       return change.getBeforeRevision() == null;
     }
 
+    @Override
     public boolean afterNull(Change change) {
       return change.getAfterRevision() == null;
     }
 
+    @Override
     @Nullable
     public File getBeforeFile(Change change) {
       return beforeNull(change) ? null : change.getBeforeRevision().getFile().getIOFile();
     }
 
+    @Override
     @Nullable
     public File getAfterFile(Change change) {
       return afterNull(change) ? null : change.getAfterRevision().getFile().getIOFile();
     }
 
+    @Override
     public boolean movedOrRenamedOrReplaced(Change change) {
       return change.isMoved() || change.isRenamed() || change.isIsReplaced();
     }

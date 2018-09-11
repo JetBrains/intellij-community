@@ -10,6 +10,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -21,10 +22,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidate: MethodCandidate) {
+
+  private var closureSkipList = mutableListOf<GrMethodCall>()
 
   private var left: PsiType? = null
 
@@ -41,6 +43,11 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
 
   fun startFromTop(startFromTop: Boolean): GroovyInferenceSessionBuilder {
     this.startFromTop = startFromTop
+    return this
+  }
+
+  fun skipClosureIn(call: GrMethodCall): GroovyInferenceSessionBuilder {
+    closureSkipList.add(call)
     return this
   }
 
@@ -63,17 +70,18 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
   fun build(): GroovyInferenceSession {
     if (!startFromTop) {
       val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
-      val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, skipClosureBlock)
+      val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
       session.addConstraint(MethodCallConstraint(ref, candidate))
+      val left = left ?: return session
 
-      val returnType = PsiUtil.getSmartReturnType(candidate.method) //TODO: Fix with startFromTop in GroovyResolveProcessor
-      val left = left
-      if (left == null || returnType == null || PsiType.VOID == returnType) return session
+      val returnType = PsiUtil.getSmartReturnType(candidate.method)
+      if (returnType == null || PsiType.VOID == returnType) return session
       session.repeatInferencePhases()
       session.addConstraint(TypeConstraint(left, returnType, ref))
       return session
-    } else {
-      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, skipClosureBlock)
+    }
+    else {
+      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
       val methodCall = ref.parent as? GrMethodCall ?: return session
       session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
       return session
@@ -87,9 +95,11 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
       val gparent = parent?.parent
       topLevel = if (parent is GrMethodCall) {
         parent
-      } else if (parent is GrArgumentList && gparent is GrMethodCall) {
+      }
+      else if (parent is GrArgumentList && gparent is GrMethodCall) {
         gparent
-      } else {
+      }
+      else {
         return topLevel
       }
     }
@@ -111,18 +121,19 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
     else if (parent is GrAssignmentExpression && call == parent.rValue) {
       val lValue = PsiUtil.skipParentheses(parent.lValue, false)
       return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
-    } else if (parent is GrArgumentList && gparent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
-      val resolveResult = gparent.advancedResolve()
-      val parameters = GrClosureSignatureUtil.mapArgumentsToParameters(
-        resolveResult,
-        gparent,
-        false,
-        true,
-        gparent.namedArguments,
-        gparent.expressionArguments,
-        gparent.closureArguments)
-      return parameters?.get(call)?.second
-    } else if (parent is GrVariable) {
+    }
+    else if (parent is GrArgumentList && gparent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
+      with(gparent) {
+        val resolveResult = advancedResolve()
+        if (resolveResult is GroovyMethodResult) {
+          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.getPartialSubstitutor(), null,
+                                                buildArguments(referenceElement!!), call)
+          return methodCandidate.argumentMapping[Argument(null, call)]?.second
+        }
+      }
+      return null
+    }
+    else if (parent is GrVariable) {
       return parent.declaredType
     }
     return null

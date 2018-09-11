@@ -88,7 +88,7 @@ public class DebugUtil {
                                   final boolean showRanges,
                                   final boolean showChildrenRanges,
                                   final boolean usePsi,
-                                  @Nullable PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     ((TreeElement) root).acceptTree(
       new TreeToBuffer(buffer, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, extra));
   }
@@ -99,12 +99,12 @@ public class DebugUtil {
     final boolean showRanges;
     final boolean showChildrenRanges;
     final boolean usePsi;
-    final PairConsumer<PsiElement, Consumer<PsiElement>> extra;
+    final PairConsumer<? super PsiElement, Consumer<PsiElement>> extra;
     int indent;
 
     TreeToBuffer(Appendable buffer, int indent, boolean skipWhiteSpaces,
                  boolean showRanges, boolean showChildrenRanges, boolean usePsi,
-                 PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                 PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
       this.buffer = buffer;
       this.skipWhiteSpaces = skipWhiteSpaces;
       this.showRanges = showRanges;
@@ -391,7 +391,7 @@ public class DebugUtil {
     return psiToString(root, skipWhiteSpaces, showRanges, null);
   }
 
-  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     StringBuilder buffer = new StringBuilder();
     psiToBuffer(buffer, root, skipWhiteSpaces, showRanges, extra);
     return buffer.toString();
@@ -421,7 +421,7 @@ public class DebugUtil {
                                   final PsiElement root,
                                   final boolean skipWhiteSpaces,
                                   final boolean showRanges,
-                                  PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                                  PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     final ASTNode node = root.getNode();
     if (node == null) {
       psiToBuffer(buffer, root, 0, skipWhiteSpaces, showRanges, showRanges, extra);
@@ -446,7 +446,7 @@ public class DebugUtil {
                                  final boolean skipWhiteSpaces,
                                  boolean showRanges,
                                  final boolean showChildrenRanges,
-                                 PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                                 PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -673,7 +673,7 @@ public class DebugUtil {
     return buffer.toString();
   }
 
-  private static <T> void printNodes(Iterator<T> nodes, Function<T, Iterator<T>> getter, int indent, Set<T> visited, StringBuilder buffer) {
+  private static <T> void printNodes(Iterator<? extends T> nodes, Function<? super T, ? extends Iterator<T>> getter, int indent, Set<? super T> visited, StringBuilder buffer) {
     while (nodes.hasNext()) {
       T node = nodes.next();
       StringUtil.repeatSymbol(buffer, ' ', indent);

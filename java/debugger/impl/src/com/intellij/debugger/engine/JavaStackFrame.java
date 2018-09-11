@@ -328,6 +328,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
               null, entry.getKey(), entry.getValue()), evaluationContext, myNodeManager));
           }
         }
+        catch (VMDisconnectedException ex) {
+          throw ex;
+        }
         catch (Exception ex) {
           LOG.info(ex);
         }
@@ -367,7 +370,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     private final String myMessage;
     private final Icon myIcon;
 
-    public DummyMessageValueNode(String message, Icon icon) {
+    DummyMessageValueNode(String message, Icon icon) {
       super("");
       myMessage = message;
       myIcon = icon;
@@ -429,7 +432,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     private final Set<String> myVars = new HashSet<>();
     private final boolean myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
 
-    public VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
+    VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
       myVisibleLocals = visibleLocals;
       myLineRange = lineRange;
     }

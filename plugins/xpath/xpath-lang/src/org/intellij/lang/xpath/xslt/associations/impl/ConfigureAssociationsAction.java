@@ -23,10 +23,11 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 class ConfigureAssociationsAction extends AnAction {
-    public ConfigureAssociationsAction() {
+    ConfigureAssociationsAction() {
         super("Configure...");
     }
 
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
         final Project project = e.getProject();
         if (project == null) return;

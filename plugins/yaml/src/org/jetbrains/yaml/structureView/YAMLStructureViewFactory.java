@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -21,8 +22,9 @@ import java.util.Collections;
  * @author oleg
  */
 public class YAMLStructureViewFactory implements PsiStructureViewFactory {
-  static final Icon ALIAS_ICON = AllIcons.Nodes.ExpandNode;
+  static final Icon ALIAS_ICON = AllIcons.Nodes.TreeRightArrow;
 
+  @Override
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
     if (!(psiFile instanceof YAMLFile)) {

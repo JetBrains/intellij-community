@@ -2,11 +2,14 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.JDOMUtil;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
@@ -150,14 +153,14 @@ public class ExtensionsImplTest {
   }
 
   @Test
-  public void testExtensionsNamespaces() {
+  public void testExtensionsNamespaces() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-    extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
+    extensionsArea.registerExtension("plugin", JDOMUtil.load(
         "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>"));
-    extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
+    extensionsArea.registerExtension("plugin", JDOMUtil.load(
         "<ep1 xmlns=\"plugin\" order=\"FIRST\"><text>1</text></ep1>"));
-    extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
+    extensionsArea.registerExtension("plugin", JDOMUtil.load(
         "<extension point=\"plugin.ep1\"><text>2</text></extension>"));
     ExtensionPoint extensionPoint = extensionsArea.getExtensionPoint("plugin.ep1");
     TestExtensionClassOne[] extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
@@ -168,14 +171,14 @@ public class ExtensionsImplTest {
   }
 
   @Test
-  public void testExtensionsWithOrdering() {
+  public void testExtensionsWithOrdering() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
+    extensionsArea.registerExtension("", JDOMUtil.load(
         "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
+    extensionsArea.registerExtension("", JDOMUtil.load(
         "<extension point=\"ep1\" order=\"FIRST\"><text>1</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
+    extensionsArea.registerExtension("", JDOMUtil.load(
         "<extension point=\"ep1\"><text>2</text></extension>"));
     ExtensionPoint extensionPoint = extensionsArea.getExtensionPoint("ep1");
     TestExtensionClassOne[] extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
@@ -186,15 +189,12 @@ public class ExtensionsImplTest {
   }
 
   @Test
-  public void testExtensionsWithOrderingUpdate() {
+  public void testExtensionsWithOrderingUpdate() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" id=\"id\"><text>3</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" id=\"id\"><text>3</text></extension>"));
     ExtensionPoint<TestExtensionClassOne> extensionPoint = extensionsArea.getExtensionPoint("ep1");
     TestExtensionClassOne[] extensions = extensionPoint.getExtensions();
     assertEquals(3, extensions.length);
@@ -204,14 +204,10 @@ public class ExtensionsImplTest {
     TestExtensionClassOne extension = new TestExtensionClassOne("xxx");
     extensionPoint.registerExtension(extension);
     extensionPoint.unregisterExtension(extension);
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"BEFORE id\"><text>2</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"AFTER id\"><text>4</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"last, after _7\"><text>8</text></extension>"));
-    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"after:id, before _7, after fst\"><text>5</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" order=\"BEFORE id\"><text>2</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" order=\"AFTER id\"><text>4</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" order=\"last, after _7\"><text>8</text></extension>"));
+    extensionsArea.registerExtension("", JDOMUtil.load("<extension point=\"ep1\" order=\"after:id, before _7, after fst\"><text>5</text></extension>"));
     extensionPoint.registerExtension(new TestExtensionClassOne("6"));
     extensions = extensionPoint.getExtensions();
     assertEquals(8, extensions.length);

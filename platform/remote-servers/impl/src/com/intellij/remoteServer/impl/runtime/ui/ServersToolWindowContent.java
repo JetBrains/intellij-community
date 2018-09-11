@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.dashboard.TreeContent;
@@ -408,6 +406,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     return myProject;
   }
 
+  @Override
   public void select(@NotNull final ServerConnection<?> connection) {
     myBuilder.select(ServersTreeStructure.RemoteServerNode.class, new TreeVisitor<ServersTreeStructure.RemoteServerNode>() {
       @Override
@@ -417,6 +416,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     }, null, false);
   }
 
+  @Override
   public void select(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
     myBuilder.getUi().queueUpdate(connection).doWhenDone(
       () -> myBuilder.<ServersTreeStructure.DeploymentNodeImpl>select(ServersTreeStructure.DeploymentNodeImpl.class,
@@ -424,6 +424,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
                                                                       null, false));
   }
 
+  @Override
   public void select(@NotNull final ServerConnection<?> connection,
                      @NotNull final String deploymentName,
                      @NotNull final String logName) {

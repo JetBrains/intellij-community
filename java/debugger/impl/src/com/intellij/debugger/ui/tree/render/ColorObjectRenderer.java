@@ -27,12 +27,13 @@ import javax.swing.*;
 import java.awt.*;
 
 class ColorObjectRenderer extends CompoundReferenceRenderer {
-  public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
+  ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Color", null, null);
     setClassName("java.awt.Color");
     setEnabled(true);
   }
 
+  @Override
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     final Value value = descriptor.getValue();
     if (value instanceof ObjectReference) {

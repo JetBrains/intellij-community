@@ -48,6 +48,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     super(shortName, popup);
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e != null) {
@@ -105,6 +106,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (e != null) {
@@ -118,11 +120,12 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     private static final Logger LOGGER = Logger.getInstance("#SpellCheckerAction");
     private final IntentionAction intention;
 
-    public SpellCheckerIntentionAction(IntentionAction intention) {
+    SpellCheckerIntentionAction(IntentionAction intention) {
       super(intention.getText());
       this.intention = intention;
     }
 
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       final Project project = e.getData(LangDataKeys.PROJECT);

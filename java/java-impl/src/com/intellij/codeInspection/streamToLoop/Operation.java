@@ -49,7 +49,7 @@ abstract class Operation {
     return null;
   }
 
-  public void registerReusedElements(Consumer<PsiElement> consumer) {}
+  public void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
 
@@ -113,7 +113,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -137,7 +137,7 @@ abstract class Operation {
   }
 
   static class FilterOperation extends LambdaIntermediateOperation {
-    public FilterOperation(FunctionHelper fn) {
+    FilterOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -148,7 +148,7 @@ abstract class Operation {
   }
 
   static class TakeWhileOperation extends LambdaIntermediateOperation {
-    public TakeWhileOperation(FunctionHelper fn) {
+    TakeWhileOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -160,7 +160,7 @@ abstract class Operation {
   }
 
   static class DropWhileOperation extends LambdaIntermediateOperation {
-    public DropWhileOperation(FunctionHelper fn) {
+    DropWhileOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -175,7 +175,7 @@ abstract class Operation {
   }
 
   static class PeekOperation extends LambdaIntermediateOperation {
-    public PeekOperation(FunctionHelper fn) {
+    PeekOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -186,7 +186,7 @@ abstract class Operation {
   }
 
   static class MapOperation extends LambdaIntermediateOperation {
-    public MapOperation(FunctionHelper fn) {
+    MapOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -259,7 +259,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myRecords.forEach(or -> or.myOperation.registerReusedElements(consumer));
       if(myCondition != null) {
         consumer.accept(myCondition);
@@ -349,7 +349,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
@@ -377,7 +377,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myLimit);
     }
 

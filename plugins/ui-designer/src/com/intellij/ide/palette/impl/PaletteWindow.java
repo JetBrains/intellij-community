@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.designer.LightToolWindowContent;
@@ -29,7 +15,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +77,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     }
   }
 
+  @Override
   public void dispose() {
     removePaletteProviderListener();
 
@@ -237,6 +223,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     return null;
   }
 
+  @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -308,6 +295,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   private class MyListSelectionListener implements ListSelectionListener {
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       PaletteComponentList sourceList = (PaletteComponentList)e.getSource();
       for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
@@ -326,12 +314,14 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   private class MyPropertyChangeListener implements PropertyChangeListener {
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       refreshPalette(myDesigner.getFile());
     }
   }
 
   private static class MyScrollPanePopupHandler extends PopupHandler {
+    @Override
     public void invokePopup(Component comp, int x, int y) {
       JScrollPane scrollPane = (JScrollPane)comp;
       PaletteContentWindow contentWindow = (PaletteContentWindow)scrollPane.getViewport().getView();
@@ -345,6 +335,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   private class ClearActiveItemAction extends AnAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       clearActiveItem();
     }

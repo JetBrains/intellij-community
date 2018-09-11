@@ -27,7 +27,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,8 +49,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
@@ -534,7 +533,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
-    public MyTreeExpander() {
+    MyTreeExpander() {
       super(ChangesTree.this);
     }
 
@@ -554,7 +553,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     private final ThreeStateCheckBox myCheckBox;
 
 
-    public MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
+    MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
       super(new BorderLayout());
       myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;
@@ -576,14 +575,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                   int row,
                                                   boolean hasFocus) {
 
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        NonOpaquePanel.setTransparent(this);
-        NonOpaquePanel.setTransparent(myCheckBox);
-      } else {
-        setBackground(null);
-        myCheckBox.setBackground(null);
-        myCheckBox.setOpaque(false);
-      }
+      setBackground(null);
+      myCheckBox.setBackground(null);
+      myCheckBox.setOpaque(false);
 
       myTextRenderer.setOpaque(false);
       myTextRenderer.setTransparentIconBackground(true);

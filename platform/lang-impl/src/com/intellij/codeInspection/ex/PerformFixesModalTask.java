@@ -68,6 +68,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
     }
   }
 
+  @Override
   public boolean iteration(ProgressIndicator indicator) {
     final Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
     CommonProblemDescriptor descriptor = pair.getFirst();
@@ -115,7 +116,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public void stop() {}
-  
+
   protected abstract void applyFix(Project project, CommonProblemDescriptor descriptor);
 
   private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {

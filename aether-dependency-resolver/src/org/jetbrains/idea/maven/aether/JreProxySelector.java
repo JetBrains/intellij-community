@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.aether;
 
-import org.eclipse.aether.repository.*;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.ProxySelector;
+import org.eclipse.aether.repository.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
@@ -19,6 +19,7 @@ final class JreProxySelector implements ProxySelector {
   JreProxySelector() {
   }
 
+  @Override
   public Proxy getProxy(RemoteRepository repository) {
     return getProxy(repository.getUrl());
   }
@@ -77,6 +78,7 @@ final class JreProxySelector implements ProxySelector {
 
     public static final Authentication INSTANCE = new JreProxyAuthentication();
 
+    @Override
     public void fill(AuthenticationContext context, String key, Map<String, String> data) {
       Proxy proxy = context.getProxy();
       if (proxy == null) {
@@ -114,6 +116,7 @@ final class JreProxySelector implements ProxySelector {
       }
     }
 
+    @Override
     public void digest(AuthenticationDigest digest) {
       // we don't know anything about the JRE's current authenticator, assume the worst (i.e. interactive)
       digest.update(UUID.randomUUID().toString());

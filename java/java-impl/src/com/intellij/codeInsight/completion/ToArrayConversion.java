@@ -23,7 +23,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 public class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,
                              final PsiElement element, final String prefix, final PsiType itemType,
-                             final Consumer<LookupElement> result, @Nullable final PsiElement qualifier,
+                             final Consumer<? super LookupElement> result, @Nullable final PsiElement qualifier,
                              final PsiType expectedType) {
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
     if (componentType == null || !(expectedType instanceof PsiArrayType)) return;
@@ -74,7 +74,7 @@ public class ToArrayConversion {
                                            final String prefix,
                                            @NonNls final String expressionString,
                                            @NonNls String presentableString,
-                                           final Consumer<LookupElement> result,
+                                           final Consumer<? super LookupElement> result,
                                            PsiElement qualifier) {
     final boolean callSpace = CodeStyle.getLanguageSettings(file).SPACE_WITHIN_METHOD_CALL_PARENTHESES;
     final PsiExpression conversion;

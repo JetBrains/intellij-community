@@ -61,4 +61,23 @@ public abstract class JsonBySchemaHeavyCompletionTestBase extends JsonSchemaHeav
       }
     });
   }
+
+  @SuppressWarnings("SameParameterValue")
+  protected void baseTestNoSchema(@NotNull final String folder, @NotNull final String testFile, @NotNull final Runnable checker) throws Exception {
+    skeleton(new JsonSchemaHeavyAbstractTest.Callback() {
+      @Override
+      public void registerSchemes() {
+      }
+
+      @Override
+      public void configureFiles() {
+        configureByFiles(null, "/" + folder + "/" + testFile + "." + getExtensionWithoutDot());
+      }
+
+      @Override
+      public void doCheck() {
+        checker.run();
+      }
+    });
+  }
 }

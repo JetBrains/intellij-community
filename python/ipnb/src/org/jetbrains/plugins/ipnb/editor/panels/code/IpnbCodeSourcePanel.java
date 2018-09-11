@@ -182,7 +182,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
   protected void addRightClickMenu() {
     addMouseListener(new EditorMouseListener() {
       @Override
-      public void mousePressed(EditorMouseEvent e) {
+      public void mousePressed(@NotNull EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (SwingUtilities.isRightMouseButton(mouseEvent) && mouseEvent.getClickCount() == 1) {
           final ListPopup menu = createPopupMenu(new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(),

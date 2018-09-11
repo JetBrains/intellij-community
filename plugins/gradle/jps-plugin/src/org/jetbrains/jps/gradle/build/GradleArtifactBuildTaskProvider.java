@@ -57,7 +57,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     protected final JpsArtifact myArtifact;
     protected final GradleArtifactExtensionProperties myProperties;
 
-    public GradleGenerationBuildTask(@NotNull JpsArtifact artifact, @NotNull GradleArtifactExtensionProperties properties) {
+    GradleGenerationBuildTask(@NotNull JpsArtifact artifact, @NotNull GradleArtifactExtensionProperties properties) {
       myArtifact = artifact;
       myProperties = properties;
     }
@@ -66,7 +66,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static class GradleManifestGenerationBuildTask extends GradleGenerationBuildTask {
     private static final Logger LOG = Logger.getInstance(GradleManifestGenerationBuildTask.class);
 
-    public GradleManifestGenerationBuildTask(@NotNull JpsArtifact artifact,
+    GradleManifestGenerationBuildTask(@NotNull JpsArtifact artifact,
                                              @NotNull GradleArtifactExtensionProperties properties) {
       super(artifact, properties);
     }
@@ -89,7 +89,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static class GradleAdditionalFilesGenerationBuildTask extends GradleGenerationBuildTask {
     private static final Logger LOG = Logger.getInstance(GradleAdditionalFilesGenerationBuildTask.class);
 
-    public GradleAdditionalFilesGenerationBuildTask(@NotNull JpsArtifact artifact,
+    GradleAdditionalFilesGenerationBuildTask(@NotNull JpsArtifact artifact,
                                                     @NotNull GradleArtifactExtensionProperties properties) {
       super(artifact, properties);
     }

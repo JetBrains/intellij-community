@@ -31,7 +31,7 @@ class PyDataViewTabs extends JBRunnerTabs {
   public static final String EMPTY_TEXT = "Run console or debugger to view available data ";
   private static final String HELP_ID = "reference.toolWindows.PyDataView";
 
-  public PyDataViewTabs(@NotNull Project project) {
+  PyDataViewTabs(@NotNull Project project) {
     super(project, ActionManager.getInstance(), IdeFocusManager.findInstance(), project);
   }
 

@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -158,6 +159,14 @@ class TestingTasksImpl extends TestingTasks {
       if (agentJar == null) context.messages.error("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
+
+      def excludeRoots = new LinkedHashSet<String>()
+      context.projectModel.global.getLibraryCollection()
+        .getLibraries(JpsJavaSdkType.INSTANCE)
+        .each { excludeRoots.add(it.getProperties().getHomePath()) }
+      excludeRoots.add(context.paths.buildOutputRoot)
+      excludeRoots.add("$context.paths.projectHome/out".toString())
+
       additionalSystemProperties.putAll(
         [
           "test.discovery.listener"                 : "com.intellij.TestDiscoveryBasicListener",
@@ -165,6 +174,8 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
+          "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
+          "test.discovery.excluded.roots"           : excludeRoots.collect { FileUtilRt.toSystemDependentName(it) }.join(";"),
         ] as Map<String, String>)
     }
   }
@@ -217,7 +228,13 @@ class TestingTasksImpl extends TestingTasks {
     def testObject = System.getProperty("teamcity.remote-debug.junit.type")
     def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
     if (testObject != "class") {
-      context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
+      def message = "Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'"
+      if (testObject == "method") {
+        context.messages.warning(message)
+        context.messages.warning("Launching all test methods in the class $junitClass")
+      } else {
+        context.messages.error(message)
+      }
     }
     if (junitClass == null) {
       context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
@@ -282,6 +299,7 @@ class TestingTasksImpl extends TestingTasks {
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
       "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
+      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
       "jna.nosys"                              : "true",
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",

@@ -20,11 +20,12 @@ class InstanceofEvaluator implements Evaluator {
   private final Evaluator myOperandEvaluator;
   private final TypeEvaluator myTypeEvaluator;
 
-  public InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
+  InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
     myOperandEvaluator = operandEvaluator;
     myTypeEvaluator = typeEvaluator;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {

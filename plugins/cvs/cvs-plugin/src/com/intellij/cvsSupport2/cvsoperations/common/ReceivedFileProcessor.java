@@ -25,6 +25,7 @@ import java.io.IOException;
  */
 public interface ReceivedFileProcessor {
   ReceivedFileProcessor DEFAULT = new ReceivedFileProcessor() {
+    @Override
     public boolean shouldProcess(VirtualFile virtualFile, File targetFile) {
       return true;
     }

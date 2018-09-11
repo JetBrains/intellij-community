@@ -13,13 +13,15 @@ import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -152,12 +154,15 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
       @Override
       public void run() {
         if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-          doAnnotate();
-          ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-            if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-              doApply();
-              doFinish(getHighlights(), modificationStampBefore);
-            }
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+            doAnnotate();
+            ReadAction.run(() -> {
+              ProgressManager.checkCanceled();
+              if (!documentChanged(modificationStampBefore)) {
+                doApply();
+                doFinish(getHighlights(), modificationStampBefore);
+              }
+            });
           });
         }
       }

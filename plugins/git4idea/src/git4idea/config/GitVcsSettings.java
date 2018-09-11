@@ -43,7 +43,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
-    public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
     // The policy that specifies how files are saved before update or rebase
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
@@ -120,10 +119,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return ArrayUtil.toStringArray(myState.PREVIOUS_COMMIT_AUTHORS);
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
   }
@@ -153,11 +154,13 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.PUSH_UPDATE_ALL_ROOTS = updateAllRoots;
   }
 
+  @Override
   @NotNull
   public Value getSyncSetting() {
     return myState.ROOT_SYNC;
   }
 
+  @Override
   public void setSyncSetting(@NotNull Value syncSetting) {
     myState.ROOT_SYNC = syncSetting;
   }
@@ -293,10 +296,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    */
   @Deprecated
   public boolean isIdeaSsh() {
-    if (getAppSettings().getIdeaSsh() == null) { // app setting has not been initialized yet => migrate the project setting there
-      getAppSettings().setIdeaSsh(myState.SSH_EXECUTABLE);
-    }
-    return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
+    return getAppSettings().isUseIdeaSsh();
   }
 
   @NotNull
@@ -336,7 +336,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     @Attribute(value = "target-branch") public String targetBranchName;
 
     @SuppressWarnings("unused")
-    public PushTargetInfo() {
+    PushTargetInfo() {
       this("", "", "", "");
     }
 

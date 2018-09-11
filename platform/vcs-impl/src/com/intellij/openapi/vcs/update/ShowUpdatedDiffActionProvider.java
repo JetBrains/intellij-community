@@ -110,7 +110,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     @NotNull private final FileStatus myFileStatus;
     @NotNull private final FilePath myFilePath;
 
-    public MyDiffRequestProducer(@Nullable Project project,
+    MyDiffRequestProducer(@Nullable Project project,
                                  @NotNull Label before,
                                  @NotNull Label after,
                                  @NotNull FilePath filePath,

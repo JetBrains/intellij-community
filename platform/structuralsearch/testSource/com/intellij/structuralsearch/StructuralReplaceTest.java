@@ -1725,7 +1725,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(true);
 
-    PlatformTestUtil.startPerformanceTest("SSR", 90000,
+    PlatformTestUtil.startPerformanceTest("SSR", 20000,
                                           () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
                                                              replace(source, pattern, replacement, true, true))).assertTiming();
 

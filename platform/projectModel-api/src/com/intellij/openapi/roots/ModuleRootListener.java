@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
  * @author dsl
  */
 public interface ModuleRootListener extends EventListener {
-  default void beforeRootsChange(ModuleRootEvent event) {
+  default void beforeRootsChange(@NotNull ModuleRootEvent event) {
   }
 
-  default void rootsChanged(ModuleRootEvent event) {
+  default void rootsChanged(@NotNull ModuleRootEvent event) {
   }
 }

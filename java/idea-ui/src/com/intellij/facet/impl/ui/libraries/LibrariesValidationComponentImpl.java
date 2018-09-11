@@ -44,26 +44,32 @@ public class LibrariesValidationComponentImpl implements LibrariesValidationComp
     myErrorPanel.addListener(() -> myDispatcher.getMulticaster().validityChanged(myErrorPanel.isOk()));
   }
 
+  @Override
   public JComponent getComponent() {
     return myErrorPanel.getComponent();
   }
 
+  @Override
   public void validate() {
     myErrorPanel.getValidatorsManager().validate();
   }
 
+  @Override
   public boolean isValid() {
     return myErrorPanel.isOk();
   }
 
+  @Override
   public void addValidityListener(final ValidityListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeValidityListener(final ValidityListener listener) {
     myDispatcher.removeListener(listener);
   }
 
+  @Override
   public void setupLibraries() {
   }
 }

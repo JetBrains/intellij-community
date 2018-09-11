@@ -39,6 +39,7 @@ public abstract class NodeIterator implements Iterator {
     /**
      * @see Iterator#hasNext
      */
+    @Override
     public boolean hasNext() {
         return (node != null);
     }
@@ -47,6 +48,7 @@ public abstract class NodeIterator implements Iterator {
     /**
      * @see Iterator#next
      */
+    @Override
     public Object next() {
         if (node == null)
             throw new NoSuchElementException();
@@ -61,6 +63,7 @@ public abstract class NodeIterator implements Iterator {
     /**
      * @see Iterator#remove
      */
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }

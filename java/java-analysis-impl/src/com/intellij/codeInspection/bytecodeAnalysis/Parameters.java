@@ -70,12 +70,12 @@ abstract class PResults {
   };
   static final class ConditionalNPE implements PResult {
     final Set<Set<EKey>> sop;
-    public ConditionalNPE(Set<Set<EKey>> sop) throws AnalyzerException {
+    ConditionalNPE(Set<Set<EKey>> sop) throws AnalyzerException {
       this.sop = sop;
       checkLimit(sop);
     }
 
-    public ConditionalNPE(EKey key) {
+    ConditionalNPE(EKey key) {
       sop = new HashSet<>();
       Set<EKey> prod = new HashSet<>();
       prod.add(key);
@@ -193,6 +193,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
   private Frame<BasicValue> nextFrame;
   private PResult subResult;
 
+  @Override
   @NotNull
   protected Equation analyze() throws AnalyzerException {
     pendingPush(new ProceedState(createStartState()));
@@ -415,6 +416,7 @@ class NullableInAnalysis extends Analysis<PResult> {
   private PResult subResult = Identity;
   private boolean top;
 
+  @Override
   @NotNull
   protected Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());

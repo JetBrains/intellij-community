@@ -27,6 +27,7 @@ public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupEle
   private PyUnindentingInsertHandler() {
   }
 
+  @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull PythonLookupElement item) {
     unindentAsNeeded(context.getProject(), context.getEditor(), context.getFile());
   }

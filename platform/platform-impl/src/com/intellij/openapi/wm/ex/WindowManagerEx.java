@@ -38,7 +38,7 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract IdeFrameImpl allocateFrame(@NotNull Project project);
 
-  public abstract void releaseFrame(IdeFrameImpl frame);
+  public abstract void releaseFrame(@NotNull IdeFrameImpl frame);
 
   /**
    * @return focus owner of the specified window.

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -70,6 +70,7 @@ abstract class GitImplBase implements Git {
     };
   }
 
+  @Override
   @NotNull
   public GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
     return run(handler, new OutputCollector() {
@@ -180,7 +181,7 @@ abstract class GitImplBase implements Git {
     private int myExitCode = 0;
     private boolean myStartFailed = false;
 
-    public GitCommandResultListener(OutputCollector outputCollector) {
+    GitCommandResultListener(OutputCollector outputCollector) {
       myOutputCollector = outputCollector;
     }
 
@@ -200,7 +201,7 @@ abstract class GitImplBase implements Git {
     }
 
     @Override
-    public void startFailed(Throwable t) {
+    public void startFailed(@NotNull Throwable t) {
       myStartFailed = true;
       myOutputCollector.errorLineReceived("Failed to start Git process " + t.getLocalizedMessage());
     }

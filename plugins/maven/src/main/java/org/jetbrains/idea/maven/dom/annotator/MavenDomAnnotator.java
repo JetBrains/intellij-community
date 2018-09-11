@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.Arrays;
 
 public class MavenDomAnnotator implements DomElementsAnnotator {
+  @Override
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof MavenDomProjectModel) {
       addProblems(element, (MavenDomProjectModel)element, holder,
@@ -75,11 +76,13 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
       myFile = file;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return MavenDomBundle.message("fix.open.file", myFile.getName());
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
@@ -90,6 +93,7 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiNavigationSupport.getInstance().createNavigatable(project, myFile, -1).navigate(true);
     }

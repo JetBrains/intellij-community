@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -121,7 +107,7 @@ public class ScopeEditorPanel {
     myPatternField.setDialogCaption("Pattern");
     myPatternField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         onTextChange();
       }
     });
@@ -217,7 +203,7 @@ public class ScopeEditorPanel {
 
   private void createUIComponents() {
     myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
-                                              strings -> StringUtil.join(strings, "||")); 
+                                              strings -> StringUtil.join(strings, "||"));
   }
 
   private static boolean invalidScopeInside(PackageSet currentScope) {
@@ -677,7 +663,7 @@ public class ScopeEditorPanel {
   private final class ChooseScopeTypeAction extends ComboBoxAction{
     private final Runnable myUpdate;
 
-    public ChooseScopeTypeAction(final Runnable update) {
+    ChooseScopeTypeAction(final Runnable update) {
       myUpdate = update;
     }
 
@@ -709,19 +695,19 @@ public class ScopeEditorPanel {
   private final class FilterLegalsAction extends ToggleAction {
     private final Runnable myUpdate;
 
-    public FilterLegalsAction(final Runnable update) {
+    FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
             IdeBundle.message("action.description.show.included.only"), AllIcons.General.Filter);
       myUpdate = update;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
       myUpdate.run();
@@ -739,7 +725,7 @@ public class ScopeEditorPanel {
           setToComponent(component, requestFocus);
         }
       });
-      myRequestFocus = requestFocus; 
+      myRequestFocus = requestFocus;
     }
 
     @Override

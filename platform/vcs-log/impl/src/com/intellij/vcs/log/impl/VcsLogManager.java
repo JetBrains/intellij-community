@@ -230,7 +230,7 @@ public class VcsLogManager implements Disposable {
   private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
     private final String myLogId;
 
-    public MainVcsLogUiFactory(@NotNull String logId) {
+    MainVcsLogUiFactory(@NotNull String logId) {
       myLogId = logId;
     }
 

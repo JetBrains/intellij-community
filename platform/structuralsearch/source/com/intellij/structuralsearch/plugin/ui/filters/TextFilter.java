@@ -27,9 +27,11 @@ public class TextFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getConstraint().getRegExp());
+    final MatchVariableConstraint constraint = myTable.getConstraint();
+    return !StringUtil.isEmpty(constraint.getRegExp()) || constraint.isWithinHierarchy();
   }
 
+  @Override
   public void clearFilter() {
     final MatchVariableConstraint constraint = myTable.getConstraint();
     constraint.setRegExp("");
@@ -61,12 +63,13 @@ public class TextFilter extends FilterAction {
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);
       private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
-      private final JLabel myNameLabel = new JLabel("name=");
+      private final JLabel myTextLabel = new JLabel("text=");
       private final ContextHelpLabel myHelpLabel =
         ContextHelpLabel.create("<p>Text of the match is checked against the provided pattern." +
                                 "<p>Use \"!\" to invert the pattern." +
                                 "<p>Regular expressions are supported.");
 
+      @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
@@ -76,7 +79,7 @@ public class TextFilter extends FilterAction {
           layout.createParallelGroup()
                 .addGroup(
                   layout.createSequentialGroup()
-                        .addComponent(myNameLabel)
+                        .addComponent(myTextLabel)
                         .addComponent(myTextField)
                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
                         .addComponent(myHelpLabel)
@@ -92,7 +95,7 @@ public class TextFilter extends FilterAction {
           layout.createSequentialGroup()
                 .addGroup(
                   layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myNameLabel)
+                        .addComponent(myTextLabel)
                         .addComponent(myTextField)
                         .addComponent(myHelpLabel)
                 )

@@ -80,7 +80,7 @@ public class TextRangeUtil {
    * @return least text range that contains all of passed text ranges
    */
   @NotNull
-  public static TextRange getEnclosingTextRange(@NotNull List<TextRange> textRanges) {
+  public static TextRange getEnclosingTextRange(@NotNull List<? extends TextRange> textRanges) {
     if(textRanges.isEmpty())
       return TextRange.EMPTY_RANGE;
     int lowerBound = textRanges.get(0).getStartOffset();

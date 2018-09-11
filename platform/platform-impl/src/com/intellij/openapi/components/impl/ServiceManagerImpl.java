@@ -88,14 +88,15 @@ public class ServiceManagerImpl implements Disposable {
     return Arrays.asList(extensions);
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<Class<?>, PluginDescriptor> processor) {
-    Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {
+    @SuppressWarnings("unchecked")
+    Collection<ComponentAdapter> adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
       return;
     }
 
-    for (Object o : adapters) {
-      Class aClass;
+    for (ComponentAdapter o : adapters) {
+      Class<?> aClass;
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
         PluginDescriptor pluginDescriptor = adapter.myPluginDescriptor;
@@ -125,19 +126,21 @@ public class ServiceManagerImpl implements Disposable {
           break;
         }
       }
-      else if (o instanceof ComponentAdapter && !(o instanceof ExtensionComponentAdapter)) {
-        PluginId pluginId = componentManager.getConfig((ComponentAdapter)o);
+      else if (!(o instanceof ExtensionComponentAdapter)) {
+        PluginId pluginId = componentManager.getConfig(o);
         // allow InstanceComponentAdapter without pluginId to test
         if (pluginId != null || o instanceof InstanceComponentAdapter) {
           try {
-            aClass = ((ComponentAdapter)o).getComponentImplementation();
+            aClass = o.getComponentImplementation();
           }
           catch (Throwable e) {
             LOG.error(e);
             continue;
           }
 
-          processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
+          if (!processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId))) {
+            break;
+          }
         }
       }
     }
@@ -156,7 +159,7 @@ public class ServiceManagerImpl implements Disposable {
     private final ComponentManagerEx myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
+    MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;

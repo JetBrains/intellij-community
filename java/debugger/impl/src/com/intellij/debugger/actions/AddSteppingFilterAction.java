@@ -23,6 +23,7 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
 public class AddSteppingFilterAction extends DebuggerAction {
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     DebugProcessImpl process = debuggerContext.getDebugProcess();
@@ -31,6 +32,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
     }
     final StackFrameProxyImpl proxy = PopFrameAction.getStackFrameProxy(e);
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
       protected void action() {
         final String name = getClassName(proxy != null ? proxy : debuggerContext.getFrameProxy());
         if (name == null) {
@@ -49,6 +51,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
     });
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(PopFrameAction.getStackFrameProxy(e) != null);
   }

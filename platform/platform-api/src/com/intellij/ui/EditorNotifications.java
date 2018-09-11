@@ -14,7 +14,6 @@ import javax.swing.*;
 
 public abstract class EditorNotifications {
   public static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
-  @NotNull protected final Project myProject;
 
   /**
    * An extension allowing to add custom notifications to the top of file editors.
@@ -32,10 +31,6 @@ public abstract class EditorNotifications {
 
   public static EditorNotifications getInstance(Project project) {
     return project.getComponent(EditorNotifications.class);
-  }
-
-  public EditorNotifications(@NotNull Project project) {
-    myProject = project;
   }
 
   public abstract void updateNotifications(@NotNull VirtualFile file);

@@ -188,6 +188,7 @@ public class ExistingTemplatesComponent {
   private void configureSelectTemplateAction(JComponent component) {
     component.addKeyListener(
       new KeyAdapter() {
+        @Override
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
@@ -245,7 +246,7 @@ public class ExistingTemplatesComponent {
 
     private final ListSpeedSearch mySpeedSearch;
 
-    public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
+    ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
       mySpeedSearch = speedSearch;
     }
 

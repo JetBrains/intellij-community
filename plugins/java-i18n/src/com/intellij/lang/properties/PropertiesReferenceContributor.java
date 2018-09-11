@@ -40,6 +40,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
   private static final Logger LOG = Logger.getInstance(PropertiesReferenceContributor.class);
 
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
+    @Override
     public boolean isSoft() {
       return true;
     }

@@ -28,12 +28,14 @@ class ArrayIterator<T> implements Iterator<T>{
         this.contents = contents.clone();
     }
 
+    @Override
     public boolean hasNext(){
         synchronized(lock){
             return currentIndex < contents.length;
         }
     }
 
+    @Override
     public T next(){
         synchronized(lock){
             if(currentIndex >= contents.length){
@@ -45,6 +47,7 @@ class ArrayIterator<T> implements Iterator<T>{
         }
     }
 
+    @Override
     public void remove(){
 
     }

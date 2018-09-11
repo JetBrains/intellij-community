@@ -11,10 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxTagNameReference;
 
 public class JavaFxXmlExtension extends DefaultXmlExtension {
+  @Override
   public boolean isAvailable(final PsiFile file) {
     return JavaFxFileTypeFactory.isFxml(file);
   }
 
+  @Override
   public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
     return new JavaFxTagNameReference(nameElement, startTagFlag);
   }

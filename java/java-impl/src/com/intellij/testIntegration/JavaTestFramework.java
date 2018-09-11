@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public abstract class JavaTestFramework implements TestFramework {
+  @Override
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     PsiClass c = JavaPsiFacade.getInstance(module.getProject()).findClass(getMarkerClassFQName(), scope);
@@ -60,6 +61,7 @@ public abstract class JavaTestFramework implements TestFramework {
 
   protected abstract String getMarkerClassFQName();
 
+  @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
     return clazz instanceof PsiClass && isTestClass((PsiClass)clazz, false);
   }
@@ -114,7 +116,7 @@ public abstract class JavaTestFramework implements TestFramework {
 
   @Nullable
   protected abstract PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
-  
+
   public boolean isParameterized(PsiClass clazz) {
     return false;
   }
@@ -128,7 +130,7 @@ public abstract class JavaTestFramework implements TestFramework {
   public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return null;
   }
-  
+
   public abstract char getMnemonic();
 
   public PsiMethod createSetUpPatternMethod(JVMElementFactory factory) {
@@ -140,7 +142,7 @@ public abstract class JavaTestFramework implements TestFramework {
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return null;
   }
-  
+
   public void setupLibrary(Module module) {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {

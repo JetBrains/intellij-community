@@ -220,7 +220,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
 
     @Override
-    public void memberInfoChanged(MemberInfoChange<T, M> event) {
+    public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     }
 
     @Override
@@ -365,7 +365,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   private static class MyTableRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends ColoredTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
-    public MyTableRenderer(AbstractMemberSelectionTable<T, M> table) {
+    MyTableRenderer(AbstractMemberSelectionTable<T, M> table) {
       myTable = table;
     }
 
@@ -420,7 +420,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   private static class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
-    public MyBooleanRenderer(AbstractMemberSelectionTable<T, M> table) {
+    MyBooleanRenderer(AbstractMemberSelectionTable<T, M> table) {
       myTable = table;
     }
 

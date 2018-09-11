@@ -25,6 +25,7 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
     myScopeName = scopeName;
   }
 
+  @Override
   public void setPattern(@Nullable String pattern) {
     try {
       myFileSet = pattern != null ? PackageSetFactory.getInstance().compile(pattern) : null;

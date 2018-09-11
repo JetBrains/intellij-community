@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
@@ -540,7 +526,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private class MyOnesideDocumentListener implements DocumentListener {
     @Override
-    public void beforeDocumentChange(DocumentEvent e) {
+    public void beforeDocumentChange(@NotNull DocumentEvent e) {
       if (myDuringOnesideDocumentModification) return;
       if (myChangedBlockData == null) {
         LOG.warn("oneside beforeDocumentChange - myChangedBlockData == null");
@@ -641,7 +627,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull protected final Side myModifiedSide;
     protected final boolean myShortcut;
 
-    public ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
+    ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
       myModifiedSide = modifiedSide;
       myShortcut = shortcut;
     }
@@ -713,7 +699,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+    ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
@@ -730,7 +716,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+    AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
@@ -955,7 +941,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
-    public MyToggleExpandByDefaultAction() {
+    MyToggleExpandByDefaultAction() {
       super(getTextSettings());
     }
 
@@ -966,7 +952,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.ReadOnlyLockAction {
-    public MyReadOnlyLockAction() {
+    MyReadOnlyLockAction() {
       super(getContext());
       applyDefaults();
     }
@@ -1070,7 +1056,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Nullable private final EditorHighlighter myHighlighter;
     @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
 
-    public TwosideDocumentData(@NotNull UnifiedFragmentBuilder builder,
+    TwosideDocumentData(@NotNull UnifiedFragmentBuilder builder,
                                @Nullable EditorHighlighter highlighter,
                                @Nullable UnifiedEditorRangeHighlighter rangeHighlighter) {
       myBuilder = builder;
@@ -1101,7 +1087,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull private final LineNumberConvertor myLineNumberConvertor2;
     private final boolean myIsContentsEqual;
 
-    public ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
+    ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                             @NotNull List<RangeMarker> guarderRangeBlocks,
                             @NotNull LineNumberConvertor lineNumberConvertor1,
                             @NotNull LineNumberConvertor lineNumberConvertor2,
@@ -1141,7 +1127,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull private final TIntFunction myLineConvertor1;
     @NotNull private final TIntFunction myLineConvertor2;
 
-    public CombinedEditorData(@NotNull CharSequence text,
+    CombinedEditorData(@NotNull CharSequence text,
                               @Nullable EditorHighlighter highlighter,
                               @Nullable UnifiedEditorRangeHighlighter rangeHighlighter,
                               @Nullable FileType fileType,
@@ -1293,7 +1279,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+    MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor}, disposable);
     }
 

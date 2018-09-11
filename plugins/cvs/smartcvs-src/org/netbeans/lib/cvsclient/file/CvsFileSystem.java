@@ -40,7 +40,8 @@ public final class CvsFileSystem
 	 * @param relativeLocalDirectoryPath ends with a trailing slash (e.g. "./" or "dir/" or "dir1/dir2")
 	 * @param repositoryFilePath ends with a trailing slash, if it is a directory ("e.g. "module/" or "module/file.txt")
 	 */
-	public FileObject getFileObject(String relativeLocalDirectoryPath, String repositoryFilePath) {
+	@Override
+        public FileObject getFileObject(String relativeLocalDirectoryPath, String repositoryFilePath) {
 		BugLog.getInstance().assertTrue(!relativeLocalDirectoryPath.startsWith("/"), "relativeLocalDirectory '" + relativeLocalDirectoryPath + "' must not start with /");
 		BugLog.getInstance().assertTrue(relativeLocalDirectoryPath.endsWith("/"), "relativeLocalDirectory '" + relativeLocalDirectoryPath + "' must end with /");
 		BugLog.getInstance().assertTrue(!repositoryFilePath.endsWith("/"), "repositoryFilePath '" + repositoryFilePath + "' must not end with /");
@@ -54,7 +55,8 @@ public final class CvsFileSystem
 		return FileObject.createInstance('/' + relativeLocalDirectoryPath + fileName);
 	}
 
-	public DirectoryObject getDirectoryObject(String relativeLocalDirectoryPath, String repositoryDirectoryPath) {
+	@Override
+        public DirectoryObject getDirectoryObject(String relativeLocalDirectoryPath, String repositoryDirectoryPath) {
 		BugLog.getInstance().assertTrue(!relativeLocalDirectoryPath.startsWith("/"), "relativeLocalDirectoryPath '" + relativeLocalDirectoryPath + "' must not start with /");
 		BugLog.getInstance().assertTrue(relativeLocalDirectoryPath.endsWith("/"), "relativeLocalDirectoryPath '" + relativeLocalDirectoryPath + "' must end with /");
 		BugLog.getInstance().assertTrue(repositoryDirectoryPath.endsWith("/"), "repositoryDirectoryPath '" + repositoryDirectoryPath + "' must end with /");
@@ -66,15 +68,18 @@ public final class CvsFileSystem
 		return DirectoryObject.createInstance('/' + FileUtils.removeTrailingSlash(relativeLocalDirectoryPath));
 	}
 
-	public IFileSystem getLocalFileSystem() {
+	@Override
+        public IFileSystem getLocalFileSystem() {
 		return localFileSystem;
 	}
 
-	public IFileSystem getAdminFileSystem() {
+	@Override
+        public IFileSystem getAdminFileSystem() {
 		return adminFileSystem;
 	}
 
-	public String getRelativeRepositoryPath(String repositoryPath) {
+	@Override
+        public String getRelativeRepositoryPath(String repositoryPath) {
           if (repositoryPath.startsWith(repository)) {
             String relativeRepositoryPath = repositoryPath.substring(repository.length());
             relativeRepositoryPath = FileUtils.removeTrailingSlash(relativeRepositoryPath);
@@ -87,7 +92,8 @@ public final class CvsFileSystem
           }
         }
 
-	public String getRepositoryForDirectory(DirectoryObject directoryObject, IAdminReader adminReader) {
+	@Override
+        public String getRepositoryForDirectory(DirectoryObject directoryObject, IAdminReader adminReader) {
 		try {
 			return adminReader.getRepositoryForDirectory(directoryObject, repository, this);
 		}
@@ -96,7 +102,8 @@ public final class CvsFileSystem
 		}
 	}
 
-	public FileObject unixFileNameToFileObject(String unixFileName) {
+	@Override
+        public FileObject unixFileNameToFileObject(String unixFileName) {
 		return FileObject.createInstance('/' + unixFileName);
 	}
 

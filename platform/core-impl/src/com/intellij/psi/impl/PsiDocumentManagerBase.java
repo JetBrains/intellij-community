@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -45,7 +46,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements PrioritizedInternalDocumentListener, Disposable {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
@@ -67,18 +68,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected PsiDocumentManagerBase(@NotNull final Project project,
                                    @NotNull PsiManager psiManager,
                                    @NotNull MessageBus bus,
-                                   @NonNls @NotNull final DocumentCommitProcessor documentCommitProcessor) {
+                                   @NotNull DocumentCommitProcessor documentCommitProcessor) {
     myProject = project;
     myPsiManager = psiManager;
     myDocumentCommitProcessor = documentCommitProcessor;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
-    bus.connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
-      @Override
-      public void transactionStarted(@NotNull Document document, @NotNull PsiFile file) {
-        myUncommittedDocuments.remove(document);
-      }
-    });
+
+    bus.connect(this).subscribe(PsiDocumentTransactionListener.TOPIC,
+                                (document, file) -> myUncommittedDocuments.remove(document));
   }
 
   @Override
@@ -297,8 +295,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   boolean finishCommit(@NotNull final Document document,
-                       @NotNull List<BooleanRunnable> finishProcessors,
-                       @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                       @NotNull List<? extends BooleanRunnable> finishProcessors,
+                       @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                        final boolean synchronously,
                        @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
@@ -328,8 +326,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   protected boolean finishCommitInWriteAction(@NotNull final Document document,
-                                              @NotNull List<BooleanRunnable> finishProcessors,
-                                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               final boolean synchronously,
                                               boolean forceNoPsiCommit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -374,8 +372,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,
-                                      @NotNull List<BooleanRunnable> finishProcessors,
-                                      @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                      @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                      @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                       boolean synchronously,
                                       @Nullable VirtualFile virtualFile,
                                       @NotNull FileViewProvider viewProvider) {
@@ -800,15 +798,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
-
-    UncommittedInfo info = myUncommittedInfos.get(document);
-    if (info != null) {
-      info.myEvents.add(event);
-    }
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
@@ -858,16 +851,26 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  @Override
-  public int getPriority() {
-    return EditorDocumentPriorities.RANGE_MARKER;
-  }
+  class PriorityEventCollector implements PrioritizedInternalDocumentListener {
+    @Override
+    public int getPriority() {
+      return EditorDocumentPriorities.RANGE_MARKER;
+    }
 
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    UncommittedInfo info = myUncommittedInfos.get(document);
-    if (info != null) {
-      info.myEvents.add(new RetargetRangeMarkers(document, start, end, base));
+    @Override
+    public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
+      UncommittedInfo info = myUncommittedInfos.get(document);
+      if (info != null) {
+        info.myEvents.add(new RetargetRangeMarkers(document, start, end, base));
+      }
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      UncommittedInfo info = myUncommittedInfos.get(event.getDocument());
+      if (info != null) {
+        info.myEvents.add(event);
+      }
     }
   }
 
@@ -884,13 +887,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myUncommittedDocuments.remove(document);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null || !FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
-      runAfterCommitActions(document);
-      return;
-    }
-
-    final PsiFile psiFile = getPsiFile(document);
-    if (psiFile == null) {
+    final PsiFile psiFile;
+    if (virtualFile == null ||
+        !FileIndexFacade.getInstance(myProject).isInContent(virtualFile) ||
+        (psiFile = getPsiFile(document)) == null) {
       runAfterCommitActions(document);
       return;
     }

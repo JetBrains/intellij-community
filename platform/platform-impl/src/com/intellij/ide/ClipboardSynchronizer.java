@@ -79,7 +79,7 @@ public class ClipboardSynchronizer implements Disposable, BaseComponent {
     myClipboardHandler.dispose();
   }
 
-  public void areDataFlavorsAvailableAsync(@NotNull Consumer<Boolean> callback, @NotNull DataFlavor... flavors) {
+  public void areDataFlavorsAvailableAsync(@NotNull Consumer<? super Boolean> callback, @NotNull DataFlavor... flavors) {
     final Supplier<Boolean> availabilitySupplier =
       () -> ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors),() -> false);
 
@@ -101,7 +101,7 @@ public class ClipboardSynchronizer implements Disposable, BaseComponent {
     }
   }
 
-  public void getContentsAsync(@NotNull Consumer<Transferable> callback) {
+  public void getContentsAsync(@NotNull Consumer<? super Transferable> callback) {
     final Supplier<Transferable> transferableSupplier =
       () -> ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
 

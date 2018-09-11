@@ -51,12 +51,14 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     myHomePath = homePath;
   }
 
+  @Override
   @NotNull
   public File getAppCfgFile() {
     final String extension = SystemInfo.isWindows ? "cmd" : "sh";
     return new File(myHomePath, "bin/appcfg." + extension);
   }
 
+  @Override
   @NotNull
   public File getWebSchemeFile() {
     return new File(myHomePath, "docs/appengine-web.xsd");
@@ -68,11 +70,13 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return new File(myHomePath, "docs/appengine-application.xsd");
   }
 
+  @Override
   @NotNull
   public File getToolsApiJarFile() {
     return new File(myHomePath, JpsAppEngineModuleExtensionImpl.LIB_APPENGINE_TOOLS_API_JAR);
   }
 
+  @Override
   @NotNull
   public File[] getLibraries() {
     return getJarsFromDirectory(new File(myHomePath, "lib/shared"));
@@ -84,6 +88,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return getJarsFromDirectory(new File(myHomePath, "lib/shared/jsp"));
   }
 
+  @Override
   public void patchJavaParametersForDevServer(@NotNull ParametersList vmParameters) {
     final String agentPath = myHomePath + "/lib/agent/appengine-agent.jar";
     if (new File(FileUtil.toSystemDependentName(agentPath)).exists()) {
@@ -108,11 +113,13 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return jars.toArray(new File[0]);
   }
 
+  @Override
   @NotNull
   public String getSdkHomePath() {
     return myHomePath;
   }
 
+  @Override
   public boolean isClassInWhiteList(@NotNull String className) {
     if (!isValid()) return true;
 
@@ -156,6 +163,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return new File(AppEngineUtil.getAppEngineSystemDir(), fileName);
   }
 
+  @Override
   public boolean isMethodInBlacklist(@NotNull String className, @NotNull String methodName) {
     if (myMethodsBlackList == null) {
       try {
@@ -170,10 +178,12 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return methods != null && methods.contains(methodName);
   }
 
+  @Override
   public boolean isValid() {
     return getToolsApiJarFile().exists() && getAppCfgFile().exists();
   }
 
+  @Override
   @NotNull
   public String getOrmLibDirectoryPath() {
     return getLibUserDirectoryPath() + "/orm";
@@ -199,6 +209,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return null;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getOrmLibSources() {
     final File libsDir = new File(myHomePath, "src/orm");

@@ -15,13 +15,13 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
-import com.intellij.ide.actions.ViewNavigationBarAction
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ide.ui.UISettings
 import org.fest.swing.core.Robot
+import org.fest.swing.fixture.ContainerFixture
 import javax.swing.JPanel
 
-class NavigationBarFixture(private val myRobot: Robot, val myPanel: JPanel, private val myIdeFrame: IdeFrameFixture) :
-  ComponentFixture<NavigationBarFixture, JPanel>(NavigationBarFixture::class.java, myRobot, myPanel) {
+class NavigationBarFixture(robot: Robot, panel: JPanel, private val myIdeFrame: IdeFrameFixture) :
+  ComponentFixture<NavigationBarFixture, JPanel>(NavigationBarFixture::class.java, robot, panel), ContainerFixture<JPanel> {
 
   private val VIEW_NAV_BAR_ACTION = "ViewNavigationBar"
 
@@ -33,10 +33,7 @@ class NavigationBarFixture(private val myRobot: Robot, val myPanel: JPanel, priv
     if (isShowing()) myIdeFrame.invokeMainMenu(VIEW_NAV_BAR_ACTION)
   }
 
-  fun isShowing(): Boolean {
-    val action = ActionManager.getInstance().getAction(VIEW_NAV_BAR_ACTION) as ViewNavigationBarAction
-    return action.isSelected(null)
-  }
+  fun isShowing(): Boolean = UISettings.instance.showNavigationBar
 
   companion object {
     fun createNavigationBarFixture(robot: Robot, ideFrame: IdeFrameFixture): NavigationBarFixture {

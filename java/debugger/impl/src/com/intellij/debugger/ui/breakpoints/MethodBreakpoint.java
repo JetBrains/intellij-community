@@ -269,6 +269,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   @Override
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
     if (isEmulated()) {
+      if (!MethodBreakpointBase.canBeEmulated(debugProcess)) {
+        disableEmulation();
+        return;
+      }
       createRequestForPreparedClassEmulated(this, debugProcess, classType, true);
     }
     else {
@@ -606,7 +610,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Processed " + types.size() + " classes in " + String.valueOf(System.currentTimeMillis() - start) + "ms");
+        LOG.debug("Processed " + types.size() + " classes in " + (System.currentTimeMillis() - start) + "ms");
       }
     }
     finally {

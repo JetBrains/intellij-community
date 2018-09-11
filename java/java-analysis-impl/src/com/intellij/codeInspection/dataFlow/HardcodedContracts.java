@@ -97,7 +97,7 @@ public class HardcodedContracts {
               ContractProvider.list(SpecialField.COLLECTION_SIZE::getEmptyContracts))
     .register(instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0),
               ContractProvider.list(SpecialField.MAP_SIZE::getEmptyContracts))
-    .register(instanceCall(JAVA_LANG_STRING, "equals", "equalsIgnoreCase").parameterCount(1),
+    .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
               ContractProvider.list(SpecialField.STRING_LENGTH::getEqualsContracts))
     .register(anyOf(instanceCall(JAVA_UTIL_SET, "equals").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT)),
@@ -238,7 +238,8 @@ public class HardcodedContracts {
 
   private static List<MethodContract> equalsContracts(PsiMethodCallExpression call) {
     PsiExpression qualifier = call == null ? null : call.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && knownAsEqualByReference(qualifier.getType())) {
+    if (qualifier != null && (knownAsEqualByReference(qualifier.getType()) ||
+                              TypeUtils.isJavaLangString(qualifier.getType()))) {
       return Arrays.asList(
         singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnTrue()),
         trivialContract(returnFalse())

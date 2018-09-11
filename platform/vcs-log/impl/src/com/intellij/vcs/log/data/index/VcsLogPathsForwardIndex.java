@@ -11,7 +11,6 @@ import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +64,7 @@ public abstract class VcsLogPathsForwardIndex
 
   public static class IntCollectionListExternalizer implements DataExternalizer<List<Collection<Integer>>> {
 
+    @Override
     public void save(@NotNull DataOutput out, @NotNull List<Collection<Integer>> value) throws IOException {
       DataInputOutputUtil.writeINT(out, value.size());
       for (Collection<Integer> collection : value) {
@@ -75,6 +75,7 @@ public abstract class VcsLogPathsForwardIndex
       }
     }
 
+    @Override
     @NotNull
     public List<Collection<Integer>> read(@NotNull DataInput in) throws IOException {
       SmartList<Collection<Integer>> result = new SmartList<>();
@@ -93,18 +94,18 @@ public abstract class VcsLogPathsForwardIndex
   }
 
   static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> {
-    @Nullable private final List<Collection<Integer>> myOldData;
+    @Nullable private final List<? extends Collection<Integer>> myOldData;
 
-    public VcsLogPathsDiffBuilder(int id, @Nullable List<Collection<Integer>> oldData) {
+    VcsLogPathsDiffBuilder(int id, @Nullable List<? extends Collection<Integer>> oldData) {
       super(id);
       myOldData = oldData;
     }
 
     @Override
     public boolean differentiate(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> newData,
-                                 @NotNull KeyValueUpdateProcessor<Integer, List<VcsLogPathsIndex.ChangeData>> addProcessor,
-                                 @NotNull KeyValueUpdateProcessor<Integer, List<VcsLogPathsIndex.ChangeData>> updateProcessor,
-                                 @NotNull RemovedKeyProcessor<Integer> removeProcessor) throws StorageException {
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> addProcessor,
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> updateProcessor,
+                                 @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
 
       if (myOldData == null) {
         return processNewFiles(newData, addProcessor);
@@ -117,7 +118,7 @@ public abstract class VcsLogPathsForwardIndex
     }
 
     public boolean processNewFiles(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> newData,
-                                   @NotNull KeyValueUpdateProcessor<Integer, List<VcsLogPathsIndex.ChangeData>> addProcessor)
+                                   @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> addProcessor)
       throws StorageException {
       for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeData>> entry : newData.entrySet()) {
         addProcessor.process(entry.getKey(), entry.getValue(), myInputId);

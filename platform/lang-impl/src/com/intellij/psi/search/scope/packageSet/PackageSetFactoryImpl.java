@@ -41,7 +41,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
   private static class Parser {
     private final Lexer myLexer;
 
-    public Parser(Lexer lexer) {
+    Parser(Lexer lexer) {
       myLexer = lexer;
     }
 
@@ -120,7 +120,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     private String parseModulePattern() throws ParsingException {
       if (myLexer.getTokenType() != ScopeTokenTypes.LBRACKET) return null;
       myLexer.advance();
-      StringBuffer pattern = new StringBuffer();
+      StringBuilder pattern = new StringBuilder();
       while (true) {
         if (myLexer.getTokenType() == ScopeTokenTypes.RBRACKET ||
             myLexer.getTokenType() == null) {

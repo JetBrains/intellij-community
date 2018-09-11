@@ -41,6 +41,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     myProject = project;
   }
 
+  @Override
   public Key<AntBeforeRunTask> getId() {
     return ID;
   }
@@ -70,10 +71,12 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return AntBundle.message("ant.target.before.run.description", targetName);
   }
 
+  @Override
   public boolean isConfigurable() {
     return true;
   }
 
+  @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull AntBeforeRunTask task) {
     AntBuildTarget buildTarget = findTargetToExecute(task);
     final TargetChooserDialog dlg = new TargetChooserDialog(myProject, buildTarget);
@@ -93,6 +96,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return false;
   }
 
+  @Override
   public AntBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new AntBeforeRunTask();
   }
@@ -102,6 +106,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return findTargetToExecute(task) != null;
   }
 
+  @Override
   public boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull AntBeforeRunTask task) {
     final AntBuildTarget target = findTargetToExecute(task);
     if (target != null) {

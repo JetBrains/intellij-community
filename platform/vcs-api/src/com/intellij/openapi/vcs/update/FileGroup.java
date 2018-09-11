@@ -144,6 +144,7 @@ public class FileGroup implements JDOMExternalizable {
     return myId;
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     for (final UpdatedFile file : myFiles) {
@@ -159,6 +160,7 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     List pathElements = element.getChildren(PATH);
@@ -243,7 +245,7 @@ public class FileGroup implements JDOMExternalizable {
     private final String myVcsName;
     private final String myRevision;
 
-    public UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
+    UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
       myPath = path;
       myVcsName = vcsKey.getName();
       myRevision = revision;

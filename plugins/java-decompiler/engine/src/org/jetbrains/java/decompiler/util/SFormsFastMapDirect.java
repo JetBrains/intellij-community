@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
@@ -348,14 +348,17 @@ public class SFormsFastMapDirect {
             private final Integer var = key;
             private final FastSparseSet<Integer> val = ent;
 
+            @Override
             public Integer getKey() {
               return var;
             }
 
+            @Override
             public FastSparseSet<Integer> getValue() {
               return val;
             }
 
+            @Override
             public FastSparseSet<Integer> setValue(FastSparseSet<Integer> newvalue) {
               return null;
             }

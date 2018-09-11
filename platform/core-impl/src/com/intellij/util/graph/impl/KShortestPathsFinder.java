@@ -246,7 +246,7 @@ public class KShortestPathsFinder<Node> {
     private final int mySize;
     private final HeapNode<Node> myRoot;
 
-    public Heap(HeapNode<Node> root) {
+    Heap(HeapNode<Node> root) {
       myRoot = root;
       mySize = 1;
     }
@@ -308,7 +308,7 @@ public class KShortestPathsFinder<Node> {
       myChildren = new HeapNode[3];
     }
 
-    public HeapNode(HeapNode<Node> node) {
+    HeapNode(HeapNode<Node> node) {
       myEdge = node.myEdge;
       myChildren = node.myChildren.clone();
     }

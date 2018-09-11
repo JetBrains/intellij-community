@@ -12,7 +12,7 @@ class EditorAndState {
   private final FileEditorState myState;
   private final VirtualFile myVirtualFile;
 
-  public EditorAndState(FileEditor editor, FileEditorState state) {
+  EditorAndState(FileEditor editor, FileEditorState state) {
     myVirtualFile = editor.getFile();
     myState = state;
   }

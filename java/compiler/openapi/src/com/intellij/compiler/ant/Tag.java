@@ -38,6 +38,7 @@ public class Tag extends CompositeGenerator {
     myTagOptions = tagOptions;
   }
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     out.print("<");
     out.print(myTagName);

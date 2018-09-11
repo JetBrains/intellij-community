@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.VcsRootError.Type.EXTRA_MAPPING
 import com.intellij.openapi.vcs.VcsRootErrorImpl
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.vcs.test.VcsPlatformTest

@@ -28,7 +28,7 @@ class CustomizedSwitcherPanel extends CompositeColorDescriptionPanel {
   private final ColorSettingsPage myPage;
   private final PreviewPanel myPreviewPanel;
 
-  public CustomizedSwitcherPanel(@Nullable PreviewPanel previewPanel,
+  CustomizedSwitcherPanel(@Nullable PreviewPanel previewPanel,
                                  @Nullable ColorSettingsPage page) {
     myPage = page;
     myPreviewPanel = previewPanel;

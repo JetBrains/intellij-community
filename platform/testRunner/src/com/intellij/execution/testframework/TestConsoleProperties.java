@@ -105,11 +105,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
       return GlobalSearchScope.allScope(myProject);
     }
 
-    GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
-    for (Module each : modules) {
-      scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(each, true));
-    }
-    return scope;
+    GlobalSearchScope[] scopes =
+      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleRuntimeScope(module, true));
+    return GlobalSearchScope.union(scopes);
   }
 
   public boolean isPreservePresentableName() {

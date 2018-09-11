@@ -47,16 +47,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
  * Utility class to generate myBlock hierarchy
@@ -172,9 +172,31 @@ public class GroovyBlockGenerator {
       }
     }
 
+    if (blockPsi instanceof GrParameterList) {
+      final List<ASTNode> children = visibleChildren(myNode);
+      if (settings.ALIGN_MULTILINE_METHOD_BRACKETS) {
+        PsiElement lParen = ((GrParameterList)blockPsi).getLParen();
+        if (lParen != null) {
+          PsiElement rParen = ((GrParameterList)blockPsi).getRParen();
+          if (rParen != null) {
+            myAlignmentProvider.addPair(lParen, rParen, false);
+          }
+        }
+      }
+      if (settings.ALIGN_MULTILINE_PARAMETERS) {
+        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(false);
+        for (ASTNode node : children) {
+          if (isKeyword(node)) continue;
+          IElementType type = node.getElementType();
+          if (type == T_LPAREN || type == T_RPAREN) continue;
+          aligner.append(node.getPsi());
+        }
+      }
+      return getGenericBlocks(children);
+    }
+
     // For Parameter lists
     if (isListLikeClause(blockPsi)) {
-      final ArrayList<Block> subBlocks = new ArrayList<>();
       List<ASTNode> astNodes = visibleChildren(myNode);
 
       if (mustAlign(blockPsi, astNodes)) {
@@ -183,10 +205,7 @@ public class GroovyBlockGenerator {
           if (!isKeyword(node)) aligner.append(node.getPsi());
         }
       }
-      for (ASTNode childNode : astNodes) {
-        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-      }
-      return subBlocks;
+      return getGenericBlocks(astNodes);
     }
 
     if (blockPsi instanceof GrSwitchStatement) {
@@ -250,11 +269,7 @@ public class GroovyBlockGenerator {
       return generateSubBlocks(visibleChildren(myNode), true);
     }
 
-    if (blockPsi instanceof GrMethod) {
-      return generateMethodSubBlocks();
-    }
-
-    else if (blockPsi instanceof GrTraditionalForClause) {
+    if (blockPsi instanceof GrTraditionalForClause) {
       if (settings.ALIGN_MULTILINE_FOR) {
         final GrTraditionalForClause clause = (GrTraditionalForClause)blockPsi;
         final AlignmentProvider.Aligner parenthesesAligner = myAlignmentProvider.createAligner(false);
@@ -310,11 +325,12 @@ public class GroovyBlockGenerator {
     }
 
     // For other cases
-    final ArrayList<Block> subBlocks = new ArrayList<>();
-    for (ASTNode childNode : visibleChildren(myNode)) {
-      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-    }
-    return subBlocks;
+    return getGenericBlocks(visibleChildren(myNode));
+  }
+
+  @NotNull
+  private List<Block> getGenericBlocks(@NotNull List<ASTNode> astNodes) {
+    return ContainerUtil.map(astNodes, it -> new GroovyBlock(it, getIndent(it), getChildWrap(it), myContext));
   }
 
   private Block createSwitchBodyBlock(List<Block> bodyBlocks) {
@@ -569,70 +585,6 @@ public class GroovyBlockGenerator {
     return list;
   }
 
-  @NotNull
-  private List<Block> generateMethodSubBlocks() {
-    final List<Block> result = new ArrayList<>();
-    final Iterator<ASTNode> children = ContainerUtil.iterate(getGroovyChildren(myNode));
-
-    ASTNode leftParen = null;
-    while (children.hasNext()) {
-      final ASTNode childNode = children.next();
-      final IElementType childElementType = childNode.getElementType();
-      if (childElementType == GroovyTokenTypes.mLPAREN) {
-        leftParen = childNode;
-        break;
-      }
-      else if (canBeCorrectBlock(childNode)) {
-        result.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-      }
-    }
-    assert leftParen != null;
-
-    final List<ASTNode> nodes = new ArrayList<>();
-
-    ASTNode parameterList = null;
-    while (children.hasNext()) {
-      final ASTNode childNode = children.next();
-      final IElementType childElementType = childNode.getElementType();
-      if (childElementType == GroovyElementTypes.PARAMETERS_LIST) {
-        parameterList = childNode;
-        break;
-      }
-      if (canBeCorrectBlock(childNode)) {
-        nodes.add(childNode);
-      }
-    }
-    assert parameterList != null;
-
-    nodes.addAll(visibleChildren(parameterList));
-
-    ASTNode rightParen = null;
-    while (children.hasNext()) {
-      final ASTNode childNode = children.next();
-      final IElementType childElementType = childNode.getElementType();
-      if (childElementType == GroovyTokenTypes.mRPAREN) {
-        rightParen = childNode;
-        break;
-      }
-      if (canBeCorrectBlock(childNode)) {
-        nodes.add(childNode);
-      }
-    }
-
-    result.add(new ParameterListBlock(
-      Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext, leftParen, parameterList, rightParen, nodes
-    ));
-
-    while (children.hasNext()) {
-      final ASTNode childNode = children.next();
-      if (canBeCorrectBlock(childNode)) {
-        result.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-      }
-    }
-
-    return result;
-  }
-
   private boolean mustAlign(PsiElement blockPsi, List<ASTNode> children) {
     // We don't want to align single call argument if it's a closure. The reason is that it looks better to have call like
     //
@@ -657,8 +609,7 @@ public class GroovyBlockGenerator {
       return myContext.getSettings().ALIGN_MULTILINE_ASSIGNMENT;
     }
 
-    return blockPsi instanceof GrParameterList && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS ||
-           blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
+    return blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
            blockPsi instanceof GrThrowsClause && myContext.getSettings().ALIGN_MULTILINE_THROWS_LIST ||
            blockPsi instanceof GrListOrMap && myContext.getGroovySettings().ALIGN_MULTILINE_LIST_OR_MAP ||
            blockPsi instanceof GrTryResourceList && myContext.getSettings().ALIGN_MULTILINE_RESOURCES ||
@@ -666,8 +617,7 @@ public class GroovyBlockGenerator {
   }
 
   private static boolean isListLikeClause(PsiElement blockPsi) {
-    return blockPsi instanceof GrParameterList ||
-           blockPsi instanceof GrArgumentList ||
+    return blockPsi instanceof GrArgumentList ||
            blockPsi instanceof GrAssignmentExpression ||
            blockPsi instanceof GrExtendsClause ||
            blockPsi instanceof GrThrowsClause ||

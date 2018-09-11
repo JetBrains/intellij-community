@@ -50,7 +50,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     setTitle(title);
     myProject = project;
     final Runnable closer = () -> this.close(0);
-    myView = new ChangesListView(project) {
+    myView = new ChangesListView(project, false) {
       @Nullable
       @Override
       public Object getData(@NotNull String dataId) {
@@ -148,19 +148,23 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   private class Expander implements TreeExpander {
+    @Override
     public void expandAll() {
       TreeUtil.expandAll(myView);
     }
 
+    @Override
     public boolean canExpand() {
       return !myView.getGroupingSupport().isNone();
     }
 
+    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 1);
       TreeUtil.expand(myView, 0);
     }
 
+    @Override
     public boolean canCollapse() {
       return !myView.getGroupingSupport().isNone();
     }

@@ -57,6 +57,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myExcludePackagesTable.addExcludePackage(packageName);
   }
 
+  @Override
   public void reset() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
@@ -84,6 +85,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myExcludePackagesTable.reset();
   }
 
+  @Override
   public void apply() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
@@ -101,10 +103,12 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     }
   }
 
+  @Override
   public JComponent createComponent() {
     return myWholePanel;
   }
 
+  @Override
   public boolean isModified() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();

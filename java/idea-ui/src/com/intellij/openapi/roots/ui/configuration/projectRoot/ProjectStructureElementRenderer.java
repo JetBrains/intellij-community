@@ -35,7 +35,7 @@ import java.awt.*;
 class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
   private final StructureConfigurableContext myContext;
 
-  public ProjectStructureElementRenderer(StructureConfigurableContext context) {
+  ProjectStructureElementRenderer(StructureConfigurableContext context) {
     myContext = context;
   }
 

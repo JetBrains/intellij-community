@@ -91,7 +91,7 @@ public class GenerationUtil {
    * @param classMemberList  list of {@link PsiElementClassMember}
    * @return a list of {PsiMember} objects.
    */
-  public static List<PsiMember> convertClassMembersToPsiMembers(@Nullable List<PsiElementClassMember> classMemberList) {
+  public static List<PsiMember> convertClassMembersToPsiMembers(@Nullable List<? extends PsiElementClassMember> classMemberList) {
       if (classMemberList == null || classMemberList.isEmpty()) {
         return Collections.emptyList();
       }

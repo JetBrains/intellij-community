@@ -10,6 +10,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.util.SVGLoader;
 
 import javax.swing.*;
 import java.net.URL;
@@ -35,6 +36,11 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     IconPathPatcher patcher = myTheme.getPatcher();
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
+    }
+
+    SVGLoader.SvgColorPatcher colorPatcher = myTheme.getColorPatcher();
+    if (colorPatcher != null) {
+      SVGLoader.setColorPatcher(colorPatcher);
     }
 
     installBackgroundImage();
@@ -94,6 +100,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (patcher != null) {
       IconLoader.removePathPatcher(patcher);
     }
+    SVGLoader.setColorPatcher(null);
 
     String value = PropertiesComponent.getInstance().getValue("old." + IdeBackgroundUtil.EDITOR_PROP);
     PropertiesComponent.getInstance().unsetValue("old." + IdeBackgroundUtil.EDITOR_PROP);

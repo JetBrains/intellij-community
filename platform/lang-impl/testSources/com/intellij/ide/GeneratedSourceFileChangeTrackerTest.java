@@ -67,7 +67,14 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
   }
 
   private boolean isEditedGeneratedFile(PsiFile file) {
-    return getTracker().isEditedGeneratedFile(file.getVirtualFile());
+    GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)getTracker();
+    try {
+      tracker.waitForAlarm();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return tracker.isEditedGeneratedFile(file.getVirtualFile());
   }
 
   private GeneratedSourceFileChangeTracker getTracker() {

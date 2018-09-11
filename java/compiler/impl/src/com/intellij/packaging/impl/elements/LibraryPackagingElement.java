@@ -49,6 +49,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     myModuleName = moduleName;
   }
 
+  @Override
   public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     final Library library = findLibrary(context);
     if (library != null) {
@@ -73,6 +74,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return library != null ? getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
@@ -90,10 +92,12 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
            && Comparing.equal(myModuleName, packagingElement.getModuleName());
   }
 
+  @Override
   public LibraryPackagingElement getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull LibraryPackagingElement state) {
     myLevel = state.getLevel();
     myLibraryName = state.getLibraryName();

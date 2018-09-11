@@ -2,7 +2,11 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * @author nik
@@ -34,4 +38,45 @@ public class ExceptionUtilRt {
     }
   }
 
+  @NotNull
+  public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {
+    final String prefix = "\tat ";
+    final String prefixProxy = prefix + "$Proxy";
+    final String prefixRemoteUtil = prefix + "com.intellij.execution.rmi.RemoteUtil";
+    final String skipPattern = prefix + stackFrameSkipPattern;
+
+    final StringWriter stringWriter = new StringWriter();
+    final PrintWriter writer = new PrintWriter(stringWriter) {
+      private boolean skipping;
+
+      @Override
+      public void println(final String x) {
+        boolean curSkipping = skipping;
+        if (x != null) {
+          if (!skipping && x.startsWith(skipPattern)) curSkipping = true;
+          else if (skipping && !x.startsWith(prefix)) curSkipping = false;
+          if (curSkipping && !skipping) {
+            super.println("\tin " + stripPackage(x, skipPattern.length()));
+          }
+          skipping = curSkipping;
+          if (skipping) {
+            skipping = !x.startsWith(prefixRemoteUtil);
+            return;
+          }
+          if (x.startsWith(prefixProxy)) return;
+          super.println(x);
+        }
+      }
+    };
+    aThrowable.printStackTrace(writer);
+    return stringWriter.getBuffer().toString();
+  }
+
+  private static String stripPackage(String x, int offset) {
+    int idx = offset;
+    while (idx > 0 && idx < x.length() && !Character.isUpperCase(x.charAt(idx))) {
+      idx = x.indexOf('.', idx) + 1;
+    }
+    return x.substring(Math.max(idx, offset));
+  }
 }

@@ -255,20 +255,8 @@ public final class XmlSerializerImpl {
       accessor.setShort(host, Short.parseShort(value));
     }
     else if (valueClass.isEnum()) {
-      Object deserializedValue = null;
-      for (Object enumConstant : valueClass.getEnumConstants()) {
-        if (enumConstant.toString().equals(value)) {
-          deserializedValue = enumConstant;
-        }
-      }
-      if (deserializedValue == null) {
-        for (Object enumConstant : valueClass.getEnumConstants()) {
-          if (enumConstant.toString().equalsIgnoreCase(value)) {
-            deserializedValue = enumConstant;
-          }
-        }
-      }
-      accessor.set(host, deserializedValue);
+      //noinspection unchecked
+      accessor.set(host, XmlSerializerUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
     }
     else if (Date.class.isAssignableFrom(valueClass)) {
       try {

@@ -403,7 +403,7 @@ public class ByLine {
     private final int myHash;
     private final int myNonSpaceChars;
 
-    public Line(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
+    Line(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
       myText = text;
       myPolicy = policy;
       myHash = hashCode(text, policy);

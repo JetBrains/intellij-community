@@ -58,6 +58,7 @@ public class CheckoutWizard extends CvsWizard {
     init();
   }
 
+  @Override
   protected void doOKAction() {
     CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
 
@@ -100,12 +101,13 @@ public class CheckoutWizard extends CvsWizard {
   }
 
   private class MySelectLocationStep extends SelectLocationStep {
-    public MySelectLocationStep(Project project) {
+    MySelectLocationStep(Project project) {
       super(CvsBundle.message("dialog.title.select.check.out.location"), CheckoutWizard.this, project, false);
       init();
     }
   }
 
+  @Override
   protected String getHelpID() {
     return "cvs.checkOutPrj";
   }

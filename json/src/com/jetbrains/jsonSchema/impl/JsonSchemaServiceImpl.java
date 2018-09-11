@@ -2,19 +2,23 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +30,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @NotNull private final Project myProject;
   @NotNull private final MyState myState;
   @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
+  @NotNull private final Set<String> myRefs = ContainerUtil.newConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
   private final ModificationTracker myAnySchemaChangeTracker;
 
@@ -44,8 +49,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
-    project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
-    JsonSchemaVfsListener.startListening(project, this);
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
+    connection.subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> {
+      myRefs.clear();
+      myAnyChangeCount.incrementAndGet();
+    });
+    JsonSchemaVfsListener.startListening(project, this, connection);
     myCatalogManager.startUpdates();
   }
 
@@ -181,6 +191,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return null;
   }
 
+  @Override
   public List<JsonSchemaInfo> getAllUserVisibleSchemas() {
     List<String> schemas = myCatalogManager.getAllCatalogSchemas();
     Collection<JsonSchemaFileProvider> providers = myState.getProviders();
@@ -248,9 +259,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return isMappedSchema(file)
-           || isSchemaByProvider(file)
-           || hasSchemaSchema(file);
+    return JsonUtil.isJsonFile(file) && (isMappedSchema(file)
+                                         || isSchemaByProvider(file)
+                                         || hasSchemaSchema(file));
   }
 
   public boolean isMappedSchema(@NotNull VirtualFile file) {
@@ -335,6 +346,20 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Override
+  public void registerReference(String ref) {
+    int index = StringUtil.lastIndexOfAny(ref, "\\/");
+    if (index >= 0) {
+      ref = ref.substring(index + 1);
+    }
+    myRefs.add(ref);
+  }
+
+  @Override
+  public boolean possiblyHasReference(String ref) {
+    return myRefs.contains(ref);
+  }
+
+  @Override
   public void triggerUpdateRemote() {
     myCatalogManager.triggerUpdateCatalog(myProject);
   }
@@ -342,7 +367,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   public boolean isApplicableToFile(@Nullable VirtualFile file) {
     if (file == null) return false;
-    return Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).anyMatch(e -> e.isEnabledForFile(file));
+    for (JsonSchemaEnabler e : JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList()) {
+      if (e.isEnabledForFile(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MyState {
@@ -379,12 +409,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       return myData.getValue().get(file);
     }
 
+    @NotNull
     private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
-      final Map<VirtualFile, JsonSchemaFileProvider> map = new HashMap<>();
-      list.stream().filter(provider -> provider.getSchemaFile() != null)
-        .forEach(provider -> map.put(provider.getSchemaFile(), provider));
+      final Map<VirtualFile, JsonSchemaFileProvider> map = new THashMap<>();
+      for (JsonSchemaFileProvider provider : list) {
+        VirtualFile schemaFile = provider.getSchemaFile();
+        if (schemaFile != null) {
+          map.put(schemaFile, provider);
+        }
+      }
       return map;
     }
   }

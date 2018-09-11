@@ -4,7 +4,6 @@ package com.intellij.util.messages.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
@@ -44,8 +43,7 @@ public class MessageBusImpl implements MessageBus {
    */
   private List<Integer> myOrder;
 
-  private final ConcurrentMap<Topic, Object> mySyncPublishers = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<Topic, Object> myAsyncPublishers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic, Object> myPublishers = ContainerUtil.newConcurrentMap();
 
   /**
    * This bus's subscribers
@@ -151,7 +149,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private static class DeliveryJob {
-    public DeliveryJob(final MessageBusConnectionImpl connection, final Message message) {
+    DeliveryJob(final MessageBusConnectionImpl connection, final Message message) {
       this.connection = connection;
       this.message = message;
     }
@@ -186,7 +184,7 @@ public class MessageBusImpl implements MessageBus {
   @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
-    L publisher = (L)mySyncPublishers.get(topic);
+    L publisher = (L)myPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
       InvocationHandler handler = new InvocationHandler() {
@@ -200,28 +198,7 @@ public class MessageBusImpl implements MessageBus {
         }
       };
       publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(mySyncPublishers, topic, publisher);
-    }
-    return publisher;
-  }
-
-  @Override
-  @NotNull
-  @SuppressWarnings("unchecked")
-  public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
-    checkNotDisposed();
-    L publisher = (L)myAsyncPublishers.get(topic);
-    if (publisher == null) {
-      final Class<L> listenerClass = topic.getListenerClass();
-      InvocationHandler handler = new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) {
-          postMessage(new Message(topic, method, args));
-          return NA;
-        }
-      };
-      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(myAsyncPublishers, topic, publisher);
+      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, publisher);
     }
     return publisher;
   }
@@ -355,15 +332,19 @@ public class MessageBusImpl implements MessageBus {
     }
     else {
       final Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
-      if (map != null) {
-        List<MessageBusImpl> buses = ContainerUtil.filter(map.keySet(), new Condition<MessageBusImpl>() {
-          @Override
-          public boolean value(MessageBusImpl bus) {
-            return ensureAlive(map, bus);
+      if (map != null && !map.isEmpty()) {
+        List<MessageBusImpl> liveBuses = null;
+        for (MessageBusImpl bus : map.keySet()) {
+          if (ensureAlive(map, bus)) {
+            if (liveBuses == null) {
+              liveBuses = new SmartList<MessageBusImpl>();
+            }
+            liveBuses.add(bus);
           }
-        });
-        if (!buses.isEmpty()) {
-          pumpWaitingBuses(buses);
+        }
+
+        if (liveBuses != null) {
+          pumpWaitingBuses(liveBuses);
         }
       }
     }

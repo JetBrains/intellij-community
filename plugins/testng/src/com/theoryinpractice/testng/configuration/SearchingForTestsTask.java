@@ -76,6 +76,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     fillTestObjects(myClasses);
   }
 
+  @Override
   protected void logCantRunException(ExecutionException e) {
     try {
       final String message = "CantRunException" + e.getMessage() + "\n";
@@ -138,7 +139,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       xmlFile = suite.save(new File(PathManager.getSystemPath()));
     }
     else {
-      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, testParams, myProject.getName(), 
+      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, testParams, myProject.getName(),
                                                 PathManager.getSystemPath(),
                                                 new TestNGXmlSuiteHelper.Logger() {
                                                   @Override

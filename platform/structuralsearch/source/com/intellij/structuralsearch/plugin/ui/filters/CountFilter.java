@@ -71,6 +71,7 @@ public class CountFilter extends FilterAction {
         });
       }
 
+      @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
@@ -99,15 +100,36 @@ public class CountFilter extends FilterAction {
         myMinField.setMaxValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
         myMinField.setDefaultValue(myMinZero ? 0 : 1);
         myMinField.setDefaultValueText(myMinZero ? "0" : "1");
-        myMinField.setValue(myConstraint.getMinCount());
+        final int minCount = myConstraint.getMinCount();
+        if (!isDefaultValue(minCount)) {
+          myMinField.setValue(minCount);
+        }
+        myMinField.setCanBeEmpty(true);
         myMinField.selectAll();
 
         myMaxField.setMinValue(myMinZero ? 0 : 1);
         myMaxField.setMaxValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
         myMaxField.setDefaultValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
         myMaxField.setDefaultValueText(myMaxUnlimited ? SSRBundle.message("editvarcontraints.unlimited") : "1");
-        myMaxField.setValue(myConstraint.getMaxCount());
+        final int maxCount = myConstraint.getMaxCount();
+        if (!isDefaultValue(maxCount)) {
+          myMaxField.setValue(maxCount);
+        }
+        myMaxField.setCanBeEmpty(true);
         myMaxField.selectAll();
+      }
+
+      private boolean isDefaultValue(int count) {
+        if (count == 0) {
+          return myMinZero;
+        }
+        else if (count == 1) {
+          return !myMinZero || !myMaxUnlimited;
+        }
+        else if (count == Integer.MAX_VALUE) {
+          return myMaxUnlimited;
+        }
+        return false;
       }
 
       @Override

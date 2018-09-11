@@ -12,12 +12,15 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -52,7 +55,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     myViewer.installPopupHandler(myPopupMenuGroup);
 
-    myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
+    myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer, true);
+    myViewerScrollPane.setBorder(createViewerBorder());
 
     myShowDiffAction = new MyShowDiffAction();
   }
@@ -88,6 +92,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
+  }
+
+  @NotNull
+  protected Border createViewerBorder() {
+    return IdeBorderFactory.createBorder(SideBorder.ALL);
   }
 
   @NotNull
@@ -214,7 +223,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   private class MyShowDiffAction extends DumbAwareAction {
-    public MyShowDiffAction() {
+    MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
 

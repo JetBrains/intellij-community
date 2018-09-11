@@ -28,7 +28,7 @@ class DeleteHandler {
   private final CvsStorageSupportingDeletionComponent myCvsStorageComponent;
   private final Collection<File> myFilesToDeleteEntry = new ArrayList<>();
 
-  public DeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
+  DeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
     myProject = project;
     myCvsStorageComponent = cvsStorageComponent;
   }
@@ -57,10 +57,12 @@ class DeleteHandler {
     }
 
     final CvsContext context = new CvsContextAdapter() {
+      @Override
       public Project getProject() {
         return myProject;
       }
 
+      @Override
       public Collection<String> getDeletedFileNames() {
         return myDeletedFiles;
       }

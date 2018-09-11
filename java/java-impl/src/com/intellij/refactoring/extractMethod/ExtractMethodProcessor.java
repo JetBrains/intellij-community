@@ -34,8 +34,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -624,6 +624,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
                                    myRefactoringName, myHelpId, myNullability, myElements,
                                    this::estimateDuplicatesCount) {
+      @Override
       protected boolean areTypesDirected() {
         return direct;
       }
@@ -643,6 +644,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         return ExtractMethodProcessor.this.isOutputVariable(var);
       }
 
+      @Override
       protected boolean isVoidReturn() {
         return myArtificialOutputVariable != null && !(myArtificialOutputVariable instanceof PsiField);
       }
@@ -674,7 +676,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       @Override
-      protected boolean isPreviewSupported() {
+      protected boolean hasPreviewButton() {
         return myIsPreviewSupported;
       }
     };
@@ -838,7 +840,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in command and in atomic action
    */
   public void doRefactoring() throws IncorrectOperationException {
-    initDuplicates();
+    initDuplicates(null);
 
     chooseAnchor();
 
@@ -884,15 +886,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  public void previewRefactoring() {
-    initDuplicates();
+  public void previewRefactoring(@Nullable Set<TextRange> textRanges) {
+    initDuplicates(textRanges);
     chooseAnchor();
   }
 
-  protected void initDuplicates() {
-    myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED);
+  protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+    myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, textRanges);
     if (myParametrizedDuplicates != null && !myParametrizedDuplicates.isEmpty()) {
-      myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT);
+      myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT, textRanges);
     }
     myDuplicates = new ArrayList<>();
   }
@@ -916,7 +918,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), value, parameters);
     List<Match> myDuplicates = finder.findDuplicates(myTargetClass);
     if (!ContainerUtil.isEmpty(myDuplicates)) return myDuplicates.size();
-    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED);
+    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, null);
     if (parametrizedDuplicates != null) {
       List<Match> duplicates = parametrizedDuplicates.getDuplicates();
       return duplicates != null ? duplicates.size() : 0;
@@ -1289,6 +1291,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  @Override
   public List<Match> getDuplicates() {
     if (myIsChainedConstructor) {
       return filterChainedConstructorDuplicates(myDuplicates);
@@ -1298,6 +1301,13 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public ParametrizedDuplicates getParametrizedDuplicates() {
     return myParametrizedDuplicates;
+  }
+
+  @Nullable
+  public List<Match> getAnyDuplicates() {
+    return Optional.ofNullable(getParametrizedDuplicates())
+      .map(ParametrizedDuplicates::getDuplicates)
+      .orElse(getDuplicates());
   }
 
   private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
@@ -1323,6 +1333,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     MatchUtil.changeSignature(match, myExtractedMethod);
   }
 
+  @Override
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
     if (PsiTreeUtil.isContextAncestor(myExtractedMethod.getContainingClass(), match.getMatchStart(), false) &&
         RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
@@ -2002,7 +2013,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return extractPass == null && !(target instanceof PsiAnonymousClass);
   }
 
-  private boolean applyChosenClassAndExtract(List<PsiVariable> inputVariables, @Nullable Pass<ExtractMethodProcessor> extractPass)
+  private boolean applyChosenClassAndExtract(List<? extends PsiVariable> inputVariables, @Nullable Pass<? super ExtractMethodProcessor> extractPass)
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
     final Set<PsiField> fields = new LinkedHashSet<>();
@@ -2023,7 +2034,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return true;
   }
 
-  public static boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<PsiField> usedFields) {
+  public static boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<? super PsiField> usedFields) {
     if (!PsiUtil.isLocalOrAnonymousClass(targetClass) && (targetClass.getContainingClass() == null || targetClass.hasModifierProperty(PsiModifier.STATIC))) {
       boolean canBeStatic = true;
       if (targetClass.isInterface()) {
@@ -2148,6 +2159,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myAnchor;
   }
 
+  @Override
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {
@@ -2209,7 +2221,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean hasDuplicates(Set<VirtualFile> files) {
-    initDuplicates();
+    initDuplicates(null);
     final DuplicatesFinder finder = getExactDuplicatesFinder();
 
     final Boolean hasDuplicates = hasDuplicates();
@@ -2238,6 +2250,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return finder;
   }
 
+  @Override
   @Nullable
   public String getConfirmDuplicatePrompt(Match match) {
     final boolean needToBeStatic = RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass());

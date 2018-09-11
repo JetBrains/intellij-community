@@ -52,7 +52,7 @@ public class ContextTest extends TaskManagerTestCase {
   public void testPack() throws Exception {
     WorkingContextManager contextManager = getContextManager();
     for (int i = 0; i < 5; i++) {
-      contextManager.saveContext("context" + Integer.toString(i), null);
+      contextManager.saveContext("context" + i, null);
       Thread.sleep(2000);
     }
     List<ContextInfo> history = contextManager.getContextHistory();

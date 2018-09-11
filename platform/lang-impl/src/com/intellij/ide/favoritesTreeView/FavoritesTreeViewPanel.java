@@ -139,7 +139,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     });
     myTree.setCellRenderer(new NodeRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -234,13 +234,13 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
 
       @Override
-      public void listAdded(String listName) {
+      public void listAdded(@NotNull String listName) {
         myBuilder.updateFromRoot();
         myTree.repaint();
       }
 
       @Override
-      public void listRemoved(String listName) {
+      public void listRemoved(@NotNull String listName) {
         myBuilder.updateFromRoot();
         myTree.repaint();
       }

@@ -62,6 +62,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     super.onSuiteTreeEnded(suiteName);
   }
 
+  @Override
   public void onStartTesting() {
     addToInvokeLater(() -> {
       mySuitesStack.pushSuite(myTestsRootProxy);
@@ -77,6 +78,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     addToInvokeLater(() -> fireOnTestsReporterAttached(myTestsRootProxy));
   }
 
+  @Override
   public void onFinishTesting() {
     addToInvokeLater(() -> {
       if (myIsTestingFinished) {
@@ -107,6 +109,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider) {
   }
 
+  @Override
   public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
     addToInvokeLater(() -> {
       final String testName = testStartedEvent.getName();
@@ -158,6 +161,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
+  @Override
   public void onSuiteStarted(@NotNull final TestSuiteStartedEvent suiteStartedEvent) {
     addToInvokeLater(() -> {
       final String suiteName = suiteStartedEvent.getName();
@@ -221,6 +225,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     return null;
   }
 
+  @Override
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
     addToInvokeLater(() -> {
       final String testName = testFinishedEvent.getName();
@@ -245,6 +250,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
+  @Override
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
     addToInvokeLater(() -> {
       final String suiteName = suiteFinishedEvent.getName();
@@ -260,6 +266,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
+  @Override
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
     addToInvokeLater(() -> {
       final SMTestProxy currentProxy = findCurrentTestOrSuite();
@@ -267,6 +274,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
+  @Override
   public void onError(@NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
@@ -275,8 +283,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       currentProxy.addError(localizedMessage, stackTrace, isCritical);
     });
   }
-  
 
+
+  @Override
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(() -> {
       final String testName = testFailedEvent.getName();
@@ -334,6 +343,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
+  @Override
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
      addToInvokeLater(() -> {
        final String testName = testIgnoredEvent.getName();
@@ -372,6 +382,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
      });
   }
 
+  @Override
   public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
      addToInvokeLater(() -> {
        final String testName = testOutputEvent.getName();
@@ -390,6 +401,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
      });
   }
 
+  @Override
   public void onTestsCountInSuite(final int count) {
      addToInvokeLater(() -> fireOnTestsCountInSuite(count));
   }
@@ -409,7 +421,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     return myTestsRootProxy;
 
   }
- 
+
   protected String getFullTestName(final String testName) {
     // Test name should be unique
     return testName;
@@ -449,6 +461,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   /*
    * Remove listeners,  etc
    */
+  @Override
   public void dispose() {
     super.dispose();
      addToInvokeLater(() -> {

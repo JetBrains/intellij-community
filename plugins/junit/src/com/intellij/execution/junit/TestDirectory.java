@@ -53,7 +53,7 @@ import java.util.Collections;
 import java.util.Set;
 
 class TestDirectory extends TestPackage {
-  public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 
@@ -166,7 +166,7 @@ class TestDirectory extends TestPackage {
             LOG.assertTrue(rootPath != null);
             JUnitStarter
               .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "",
-                                classes.isEmpty() ? packageName + ".*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
+                                classes.isEmpty() ? packageName + "\\..*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
                                 myTempFile);
           }
           catch (IOException e) {
@@ -186,14 +186,14 @@ class TestDirectory extends TestPackage {
 
 
   @Override
-  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<PsiClass> acceptClassCondition, Set<PsiClass> classes) throws CantRunException {
+  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<? super PsiClass> acceptClassCondition, Set<? super PsiClass> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
 
   private static void collectClassesRecursively(PsiDirectory directory,
-                                                Condition<PsiClass> acceptAsTest,
-                                                Set<PsiClass> classes) {
+                                                Condition<? super PsiClass> acceptAsTest,
+                                                Set<? super PsiClass> classes) {
     PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
     for (PsiDirectory subDirectory : subDirectories) {
       collectClassesRecursively(subDirectory, acceptAsTest, classes);

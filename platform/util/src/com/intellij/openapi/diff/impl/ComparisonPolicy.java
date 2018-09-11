@@ -94,7 +94,7 @@ public abstract class ComparisonPolicy {
   }
 
   private static class DefaultPolicy extends ComparisonPolicy {
-    public DefaultPolicy() {
+    DefaultPolicy() {
       super(CommonBundle.message("comparison.policy.default.name"));
     }
 
@@ -123,7 +123,7 @@ public abstract class ComparisonPolicy {
   }
 
   private static class TrimSpacePolicy extends ComparisonPolicy {
-    public TrimSpacePolicy() {
+    TrimSpacePolicy() {
       super(CommonBundle.message("comparison.policy.trim.space.name"));
     }
 
@@ -173,7 +173,7 @@ public abstract class ComparisonPolicy {
 
   private static class IgnoreSpacePolicy extends ComparisonPolicy
     implements DiffCorrection.FragmentProcessor<DiffCorrection.FragmentsCollector> {
-    public IgnoreSpacePolicy() {
+    IgnoreSpacePolicy() {
       super(CommonBundle.message("comparison.policy.ignore.spaces.name"));
     }
 

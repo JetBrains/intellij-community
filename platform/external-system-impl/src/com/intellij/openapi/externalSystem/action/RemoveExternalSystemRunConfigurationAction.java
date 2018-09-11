@@ -16,7 +16,6 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -34,6 +33,7 @@ import java.util.List;
  */
 public class RemoveExternalSystemRunConfigurationAction extends ExternalSystemAction {
 
+  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());

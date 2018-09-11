@@ -18,6 +18,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
     return (JavaRefactoringFactory) ServiceManager.getService(project, RefactoringFactory.class);
   }
 
+  @Override
   public abstract JavaRenameRefactoring createRename(@NotNull PsiElement element, String newName);
 
   @Nullable("in case the source file is not located under any source root")

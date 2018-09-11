@@ -67,6 +67,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     myContext = context;
   }
 
+  @Override
   public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
     RefEntity entity = myProblemElements.removeValue(descriptor);
     if (entity != null) {
@@ -74,10 +75,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     }
   }
 
+  @Override
   public boolean isProblemResolved(@Nullable CommonProblemDescriptor descriptor) {
     return myResolvedElements.containsValue(descriptor);
   }
 
+  @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
     return myResolvedElements.containsKey(entity);
   }
@@ -94,6 +97,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return myResolvedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
+  @Override
   public void suppressProblem(@NotNull CommonProblemDescriptor descriptor) {
     mySuppressedElements.put(myProblemElements.removeValue(descriptor), descriptor);
   }
@@ -202,8 +206,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public void exportResults(@NotNull final Element parentNode,
-                            @NotNull final Predicate<RefEntity> excludedEntities,
-                            @NotNull final Predicate<CommonProblemDescriptor> excludedDescriptors) {
+                            @NotNull final Predicate<? super RefEntity> excludedEntities,
+                            @NotNull final Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor(){
       @Override
       public void visitElement(@NotNull RefEntity elem) {
@@ -324,7 +328,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
-                            @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
+                            @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
     if (descriptions != null) {
       exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
@@ -334,7 +338,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   private void exportResults(@NotNull final CommonProblemDescriptor[] descriptors,
                              @NotNull RefEntity refEntity,
                              @NotNull Element parentNode,
-                             @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
+                             @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (isDescriptorExcluded.test(descriptor)) continue;
       @NonNls final String template = descriptor.getDescriptionTemplate();
@@ -510,7 +514,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       @NotNull
       @Override
       protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
-        return CommonProblemDescriptor[]::new;
+        return CommonProblemDescriptor.ARRAY_FACTORY;
       }
     };
   }

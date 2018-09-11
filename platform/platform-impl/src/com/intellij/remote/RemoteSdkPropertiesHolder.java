@@ -180,9 +180,9 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
     setRemoteRoots(JDOMExternalizer.loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
 
-    setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
+    setInitialized(Boolean.parseBoolean(element.getAttributeValue(INITIALIZED)));
 
-    setValid(StringUtil.parseBoolean(element.getAttributeValue(VALID), true));
+    setValid(Boolean.parseBoolean(element.getAttributeValue(VALID)));
 
     setPathMappings(PathMappingSettings.readExternal(element));
   }

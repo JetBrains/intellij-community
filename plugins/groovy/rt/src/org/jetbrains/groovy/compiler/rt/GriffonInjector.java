@@ -28,6 +28,7 @@ import java.io.File;
  * @author peter
  */
 public class GriffonInjector extends CompilationUnitPatcher {
+  @Override
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void patchCompilationUnit(CompilationUnit compilationUnit, GroovyResourceLoader resourceLoader, File[] srcFiles) {
     File baseDir = guessBaseDir(srcFiles);

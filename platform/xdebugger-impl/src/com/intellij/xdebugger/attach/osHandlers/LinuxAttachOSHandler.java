@@ -5,7 +5,7 @@ import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import org.jetbrains.annotations.NotNull;
 
 class LinuxAttachOSHandler extends UnixAttachOSHandler {
-  public LinuxAttachOSHandler(@NotNull EnvironmentAwareHost host) {
+  LinuxAttachOSHandler(@NotNull EnvironmentAwareHost host) {
     super(host, OSType.LINUX);
   }
 }

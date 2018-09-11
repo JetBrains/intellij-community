@@ -27,7 +27,7 @@ import java.util.List;
 class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
 
-  public ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
+  ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Image", null, null);
     setClassName("java.awt.Image");
     setEnabled(true);
@@ -106,7 +106,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   }
 
   static abstract class IconPopupEvaluator extends CustomPopupFullValueEvaluator<Icon> {
-    public IconPopupEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
+    IconPopupEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
       super(linkText, evaluationContext);
     }
 

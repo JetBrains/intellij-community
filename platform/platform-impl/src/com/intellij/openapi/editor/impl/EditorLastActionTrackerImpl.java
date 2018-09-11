@@ -26,7 +26,7 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
     myActionManager = actionManager;
     myEditorEventMulticaster = editorFactory.getEventMulticaster();
     // to prevent leaks
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         EditorImpl killedEditor = (EditorImpl)event.getEditor();
@@ -61,7 +61,7 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
   }
 
   @Override
-  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
     myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
     if (myCurrentEditor != myLastEditor) {
       resetLastAction();
@@ -69,29 +69,29 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
   }
 
   @Override
-  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
     myLastActionId = getActionId(action);
     myLastEditor = myCurrentEditor;
     myCurrentEditor = null;
   }
 
   @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {
+  public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
     resetLastAction();
   }
 
   @Override
-  public void mousePressed(EditorMouseEvent e) {
+  public void mousePressed(@NotNull EditorMouseEvent e) {
     resetLastAction();
   }
 
   @Override
-  public void mouseClicked(EditorMouseEvent e) {
+  public void mouseClicked(@NotNull EditorMouseEvent e) {
     resetLastAction();
   }
 
   @Override
-  public void mouseReleased(EditorMouseEvent e) {
+  public void mouseReleased(@NotNull EditorMouseEvent e) {
     resetLastAction();
   }
 

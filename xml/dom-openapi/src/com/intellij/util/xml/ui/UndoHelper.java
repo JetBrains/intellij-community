@@ -22,7 +22,7 @@ public class UndoHelper {
   private boolean myDirty;
   private final DocumentListener myDocumentAdapter = new DocumentListener() {
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (myShowing) {
         myDirty = true;
       }
@@ -34,7 +34,7 @@ public class UndoHelper {
       PsiDocumentManager psiDocumentManager;
 
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         undoTransparentActionStarted();
       }
 
@@ -55,7 +55,7 @@ public class UndoHelper {
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         undoTransparentActionFinished();
       }
     });

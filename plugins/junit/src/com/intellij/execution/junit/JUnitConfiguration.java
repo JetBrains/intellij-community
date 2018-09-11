@@ -66,7 +66,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   private final Data myData;
-  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+  private final InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
   final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
     @Override
@@ -138,6 +138,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
     super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
+    myData = data;
+  }
+
+  protected JUnitConfiguration(@NotNull Project project, Data data, @NotNull ConfigurationFactory configurationFactory) {
+    super(new JavaRunConfigurationModule(project, false), configurationFactory);
     myData = data;
   }
 
@@ -300,6 +305,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
   }
 
+  @Override
   public void beClassConfiguration(final PsiClass testClass) {
     if (FORK_KLASS.equals(getForkMode())) {
       setForkMode(FORK_NONE);
@@ -341,7 +347,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     getPersistentData().setScope(searchScope);
   }
 
-  public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
+  public void beFromSourcePosition(PsiLocation<? extends PsiMethod> sourceLocation) {
     myData.setTestMethod(sourceLocation);
     myData.TEST_OBJECT = BY_SOURCE_POSITION;
   }
@@ -358,6 +364,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (shouldUpdateName) setGeneratedName();
   }
 
+  @Override
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
     setForkMode(FORK_NONE);
     setModule(myData.setTestMethod(methodLocation));
@@ -531,6 +538,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return false;
   }
 
+  @Override
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
@@ -695,7 +703,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return UNIQUE_ID;
     }
 
-    public Module setTestMethod(final Location<PsiMethod> methodLocation) {
+    public Module setTestMethod(final Location<? extends PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
       METHOD_NAME = getMethodPresentation(method);
       TEST_OBJECT = TEST_METHOD;

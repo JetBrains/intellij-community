@@ -41,10 +41,12 @@ public class GenerateToStringContext implements PersistentStateComponent<Config>
         getInstance().config = newConfig;
     }
 
+    @Override
     public Config getState() {
         return config;
     }
 
+    @Override
     public void loadState(@NotNull Config state) {
         config = state;
     }

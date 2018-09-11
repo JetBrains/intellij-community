@@ -30,18 +30,21 @@ import org.jetbrains.annotations.NotNull;
  * @see ImageEditor#setGridVisible
  */
 public final class ToggleGridAction extends ToggleAction implements DumbAware {
-  public boolean isSelected(AnActionEvent e) {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     return decorator != null && decorator.isGridVisible();
   }
 
-  public void setSelected(AnActionEvent e, boolean state) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (decorator != null) {
       decorator.setGridVisible(state);
     }
   }
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageEditorActionUtil.setEnabled(e);

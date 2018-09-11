@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.util.Ref;
@@ -71,7 +57,7 @@ public class SvnPropertyService {
     @NotNull protected final SvnVcs myVcs;
     protected final boolean myUseCommonExtension;
     protected final boolean myCanUseCachedProperty;
-    
+
     protected abstract void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data,
                                           final PropertyValue propertyValue) throws VcsException;
 
@@ -124,10 +110,12 @@ public class SvnPropertyService {
       myFilesOk = true;
     }
 
+    @Override
     protected boolean stopIteration() {
       return (! myFilesOk) && (! myExtensionOk);
     }
 
+    @Override
     protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final PropertyValue propertyValue) {
       if (propertyValue == null) {
         myFilesOk = false;
@@ -149,9 +137,11 @@ public class SvnPropertyService {
       }
     }
 
+    @Override
     protected void onAfterProcessing(final VirtualFile[] file) {
     }
 
+    @Override
     protected void onSVNException(final Exception e) {
       myFilesOk = false;
       myExtensionOk = false;
@@ -176,12 +166,14 @@ public class SvnPropertyService {
       dirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
     }
 
+    @Override
     protected boolean stopIteration() {
       return false;
     }
 
     protected abstract String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue);
 
+    @Override
     protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final PropertyValue propertyValue)
       throws VcsException {
       String newValue = getNewPropertyValue(data, propertyValue);
@@ -194,6 +186,7 @@ public class SvnPropertyService {
       }
     }
 
+    @Override
     protected void onAfterProcessing(final VirtualFile[] file) throws VcsException {
       if (! myUseCommonExtension) {
         for (VirtualFile virtualFile : file) {
@@ -206,6 +199,7 @@ public class SvnPropertyService {
       }
     }
 
+    @Override
     protected void onSVNException(final Exception e) {
       exceptions.add(e.getMessage());
     }
@@ -216,6 +210,7 @@ public class SvnPropertyService {
       super(vcs, useCommonExtension);
     }
 
+    @Override
     protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
       if (propertyValue != null) {
         return getNewPropertyValueForRemove(data, PropertyValue.toString(propertyValue));
@@ -241,6 +236,7 @@ public class SvnPropertyService {
       super(vcs, useCommonExtension);
     }
 
+    @Override
     protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
       final String ignoreString;
       if (data.size() == 1) {

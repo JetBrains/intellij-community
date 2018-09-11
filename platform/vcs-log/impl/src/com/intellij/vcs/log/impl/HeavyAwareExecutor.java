@@ -134,7 +134,7 @@ public class HeavyAwareExecutor implements Disposable {
 
     @Nullable private ScheduledFuture<?> myFuture = null;
 
-    public CancellingOnHeavyOrPowerSaveListener(@NotNull Project project,
+    CancellingOnHeavyOrPowerSaveListener(@NotNull Project project,
                                                 @NotNull ProgressIndicator indicator,
                                                 int logActivityDurationMs,
                                                 @NotNull Disposable disposable) {
@@ -184,7 +184,7 @@ public class HeavyAwareExecutor implements Disposable {
     @NotNull private final AtomicReference<List<FutureRunnable>> myTasksToRun = new AtomicReference<>(ContainerUtil.newArrayList());
     private final int myDelayMs;
 
-    public ExecutingHeavyOrPowerSaveListener(@NotNull Project project, int delayMs, @NotNull Disposable parent) {
+    ExecutingHeavyOrPowerSaveListener(@NotNull Project project, int delayMs, @NotNull Disposable parent) {
       myDelayMs = delayMs;
       project.getMessageBus().connect(parent).subscribe(PowerSaveMode.TOPIC, this);
     }
@@ -225,6 +225,7 @@ public class HeavyAwareExecutor implements Disposable {
       myFuture = SettableFuture.create();
     }
 
+    @Override
     public void run() {
       try {
         myFuture.set(myComputable.compute());

@@ -386,7 +386,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] append(@NotNull final T[] src, final T element, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] append(@NotNull final T[] src, final T element, @NotNull ArrayFactory<? extends T> factory) {
     int length = src.length;
     T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 0, length);
@@ -432,7 +432,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] remove(@NotNull final T[] src, int idx, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] remove(@NotNull final T[] src, int idx, @NotNull ArrayFactory<? extends T> factory) {
     int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
@@ -454,7 +454,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] remove(@NotNull final T[] src, T element, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] remove(@NotNull final T[] src, T element, @NotNull ArrayFactory<? extends T> factory) {
     final int idx = find(src, element);
     if (idx == -1) return src;
 
@@ -696,7 +696,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<T> objects, T object, @NotNull Equality<T> comparator) {
+  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull Equality<? super T> comparator) {
     for (int i = 0; i < objects.size(); i++) {
       if (comparator.equals(objects.get(i), object)) return i;
     }
@@ -704,7 +704,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<T> objects, T object, @NotNull Comparator<T> comparator) {
+  public static <T> int indexOf(@NotNull List<? extends T> objects, T object, @NotNull Comparator<? super T> comparator) {
     for (int i = 0; i < objects.size(); i++) {
       if (comparator.compare(objects.get(i), object) == 0) return i;
     }
@@ -721,20 +721,18 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull long[] ints, long value) {
-    return ArrayUtilRt.indexOf(ints, value);
-  }
-  @Contract(pure=true)
-  public static int indexOf(@NotNull int[] ints, int value) {
-    return ArrayUtilRt.indexOf(ints, value);
-  }
-  @Contract(pure=true)
-  public static int indexOf(@NotNull short[] ints, short value) {
-    return ArrayUtilRt.indexOf(ints, value);
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+    return -1;
   }
 
   @Contract(pure=true)
-  public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
-    return ArrayUtilRt.indexOf(ints, value, start, end);
+  public static int indexOf(@NotNull int[] ints, int value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+    return -1;
   }
 
   @Contract(pure=true)
@@ -789,7 +787,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<T> src, final T obj, @NotNull Equality<? super T> comparator) {
+  public static <T> int lastIndexOf(@NotNull List<? extends T> src, final T obj, @NotNull Equality<? super T> comparator) {
     for (int i = src.size() - 1; i >= 0; i--) {
       final T o = src.get(i);
       if (comparator.equals(obj, o)) {
@@ -805,8 +803,8 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean contains(@Nullable final String s, @NotNull String... strings) {
-    return ArrayUtilRt.contains(s, strings);
+  public static boolean contains(@Nullable String s, @NotNull String... strings) {
+    return indexOf(strings, s) >= 0;
   }
 
   @NotNull

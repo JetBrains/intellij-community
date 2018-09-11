@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 
 public class Cvs2Renderer extends ColoredTreeCellRenderer {
+  @Override
   public void customizeCellRenderer(JTree tree,
                                     Object value,
                                     boolean selected,

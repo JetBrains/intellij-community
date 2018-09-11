@@ -18,6 +18,7 @@ package com.intellij.refactoring.listeners;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Notifies that a certain member has been moved.
@@ -32,5 +33,5 @@ public interface MoveMemberListener {
    * {@link com.intellij.psi.PsiMember#getContainingClass()}. In all cases but
    * "Move inner to upper level" target class wil be non null.
    */
-  void memberMoved (PsiClass sourceClass, PsiMember member);
+  void memberMoved (@NotNull PsiClass sourceClass, @NotNull PsiMember member);
 }

@@ -87,7 +87,7 @@ public class GroovyExpectedTypesProvider {
     private TypeConstraint[] myResult;
     private final GrExpression myExpression;
 
-    public MyCalculator(GrExpression expression) {
+    MyCalculator(GrExpression expression) {
       myExpression = (GrExpression)PsiUtil.skipParentheses(expression, true);
       myResult = TypeConstraint.EMPTY_ARRAY;
     }

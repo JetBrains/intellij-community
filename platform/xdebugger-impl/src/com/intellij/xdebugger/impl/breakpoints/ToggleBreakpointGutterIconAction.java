@@ -36,6 +36,7 @@ class ToggleBreakpointGutterIconAction extends DumbAwareAction {
     copyShortcutFrom(action);
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     myBreakpoint.setEnabled(!myBreakpoint.isEnabled());
   }

@@ -104,7 +104,7 @@ class OptimizeImportsTask implements SequentialTask {
   private int myCount;
   private final Map<PsiFile, Set<String>> myDuplicates = new HashMap<>();
 
-  public OptimizeImportsTask(SequentialModalProgressTask progressTask, Collection<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
+  OptimizeImportsTask(SequentialModalProgressTask progressTask, Collection<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
     myTask = progressTask;
     myTotal = pointers.size();
     myPointers = pointers.iterator();

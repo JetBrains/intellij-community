@@ -471,20 +471,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return survivors;
   }
 
-  public static void addSurvivingFiles(@NotNull Collection<VirtualFile> files) {
+  public static void addSurvivingFiles(@NotNull Collection<? extends VirtualFile> files) {
     for (VirtualFile each : files) {
       registerSurvivor(eternallyLivingFiles(), each);
     }
   }
 
-  private static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
+  private static void registerSurvivor(Set<? super VirtualFile> survivors, VirtualFile file) {
     addSubTree(file, survivors);
     while (file != null && survivors.add(file)) {
       file = file.getParent();
     }
   }
 
-  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
+  private static void addSubTree(VirtualFile root, Set<? super VirtualFile> to) {
     if (root instanceof VirtualDirectoryImpl) {
       for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
         if (child instanceof VirtualDirectoryImpl) {
@@ -533,7 +533,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           }
         }
       })
-      .append(super::tearDown)
+      .append(() -> super.tearDown())
       .append(() -> {
         if (myEditorListenerTracker != null) {
           myEditorListenerTracker.checkListenersLeak();
@@ -584,8 +584,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     resetClassFields(getClass());
   }
 
+  @NotNull
   @Override
-  protected final <T extends Disposable> T disposeOnTearDown(T disposable) {
+  protected final <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(myProject, disposable);
     return disposable;
   }

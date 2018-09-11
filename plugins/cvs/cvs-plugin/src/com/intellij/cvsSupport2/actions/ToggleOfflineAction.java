@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ToggleOfflineAction extends ToggleAction implements DumbAware {
 
-  public boolean isSelected(AnActionEvent e) {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     if (!cvsContext.cvsIsActive()) return false;
     VirtualFile root = cvsContext.getSelectedFile();
@@ -44,7 +45,8 @@ public class ToggleOfflineAction extends ToggleAction implements DumbAware {
     return settings.isOffline();
   }
 
-  public void setSelected(AnActionEvent e, boolean state) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     final VirtualFile file = cvsContext.getSelectedFile();

@@ -136,7 +136,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
     return d1.getRequiringLevel() > d2.getRequiringLevel();
   }
-  
+
   private static void fillParameterData(String name, ParameterData data, MavenDomMojo mojo) {
     XmlTag config = mojo.getConfiguration().getXmlTag();
     if (config == null) return;
@@ -161,6 +161,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
     if (isCollection(data.parameter)) {
       e.addExtender(new DomExtender() {
+        @Override
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
           for (String each : collectPossibleNameForCollectionParameter(parameterName)) {
             DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), MavenDomConfigurationParameter.class);
@@ -207,6 +208,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
         public boolean identifier() {
           return false;
         }
+        @Override
         public Class<? extends Annotation> annotationType() {
               return Required.class;
         }
@@ -241,7 +243,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     private ParameterData(MavenDomParameter parameter) {
       this.parameter = parameter;
     }
-    
+
     @NotNull
     public MavenDomMojo getMojo() {
       return (MavenDomMojo)parameter.getParent().getParent();

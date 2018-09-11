@@ -22,6 +22,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjec
  */
 public interface PostCvsActivity {
   PostCvsActivity DEAF = new PostCvsActivity() {
+    @Override
     public void registerCorruptedProjectOrModuleFile(MergedWithConflictProjectOrModuleFile mergedWithConflictProjectOrModuleFile) {
     }
 

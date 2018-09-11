@@ -105,7 +105,7 @@ public abstract class VcsDirtyScope {
    */
   public abstract boolean belongsTo(final FilePath path);
 
-  public abstract boolean belongsTo(final FilePath path, final Consumer<AbstractVcs> vcsConsumer);
+  public abstract boolean belongsTo(final FilePath path, final Consumer<? super AbstractVcs> vcsConsumer);
 
   public boolean wasEveryThingDirty() {
     return false;

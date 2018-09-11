@@ -26,7 +26,7 @@ class FromArrayConversion {
   static void addConversions(final PsiElement element,
                              final String prefix,
                              final PsiType itemType,
-                             final Consumer<LookupElement> result,
+                             final Consumer<? super LookupElement> result,
                              @Nullable PsiElement qualifier,
                              @NotNull PsiType expectedType) throws IncorrectOperationException {
     final String methodName = getArraysConversionMethod(itemType, expectedType);

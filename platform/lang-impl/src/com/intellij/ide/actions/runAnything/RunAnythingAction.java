@@ -8,9 +8,9 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider;
@@ -28,19 +28,20 @@ import com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.impl.PoppedIcon;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -65,19 +66,18 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +99,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.*;
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -111,11 +112,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
+  public static final String TOOLTIP_TEXT = IdeBundle.message("run.anything.action.tooltip.text", getShortcut());
   static final String RUN_ANYTHING = "RunAnything";
 
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
-  private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
   private static final String HELP_PLACEHOLDER = "?";
   private static final NotNullLazyValue<Boolean> IS_ACTION_ENABLED = new NotNullLazyValue<Boolean>() {
     @NotNull
@@ -171,56 +172,26 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }, null);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = new BorderLayoutPanel() {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+    return new ActionButton(this, presentation, ActionPlaces.NAVIGATION_BAR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
-      public Dimension getPreferredSize() {
-        return JBUI.size(25);
+      protected void updateToolTipText() {
+        if (Registry.is("ide.helptooltip.enabled")) {
+          HelpTooltip.dispose(this);
+
+          new HelpTooltip()
+            .setTitle(myPresentation.getText())
+            .setShortcut(getShortcut())
+            .setDescription(TOOLTIP_TEXT)
+            .setLocation(getTooltipLocation()).installOn(this);
+        }
+        else {
+          setToolTipText(TOOLTIP_TEXT);
+        }
       }
     };
-    panel.setOpaque(false);
-
-    final JLabel label = new JBLabel(AllIcons.Actions.Run_anything) {
-      {
-        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
-      }
-    };
-    panel.add(label, BorderLayout.CENTER);
-    RunAnythingUtil.initTooltip(label);
-    label.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        if (myBalloon != null) {
-          myBalloon.cancel();
-        }
-        myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
-        label.setToolTipText(null);
-        IdeTooltipManager.getInstance().hideCurrentNow(false);
-        ActionToolbarImpl toolbar = UIUtil.getParentOfType(ActionToolbarImpl.class, panel);
-        if (toolbar != null) {
-          ToolbarClicksCollector.record(RunAnythingAction.this, toolbar.getPlace());
-        }
-        actionPerformed(null, e);
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(RUN_ANYTHING_POPPED_ICON);
-        }
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Actions.Run_anything);
-        }
-      }
-    });
-
-    return panel;
   }
 
   private void updateComponents() {
@@ -290,7 +261,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     //    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myIsUsedTrigger = true;
 
         final String pattern = editor.getText();
@@ -804,7 +775,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void setHandleMatchedConfiguration() {
     myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
       }
     });
@@ -960,6 +931,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
   }
 
+  @NotNull
+  public static String getShortcut() {
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts();
+    if (shortcuts.length == 0) {
+      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl");
+    }
+    return KeymapUtil.getShortcutsText(shortcuts);
+  }
+
   private class MyListRenderer extends ColoredListCellRenderer {
     private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
     private final JLabel myTitle = new JLabel();
@@ -1063,7 +1043,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
+    CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myList);
@@ -1282,7 +1262,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
             ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
@@ -1443,7 +1423,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
-    public MySearchTextField() {
+    MySearchTextField() {
       super(false, "RunAnythingHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);

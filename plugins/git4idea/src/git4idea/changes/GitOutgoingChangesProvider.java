@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,6 +35,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     myProject = project;
   }
 
+  @Override
   public Pair<VcsRevisionNumber, List<CommittedChangeList>> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote)
     throws VcsException {
     LOG.debug("getOutgoingChanges root: " + vcsRoot.getPath());
@@ -65,6 +52,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return new Pair<>(base, map(lists, identity()));
   }
 
+  @Override
   @Nullable
   public VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
     LOG.debug("getMergeBaseNumber parameter: " + anyFileUnderRoot.getPath());
@@ -85,6 +73,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return base;
   }
 
+  @Override
   public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException {
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
@@ -121,6 +110,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return result;
   }
 
+  @Override
   @Nullable
   public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
     if (VcsRevisionNumber.NULL.equals(revision)) return null;

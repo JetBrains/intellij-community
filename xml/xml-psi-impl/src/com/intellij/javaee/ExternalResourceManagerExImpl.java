@@ -240,7 +240,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return ArrayUtil.toStringArray(result);
   }
 
-  private static <T> void addResourcesFromMap(@NotNull List<String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
+  private static <T> void addResourcesFromMap(@NotNull List<? super String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
     Map<String, T> resources = getMap(resourcesMap, version, false);
     if (resources != null) {
       result.addAll(resources.keySet());
@@ -342,6 +342,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  @Override
   public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {

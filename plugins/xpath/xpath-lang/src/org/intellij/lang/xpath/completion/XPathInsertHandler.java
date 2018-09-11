@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 class XPathInsertHandler implements InsertHandler {
     private static final Logger LOG = Logger.getInstance(XPathInsertHandler.class.getName());
 
+    @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement lookupItem) {
         final Object object = lookupItem.getObject();
         LOG.debug("object = " + object);
@@ -71,7 +72,7 @@ class XPathInsertHandler implements InsertHandler {
             } else if (charAt(charsSequence, offset) == ':') {
                 caretModel.moveCaretRelatively(1, 0, false, false, true);
             }
-        } 
+        }
     }
 
     private static char charAt(CharSequence charsSequence, int offset) {

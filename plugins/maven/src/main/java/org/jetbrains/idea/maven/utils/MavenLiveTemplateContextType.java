@@ -28,6 +28,7 @@ public class MavenLiveTemplateContextType extends TemplateContextType {
     super("MAVEN", "Maven");
   }
 
+  @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     if (!MavenDomUtil.isMavenFile(file)) return false;
 

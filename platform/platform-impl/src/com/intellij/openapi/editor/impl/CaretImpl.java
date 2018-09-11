@@ -3,10 +3,14 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -27,7 +31,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -122,14 +125,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
-      List<Inlay> inlaysAtOffset = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
-      boolean leanForward = ContainerUtil.find(inlaysAtOffset, inlay -> !inlay.isRelatedToPrecedingText()) != null;
-      LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset).leanForward(leanForward);
-      CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, false);
+      LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
+      CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, true, false);
       final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(getOffset());
       if (!positionByOffsetAfterMove.equals(logicalPosition)) {
         StringBuilder debugBuffer = new StringBuilder();
-        moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, true);
+        moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, true, true);
         int actualOffset = getOffset();
         int textStart = Math.max(0, Math.min(offset, actualOffset) - 1);
         final DocumentEx document = myEditor.getDocument();
@@ -190,7 +191,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         }
         else if (columnShift == 1) {
           while (myEditor.getInlayModel().hasInlineElementAt(
-            new VisualPosition(myVisibleCaret.line, 
+            new VisualPosition(myVisibleCaret.line,
                                myVisibleCaret.column + columnShift - (hasSelection() && oldOffset == getSelectionStart() ? 0 : 1)))) {
             columnShift++;
           }
@@ -348,13 +349,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
-    myEditor.getCaretModel().doWithCaretMerging(() -> moveToLogicalPosition(pos, false, null, true));
+    myEditor.getCaretModel().doWithCaretMerging(() -> moveToLogicalPosition(pos, false, null, false, true));
   }
 
 
   private CaretEvent doMoveToLogicalPosition(@NotNull LogicalPosition pos,
                                              boolean locateBeforeSoftWrap,
                                              @NonNls @Nullable StringBuilder debugBuffer,
+                                             boolean adjustForInlays,
                                              boolean fireListeners) {
     assertIsDispatchThread();
     updateCachedStateIfNeeded();
@@ -442,11 +444,18 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
     myVisualColumnAdjustment = 0;
-    
+
     updateOffsetsFromLogicalPosition();
     int newOffset = getOffset();
     if (debugBuffer != null) {
       debugBuffer.append("Storing offset ").append(newOffset).append(" (mapped from logical position ").append(myLogicalCaret).append(")\n");
+    }
+
+    if (adjustForInlays) {
+      VisualPosition correctPosition = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, newOffset);
+      assert correctPosition.line == myVisibleCaret.line;
+      myVisualColumnAdjustment = correctPosition.column - myVisibleCaret.column;
+      myVisibleCaret = correctPosition;
     }
 
     updateVisualLineInfo();
@@ -581,7 +590,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     setCurrentLogicalCaret(myEditor.visualToLogicalPosition(myVisibleCaret));
     VisualPosition mappedPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
-    myVisualColumnAdjustment = mappedPosition.line == myVisibleCaret.line && myVisibleCaret.column > mappedPosition.column && 
+    myVisualColumnAdjustment = mappedPosition.line == myVisibleCaret.line && myVisibleCaret.column > mappedPosition.column &&
                                !myLogicalCaret.leansForward ? myVisibleCaret.column - mappedPosition.column : 0;
     updateOffsetsFromLogicalPosition();
 
@@ -604,6 +613,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   CaretEvent moveToLogicalPosition(@NotNull LogicalPosition pos,
                                            boolean locateBeforeSoftWrap,
                                            @Nullable StringBuilder debugBuffer,
+                                           boolean adjustForInlays,
                                            boolean fireListeners) {
     if (mySkipChangeRequests) {
       return null;
@@ -617,7 +627,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     myReportCaretMoves = true;
     try {
-      return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, fireListeners);
+      return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, adjustForInlays, fireListeners);
     }
     finally {
       myReportCaretMoves = false;
@@ -859,7 +869,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       newSelectionStartColumn = -1;
       newSelectionEndColumn = -1;
     }
-    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false);
+    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false, false);
     clone.myLastColumnNumber = myLastColumnNumber;
     clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
     clone.myDesiredSelectionStartColumn = newSelectionStartColumn;
@@ -1163,7 +1173,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       mySelectionMarker = marker;
 
       if (fireListeners) {
-        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, 
+        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor,
                                                                              oldSelectionStart, oldSelectionEnd, startOffset, endOffset));
       }
 
@@ -1286,7 +1296,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       try {
         EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        handler.execute(myEditor, this, myEditor.getDataContext());
+        DataContext context = AnActionEvent.getInjectedDataContext(new CaretSpecificDataContext(myEditor.getDataContext(), this));
+        Caret caret = context.getData(CommonDataKeys.CARET);
+        assert caret != null;
+        handler.execute(caret.getEditor(), caret, context);
       }
       finally {
         if (needOverrideSetting) {

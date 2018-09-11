@@ -40,20 +40,24 @@ public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier 
     this.moduleIdentifier = new ModuleIdentifierImpl(group, module);
   }
 
+  @Override
   public String getDisplayName() {
     return group + ":" + module + ":" + version;
   }
 
+  @Override
   @NotNull
   public String getGroup() {
     return group;
   }
 
+  @Override
   @NotNull
   public String getModule() {
     return module;
   }
 
+  @Override
   @NotNull
   public String getVersion() {
     return version;
@@ -96,7 +100,7 @@ class ModuleIdentifierImpl implements ModuleIdentifier {
   @NotNull private final String myGroup;
   @NotNull private final String myModule;
 
-  public ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
+  ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
     myGroup = group;
     myModule = module;
   }

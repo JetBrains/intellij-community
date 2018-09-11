@@ -25,14 +25,17 @@ public class SimpleCheckoutStrategy extends CheckoutStrategy{
     super(selectedLocation, cvsPath, isForFile);
   }
 
+  @Override
   public boolean useAlternativeCheckoutLocation() {
     return false;
   }
 
+  @Override
   public File getResult() {
     return new File(getSelectedLocation(), getCvsPath().getPath());
   }
 
+  @Override
   public File getCheckoutDirectory() {
     return getSelectedLocation();
   }

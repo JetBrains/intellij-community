@@ -105,7 +105,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       }
       lookup.appendPrefix(charTyped);
       if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-        final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+        final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
         if (completion != null) {
           completion.scheduleRestart();
         } else {
@@ -115,7 +115,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
 
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
 
-      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
       if (completion != null) {
         completion.prefixUpdated();
       }

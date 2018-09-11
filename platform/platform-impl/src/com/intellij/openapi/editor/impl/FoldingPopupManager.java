@@ -33,7 +33,7 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
     Editor editor = e.getEditor();
     if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
@@ -72,23 +72,23 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
   }
 
   @Override
-  public void mouseExited(EditorMouseEvent e) {
+  public void mouseExited(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
     TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e.getMouseEvent(), true);
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {}
+  public void mouseDragged(@NotNull EditorMouseEvent e) {}
 
   @Override
-  public void mousePressed(EditorMouseEvent e) {}
+  public void mousePressed(@NotNull EditorMouseEvent e) {}
 
   @Override
-  public void mouseClicked(EditorMouseEvent e) {}
+  public void mouseClicked(@NotNull EditorMouseEvent e) {}
 
   @Override
-  public void mouseReleased(EditorMouseEvent e) {}
+  public void mouseReleased(@NotNull EditorMouseEvent e) {}
 
   @Override
-  public void mouseEntered(EditorMouseEvent e) {}
+  public void mouseEntered(@NotNull EditorMouseEvent e) {}
 }

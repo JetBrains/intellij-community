@@ -25,11 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -111,7 +107,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     final CaretListener caretListener = new CaretListener() {
       @Override
-      public void caretPositionChanged(final CaretEvent e) {
+      public void caretPositionChanged(@NotNull final CaretEvent e) {
         if (myUserCaretChange) {
           queueUpdate();
         }
@@ -243,7 +239,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     return provider == null ? defaultProvider : provider;
   }
 
-  private static PsiElement[] toPsiElementArray(Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs) {
+  private static PsiElement[] toPsiElementArray(Collection<? extends Pair<PsiElement, BreadcrumbsProvider>> pairs) {
     PsiElement[] elements = new PsiElement[pairs.size()];
     int index = 0;
     for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
@@ -493,7 +489,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private static class MyUpdate extends Update {
     private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
 
-    public MyUpdate(@NonNls final BreadcrumbsXmlWrapper c) {
+    MyUpdate(@NonNls final BreadcrumbsXmlWrapper c) {
       super(c);
 
       myBreadcrumbsComponent = c;

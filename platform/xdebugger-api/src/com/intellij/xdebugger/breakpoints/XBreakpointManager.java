@@ -63,14 +63,22 @@ public interface XBreakpointManager {
                                                                                          @NotNull XBreakpointListener<B> listener,
                                                                                          Disposable parentDisposable);
 
+  // no externals usages, agreed to keep it anyway for now
+  // cannot be default because project message bus must be used
   /**
-   * Use {@link XBreakpointListener#TOPIC}
+   * @deprecated Use {@link XBreakpointListener#TOPIC}
+   */
+  @Deprecated
+  void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable);
+
+  /**
+   * @deprecated Use {@link XBreakpointListener#TOPIC}
    */
   @Deprecated
   void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
 
   /**
-   * Use {@link XBreakpointListener#TOPIC}
+   * @deprecated Use {@link XBreakpointListener#TOPIC}
    */
   @Deprecated
   void removeBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);

@@ -65,6 +65,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     buildArtifacts(project, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
   }
 
+  @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     throw new UnsupportedOperationException("MavenProjectTaskRunner#canRun(ProjectTask)");
   }
@@ -241,6 +242,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           mavenRunner.runBatch(commands, null, null, TasksBundle.message("maven.tasks.executing"), indicator, console);
         }

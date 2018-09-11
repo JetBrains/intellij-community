@@ -202,7 +202,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
         };
         myField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          protected void textChanged(DocumentEvent e) {
+          protected void textChanged(@NotNull DocumentEvent e) {
             checkNowAction.setEnabled(!StringUtil.isEmptyOrSpaces(myField.getText()));
           }
         });

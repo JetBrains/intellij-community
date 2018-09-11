@@ -33,18 +33,18 @@ class ActionTracker {
     myProject = editor.getProject();
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         myActionsHappened = true;
       }
 
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         myActionsHappened = true;
       }
     });
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (!myIgnoreDocumentChanges) {
           myActionsHappened = true;
         }
@@ -62,7 +62,7 @@ class ActionTracker {
     Disposer.register(myProject, disposable);
     myProject.getMessageBus().connect(disposable).subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         Disposer.dispose(disposable);
         myIgnoreDocumentChanges = false;
       }

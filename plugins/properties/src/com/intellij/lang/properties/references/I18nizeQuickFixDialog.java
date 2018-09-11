@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -49,7 +48,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -137,7 +138,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     myPropertiesFile.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         propertiesFileChanged();
         somethingChanged();
       }
@@ -145,14 +146,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     getKeyTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         somethingChanged();
       }
     });
 
     myValue.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         somethingChanged();
       }
     });
@@ -444,16 +445,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return "editing.propertyFile.i18nInspection";
   }
-
-  @Override
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("editing.propertyFile.i18nInspection");
-  }
-
 
   public JComponent getValueComponent() {
     return myValue;

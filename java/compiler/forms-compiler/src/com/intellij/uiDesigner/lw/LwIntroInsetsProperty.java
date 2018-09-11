@@ -25,6 +25,7 @@ public final class LwIntroInsetsProperty extends LwIntrospectedProperty{
     super(name, "java.awt.Insets");
   }
 
+  @Override
   public Object read(final Element element) throws Exception{
     return LwXmlReader.readInsets(element);
   }

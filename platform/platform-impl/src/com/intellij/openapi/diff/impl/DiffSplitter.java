@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,12 +18,12 @@ class DiffSplitter extends Splitter implements DiffSplitterI {
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
         @Override
-        public void visibleAreaChanged(VisibleAreaEvent e) {
+        public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
           redrawDiffs();
         }
       };
 
-  public DiffSplitter(JComponent component1, JComponent component2, DiffDividerPaint dividerPaint, DiffPanelState data) {
+  DiffSplitter(JComponent component1, JComponent component2, DiffDividerPaint dividerPaint, DiffPanelState data) {
     myPaint = dividerPaint;
     myData = data;
     setDividerWidth(30);

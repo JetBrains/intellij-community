@@ -35,10 +35,12 @@ public class SMTRunnerTestTreeView extends TestTreeView {
 
   @Nullable private TestResultsViewer myResultsViewer;
 
+  @Override
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
     return new TestTreeRenderer(properties);
   }
 
+  @Override
   @Nullable
   public SMTestProxy getSelectedTest(@NotNull final TreePath selectionPath) {
     final Object lastComponent = selectionPath.getLastPathComponent();

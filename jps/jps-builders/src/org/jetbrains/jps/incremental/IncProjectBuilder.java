@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,6 +96,7 @@ public class IncProjectBuilder {
   @Nullable private final Callbacks.ConstantAffectionResolver myJavaConstantResolver;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<>();
   private final MessageHandler myMessageDispatcher = new MessageHandler() {
+    @Override
     public void processMessage(BuildMessage msg) {
       for (MessageHandler h : myMessageHandlers) {
         h.processMessage(msg);
@@ -175,9 +176,9 @@ public class IncProjectBuilder {
       myProjectDescriptor.dataManager.flush(false);
       myProjectDescriptor.timestamps.getStorage().force();
     });
-    
+
     startTempDirectoryCleanupTask();
-    
+
     CompileContextImpl context = null;
     try {
       context = createContext(scope);
@@ -338,11 +339,11 @@ public class IncProjectBuilder {
              BuildRunner.PARALLEL_BUILD_ENABLED);
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
-    
+
     //Deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
-      public void filesGenerated(FileGeneratedEvent event) {
+      public void filesGenerated(@NotNull FileGeneratedEvent event) {
         final Set<File> outputs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
         for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
@@ -354,7 +355,7 @@ public class IncProjectBuilder {
       }
 
       @Override
-      public void filesDeleted(FileDeletedEvent event) {
+      public void filesDeleted(@NotNull FileDeletedEvent event) {
       }
     });
 
@@ -395,11 +396,15 @@ public class IncProjectBuilder {
   }
 
   private void sendElapsedTimeMessages(CompileContext context) {
-    for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
-      AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
-      int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
-      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1000000));
-    }
+    myElapsedTimeNanosByBuilder.entrySet()
+      .stream()
+      .map(entry -> {
+        AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
+        int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
+        return new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1_000_000);
+      })
+      .sorted(Comparator.comparing(BuilderStatisticsMessage::getBuilderName))
+      .forEach(context::processMessage);
   }
 
   private void startTempDirectoryCleanupTask() {
@@ -434,7 +439,7 @@ public class IncProjectBuilder {
     // in project rebuild mode performance gain is hard to observe, so it is better to save memory
     // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
     myProjectDescriptor.setFSCache(context.isProjectRebuild() ? FSCache.NO_CACHE : new FSCache());
-    
+
     final Callbacks.ConstantAffectionResolver javaResolver = myJavaConstantResolver;
     if (javaResolver == null) {
       JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, null);
@@ -671,7 +676,7 @@ public class IncProjectBuilder {
       }
       boolean okToDelete = applicability == Applicability.ALL;
       if (okToDelete && !moduleIndex.isExcluded(outputRoot)) {
-        // if output root itself is directly or indirectly excluded, 
+        // if output root itself is directly or indirectly excluded,
         // there cannot be any manageable sources under it, even if the output root is located under some source root
         // so in this case it is safe to delete such root
         if (JpsPathUtil.isUnder(allSourceRoots, outputRoot)) {
@@ -994,10 +999,10 @@ public class IncProjectBuilder {
     }
 
     // In general the set of files corresponding to changed source file may be different
-    // Need this for example, to keep up with case changes in file names  for case-insensitive OSes: 
+    // Need this for example, to keep up with case changes in file names  for case-insensitive OSes:
     // deleting the output before copying is the only way to ensure the case of the output file's name is exactly the same as source file's case
     cleanOldOutputs(context, target);
-    
+
     final List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
     final float builderProgressDelta = 1.0f / builders.size();
     for (TargetBuilder<?, ?> builder : builders) {
@@ -1031,14 +1036,15 @@ public class IncProjectBuilder {
   void cleanOldOutputs(final CompileContext context, final BuildTarget<T> target) throws ProjectBuildException, IOException {
     if (!context.getScope().isBuildForced(target)) {
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, new DirtyFilesHolderBase<T, BuildTarget<T>>(context) {
+        @Override
         public void processDirtyFiles(@NotNull FileProcessor<T, BuildTarget<T>> processor) throws IOException {
           context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
         }
       });
     }
   }
-  
-  
+
+
   private void updateDoneFraction(CompileContext context, final float delta) {
     myTargetsProcessed += delta;
     float processed = myTargetsProcessed;

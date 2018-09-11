@@ -145,6 +145,7 @@ public class GroovyCompilerWrapper {
   static List<OutputItem> getStubOutputItems(CompilationUnit compilationUnit, final File stubDirectory) {
     final List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
     compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
+      @Override
       public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
         final String topLevel = classNode.getName();
         String fileName = source.getName();

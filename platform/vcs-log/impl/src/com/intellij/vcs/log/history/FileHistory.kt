@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
@@ -51,7 +50,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
       val visibleLinearGraph = controller.compiledGraph
 
       val row = startCommit?.let {
-        findAncestorRowAffectingFile(startCommit, startPath, visibleLinearGraph, permanentGraphInfo, fileNamesData)
+        findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
       } ?: 0
       if (row >= 0) {
         val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
@@ -64,6 +63,14 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
       }
     }
     return fileNamesData.buildPathsMap()
+  }
+
+  private fun findAncestorRowAffectingFile(commitId: Int,
+                                           visibleLinearGraph: LinearGraph,
+                                           permanentGraphInfo: PermanentGraphInfo<Int>): Int {
+    return findVisibleAncestorRow(commitId, visibleLinearGraph, permanentGraphInfo) { nodeId ->
+      fileNamesData.affects(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId), startPath)
+    } ?: -1
   }
 
   companion object {
@@ -108,33 +115,6 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
       connectRows(upNode, singleParent)
     }
   }
-}
-
-internal fun findAncestorRowAffectingFile(commitId: Int,
-                                          filePath: FilePath,
-                                          visibleLinearGraph: LinearGraph,
-                                          permanentGraphInfo: PermanentGraphInfo<Int>,
-                                          fileNamesData: FileNamesData): Int {
-  val resultNodeId = Ref<Int>()
-
-  val commitsInfo = permanentGraphInfo.permanentCommitsInfo
-  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph))
-  reachableNodes.walk(setOf(commitsInfo.getNodeId(commitId)), true) { currentNode ->
-    val id = commitsInfo.getCommitId(currentNode)
-    if (fileNamesData.affects(id, filePath)) {
-      resultNodeId.set(currentNode)
-      false // stop walk, we have found it
-    }
-    else {
-      true // continue walk
-    }
-  }
-
-  if (!resultNodeId.isNull) {
-    return visibleLinearGraph.getNodeIndex(resultNodeId.get())!!
-  }
-
-  return -1
 }
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,

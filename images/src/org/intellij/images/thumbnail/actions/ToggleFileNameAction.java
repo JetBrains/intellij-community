@@ -23,12 +23,14 @@ import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
 public final class ToggleFileNameAction extends ToggleAction {
-    public boolean isSelected(AnActionEvent e) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
         ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
         return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isFileNameVisible();
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
         ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
         if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
             decorator.setFileNameVisible(state);
@@ -36,6 +38,7 @@ public final class ToggleFileNameAction extends ToggleAction {
         }
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
         super.update(e);
         ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());

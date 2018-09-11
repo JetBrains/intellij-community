@@ -57,15 +57,18 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     myBuilder = builder;
   }
 
+  @Override
   public String getName() {
     return getBuilder().getName();
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return getBuilder().getIcon();
   }
 
+  @Override
   public boolean canOpenProject(final VirtualFile file) {
     final String[] supported = getSupportedExtensions();
     if (supported != null) {
@@ -107,6 +110,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
   @Nullable
   public abstract String[] getSupportedExtensions();
 
+  @Override
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
     try {

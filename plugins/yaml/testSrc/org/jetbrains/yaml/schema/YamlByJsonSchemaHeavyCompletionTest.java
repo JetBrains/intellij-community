@@ -63,9 +63,20 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
     baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "business", "home");
   }
 
+  @Override
   public void testObjectLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
     complete();
     assertStringItems("insideTopObject1", "insideTopObject2");
+  }
+
+  @Override
+  public void testRequiredPropsFirst() throws Exception {
+    // do nothing
+  }
+
+  @Override
+  public void testRequiredPropsLast() throws Exception {
+    // do nothing
   }
 }

@@ -37,7 +37,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @NotNull
   default ConfigurationType getType() {
     ConfigurationFactory factory = getFactory();
-    return factory == null ? UnknownConfigurationType.INSTANCE : factory.getType();
+    return factory == null ? UnknownConfigurationType.getInstance() : factory.getType();
   }
 
   /**
@@ -46,10 +46,9 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @Nullable
   ConfigurationFactory getFactory();
 
+  // do not annotate as Nullable because in this case Kotlin compiler will forbid field style access (because of different nullability for getter and setter).
   /**
    * Sets the name of the configuration.
-   *
-   * @param name the new name of the configuration.
    */
   void setName(String name);
 
@@ -156,10 +155,17 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   @NotNull
-  default List<BeforeRunTask> getBeforeRunTasks() {
+  default List<BeforeRunTask<?>> getBeforeRunTasks() {
     return Collections.emptyList();
   }
 
-  default void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+  default void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
+  }
+
+  default boolean isAllowRunningInParallel() {
+    return false;
+  }
+
+  default void setAllowRunningInParallel(boolean value) {
   }
 }

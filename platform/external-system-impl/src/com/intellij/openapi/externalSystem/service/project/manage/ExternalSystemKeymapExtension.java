@@ -48,7 +48,6 @@ import com.intellij.openapi.keymap.impl.ui.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -75,6 +74,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   }
 
 
+  @Override
   public KeymapGroup createGroup(Condition<AnAction> condition, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(
       ExternalSystemBundle.message("external.system.keymap.group"), ExternalSystemIcons.TaskGroup);
@@ -291,7 +291,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     private final String myGroup;
     private final TaskData myTaskData;
 
-    public ExternalSystemTaskAction(Project project, String group, TaskData taskData) {
+    ExternalSystemTaskAction(Project project, String group, TaskData taskData) {
       myGroup = group;
       myTaskData = taskData;
       myId = getActionPrefix(project, taskData.getLinkedExternalProjectPath()) + taskData.getName();
@@ -307,6 +307,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       return hasProject(e);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final ExternalTaskExecutionInfo taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(myTaskData);
       ExternalSystemUtil.runTask(
@@ -364,7 +365,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     private final RunnerAndConfigurationSettings myConfigurationSettings;
     private final ProjectSystemId systemId;
 
-    public ExternalSystemRunConfigurationAction(Project project, RunnerAndConfigurationSettings configurationSettings) {
+    ExternalSystemRunConfigurationAction(Project project, RunnerAndConfigurationSettings configurationSettings) {
       myConfigurationSettings = configurationSettings;
       ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)configurationSettings.getConfiguration();
       systemId = runConfiguration.getSettings().getExternalSystemId();
@@ -384,6 +385,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       return hasProject(e);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ProgramRunnerUtil.executeConfiguration(myConfigurationSettings, DefaultRunExecutor.getRunExecutorInstance());
     }
@@ -402,6 +404,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       return systemId;
     }
 
+    @Override
     public String getId() {
       return myId;
     }

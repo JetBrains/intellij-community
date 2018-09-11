@@ -35,7 +35,7 @@ class JreComboboxEditor extends BasicComboBoxEditor {
   public static final TextComponentAccessor<JComboBox> TEXT_COMPONENT_ACCESSOR = new JreComboBoxTextComponentAccessor();
   private final SortedComboBoxModel<JrePathEditor.JreComboBoxItem> myComboBoxModel;
 
-  public JreComboboxEditor(SortedComboBoxModel<JrePathEditor.JreComboBoxItem> comboBoxModel) {
+  JreComboboxEditor(SortedComboBoxModel<JrePathEditor.JreComboBoxItem> comboBoxModel) {
     myComboBoxModel = comboBoxModel;
   }
 
@@ -83,6 +83,7 @@ class JreComboboxEditor extends BasicComboBoxEditor {
     return getEditorComponent().getEmptyText();
   }
 
+  @Override
   public JBTextField getEditorComponent() {
     return (JBTextField)super.getEditorComponent();
   }

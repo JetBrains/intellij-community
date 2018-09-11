@@ -97,7 +97,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
                                                myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateSwitchOnCreate();
         updateControls();
       }
@@ -109,7 +110,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateToURL();
       }
     });
@@ -153,7 +155,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myAnyLocationRadioButton.addActionListener(listener);
     updateControls();
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateToURL();
       }
     });
@@ -221,6 +224,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return HELP_ID;
   }
 
+  @Override
   protected void init() {
     super.init();
     myWorkingCopyField.setText(mySrcFile.toString());
@@ -260,14 +264,17 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myTopPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myBranchTextField;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.copyDialog";
   }

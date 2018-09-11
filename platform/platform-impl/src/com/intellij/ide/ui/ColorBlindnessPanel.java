@@ -35,7 +35,7 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
   private final JComboBox myComboBox = new ComboBox();
   private ColorBlindness myBlindness;
 
-  public ColorBlindnessPanel() {
+  ColorBlindnessPanel() {
     super(new HorizontalLayout(JBUI.scale(10)));
     add(HorizontalLayout.LEFT, myCheckBox);
     add(HorizontalLayout.LEFT, myComboBox);

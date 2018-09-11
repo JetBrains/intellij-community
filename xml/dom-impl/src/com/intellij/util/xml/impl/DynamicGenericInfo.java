@@ -259,7 +259,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
+  public boolean processAttributeChildrenDescriptions(final Processor<? super AttributeChildDescriptionImpl> processor) {
     final Set<AttributeChildDescriptionImpl> visited = new THashSet<>();
     if (!myStaticGenericInfo.processAttributeChildrenDescriptions(attributeChildDescription -> {
       visited.add(attributeChildDescription);

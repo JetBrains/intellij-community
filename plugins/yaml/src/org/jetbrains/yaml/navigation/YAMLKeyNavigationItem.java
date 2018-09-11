@@ -18,7 +18,7 @@ class YAMLKeyNavigationItem implements NavigationItem {
   @NotNull
   private final VirtualFile myFile;
 
-  public YAMLKeyNavigationItem(@NotNull Navigatable navigatable, @NotNull String name, @NotNull VirtualFile file) {
+  YAMLKeyNavigationItem(@NotNull Navigatable navigatable, @NotNull String name, @NotNull VirtualFile file) {
     myNavigatable = navigatable;
     myName = name;
     myFile = file;

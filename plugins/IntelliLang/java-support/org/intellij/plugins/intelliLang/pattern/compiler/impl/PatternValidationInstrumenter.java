@@ -53,15 +53,18 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
     myInstrumentationType = instrumentation;
   }
 
+  @Override
   public boolean instrumented() {
     return myInstrumented;
   }
 
+  @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
   }
 
+  @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
     super.visitInnerClass(name, outerName, innerName, access);
     if (myClassName.equals(name)) {
@@ -69,6 +72,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
     }
   }
 
+  @Override
   public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
     if (name.equals(ASSERTIONS_DISABLED_NAME)) {
       myHasAssertions = true;
@@ -79,6 +83,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
     return super.visitField(access, name, desc, signature, value);
   }
 
+  @Override
   public void visitEnd() {
     if (myInstrumented) {
       addField(PATTERN_CACHE_NAME, ACC_PRIVATE + ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
@@ -160,6 +165,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
     mv.visitFieldInsn(PUTSTATIC, myClassName, ASSERTIONS_DISABLED_NAME, "Z");
   }
 
+  @Override
   public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
     final MethodVisitor methodvisitor = cv.visitMethod(access, name, desc, signature, exceptions);
 
@@ -168,6 +174,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
       myHasStaticInitializer = true;
 
       return new MethodVisitor(Opcodes.API_VERSION, methodvisitor) {
+        @Override
         public void visitCode() {
           super.visitCode();
           patchStaticInitializer(mv);

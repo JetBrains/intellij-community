@@ -153,7 +153,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = new HintListener() {
-      public void hintHidden(final EventObject event) {
+      @Override
+      public void hintHidden(@NotNull final EventObject event) {
         Disposer.dispose(disposable);
       }
     };
@@ -184,7 +185,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       });
 
     if (!hint.isVisible()) {
-      closeListener.hintHidden(null);
+      closeListener.hintHidden(new EventObject(hint));
     }
   }
 
@@ -318,7 +319,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @Nullable private final JComponent myEditorComponent;
     @NotNull private final Editor myEditor;
 
-    public PopupPanel(@NotNull Editor editor,
+    PopupPanel(@NotNull Editor editor,
                       @NotNull ActionToolbar toolbar,
                       @Nullable JComponent editorComponent,
                       @Nullable JComponent additionalInfo) {
@@ -375,6 +376,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
           transferEvent(e, editor);
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
           transferEvent(e, editor);
         }
@@ -559,12 +561,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (!myTracker.isValid()) return;
       VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 

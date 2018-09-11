@@ -22,6 +22,7 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
       PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager" + path);
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myManager = new FileEditorManagerImpl(getProject(), DockManager.getInstance(getProject()));

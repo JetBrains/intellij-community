@@ -66,6 +66,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     myProject = project;
   }
 
+  @Override
   public Key<MakeBeforeRunTask> getId() {
     return ID;
   }
@@ -90,6 +91,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return AllIcons.Actions.Compile;
   }
 
+  @Override
   @Nullable
   public MakeBeforeRunTask createTask(@NotNull RunConfiguration configuration) {
     MakeBeforeRunTask task = null;
@@ -113,6 +115,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return !(configuration instanceof RemoteConfiguration) && configuration instanceof RunProfileWithCompileBeforeLaunchOption;
   }
 
+  @Override
   public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
     return doMake(myProject, configuration, env, false);
   }
@@ -137,6 +140,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       final Semaphore done = new Semaphore();
       done.down();
       final ProjectTaskNotification callback = new ProjectTaskNotification() {
+        @Override
         public void finished(@NotNull ProjectTaskResult executionResult) {
           if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
             result.set(Boolean.TRUE);

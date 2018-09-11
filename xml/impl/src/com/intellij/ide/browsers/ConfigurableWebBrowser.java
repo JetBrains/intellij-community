@@ -22,15 +22,15 @@ final class ConfigurableWebBrowser extends WebBrowser {
   private BrowserSpecificSettings specificSettings;
 
   @SuppressWarnings("UnusedDeclaration")
-  public ConfigurableWebBrowser() {
+  ConfigurableWebBrowser() {
     this(UUID.randomUUID(), BrowserFamily.CHROME);
   }
 
-  public ConfigurableWebBrowser(@NotNull UUID id, @NotNull BrowserFamily family) {
+  ConfigurableWebBrowser(@NotNull UUID id, @NotNull BrowserFamily family) {
     this(id, family, family.getName(), family.getExecutionPath(), true, family.createBrowserSpecificSettings());
   }
 
-  public ConfigurableWebBrowser(@NotNull UUID id,
+  ConfigurableWebBrowser(@NotNull UUID id,
                                 @NotNull BrowserFamily family,
                                 @NotNull String name,
                                 @Nullable String path,
@@ -162,7 +162,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   @Override
-  public void addOpenUrlParameter(@NotNull List<String> command, @NotNull String url) {
+  public void addOpenUrlParameter(@NotNull List<? super String> command, @NotNull String url) {
     if (WebBrowserManager.isEdge(this) && !command.isEmpty()) {
       command.set(command.size() - 1, command.get(command.size() - 1) + ":" + url);
     }

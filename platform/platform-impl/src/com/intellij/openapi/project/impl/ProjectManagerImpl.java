@@ -98,7 +98,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
 
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosed(project);
@@ -112,7 +112,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
 
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosing(project);

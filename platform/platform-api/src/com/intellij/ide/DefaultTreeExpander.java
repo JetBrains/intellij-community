@@ -31,15 +31,18 @@ public class DefaultTreeExpander implements TreeExpander {
     myTree = tree;
   }
 
+  @Override
   public void expandAll() {
     TreeUtil.expandAll(myTree);
     showSelectionCentered();
   }
 
+  @Override
   public boolean canExpand() {
     return myTree.isShowing();
   }
 
+  @Override
   public void collapseAll() {
     TreeUtil.collapseAll(myTree, 1);
     showSelectionCentered();
@@ -52,6 +55,7 @@ public class DefaultTreeExpander implements TreeExpander {
     }
   }
 
+  @Override
   public boolean canCollapse() {
     return myTree.isShowing();
   }

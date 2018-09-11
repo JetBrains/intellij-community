@@ -14,11 +14,12 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.update;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.DualListener;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
@@ -31,7 +32,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -70,7 +70,8 @@ public final class UpdateCommand extends AbstractCommand
 	 *               services to this command, including the ability to actually
 	 *               process all the requests
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer)
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer)
           throws CommandException, AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -130,7 +131,8 @@ public final class UpdateCommand extends AbstractCommand
 	 * command line.
 	 * Each command is responsible for constructing this information.
 	 */
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("update ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
@@ -142,7 +144,8 @@ public final class UpdateCommand extends AbstractCommand
 	 * After calling this method, the command should have no switches defined
 	 * and should behave defaultly.
 	 */
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 		setCleanCopy(false);
@@ -157,7 +160,8 @@ public final class UpdateCommand extends AbstractCommand
 		setMergeRevision2(null);
 	}
 
-	protected void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
+	@Override
+        protected void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
 		if (isCleanCopy()) {
 			if (!getGlobalOptions().isDoNoChanges()) {
 				final String newFileName = ".#" + fileObject.getName() + '.' + entry.getRevision();
@@ -205,7 +209,8 @@ public final class UpdateCommand extends AbstractCommand
 		return resetStickyOnes;
 	}
 
-	public void setResetStickyOnes(boolean resetStickyOnes) {
+	@Override
+        public void setResetStickyOnes(boolean resetStickyOnes) {
 		this.resetStickyOnes = resetStickyOnes;
 	}
 
@@ -213,7 +218,8 @@ public final class UpdateCommand extends AbstractCommand
 		return useHeadIfNotFound;
 	}
 
-	public void setUseHeadIfNotFound(boolean useHeadIfNotFound) {
+	@Override
+        public void setUseHeadIfNotFound(boolean useHeadIfNotFound) {
 		this.useHeadIfNotFound = useHeadIfNotFound;
 	}
 
@@ -221,7 +227,8 @@ public final class UpdateCommand extends AbstractCommand
 		return updateByDate;
 	}
 
-	public void setUpdateByDate(String updateByDate) {
+	@Override
+        public void setUpdateByDate(String updateByDate) {
 		this.updateByDate = getTrimmedString(updateByDate);
 	}
 
@@ -229,7 +236,8 @@ public final class UpdateCommand extends AbstractCommand
 		return updateByRevision;
 	}
 
-	public void setUpdateByRevisionOrTag(String updateByRevision) {
+	@Override
+        public void setUpdateByRevisionOrTag(String updateByRevision) {
 		this.updateByRevision = getTrimmedString(updateByRevision);
 	}
 
@@ -312,7 +320,8 @@ public final class UpdateCommand extends AbstractCommand
 		return cvsArguments.toString();
 	}
 
-	public void setUpdateByRevisionOrDate(String revision, final String date) {
+	@Override
+        public void setUpdateByRevisionOrDate(String revision, final String date) {
 		setUpdateByRevisionOrTag(revision);
 		setUpdateByDate(date);
 	}

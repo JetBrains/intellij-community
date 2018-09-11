@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,15 +11,6 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.openapi.editor.EditorFactory#getEventMulticaster()
  */
 public interface EditorEventMulticaster {
-  interface EditorEventListener extends DocumentListener, CaretListener, SelectionListener {
-  }
-
-  interface EditorMouseEventListener extends EditorMouseMotionListener, EditorMouseListener {
-  }
-
-  Topic<EditorEventListener> TOPIC = new Topic<>("changes in any currently open editor", EditorEventListener.class);
-  Topic<EditorMouseEventListener> MOUSE_TOPIC = new Topic<>("mouse changes in any currently open editor", EditorMouseEventListener.class);
-
   void addDocumentListener(@NotNull DocumentListener listener);
 
   void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable);
@@ -40,7 +30,7 @@ public interface EditorEventMulticaster {
   void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener);
 
   /**
-   * Use {@link #TOPIC}
+   * Use {@link EditorEventListener#TOPIC}
    * @deprecated
    */
   @Deprecated
