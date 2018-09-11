@@ -58,15 +58,12 @@ class CreateKotlinMPProjectWebGuiTest : KotlinGuiTestCase() {
         expectedJars
       )
 
-      val commonFacet = defaultFacetSettings[TargetPlatform.Common]!!.copy(cmdParameters = "-Xmulti-platform")
-      projectStructureDialogModel.checkFacetInOneModule(commonFacet, path = *arrayOf(projectName, "${projectName}_commonMain", "Kotlin"))
-      projectStructureDialogModel.checkFacetInOneModule(commonFacet, path = *arrayOf(projectName, "${projectName}_commonTest", "Kotlin"))
+      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, path = *arrayOf(projectName, "${projectName}_commonMain", "Kotlin"))
+      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, path = *arrayOf(projectName, "${projectName}_commonTest", "Kotlin"))
       projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, path = *arrayOf(projectName, "${projectName}_jsMain", "Kotlin"))
       projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, path = *arrayOf(projectName, "${projectName}_jsTest", "Kotlin"))
       projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM16]!!, path = *arrayOf(projectName, "${projectName}_jvmMain", "Kotlin"))
       projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM16]!!, path = *arrayOf(projectName, "${projectName}_jvmTest", "Kotlin"))
-      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, path = *arrayOf(projectName, "${projectName}_metadataMain", "Kotlin"))
-      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, path = *arrayOf(projectName, "${projectName}_metadataTest", "Kotlin"))
     }
   }
 
