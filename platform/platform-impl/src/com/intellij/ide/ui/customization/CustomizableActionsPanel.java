@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTree;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -47,6 +49,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -68,6 +71,7 @@ public class CustomizableActionsPanel {
 
   private JButton myRestoreAllDefaultButton;
   private JButton myRestoreDefaultButton;
+  private JPanel myTopPanel;
 
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
@@ -75,8 +79,6 @@ public class CustomizableActionsPanel {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);
-    TreeUIHelper.getInstance().installTreeSpeedSearch(myActionsTree, new TreePathStringConvertor(), true);
-
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myActionsTree);
@@ -274,6 +276,33 @@ public class CustomizableActionsPanel {
     patchActionsTreeCorrespondingToSchema(root);
 
     TreeExpansionMonitor.install(myActionsTree);
+    myTopPanel.setLayout(new BorderLayout());
+    myTopPanel.add(setupFilterComponent(myActionsTree), BorderLayout.WEST);
+  }
+
+  private static FilterComponent setupFilterComponent(JTree tree) {
+    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, new TreePathStringConvertor(), true);
+    final FilterComponent filterComponent = new FilterComponent("CUSTOMIZE_ACTIONS", 5) {
+      @Override
+      public void filter() {
+        mySpeedSearch.findAndSelectElement(getFilter());
+      }
+    };
+    JTextField textField = filterComponent.getTextEditor();
+    int[] keyCodes = {KeyEvent.VK_HOME, KeyEvent.VK_END, KeyEvent.VK_UP, KeyEvent.VK_DOWN};
+    for (int keyCode : keyCodes) {
+      new DumbAwareAction(){
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          String filter = filterComponent.getFilter();
+          if (!StringUtil.isEmpty(filter)) {
+            mySpeedSearch.adjustSelection(keyCode, filter);
+          }
+        }
+      }.registerCustomShortcutSet(keyCode, 0, textField);
+
+    }
+    return filterComponent;
   }
 
   private List<ActionUrl> findActionsUnderSelection() {
@@ -615,6 +644,7 @@ public class CustomizableActionsPanel {
     private JTree myTree;
     private JButton mySetIconButton;
     private TextFieldWithBrowseButton myTextField;
+    private FilterComponent myFilterComponent;
 
     FindAvailableActionsDialog() {
       super(false);
@@ -652,15 +682,17 @@ public class CustomizableActionsPanel {
           enableSetIconButton(actionManager);
         }
       });
-      JPanel northPanel = new JPanel(new BorderLayout());
-      northPanel.add(myTextField, BorderLayout.CENTER);
+      JPanel southPanel = new JPanel(new BorderLayout());
+      southPanel.add(myTextField, BorderLayout.CENTER);
       final JLabel label = new JLabel(IdeBundle.message("label.icon.path"));
       label.setLabelFor(myTextField.getChildComponent());
-      northPanel.add(label, BorderLayout.WEST);
-      northPanel.add(mySetIconButton, BorderLayout.EAST);
-      northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      southPanel.add(label, BorderLayout.WEST);
+      southPanel.add(mySetIconButton, BorderLayout.EAST);
+      southPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(northPanel, BorderLayout.NORTH);
+      panel.add(southPanel, BorderLayout.SOUTH);
+      myFilterComponent = setupFilterComponent(myTree);
+      panel.add(myFilterComponent, BorderLayout.NORTH);
 
       panel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
       myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -679,6 +711,12 @@ public class CustomizableActionsPanel {
         }
       });
       return panel;
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myFilterComponent.getTextEditor();
     }
 
     @Override
