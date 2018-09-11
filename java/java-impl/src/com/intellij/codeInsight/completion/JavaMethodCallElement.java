@@ -290,7 +290,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
-    if (methodCall == null) return;
+    if (methodCall == null || methodCall.getContainingFile() instanceof PsiCodeFragment) return;
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
     PsiExpressionList parameterOwner = methodCall.getArgumentList();

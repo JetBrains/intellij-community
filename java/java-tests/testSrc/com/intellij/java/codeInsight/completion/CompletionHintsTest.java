@@ -1492,6 +1492,17 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays(" <caret>class C { void m() { System.getProperty(<hint text=\"key:\"/><hint text=\",def:\"/>) } }");
   }
 
+  public void testCodeFragmentWithVirtualComma() {
+    enableVirtualComma();
+
+    PsiExpressionCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("System.getPro<caret>", null, null, true);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("System.getProperty(<caret>)"); // At the moment, we assure that neither hints, nor comma appear.
+                                                          // Later we might make it work correctly for code fragments.
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
