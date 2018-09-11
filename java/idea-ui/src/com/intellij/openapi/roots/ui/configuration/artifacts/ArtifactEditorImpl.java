@@ -220,7 +220,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
     labelPanel.add(new JLabel("Available Elements "));
     final HyperlinkLabel link = new HyperlinkLabel("");
-    link.setIcon(AllIcons.General.Help_small);
+    link.setIcon(AllIcons.General.ContextHelp);
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
