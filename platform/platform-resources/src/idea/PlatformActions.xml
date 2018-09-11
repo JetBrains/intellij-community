@@ -916,5 +916,7 @@
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
 
     <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
+
+    <group id="ToolWindowContextMenu"/>
   </actions>
 </idea-plugin>
