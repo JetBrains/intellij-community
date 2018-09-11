@@ -723,16 +723,21 @@ public class AllIcons {
     public static final Icon Compare4MiddleBottom = IconLoader.getIcon("/diff/compare4MiddleBottom.png"); // 16x16
     public static final Icon Compare4MiddleRight = IconLoader.getIcon("/diff/compare4MiddleRight.png"); // 16x16
     public static final Icon Compare4RightBottom = IconLoader.getIcon("/diff/compare4RightBottom.png"); // 16x16
-    public static final Icon CurrentLine = IconLoader.getIcon("/diff/currentLine.png"); // 16x16
     public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.svg"); // 12x12
     public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.svg"); // 12x12
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.svg"); // 12x12
     public static final Icon MagicResolveToolbar = IconLoader.getIcon("/diff/magicResolveToolbar.svg"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/diff/remove.svg"); // 12x12
 
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png");
+    public static final Icon CurrentLine = AllIcons.Actions.Forward;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Diff = AllIcons.Actions.Diff;
 
   }
 
