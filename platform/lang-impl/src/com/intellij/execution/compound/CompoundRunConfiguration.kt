@@ -22,7 +22,7 @@ internal data class TypeNameTarget(val type: String, val name: String, val targe
 
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
-class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = CompoundRunConfigurationType.getInstance().configurationFactories.first()) :
+class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
   RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
