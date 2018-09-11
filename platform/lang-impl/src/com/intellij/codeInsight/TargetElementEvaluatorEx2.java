@@ -38,8 +38,8 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
   }
 
   @Nullable
-  public PsiElement adjustReferenceOrReferencedElement(PsiFile file,
-                                                       Editor editor,
+  public PsiElement adjustReferenceOrReferencedElement(@NotNull PsiFile file,
+                                                       @NotNull Editor editor,
                                                        int offset,
                                                        int flags,
                                                        @Nullable PsiElement refElement) {
