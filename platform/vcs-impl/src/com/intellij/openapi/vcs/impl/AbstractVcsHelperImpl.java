@@ -387,7 +387,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return;
     }
 
-    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
+    AnnotateToggleAction.doAnnotate(editor, myProject, annotation, vcs);
   }
 
   @Override
