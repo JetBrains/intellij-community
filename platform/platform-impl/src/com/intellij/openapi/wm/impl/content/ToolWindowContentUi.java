@@ -504,7 +504,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (selectedContent == null && toolWindowGroup == null) {
       return;
     }
+    DefaultActionGroup configuredGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("ToolWindowContextMenu");
     DefaultActionGroup group = new DefaultActionGroup();
+    group.copyFromGroup(configuredGroup);
     if (selectedContent != null) {
       initActionGroup(group, selectedContent);
     }
