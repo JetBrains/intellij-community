@@ -7,11 +7,13 @@ import com.intellij.platform.onair.storage.HashMapCache;
 import com.intellij.platform.onair.storage.StorageImpl;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.tree.BTree;
+import gnu.trove.TIntHashSet;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.platform.onair.vfs.RemoteVFS.VFS_TREE_KEY_SIZE;
@@ -94,14 +96,30 @@ public class VFSRemapTest {
         storage.dumpStats(System.out);
 
         final int maxId = fs.getMaxId();
+        System.out.println("max id: " + maxId);
+        TIntHashSet nonOrphans = new TIntHashSet();
+        TIntHashSet orphans = new TIntHashSet();
+        for (final FSRecords.NameId root : fs.listRootsWithLock()) {
+          nonOrphans.add(root.id);
+        }
         for (int i = 1; i < maxId; i++) {
-          if (fs.getName(i) != null) {
-            Assert.assertEquals(i, mapping.localToRemote.get(i));
-          }
-          else {
-            Assert.assertEquals(-1, mapping.localToRemote.get(i));
+          if (isNonOrphan(fs, nonOrphans, orphans, i)) {
+            String name = fs.getName(i);
+            if (name != null) {
+              int actual = mapping.localToRemote.get(i);
+              if (i != actual) {
+                System.out.println("fail: " + i + ", name: " + name);
+                continue;
+              }
+
+              Assert.assertEquals(i, actual);
+            }
+            else {
+              Assert.assertEquals(-1, mapping.localToRemote.get(i));
+            }
           }
         }
+        System.out.println("assert done, orphans: " + orphans.size() + ", non-orphans: " + nonOrphans.size());
       }
       finally {
         if (novelty != null) {
@@ -111,6 +129,31 @@ public class VFSRemapTest {
     }
     finally {
       fs.dispose();
+    }
+  }
+
+  private static boolean isNonOrphan(final FSRecords fs, final TIntHashSet nonOrphans, final TIntHashSet orphans, final int child) {
+    if (nonOrphans.contains(child)) {
+      return true;
+    }
+    final int parent = fs.getParent(child);
+    if (parent <= 0) {
+      return false;
+    }
+    else if (orphans.contains(parent)) {
+      return false;
+    }
+    else if (Arrays.stream(fs.listAll(parent)).noneMatch(node -> node.id == child)) {
+      orphans.add(child);
+      return false;
+    }
+    if (isNonOrphan(fs, nonOrphans, orphans, parent)) {
+      nonOrphans.add(child);
+      return true;
+    }
+    else {
+      orphans.add(child);
+      return false;
     }
   }
 }

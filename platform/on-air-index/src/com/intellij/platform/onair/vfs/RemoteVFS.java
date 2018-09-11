@@ -4,8 +4,8 @@ package com.intellij.platform.onair.vfs;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Novelty;
+import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTree;
 import com.intellij.platform.onair.tree.ByteUtils;
@@ -14,9 +14,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class RemoteVFS {
 
@@ -45,10 +47,13 @@ public class RemoteVFS {
   public static Mapping remap(final FSRecords fs, final BTree remoteTree, final Novelty novelty) {
     final LinkedList<NodeMapping> stack = new LinkedList<>();
     final Novelty.Accessor accessor = novelty.access();
-    processChildren(remoteTree, accessor, stack, Integer.MIN_VALUE, getRootMap(fs));
+    final Map<CharSequence, Integer> roots = getRootMap(fs);
+    processChildren(remoteTree, accessor, stack, Integer.MIN_VALUE, roots);
 
     final IntIntHashMap localToRemote = new IntIntHashMap();
     final IntIntHashMap remoteToLocal = new IntIntHashMap();
+
+    addIdentityMapping(fs, roots.values().stream(), localToRemote, remoteToLocal);
 
     // fake idempotent mapping for default value
     localToRemote.put(1, 1);
@@ -66,14 +71,23 @@ public class RemoteVFS {
         }
       }
       processChildren(remoteTree, accessor, stack, mapping.remoteId, children);
+      addIdentityMapping(fs, children.values().stream(), localToRemote, remoteToLocal);
       mapping = stack.poll();
     }
     return new Mapping(localToRemote, remoteToLocal);
   }
 
+  private static void addIdentityMapping(FSRecords fs, Stream<Integer> folders, IntIntHashMap localToRemote, IntIntHashMap remoteToLocal) {
+    folders.forEach(localId -> { // remaining local folders
+      localToRemote.put(localId, localId);
+      remoteToLocal.put(localId, localId);
+      addIdentityMapping(fs, Arrays.stream(fs.listAll(localId)).map(node -> node.id), localToRemote, remoteToLocal);
+    });
+  }
+
   private static void processChildren(BTree remoteTree,
                                       Novelty.Accessor txn,
-                                      LinkedList<NodeMapping> queue,
+                                      LinkedList<NodeMapping> stack,
                                       int remoteParentId,
                                       Map<CharSequence, Integer> children) {
     final byte[] rangeKey = new byte[4 + 4];
@@ -84,19 +98,19 @@ public class RemoteVFS {
       final boolean matchingId = parentId == remoteParentId;
       if (matchingId) {
         final String childName = new String(value, StandardCharsets.UTF_8);
-        final Integer localId = children.get(childName);
+        final Integer localId = children.remove(childName);
         if (localId != null) {
           final int remoteId = (int)(ByteUtils.readUnsignedInt(key, 4) ^ 0x80000000);
-          queue.addFirst(new NodeMapping(localId, remoteId)); // DFS
+          stack.addFirst(new NodeMapping(localId, remoteId)); // DFS
         }
       }
       return matchingId;
     });
   }
 
-  private static void addChildren(FSRecords fs, BTree tree, Novelty.Accessor txn, int rootId) {
-    for (final FSRecords.NameId child : fs.listAll(rootId)) {
-      addChild(tree, txn, rootId, child.id, child.name.toString());
+  private static void addChildren(FSRecords fs, BTree tree, Novelty.Accessor txn, int parentId) {
+    for (final FSRecords.NameId child : fs.listAll(parentId)) {
+      addChild(tree, txn, parentId, child.id, child.name.toString());
       addChildren(fs, tree, txn, child.id);
     }
   }
