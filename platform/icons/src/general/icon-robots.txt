@@ -2,6 +2,7 @@ deprecated: arrowDown_white.png -> /general/arrowDown.svg; to be removed in IDEA
 deprecated: autohideOff.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
 deprecated: autohideOffInactive.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
 deprecated: autohideOffPressed.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
+deprecated: bullet.png; to be removed in IDEA 2020
 deprecated: collapseAll.png -> /actions/collapseall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Collapseall
 deprecated: collapseAllHover.png -> /actions/collapseall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Collapseall
 deprecated: combo.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
