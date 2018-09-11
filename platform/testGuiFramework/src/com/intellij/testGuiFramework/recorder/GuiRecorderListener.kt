@@ -22,39 +22,27 @@ interface GuiRecorderListener {
     val EP_NAME = ExtensionPointName.create<GuiRecorderListener>("com.intellij.guiRecorderListener")
 
     internal fun notifyBeforeRecordingStart() {
-      for (listener in Extensions.getExtensions(EP_NAME)) {
-        listener.beforeRecordingStart()
-      }
+      EP_NAME.extensionList.forEach { it.beforeRecordingStart() }
     }
 
     internal fun notifyBeforeRecordingPause() {
-      for (listener in Extensions.getExtensions(EP_NAME)) {
-        listener.beforeRecordingPause()
-      }
+      EP_NAME.extensionList.forEach { it.beforeRecordingPause() }
     }
 
     internal fun notifyBeforeRecordingFinish() {
-      for (listener in Extensions.getExtensions(EP_NAME)) {
-        listener.beforeRecordingFinish()
-      }
+      EP_NAME.extensionList.forEach { it.beforeRecordingFinish() }
     }
 
     internal fun notifyRecordingStarted() {
-      for (listener in Extensions.getExtensions(EP_NAME)) {
-        listener.recordingStarted()
-      }
+      EP_NAME.extensionList.forEach { it.recordingStarted() }
     }
 
     internal fun notifyRecordingPaused() {
-      for (listener in Extensions.getExtensions(EP_NAME)) {
-        listener.recordingPaused()
-      }
+      EP_NAME.extensionList.forEach { it.recordingPaused() }
     }
 
     internal fun notifyRecordingFinished() {
-      for (listener in Extensions.getExtensions(EP_NAME)) {
-        listener.recordingFinished()
-      }
+      EP_NAME.extensionList.forEach { it.recordingFinished() }
     }
   }
 }
