@@ -14,12 +14,20 @@ import org.jetbrains.plugins.groovy.lang.resolve.PropertyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 class PropertyProcessor(
-  private val receiverType: PsiType?,
+  private val receiverType: Lazy<PsiType?>,
   propertyName: String,
   private val propertyKind: PropertyKind,
   argumentTypes: () -> Array<PsiType?>?,
   private val place: PsiElement
 ) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
+
+  constructor(
+    receiverType: PsiType?,
+    propertyName: String,
+    propertyKind: PropertyKind,
+    argumentTypes: () -> Array<PsiType?>?,
+    place: PsiElement
+  ) : this(lazyOf(receiverType), propertyName, propertyKind, argumentTypes, place)
 
   private val accessorName = propertyKind.getAccessorName(propertyName)
   private val argumentTypes by lazy(LazyThreadSafetyMode.NONE, argumentTypes)
