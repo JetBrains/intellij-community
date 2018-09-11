@@ -24,7 +24,6 @@ import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyReferenceOwner;
-import com.jetbrains.python.psi.PyTargetExpression;
 
 /**
  * @author Mikhail Golubev
@@ -74,10 +73,5 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   // PY-20377
   public void testFunctionTypeCommentReturnTypeReference() {
     assertResolvesTo(PyClass.class, "MyClass");
-  }
-
-  // PY-21493
-  public void testRegexpAndFStringCombined() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyTargetExpression.class, "foo"));
   }
 }
