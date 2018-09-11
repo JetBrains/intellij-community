@@ -17,35 +17,27 @@ import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
 
@@ -153,41 +145,12 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       }
     }
 
-    final PsiElement resolveContext = state.get(ClassHint.RESOLVE_CONTEXT);
-
-    final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-    final boolean isAccessible = isAccessible(myRef, namedElement);
-    final boolean isStaticsOK = isStaticsOK(myRef, namedElement, resolveContext, false);
-
     final GroovyResolveResult candidate;
-
     if (kind == GroovyResolveKind.METHOD) {
-      final PsiMethod method = (PsiMethod)namedElement;
-
-
-      MethodCandidate methodCandidate = buildMethodCandidate(state, method);
-      GroovyInferenceSession session = new GroovyInferenceSessionBuilder(myRef, methodCandidate).build();
-      PsiSubstitutor applicabilitySubst = session.inferSubst();
-
-      candidate = new GroovyMethodResultImpl(
-        method, resolveContext, spreadState,
-        applicabilitySubst,
-        () -> {
-          GroovyInferenceSession inferenceSession =
-            new GroovyInferenceSessionBuilder(myRef, methodCandidate).addReturnConstraint().resolveMode(false).startFromTop(true).build();
-          PsiSubstitutor substitutor = inferenceSession.inferSubst(myRef);
-          return substitutor;
-        },
-        methodCandidate,
-        false,
-        isAccessible, isStaticsOK, methodCandidate.isApplicable(applicabilitySubst)
-      );
+      candidate = new MethodResolveResult((PsiMethod)namedElement, myRef, state);
     }
     else {
-      final PsiSubstitutor substitutor = getSubstitutor(state);
-      candidate = new GroovyResolveResultImpl(
-        namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, false, true
-      );
+      candidate = new BaseGroovyResolveResult<>(namedElement, myRef, state);
     }
 
     myCandidates.putValue(kind, candidate);
@@ -197,56 +160,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     }
 
     return true;
-  }
-
-
-  private MethodCandidate buildMethodCandidate(@NotNull ResolveState state, PsiMethod method) {
-    final PsiSubstitutor substitutor = getSubstitutor(state);
-    final PsiSubstitutor siteSubstitutor = updateSubst(myRef.getTypeArguments(), method.getTypeParameters(), substitutor);
-    GrExpression qualifierExpression = myRef.getQualifierExpression();
-    Argument qualifierConstraint = buildQualifier(state, qualifierExpression);
-    List<Argument> argumentConstraints = buildArguments(myRef);
-
-    if (method instanceof GrGdkMethod) {
-      ArrayList<Argument> arguments = new ArrayList<>();
-      arguments.add(0, qualifierConstraint);
-      arguments.addAll(argumentConstraints);
-      return new MethodCandidate(((GrGdkMethod)method).getStaticMethod(), siteSubstitutor, null, arguments, myRef);
-    }
-
-    return new MethodCandidate(method, siteSubstitutor, qualifierConstraint, argumentConstraints, myRef);
-  }
-
-  @NotNull
-  private Argument buildQualifier(@NotNull ResolveState state, GrExpression qualifierExpression) {
-    final PsiType resolvedThis = state.get(ClassHint.THIS_TYPE);
-    final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-
-    if (qualifierExpression != null && spreadState == null) {
-      return new Argument(null, qualifierExpression);
-    }
-
-    PsiType type = PsiImplUtil.getQualifierType(myRef);
-    if (spreadState != null && type != null) {
-      type = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
-    }
-
-    return new Argument(resolvedThis != null ? resolvedThis : type, null);
-  }
-
-
-
-
-  @NotNull
-  private static PsiSubstitutor updateSubst(@NotNull PsiType[] arguments,
-                                            @NotNull PsiTypeParameter[] parameters,
-                                            @NotNull PsiSubstitutor substitutor) {
-    if (arguments.length != parameters.length) return substitutor;
-    for (int i = 0; i < arguments.length; i++) {
-      substitutor.put(parameters[i], arguments[i]);
-    }
-
-    return substitutor;
   }
 
   @SuppressWarnings("unchecked")
