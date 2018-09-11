@@ -33,6 +33,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
@@ -160,9 +161,11 @@ public class ShowAffectedTestsAction extends AnAction {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
-      if (DumbService.isDumb(project)) return null;
-      PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
-      if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
+      if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
+      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+      if (!index.isInSource(file)) return null;
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return null;
       UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
