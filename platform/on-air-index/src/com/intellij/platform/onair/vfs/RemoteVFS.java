@@ -78,6 +78,7 @@ public class RemoteVFS {
   }
 
   private static void addIdentityMapping(FSRecords fs, Stream<Integer> folders, IntIntHashMap localToRemote, IntIntHashMap remoteToLocal) {
+    // TODO: instead of identity mapping allocate an unique id (increment max id) against remote vfs
     folders.forEach(localId -> { // remaining local folders
       localToRemote.put(localId, localId);
       remoteToLocal.put(localId, localId);
