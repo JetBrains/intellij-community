@@ -328,15 +328,23 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void reportActionError(final PluginId pluginId, @NotNull String message) {
-    if (pluginId == null) {
-      LOG.error(message);
+  private static void reportActionError(PluginId pluginId, @NotNull String message) {
+    reportActionError(pluginId, message, null);
+  }
+
+  private static void reportActionError(PluginId pluginId, @NotNull String message, @Nullable Throwable cause) {
+    if (pluginId != null) {
+      LOG.error(new PluginException(message, cause, pluginId));
+    }
+    else if (cause != null) {
+      LOG.error(message, cause);
     }
     else {
-      LOG.error(new PluginException(message, null, pluginId));
+      LOG.error(message);
     }
   }
-  private static void reportActionWarning(final PluginId pluginId, @NotNull String message) {
+
+  private static void reportActionWarning(PluginId pluginId, @NotNull String message) {
     if (pluginId == null) {
       LOG.warn(message);
     }
@@ -740,26 +748,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       return group;
     }
-    catch (ClassNotFoundException e) {
-      reportActionError(pluginId, "class with name \"" + className + "\" not found");
-      return null;
-    }
-    catch (NoClassDefFoundError e) {
-      reportActionError(pluginId, "class with name \"" + e.getMessage() + "\" not found");
-      return null;
-    }
-    catch(UnsupportedClassVersionError e) {
-      reportActionError(pluginId, "unsupported class version for " + className);
-      return null;
-    }
     catch (Exception e) {
-      final String message = "cannot create class \"" + className + "\"";
-      if (pluginId == null) {
-        LOG.error(message, e);
-      }
-      else {
-        LOG.error(new PluginException(message, e, pluginId));
-      }
+      String message = "cannot create class \"" + className + "\"";
+      reportActionError(pluginId, message, e);
       return null;
     }
   }
