@@ -16,6 +16,7 @@ public class ReportProblemAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    SendFeedbackAction.doPerformAction(e.getProject(), ApplicationInfoEx.getInstanceEx().getYoutrackUrl());
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    SendFeedbackAction.doPerformActionImpl(e.getProject(), appInfo.getYoutrackUrl(), SendFeedbackAction.getDescription());
   }
 }

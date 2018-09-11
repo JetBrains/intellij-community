@@ -43,16 +43,16 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   public static void doPerformAction(@Nullable Project project) {
-    doPerformAction(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription());
+    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription());
   }
 
   public static void doPerformAction(@Nullable Project project, @NotNull String description) {
-    doPerformAction(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
+    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
   }
 
-  static void doPerformAction(@Nullable Project project,
-                              @NotNull String urlTemplate,
-                              @NotNull String description) {
+  static void doPerformActionImpl(@Nullable Project project,
+                                  @NotNull String urlTemplate,
+                                  @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();
