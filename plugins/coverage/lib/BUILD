@@ -35,5 +35,10 @@ java_import(
 java_import(
     name = "jacocoagent",
     jars = ["jacocoagent.jar"],
+    # b/112891050
+    neverlink = select({
+        "//tools/base/bazel:coverage": 1,
+        "//conditions:default": 0,
+    }),
     visibility = ["//visibility:public"],
 )
