@@ -833,7 +833,6 @@ public class AllIcons {
     public static final Icon ExclMark = IconLoader.getIcon("/general/exclMark.svg"); // 16x16
     public static final Icon ExpandComponent = IconLoader.getIcon("/general/expandComponent.svg"); // 12x12
     public static final Icon ExpandComponentHover = IconLoader.getIcon("/general/expandComponentHover.svg"); // 12x12
-    public static final Icon ExportSettings = IconLoader.getIcon("/general/ExportSettings.png"); // 32x32
     public static final Icon ExternalToolsSmall = IconLoader.getIcon("/general/externalToolsSmall.svg"); // 16x16
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
@@ -857,7 +856,6 @@ public class AllIcons {
     public static final Icon HideToolWindowInactive = IconLoader.getIcon("/general/hideToolWindowInactive.png"); // 14x14
     public static final Icon HideWarnings = IconLoader.getIcon("/general/hideWarnings.png"); // 16x16
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
-    public static final Icon ImportSettings = IconLoader.getIcon("/general/ImportSettings.png"); // 32x32
     public static final Icon Information = IconLoader.getIcon("/general/information.svg"); // 16x16
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.svg"); // 32x32
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); // 11x14
@@ -1069,6 +1067,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon ExpandAllHover = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
 
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ExportSettings = AllIcons.ToolbarDecorator.Export;
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ExternalToolsSmall */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1098,6 +1101,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ImportProject = AllIcons.ToolbarDecorator.Import;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ImportSettings = AllIcons.ToolbarDecorator.Import;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")

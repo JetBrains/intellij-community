@@ -673,8 +673,8 @@
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
 
-      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
-      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
+      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.ToolbarDecorator.Import"/>
+      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.ToolbarDecorator.Export"/>
 
       <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
       <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>

@@ -24,12 +24,14 @@ deprecated: defaultKeymap.png; to be removed in IDEA 2020
 deprecated: editColors.png -> /general/settings.svg; to be removed in IDEA 2020 - AllIcons.General.Settings
 deprecated: expandAll.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
 deprecated: expandAllHover.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
+deprecated: ExportSettings.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
 deprecated: externalTools.png -> /general/externalToolsSmall.png; to be removed in IDEA 2020 - use AllIcons.General.ExternalToolsSmall
 deprecated: gear.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
 deprecated: gearHover.png; to be removed in IDEA 2020
 deprecated: getProjectfromVCS.png -> /welcome/fromVCS.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS
 deprecated: ijLogo.png; to be removed in IDEA 2020
 deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
+deprecated: ImportSettings.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
 deprecated: jdk.png; to be removed in IDEA 2020
 deprecated: keymap.png; to be removed in IDEA 2020
 deprecated: openProject.png -> /actions/menu-open.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open
