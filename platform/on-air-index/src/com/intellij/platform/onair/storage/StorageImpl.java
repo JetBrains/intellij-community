@@ -8,17 +8,17 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.onair.storage.api.*;
+import com.intellij.platform.onair.storage.memcached.AddressOperationCallback;
+import com.intellij.platform.onair.storage.memcached.BulkGetAddressCompletionListener;
+import com.intellij.platform.onair.storage.memcached.BulkGetAddressFuture;
+import com.intellij.platform.onair.storage.memcached.MultiGetOperationFastImpl;
 import com.intellij.platform.onair.tree.BTree;
 import net.spy.memcached.*;
 import net.spy.memcached.internal.BulkFuture;
-import net.spy.memcached.internal.BulkGetCompletionListener;
-import net.spy.memcached.internal.BulkGetFuture;
-import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.transcoders.Transcoder;
-import net.spy.memcached.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -147,7 +147,6 @@ public class StorageImpl implements Storage {
     }
 
     final int bytesPerKey = tree.getKeySize();
-    final List<String> addresses = new ArrayList<>(size);
     final List<Address> addressValues = new ArrayList<>(size);
 
     for (int i = 0; i < size; i++) {
@@ -157,12 +156,11 @@ public class StorageImpl implements Storage {
         final long highBytes = readUnsignedLong(bytes, offset + 8, 8);
         Address address = new Address(highBytes, lowBytes);
         if (myLocalCache.getIfPresent(address) == null) { // don't prefetch already cached stuff
-          addresses.add(address.toString());
           addressValues.add(address);
         }
       }
     }
-    if (addresses.isEmpty()) {
+    if (addressValues.isEmpty()) {
       return; // all pre-fetched
     }
     int index = this.q + 1;
@@ -171,20 +169,15 @@ public class StorageImpl implements Storage {
     }
     q = index;
     prefetchInProgress.incrementAndGet();
-    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulkBytes(addresses.iterator());
-    future.addListener(new BulkGetCompletionListener() {
+    final BulkGetAddressFuture<byte[]> future = myClient[index].asyncGetBulkBytes(addressValues.iterator());
+    future.addListener(new BulkGetAddressCompletionListener() {
       @Override
-      public void onComplete(BulkGetFuture<?> future) throws Exception {
+      public void onComplete(BulkGetAddressFuture<?> future) throws Exception {
         prefetchInProgress.decrementAndGet();
         preFetches.remove(prefetchAddress);
-        Map<String, ?> data = future.get();
+        Map<Address, ?> data = future.get();
         if (future.getStatus().isSuccess()) {
-          data.forEach((key, value) -> {
-            final int index = addresses.indexOf(key);
-            if (index >= 0) {
-              myLocalCache.put(addressValues.get(index), value);
-            }
-          });
+          data.forEach((key, value) -> myLocalCache.put(key, value));
         }
         else {
           addressValues.forEach(address -> myLocalCache.invalidate(address)); // cleanup futures
@@ -196,26 +189,14 @@ public class StorageImpl implements Storage {
 
   @Override
   public void bulkLookup(@NotNull List<Address> addresses, @NotNull DataConsumer consumer) {
-    final int size = addresses.size();
-    final Map<String, Address> serializedAddresses = new HashMap<>(size);
-    final List<String> loadAddresses = new ArrayList<>(size);
-
-    addresses.forEach(address -> {
-      String loadAddress = address.toString();
-      if (serializedAddresses.put(loadAddress, address) != null) {
-        throw new IllegalStateException("address in not unique: " + address);
-      }
-      loadAddresses.add(loadAddress);
-    });
-
     int clientIndex = this.q + 1;
     if (clientIndex >= CLIENT_COUNT) {
       clientIndex = 0;
     }
     q = clientIndex;
 
-    final BulkFuture<Map<String, byte[]>> future = myClient[clientIndex].asyncGetBulkBytes(loadAddresses.iterator());
-    final Map<String, byte[]> data;
+    final BulkFuture<Map<Address, byte[]>> future = myClient[clientIndex].asyncGetBulkBytes(addresses.iterator());
+    final Map<Address, byte[]> data;
     try {
       data = future.get();
     }
@@ -228,16 +209,10 @@ public class StorageImpl implements Storage {
     }
     if (future.getStatus().isSuccess()) {
       data.forEach((key, value) -> {
-        final Address address = serializedAddresses.remove(key);
-        if (address != null) {
-          myLocalCache.put(address, value);
-          consumer.consume(address, value);
-        }
-        else {
-          throw new IllegalStateException("weird address");
-        }
+        myLocalCache.put(key, value);
+        consumer.consume(key, value);
       });
-      if (!serializedAddresses.isEmpty()) {
+      if (data.size() != addresses.size()) {
         throw new IllegalStateException("not all addresses returned");
       }
     }
@@ -331,23 +306,23 @@ public class StorageImpl implements Storage {
       super(cf, addrs);
     }
 
-    public BulkFuture<Map<String, byte[]>> asyncGetBulkBytes(Iterator<String> keyIter) {
-      final Map<String, Future<byte[]>> m = new ConcurrentHashMap<>();
+    public BulkGetAddressFuture<byte[]> asyncGetBulkBytes(Iterator<Address> keyIter) {
+      final Map<Address, Future<byte[]>> m = new ConcurrentHashMap<>();
 
       // Break the gets down into groups by key
-      final Map<MemcachedNode, List<String>> chunks = new HashMap<>();
+      final Map<MemcachedNode, List<Address>> chunks = new HashMap<>();
       final NodeLocator locator = mconn.getLocator();
 
       while (keyIter.hasNext()) {
-        String key = keyIter.next();
-        StringUtils.validateKey(key, true);
-        final MemcachedNode primaryNode = locator.getPrimary(key);
+        Address key = keyIter.next();
+        final MemcachedNode primaryNode = locator.getPrimary("xxx"); // TODO: use key
         MemcachedNode node = null;
         if (primaryNode.isActive()) {
           node = primaryNode;
         }
         else {
-          for (Iterator<MemcachedNode> i = locator.getSequence(key); node == null && i.hasNext(); ) {
+          // TODO: use key
+          for (Iterator<MemcachedNode> i = locator.getSequence("xxx"); node == null && i.hasNext(); ) {
             MemcachedNode n = i.next();
             if (n.isActive()) {
               node = n;
@@ -357,7 +332,7 @@ public class StorageImpl implements Storage {
             node = primaryNode;
           }
         }
-        List<String> ks = chunks.get(node);
+        List<Address> ks = chunks.get(node);
         if (ks == null) {
           ks = new ArrayList<>();
           chunks.put(node, ks);
@@ -369,9 +344,9 @@ public class StorageImpl implements Storage {
       int initialLatchCount = chunks.isEmpty() ? 0 : 1;
       final CountDownLatch latch = new CountDownLatch(initialLatchCount);
       final Collection<Operation> ops = new ArrayList<>(chunks.size());
-      final BulkGetFuture<byte[]> rv = new BulkGetFuture<>(m, ops, latch, executorService);
+      final BulkGetAddressFuture<byte[]> rv = new BulkGetAddressFuture<>(m, ops, latch, executorService);
 
-      GetOperation.Callback cb = new GetOperation.Callback() {
+      AddressOperationCallback cb = new AddressOperationCallback() {
         @Override
         @SuppressWarnings("synthetic-access")
         public void receivedStatus(OperationStatus status) {
@@ -382,7 +357,7 @@ public class StorageImpl implements Storage {
         }
 
         @Override
-        public void gotData(String k, int flags, byte[] data) {
+        public void gotData(Address k, int flags, byte[] data) {
           m.put(k, tcService.decode(MY_TRANSCODER, new CachedData(flags, data, MY_TRANSCODER.getMaxSize())));
         }
 
@@ -399,7 +374,7 @@ public class StorageImpl implements Storage {
       // is all set up, convert all of these strings collections to operations
       final Map<MemcachedNode, Operation> mops = new HashMap<>();
 
-      for (Map.Entry<MemcachedNode, List<String>> me : chunks.entrySet()) {
+      for (Map.Entry<MemcachedNode, List<Address>> me : chunks.entrySet()) {
         Operation op = new MultiGetOperationFastImpl(me.getValue(), cb);
         mops.put(me.getKey(), op);
         ops.add(op);

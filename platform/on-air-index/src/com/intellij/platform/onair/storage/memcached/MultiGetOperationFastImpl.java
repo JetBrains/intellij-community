@@ -1,11 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.platform.onair.storage;
+package com.intellij.platform.onair.storage.memcached;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.tree.ByteUtils;
 import net.spy.memcached.KeyUtil;
 import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.ops.*;
+import net.spy.memcached.ops.GetOperation;
+import net.spy.memcached.ops.KeyedOperation;
+import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.VBucketAware;
 import net.spy.memcached.protocol.binary.OperationImpl;
 
 import java.io.IOException;
@@ -14,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class MultiGetOperationFastImpl extends OperationImpl implements VBucketAware, KeyedOperation, GetOperation {
   private static final byte CMD_GETQ = 0x09;
@@ -22,12 +27,12 @@ public class MultiGetOperationFastImpl extends OperationImpl implements VBucketA
 
   private static final AtomicInteger SEQ_NUMBER;
 
-  private final List<String> keys;
+  private final List<Address> keys;
 
   private final int terminalOpaque;
   private final int startingOpaque;
 
-  public MultiGetOperationFastImpl(List<String> keys, OperationCallback cb) {
+  public MultiGetOperationFastImpl(List<Address> keys, AddressOperationCallback cb) {
     super(DUMMY_OPCODE, -1, cb);
     this.keys = keys;
     int size = keys.size();
@@ -48,14 +53,14 @@ public class MultiGetOperationFastImpl extends OperationImpl implements VBucketA
   @Override
   public void initialize() {
     int size = (1 + keys.size()) * MIN_RECV_PACKET;
-    for (final String key : keys) {
-      size += key.length();
+    for (final Address key : keys) {
+      size += key.toString().length(); // TODO: optimize
     }
     // set up the initial header stuff
     ByteBuffer bb = ByteBuffer.allocate(size);
     int i = 0;
-    for (final String key : keys) {
-      final byte[] keyBytes = KeyUtil.getKeyBytes(key);
+    for (final Address key : keys) {
+      final byte[] keyBytes = KeyUtil.getKeyBytes(key.toString()); // TODO: optimize
       // Custom header
       bb.put(REQ_MAGIC);
       bb.put(CMD_GETQ);
@@ -104,7 +109,7 @@ public class MultiGetOperationFastImpl extends OperationImpl implements VBucketA
       final int flags = ByteUtils.readUnsignedShort(pl, 0);
       final byte[] data = new byte[pl.length - EXTRA_HDR_LEN];
       System.arraycopy(pl, EXTRA_HDR_LEN, data, 0, pl.length - EXTRA_HDR_LEN);
-      Callback cb = (Callback)getCallback();
+      AddressOperationCallback cb = (AddressOperationCallback)getCallback();
       cb.gotData(keys.get(responseOpaque - startingOpaque), flags, data);
     }
     resetInput();
@@ -116,7 +121,7 @@ public class MultiGetOperationFastImpl extends OperationImpl implements VBucketA
   }
 
   public Collection<String> getKeys() {
-    return keys;
+    return keys.stream().map(address -> address.toString()).collect(Collectors.toList());
   }
 
   public Collection<MemcachedNode> getNotMyVbucketNodes() {
