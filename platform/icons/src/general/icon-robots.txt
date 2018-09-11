@@ -39,7 +39,7 @@ deprecated: projectConfigurableSelected.png -> /general/projectConfigurable.svg;
 deprecated: projectSettings.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
 deprecated: readHelp.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: recursive.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
-deprecated: run.png -> /runConfigurations/testState/run.png; to be removed in IDEA 2020 - use AllIcons.RunConfigurations.TestState.Run
+deprecated: run.png; to be removed in IDEA 2020
 deprecated: secondaryGroup.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
 deprecated: splitCenterH.png -> /general/arrowSplitCenterH.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterH
 deprecated: splitCenterV.png -> /general/arrowSplitCenterV.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterV

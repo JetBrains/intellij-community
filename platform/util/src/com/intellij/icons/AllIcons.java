@@ -1141,10 +1141,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon Recursive = AllIcons.Actions.ShowAsTree;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.RunConfigurations.TestState.Run */
+    /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Run = AllIcons.RunConfigurations.TestState.Run;
+    public static final Icon Run = IconLoader.getIcon("/general/run.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
