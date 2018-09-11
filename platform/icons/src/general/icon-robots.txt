@@ -30,6 +30,7 @@ deprecated: gear.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use
 deprecated: gearHover.png; to be removed in IDEA 2020
 deprecated: getProjectfromVCS.png -> /welcome/fromVCS.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS
 deprecated: help_small.png -> /general/contextHelp.svg; to be removed in IDEA 2020 - use AllIcons.General.ContextHelp
+deprecated: hideWarnings.png; to be removed in IDEA 2020
 deprecated: ijLogo.png; to be removed in IDEA 2020
 deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
 deprecated: ImportSettings.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import

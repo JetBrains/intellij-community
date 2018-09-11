@@ -853,7 +853,6 @@ public class AllIcons {
     public static final Icon HideRightPartHover = IconLoader.getIcon("/general/hideRightPartHover.png"); // 16x16
     public static final Icon HideToolWindow = IconLoader.getIcon("/general/hideToolWindow.svg"); // 16x16
     public static final Icon HideToolWindowInactive = IconLoader.getIcon("/general/hideToolWindowInactive.png"); // 14x14
-    public static final Icon HideWarnings = IconLoader.getIcon("/general/hideWarnings.png"); // 16x16
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
     public static final Icon Information = IconLoader.getIcon("/general/information.svg"); // 16x16
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.svg"); // 32x32
@@ -1095,6 +1094,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Help_small = AllIcons.General.ContextHelp;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideWarnings = IconLoader.getIcon("/general/hideWarnings.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
