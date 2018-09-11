@@ -22,3 +22,4 @@ org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.IntelliJSettingsBuilder
 org.jetbrains.plugins.gradle.tooling.builder.IntelliJProjectSettingsBuilder
+org.jetbrains.plugins.gradle.tooling.builder.MavenRepositoriesModelBuilder
