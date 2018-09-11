@@ -833,7 +833,7 @@ public class AllIcons {
     public static final Icon ExclMark = IconLoader.getIcon("/general/exclMark.svg"); // 16x16
     public static final Icon ExpandComponent = IconLoader.getIcon("/general/expandComponent.svg"); // 12x12
     public static final Icon ExpandComponentHover = IconLoader.getIcon("/general/expandComponentHover.svg"); // 12x12
-    public static final Icon ExternalToolsSmall = IconLoader.getIcon("/general/externalToolsSmall.svg"); // 16x16
+    public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.svg"); // 16x16
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
@@ -1072,10 +1072,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon ExportSettings = AllIcons.ToolbarDecorator.Export;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ExternalToolsSmall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ExternalTools */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExternalTools = AllIcons.General.ExternalToolsSmall;
+    public static final Icon ExternalToolsSmall = AllIcons.General.ExternalTools;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
