@@ -660,6 +660,7 @@ public class CustomizableActionsPanel {
       myTree = new Tree();
       TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, new TreePathStringConvertor(), true);
       myTree.setModel(model);
+      myTree.setRootVisible(false);
       myTree.setCellRenderer(new MyTreeCellRenderer());
       final ActionManager actionManager = ActionManager.getInstance();
 
