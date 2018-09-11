@@ -9,6 +9,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -172,7 +173,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @Nullable
   static LocalAttachInfo getProcessAttachInfo(String pid) {
-    CompletableFuture<LocalAttachInfo> future = CompletableFuture.supplyAsync(() -> getProcessAttachInfoInt(pid));
+    Future<LocalAttachInfo> future = ApplicationManager.getApplication().executeOnPooledThread(() -> getProcessAttachInfoInt(pid));
     try {
       // attaching ang getting info may hang in some cases
       return future.get(5, TimeUnit.SECONDS);
