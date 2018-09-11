@@ -519,7 +519,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
           myPeg.equals(((SvnRevisionNumber)list.get(list.size() - 1).getRevisionNumber()).getRevision())) {
         last = list.remove(list.size() - 1);
       }
-      myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, session, myProvider, null, new FileHistoryRefresherI() {
+      myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, session, myProvider, new FileHistoryRefresherI() {
         @Override
         public void refresh(boolean canUseCache) {
           //we will not refresh

@@ -16,7 +16,6 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.IGInspectionTestCase;
 import com.siyeh.ig.LightInspectionTestCase;
 
 public class ThreadDeathRethrownInspectionTest extends LightInspectionTestCase {

@@ -19,7 +19,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
   private val customOrder = ObjectIntHashMap<String>()
 
-  private var isSorted = true
+  private var isSorted = false
     set(value) {
       if (field != value) {
         field = value

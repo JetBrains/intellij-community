@@ -47,7 +47,7 @@ class ConfigurationFileTest {
 
   @Test
   fun empty() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
     """)
     assertThat(result).isEmpty()
@@ -55,7 +55,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `empty rc type group`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
     """)
@@ -64,7 +64,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `empty rc`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
         -
@@ -74,7 +74,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `one jvmMainMethod`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
         isAlternativeJrePathEnabled: true
@@ -86,7 +86,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `one jvmMainMethod as list`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
         - isAlternativeJrePathEnabled: true
@@ -98,7 +98,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `one jvmMainMethod as list - template`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       templates:
         jvmMainMethod:
@@ -111,7 +111,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `templates as invalid node type`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       templates: foo
     """, isTemplatesOnly = true)
@@ -119,9 +119,9 @@ class ConfigurationFileTest {
   }
 }
 
-internal fun parse(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
+internal fun readRunConfigurations(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
   val list = SmartList<Any>()
-  parseConfigurationFile(data.trimIndent().reader(), isTemplatesOnly) { _, state ->
+  com.intellij.configurationScript.providers.readRunConfigurations(doRead(data.trimIndent().reader())!!, isTemplatesOnly) { _, state ->
     list.add(state)
   }
   return list

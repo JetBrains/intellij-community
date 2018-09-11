@@ -84,7 +84,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     if(element==myFile){
       return true;
     }else{
-      return super.isAutoExpandNode(descriptor);
+      return element == getRootElement() || element == mySummaryElement;
     }
   }
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAc
 
     if (detail != null) {
       VcsFileRevision fileRevision = ui.createRevision(detail);
-      return AnnotateRevisionActionBase.isEnabled(vcs, ui.createVcsVirtualFile(fileRevision), fileRevision);
+      return AnnotateRevisionActionBase.isEnabled(vcs, FileHistoryUtil.createVcsVirtualFile(fileRevision), fileRevision);
     }
 
     return true;
@@ -60,7 +61,7 @@ public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAc
     VcsKey vcsKey = e.getRequiredData(VcsDataKeys.VCS);
 
     VcsFileRevision revision = ui.createRevision(detail);
-    VirtualFile vcsVirtualFile = ui.createVcsVirtualFile(detail);
+    VirtualFile vcsVirtualFile = FileHistoryUtil.createVcsVirtualFile(revision);
 
     if (!VcsHistoryUtil.isEmpty(revision) && vcsVirtualFile != null) {
       AnnotateRevisionActionBase.annotate(vcsVirtualFile, revision,

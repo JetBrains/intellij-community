@@ -1642,8 +1642,8 @@ public class JBUI {
 
       @NotNull
       public static Icon comboTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
-                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ArrowDown)
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ArrowDown);
       }
     }
 

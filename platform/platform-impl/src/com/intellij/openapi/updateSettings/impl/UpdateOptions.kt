@@ -2,8 +2,15 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ProjectExtensionPointName
+import com.intellij.openapi.project.getActiveInitializedProject
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.annotations.ApiStatus
+
+private val LOG = logger<UpdateOptions>()
 
 class UpdateOptions : BaseState() {
   @get:CollectionBean
@@ -38,4 +45,22 @@ class UpdateOptions : BaseState() {
 
   @get:OptionTag("THIRD_PARTY_PLUGINS_ALLOWED")
   var isThirdPartyPluginsAllowed by property(false)
+}
+
+@ApiStatus.Experimental
+private val UPDATE_SETTINGS_PROVIDER_EP = ProjectExtensionPointName<UpdateSettingsProvider>("com.intellij.updateSettingsProvider")
+
+internal fun addPluginRepositories(to: MutableList<String>) {
+  val project = getActiveInitializedProject() ?: return
+
+  for (provider in UPDATE_SETTINGS_PROVIDER_EP.getExtensions(project)) {
+    LOG.runAndLogException {
+      to.addAll(provider.getPluginRepositories())
+    }
+  }
+}
+
+@ApiStatus.Experimental
+interface UpdateSettingsProvider {
+  fun getPluginRepositories(): List<String>
 }

@@ -54,6 +54,14 @@ class ProductModulesLayout {
    */
   List<String> bundledPluginModules = []
 
+  /**
+   * Names of the main modules of the plugins which need to be bundled in windows distribution of the product.
+   */
+  final Map<OsFamily, List<String>> bundledOsPluginModules = [:]
+
+  Set<String> getAllBundledPluginsModules() {
+    return (bundledOsPluginModules.values().flatten() as Set<String>) + bundledPluginModules
+  }
 
   private LinkedHashMap<String, PluginPublishingSpec> pluginsToPublish = []
 

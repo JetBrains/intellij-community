@@ -35,12 +35,12 @@ public final class EventManager
 
         // Fields =================================================================
 
-        private final List terminationListeners = new ArrayList();
-        private final List messageListener = new ArrayList();
-        private final List moduleExpansionListeners = new ArrayList();
-        private final List fileInfoListeners = new ArrayList();
-        private final List entryListeners = new ArrayList();
-        private final List directoryListeners = new ArrayList();
+        private final List<ITerminationListener> terminationListeners = new ArrayList<>();
+        private final List<IMessageListener> messageListener = new ArrayList<>();
+        private final List<IModuleExpansionListener> moduleExpansionListeners = new ArrayList<>();
+        private final List<IFileInfoListener> fileInfoListeners = new ArrayList<>();
+        private final List<IEntryListener> entryListeners = new ArrayList<>();
+        private final List<IDirectoryListener> directoryListeners = new ArrayList<>();
 	    private final String myCharset;
 
 	// Setup ==================================================================

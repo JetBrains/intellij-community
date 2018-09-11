@@ -18,7 +18,9 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.Panels;
 import com.intellij.util.ui.MouseEventHandler;
@@ -28,7 +30,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.icons.AllIcons.General.*;
+import static com.intellij.icons.AllIcons.General.ArrowDownSmall;
+import static com.intellij.icons.AllIcons.General.ArrowRight;
 
 public abstract class SplitterWithSecondHideable {
   public interface OnOffListener<T> {
@@ -92,7 +95,7 @@ public abstract class SplitterWithSecondHideable {
 
   private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
     MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
-      super(ComboArrowRight, vertical ? ComboArrowDown : ComboArrowRightPassive, separatorText);
+      super(ArrowRight, vertical ? ArrowDownSmall : ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
 
     @Override

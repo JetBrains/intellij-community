@@ -67,10 +67,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       myPredefinedSeparators.add(".");
       myPredefinedSeparators.add("_");
       myPredefinedSeparators.add("/");
-      String currentSeparator = getCurrentSeparator();
-      if (!myPredefinedSeparators.contains(currentSeparator)) {
-        myPredefinedSeparators.add(currentSeparator);
-      }
+      myPredefinedSeparators.add(getCurrentSeparator());
       refillActionGroup();
     }
 

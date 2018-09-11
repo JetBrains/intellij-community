@@ -191,7 +191,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       ContentManager contentManager = myToolWindow.getContentManager();
       Content selectedContent = contentManager.getSelectedContent();
       JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
-      if (contentComponent == null) return EMPTY_ARRAY;
+      if (contentComponent == null || e == null) return EMPTY_ARRAY;
       List<AnAction> result = ContainerUtil.newSmartList();
       for (final ActionToolbar toolbar : iterateToolbars(JBIterable.of(contentComponent))) {
         JComponent c = toolbar.getComponent();
@@ -202,7 +202,8 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
         List<AnAction> actions = toolbar.getActions();
         for (AnAction action : actions) {
-          if (action instanceof ToggleAction && !result.contains(action)) {
+          if (action instanceof ToggleAction && !result.contains(action) &&
+              ActionGroupUtil.isActionEnabledAndVisible(action, e, LaterInvocator.isInModalContext())) {
             result.add(action);
           }
           else if (action instanceof Separator) {
@@ -212,7 +213,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
           }
         }
       }
-      boolean popup = result.size() > 3;
+      boolean popup = ContainerUtil.count(result, it -> !(it instanceof Separator)) > 3;
       setPopup(popup);
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
       return result.toArray(AnAction.EMPTY_ARRAY);

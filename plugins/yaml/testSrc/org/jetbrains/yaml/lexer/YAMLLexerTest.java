@@ -221,6 +221,54 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testAnchorsAndAliases() {
+    doTest();
+  }
+
+  public void testBlockScalarAfterDocMarker() {
+    doTest();
+  }
+
+  public void testBlockScalarDocument() {
+    doTest();
+  }
+
+  public void testBlockScalarZeroIndent() {
+    doTest();
+  }
+
+  // Copy-paste from parser test
+  public void testExplicitMaps() {
+    doTest();
+  }
+
+  // NOTE: check invalid syntax
+  public void testEarlyDocumentEnd() {
+    doTest();
+  }
+
+  // NOTE: check invalid syntax
+  public void testInlinedSequence() {
+    doTest();
+  }
+
+  public void testExoticMultilinePlainScalar() {
+    doTest();
+  }
+
+  public void testLonelyCloseBracket() {
+    doTest();
+  }
+
+  // NOTE: check invalid syntax
+  public void testShiftedSecondKey() {
+    doTest();
+  }
+
+  public void testColonStartedTokens() {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

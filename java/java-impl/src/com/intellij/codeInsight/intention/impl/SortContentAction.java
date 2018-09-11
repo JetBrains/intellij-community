@@ -904,10 +904,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         }
       }
       StringBuilder sb = new StringBuilder();
-      sortableList.generate(sb);
-      SortableEntry lastItem = ContainerUtil.getLastItem(sortableList.myEntries);
-      assert lastItem != null;
-      if (!lastItem.myBeforeSeparator.isEmpty()) {
+      if (sortableList.generate(sb)) {
         sb.append("\n");
       }
       PsiElement elementToPreserve = lastElement.getNextSibling();

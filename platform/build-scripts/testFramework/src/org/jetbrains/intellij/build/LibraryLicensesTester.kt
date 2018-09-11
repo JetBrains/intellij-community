@@ -25,9 +25,6 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
     val unusedLibrariesWithLicenses = licenses.mapNotNullTo(THashSet()) {it.libraryName }
 
-    // what for?
-    unusedLibrariesWithLicenses.remove("Servlets")
-
     for ((jpsLibrary, jpsModule) in libraries) {
       for (libName in LibraryLicensesListGenerator.getLibraryNames(jpsLibrary)) {
         if (libName !in librariesWithLicenses) {
