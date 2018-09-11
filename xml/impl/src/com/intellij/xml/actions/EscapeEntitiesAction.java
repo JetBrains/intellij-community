@@ -24,7 +24,6 @@ import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static final ParameterizedCachedValueImpl<TIntObjectHashMap<String>, PsiFile> ESCAPES = new ParameterizedCachedValueImpl<TIntObjectHashMap<String>, PsiFile>(
     new ParameterizedCachedValueProvider<TIntObjectHashMap<String>, PsiFile>() {
-      @Nullable
       @Override
       public CachedValueProvider.Result<TIntObjectHashMap<String>> compute(PsiFile param) {
         final XmlFile file = XmlUtil.findXmlFile(param, Html5SchemaProvider.getCharsDtdLocation());

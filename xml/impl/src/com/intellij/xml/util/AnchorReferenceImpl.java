@@ -85,7 +85,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     return null;
   }
 
-  private static boolean processXmlElements(XmlTag element, PsiElementProcessor<XmlTag> processor) {
+  private static boolean processXmlElements(XmlTag element, PsiElementProcessor<? super XmlTag> processor) {
     if (!_processXmlElements(element,processor)) return false;
 
     for(PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
@@ -97,7 +97,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     return true;
   }
 
-  static boolean _processXmlElements(XmlTag element, PsiElementProcessor<XmlTag> processor) {
+  static boolean _processXmlElements(XmlTag element, PsiElementProcessor<? super XmlTag> processor) {
     if (!processor.execute(element)) return false;
     final XmlTag[] subTags = element.getSubTags();
 
@@ -224,7 +224,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   private static class MapCachedValueProvider implements CachedValueProvider<Map<String, XmlTag>> {
     private final XmlFile myFile;
 
-    public MapCachedValueProvider(XmlFile file) {
+    MapCachedValueProvider(XmlFile file) {
       myFile = file;
     }
 

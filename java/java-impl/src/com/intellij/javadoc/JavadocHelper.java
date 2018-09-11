@@ -95,7 +95,7 @@ public class JavadocHelper {
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
-                                                           @NotNull Collection<JavadocParameterInfo> data,
+                                                           @NotNull Collection<? extends JavadocParameterInfo> data,
                                                            @NotNull JavadocHelper.JavadocParameterInfo anchor)
   {
     int descriptionStartColumn = -1;

@@ -359,7 +359,7 @@ public class ExpectedHighlightingData {
     return (HighlightInfoType)field.get(null);
   }
 
-  public void checkLineMarkers(@NotNull Collection<LineMarkerInfo> markerInfos, @NotNull String text) {
+  public void checkLineMarkers(@NotNull Collection<? extends LineMarkerInfo> markerInfos, @NotNull String text) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     StringBuilder failMessage = new StringBuilder();
 
@@ -386,7 +386,7 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private static boolean containsLineMarker(LineMarkerInfo info, Collection<LineMarkerInfo> where) {
+  private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     String infoTooltip = info.getLineMarkerTooltip();
     for (LineMarkerInfo markerInfo : where) {
       String markerInfoTooltip;
@@ -466,7 +466,7 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private static <T> List<T> reverseCollection(Collection<T> infos) {
+  private static <T> List<T> reverseCollection(Collection<? extends T> infos) {
     return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<>(infos));
   }
 
@@ -529,7 +529,7 @@ public class ExpectedHighlightingData {
   }
 
   private static int[] composeText(StringBuilder sb,
-                                   List<Pair<String, HighlightInfo>> list, int index,
+                                   List<? extends Pair<String, HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys) {
     int i = index;
@@ -567,7 +567,7 @@ public class ExpectedHighlightingData {
     return new int[]{i, endPos};
   }
 
-  private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
+  private static boolean infosContainsExpectedInfo(Collection<? extends HighlightInfo> infos, HighlightInfo expectedInfo) {
     for (HighlightInfo info : infos) {
       if (infoEquals(expectedInfo, info)) {
         return true;
@@ -625,7 +625,7 @@ public class ExpectedHighlightingData {
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 
-    public MyLineMarkerInfo(PsiElement element, TextRange range, int updatePass, GutterIconRenderer.Alignment alignment, String tooltip) {
+    MyLineMarkerInfo(PsiElement element, TextRange range, int updatePass, GutterIconRenderer.Alignment alignment, String tooltip) {
       super(element, range, null, updatePass, null, null, alignment);
       myTooltip = tooltip;
     }

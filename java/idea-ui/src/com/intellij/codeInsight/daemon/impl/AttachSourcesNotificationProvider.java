@@ -64,7 +64,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     myProject = project;
     myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
     });
@@ -201,7 +201,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   private static class AttachJarAsSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
     private final VirtualFile myClassFile;
 
-    public AttachJarAsSourcesAction(VirtualFile classFile) {
+    AttachJarAsSourcesAction(VirtualFile classFile) {
       myClassFile = classFile;
     }
 
@@ -252,7 +252,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     private final Project myProject;
     private final JComponent myParentComponent;
 
-    public ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
+    ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
       myProject = project;
       myParentComponent = parentComponent;
     }

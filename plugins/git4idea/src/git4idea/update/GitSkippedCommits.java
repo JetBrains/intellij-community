@@ -200,7 +200,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
   private static class VcsRoot {
     final VirtualFile root;
 
-    public VcsRoot(VirtualFile root) {
+    VcsRoot(VirtualFile root) {
       this.root = root;
     }
 
@@ -217,7 +217,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
     final VirtualFile root;
     final GitRebaseUtils.CommitInfo commitInfo;
 
-    public Commit(VirtualFile root, GitRebaseUtils.CommitInfo commitInfo) {
+    Commit(VirtualFile root, GitRebaseUtils.CommitInfo commitInfo) {
       this.root = root;
       this.commitInfo = commitInfo;
     }

@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -142,14 +143,14 @@ public class MessageViewHelper {
     private NewErrorTreeViewPanel myErrorsView;
     private Content myContent;
 
-    public CloseListener(Content content, String contentName, NewErrorTreeViewPanel errorsView) {
+    CloseListener(Content content, String contentName, NewErrorTreeViewPanel errorsView) {
       myContent = content;
       myContentName = contentName;
       myErrorsView = errorsView;
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (myErrorsView.canControlProcess()) {
           myErrorsView.stopProcess();
@@ -163,7 +164,7 @@ public class MessageViewHelper {
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
           int result = Messages.showYesNoDialog(
@@ -191,7 +192,7 @@ public class MessageViewHelper {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       final Content eventContent = event.getContent();
       if (!eventContent.equals(myContent)) {
         return;

@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenRunConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
 
@@ -57,8 +57,9 @@ public class MavenRunConfigurationType implements ConfigurationType {
         return new MavenRunConfiguration(project, this, "");
       }
 
+      @NotNull
       @Override
-      public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+      public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
         MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
 
         if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;
@@ -87,6 +88,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");
@@ -105,6 +107,11 @@ public class MavenRunConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.MavenRunConfiguration";
   }
 
   @Override
@@ -195,7 +202,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
                                                                                     Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(generateName(project, params), type.myFactory);
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(generateName(project, params), type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettings);

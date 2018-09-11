@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -26,7 +27,7 @@ public class PythonModulePathCache extends PythonPathCache implements Disposable
     final MessageBusConnection connection = module.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateCacheForSdk(module);
         clearCache();
       }

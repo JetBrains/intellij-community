@@ -33,7 +33,7 @@ class IdeaJHelp extends JHelp{
   /**
    * PATCHED VERSION OF SUPER CONSTRUCTOR
    */
-  public IdeaJHelp(HelpSet hs){
+  IdeaJHelp(HelpSet hs){
     super(new DefaultHelpModel(hs));
 
     navigators=new Vector();

@@ -54,7 +54,7 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
     private final Project myProject;
     private final RunnerAndConfigurationSettings mySettings;
 
-    public ExecuteExternalSystemRunConfigurationAction(Executor executor,
+    ExecuteExternalSystemRunConfigurationAction(Executor executor,
                                                        boolean enabled,
                                                        Project project,
                                                        RunnerAndConfigurationSettings settings) {

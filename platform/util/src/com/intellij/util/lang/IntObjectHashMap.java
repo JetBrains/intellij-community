@@ -25,7 +25,7 @@ final class IntObjectHashMap {
   private Object specialZeroValue;
   private boolean hasZeroValue;
 
-  public IntObjectHashMap() {
+  IntObjectHashMap() {
     keys = new int[4];
     values = new Object[keys.length];
   }

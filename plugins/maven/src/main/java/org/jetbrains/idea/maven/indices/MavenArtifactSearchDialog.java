@@ -120,7 +120,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
       }
 
       @Override
-      public void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect) {
+      public void canSelectStateChanged(@NotNull MavenArtifactSearchPanel from, boolean canSelect) {
         myOkButtonStates.put(from, canSelect);
         updateOkButtonState();
       }

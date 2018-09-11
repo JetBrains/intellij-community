@@ -940,7 +940,7 @@ public abstract class PropertyTable extends JBTable {
     private final boolean myExpand;
     private final boolean mySelect;
 
-    public MyExpandCurrentAction(boolean expand, boolean select) {
+    MyExpandCurrentAction(boolean expand, boolean select) {
       myExpand = expand;
       mySelect = select;
     }
@@ -1076,7 +1076,7 @@ public abstract class PropertyTable extends JBTable {
 
   private class PropertyCellEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
+    public void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       if (isEditing()) {
         Object value;
         TableCellEditor tableCellEditor = cellEditor;
@@ -1103,14 +1103,14 @@ public abstract class PropertyTable extends JBTable {
     }
 
     @Override
-    public void editingCanceled(PropertyEditor source) {
+    public void editingCanceled(@NotNull PropertyEditor source) {
       if (isEditing()) {
         cellEditor.cancelCellEditing();
       }
     }
 
     @Override
-    public void preferredSizeChanged(PropertyEditor source) {
+    public void preferredSizeChanged(@NotNull PropertyEditor source) {
     }
   }
 
@@ -1324,7 +1324,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private static class GroupProperty extends Property {
-    public GroupProperty(@Nullable String name) {
+    GroupProperty(@Nullable String name) {
       super(null, StringUtil.notNullize(name));
     }
 

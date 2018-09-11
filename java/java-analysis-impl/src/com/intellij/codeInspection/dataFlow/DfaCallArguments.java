@@ -25,7 +25,7 @@ import java.util.Objects;
   final DfaValue[] myArguments;
   final boolean myPure;
 
-  public DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, boolean pure) {
+  DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, boolean pure) {
     myQualifier = qualifier;
     myArguments = arguments;
     myPure = pure;

@@ -637,7 +637,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  private void fireOnTestNodeAdded(final SMTestProxy test) {
+  private void fireOnTestNodeAdded(@NotNull SMTestProxy test) {
     for (EventsListener eventListener : myEventListeners) {
       eventListener.onTestNodeAdded(this, test);
     }
@@ -822,7 +822,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     private RunConfiguration myConfiguration;
     private File myOutputFile;
 
-    public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
+    MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
       super(consoleProperties.getProject(), "Save Test Results", true);
       myConsoleProperties = consoleProperties;
       myRoot = root;

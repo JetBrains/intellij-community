@@ -53,10 +53,9 @@ public class MergeActionsTest extends TestSuite {
 
     @Override
     protected String process(Editor editor) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       RangeHighlighter[] allHighlighters = editor.getMarkupModel().getAllHighlighters();
-      for (int i = 0; i < allHighlighters.length; i++) {
-        RangeHighlighter highlighter = allHighlighters[i];
+      for (RangeHighlighter highlighter : allHighlighters) {
         GutterMark iconRenderer = highlighter.getGutterIconRenderer();
         if (iconRenderer != null) {
           buffer.append(iconRenderer.getTooltipText());

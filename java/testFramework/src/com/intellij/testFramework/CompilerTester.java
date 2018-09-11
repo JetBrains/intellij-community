@@ -59,7 +59,7 @@ public class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
   private final Project myProject;
-  private List<Module> myModules;
+  private List<? extends Module> myModules;
   private TempDirTestFixture myMainOutput;
 
   public CompilerTester(@NotNull Module module) throws Exception {
@@ -70,7 +70,7 @@ public class CompilerTester {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
-  public CompilerTester(@NotNull Project project, @NotNull List<Module> modules, @Nullable Disposable disposable) throws Exception {
+  public CompilerTester(@NotNull Project project, @NotNull List<? extends Module> modules, @Nullable Disposable disposable) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
@@ -174,7 +174,7 @@ public class CompilerTester {
   }
 
   @NotNull
-  public List<CompilerMessage> runCompiler(@NotNull Consumer<CompileStatusNotification> runnable) {
+  public List<CompilerMessage> runCompiler(@NotNull Consumer<? super CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -258,16 +258,13 @@ public class CompilerTester {
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
-            final String text = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION ||
-                !(text.contains("Compilation completed successfully") ||
-                  text.contains("used to compile") ||
-                  text.startsWith("Using Groovy-Eclipse"))) {
+            String text = message.getMessage();
+            if (category != CompilerMessageCategory.INFORMATION || !isSpamMessage(text)) {
               myMessages.add(message);
             }
           }
@@ -280,6 +277,14 @@ public class CompilerTester {
       finally {
         mySemaphore.up();
       }
+    }
+
+    private static boolean isSpamMessage(String text) {
+      return text.contains("Compilation completed successfully") ||
+             text.contains("used to compile") ||
+             text.contains("illegal reflective") ||
+             text.contains("consider reporting this to the maintainers") ||
+             text.startsWith("Using Groovy-Eclipse");
     }
 
     void throwException() {

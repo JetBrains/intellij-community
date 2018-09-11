@@ -130,12 +130,12 @@ public class EmmetAbbreviationBalloon {
 
     balloon.addListener(new JBPopupListener() {
       @Override
-      public void beforeShown(LightweightWindowEvent event) {
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
         field.setText(PropertiesComponent.getInstance().getValue(myLastAbbreviationKey, ""));
       }
 
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         field.removeKeyListener(keyListener);
         field.removeDocumentListener(documentListener);
       }

@@ -39,7 +39,7 @@ public class ToggleOfflineAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     GradleSettings.getInstance(getProject(e)).setOfflineWork(state);
   }
 }

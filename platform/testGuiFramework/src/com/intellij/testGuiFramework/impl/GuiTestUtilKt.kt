@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
-import com.intellij.testGuiFramework.framework.toSec
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -215,15 +214,15 @@ object GuiTestUtilKt {
   }
 
   fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("${timeout.toSec()} second(s) until $condition") {
+    Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
       override fun test() = conditionalFunction()
     }, timeout)
   }
 
-  inline fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+  fun <R> tryWithPause(exceptionClass: Class<out Exception>,
                    condition: String = "try block will not throw ${exceptionClass.name} exception",
                    timeout: Timeout,
-                   crossinline tryBlock: () -> R): R {
+                   tryBlock: () -> R): R {
     val exceptionRef: Ref<Exception> = Ref.create()
     try {
       return withPauseWhenNull (condition, timeout) {
@@ -339,10 +338,11 @@ object GuiTestUtilKt {
     return result?.first
   }
 
-  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+  inline fun <T> ignoreComponentLookupException(action: () -> T): T? = try {
     action()
   }
   catch (ignore: ComponentLookupException) {
+    null
   }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {

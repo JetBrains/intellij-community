@@ -255,7 +255,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   }
 
   private static class TaskInfoCellRenderer extends ColoredListCellRenderer<VcsTaskHandler.TaskInfo> {
-    public TaskInfoCellRenderer(ComboBox from) {
+    TaskInfoCellRenderer(ComboBox from) {
       super(from);
     }
 

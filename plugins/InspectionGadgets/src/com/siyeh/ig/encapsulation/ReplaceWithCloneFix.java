@@ -20,7 +20,7 @@ class ReplaceWithCloneFix extends InspectionGadgetsFix {
 
   private final String myName;
 
-  public ReplaceWithCloneFix(String name) {
+  ReplaceWithCloneFix(String name) {
     myName = name;
   }
 

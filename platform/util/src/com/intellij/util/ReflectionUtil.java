@@ -173,7 +173,7 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  private static Field processFields(@NotNull Class clazz, @NotNull Condition<Field> checker) {
+  private static Field processFields(@NotNull Class clazz, @NotNull Condition<? super Field> checker) {
     for (Class c : classTraverser(clazz)) {
       Field field = JBIterable.of(c.getDeclaredFields()).find(checker);
       if (field != null) {

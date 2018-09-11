@@ -37,11 +37,12 @@ public class TemplateImpl extends Template implements SchemeElement {
   private String myGroupName;
   private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
   private final List<Variable> myVariables = new SmartList<>();
-  private List<Segment> mySegments = null;
-  private String myTemplateText = null;
+  private List<Segment> mySegments;
+  private String myTemplateText;
   private String myId;
   @Nullable private Throwable myBuildingTemplateTrace;
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof TemplateImpl)) return false;
@@ -64,6 +65,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return true;
   }
 
+  @Override
   public int hashCode() {
     if (myId != null) {
       return myId.hashCode();
@@ -75,21 +77,21 @@ public class TemplateImpl extends Template implements SchemeElement {
     return result;
   }
 
-  private boolean isToReformat = false;
+  private boolean isToReformat;
   private boolean isToShortenLongNames = true;
   private boolean toParseSegments = true;
   private TemplateContext myTemplateContext = new TemplateContext();
 
   @NonNls public static final String END = "END";
   @NonNls public static final String SELECTION = "SELECTION";
-  @NonNls public static final String SELECTION_START = "SELECTION_START";
-  @NonNls public static final String SELECTION_END = "SELECTION_END";
+  @NonNls private static final String SELECTION_START = "SELECTION_START";
+  @NonNls private static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
 
   public static final Set<String> INTERNAL_VARS_SET = new THashSet<>(Arrays.asList(
     END, SELECTION, SELECTION_START, SELECTION_END));
 
-  private boolean isDeactivated = false;
+  private boolean isDeactivated;
 
   public boolean isInline() {
     return myIsInline;
@@ -103,7 +105,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     myIsInline = isInline;
   }
 
-  private boolean myIsInline = false;
+  private boolean myIsInline;
 
   public TemplateImpl(@NotNull String key, @NotNull String group) {
     this(key, null, group);
@@ -134,11 +136,13 @@ public class TemplateImpl extends Template implements SchemeElement {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
+  @NotNull
   @Override
-  public Variable addVariable(Expression expression, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt) {
     return addVariable("__Variable" + myVariables.size(), expression, isAlwaysStopAt);
   }
 
+  @NotNull
   @Override
   public Variable addVariable(@NotNull String name,
                               Expression expression,
@@ -153,6 +157,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return variable;
   }
 
+  @NotNull
   @Override
   public Variable addVariable(@NotNull String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
@@ -261,15 +266,15 @@ public class TemplateImpl extends Template implements SchemeElement {
     return getVariableSegmentNumber(END);
   }
 
-  public int getSelectionStartSegmentNumber() {
+  int getSelectionStartSegmentNumber() {
     return getVariableSegmentNumber(SELECTION_START);
   }
 
-  public int getSelectionEndSegmentNumber() {
+  int getSelectionEndSegmentNumber() {
     return getVariableSegmentNumber(SELECTION_END);
   }
 
-  public int getVariableSegmentNumber(String variableName) {
+  int getVariableSegmentNumber(String variableName) {
     parseSegments();
     for (int i = 0; i < mySegments.size(); i++) {
       Segment segment = mySegments.get(i);
@@ -287,6 +292,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return myTemplateText;
   }
 
+  @NotNull
   @Override
   public String getSegmentName(int i) {
     parseSegments();
@@ -355,23 +361,28 @@ public class TemplateImpl extends Template implements SchemeElement {
     return myVariables.size();
   }
 
+  @NotNull
   public String getVariableNameAt(int i) {
     return myVariables.get(i).getName();
   }
 
+  @NotNull
   public String getExpressionStringAt(int i) {
     return myVariables.get(i).getExpressionString();
   }
 
-  public Expression getExpressionAt(int i) {
+  @NotNull
+  Expression getExpressionAt(int i) {
     return myVariables.get(i).getExpression();
   }
 
+  @NotNull
   public String getDefaultValueStringAt(int i) {
     return myVariables.get(i).getDefaultValueString();
   }
 
-  public Expression getDefaultValueAt(int i) {
+  @NotNull
+  Expression getDefaultValueAt(int i) {
     return myVariables.get(i).getDefaultValueExpression();
   }
 
@@ -468,7 +479,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return getTemplateContext().createCopy();
   }
 
-  public boolean contextsEqual(TemplateImpl defaultTemplate) {
+  boolean contextsEqual(TemplateImpl defaultTemplate) {
     return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()) == null;
   }
 
@@ -482,7 +493,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     myTemplateContext = context.createCopy();
   }
 
-  public boolean skipOnStart(int i) {
+  boolean skipOnStart(int i) {
     return myVariables.get(i).skipOnStart();
   }
 
@@ -497,6 +508,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   private static class Segment {
+    @NotNull
     public final String name;
     public final int offset;
 
@@ -512,7 +524,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Nullable
-  public Throwable getBuildingTemplateTrace() {
+  Throwable getBuildingTemplateTrace() {
     return myBuildingTemplateTrace;
   }
 }

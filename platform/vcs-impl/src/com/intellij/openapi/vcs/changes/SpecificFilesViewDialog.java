@@ -50,7 +50,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     setTitle(title);
     myProject = project;
     final Runnable closer = () -> this.close(0);
-    myView = new ChangesListView(project) {
+    myView = new ChangesListView(project, false) {
       @Nullable
       @Override
       public Object getData(@NotNull String dataId) {

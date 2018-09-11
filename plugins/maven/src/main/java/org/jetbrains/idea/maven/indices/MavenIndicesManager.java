@@ -112,7 +112,7 @@ public class MavenIndicesManager implements Disposable {
 
     myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenIndex.IndexListener() {
       @Override
-      public void indexIsBroken(MavenIndex index) {
+      public void indexIsBroken(@NotNull MavenIndex index) {
         scheduleUpdate(null, Collections.singletonList(index), false);
       }
     });

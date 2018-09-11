@@ -85,7 +85,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
           throw e;
         }
         if (context.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
-          LOG.error(e);
+          LOG.debug(e);
         }
         else {
           LOG.warn(e);

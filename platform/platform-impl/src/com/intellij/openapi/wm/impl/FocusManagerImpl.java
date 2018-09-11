@@ -372,7 +372,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private class AppListener implements ApplicationActivationListener {
 
     @Override
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+    public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         Component parent = UIUtil.findUltimateParent(owner);
 

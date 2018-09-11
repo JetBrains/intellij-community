@@ -97,10 +97,10 @@
 
     <extensionPoint name="daemon.highlightInfoFilter"
                     interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
-    
+
     <extensionPoint name="daemon.tooltipActionProvider"
                     interface="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider"/>
-    
+
     <extensionPoint name="daemon.intentionActionFilter"
                     interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter"/>
 
@@ -447,8 +447,8 @@
       <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.CommentTokenSetProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="configurationType"
-                    interface="com.intellij.execution.configurations.ConfigurationType"/>
+    <extensionPoint name="configurationType" interface="com.intellij.execution.configurations.ConfigurationType"/>
+    <extensionPoint name="runConfigurationTemplateProvider" interface="com.intellij.execution.impl.RunConfigurationTemplateProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="runConfigurationsSettings"
                     interface="com.intellij.execution.configurations.RunConfigurationsSettings"
@@ -668,6 +668,8 @@
     <extensionPoint name="usageContextPanelProvider"
                     interface="com.intellij.usages.UsageContextPanel$Provider"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="usageViewFactory"
+                    interface="com.intellij.usages.impl.UsageViewFactory"/>
 
     <extensionPoint name="treeStructureProvider"
                     interface="com.intellij.ide.projectView.TreeStructureProvider"
@@ -970,10 +972,12 @@
 
     <extensionPoint name="runningApplicationUpdaterProvider"
                     interface="com.intellij.execution.update.RunningApplicationUpdaterProvider"/>
- 
+
     <extensionPoint name="languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
 
     <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.retype.RetypeFileAssistant"/>
+
+    <extensionPoint name="trafficLightRendererContributor" interface="com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor"/>
   </extensionPoints>
 </idea-plugin>
 

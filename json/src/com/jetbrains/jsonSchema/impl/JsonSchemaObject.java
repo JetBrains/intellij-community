@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -712,13 +713,13 @@ public class JsonSchemaObject {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         final String nextPart = parts.get(++i);
-        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(nextPart);
+        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(JsonPointerUtil.unescapeJsonPointerPart(nextPart));
         continue;
       }
       if (PROPERTIES.equals(part)) {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
-        current = current.getProperties().get(parts.get(++i));
+        current = current.getProperties().get(JsonPointerUtil.unescapeJsonPointerPart(parts.get(++i)));
         continue;
       }
       if (ITEMS.equals(part)) {
@@ -821,7 +822,67 @@ public class JsonSchemaObject {
       return shortDesc ? "enum" : anEnum.stream().map(o -> o.toString()).collect(Collectors.joining(" | "));
     }
 
+    JsonSchemaType guessedType = guessType();
+    if (guessedType != null) {
+      return guessedType.getDescription();
+    }
+
     return null;
+  }
+
+  @Nullable
+  public JsonSchemaType guessType() {
+    JsonSchemaType type = getType();
+    if (type != null) return type;
+    boolean hasObjectChecks = hasObjectChecks();
+    boolean hasNumericChecks = hasNumericChecks();
+    boolean hasStringChecks = hasStringChecks();
+    boolean hasArrayChecks = hasArrayChecks();
+
+    if (hasObjectChecks && !hasNumericChecks && !hasStringChecks && !hasArrayChecks) {
+      return JsonSchemaType._object;
+    }
+    if (!hasObjectChecks && hasNumericChecks && !hasStringChecks && !hasArrayChecks) {
+      return JsonSchemaType._number;
+    }
+    if (!hasObjectChecks && !hasNumericChecks && hasStringChecks && !hasArrayChecks) {
+      return JsonSchemaType._string;
+    }
+    if (!hasObjectChecks && !hasNumericChecks && !hasStringChecks && hasArrayChecks) {
+      return JsonSchemaType._array;
+    }
+    return null;
+  }
+
+  public boolean hasNumericChecks() {
+    return getMultipleOf() != null
+           || getExclusiveMinimumNumber() != null
+           || getExclusiveMaximumNumber() != null
+           || getMaximum() != null
+           || getMinimum() != null;
+  }
+
+  public boolean hasStringChecks() {
+    return getPattern() != null || getFormat() != null;
+  }
+
+  public boolean hasArrayChecks() {
+    return isUniqueItems()
+           || getContainsSchema() != null
+           || getItemsSchema() != null
+           || getItemsSchemaList() != null
+           || getMinItems() != null
+           || getMaxItems() != null;
+  }
+
+  public boolean hasObjectChecks() {
+    return !getProperties().isEmpty()
+           || getPropertyNamesSchema() != null
+           || getPropertyDependencies() != null
+           || hasPatternProperties()
+           || getRequired() != null
+           || getMinProperties() != null
+           || getMaxProperties() != null;
   }
 
   @Nullable
@@ -923,7 +984,7 @@ public class JsonSchemaObject {
     @Nullable private final String myPatternError;
     @NotNull private final Map<String, Boolean> myValuePatternCache;
 
-    public PropertyNamePattern(@NotNull String pattern) {
+    PropertyNamePattern(@NotNull String pattern) {
       myPattern = StringUtil.unescapeBackSlashes(pattern);
       final Pair<Pattern, String> pair = compilePattern(pattern);
       myPatternError = pair.getSecond();
@@ -957,7 +1018,7 @@ public class JsonSchemaObject {
     @NotNull private final Map<String, String> myCachedPatternProperties;
     @NotNull private final Map<String, String> myInvalidPatterns;
 
-    public PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
+    PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
       mySchemasMap = new HashMap<>();
       schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
       myCachedPatterns = new HashMap<>();

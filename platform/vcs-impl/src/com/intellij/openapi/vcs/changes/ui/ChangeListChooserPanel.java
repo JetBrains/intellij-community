@@ -226,7 +226,7 @@ public class ChangeListChooserPanel extends JPanel {
     private static final int PREF_WIDTH = 200;
     private final LanguageTextField myEditorTextField;
 
-    public MyEditorComboBox() {
+    MyEditorComboBox() {
       super(PREF_WIDTH);
       JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
       JBColor bg = new JBColor(0xebfcf1, 0x313b32);

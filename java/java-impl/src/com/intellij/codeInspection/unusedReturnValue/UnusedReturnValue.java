@@ -20,17 +20,22 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.util.VisibilityUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 
 /**
@@ -38,6 +43,10 @@ import java.util.Collections;
  */
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
+  @PsiModifier.ModifierConstant
+  public static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PUBLIC;
+  @PsiModifier.ModifierConstant
+  public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
 
   @Override
   @Nullable
@@ -49,6 +58,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
+      if (VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0) return null;
       if (refMethod.isConstructor()) return null;
       if (!refMethod.getSuperMethods().isEmpty()) return null;
       if (refMethod.getInReferences().size() == 0) return null;
@@ -78,14 +88,22 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (IGNORE_BUILDER_PATTERN) {
+    if (IGNORE_BUILDER_PATTERN || highestModifier != DEFAULT_HIGHEST_MODIFIER) {
       super.writeSettings(node);
     }
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore simple setters", this, "IGNORE_BUILDER_PATTERN");
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Ignore simple setters", "IGNORE_BUILDER_PATTERN");
+    LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
+                                                                                                                  highestModifier,
+                                                                                                                  (newModifier) -> highestModifier = newModifier),
+                                                                                    "Maximal reported method visibility:",
+                                                                                    BorderLayout.WEST);
+    panel.addComponent(component);
+    return panel;
   }
 
   @Override

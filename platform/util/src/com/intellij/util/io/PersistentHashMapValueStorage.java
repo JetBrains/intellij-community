@@ -224,12 +224,12 @@ public class PersistentHashMapValueStorage {
   }
 
   void checkAppendsAllowed(int previouslyAccumulatedChunkSize) {
-    assert previouslyAccumulatedChunkSize == 0 || !myOptions.myHasNoChunks;
+    if (previouslyAccumulatedChunkSize != 0 && myOptions.myHasNoChunks) throw new AssertionError();
   }
 
   private long doAppendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
-    assert allowedToCompactChunks();
-    assert prevChunkAddress == 0 || !myOptions.myHasNoChunks;
+    if (!allowedToCompactChunks()) throw new AssertionError();
+    if (prevChunkAddress != 0 && myOptions.myHasNoChunks) throw new AssertionError();
     long result = mySize; // volatile read
     final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null ? null : ourAppendersCache.get(myPath);
 
@@ -277,7 +277,7 @@ public class PersistentHashMapValueStorage {
   private final DataInputStream myBufferDataStreamWrapper = new DataInputStream(myBufferStreamWrapper);
   private static final int ourBufferLength = 1024;
 
-  private long compactValuesWithoutChunks(@NotNull List<PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
+  private long compactValuesWithoutChunks(@NotNull List<? extends PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
     Collections.sort(infos, new Comparator<PersistentHashMap.CompactionRecordInfo>() {
@@ -346,7 +346,7 @@ public class PersistentHashMapValueStorage {
     return fragments | ((long)newFragments << 32);
   }
 
-  long compactValues(@NotNull List<PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
+  long compactValues(@NotNull List<? extends PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
     if (myOptions.myHasNoChunks) {
       return compactValuesWithoutChunks(infos, storage);
     }

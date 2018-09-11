@@ -265,7 +265,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<VirtualFile> processor) {
+  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<? super VirtualFile> processor) {
     if (!processor.process(file)) return false;
     if (file.isDirectory()) {
       for (VirtualFile child : file.getCachedChildren()) {

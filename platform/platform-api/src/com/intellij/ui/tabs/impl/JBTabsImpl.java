@@ -78,7 +78,7 @@ public class JBTabsImpl extends JComponent
   private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFocused;
 
-  private Getter<ActionGroup> myPopupGroup;
+  private Getter<? extends ActionGroup> myPopupGroup;
   private String myPopupPlace;
 
   TabInfo myPopupInfo;
@@ -811,7 +811,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  public JBTabs setPopupGroup(@NotNull final Getter<ActionGroup> popupGroup,
+  public JBTabs setPopupGroup(@NotNull final Getter<? extends ActionGroup> popupGroup,
                               @NotNull final String place,
                               final boolean addNavigationGroup) {
     myPopupGroup = popupGroup;
@@ -963,7 +963,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  void fireTabRemoved(TabInfo info) {
+  void fireTabRemoved(@NotNull TabInfo info) {
     for (TabsListener eachListener : myTabListeners) {
       if (eachListener != null) {
         eachListener.tabRemoved(info);
@@ -2379,7 +2379,7 @@ public class JBTabsImpl extends JComponent
     return size;
   }
 
-  private Dimension computeSize(Function<JComponent, Dimension> transform, int tabCount) {
+  private Dimension computeSize(Function<? super JComponent, ? extends Dimension> transform, int tabCount) {
     Dimension size = new Dimension();
     for (TabInfo each : myVisibleInfos) {
       final JComponent c = each.getComponent();
@@ -3107,7 +3107,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public void sortTabs(Comparator<TabInfo> comparator) {
+  public void sortTabs(Comparator<? super TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
     relayout(true, false);

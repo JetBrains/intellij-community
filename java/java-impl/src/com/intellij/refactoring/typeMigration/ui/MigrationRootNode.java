@@ -77,7 +77,7 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
   }
 
   @Override
-  protected void update(final PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
 
   }
 

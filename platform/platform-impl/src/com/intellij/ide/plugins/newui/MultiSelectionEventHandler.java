@@ -238,9 +238,9 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void initialSelection() {
+  public void initialSelection(boolean scrollAndFocus) {
     if (!myComponents.isEmpty()) {
-      singleSelection(0);
+      singleSelection(myComponents.get(0), 0, scrollAndFocus);
     }
   }
 
@@ -427,9 +427,9 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelection(@NotNull CellPluginComponent component) {
+  public void setSelection(@NotNull CellPluginComponent component, boolean scrollAndFocus) {
     clearSelectionWithout(-1);
-    singleSelection(component, getIndex(component));
+    singleSelection(component, getIndex(component), scrollAndFocus);
   }
 
   private void singleSelection(int index) {
@@ -437,13 +437,17 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   private void singleSelection(@NotNull CellPluginComponent component, int index) {
+    singleSelection(component, index, true);
+  }
+
+  private void singleSelection(@NotNull CellPluginComponent component, int index, boolean scrollAndFocus) {
     mySelectionIndex = index;
     mySelectionLength = 1;
     if (myHoverComponent == component) {
       myHoverComponent = null;
     }
     if (component.getSelection() != SelectionType.SELECTION) {
-      component.setSelection(SelectionType.SELECTION);
+      component.setSelection(SelectionType.SELECTION, scrollAndFocus);
     }
   }
 

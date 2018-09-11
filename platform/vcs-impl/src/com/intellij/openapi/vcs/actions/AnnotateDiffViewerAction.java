@@ -298,7 +298,7 @@ public class AnnotateDiffViewerAction {
   private static class MyDiffViewerListener extends DiffViewerListener {
     @NotNull private final DiffViewerBase myViewer;
 
-    public MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
+    MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
       myViewer = viewer;
     }
 
@@ -450,7 +450,7 @@ public class AnnotateDiffViewerAction {
     @NotNull private final Side mySide;
     @NotNull private final UpToDateLineNumberProvider myLocalChangesProvider;
 
-    public UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
+    UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
       myViewer = viewer;
       mySide = side;
       myLocalChangesProvider = new UpToDateLineNumberProviderImpl(myViewer.getDocument(mySide), viewer.getProject());
@@ -742,7 +742,7 @@ public class AnnotateDiffViewerAction {
     @Nullable private VcsException myException;
     @Nullable private FileAnnotation myResult;
 
-    public FileAnnotationLoader(@NotNull AbstractVcs vcs) {
+    FileAnnotationLoader(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
     }
 
@@ -772,7 +772,7 @@ public class AnnotateDiffViewerAction {
     @NotNull public final AbstractVcs vcs;
     @NotNull public final FileAnnotation annotation;
 
-    public AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
+    AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
       this.vcs = vcs;
       this.annotation = annotation;
     }
@@ -782,7 +782,7 @@ public class AnnotateDiffViewerAction {
     @NotNull public final DiffViewerBase viewer;
     @NotNull public final ViewerAnnotator annotator;
 
-    public EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
+    EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
       this.viewer = viewer;
       this.annotator = annotator;
     }

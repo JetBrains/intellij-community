@@ -19,7 +19,7 @@ import java.util.Set;
 public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
 
-  public CommonInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+  public CommonInjectedFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
                                           Editor editor,
                                           Document newDocument,
                                           PsiFile injectedFile) {

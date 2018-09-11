@@ -52,7 +52,7 @@ public class MultiCheck {
   private static class BooleanCondition extends FailedCondition {
     private final AssertionFailedError myFailure;
 
-    public BooleanCondition(String message) {
+    BooleanCondition(String message) {
       myFailure = new AssertionFailedError(message);
     }
 

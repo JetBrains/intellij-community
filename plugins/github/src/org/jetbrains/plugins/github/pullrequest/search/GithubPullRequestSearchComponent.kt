@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -89,8 +88,8 @@ class GithubPullRequestSearchComponent(project: Project,
         repaint()
         errorBalloonBuilder = popupFactory.createBalloonBuilder(JLabel(error))
           .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-          .setBorderColor(DialogWrapper.BALLOON_ERROR_BORDER)
-          .setFillColor(DialogWrapper.BALLOON_ERROR_BACKGROUND)
+          .setBorderColor(JBUI.CurrentTheme.Validator.errorBorderColor())
+          .setFillColor(JBUI.CurrentTheme.Validator.errorBackgroundColor())
           .setAnimationCycle(100)
           .setRequestFocus(false)
         showErrorBalloon()

@@ -56,11 +56,11 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     setOpaque(true);
   }
 
-  public void onHover(BiConsumer<Crumb, InputEvent> consumer) {
+  public void onHover(BiConsumer<? super Crumb, ? super InputEvent> consumer) {
     hover = hover.andThen(consumer);
   }
 
-  public void onSelect(BiConsumer<Crumb, InputEvent> consumer) {
+  public void onSelect(BiConsumer<? super Crumb, ? super InputEvent> consumer) {
     select = select.andThen(consumer);
   }
 
@@ -227,7 +227,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return null;
   }
 
-  private CrumbView getCrumbView(Predicate<CrumbView> predicate) {
+  private CrumbView getCrumbView(Predicate<? super CrumbView> predicate) {
     for (CrumbView view : views) if (view.crumb != null && predicate.test(view)) return view;
     return null;
   }

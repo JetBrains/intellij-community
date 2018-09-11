@@ -122,7 +122,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     }
   }
 
-  private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<SdkTypeId> sdkFilter) {
+  private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
     if (project != null) {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && myModuleBuilder.isSuitableSdkType(sdk.getSdkType())) {

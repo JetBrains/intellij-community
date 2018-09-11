@@ -84,17 +84,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   public UiInspectorAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> setSelected(null, true));
+      ApplicationManager.getApplication().invokeLater(() -> setSelected(true));
     }
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myInspector != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    setSelected(state);
+  }
+
+  void setSelected(boolean state) {
     if (state) {
       if (myInspector == null) {
         myInspector = new UiInspector();
@@ -469,7 +473,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       setCellRenderer(new ComponentTreeCellRenderer(c));
       getSelectionModel().addTreeSelectionListener(this);
       new TreeSpeedSearch(this);
-      if (((JComponent)c).getClientProperty(CLICK_INFO) != null) {
+      if (c instanceof JComponent && ((JComponent)c).getClientProperty(CLICK_INFO) != null) {
         SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
       }
     }
@@ -581,7 +585,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private static class ClickInfoNode extends DefaultMutableTreeNode {
       private final List<PropertyBean> myInfo;
 
-      public ClickInfoNode(List<PropertyBean> info) {
+      ClickInfoNode(List<PropertyBean> info) {
         myInfo = info;
       }
 
@@ -1464,7 +1468,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    public UiInspector() {
+    UiInspector() {
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     }
 

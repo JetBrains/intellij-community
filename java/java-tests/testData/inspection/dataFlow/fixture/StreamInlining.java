@@ -42,7 +42,7 @@ public class StreamInlining {
   }
 
   int hash(List<Holder> holders) {
-    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>()).sum();
+    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>()).sum();
   }
 
   void test2(int[] array) {

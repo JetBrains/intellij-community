@@ -1,21 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Set;
 
 public class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
-  private static final HashSet<String> BLOCKING_EXCEPTION_TYPES = new HashSet<>(Arrays.asList(
+  private static final Set<String> BLOCKING_EXCEPTION_TYPES = ContainerUtil.immutableSet(
     "java.lang.InterruptedException",
-    "java.io.IOException"));
+    "java.io.IOException");
 
   @Override
-  public boolean isActive(Project project) {
-    return !BLOCKING_EXCEPTION_TYPES.isEmpty();
+  public boolean isApplicable(@NotNull PsiFile file) {
+    return true;
   }
 
   @Override

@@ -102,12 +102,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     });
     busConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         onCommandStarted();
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         onCommandFinished(event.getCommandGroupId());
       }
     });
@@ -127,7 +127,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       }
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (e.getOldPosition().line == e.getNewPosition().line) {
           return;
         }

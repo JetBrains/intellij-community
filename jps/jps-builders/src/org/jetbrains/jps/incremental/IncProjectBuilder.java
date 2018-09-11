@@ -343,7 +343,7 @@ public class IncProjectBuilder {
     //Deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
-      public void filesGenerated(FileGeneratedEvent event) {
+      public void filesGenerated(@NotNull FileGeneratedEvent event) {
         final Set<File> outputs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
         for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
@@ -355,7 +355,7 @@ public class IncProjectBuilder {
       }
 
       @Override
-      public void filesDeleted(FileDeletedEvent event) {
+      public void filesDeleted(@NotNull FileDeletedEvent event) {
       }
     });
 
@@ -396,11 +396,15 @@ public class IncProjectBuilder {
   }
 
   private void sendElapsedTimeMessages(CompileContext context) {
-    for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
-      AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
-      int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
-      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1000000));
-    }
+    myElapsedTimeNanosByBuilder.entrySet()
+      .stream()
+      .map(entry -> {
+        AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
+        int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
+        return new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1_000_000);
+      })
+      .sorted(Comparator.comparing(BuilderStatisticsMessage::getBuilderName))
+      .forEach(context::processMessage);
   }
 
   private void startTempDirectoryCleanupTask() {

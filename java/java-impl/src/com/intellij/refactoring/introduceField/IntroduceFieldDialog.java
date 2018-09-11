@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -36,15 +21,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 class IntroduceFieldDialog extends DialogWrapper {
-
-
   public static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   private final Project myProject;
@@ -64,7 +46,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private NameSuggestionsManager myNameSuggestionsManager;
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
 
-  public IntroduceFieldDialog(Project project,
+  IntroduceFieldDialog(Project project,
                               PsiClass parentClass,
                               PsiExpression initializerExpression,
                               PsiLocalVariable localVariable,
@@ -102,7 +84,6 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
-
     return myCentralPanel.getInitializerPlace();
   }
 
@@ -113,12 +94,10 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   public boolean isReplaceAllOccurrences() {
     return myCentralPanel.isReplaceAllOccurrences();
-
   }
 
   public boolean isDeleteVariable() {
     return myCentralPanel.isDeleteVariable();
-
   }
 
   public boolean isDeclareFinal() {
@@ -129,17 +108,13 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myTypeSelector.getSelectedType();
   }
 
-
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return HelpID.INTRODUCE_FIELD;
   }
-
 
   @Override
   protected JComponent createNorthPanel() {
-
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
@@ -200,7 +175,6 @@ class IntroduceFieldDialog extends DialogWrapper {
       }
     });
 
-
     return panel;
   }
 
@@ -252,7 +226,6 @@ class IntroduceFieldDialog extends DialogWrapper {
     };
   }
 
-
   @Override
   protected void doOKAction() {
     String fieldName = getEnteredName();
@@ -273,7 +246,6 @@ class IntroduceFieldDialog extends DialogWrapper {
     }
 
     PsiField oldField = myParentClass.findFieldByName(fieldName, true);
-
     if (oldField != null) {
       int answer = Messages.showYesNoDialog(
               myProject,
@@ -299,10 +271,5 @@ class IntroduceFieldDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_FIELD);
   }
 }

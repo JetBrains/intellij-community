@@ -67,25 +67,19 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
-    this(name, actions, true);
-  }
-
-  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions, boolean validate) {
     this(name, false);
-    addActions(actions, validate);
+    addActions(actions);
   }
 
   public DefaultActionGroup(@Nullable String shortName, boolean popup) {
     super(shortName, popup);
   }
 
-  private void addActions(@NotNull List<? extends AnAction> actions, boolean validate) {
-    if (validate) {
-      HashSet<Object> actionSet = new HashSet<>();
-      for (AnAction action : actions) {
-        if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
-        if (!(action instanceof Separator) && !actionSet.add(action)) throw new ActionDuplicationException(action);
-      }
+  private void addActions(@NotNull List<? extends AnAction> actions) {
+    HashSet<Object> actionSet = new HashSet<>();
+    for (AnAction action : actions) {
+      if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
+      if (!(action instanceof Separator) && !actionSet.add(action)) throw new ActionDuplicationException(action);
     }
     mySortedChildren.addAll(actions);
   }

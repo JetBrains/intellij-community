@@ -14,7 +14,7 @@ import java.io.File;
 class LocalFileExternalizer implements ContentExternalizer {
   private final File myFile;
 
-  public LocalFileExternalizer(File file) {
+  LocalFileExternalizer(File file) {
     myFile = file;
   }
 

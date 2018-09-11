@@ -16,9 +16,9 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -50,8 +50,6 @@ import java.util.List;
  * @author nik
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
-  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator");
-
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
     public void componentMoved(ComponentEvent e) {
@@ -400,14 +398,14 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return XDEBUGGER_TREE_KEY.getData(context);
   }
 
-  public TransferToEDTQueue<Runnable> getLaterInvocator() {
-    return myLaterInvocator;
+  public void invokeLater(Runnable runnable) {
+    EdtExecutorService.getInstance().execute(runnable);
   }
 
   public void selectNodeOnLoad(Condition<TreeNode> nodeFilter, Condition<TreeNode> obsoleteChecker) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         if (obsoleteChecker.value(node)) {
           removeTreeListener(this);
         }
@@ -422,7 +420,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         if (nodeFilter.value(node) && !node.isLeaf()) {
           // cause children computing
           node.getChildCount();

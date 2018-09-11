@@ -80,7 +80,7 @@ class AbstractValues {
   static final class NthParamValue extends BasicValue {
     final int n;
 
-    public NthParamValue(Type type, int n) {
+    NthParamValue(Type type, int n) {
       super(type);
       this.n = n;
     }
@@ -307,18 +307,18 @@ abstract class Analysis<Res> {
   }
 
   @NotNull
-  static Frame<BasicValue> createCatchFrame(Frame<BasicValue> frame) {
+  static Frame<BasicValue> createCatchFrame(Frame<? extends BasicValue> frame) {
     Frame<BasicValue> catchFrame = new Frame<>(frame);
     catchFrame.clearStack();
     catchFrame.push(ASMUtils.THROWABLE_VALUE);
     return catchFrame;
   }
 
-  static BasicValue popValue(Frame<BasicValue> frame) {
+  static BasicValue popValue(Frame<? extends BasicValue> frame) {
     return frame.getStack(frame.getStackSize() - 1);
   }
 
-  static <A> List<A> append(List<A> xs, A x) {
+  static <A> List<A> append(List<? extends A> xs, A x) {
     ArrayList<A> result = new ArrayList<>();
     if (xs != null) {
       result.addAll(xs);

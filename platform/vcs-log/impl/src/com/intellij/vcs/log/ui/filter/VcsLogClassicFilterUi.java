@@ -197,7 +197,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull private final Computable<JComponent> myComponentCreator;
 
-    public FilterActionComponent(@NotNull Computable<JComponent> componentCreator) {
+    FilterActionComponent(@NotNull Computable<JComponent> componentCreator) {
       myComponentCreator = componentCreator;
     }
 
@@ -251,7 +251,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
     @Nullable private String myText;
 
-    public TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties) {
+    TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties) {
       super("text", dataPackProvider, properties);
     }
 
@@ -303,7 +303,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull private static final String STRUCTURE = "structure";
     @NotNull private final Set<VirtualFile> myRoots;
 
-    public FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
+    FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
                            @NotNull Set<VirtualFile> roots,
                            MainVcsLogUiProperties uiProperties) {
       super("file", dataPackGetter, uiProperties);
@@ -388,7 +388,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private static class DateFilterModel extends FilterModel<VcsLogDateFilter> {
-    public DateFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
+    DateFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
       super("date", dataPackGetter, uiProperties);
     }
 
@@ -422,7 +422,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private class UserFilterModel extends FilterModel<VcsLogUserFilter> {
-    public UserFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
+    UserFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
       super("user", dataPackGetter, uiProperties);
     }
 
@@ -442,7 +442,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class TextFilterField extends SearchTextField {
     @NotNull private final TextFilterModel myTextFilterModel;
 
-    public TextFilterField(@NotNull TextFilterModel model) {
+    TextFilterField(@NotNull TextFilterModel model) {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());

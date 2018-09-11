@@ -649,7 +649,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   /* UI components */
 
   private class BackAction extends AnAction implements DumbAware {
-    public BackAction() {
+    BackAction() {
       super("Previous", null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (action != null) {
@@ -670,7 +670,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private class ForwardAction extends AnAction implements DumbAware {
-    public ForwardAction() {
+    ForwardAction() {
       super("Next", null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (action != null) {
@@ -760,14 +760,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   public void newEntryAdded() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      updateMessages();
-      updateControls();
+      if (isShowing()) {
+        updateMessages();
+        updateControls();
+      }
     });
   }
 
   @Override
   public void poolCleared() {
-    UIUtil.invokeLaterIfNeeded(() -> doCancelAction());
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isShowing()) {
+        doCancelAction();
+      }
+    });
   }
 
   @Override

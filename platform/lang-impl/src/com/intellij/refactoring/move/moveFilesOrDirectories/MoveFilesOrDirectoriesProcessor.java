@@ -314,7 +314,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     int myIndex;
     PsiReference myReference;
 
-    public MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
+    MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
       super(element);
       myIndex = index;
       myReference = reference;

@@ -544,7 +544,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   private class MyProjectManagerListener implements ProjectManagerListener {
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       if (project == myProject) {
         close();
       }

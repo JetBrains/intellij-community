@@ -20,7 +20,7 @@ public abstract class SearchResultPanel {
   public final int tabIndex;
   public final int backTabIndex;
 
-  private final PluginsGroupComponent myPanel;
+  protected final PluginsGroupComponent myPanel;
   private final PluginsGroup myGroup = new PluginsGroup("Search Results");
   private String myQuery;
   private AtomicBoolean myRunQuery;
@@ -34,7 +34,12 @@ public abstract class SearchResultPanel {
     myPanel = panel;
     this.tabIndex = tabIndex;
     this.backTabIndex = backTabIndex;
-    panel.getEmptyText().setText("Nothing to show");
+
+    setEmptyText();
+
+    if (panel instanceof PluginsGroupComponentWithProgress) {
+      loading(false);
+    }
   }
 
   @NotNull
@@ -42,6 +47,10 @@ public abstract class SearchResultPanel {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
     return pane;
+  }
+
+  private void setEmptyText() {
+    myPanel.getEmptyText().setText("Nothing to show");
   }
 
   public boolean isEmpty() {
@@ -54,6 +63,8 @@ public abstract class SearchResultPanel {
   }
 
   public void setQuery(@NotNull String query) {
+    setEmptyText();
+
     if (query.equals(myQuery)) {
       return;
     }
@@ -96,8 +107,8 @@ public abstract class SearchResultPanel {
             myGroup.titleWithCount();
           }
 
-          myPanel.doLayout();
-          myPanel.initialSelection();
+          myPanel.initialSelection(false);
+          fullRepaint();
         }, ModalityState.any());
       });
     }
@@ -107,7 +118,7 @@ public abstract class SearchResultPanel {
       if (!myGroup.descriptors.isEmpty()) {
         myPanel.addGroup(myGroup);
         myGroup.titleWithCount();
-        //myPanel.initialSelection();
+        myPanel.initialSelection(false);
       }
 
       fullRepaint();
@@ -123,6 +134,12 @@ public abstract class SearchResultPanel {
     }
     else {
       panel.stopLoading();
+    }
+  }
+
+  public void dispose() {
+    if (myPanel instanceof PluginsGroupComponentWithProgress) {
+      ((PluginsGroupComponentWithProgress)myPanel).dispose();
     }
   }
 

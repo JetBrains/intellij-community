@@ -16,8 +16,10 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -170,6 +172,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
       if (cls == null || cls.isInterface()) {
         return false;
       }
+    }
+    if (JavaLexer.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
+        !PsiJavaModule.MODULE_INFO_FILE.equals(leaf.getContainingFile().getName())) {
+      return false;
     }
     return true;
   }

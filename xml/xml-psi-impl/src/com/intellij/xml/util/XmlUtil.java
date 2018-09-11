@@ -133,12 +133,7 @@ public class XmlUtil {
   @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final String XHTML4_SCHEMA_LOCATION;
-  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
   @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
   @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
@@ -408,7 +403,7 @@ public class XmlUtil {
 
   public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
                                                                           final Map<String, T> presentNames,
-                                                                          DuplicationInfoProvider<T> provider,
+                                                                          DuplicationInfoProvider<? super T> provider,
                                                                           final Validator.ValidationHost host) {
     for (T t : elements) {
       final String name = provider.getName(t);
@@ -895,7 +890,7 @@ public class XmlUtil {
     return elementDescriptor;
   }
 
-  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<? super String> variants) {
     return processEnumerationValues(element, xmlTag -> {
       variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
       return true;
@@ -1151,7 +1146,7 @@ public class XmlUtil {
     return buffer.toString();
   }
 
-  public static String generateElementDTD(String name, List<String> tags, List<MyAttributeInfo> attributes) {
+  public static String generateElementDTD(String name, List<String> tags, List<? extends MyAttributeInfo> attributes) {
     if (name == null || "".equals(name)) return "";
     if (name.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
 

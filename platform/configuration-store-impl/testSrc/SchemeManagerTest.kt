@@ -427,7 +427,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
 open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
   override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
                             name: String,
-                            attributeProvider: Function<String, String?>,
+                            attributeProvider: Function<in String, String?>,
                             isBundled: Boolean): TestScheme {
     val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)

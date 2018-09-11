@@ -127,7 +127,7 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {
     @NotNull private final RangeMarker myRangeMarker;
 
-    public MyDocumentsSynchronizer(@Nullable Project project,
+    MyDocumentsSynchronizer(@Nullable Project project,
                                    @NotNull RangeMarker range,
                                    @NotNull Document document1,
                                    @NotNull Document document2) {

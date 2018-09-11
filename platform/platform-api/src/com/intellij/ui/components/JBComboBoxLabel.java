@@ -46,7 +46,7 @@ public class JBComboBoxLabel extends JPanel {
   }
 
   public void setSelectionIcon() {
-    myIcon.setIcon(AllIcons.General.Combo);
+    myIcon.setIcon(AllIcons.General.ArrowDown);
   }
 
   @Override

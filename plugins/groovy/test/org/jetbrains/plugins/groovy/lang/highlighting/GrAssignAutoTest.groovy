@@ -130,7 +130,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         ''',
            vectorProduct(types, types),
            ['int -> double[]', 'short -> int[]', 'short -> double[]', 'byte -> int[]', 'byte -> double[]'],
-           ['Integer[] -> int[]', 'Integer[] -> double[]', 'int[] -> double[]', 'int[] -> Integer[]']
+           ['Integer[] -> int[]', 'Integer[] -> double[]', 'int[] -> double[]', 'int[] -> Integer[]', 'short -> Integer[]', 'byte -> Integer[]']
   }
 
   void testReturnAssignValue() {

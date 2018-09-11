@@ -136,7 +136,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   private static class PyInplaceParameterIntroducer extends InplaceVariableIntroducer<PsiElement> {
     private final PyNamedParameter myTarget;
 
-    public PyInplaceParameterIntroducer(PyNamedParameter target,
+    PyInplaceParameterIntroducer(PyNamedParameter target,
                                        IntroduceOperation operation,
                                        List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Parameter",

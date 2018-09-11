@@ -64,8 +64,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private Project myProject;
@@ -158,7 +158,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     DomManager.getDomManager(project).addDomEventListener(new DomEventListener() {
       @Override
-      public void eventOccured(DomEvent event) {
+      public void eventOccured(@NotNull DomEvent event) {
         myBuilder.queueUpdate();
       }
     }, this);
@@ -577,7 +577,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class AddAction extends AnAction {
-    public AddAction() {
+    AddAction() {
       super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), IconUtil.getAddIcon());
     }
 
@@ -588,7 +588,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class RemoveAction extends AnAction {
-    public RemoveAction() {
+    RemoveAction() {
       super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"),
             IconUtil.getRemoveIcon());
     }
@@ -605,7 +605,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class RunAction extends AnAction {
-    public RunAction() {
+    RunAction() {
       super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"),
             AllIcons.Actions.Execute);
     }
@@ -642,7 +642,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
   private final class MakeAntRunConfigurationAction extends AnAction {
-    public MakeAntRunConfigurationAction() {
+    MakeAntRunConfigurationAction() {
       super(AntBundle.message("make.ant.runconfiguration.name"), null, AntIcons.Build);
     }
 
@@ -680,9 +680,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
 
       RunManager runManager = RunManager.getInstance(myProject);
-      RunnerAndConfigurationSettings settings =
-        runManager.createRunConfiguration(name, AntRunConfigurationType.getInstance().getFactory());
-      AntRunConfiguration configuration  = (AntRunConfiguration)settings.getConfiguration();
+      RunnerAndConfigurationSettings settings = runManager.createConfiguration(name, AntRunConfigurationType.class);
+      AntRunConfiguration configuration = (AntRunConfiguration)settings.getConfiguration();
       configuration.acceptSettings(target);
       if (RunDialog.editConfiguration(e.getProject(), settings, ExecutionBundle
         .message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
@@ -692,21 +691,20 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
 
-
   private final class ShowAllTargetsAction extends ToggleAction {
-    public ShowAllTargetsAction() {
+    ShowAllTargetsAction() {
       super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"),
             AllIcons.General.Filter);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       final Project project = myProject;
       return project != null && AntConfigurationBase.getInstance(project).isFilterTargets();
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setTargetsFiltered(flag);
     }
   }
@@ -720,19 +718,19 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     private final AntBuildTargetBase myTarget;
     private final ExecutionEvent myExecutionEvent;
 
-    public ExecuteOnEventAction(final AntBuildTargetBase target, final ExecutionEvent executionEvent) {
+    ExecuteOnEventAction(final AntBuildTargetBase target, final ExecutionEvent executionEvent) {
       super(executionEvent.getPresentableName());
       myTarget = target;
       myExecutionEvent = executionEvent;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myTarget.equals(AntConfigurationBase.getInstance(myProject).getTargetForEvent(myExecutionEvent));
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean state) {
+    public void setSelected(@NotNull AnActionEvent event, boolean state) {
       final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
       if (state) {
         final AntBuildFileBase buildFile =
@@ -756,7 +754,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final class ExecuteBeforeRunAction extends AnAction {
     private final AntBuildTarget myTarget;
 
-    public ExecuteBeforeRunAction(final AntBuildTarget target) {
+    ExecuteBeforeRunAction(final AntBuildTarget target) {
       super(AntBundle.message("executes.before.run.debug.acton.name"));
       myTarget = target;
     }
@@ -775,7 +773,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class CreateMetaTargetAction extends AnAction {
 
-    public CreateMetaTargetAction() {
+    CreateMetaTargetAction() {
       super(AntBundle.message("ant.create.meta.target.action.name"), AntBundle.message("ant.create.meta.target.action.description"), null
 /*IconLoader.getIcon("/actions/execute.png")*/);
     }
@@ -802,7 +800,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class RemoveMetaTargetsOrBuildFileAction extends AnAction {
 
-    public RemoveMetaTargetsOrBuildFileAction() {
+    RemoveMetaTargetsOrBuildFileAction() {
       super(AntBundle.message("remove.meta.targets.action.name"), AntBundle.message("remove.meta.targets.action.description"), null);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
       Disposer.register(AntExplorer.this, new Disposable() {
@@ -910,7 +908,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final class AssignShortcutAction extends AnAction {
     private final String myActionId;
 
-    public AssignShortcutAction(String actionId) {
+    AssignShortcutAction(String actionId) {
       super(AntBundle.message("ant.explorer.assign.shortcut.action.name"));
       myActionId = actionId;
     }

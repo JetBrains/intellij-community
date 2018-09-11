@@ -235,7 +235,7 @@ public class PathMacroTable extends JBTable {
   private class AddValidator implements PathMacroEditor.Validator {
     private final String myTitle;
 
-    public AddValidator(String title) {
+    AddValidator(String title) {
       myTitle = title;
     }
 

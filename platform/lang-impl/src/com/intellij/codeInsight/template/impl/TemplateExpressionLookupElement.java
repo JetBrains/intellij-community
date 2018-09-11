@@ -26,7 +26,7 @@ import java.util.List;
 class TemplateExpressionLookupElement extends LookupElementDecorator<LookupElement> {
   private final TemplateState myState;
 
-  public TemplateExpressionLookupElement(final TemplateState state, LookupElement element, int index) {
+  TemplateExpressionLookupElement(final TemplateState state, LookupElement element, int index) {
     super(PrioritizedLookupElement.withPriority(element, Integer.MAX_VALUE - 10 - index));
     myState = state;
   }

@@ -301,7 +301,7 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   private class TextFieldAction extends LinkLabel implements LinkListener {
-    public TextFieldAction() {
+    TextFieldAction() {
       super("", null);
       setListener(this, null);
       update();

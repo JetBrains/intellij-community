@@ -122,7 +122,7 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
   }
 
   private static class GradlePatternBasedConfigurationProducer extends AbstractPatternBasedConfigurationProducer {
-    public GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
+    GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
       super(configurationType);
     }
 

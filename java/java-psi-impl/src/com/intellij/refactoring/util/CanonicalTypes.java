@@ -57,7 +57,7 @@ public class CanonicalTypes {
   private abstract static class AnnotatedType extends Type {
     protected final TypeAnnotationProvider myProvider;
 
-    public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
+    AnnotatedType(@NotNull TypeAnnotationProvider provider) {
       PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }

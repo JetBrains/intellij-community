@@ -22,7 +22,7 @@ class FileChunkKey<OwnerType> implements Comparable<FileChunkKey<OwnerType>>, Sh
   private OwnerType owner;
   private long offset;
 
-  public FileChunkKey(OwnerType owner, long offset) {
+  FileChunkKey(OwnerType owner, long offset) {
     this.owner = owner;
     this.offset = offset;
   }

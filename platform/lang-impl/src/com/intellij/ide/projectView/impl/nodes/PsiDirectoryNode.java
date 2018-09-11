@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -40,10 +40,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Set;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
   // the chain from a parent directory to this one usually contains only one virtual file
-  private final SmartHashSet<VirtualFile> chain = new SmartHashSet<>();
+  private final Set<VirtualFile> chain = new SmartHashSet<>();
 
   private final PsiFileSystemItemFilter myFilter;
 
@@ -70,7 +71,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     Project project = getProject();
     assert project != null : this;
     PsiDirectory psiDirectory = getValue();
@@ -272,9 +273,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     Project project = getProject();
 
     ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
-    return file != null && ((ProjectRootsUtil.isModuleContentRoot(file, project) && service.canOpenModuleSettings()) ||
-                            (ProjectRootsUtil.isModuleSourceRoot(file, project)  && service.canOpenContentEntriesSettings()) ||
-                            (ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings()));
+    return file != null && (ProjectRootsUtil.isModuleContentRoot(file, project) && service.canOpenModuleSettings() ||
+                            ProjectRootsUtil.isModuleSourceRoot(file, project)  && service.canOpenContentEntriesSettings() ||
+                            ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings());
   }
 
   @Override
@@ -284,7 +285,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public void navigate(final boolean requestFocus) {
-    Module module = ModuleUtil.findModuleForPsiElement(getValue());
+    Module module = ModuleUtilCore.findModuleForPsiElement(getValue());
     if (module != null) {
       final VirtualFile file = getVirtualFile();
       final Project project = getProject();

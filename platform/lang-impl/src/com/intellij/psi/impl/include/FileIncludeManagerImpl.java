@@ -74,7 +74,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   };
   private final Map<String, FileIncludeProvider> myProviderMap;
 
-  public void processIncludes(PsiFile file, Processor<FileIncludeInfo> processor) {
+  public void processIncludes(PsiFile file, Processor<? super FileIncludeInfo> processor) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), scope);
     for (FileIncludeInfo info : infoList) {
@@ -231,7 +231,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       return getFiles(file, compileTimeOnly);
     }
 
-    private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {
+    private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<? super VirtualFile> result) {
       if (!result.add(file)) return;
       VirtualFile[] includes = getFiles(file, compileTimeOnly);
       if (includes.length != 0) {
@@ -259,7 +259,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private abstract static class IncludedFilesProvider implements ParameterizedCachedValueProvider<VirtualFile[], PsiFile> {
     private final boolean myRuntimeOnly;
 
-    public IncludedFilesProvider(boolean runtimeOnly) {
+    IncludedFilesProvider(boolean runtimeOnly) {
       myRuntimeOnly = runtimeOnly;
     }
 

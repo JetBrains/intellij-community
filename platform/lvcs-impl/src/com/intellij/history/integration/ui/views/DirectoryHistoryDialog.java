@@ -146,7 +146,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private class ShowDifferenceAction extends ActionOnSelection {
-    public ShowDifferenceAction() {
+    ShowDifferenceAction() {
       super(message("action.show.difference"), AllIcons.Actions.Diff);
       setShortcutSet(CommonShortcuts.getDiff());
     }
@@ -176,7 +176,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private class RevertSelectionAction extends ActionOnSelection {
-    public RevertSelectionAction() {
+    RevertSelectionAction() {
       super(message("action.revert.selection"), AllIcons.Actions.Rollback);
     }
 
@@ -196,7 +196,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private abstract class ActionOnSelection extends MyAction {
-    public ActionOnSelection(String name, Icon icon) {
+    ActionOnSelection(String name, Icon icon) {
       super(name, null, icon);
     }
 

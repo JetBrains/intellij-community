@@ -55,7 +55,7 @@ public class TasksNode extends ExternalSystemNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(ExternalSystemIcons.TaskGroup);
   }
@@ -82,7 +82,7 @@ public class TasksNode extends ExternalSystemNode {
         final ExternalSystemNode tasksGroupNode = new ExternalSystemNode(getExternalProjectsView(), null, null) {
 
           @Override
-          protected void update(PresentationData presentation) {
+          protected void update(@NotNull PresentationData presentation) {
             super.update(presentation);
             presentation.setIcon(ExternalSystemIcons.TaskGroup);
           }

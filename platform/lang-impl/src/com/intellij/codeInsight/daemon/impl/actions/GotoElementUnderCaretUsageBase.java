@@ -25,7 +25,7 @@ import java.util.Comparator;
   /**
    * @param direction defines direction for next usage searching.
    */
-  public GotoElementUnderCaretUsageBase(@NotNull Direction direction) {
+  GotoElementUnderCaretUsageBase(@NotNull Direction direction) {
     myDirection = direction;
   }
 

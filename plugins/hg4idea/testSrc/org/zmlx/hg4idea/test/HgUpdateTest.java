@@ -177,8 +177,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
   @Override
   protected HgFile getHgFile(String... filepath) {
     File fileToInclude = projectRepo;
-    for (int i = 0; i < filepath.length; i++) {
-      fileToInclude = new File(fileToInclude, filepath[i]);
+    for (String path : filepath) {
+      fileToInclude = new File(fileToInclude, path);
     }
     return new HgFile(projectRepoVirtualFile, fileToInclude);
   }

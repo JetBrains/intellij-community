@@ -23,7 +23,7 @@ class FieldAccessor<FIELD_TYPE> {
   private final Object myHost;
   private final String myFieldName;
 
-  public <T> FieldAccessor(Class<? super T> hostClass, T host, String fieldName) {
+  <T> FieldAccessor(Class<? super T> hostClass, T host, String fieldName) {
     myHostClass = hostClass;
     myHost = host;
     myFieldName = fieldName;

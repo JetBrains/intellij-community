@@ -302,7 +302,7 @@ public class SSHConfig {
      *
      * @param patterns a patterns to match
      */
-    public HostEntry(final String patterns) {
+    HostEntry(final String patterns) {
       for (String pattern : patterns.split("[\t ,]+")) {
         if (pattern.length() == 0) {
           continue;

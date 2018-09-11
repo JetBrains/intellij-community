@@ -392,7 +392,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     return CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
   }
 
-  private void readExternalCollection(Element parentElement, Collection<String> collection, String collectionName, String itemName) {
+  private void readExternalCollection(Element parentElement, Collection<? super String> collection, String collectionName, String itemName) {
     Element child = parentElement.getChild(getTagName());
     if (child != null) {
       collection.clear();

@@ -141,8 +141,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     };
 
-    myStructureTreeModel = new StructureTreeModel(true);
-    myStructureTreeModel.setStructure(myTreeStructure);
+    myStructureTreeModel = new StructureTreeModel(myTreeStructure);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
@@ -214,7 +213,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     TreeUtil.installActions(getTree());
 
     new TreeSpeedSearch(getTree(), treePath -> {
-      Object userObject = TreeUtil.getUserObject(treePath.getLastPathComponent());
+      Object userObject = TreeUtil.getLastUserObject(treePath);
       return userObject != null ? FileStructurePopup.getSpeedSearchText(userObject) : null;
     });
 
@@ -247,7 +246,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
       UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
       myTreeStructure.rebuildTree();
-      myStructureTreeModel.invalidate(null);
+      myStructureTreeModel.invalidate();
     });
   }
 
@@ -371,7 +370,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public Promise<AbstractTreeNode> expandPathToElement(Object element) {
     return expandSelectFocusInner(element, false, false)
-      .then(p -> TreeUtil.getUserObject(AbstractTreeNode.class, p.getLastPathComponent()));
+      .then(p -> TreeUtil.getLastUserObject(AbstractTreeNode.class, p));
   }
 
   @NotNull
@@ -673,7 +672,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     AsyncPromise<Void> result = new AsyncPromise<>();
     rebuild();
     TreeVisitor visitor = path -> {
-      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };

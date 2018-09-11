@@ -239,7 +239,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.logicalPositionToOffset(pos);
   }
 
-  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<RangeHighlighterEx> highlighters) {
+  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<? super RangeHighlighterEx> highlighters) {
     final int startOffset = getOffset(fitLineToEditor(visualLine - myPreviewLines), true);
     final int endOffset = getOffset(fitLineToEditor(visualLine + myPreviewLines), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -272,7 +272,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private void getNearestHighlighters(@NotNull MarkupModelEx markupModel,
                                       final int scrollBarY,
-                                      @NotNull final Collection<RangeHighlighter> nearest) {
+                                      @NotNull final Collection<? super RangeHighlighter> nearest) {
     int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
     int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -754,7 +754,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private int drawStripesEndingBefore(int ys,
-                                        @NotNull Queue<PositionedStripe> ends,
+                                        @NotNull Queue<? extends PositionedStripe> ends,
                                         @NotNull List<PositionedStripe> stripes,
                                         @NotNull Graphics g, int yStart) {
       while (!ends.isEmpty()) {
@@ -975,7 +975,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
-    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
+    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;
       //do not show same tooltip twice
       Set<String> tooltips = null;
@@ -1129,7 +1129,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       update(-1, Collections.emptyList(), false);
     }
 
-    void update(int visualLine, @NotNull Collection<RangeHighlighterEx> rangeHighlighters, boolean showInstantly) {
+    void update(int visualLine, @NotNull Collection<? extends RangeHighlighterEx> rangeHighlighters, boolean showInstantly) {
       myVisualLine = visualLine;
       myShowInstantly = showInstantly;
       myHighlighters.clear();

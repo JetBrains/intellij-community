@@ -103,7 +103,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   public void optimizeImports(@NotNull PsiFile file) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
-    if (file instanceof PsiJavaFile) {
+    if (file instanceof PsiJavaFile && CodeStyle.isFormattingEnabled(file)) {
       PsiImportList newList = prepareOptimizeImportsResult((PsiJavaFile)file);
       if (newList != null) {
         final PsiImportList importList = ((PsiJavaFile)file).getImportList();
@@ -974,7 +974,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NotNull
   @Override
-  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused) {
+  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
     return suggestUniqueVariableName(baseName, place, true, false, canBeReused);
   }
 

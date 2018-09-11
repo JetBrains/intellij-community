@@ -514,7 +514,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   static class ReplaceWithComparatorFix implements LocalQuickFix {
     private final String myMessage;
 
-    public ReplaceWithComparatorFix(String message) {
+    ReplaceWithComparatorFix(String message) {
       myMessage = message;
     }
 

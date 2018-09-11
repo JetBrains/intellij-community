@@ -108,7 +108,7 @@ public class MessagesServiceImpl implements MessagesService {
                                            int defaultOptionIndex,
                                            int focusedOptionIndex,
                                            Icon icon,
-                                           PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+                                           PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     if (isApplicationInUnitTestOrHeadless()) {
       return getTestImplementation().show(message);
     }
@@ -237,8 +237,8 @@ public class MessagesServiceImpl implements MessagesService {
   public void showTextAreaDialog(final JTextField textField,
                                  String title,
                                  String dimensionServiceKey,
-                                 Function<String, List<String>> parser,
-                                 final Function<List<String>, String> lineJoiner) {
+                                 Function<? super String, ? extends List<String>> parser,
+                                 final Function<? super List<String>, String> lineJoiner) {
     if (isApplicationInUnitTestOrHeadless()) {
       getTestImplementation().show(title);
       return;

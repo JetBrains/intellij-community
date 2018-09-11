@@ -990,7 +990,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
-                                              @Nullable Processor<FileIndentOptionsProvider> providerProcessor) {
+                                              @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
     if (file != null && file.isValid()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {

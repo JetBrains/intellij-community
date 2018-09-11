@@ -840,12 +840,12 @@ public class ChangeListWorker {
     public boolean isDefault = false;
     public boolean isReadOnly = false; // read-only lists cannot be removed or renamed
 
-    public ListData(@Nullable String id, @NotNull String name) {
+    ListData(@Nullable String id, @NotNull String name) {
       this.id = id != null ? id : LocalChangeListImpl.generateChangelistId();
       this.name = name;
     }
 
-    public ListData(@NotNull LocalChangeListImpl list) {
+    ListData(@NotNull LocalChangeListImpl list) {
       this.id = list.getId();
       this.name = list.getName();
       this.comment = list.getComment();
@@ -854,7 +854,7 @@ public class ChangeListWorker {
       this.isReadOnly = list.isReadOnly();
     }
 
-    public ListData(@NotNull ListData list) {
+    ListData(@NotNull ListData list) {
       this.id = list.id;
       this.name = list.name;
       this.comment = list.comment;
@@ -1253,7 +1253,7 @@ public class ChangeListWorker {
     @NotNull private final Set<String> myChangeListsIds;
     @NotNull private String myDefaultId;
 
-    public PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
+    PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
                                     @NotNull ListData defaultList) {
       myChangeListsIds = new HashSet<>(tracker.getAffectedChangeListsIds());
       myDefaultId = defaultList.id;

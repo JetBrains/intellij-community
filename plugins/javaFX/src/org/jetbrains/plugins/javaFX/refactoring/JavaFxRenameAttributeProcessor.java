@@ -32,7 +32,7 @@ public class JavaFxRenameAttributeProcessor extends RenameXmlAttributeProcessor 
     });
   }
 
-  static void visitReferencedElements(PsiReference[] references, NullableConsumer<PsiElement> consumer) {
+  static void visitReferencedElements(PsiReference[] references, NullableConsumer<? super PsiElement> consumer) {
     for (PsiReference reference : references) {
       if (reference instanceof PsiPolyVariantReference) {
         final ResolveResult[] resolveResults = ((PsiPolyVariantReference)reference).multiResolve(false);

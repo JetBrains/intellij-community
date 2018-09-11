@@ -70,7 +70,7 @@ public class BuildAndRestartConsoleAction extends AnAction {
     if (ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myExecutor, myContentDescriptor)) {
       CompilerManager.getInstance(myProject).compile(myModule, new CompileStatusNotification() {
         @Override
-        public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           if (!myModule.isDisposed()) {
             myRestarter.consume(myModule);
           }

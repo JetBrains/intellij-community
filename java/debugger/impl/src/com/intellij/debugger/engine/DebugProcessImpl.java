@@ -13,7 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
-import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -143,7 +143,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
-      public void paused(SuspendContext suspendContext) {
+      public void paused(@NotNull SuspendContext suspendContext) {
         myThreadBlockedMonitor.stopWatching(
           suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL ? suspendContext.getThread() : null);
       }
@@ -205,7 +205,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     Type type = descriptor.getType();
 
     // in case evaluation is not possible, force default renderer
-    if (!DebuggerManagerEx.getInstanceEx(getProject()).getContext().isEvaluationPossible()) {
+    if (!isEvaluationPossible()) {
       return getDefaultRenderer(type);
     }
 
@@ -443,8 +443,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof SAPidRemoteConnection) {
-        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
+      if (myConnection instanceof PidRemoteConnection) {
+        PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
         AttachingConnector connector = pidRemoteConnection.getConnector();
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
@@ -590,7 +590,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  static Connector findConnector(String connectorName) throws ExecutionException {
+  public static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -1514,7 +1514,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class StepOutCommand extends StepCommand {
     private final int myStepSize;
 
-    public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
+    StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
       super(suspendContext);
       myStepSize = stepSize;
     }
@@ -1543,7 +1543,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final StepIntoBreakpoint myBreakpoint;
     private final int myStepSize;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
+    StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
                            int stepSize) {
       super(suspendContext);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
@@ -1686,7 +1686,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private abstract class StepCommand extends ResumeCommand {
-    public StepCommand(SuspendContextImpl suspendContext) {
+    StepCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
     }
 
@@ -1752,7 +1752,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private class PauseCommand extends DebuggerCommandImpl {
-    public PauseCommand() {
+    PauseCommand() {
     }
 
     @Override
@@ -1771,7 +1771,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class ResumeThreadCommand extends SuspendContextCommandImpl {
     private final ThreadReferenceProxyImpl myThread;
 
-    public ResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
+    ResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
       super(suspendContext);
       myThread = thread;
     }
@@ -1800,7 +1800,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class FreezeThreadCommand extends DebuggerCommandImpl {
     private final ThreadReferenceProxyImpl myThread;
 
-    public FreezeThreadCommand(ThreadReferenceProxyImpl thread) {
+    FreezeThreadCommand(ThreadReferenceProxyImpl thread) {
       myThread = thread;
     }
 
@@ -1819,7 +1819,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class PopFrameCommand extends DebuggerContextCommandImpl {
     private final StackFrameProxyImpl myStackFrame;
 
-    public PopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl frameProxy) {
+    PopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl frameProxy) {
       super(context, frameProxy.threadProxy());
       myStackFrame = frameProxy;
     }
@@ -2238,5 +2238,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
+  }
+
+  public boolean isEvaluationPossible() {
+    return getSuspendManager().getPausedContext() != null;
   }
 }

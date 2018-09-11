@@ -118,7 +118,7 @@ public class IntroduceTargetChooser {
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
@@ -155,12 +155,12 @@ public class IntroduceTargetChooser {
   }
 
   private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
-    private final NotNullFunction<PsiElement, TextRange> myRanger;
-    private final Function<T, String> myRenderer;
+    private final NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
+    private final Function<? super T, String> myRenderer;
 
-    public MyIntroduceTarget(@NotNull T psi,
-                             @NotNull NotNullFunction<PsiElement, TextRange> ranger,
-                             @NotNull Function<T, String> renderer) {
+    MyIntroduceTarget(@NotNull T psi,
+                             @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger,
+                             @NotNull Function<? super T, String> renderer) {
       super(psi);
       myRanger = ranger;
       myRenderer = renderer;

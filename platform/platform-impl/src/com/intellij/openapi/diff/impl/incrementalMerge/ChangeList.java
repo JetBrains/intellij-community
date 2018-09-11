@@ -16,19 +16,18 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,7 +240,7 @@ public class ChangeList {
   }
 
   public interface Listener {
-    void onChangeRemoved(ChangeList source);
-    void onChangeApplied(ChangeList source);
+    void onChangeRemoved(@NotNull ChangeList source);
+    void onChangeApplied(@NotNull ChangeList source);
   }
 }

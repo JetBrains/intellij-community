@@ -6,6 +6,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Collections;
 
 /**
  * @author Alexander Lobas
@@ -23,6 +24,20 @@ public class PluginSearchTextField extends SearchTextField {
     Dimension size = super.getPreferredSize();
     size.height = JBUI.scale(38);
     return size;
+  }
+
+  @Override
+  public void setHistoryPropertyName(String historyPropertyName) {
+    super.setHistoryPropertyName(historyPropertyName);
+  }
+
+  @Override
+  protected void setEmptyHistory() {
+    setHistory(Collections.emptyList());
+  }
+
+  @Override
+  public void setSelectedItem(String s) {
   }
 
   public boolean isSkipDocumentEvents() {

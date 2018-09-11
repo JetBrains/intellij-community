@@ -79,7 +79,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
 
   @FunctionalInterface
   interface MoreElementsGenerator<T,V> {
-    void generateMoreElementsFor(@NotNull V element, @NotNull Consumer<T> processor);
+    void generateMoreElementsFor(@NotNull V element, @NotNull Consumer<? super T> processor);
   }
 
   @NotNull

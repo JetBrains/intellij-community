@@ -763,7 +763,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return node;
   }
 
-  private void deleteNodes(@NotNull List<IntervalNode<T>> collectedAway) {
+  private void deleteNodes(@NotNull List<? extends IntervalNode<T>> collectedAway) {
     if (collectedAway.isEmpty()) return;
     try {
       l.writeLock().lock();

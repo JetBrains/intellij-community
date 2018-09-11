@@ -42,4 +42,11 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                                 "  {x(HashSet</*_Flip '>' to '<'*/>());}" +
                                 "}");
   }
+
+  public void testBrokenCode2() {
+    doTestIntentionNotAvailable("class Builder {\n" +
+                                "    Builder b = !(new//simple end comment\n" +
+                                "         </*_Flip '>=' to '<='*/>   Builder().method( >= caret) >1).method(2);\n" +
+                                "}");
+  }
 }

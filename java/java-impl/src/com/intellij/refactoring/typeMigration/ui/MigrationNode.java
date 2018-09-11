@@ -115,7 +115,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   }
 
   @Override
-  protected void update(final PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
 
   }
 

@@ -192,7 +192,7 @@ public class DuplicatesFinder {
     }
   }
 
-  private void findPatternOccurrences(List<Match> array, PsiElement scope) {
+  private void findPatternOccurrences(List<? super Match> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       final Match match = isDuplicateFragment(child, false);
@@ -256,7 +256,7 @@ public class DuplicatesFinder {
     return false;
   }
 
-  private boolean checkPostVariableUsages(final ArrayList<PsiElement> candidates, final Match match) {
+  private boolean checkPostVariableUsages(final ArrayList<? extends PsiElement> candidates, final Match match) {
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(candidates.get(0));
     try {
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeFragment.getProject()).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
@@ -503,7 +503,7 @@ public class DuplicatesFinder {
   @Nullable
   private Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
                                         @NotNull PsiJavaCodeReferenceElement candidate,
-                                        @NotNull List<PsiElement> candidates,
+                                        @NotNull List<? extends PsiElement> candidates,
                                         @NotNull Match match) {
     final PsiElement resolveResult1 = pattern.resolve();
     final PsiElement resolveResult2 = candidate.resolve();
@@ -914,7 +914,7 @@ public class DuplicatesFinder {
     return false;
   }
 
-  static boolean isUnder(@Nullable PsiElement element, @NotNull List<PsiElement> parents) {
+  static boolean isUnder(@Nullable PsiElement element, @NotNull List<? extends PsiElement> parents) {
     if (element == null) return false;
     for (final PsiElement parent : parents) {
       if (PsiTreeUtil.isAncestor(parent, element, false)) return true;

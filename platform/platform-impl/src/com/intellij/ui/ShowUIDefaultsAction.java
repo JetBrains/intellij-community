@@ -1,48 +1,53 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.TextCopyProvider;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.EventObject;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -60,12 +65,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
     int i = 0;
     while (keys.hasMoreElements()) {
       Object key = keys.nextElement();
-      data[i][0] = key;
-      data[i][1] = defaults.get(key);
+      Pair<Object, Object> row = Pair.create(key, defaults.get(key));
+      data[i][0] = row;
+      data[i][1] = row;
       i++;
     }
 
-    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString()));
+    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair)o1[0]).first.toString(), ((Pair)o2[0]).first.toString()));
 
     new DialogWrapper(project) {
       {
@@ -75,11 +81,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       public JBTable myTable;
+      public JBTextField mySearchField;
+      public JBCheckBox myColorsOnly;
 
       @Nullable
       @Override
       public JComponent getPreferredFocusedComponent() {
-        return myTable;
+        return mySearchField;
       }
 
       @Nullable
@@ -90,22 +98,30 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       @Override
       protected JComponent createCenterPanel() {
-        final JBTable table = new JBTable(new DefaultTableModel(data, new Object[]{"Name", "Value"}) {
+        mySearchField = new JBTextField(40);
+        JPanel top = UI.PanelFactory.panel(mySearchField).withLabel("Filter:").createPanel();
+        DefaultTableModel model = new DefaultTableModel(data, new Object[]{"Name", "Value"}) {
           @Override
           public boolean isCellEditable(int row, int column) {
-            Object value = getValueAt(row, column);
-            return column == 1 && (value instanceof Color ||
-                                   value instanceof Integer ||
-                                   value instanceof Border ||
-                                   value instanceof UIUtil.GrayFilter ||
-                                   value instanceof Font);
+            if (column != 1) return false;
+            Object value = ((Pair)getValueAt(row, column)).second;
+            return (value instanceof Color ||
+                    value instanceof Integer ||
+                    value instanceof Border ||
+                    value instanceof UIUtil.GrayFilter ||
+                    value instanceof Font);
           }
-        }) {
+        };
+        FilteringTableModel<Object> filteringTableModel = new FilteringTableModel<>(model, Object.class);
+        filteringTableModel.setFilter(null);
+        final JBTable table = new JBTable(filteringTableModel) {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column) && e instanceof MouseEvent) {
-              Object key = getValueAt(row, 0);
-              Object value = getValueAt(row, column);
+              Pair pair = (Pair)getValueAt(row, 0);
+              Object key = pair.first;
+              Object value = pair.second;
+              boolean changed = false;
 
               if (value instanceof Color) {
                 Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)value, true, null, true);
@@ -114,34 +130,30 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
                   // MultiUIDefaults overrides remove but does not override put.
                   // So to avoid duplications we should first remove the value and then put it again.
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, colorUIResource);
-                  setValueAt(colorUIResource, row, column);
+                  updateValue(pair, colorUIResource, row, column);
+                  changed = true;
                 }
               } else if (value instanceof Integer) {
                 Integer newValue = editNumber(key.toString(), value.toString());
                 if (newValue != null) {
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, newValue);
-                  setValueAt(newValue, row, column);
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
                 }
               } else if (value instanceof Border) {
                 Insets i = ((Border)value).getBorderInsets(null);
                 String oldBorder = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
                 Border newValue = editBorder(key.toString(), oldBorder);
                 if (newValue != null) {
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, newValue);
-                  setValueAt(newValue, row, column);
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
                 }
               } else if (value instanceof UIUtil.GrayFilter) {
                 UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
                 UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
                 if (newValue != null) {
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, newValue);
-                  setValueAt(newValue, row, column);
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
                 }
               } else if (value instanceof Font) {
                 Font newValue = editFontSize(key.toString(), (Font)value);
@@ -149,10 +161,24 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   UIManager.getDefaults().remove(key);
                   UIManager.getDefaults().put(key, newValue);
                   setValueAt(newValue, row, column);
+                  changed = true;
                 }
+              }
+
+              if (changed) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  LafManager.getInstance().updateUI();
+                  LafManager.getInstance().repaintUI();
+                });
               }
             }
             return false;
+          }
+
+          void updateValue(Pair value, Object newValue, int row, int col) {
+            UIManager.getDefaults().remove(value.first);
+            UIManager.getDefaults().put(value.first, newValue);
+            setValueAt(Pair.create(value.first, newValue), row, col);
           }
         };
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -163,13 +189,15 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                                          boolean hasFocus,
                                                          int row,
                                                          int column) {
+            value = column == 0 ? ((Pair)value).first : ((Pair)value).second;
             final JPanel panel = new JPanel(new BorderLayout());
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             panel.add(label, BorderLayout.CENTER);
             if (value instanceof Color) {
               final Color c = (Color)value;
-              label.setText(String.format("[r=%d,g=%d,b=%d] hex=0x%s", c.getRed(), c.getGreen(), c.getBlue(), ColorUtil.toHex(c)));
-              label.setForeground(ColorUtil.isDark(c) ? JBColor.white : JBColor.black);
+              label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
+              Color fg = c.getRed()*0.299 + c.getGreen()*0.587 + c.getBlue()*0.114 < 186 ? Gray.xFF : Gray.x00; // M is for Magic
+              label.setForeground(fg);
               panel.setBackground(c);
               return panel;
             } else if (value instanceof Icon) {
@@ -196,11 +224,82 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         final JBScrollPane pane = new JBScrollPane(table);
         new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(pane, BorderLayout.CENTER);
         myTable = table;
         TableUtil.ensureSelectionExists(myTable);
+        mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(@NotNull DocumentEvent e) {
+            updateFilter();
+          }
+        });
+
+        ScrollingUtil.installActions(myTable, true, mySearchField);
+
+        myColorsOnly = new JBCheckBox("Colors only", PropertiesComponent.getInstance().getBoolean("LaFDialog.ColorsOnly", false)) {
+          @Override
+          public void addNotify() {
+            super.addNotify();
+            updateFilter();
+          }
+        };
+        myColorsOnly.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            PropertiesComponent.getInstance().setValue("LaFDialog.ColorsOnly", myColorsOnly.isSelected(), false);
+            updateFilter();
+          }
+        });
+        BorderLayoutPanel panel = simplePanel(simplePanel(pane).withBorder(JBUI.Borders.empty(5, 0)))
+          .addToTop(top)
+          .addToBottom(myColorsOnly);
+        DataProvider provider = dataId -> {
+          if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+            if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
+              int row = myTable.getSelectedRow();
+              if (row != -1) {
+                Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
+                if (pair.second instanceof Color) {
+                  return new TextCopyProvider() {
+                    @Override
+                    public Collection<String> getTextLinesToCopy() {
+                      return Collections
+                        .singletonList("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"");
+                    }
+                  };
+                }
+              }
+            }
+          }
+          return null;
+        };
+        DataManager.registerDataProvider(myTable, provider);
+        DataManager.registerDataProvider(mySearchField, provider);
         return panel;
+      }
+
+      private void updateFilter() {
+        FilteringTableModel<?> model = (FilteringTableModel<?>)myTable.getModel();
+        if (StringUtil.isEmpty(mySearchField.getText()) && !myColorsOnly.isSelected()) {
+          model.setFilter(null);
+          return;
+        }
+
+        MinusculeMatcher matcher = NameUtil.buildMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
+        model.setFilter(pair -> {
+          Object obj = ((Pair)pair).second;
+          String value;
+          if (obj == null) {
+            value = "null";
+          } else if (obj instanceof Color) {
+            value = ColorUtil.toHtmlColor((Color)obj);
+          } else {
+            value = obj.toString();
+          }
+
+          value = ((Pair)pair).first.toString() + " " + value;
+          return (!myColorsOnly.isSelected() || obj instanceof Color) && matcher.matches(value);
+        });
+
       }
 
       private @Nullable Integer editNumber(String key, String value) {
@@ -330,7 +429,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   private static class IconWrap implements Icon {
     private final Icon myIcon;
 
-    public IconWrap(Icon icon) {
+    IconWrap(Icon icon) {
       myIcon = icon;
     }
 

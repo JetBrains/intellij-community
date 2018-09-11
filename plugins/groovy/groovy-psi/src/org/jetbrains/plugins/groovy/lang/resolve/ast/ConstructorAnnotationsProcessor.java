@@ -112,7 +112,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   private static void addParametersForSuper(@NotNull PsiClass typeDefinition,
                                             GrLightMethodBuilder fieldsConstructor,
                                             boolean superFields,
-                                            boolean superProperties, Set<PsiClass> visited, Set<String> excludes) {
+                                            boolean superProperties, Set<? super PsiClass> visited, Set<String> excludes) {
     PsiClass parent = typeDefinition.getSuperClass();
     if (parent != null && visited.add(parent) && !GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
       addParametersForSuper(parent, fieldsConstructor, superFields, superProperties, visited, excludes);

@@ -27,7 +27,7 @@ import java.util.StringTokenizer;
 * @author nik
 */
 class LibraryRootsTreeSpeedSearch extends TreeSpeedSearch {
-  public LibraryRootsTreeSpeedSearch(final Tree tree) {
+  LibraryRootsTreeSpeedSearch(final Tree tree) {
     super(tree);
   }
 

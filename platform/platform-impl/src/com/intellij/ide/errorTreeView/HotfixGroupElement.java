@@ -13,14 +13,14 @@ import javax.swing.*;
 
 public class HotfixGroupElement extends GroupingElement {
 
-  private final Consumer<HotfixGate> myHotfix;
+  private final Consumer<? super HotfixGate> myHotfix;
   private final String myFixDescription;
   private final MutableErrorTreeView myView;
   private boolean myInProgress;
   private final CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
   private final CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
 
-  public HotfixGroupElement(final String name, final Object data, final VirtualFile file, final Consumer<HotfixGate> hotfix,
+  public HotfixGroupElement(final String name, final Object data, final VirtualFile file, final Consumer<? super HotfixGate> hotfix,
                             final String fixDescription, final MutableErrorTreeView view) {
     super(name, data, file);
     myHotfix = hotfix;
@@ -49,7 +49,7 @@ public class HotfixGroupElement extends GroupingElement {
   private class MyRightRenderer extends CustomizeColoredTreeCellRenderer {
     private final HotfixGroupElement.MyRunner myRunner;
 
-    public MyRightRenderer() {
+    MyRightRenderer() {
       myRunner = new MyRunner();
     }
 

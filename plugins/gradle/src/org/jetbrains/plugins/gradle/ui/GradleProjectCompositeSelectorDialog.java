@@ -182,7 +182,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   }
 
   private class SelectAllButton extends AnActionButton {
-    public SelectAllButton() {
+    SelectAllButton() {
       super("Select All", AllIcons.Actions.Selectall);
     }
 
@@ -194,7 +194,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   }
 
   private class UnselectAllButton extends AnActionButton {
-    public UnselectAllButton() {
+    UnselectAllButton() {
       super("Unselect All", AllIcons.Actions.Unselectall);
     }
 

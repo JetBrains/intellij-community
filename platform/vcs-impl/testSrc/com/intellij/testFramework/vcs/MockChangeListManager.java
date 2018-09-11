@@ -73,7 +73,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 String title,
-                                Consumer<VcsDirtyScopeManager> dirtyScopeManager,
+                                Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
                                 ModalityState state) {
     afterUpdate.run();
   }

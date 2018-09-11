@@ -433,7 +433,7 @@ public class DualView extends JPanel {
   private class MyTableCellRendererWrapper implements TableCellRendererWrapper {
     @NotNull private final TableCellRenderer myRenderer;
 
-    public MyTableCellRendererWrapper(@NotNull TableCellRenderer renderer) {
+    MyTableCellRendererWrapper(@NotNull TableCellRenderer renderer) {
       myRenderer = renderer;
     }
 

@@ -44,8 +44,8 @@ public abstract class ShowSettingsUtil {
                                                                    @Nullable Consumer<T> additionalConfiguration);
 
   public abstract void showSettingsDialog(@Nullable Project project,
-                                          @NotNull Predicate<Configurable> predicate,
-                                          @Nullable Consumer<Configurable> additionalConfiguration);
+                                          @NotNull Predicate<? super Configurable> predicate,
+                                          @Nullable Consumer<? super Configurable> additionalConfiguration);
 
   public abstract boolean editConfigurable(Project project, Configurable configurable);
 

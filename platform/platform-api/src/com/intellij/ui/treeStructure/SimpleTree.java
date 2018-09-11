@@ -86,7 +86,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
       setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
     }
 
-    setOpaque(UIUtil.isUnderGTKLookAndFeel());
+    setOpaque(false);
   }
 
   public SimpleTree(TreeModel aModel) {

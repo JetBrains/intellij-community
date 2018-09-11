@@ -76,7 +76,7 @@ public class FindSuperElementsHelper {
   }
 
   @NotNull
-  public static Map<PsiMethod, SiblingInfo> getSiblingInheritanceInfos(@NotNull final Collection<PsiMethod> methods) {
+  public static Map<PsiMethod, SiblingInfo> getSiblingInheritanceInfos(@NotNull final Collection<? extends PsiMethod> methods) {
     MultiMap<PsiClass, PsiMethod> byClass = MultiMap.create();
     for (PsiMethod method : methods) {
       PsiClass containingClass = method.getContainingClass();

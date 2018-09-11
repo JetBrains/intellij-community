@@ -20,7 +20,7 @@ import java.awt.*;
 final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.propertyInspector.QuickFixManagerImpl");
 
-  public QuickFixManagerImpl(final GuiEditor editor, final PropertyInspectorTable propertyInspectorTable, final JViewport viewPort) {
+  QuickFixManagerImpl(final GuiEditor editor, final PropertyInspectorTable propertyInspectorTable, final JViewport viewPort) {
     super(editor, propertyInspectorTable, viewPort);
     propertyInspectorTable.getSelectionModel().addListSelectionListener(new MyListSelectionListener());
   }

@@ -75,7 +75,7 @@ public class RestRoleInspection extends RestInspection {
     private final ImmutableSet<String> myIgnoredRoles;
     Set<String> mySphinxRoles = new HashSet<>();
 
-    public Visitor(final ProblemsHolder holder, List<String> ignoredRoles) {
+    Visitor(final ProblemsHolder holder, List<String> ignoredRoles) {
       super(holder);
       myIgnoredRoles = ImmutableSet.copyOf(ignoredRoles);
       Project project = holder.getProject();

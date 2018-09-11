@@ -236,7 +236,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     removeLibraries(Collections.singletonList(element));
   }
 
-  public void removeLibraries(@NotNull List<LibraryProjectStructureElement> libraries) {
+  public void removeLibraries(@NotNull List<? extends LibraryProjectStructureElement> libraries) {
     List<TreePath> pathsToRemove = new ArrayList<>();
     for (LibraryProjectStructureElement element : libraries) {
       getModelProvider().getModifiableModel().removeLibrary(element.getLibrary());
@@ -253,7 +253,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
     return Collections.singletonList(new RemoveConfigurableHandler<Library>(LibraryConfigurable.class) {
       @Override
-      public boolean remove(@NotNull Collection<Library> libraries) {
+      public boolean remove(@NotNull Collection<? extends Library> libraries) {
         List<Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>>> toRemove = new ArrayList<>();
 
         String firstLibraryUsageDescription = null;
@@ -328,7 +328,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       }
 
       @Override
-      public boolean canBeRemoved(@NotNull Collection<Library> libraries) {
+      public boolean canBeRemoved(@NotNull Collection<? extends Library> libraries) {
         for (Library library : libraries) {
           LibraryTable table = library.getTable();
           if (table != null && !table.isEditable()) {

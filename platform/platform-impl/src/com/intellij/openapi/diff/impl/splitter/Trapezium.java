@@ -7,11 +7,11 @@ class Trapezium {
   private final Interval myBase1;
   private final Interval myBase2;
 
-  public Trapezium(int start1, int length1, int start2, int length2) {
+  Trapezium(int start1, int length1, int start2, int length2) {
     this(new Interval(start1, length1), new Interval(start2, length2));
   }
 
-  public Trapezium(Interval base1, Interval base2) {
+  Trapezium(Interval base1, Interval base2) {
     myBase1 = base1;
     myBase2 = base2;
   }

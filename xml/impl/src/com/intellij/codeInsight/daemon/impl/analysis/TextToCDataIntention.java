@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,9 @@ public class TextToCDataIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) && getText(editor, file) != null;
+    return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) &&
+           getText(editor, file) != null &&
+           !file.getLanguage().isKindOf(HTMLLanguage.INSTANCE);
   }
 
   @Override

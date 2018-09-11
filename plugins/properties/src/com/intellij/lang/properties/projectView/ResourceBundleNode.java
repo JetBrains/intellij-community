@@ -76,7 +76,7 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", myBundle.getBaseName()));
   }
@@ -131,7 +131,7 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   }
 
   @Override
-  public boolean canDrop(TreeNode[] sourceNodes) {
+  public boolean canDrop(@NotNull TreeNode[] sourceNodes) {
     for (TreeNode node : sourceNodes) {
       if (extractPropertiesFileFromNode(node) == null) return false;
     }
@@ -139,7 +139,7 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   }
 
   @Override
-  public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
+  public void drop(@NotNull TreeNode[] sourceNodes, @NotNull DataContext dataContext) {
     MultiMap<ResourceBundle, PropertiesFile> bundleGrouping = new MultiMap<>();
     for (TreeNode sourceNode : sourceNodes) {
       final PropertiesFile propertiesFile = extractPropertiesFileFromNode(sourceNode);

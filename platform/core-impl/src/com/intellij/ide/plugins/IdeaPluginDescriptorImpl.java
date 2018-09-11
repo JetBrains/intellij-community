@@ -24,7 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
-import org.jdom.Document;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -103,19 +103,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myBundled = bundled;
   }
 
-  @Nullable
-  private static List<Element> copyChildren(@Nullable Element[] elements) {
-    if (elements == null || elements.length == 0) {
-      return null;
-    }
-
-    List<Element> result = new SmartList<>();
-    for (Element extensionsRoot : elements) {
-      result.addAll(extensionsRoot.getChildren());
-    }
-    return result;
-  }
-
   @SuppressWarnings("HardCodedStringLiteral")
   private static String createDescriptionKey(final PluginId id) {
     return "plugin." + id + ".description";
@@ -140,22 +127,25 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Deprecated
   public void setPath(@SuppressWarnings("unused") File path) { }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     Application application = ApplicationManager.getApplication();
-    readExternal(document, url, application != null && application.isUnitTestMode(), pathResolver);
+    readExternal(element, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
-    Element rootElement = JDOMXIncluder.resolveNonXIncludeElement(document.getRootElement(), url.toExternalForm(), ignoreMissingInclude, pathResolver);
-    readExternal(JDOMUtil.internElement(rootElement));
+    if (JDOMUtil.isEmpty(element)) {
+      return;
+    }
+
+    JDOMXIncluder.resolveNonXIncludeElement(element, url.toExternalForm(), ignoreMissingInclude, pathResolver);
+    readExternal(JDOMUtil.internElement(element));
   }
 
   public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
     try {
-      Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+      readExternal(JDOMUtil.load(url), url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
     }
     catch (FileNotFoundException e) {
       throw e;
@@ -167,7 +157,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   // used in upsource
   protected void readExternal(@NotNull Element element) {
-    PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
+    OptimizedPluginBean pluginBean = XmlSerializer.deserialize(element, OptimizedPluginBean.class);
     myUrl = pluginBean.url;
 
     String idString = StringUtil.nullize(pluginBean.id, true);
@@ -256,26 +246,45 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    if (!ArrayUtil.isEmpty(pluginBean.extensions)) {
-      myExtensions = MultiMap.createSmart();
-      for (Element extensionsRoot : pluginBean.extensions) {
-        String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
-        for (Element extension : extensionsRoot.getChildren()) {
-          myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+    for (Content content : element.getContent()) {
+      if (!(content instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)content;
+      switch (child.getName()) {
+        case "extensions": {
+          if (myExtensions == null) {
+            myExtensions = MultiMap.createSmart();
+          }
+          String ns = child.getAttributeValue("defaultExtensionNs");
+          for (Element extension : child.getChildren()) {
+            myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+          }
         }
+        break;
+
+        case "extensionPoints": {
+          if (myExtensionsPoints == null) {
+            myExtensionsPoints = MultiMap.createSmart();
+          }
+          for (Element extensionPoint : child.getChildren()) {
+            myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+          }
+        }
+        break;
+
+        case "actions": {
+          if (myActionElements == null) {
+            myActionElements = new ArrayList<>(child.getChildren());
+          }
+          else {
+            myActionElements.addAll(child.getChildren());
+          }
+        }
+        break;
       }
     }
-
-    if (!ArrayUtil.isEmpty(pluginBean.extensionPoints)) {
-      myExtensionsPoints = MultiMap.createSmart();
-      for (Element extensionsRoot : pluginBean.extensionPoints) {
-        for (Element extensionPoint : extensionsRoot.getChildren()) {
-          myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
-        }
-      }
-    }
-
-    myActionElements = copyChildren(pluginBean.actions);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
@@ -283,7 +292,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  private static Date parseReleaseDate(PluginBean bean) {
+  private static Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
     final String dateStr = bean.releaseDate;
     if (dateStr != null) {
       try {
@@ -321,16 +330,22 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   // made public for Upsource
   public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
-    if (myExtensions != null) {
-      Collection<Element> elements = myExtensions.get(epName);
-      if (elements.isEmpty()) {
-        return;
-      }
+    registerExtensions(area, area.getExtensionPoint(epName));
+  }
 
-      ExtensionPoint<Object> extensionPoint = area.getExtensionPoint(epName);
-      for (Element element : elements) {
-        area.registerExtension(extensionPoint, this, element);
-      }
+  // made public for Upsource
+  public void registerExtensions(@NotNull ExtensionsArea area, @NotNull ExtensionPoint<?> extensionPoint) {
+    if (myExtensions == null) {
+      return;
+    }
+
+    Collection<Element> elements = myExtensions.get(extensionPoint.getName());
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    for (Element element : elements) {
+      area.registerExtension(extensionPoint, this, element);
     }
   }
 
@@ -631,7 +646,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myOptionalDescriptors = optionalDescriptors;
   }
 
-  void mergeOptionalConfig(final IdeaPluginDescriptorImpl descriptor) {
+  void mergeOptionalConfig(@NotNull IdeaPluginDescriptorImpl descriptor) {
     if (myExtensions == null) {
       myExtensions = descriptor.myExtensions;
     }

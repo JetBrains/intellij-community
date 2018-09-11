@@ -273,7 +273,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     private final Editor myEditor;
     private final PsiElement[] myElements;
 
-    public InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
+    InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
       super(UIUtil.MNEMONIC + String.valueOf(mnemonic) + ". " + surrounder.getTemplateDescription());
       mySurrounder = surrounder;
       myProject = project;

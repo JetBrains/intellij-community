@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -34,14 +32,8 @@ public class LockDialog extends OptionsDialog {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+  protected String getHelpId() {
+    return HELP_ID;
   }
 
   @Override

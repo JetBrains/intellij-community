@@ -35,7 +35,7 @@ public class EventHandler {
   public void updateHover(@NotNull CellPluginComponent component) {
   }
 
-  public void initialSelection() {
+  public void initialSelection(boolean scrollAndFocus) {
   }
 
   @NotNull
@@ -44,6 +44,10 @@ public class EventHandler {
   }
 
   public void setSelection(@NotNull CellPluginComponent component) {
+    setSelection(component, true);
+  }
+
+  public void setSelection(@NotNull CellPluginComponent component, boolean scrollAndFocus) {
   }
 
   public void clear() {

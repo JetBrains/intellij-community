@@ -29,6 +29,12 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     doTest("Add static import for 'impl.FooImpl.foo'");
   }
 
+  public void testInaccessibleSuper() {
+    myFixture.addClass("package foo; class Foo {public static void foo(){}}");
+    myFixture.addClass("package foo; public class Bar extends Foo {}");
+    doTest("Add static import for 'foo.Bar.foo'");
+  }
+
   public void testInsideParameterizedReference() {
     myFixture.addClass("package foo; " +
                        "public class Class1 {" +

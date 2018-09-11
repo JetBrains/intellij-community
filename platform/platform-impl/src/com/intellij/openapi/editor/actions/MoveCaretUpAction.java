@@ -29,7 +29,7 @@ public class MoveCaretUpAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-    public Handler() {
+    Handler() {
       super(true);
     }
 

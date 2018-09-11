@@ -174,7 +174,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     final boolean containsReference = descriptionTemplate.contains(reference);
     String res = descriptionTemplate.replaceAll(reference, anchor.toString());
     final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-    StringBuffer lineAnchor = new StringBuffer();
+    StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {
       Document doc = FileDocumentManager.getInstance().getDocument(vFile);
       lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");

@@ -38,7 +38,7 @@ public class MockVcsContextFactory extends VcsContextFactoryImpl {
   }
 
   private class CustomFileSystemFilePath extends LocalFilePath {
-    public CustomFileSystemFilePath(@NotNull String path, boolean directory) {
+    CustomFileSystemFilePath(@NotNull String path, boolean directory) {
       super(path, directory);
     }
 

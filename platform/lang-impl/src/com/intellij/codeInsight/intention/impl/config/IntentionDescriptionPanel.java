@@ -214,7 +214,7 @@ public class IntentionDescriptionPanel {
     disposeUsagePanels(myAfterUsagePanels);
   }
 
-  private static void disposeUsagePanels(List<IntentionUsagePanel> usagePanels) {
+  private static void disposeUsagePanels(List<? extends IntentionUsagePanel> usagePanels) {
     for (final IntentionUsagePanel usagePanel : usagePanels) {
       Disposer.dispose(usagePanel);
     }

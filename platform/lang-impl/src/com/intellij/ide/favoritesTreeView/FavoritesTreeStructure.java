@@ -128,7 +128,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
       }
 
       @Override
-      public void update(final PresentationData presentation) {
+      public void update(@NotNull final PresentationData presentation) {
         presentation.setPresentableText(getValue());
       }
     };
@@ -158,7 +158,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   private static class MyProvider implements TreeStructureProvider {
     private final Project myProject;
 
-    public MyProvider(Project project) {
+    MyProvider(Project project) {
       myProject = project;
     }
 

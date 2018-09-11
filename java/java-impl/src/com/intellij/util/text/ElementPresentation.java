@@ -89,7 +89,7 @@ public abstract class ElementPresentation {
   }
 
   private static class InvalidPresentation extends ElementPresentation {
-    public InvalidPresentation() {
+    InvalidPresentation() {
       super(new Noun(-1));
     }
 
@@ -112,7 +112,7 @@ public abstract class ElementPresentation {
   private static class ForDirectory extends ElementPresentation {
     private final PsiDirectory myPsiDirectory;
 
-    public ForDirectory(PsiDirectory psiDirectory) {
+    ForDirectory(PsiDirectory psiDirectory) {
       super(Noun.DIRECTORY);
       myPsiDirectory = psiDirectory;
     }
@@ -140,7 +140,7 @@ public abstract class ElementPresentation {
   private static class ForFile extends ElementPresentation {
     private final PsiFile myFile;
 
-    public ForFile(PsiFile file) {
+    ForFile(PsiFile file) {
       super(Noun.FILE);
       myFile = file;
     }
@@ -194,7 +194,7 @@ public abstract class ElementPresentation {
   private static class ForAnonymousClass extends ElementPresentation {
     private final PsiAnonymousClass myPsiAnonymousClass;
 
-    public ForAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
+    ForAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
       super(Noun.FRAGMENT);
       myPsiAnonymousClass = psiAnonymousClass;
     }
@@ -221,7 +221,7 @@ public abstract class ElementPresentation {
     private static final Logger LOG = Logger.getInstance(ForClass.class);
     private final PsiClass myPsiClass;
 
-    public ForClass(PsiClass psiClass) {
+    ForClass(PsiClass psiClass) {
       super(Noun.CLASS);
       myPsiClass = psiClass;
     }
@@ -256,7 +256,7 @@ public abstract class ElementPresentation {
     private static final int NAME_OPTIONS = PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS;
     private final PsiMethod myPsiMethod;
 
-    public ForMethod(PsiMethod psiMethod) {
+    ForMethod(PsiMethod psiMethod) {
       super(Noun.METHOD);
       myPsiMethod = psiMethod;
     }
@@ -282,7 +282,7 @@ public abstract class ElementPresentation {
   private static class ForField extends ElementPresentation {
     private final PsiField myPsiField;
 
-    public ForField(PsiField psiField) {
+    ForField(PsiField psiField) {
       super(Noun.FIELD);
       myPsiField = psiField;
     }
@@ -314,7 +314,7 @@ public abstract class ElementPresentation {
   private static class ForGeneralElement extends ElementPresentation {
     private final PsiElement myPsiElement;
 
-    public ForGeneralElement(PsiElement psiElement) {
+    ForGeneralElement(PsiElement psiElement) {
       super(Noun.FRAGMENT);
       myPsiElement = psiElement;
     }
@@ -340,7 +340,7 @@ public abstract class ElementPresentation {
   private static class ForXmlTag extends ElementPresentation {
     private final XmlTag myXmlTag;
 
-    public ForXmlTag(XmlTag xmlTag) {
+    ForXmlTag(XmlTag xmlTag) {
       super(Noun.XML_TAG);
       myXmlTag = xmlTag;
     }
@@ -364,7 +364,7 @@ public abstract class ElementPresentation {
   private static class ForVirtualFile extends ElementPresentation {
     private final VirtualFile myFile;
 
-    public ForVirtualFile(VirtualFile file) {
+    ForVirtualFile(VirtualFile file) {
       super(file.isDirectory() ? Noun.DIRECTORY : Noun.FILE);
       myFile = file;
     }

@@ -397,7 +397,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
   private static class MyInjector implements DomReferenceInjector {
     private final PsiElement myMyTargetElement;
 
-    public MyInjector(PsiElement myTargetElement) {
+    MyInjector(PsiElement myTargetElement) {
       myMyTargetElement = myTargetElement;
     }
 

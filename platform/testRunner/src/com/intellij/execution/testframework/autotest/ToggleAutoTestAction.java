@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -20,14 +21,14 @@ public class ToggleAutoTestAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     return project != null && descriptor != null && getAutoTestManager(project).isAutoTestEnabled(descriptor);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);

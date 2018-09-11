@@ -172,7 +172,7 @@ public class RemoteFilePanel {
 
   private class MyDownloadingListener implements FileDownloadingListener {
     @Override
-    public void fileDownloaded(final VirtualFile localFile) {
+    public void fileDownloaded(@NotNull final VirtualFile localFile) {
       switchEditor();
     }
 

@@ -171,11 +171,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   @Override
-  public void beforeShown(LightweightWindowEvent event) {
+  public void beforeShown(@NotNull LightweightWindowEvent event) {
   }
 
   @Override
-  public void onClosed(LightweightWindowEvent event) {
+  public void onClosed(@NotNull LightweightWindowEvent event) {
     event.asPopup().removeListener(this);
     fireEditingCanceled();
   }
@@ -341,11 +341,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     @Override
     public SpeedSearchFilter<T> getSpeedSearchFilter() {
       return this;
-    }
-
-    @Override
-    public boolean canBeHidden(T value) {
-      return true;
     }
 
     @Override

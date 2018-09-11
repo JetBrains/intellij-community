@@ -1,7 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -20,20 +24,24 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerManagerListener;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -76,6 +84,13 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
+
+      if (Registry.is("execution.java.always.debug") && DebuggerSettings.getInstance().ALWAYS_DEBUG) {
+        ParametersList parametersList = parameters.getVMParametersList();
+        if (parametersList.getList().stream().noneMatch(s -> s.startsWith("-agentlib:jdwp"))) {
+          parametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,quiet=y");
+        }
+      }
 
       ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(env.getExecutor(), this);
@@ -197,9 +212,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   protected static class AttachDebuggerAction extends AnAction {
-    static final Key<Boolean> DEBUGGER_ATTACHED_KEY = Key.create("DEBUGGER_ATTACHED_KEY");
     private final AtomicBoolean myEnabled = new AtomicBoolean();
+    private final AtomicBoolean myAttached = new AtomicBoolean();
     private final BaseProcessHandler myProcessHandler;
+    private MessageBusConnection myConnection = null;
 
     public AttachDebuggerAction(BaseProcessHandler processHandler) {
       super(ExecutionBundle.message("run.configuration.attach.debugger.action.name"), null, AllIcons.Debugger.AttachToProcess);
@@ -207,8 +223,18 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       myProcessHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
-          ApplicationManager.getApplication().executeOnPooledThread(
-            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())));
+          // 1 second delay to allow jvm to start correctly
+          JobScheduler.getScheduler()
+            .schedule(() -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+                      1, TimeUnit.SECONDS);
+        }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          if (myConnection != null) {
+            myConnection.disconnect();
+          }
+          myProcessHandler.removeProcessListener(this);
         }
       });
     }
@@ -216,7 +242,34 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     @SuppressWarnings("unchecked")
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (DEBUGGER_ATTACHED_KEY.isIn(myProcessHandler) || myProcessHandler.isProcessTerminated()) {
+      Project project = e.getProject();
+      if (project != null && myConnection == null) {
+        myConnection = project.getMessageBus().connect();
+        myConnection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
+          @Override
+          public void processStarted(@NotNull XDebugProcess debugProcess) {
+            processEvent(debugProcess, true);
+          }
+
+          @Override
+          public void processStopped(@NotNull XDebugProcess debugProcess) {
+            processEvent(debugProcess, false);
+          }
+
+          void processEvent(@NotNull XDebugProcess debugProcess, boolean started) {
+            if (debugProcess instanceof JavaDebugProcess) {
+              RemoteConnection connection = ((JavaDebugProcess)debugProcess).getDebuggerSession().getProcess().getConnection();
+              if (connection instanceof PidRemoteConnection) {
+                if (((PidRemoteConnection)connection).getPid()
+                  .equals(String.valueOf(OSProcessUtil.getProcessID(myProcessHandler.getProcess())))) {
+                  myAttached.set(started);
+                }
+              }
+            }
+          }
+        });
+      }
+      if (myAttached.get() || myProcessHandler.isProcessTerminated()) {
         e.getPresentation().setEnabled(false);
         return;
       }
@@ -225,8 +278,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      JavaDebuggerAttachUtil.attach(myProcessHandler.getProcess(), e.getProject());
-      DEBUGGER_ATTACHED_KEY.set(myProcessHandler, true);
+      myAttached.set(JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject()));
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {
@@ -241,7 +293,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     private final ProcessHandler myProcessHandler;
     private final CapturingProcessAdapter myListener;
 
-    public WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
+    WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
       myProject = project;
       myProcessHandler = processHandler;
       myListener = new CapturingProcessAdapter();

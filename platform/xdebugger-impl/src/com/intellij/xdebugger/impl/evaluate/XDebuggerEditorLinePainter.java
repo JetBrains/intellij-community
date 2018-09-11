@@ -171,7 +171,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     private final int lineNumber;
     private final String name;
 
-    public Variable(String name, int lineNumber) {
+    Variable(String name, int lineNumber) {
       this.lineNumber = lineNumber;
       this.name = name;
     }

@@ -158,7 +158,7 @@ public class JBTabbedTerminalWidget extends AbstractTabbedTerminalWidget<JBTabIn
         }
 
         @Override
-        public void tabRemoved(TabInfo tabInfo) {
+        public void tabRemoved(@NotNull TabInfo tabInfo) {
           for (TabChangeListener each : myListeners) {
             each.tabRemoved();
           }
@@ -276,7 +276,7 @@ public class JBTabbedTerminalWidget extends AbstractTabbedTerminalWidget<JBTabIn
     }
 
     private class TerminalTabLabel extends TabLabel {
-      public TerminalTabLabel(final JBTabsImpl tabs, final TabInfo info) {
+      TerminalTabLabel(final JBTabsImpl tabs, final TabInfo info) {
         super(tabs, info);
 
         setOpaque(false);

@@ -199,7 +199,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private class SingletonIterator extends SingletonIteratorBase<E> {
     private final int myInitialModCount;
 
-    public SingletonIterator() {
+    SingletonIterator() {
       myInitialModCount = modCount;
     }
 

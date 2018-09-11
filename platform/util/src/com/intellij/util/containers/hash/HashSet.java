@@ -308,7 +308,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
-    public Entry(final E key) {
+    Entry(final E key) {
 
       this.key = key;
 

@@ -9,7 +9,7 @@ import java.awt.*;
 class RunAnythingMyAccessibleComponent extends JPanel {
   private Accessible myAccessible;
 
-  public RunAnythingMyAccessibleComponent(LayoutManager layout) {
+  RunAnythingMyAccessibleComponent(LayoutManager layout) {
     super(layout);
     setOpaque(false);
   }

@@ -241,7 +241,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       }
     };
 
-    public MyContentEntryTreeEditor(Project project, List<ModuleSourceRootEditHandler<?>> handlers) {
+    MyContentEntryTreeEditor(Project project, List<ModuleSourceRootEditHandler<?>> handlers) {
       super(project, handlers);
     }
 

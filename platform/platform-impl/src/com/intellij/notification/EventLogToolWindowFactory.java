@@ -102,7 +102,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   private static class EditNotificationSettings extends DumbAwareAction {
     private final Project myProject;
 
-    public EditNotificationSettings(Project project) {
+    EditNotificationSettings(Project project) {
       super("Settings", "Edit notification settings", AllIcons.General.Settings);
       myProject = project;
     }
@@ -130,7 +130,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   private static class LogShownTracker extends AncestorListenerAdapter {
     private final Project myProject;
 
-    public LogShownTracker(Project project) {
+    LogShownTracker(Project project) {
       myProject = project;
     }
 

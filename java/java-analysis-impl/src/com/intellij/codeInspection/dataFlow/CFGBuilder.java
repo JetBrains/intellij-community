@@ -620,7 +620,9 @@ public class CFGBuilder {
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length == argCount && lambda.getBody() != null) {
         StreamEx.ofReversed(parameters).forEach(p -> assignTo(p).pop());
-        return inlineLambda(lambda, resultNullability);
+        inlineLambda(lambda, resultNullability);
+        StreamEx.of(parameters).forEach(p -> add(new FlushVariableInstruction(getFactory().getVarFactory().createVariableValue(p))));
+        return this;
       }
     }
     if (stripped instanceof PsiMethodReferenceExpression) {

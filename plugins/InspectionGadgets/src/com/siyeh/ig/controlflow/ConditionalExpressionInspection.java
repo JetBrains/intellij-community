@@ -89,7 +89,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
 
     private final boolean myChangesSemantics;
 
-    public ReplaceWithIfFix(boolean changesSemantics) {
+    ReplaceWithIfFix(boolean changesSemantics) {
       myChangesSemantics = changesSemantics;
     }
 

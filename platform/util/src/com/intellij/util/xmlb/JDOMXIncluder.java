@@ -81,15 +81,14 @@ public class JDOMXIncluder {
   /**
    * Original element will be mutated in place.
    */
-  @NotNull
-  public static Element resolveNonXIncludeElement(@NotNull Element original, @Nullable String base, boolean ignoreMissing, @NotNull PathResolver pathResolver) throws XIncludeException {
+  public static void resolveNonXIncludeElement(@NotNull Element original, @Nullable String base, boolean ignoreMissing, @NotNull PathResolver pathResolver) throws XIncludeException {
     LOG.assertTrue(!isIncludeElement(original));
 
     Stack<String> bases = new Stack<String>();
     if (base != null) {
       bases.push(base);
     }
-    return new InplaceJdomXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
+    new InplaceJdomXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
   }
 
   @NotNull
@@ -328,7 +327,7 @@ public class JDOMXIncluder {
   private List<Content> parseRemote(@NotNull Stack<String> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
     try {
       bases.push(remote.toExternalForm());
-      Element root = JDOMUtil.loadResourceDocument(remote).getRootElement();
+      Element root = JDOMUtil.loadResource(remote);
       List<Content> list = resolve(root, bases);
       bases.pop();
       return list;

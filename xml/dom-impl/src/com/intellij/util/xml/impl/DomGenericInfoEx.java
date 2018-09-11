@@ -70,5 +70,5 @@ public abstract class DomGenericInfoEx implements DomGenericInfo {
     return null;
   }
 
-  public abstract boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor);
+  public abstract boolean processAttributeChildrenDescriptions(Processor<? super AttributeChildDescriptionImpl> processor);
 }

@@ -65,12 +65,7 @@ public class InspectionValidatorWrapper implements Validator {
   private final InspectionManager myInspectionManager;
   private final InspectionProjectProfileManager myProfileManager;
   private final PsiDocumentManager myPsiDocumentManager;
-  private static final ThreadLocal<Boolean> ourCompilationThreads = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  private static final ThreadLocal<Boolean> ourCompilationThreads = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   public InspectionValidatorWrapper(final CompilerManager compilerManager, final InspectionManager inspectionManager,
                                     final InspectionProjectProfileManager profileManager, final PsiDocumentManager psiDocumentManager,
@@ -99,7 +94,7 @@ public class InspectionValidatorWrapper implements Validator {
     private final PsiManager myPsiManager;
     private PsiElementsValidityState myValidityState;
 
-    public MyValidatorProcessingItem(@NotNull final PsiFile psiFile) {
+    MyValidatorProcessingItem(@NotNull final PsiFile psiFile) {
       myVirtualFile = psiFile.getVirtualFile();
       myPsiManager = psiFile.getManager();
     }
@@ -215,7 +210,7 @@ public class InspectionValidatorWrapper implements Validator {
     return processedItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
-  private boolean checkFile(List<LocalInspectionTool> inspections, final MyValidatorProcessingItem item, final CompileContext context) {
+  private boolean checkFile(List<? extends LocalInspectionTool> inspections, final MyValidatorProcessingItem item, final CompileContext context) {
     boolean hasErrors = false;
     if (!checkUnderReadAction(item, context, () -> myValidator.checkAdditionally(item.getPsiFile()))) {
       hasErrors = true;
@@ -248,7 +243,7 @@ public class InspectionValidatorWrapper implements Validator {
     return !hasErrors;
   }
 
-  private boolean checkUnderReadAction(final MyValidatorProcessingItem item, final CompileContext context, final Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
+  private boolean checkUnderReadAction(final MyValidatorProcessingItem item, final CompileContext context, final Computable<? extends Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
     return DumbService.getInstance(context.getProject()).runReadActionInSmartMode(() -> {
       final PsiFile file = item.getPsiFile();
       if (file == null) return false;

@@ -49,7 +49,7 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     private final boolean myEnabled;
     private final RunnerAndConfigurationSettings mySettings;
 
-    public ExecuteMavenRunConfigurationAction(Executor executor,
+    ExecuteMavenRunConfigurationAction(Executor executor,
                                               boolean enabled,
                                               RunnerAndConfigurationSettings settings) {
       super(executor.getActionName(), null, executor.getIcon());

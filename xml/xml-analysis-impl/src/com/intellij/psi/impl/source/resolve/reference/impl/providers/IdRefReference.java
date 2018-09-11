@@ -169,12 +169,12 @@ public class IdRefReference extends BasicAttributeValueReference {
     return XmlDeclareIdInCommentAction.getImplicitlyDeclaredId(comment);
   }
 
-  private void process(PsiElementProcessor<PsiElement> processor) {
+  private void process(PsiElementProcessor<? super PsiElement> processor) {
     final PsiFile psiFile = getElement().getContainingFile();
     process(processor, psiFile);
   }
 
-  public static void process(final PsiElementProcessor<PsiElement> processor, PsiFile file) {
+  public static void process(final PsiElementProcessor<? super PsiElement> processor, PsiFile file) {
     for (PsiElement e : ourCachedIdsCache.compute(file)) {
       if (!processor.execute(e)) return;
     }

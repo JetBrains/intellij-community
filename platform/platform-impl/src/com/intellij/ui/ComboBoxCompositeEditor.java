@@ -28,15 +28,15 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     return new ComboBoxCompositeEditor<>(editableComponent, components);
   }
 
-  private BiConsumer<I, F>  myOnSetItemHandler = null;
-  private BiFunction<I, F, I>  myOnGetItemHandler = null;
+  private BiConsumer<? super I, ? super F> myOnSetItemHandler = null;
+  private BiFunction<? super I, ? super F, ? extends I> myOnGetItemHandler = null;
 
-  public ComboBoxCompositeEditor<I, F> onSetItem (BiConsumer<I, F> onSetItemHandler) {
+  public ComboBoxCompositeEditor<I, F> onSetItem (BiConsumer<? super I, ? super F> onSetItemHandler) {
     myOnSetItemHandler = onSetItemHandler;
     return this;
   }
 
-  public ComboBoxCompositeEditor<I, F> onGetItem (BiFunction<I, F, I> onGetItemHandler) {
+  public ComboBoxCompositeEditor<I, F> onGetItem (BiFunction<? super I, ? super F, ? extends I> onGetItemHandler) {
     myOnGetItemHandler = onGetItemHandler;
     return this;
   }

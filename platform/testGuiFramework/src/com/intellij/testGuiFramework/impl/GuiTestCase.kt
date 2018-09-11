@@ -11,19 +11,19 @@ import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.framework.toSec
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.testGuiFramework.util.Clipboard
 import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.testGuiFramework.util.Shortcut
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.AbstractComponentFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JTableFixture
-import org.fest.swing.image.ScreenshotTaker
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
@@ -72,6 +72,8 @@ open class GuiTestCase {
   val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
+  private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+
   fun robot() = guiTestRule.robot()
 
   //********************KOTLIN DSL FOR GUI TESTING*************************
@@ -110,10 +112,21 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
+                      needToKeepDialog: Boolean = false,
+                      func: JDialogFixture.() -> Unit) {
+    if (isMac()) dialog(title = "Preferences", func = func)
+    else dialog(title = "Settings", func = func)
+  }
+
   fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
     val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
     func(pluginDialog)
     if (!needToKeepDialog) pluginDialog.waitTillGone()
+  }
+
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+    return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
   /**
@@ -139,7 +152,7 @@ open class GuiTestCase {
         }
       }
       catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toSec()} seconds")
+        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toPrintable()}")
       }
       val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
       with(dialogFixture) {
@@ -244,6 +257,8 @@ open class GuiTestCase {
     func(this.editor())
   }
 
+  fun JDialogFixture.editor(func: EditorFixture.() -> Unit) = func(this.editor)
+
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
@@ -282,7 +297,7 @@ open class GuiTestCase {
    */
   fun screenshot(component: Component, screenshotName: String) {
 
-    val extension = "${getScaleSuffix()}.png"
+    val extension = "${getScaleSuffix()}.jpg"
     val pathWithTestFolder = getTestScreenshotDirPath().path + slash + this.guiTestRule.getTestName()
     val fileWithTestFolder = File(pathWithTestFolder)
     FileUtil.ensureExists(fileWithTestFolder)
@@ -292,7 +307,7 @@ open class GuiTestCase {
       val now = format.format(GregorianCalendar().time)
       screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
     }
-    ScreenshotTaker().saveComponentAsPng(component, screenshotFilePath.path)
+    screenshotTaker.safeTakeScreenshotAndSave(screenshotFilePath, component)
     println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")
 
   }
@@ -319,7 +334,7 @@ open class GuiTestCase {
         return JDialogFixture(robot(), dialog)
       }
       catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for ${timeout.toSec()} seconds")
+        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for ${timeout.toPrintable()}")
       }
     }
   }

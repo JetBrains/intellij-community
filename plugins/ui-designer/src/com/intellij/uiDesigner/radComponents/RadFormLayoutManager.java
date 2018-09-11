@@ -935,7 +935,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
-    public ComponentInsetsProperty() {
+    ComponentInsetsProperty() {
       super(null, "Insets");
     }
 

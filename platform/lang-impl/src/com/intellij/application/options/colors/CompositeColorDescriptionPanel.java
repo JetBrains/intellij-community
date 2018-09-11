@@ -134,7 +134,7 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
     private final Container myPaintHolder;
     private final boolean myPaintState;
 
-    public PaintLocker(@NotNull JComponent component) {
+    PaintLocker(@NotNull JComponent component) {
       myPaintHolder = component.getParent();
       myPaintState = myPaintHolder.getIgnoreRepaint();
       myPaintHolder.setIgnoreRepaint(true);

@@ -21,18 +21,20 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import git4idea.GitLocalBranch;
+import git4idea.GitReference;
+import git4idea.GitRemoteBranch;
+import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class GitLogBranchOperationsActionGroup extends ActionGroup implements DumbAware {
   private static final int MAX_BRANCH_GROUPS = 2;
@@ -91,9 +93,19 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
       GitVcsSettings settings = GitVcsSettings.getInstance(project);
       boolean showBranchesPopup = branchRefs.size() > MAX_BRANCH_GROUPS;
 
+      List<GitRepository> allRepositories = repositoryManager.getRepositories();
+
+      Set<String> commonBranches = new THashSet<>(GitReference.BRANCH_NAME_HASHING_STRATEGY);
+      for (GitLocalBranch branch : GitBranchUtil.getCommonLocalBranches(allRepositories)) {
+        commonBranches.add(branch.getName());
+      }
+      for (GitRemoteBranch branch : GitBranchUtil.getCommonRemoteBranches(allRepositories)) {
+        commonBranches.add(branch.getName());
+      }
+
       List<AnAction> branchActionGroups = new ArrayList<>();
       for (VcsRef ref : branchRefs) {
-        branchActionGroups.add(createBranchGroup(project, ref, root, repositoryManager, settings, showBranchesPopup));
+        branchActionGroups.add(createBranchGroup(project, ref, root, allRepositories, commonBranches, settings, showBranchesPopup));
       }
 
       DefaultActionGroup branchesGroup = new DefaultActionGroup("Branches", branchActionGroups);
@@ -121,12 +133,12 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
   private static AnAction createBranchGroup(@NotNull Project project,
                                             @NotNull VcsRef ref,
                                             @NotNull GitRepository repository,
-                                            @NotNull GitRepositoryManager repositoryManager,
+                                            @NotNull List<GitRepository> allRepositories,
+                                            @NotNull Set<String> commonBranches,
                                             @NotNull GitVcsSettings settings,
                                             boolean showBranchesPopup) {
-    List<GitRepository> allRepositories = repositoryManager.getRepositories();
     boolean isSyncBranch = settings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC &&
-                           allRepositories.size() > 1 && branchInAllRepositories(allRepositories, ref);
+                           allRepositories.size() > 1 && commonBranches.contains(ref.getName());
     boolean isLocal = ref.getType() == GitRefManager.LOCAL_BRANCH;
 
     List<AnAction> actions = new ArrayList<>(3);
@@ -148,10 +160,6 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);
     return group;
-  }
-
-  private static boolean branchInAllRepositories(@NotNull List<GitRepository> repositories, @NotNull final VcsRef branches) {
-    return ContainerUtil.and(repositories, repository -> repository.getBranches().findBranchByName(branches.getName()) != null);
   }
 
   @NotNull

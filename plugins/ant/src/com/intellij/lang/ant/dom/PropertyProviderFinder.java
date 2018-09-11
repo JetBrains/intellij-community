@@ -338,7 +338,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       if (myPrefixes.isEmpty()) {
         return "";
       }
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       for (Pair<String, InclusionKind> prefix : myPrefixes) {
         buf.append(prefix.getFirst());
       }

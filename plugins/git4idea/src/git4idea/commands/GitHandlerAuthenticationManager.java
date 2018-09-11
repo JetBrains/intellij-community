@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -52,7 +53,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
       manager.prepareSshAuth();
     }
-    else if (GitVcsApplicationSettings.getInstance().isOverrideSshAskPass()) {
+    else if (Registry.is("git.ssh.native.override.ssh.askpass")) {
       manager.prepareNativeSshAuth();
     }
     return manager;
@@ -158,7 +159,11 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void prepareNativeSshAuth() throws IOException {
     GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
-    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject, myHandler.isIgnoreAuthenticationRequest());
+
+    boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
+    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
+                                                                                  myHandler.isIgnoreAuthenticationRequest(),
+                                                                                  doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
     int port = service.getXmlRcpPort();

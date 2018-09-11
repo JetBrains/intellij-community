@@ -358,7 +358,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
   private class MyCodeFragmentTableCellRenderer extends CodeFragmentTableCellRenderer {
 
-    public MyCodeFragmentTableCellRenderer() {
+    MyCodeFragmentTableCellRenderer() {
       super(getProject());
     }
 

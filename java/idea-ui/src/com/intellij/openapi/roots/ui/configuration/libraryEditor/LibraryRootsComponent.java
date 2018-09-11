@@ -71,7 +71,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @Nullable private final Project myProject;
 
-  private final Computable<LibraryEditor> myLibraryEditorComputable;
+  private final Computable<? extends LibraryEditor> myLibraryEditorComputable;
   private LibraryRootsComponentDescriptor myDescriptor;
   private Module myContextModule;
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
@@ -80,7 +80,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
   }
 
-  public LibraryRootsComponent(@Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditorComputable) {
+  public LibraryRootsComponent(@Nullable Project project, @NotNull Computable<? extends LibraryEditor> libraryEditorComputable) {
     myProject = project;
     myLibraryEditorComputable = libraryEditorComputable;
     final LibraryEditor editor = getLibraryEditor();
@@ -382,7 +382,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    public AttachFilesAction(String title) {
+    AttachFilesAction(String title) {
       super(title);
     }
 
@@ -451,7 +451,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  private List<OrderRoot> attachFiles(List<OrderRoot> roots) {
+  private List<OrderRoot> attachFiles(List<? extends OrderRoot> roots) {
     final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
     if (!rootsToAttach.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
@@ -462,7 +462,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return rootsToAttach;
   }
 
-  private List<OrderRoot> filterAlreadyAdded(@NotNull List<OrderRoot> roots) {
+  private List<OrderRoot> filterAlreadyAdded(@NotNull List<? extends OrderRoot> roots) {
     List<OrderRoot> result = new ArrayList<>();
     for (OrderRoot root : roots) {
       final VirtualFile[] libraryFiles = getLibraryEditor().getFiles(root.getType());
@@ -531,7 +531,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AddExcludedRootActionButton extends AnActionButton {
-    public AddExcludedRootActionButton() {
+    AddExcludedRootActionButton() {
       super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
     }
 

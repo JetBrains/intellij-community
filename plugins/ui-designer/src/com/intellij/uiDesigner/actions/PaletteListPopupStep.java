@@ -24,12 +24,12 @@ import java.util.List;
 class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchFilter<ComponentItem> {
   private final ArrayList<ComponentItem> myItems = new ArrayList<>();
   private final ComponentItem myInitialSelection;
-  private final Processor<ComponentItem> myRunnable;
+  private final Processor<? super ComponentItem> myRunnable;
   private final String myTitle;
   private final Project myProject;
   private Runnable myFinalRunnable;
 
-  PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<ComponentItem> runnable, final String title) {
+  PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<? super ComponentItem> runnable, final String title) {
     myInitialSelection = initialSelection;
     myRunnable = runnable;
     myProject = editor.getProject();
@@ -129,11 +129,6 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   @Override
   public SpeedSearchFilter<ComponentItem> getSpeedSearchFilter() {
     return this;
-  }
-
-  @Override
-  public boolean canBeHidden(final ComponentItem value) {
-    return true;
   }
 
   @Override

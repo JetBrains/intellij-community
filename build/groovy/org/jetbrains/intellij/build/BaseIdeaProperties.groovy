@@ -37,7 +37,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.uiDesigner"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
-    "intellij.copyright", "intellij.properties", "intellij.terminal", "intellij.editorconfig", "intellij.settingsRepository", "intellij.yaml",
+    "intellij.copyright", "intellij.properties", "intellij.terminal", "intellij.editorconfig", "intellij.settingsRepository", "intellij.configurationScript", "intellij.yaml",
     "intellij.tasks.core", "intellij.tasks.java",
     "intellij.maven", "intellij.gradle",
     "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.hg", "intellij.vcs.github", "intellij.vcs.cvs",

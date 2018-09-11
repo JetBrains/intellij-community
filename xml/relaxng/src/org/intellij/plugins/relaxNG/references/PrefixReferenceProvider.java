@@ -57,7 +57,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
   }
 
   private static class PrefixReference extends BasicAttributeValueReference implements EmptyResolveMessageProvider, LocalQuickFixProvider {
-    public PrefixReference(XmlAttributeValue value, int length) {
+    PrefixReference(XmlAttributeValue value, int length) {
       super(value, TextRange.from(1, length));
     }
 

@@ -187,7 +187,7 @@ public abstract class OrderPanel<T> extends JPanel {
     }
   }
 
-  public void addAll(Collection<T> orderEntries) {
+  public void addAll(Collection<? extends T> orderEntries) {
     for (T orderEntry : orderEntries) {
       add(orderEntry);
     }
@@ -209,7 +209,7 @@ public abstract class OrderPanel<T> extends JPanel {
   private class MyTableModel extends DefaultTableModel {
     private final boolean myShowCheckboxes;
 
-    public MyTableModel(boolean showCheckboxes) {
+    MyTableModel(boolean showCheckboxes) {
       myShowCheckboxes = showCheckboxes;
     }
 

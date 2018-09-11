@@ -82,7 +82,7 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   private static class MyDownloadManager extends DownloadManager {
-    public MyDownloadManager(Project project, ProgressIndicator progress) {
+    MyDownloadManager(Project project, ProgressIndicator progress) {
       super(project, progress);
     }
 

@@ -226,11 +226,6 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public boolean canBeHidden(final PopupFactoryImpl.ActionItem value) {
-    return true;
-  }
-
-  @Override
   public String getIndexedString(final PopupFactoryImpl.ActionItem value) {
     return getTextFor(value);
   }

@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 class GrClosableSignatureImpl implements GrClosureSignature {
   private final GrClosableBlock myBlock;
 
-  public GrClosableSignatureImpl(GrClosableBlock block) {
+  GrClosableSignatureImpl(GrClosableBlock block) {
     myBlock = block;
   }
 

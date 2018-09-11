@@ -314,7 +314,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     private final PsiAnchor myAnchor;
     private final Project myProject;
 
-    public PsiBasedDomAnchor(PsiAnchor anchor, Project project) {
+    PsiBasedDomAnchor(PsiAnchor anchor, Project project) {
       myAnchor = anchor;
       myProject = project;
     }

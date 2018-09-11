@@ -101,7 +101,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   }
 
   public void appendExpandedRules(@NotNull final StdArrangementMatchRule rule,
-                                  @NotNull final List<StdArrangementMatchRule> rules,
+                                  @NotNull final List<? super StdArrangementMatchRule> rules,
                                   @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
     final List<StdArrangementMatchRule> sequence = getRuleSequence(rule, tokenIdToDefinition);
     if (sequence == null || sequence.isEmpty()) {

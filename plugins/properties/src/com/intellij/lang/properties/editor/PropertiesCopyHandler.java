@@ -100,7 +100,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   public void doClone(PsiElement element) {
   }
 
-  private static void copyPropertyToAnotherBundle(@NotNull Collection<IProperty> properties,
+  private static void copyPropertyToAnotherBundle(@NotNull Collection<? extends IProperty> properties,
                                                   @NotNull final String newName,
                                                   @NotNull ResourceBundle targetResourceBundle) {
     final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<>();
@@ -175,13 +175,13 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   }
 
   private static class PropertiesCopyDialog extends DialogWrapper {
-    @NotNull private final List<IProperty> myProperties;
+    @NotNull private final List<? extends IProperty> myProperties;
     @NotNull private ResourceBundle myCurrentResourceBundle;
     private String myCurrentPropertyName;
     @NotNull private final Project myProject;
     private JBTextField myPropertyNameTextField;
 
-    protected PropertiesCopyDialog(@NotNull List<IProperty> properties,
+    protected PropertiesCopyDialog(@NotNull List<? extends IProperty> properties,
                                    @NotNull ResourceBundle currentResourceBundle) {
 
       super(currentResourceBundle.getProject());
@@ -291,7 +291,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   private static class ResourceBundleAsFileSystemItem extends SyntheticFileSystemItem {
     private final ResourceBundle myResourceBundle;
 
-    public ResourceBundleAsFileSystemItem(@NotNull ResourceBundle resourceBundle) {
+    ResourceBundleAsFileSystemItem(@NotNull ResourceBundle resourceBundle) {
       super(resourceBundle.getProject());
       myResourceBundle = resourceBundle;
     }

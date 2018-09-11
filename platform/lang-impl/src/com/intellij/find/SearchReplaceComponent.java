@@ -252,16 +252,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     mySearchTextComponent.setBackground(LightColors.RED);
   }
 
-  @Override
-  public Insets getInsets() {
-    Insets insets = super.getInsets();
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      insets.top += 1;
-      insets.bottom += 2;
-    }
-    return insets;
-  }
-
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.Collection;
@@ -27,7 +28,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
-  private NodeDescriptor myParentDescriptor;
 
   protected AbstractTreeNode(Project project, T value) {
     super(project, null);
@@ -68,7 +68,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     setForcedForeground(presentation);
   }
 
-  protected void setForcedForeground(@NotNull PresentationData presentation) {
+  private void setForcedForeground(@NotNull PresentationData presentation) {
     final FileStatus status = getFileStatus();
     Color fgColor = getFileStatusColor(status);
     fgColor = fgColor == null ? status.getColor() : fgColor;
@@ -105,6 +105,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return getEqualityObject() != null ? this : null;
   }
 
+  @Override
   public boolean equals(Object object) {
     if (object == this) return true;
     if (object == null || !object.getClass().equals(getClass())) return false;
@@ -112,6 +113,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return object instanceof AbstractTreeNode && Comparing.equal(myValue, ((AbstractTreeNode)object).myValue);
   }
 
+  @Override
   public int hashCode() {
     // we should not change hash code if value is set to null
     Object value = myValue;
@@ -124,12 +126,11 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   public final void setParent(AbstractTreeNode parent) {
     myParent = parent;
-    myParentDescriptor = parent;
   }
 
   @Override
   public final NodeDescriptor getParentDescriptor() {
-    return myParentDescriptor;
+    return myParent;
   }
 
   public final T getValue() {
@@ -163,6 +164,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   @Nullable
+  @TestOnly
   public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     if (getValue() instanceof Queryable) {
       String text = Queryable.Util.print((Queryable)getValue(), printInfo, this);
@@ -177,12 +179,13 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   /**
-   * @deprecated use toTestString
-   * @return
+   * @deprecated use {@link #toTestString(Queryable.PrintInfo)} instead
    */
   @Deprecated
   @Nullable
-  @NonNls public String getTestPresentation() {
+  @NonNls
+  @TestOnly
+  public String getTestPresentation() {
     if (myName != null) {
       return myName;
     }

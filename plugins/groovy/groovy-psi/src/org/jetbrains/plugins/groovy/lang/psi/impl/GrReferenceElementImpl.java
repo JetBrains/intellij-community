@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -24,7 +22,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   private static final String DUMMY_FQN = "05ab655a-0e15-4f35-909d-9dff5e757f63";
 
   private volatile String myQualifiedReferenceName = DUMMY_FQN;
-  private volatile String myCachedQName;
   private volatile String myCachedTextSkipWhiteSpaceAndComments;
 
   public GrReferenceElementImpl(@NotNull ASTNode node) {
@@ -34,7 +31,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   @Override
   public void subtreeChanged() {
     myQualifiedReferenceName = DUMMY_FQN;
-    myCachedQName = null;
     myCachedTextSkipWhiteSpaceAndComments = null;
     super.subtreeChanged();
   }
@@ -177,16 +173,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   @Override
   public void setQualifier(@Nullable Q newQualifier) {
     PsiImplUtil.setQualifier(this, newQualifier);
-  }
-
-  @NotNull
-  @Override
-  public String getClassNameText() {
-    String cachedQName = myCachedQName;
-    if (cachedQName == null) {
-      myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getTextSkipWhiteSpaceAndComments(), false);
-    }
-    return cachedQName;
   }
 
   public String getTextSkipWhiteSpaceAndComments() {

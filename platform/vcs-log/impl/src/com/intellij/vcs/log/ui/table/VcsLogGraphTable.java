@@ -557,10 +557,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     VcsCommitStyle defaultStyle = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
                                               baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
-    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
+    Integer commitId = rowInfo.getCommit();
+    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
     if (details == null) return defaultStyle;
 
-    List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(details, selected));
+    List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
@@ -749,7 +750,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private class MyTableColumnModel extends DefaultTableColumnModel {
     @NotNull private final VcsLogUiProperties myProperties;
 
-    public MyTableColumnModel(@NotNull VcsLogUiProperties properties) {
+    MyTableColumnModel(@NotNull VcsLogUiProperties properties) {
       myProperties = properties;
     }
 

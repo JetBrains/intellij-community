@@ -37,7 +37,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   private final Map<ArtifactImpl, ArtifactImpl> myModifiable2Original = new HashMap<>();
   private final EventDispatcher<ArtifactListener> myDispatcher = EventDispatcher.create(ArtifactListener.class);
 
-  public ArtifactModelImpl(ArtifactManagerImpl artifactManager, List<ArtifactImpl> originalArtifacts) {
+  public ArtifactModelImpl(ArtifactManagerImpl artifactManager, List<? extends ArtifactImpl> originalArtifacts) {
     myArtifactManager = artifactManager;
     myOriginalArtifacts = new ArrayList<>(originalArtifacts);
     addListener(new ArtifactAdapter() {

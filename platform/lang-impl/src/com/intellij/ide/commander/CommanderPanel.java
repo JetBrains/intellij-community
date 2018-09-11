@@ -536,7 +536,7 @@ public class CommanderPanel extends JPanel {
   private static final class MyTitleLabel extends JLabel {
     private final JPanel myPanel;
 
-    public MyTitleLabel(final JPanel panel) {
+    MyTitleLabel(final JPanel panel) {
       myPanel = panel;
     }
 

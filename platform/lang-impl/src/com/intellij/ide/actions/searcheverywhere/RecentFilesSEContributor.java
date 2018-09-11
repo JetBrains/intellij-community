@@ -14,10 +14,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,7 +52,13 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter, ProgressIndicator progressIndicator, int elementsLimit) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 1;
+  }
+
+  @Override
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<FileType> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     String searchString = filterControlSymbols(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
@@ -65,15 +73,17 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                         .distinct()
-                         .map(vf -> psiManager.findFile(vf))
-                         .collect(Collectors.toList())
+                     .distinct()
+                     .map(vf -> psiManager.findFile(vf))
+                     .collect(Collectors.toList())
         );
       }
     );
 
-    return elementsLimit > 0 && res.size() > elementsLimit
-           ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
-           : new ContributorSearchResult<>(res);
+    for (Object element : res) {
+      if (!consumer.apply(element)) {
+        return;
+      }
+    }
   }
 }

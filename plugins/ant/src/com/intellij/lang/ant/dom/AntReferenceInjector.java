@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -31,6 +30,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,15 +53,10 @@ class AntReferenceInjector implements DomReferenceInjector {
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
-      final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
-      try {
-        addPropertyReferences(context, xmlAttributeValue, refs);
-        addMacrodefParameterRefs(xmlAttributeValue, refs);
-        return refs.size() == 0? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
-      }
-      finally {
-        PsiReferenceListSpinAllocator.dispose(refs);
-      }
+      final List<PsiReference> refs = new ArrayList<>();
+      addPropertyReferences(context, xmlAttributeValue, refs);
+      addMacrodefParameterRefs(xmlAttributeValue, refs);
+      return refs.isEmpty() ? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
     }
     return PsiReference.EMPTY_ARRAY;
   }

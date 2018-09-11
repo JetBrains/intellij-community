@@ -40,7 +40,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     return addAll(Arrays.asList(items));
   }
 
-  public int[] addAll(Iterator<T> iterator) {
+  public int[] addAll(Iterator<? extends T> iterator) {
     return addAll(ContainerUtil.collect(iterator));
   }
 
@@ -126,7 +126,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     private final Iterator<T> myIterator;
     private int myCounter = -1;
 
-    public MyIterator() {
+    MyIterator() {
       myIterator = myItems.iterator();
     }
 

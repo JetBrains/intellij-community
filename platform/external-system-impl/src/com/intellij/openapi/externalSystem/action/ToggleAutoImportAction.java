@@ -60,7 +60,7 @@ public class ToggleAutoImportAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ExternalProjectSettings projectSettings = getProjectSettings(e);
     if (projectSettings != null) {
       if (state != projectSettings.isUseAutoImport()) {

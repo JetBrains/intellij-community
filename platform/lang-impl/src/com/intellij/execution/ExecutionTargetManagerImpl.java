@@ -184,18 +184,19 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     boolean isCompound = settings.getConfiguration() instanceof CompoundRunConfiguration;
     if (isCompound && target == MULTIPLE_TARGETS) return true;
 
-    boolean useCache = ApplicationManager.getApplication().isInternal() || Registry.is("update.run.configuration.actions.from.cache");
-
     ExecutionTarget defaultTarget = DefaultExecutionTarget.INSTANCE;
     boolean checkFallbackToDefault = isCompound
                                      && !target.equals(defaultTarget);
 
     return doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
-      if (useCache && RunManagerImpl.getInstanceImpl(myProject).isInvalidInCache(each.first)) {
-        return false;
-      }
       RunConfiguration configuration = each.first.getConfiguration();
       if (!(configuration instanceof TargetAwareRunProfile)) return true;
+
+      if ((ApplicationManager.getApplication().isInternal() || Registry.is("update.run.configuration.actions.from.cache"))
+          && RunManagerImpl.getInstanceImpl(myProject).isInvalidInCache(each.first)) {
+        return false;
+      }
+
       TargetAwareRunProfile targetAwareProfile = (TargetAwareRunProfile)configuration;
 
       return target.canRun(each.first) && targetAwareProfile.canRunOn(target)
@@ -242,7 +243,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(
-    @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
+    @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<? super Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
     if (settings == null) return true;
 
     RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);

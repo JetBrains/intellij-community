@@ -5,6 +5,7 @@ import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.junit.JUnitConfigurationType
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Trinity
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
@@ -14,7 +15,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.RowsDnDSupport
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.loadElement
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -34,11 +34,11 @@ private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
 )
 
 @RunsInEdt
-class RunConfigurableTest {
+internal class RunConfigurableTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule: ProjectRule = ProjectRule()
+    val projectRule = ProjectRule()
 
     private fun createRunManager(element: Element): RunManagerImpl {
       val runManager = RunManagerImpl(projectRule.project)
@@ -56,14 +56,14 @@ class RunConfigurableTest {
 
   @JvmField
   @Rule
-  val edtRule: EdtRule = EdtRule()
+  val edtRule = EdtRule()
 
   @JvmField
   @Rule
-  val disposableRule: DisposableRule = DisposableRule()
+  val disposableRule = DisposableRule()
 
-  private val configurable: RunConfigurable by lazy {
-    val result = MockRunConfigurable(createRunManager(loadElement(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
+  private val configurable by lazy {
+    val result = MockRunConfigurable(createRunManager(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
     Disposer.register(disposableRule.disposable, result)
     result
   }
@@ -78,7 +78,7 @@ class RunConfigurableTest {
     get() = configurable.treeModel
 
   @Test
-  fun testDND() {
+  fun dnd() {
     doExpand()
     val never = intArrayOf(-1, 0, 14, 22, 23, 999)
     for (i in -1..16) {
@@ -187,26 +187,26 @@ class RunConfigurableTest {
   }
 
   @Test
-  fun testSort() {
+  fun sort() {
     doExpand()
     assertThat(configurable.isModified).isFalse()
     model.drop(2, 0, ABOVE)
     assertThat(configurable.isModified).isTrue()
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-                                                                                     "UI",
-                                                                                     "AuTest",
-                                                                                     "Simples",
-                                                                                     "OutAndErr",
-                                                                                     "C148C_TersePrincess",
-                                                                                     "Periods",
-                                                                                     "C148E_Porcelain",
-                                                                                     "ErrAndOut",
-                                                                                     "All in titled",
-                                                                                     "All in titled2",
-                                                                                     "All in titled3",
-                                                                                     "All in titled4",
-                                                                                     "All in titled5"))
+    assertThat(configurable.runManager.allSettings.map { it.name }).containsExactly("Renamer",
+                                                                                    "UI",
+                                                                                    "AuTest",
+                                                                                    "Simples",
+                                                                                    "OutAndErr",
+                                                                                    "C148C_TersePrincess",
+                                                                                    "Periods",
+                                                                                    "C148E_Porcelain",
+                                                                                    "ErrAndOut",
+                                                                                    "All in titled",
+                                                                                    "All in titled2",
+                                                                                    "All in titled3",
+                                                                                    "All in titled4",
+                                                                                    "All in titled5")
     assertThat(configurable.isModified).isFalse()
     model.drop(4, 8, BELOW)
     configurable.apply()

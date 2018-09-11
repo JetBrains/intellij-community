@@ -36,7 +36,7 @@ class ArrayAccessEvaluator implements Evaluator {
   private ArrayReference myEvaluatedArrayReference;
   private int myEvaluatedIndex;
 
-  public ArrayAccessEvaluator(Evaluator arrayReferenceEvaluator, Evaluator indexEvaluator) {
+  ArrayAccessEvaluator(Evaluator arrayReferenceEvaluator, Evaluator indexEvaluator) {
     myArrayReferenceEvaluator = arrayReferenceEvaluator;
     myIndexEvaluator = indexEvaluator;
   }

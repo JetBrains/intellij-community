@@ -281,7 +281,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     private final DfaValue myValue;
     private final DfaMemoryState myMemState;
 
-    public ExpressionVisitor(DfaValue value, DfaMemoryState memState) {
+    ExpressionVisitor(DfaValue value, DfaMemoryState memState) {
       myValue = value;
       myMemState = memState;
     }

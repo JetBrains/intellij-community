@@ -237,7 +237,7 @@ public class NamePathComponent extends JPanel {
   }
 
   private class NameFieldDocument extends PlainDocument {
-    public NameFieldDocument() {
+    NameFieldDocument() {
       addDocumentListener(new DocumentAdapter() {
         @Override
         public void textChanged(@NotNull DocumentEvent event) {
@@ -284,7 +284,7 @@ public class NamePathComponent extends JPanel {
   }
 
   private class PathFieldDocument extends PlainDocument {
-    public PathFieldDocument() {
+    PathFieldDocument() {
       addDocumentListener(new DocumentAdapter() {
         @Override
         public void textChanged(@NotNull DocumentEvent event) {

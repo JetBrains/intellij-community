@@ -103,7 +103,6 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
           return;
         }
         myUsedMethods.putValue(className, methodName);
-
       }
 
       @Override
@@ -114,6 +113,11 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
       @Override
       public void testDataProcessed() {
         myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
+      }
+
+      @Override
+      public void processAffectedFile(int[] ints) {
+        // todo[batkovich] update index
       }
     };
   }

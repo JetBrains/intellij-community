@@ -221,7 +221,7 @@ public class SwingHelper {
     });
   }
 
-  private static void doWithDialogWrapper(@NotNull final JComponent component, @NotNull final Consumer<DialogWrapper> consumer) {
+  private static void doWithDialogWrapper(@NotNull final JComponent component, @NotNull final Consumer<? super DialogWrapper> consumer) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
         return;
@@ -276,7 +276,7 @@ public class SwingHelper {
     }
   }
 
-  private static <T> boolean shouldUpdate(@NotNull JComboBox<T> comboBox, @NotNull List<T> newItems) {
+  private static <T> boolean shouldUpdate(@NotNull JComboBox<T> comboBox, @NotNull List<? extends T> newItems) {
     int count = comboBox.getItemCount();
     if (newItems.size() != count) {
       return true;

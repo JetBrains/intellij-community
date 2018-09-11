@@ -30,7 +30,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
   private final Alarm myUpdateQueue;
 
-  public InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
+  InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, view);
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, view);
@@ -187,7 +187,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     ReadAction.run(() -> node.dropCache());
   }
 
-  private static void processNodesIfNeed(InspectionTreeNode node, Processor<InspectionTreeNode> processor) {
+  private static void processNodesIfNeed(InspectionTreeNode node, Processor<? super InspectionTreeNode> processor) {
     if (processor.process(node)) {
       final int count = node.getChildCount();
       for (int i = 0; i < count; i++) {
@@ -197,12 +197,12 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   }
 
   private static class CompositeProcessor<X> implements Processor<X> {
-    private final Processor<X> myFirstProcessor;
+    private final Processor<? super X> myFirstProcessor;
     private boolean myFirstFinished;
-    private final Processor<X> mySecondProcessor;
+    private final Processor<? super X> mySecondProcessor;
     private boolean mySecondFinished;
 
-    private CompositeProcessor(@NotNull Processor<X> firstProcessor, @NotNull Processor<X> secondProcessor) {
+    private CompositeProcessor(@NotNull Processor<? super X> firstProcessor, @NotNull Processor<? super X> secondProcessor) {
       myFirstProcessor = firstProcessor;
       mySecondProcessor = secondProcessor;
     }
@@ -220,7 +220,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     }
 
     @NotNull
-    public static <X> Processor<X> combine(@NotNull Processor<X> processor1, @Nullable Processor<X> processor2) {
+    public static <X> Processor<X> combine(@NotNull Processor<X> processor1, @Nullable Processor<? super X> processor2) {
       return processor2 == null ? processor1 : new CompositeProcessor<>(processor1, processor2);
     }
   }

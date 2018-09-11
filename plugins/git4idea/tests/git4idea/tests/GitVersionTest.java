@@ -128,7 +128,7 @@ public class GitVersionTest {
     private final int rev;
     private final int patch;
 
-    public TestGitVersion(String output, int major, int minor, int rev, int patch) {
+    TestGitVersion(String output, int major, int minor, int rev, int patch) {
       this.output = output;
       this.major = major;
       this.minor = minor;

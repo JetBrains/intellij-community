@@ -29,10 +29,9 @@ Groovy script
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('foo')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         PsiWhiteSpace(' ')
         PsiElement(default)('default')
         PsiWhiteSpace(' ')

@@ -21,7 +21,7 @@ public interface ExtendableTextComponent {
 
   void setExtensions(Extension... extensions);
 
-  void setExtensions(Collection<Extension> extensions);
+  void setExtensions(Collection<? extends Extension> extensions);
 
   void addExtension(@NotNull Extension extension);
 

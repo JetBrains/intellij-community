@@ -78,11 +78,11 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> evaluator) {
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator) {
     return deferImpl(base, param, evaluator, true);
   }
 
-  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> evaluator, final boolean autoUpdatable) {
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator, final boolean autoUpdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return evaluator.fun(param);
     }

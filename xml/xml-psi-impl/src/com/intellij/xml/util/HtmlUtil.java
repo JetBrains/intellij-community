@@ -183,7 +183,7 @@ public class HtmlUtil {
 
   public static void addHtmlSpecificCompletions(final XmlElementDescriptor descriptor,
                                                 final XmlTag element,
-                                                final List<XmlElementDescriptor> variants) {
+                                                final List<? super XmlElementDescriptor> variants) {
     // add html block completions for tags with optional ends!
     String name = descriptor.getName(element);
 

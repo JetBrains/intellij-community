@@ -84,20 +84,20 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         private final ThumbnailView myView;
         private final TagFilter myFilter;
 
-        public MyToggleAction(ThumbnailView view, TagFilter filter) {
+        MyToggleAction(ThumbnailView view, TagFilter filter) {
             super(filter.getDisplayName());
             myView = view;
             myFilter = filter;
         }
 
         @Override
-        public boolean isSelected(AnActionEvent e) {
+        public boolean isSelected(@NotNull AnActionEvent e) {
             TagFilter[] filters = myView.getTagFilters();
             return filters != null && Arrays.stream(filters).anyMatch(f -> myFilter.getDisplayName().equals(f.getDisplayName()));
         }
 
         @Override
-        public void setSelected(AnActionEvent e, boolean state) {
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
             if (state) {
                 myFilter.setFilter(myView);
             }

@@ -139,7 +139,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     public final RedmineProject myProject;
     public final int myLevel;
 
-    public RedmineProjectItem(@NotNull RedmineProject project, int level) {
+    RedmineProjectItem(@NotNull RedmineProject project, int level) {
       myProject = project;
       myLevel = level;
     }

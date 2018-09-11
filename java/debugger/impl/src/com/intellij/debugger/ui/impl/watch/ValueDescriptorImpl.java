@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -197,7 +198,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
             myIsDirty = !(value instanceof FloatValue);
           }
           else {
-            myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
+            myIsDirty = !Objects.equals(value, myValue);
           }
         }
         catch (ObjectCollectedException ignored) {
@@ -457,7 +458,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private static class DebuggerTreeNodeMock implements DebuggerTreeNode {
     private final JavaValue value;
 
-    public DebuggerTreeNodeMock(JavaValue value) {
+    DebuggerTreeNodeMock(JavaValue value) {
       this.value = value;
     }
 

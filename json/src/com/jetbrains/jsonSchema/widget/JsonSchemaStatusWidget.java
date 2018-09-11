@@ -38,7 +38,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final JsonSchemaService myService;
   private static final String ID = "JSONSchemaSelector";
 
-  public JsonSchemaStatusWidget(Project project) {
+  JsonSchemaStatusWidget(Project project) {
     super(project);
     myService = JsonSchemaService.Impl.get(project);
     myService.registerRemoteUpdateCallback(myUpdateCallback);
@@ -49,7 +49,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private static class MyWidgetState extends WidgetState {
     boolean warning = false;
-    public MyWidgetState(String toolTip, String text, boolean actionEnabled) {
+    MyWidgetState(String toolTip, String text, boolean actionEnabled) {
       super(toolTip, text, actionEnabled);
     }
 
@@ -162,7 +162,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
     info.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
-      public void fileDownloaded(VirtualFile localFile) {
+      public void fileDownloaded(@NotNull VirtualFile localFile) {
         update();
       }
 
@@ -178,10 +178,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     });
   }
 
-  private boolean isValidSchemaFile(VirtualFile schemaFile) {
-    if (schemaFile == null || !myService.isApplicableToFile(schemaFile) || !myService.isSchemaFile(schemaFile)) return false;
-    FileType type = schemaFile.getFileType();
-    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof JsonLanguage;
+  private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
+    return schemaFile != null && myService.isSchemaFile(schemaFile) && myService.isApplicableToFile(schemaFile);
   }
 
   @Nullable

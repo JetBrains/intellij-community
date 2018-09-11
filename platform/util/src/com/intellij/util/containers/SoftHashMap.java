@@ -40,7 +40,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
     super(initialCapacity);
   }
 
-  SoftHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  SoftHashMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     super(hashingStrategy);
   }
 

@@ -146,7 +146,7 @@ public class AppEngineUploader {
     final CompileScope compileScope = ArtifactCompileScope.createScopeWithArtifacts(moduleScope, Collections.singletonList(myArtifact));
     ApplicationManager.getApplication().invokeLater(() -> compilerManager.make(compileScope, new CompileStatusNotification() {
       @Override
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+      public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
         if (!aborted && errors == 0) {
           startUploading.run();
         }
@@ -196,7 +196,7 @@ public class AppEngineUploader {
     @Nullable private final ConsoleView myConsole;
     @Nullable private final LoggingHandler myLoggingHandler;
 
-    public MyProcessListener(ProcessHandler processHandler, @Nullable ConsoleView console, @Nullable LoggingHandler loggingHandler) {
+    MyProcessListener(ProcessHandler processHandler, @Nullable ConsoleView console, @Nullable LoggingHandler loggingHandler) {
       myProcessHandler = processHandler;
       myConsole = console;
       myLoggingHandler = loggingHandler;

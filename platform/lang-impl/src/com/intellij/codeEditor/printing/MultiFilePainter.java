@@ -25,14 +25,14 @@ import java.awt.print.PrinterException;
 import java.util.List;
 
 class MultiFilePainter extends BasePainter {
-  private final List<PsiFile> myFilesList;
+  private final List<? extends PsiFile> myFilesList;
   private final boolean myEvenNumberOfPagesPerFile;
   private int myFileIndex = 0;
   private int myStartPageIndex = 0;
   private TextPainter myTextPainter = null;
   private int myLargestPrintedPage = -1;
 
-  public MultiFilePainter(List<PsiFile> filesList, boolean evenNumberOfPagesPerFile) {
+  MultiFilePainter(List<? extends PsiFile> filesList, boolean evenNumberOfPagesPerFile) {
     myFilesList = filesList;
     myEvenNumberOfPagesPerFile = evenNumberOfPagesPerFile;
   }

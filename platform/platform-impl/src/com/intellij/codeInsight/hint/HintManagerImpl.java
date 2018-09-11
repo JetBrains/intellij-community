@@ -764,7 +764,7 @@ public class HintManagerImpl extends HintManager {
 
     hint.addHintListener(new HintListener() {
       @Override
-      public void hintHidden(EventObject event) {
+      public void hintHidden(@NotNull EventObject event) {
         hint.removeHintListener(this);
         highlighter.dispose();
 
@@ -865,7 +865,7 @@ public class HintManagerImpl extends HintManager {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
       if (action instanceof ActionToIgnore) return;
 
       AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
@@ -893,12 +893,12 @@ public class HintManagerImpl extends HintManager {
    */
   private final class MyProjectManagerListener implements ProjectManagerListener {
     @Override
-    public void projectOpened(Project project) {
+    public void projectOpened(@NotNull Project project) {
       project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip

@@ -93,7 +93,7 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
     private final @NotNull Project myProject;
     private volatile Navigatable openFileDescriptor;
 
-    public MyNavigatable(@NotNull File file, @NotNull Project project) {
+    MyNavigatable(@NotNull File file, @NotNull Project project) {
       myFile = file;
       myProject = project;
     }

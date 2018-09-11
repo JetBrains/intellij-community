@@ -57,7 +57,7 @@ public interface PydevConsoleRunner {
   Key<Sdk> CONSOLE_SDK = new Key<>("PYDEV_CONSOLE_SDK_KEY");
 
   interface ConsoleListener {
-    void handleConsoleInitialized(LanguageConsoleView consoleView);
+    void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView);
   }
 
 

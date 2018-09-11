@@ -58,9 +58,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.size?
 		&	input.text.attrs.value? 
 		&	(	common.attrs.aria.implicit.textbox
-			|	common.attrs.aria.implicit.combobox
 			|	common.attrs.aria.role.textbox
 			|	common.attrs.aria.role.combobox
+			|	common.attrs.aria.role.searchbox
+			|	common.attrs.aria.role.spinbutton
 			)?
 		)
 		input.text.attrs.type = 
@@ -267,7 +268,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.hidden.attrs.type
 		&	input.hidden.attrs.value? 
-		&	common.attrs.aria?
 		)
 		input.hidden.attrs.type = 
 			attribute type {
@@ -583,8 +583,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 	fieldset.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.group
+			|	common.attrs.aria.role.group
 			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria
 			)?
 		)
 	fieldset.inner =

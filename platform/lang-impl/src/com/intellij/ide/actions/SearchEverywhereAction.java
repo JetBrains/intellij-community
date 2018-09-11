@@ -115,6 +115,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -123,7 +124,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider, RightAlignedToolbarAction {
+public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
   public static final String SE_HISTORY_KEY = "SearchEverywhereHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private static final int MAX_CLASSES = 6;
@@ -791,7 +792,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   static class SEOption extends BooleanOptionDescription {
     private final String myKey;
 
-    public SEOption(String option, String registryKey) {
+    SEOption(String option, String registryKey) {
       super(option, null);
       myKey = registryKey;
     }
@@ -965,7 +966,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
-    public MySearchTextField() {
+    MySearchTextField() {
       super(false, "SearchEveryWhereHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
@@ -1037,7 +1038,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private class MyAccessibleComponent extends JPanel {
       private Accessible myAccessible;
-      public MyAccessibleComponent(LayoutManager layout) {
+      MyAccessibleComponent(LayoutManager layout) {
         super(layout);
         setOpaque(false);
       }
@@ -1330,7 +1331,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<>();
 
 
-    public CalcThread(Project project, String pattern, boolean reuseModel) {
+    CalcThread(Project project, String pattern, boolean reuseModel) {
       this.project = project;
       this.pattern = pattern;
       myListModel = reuseModel ? (SearchListModel)myList.getModel() : new SearchListModel();
@@ -1552,7 +1553,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void fillStructure(StructureViewTreeElement element, List<StructureViewTreeElement> elements, Matcher matcher) {
+    private void fillStructure(StructureViewTreeElement element, List<? super StructureViewTreeElement> elements, Matcher matcher) {
       final TreeElement[] children = element.getChildren();
       check();
       for (TreeElement child : children) {
@@ -1941,15 +1942,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     protected boolean isEnabled(final AnAction action) {
       AnActionEvent event = myActionEvent;
       if (myDisabledActions.contains(action) || event == null) return false;
-      final AnActionEvent e = new AnActionEvent(event.getInputEvent(),
-                                                event.getDataContext(),
-                                                event.getPlace(),
-                                                action.getTemplatePresentation().clone(),
-                                                event.getActionManager(),
-                                                event.getModifiers());
 
-      ApplicationManager.getApplication().invokeAndWait(() -> ActionUtil.performDumbAwareUpdate(action, e, false), ModalityState.NON_MODAL);
-      final Presentation presentation = e.getPresentation();
+      AtomicReference<Presentation> presentationReference= new AtomicReference<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        AnActionEvent e = new AnActionEvent(event.getInputEvent(),
+                                            DataManager.getInstance().getDataContext(myContextComponent),
+                                            event.getPlace(),
+                                            action.getTemplatePresentation().clone(),
+                                            event.getActionManager(),
+                                            event.getModifiers());
+        ActionUtil.performDumbAwareUpdate(action, e, false);
+        presentationReference.set(e.getPresentation());
+      }, ModalityState.NON_MODAL);
+      final Presentation presentation = presentationReference.get();
       final boolean enabled = presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
       if (!enabled) {
         myDisabledActions.add(action);
@@ -2093,7 +2098,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
             ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }

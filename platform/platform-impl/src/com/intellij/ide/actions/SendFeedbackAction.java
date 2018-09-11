@@ -32,18 +32,32 @@ import java.awt.*;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    launchBrowser(e.getProject());
+  public void update(@NotNull AnActionEvent e) {
+    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+    String url = info == null ? null : info.getReleaseFeedbackUrl();
+    e.getPresentation().setEnabledAndVisible(url != null);
   }
 
-  public static void launchBrowser(@Nullable Project project) {
-    final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    doPerformAction(e.getProject());
+  }
+
+  public static void doPerformAction(@Nullable Project project) {
+    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+    String eapUrl = info.getEAPFeedbackUrl();
+    String urlTemplate = info.isEAP() && !eapUrl.contains("youtrack") ? eapUrl : info.getReleaseFeedbackUrl();
+    doPerformAction(project, urlTemplate);
+  }
+
+  static void doPerformAction(@Nullable Project project, @NotNull String urlTemplate) {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
-    String urlTemplate = eap ? appInfo.getEAPFeedbackUrl() : appInfo.getReleaseFeedbackUrl();
+    LicensingFacade la = LicensingFacade.getInstance();
     urlTemplate = urlTemplate
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
-      .replace("$EVAL", isEvaluationLicense() ? "true" : "false")
+      .replace("$EVAL", la != null && la.isEvaluationLicense() ? "true" : "false")
       .replace("$DESCR", getDescription());
     BrowserUtil.browse(urlTemplate, project);
   }
@@ -72,7 +86,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     String osPatchLevel = System.getProperty("sun.os.patch.level");
     if (osVersion != null) {
       sb.append(" v").append(osVersion);
-      if (osPatchLevel != null) {
+      if (osPatchLevel != null && !"unknown".equals(osPatchLevel)) {
         sb.append(" ").append(osPatchLevel);
       }
     }
@@ -85,18 +99,10 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
         Rectangle bounds = device.getDefaultConfiguration().getBounds();
         sb.append(bounds.width).append("x").append(bounds.height);
       }
-      if (UIUtil.isRetina()) sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
+      if (UIUtil.isRetina()) {
+        sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
+      }
     }
     return sb.toString();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(ApplicationInfoEx.getInstanceEx() != null);
-  }
-
-  private static boolean isEvaluationLicense() {
-    final LicensingFacade la = LicensingFacade.getInstance();
-    return la != null && la.isEvaluationLicense();
   }
 }

@@ -98,6 +98,7 @@ public final class IconLoader {
   public static void clearCache() {
     ourIconsCache.clear();
     ourIcon2DisabledIcon.clear();
+    ImageLoader.clearCache(); //clears svg cache
     clearCacheCounter++;
   }
 
