@@ -91,8 +91,10 @@ public class Runner {
         .setCriticalFiles(criticalFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
-        .setWarnings(warnings)
-        .setRenameRootDirectory(renameRootDirectory);
+        .setWarnings(warnings);
+      if (renameRootDirectory) {
+        logger().warn("Ignoring option --rename_root_dir.");
+      }
 
       boolean success = create(spec);
       System.exit(success ? 0 : 1);
