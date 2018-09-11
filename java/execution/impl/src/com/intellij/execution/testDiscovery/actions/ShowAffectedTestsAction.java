@@ -44,10 +44,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.testDiscovery.instrumentation.TestDiscoveryInstrumentationUtils;
 import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ActiveComponent;
@@ -73,6 +75,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
+import static com.intellij.openapi.util.Pair.pair;
 
 public class ShowAffectedTestsAction extends AnAction {
   private static final String RUN_ALL_ACTION_TEXT = "Run All Affected Tests";
@@ -404,22 +407,18 @@ public class ShowAffectedTestsAction extends AnAction {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
-    @SuppressWarnings("unchecked")
-    Location<PsiMethod>[] testMethods = Arrays
-      .stream(tree.getTestMethods())
+    List<Location<PsiMethod>> testMethods = Arrays.stream(tree.getTestMethods())
       .map(TestMethodUsage::calculateLocation)
       .filter(Objects::nonNull)
-      .toArray(Location[]::new);
+      .collect(Collectors.toList());
 
-    //noinspection unchecked
-    getRunConfigurationProducers(project)
-      .stream()
-      .map(producer -> new Object() {
-        TestDiscoveryConfigurationProducer myProducer = producer;
-        Location<PsiMethod>[] mySupportedTests = Arrays.stream(testMethods).filter(producer::isApplicable).toArray(Location[]::new);
+    getRunConfigurationProducers(project).stream()
+      .map(producer -> pair(producer, testMethods.stream().filter(producer::isApplicable).collect(Collectors.toList())))
+      .max(Comparator.comparingInt(p -> p.second.size()))
+      .map(p -> {
+        @SuppressWarnings("unchecked") Location<PsiMethod>[] locations = p.second.toArray(new Location[0]);
+        return p.first.createProfile(locations, targetModule, context, title);
       })
-      .max(Comparator.comparingInt(p -> p.mySupportedTests.length))
-      .map(p -> p.myProducer.createProfile(p.mySupportedTests, targetModule, context, title))
       .ifPresent(profile -> {
         try {
           ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
@@ -477,9 +476,10 @@ public class ShowAffectedTestsAction extends AnAction {
 
   @NotNull
   public static List<String> getRelativeAffectedPaths(@NotNull Project project, @NotNull Collection<Change> changes) {
-    return changes.stream().map(change -> {
-          VirtualFile file = change.getVirtualFile();
-          return file == null ? null : "/" + VfsUtilCore.getRelativePath(file, project.getBaseDir());
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+    return changes.stream()
+      .map(Change::getVirtualFile)
+      .filter(Objects::nonNull)
+      .map(file -> "/" + VfsUtilCore.getRelativePath(file, project.getBaseDir()))
+      .collect(Collectors.toList());
   }
 }
