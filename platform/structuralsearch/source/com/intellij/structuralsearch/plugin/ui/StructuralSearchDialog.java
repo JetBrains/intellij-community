@@ -277,12 +277,11 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void detectFileType() {
-    final PsiFile file = mySearchContext.getFile();
-    PsiElement context = file;
+    PsiElement context = mySearchContext.getFile();
 
     final Editor editor = mySearchContext.getEditor();
-    if (editor != null) {
-      context = file.findElementAt(editor.getCaretModel().getOffset());
+    if (editor != null && context != null) {
+      context = context.findElementAt(editor.getCaretModel().getOffset());
       if (context != null) {
         context = context.getParent();
       }
