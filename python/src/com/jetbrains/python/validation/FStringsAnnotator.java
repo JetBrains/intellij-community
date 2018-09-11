@@ -17,6 +17,7 @@ package com.jetbrains.python.validation;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,6 +25,7 @@ import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -75,6 +77,11 @@ public class FStringsAnnotator extends PyAnnotator {
     for (TextRange textRange : node.getLiteralPartRanges()) {
       int i = textRange.getStartOffset();
       while (i < textRange.getEndOffset()) {
+        final int nextOffset = skipNamedUnicodeEscape(wholeNodeText, i, textRange.getEndOffset());
+        if (i != nextOffset) {
+          i = nextOffset;
+          continue;
+        }
         final char c = wholeNodeText.charAt(i);
         if (c == '}') {
           if (i + 1 < textRange.getEndOffset() && wholeNodeText.charAt(i + 1) == '}') {
@@ -86,6 +93,14 @@ public class FStringsAnnotator extends PyAnnotator {
         i++;
       }
     }
+  }
+
+  private static int skipNamedUnicodeEscape(@NotNull String nodeText, int offset, int endOffset) {
+    if (StringUtil.startsWith(nodeText, offset, "\\N{")) {
+      final int rightBraceOffset = nodeText.indexOf('}', offset + 3);
+      return rightBraceOffset < 0 ? endOffset : rightBraceOffset + 1;
+    }
+    return offset;
   }
 
   @Override
