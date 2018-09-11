@@ -1346,10 +1346,10 @@ public class AllIcons {
     public static final Icon Readwrite = IconLoader.getIcon("/ide/readwrite.svg"); // 16x16
 
     public static class Shadow {
-      public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/bottom-left.png"); // 18x22
-      public static final Icon Bottom_right = IconLoader.getIcon("/ide/shadow/bottom-right.png"); // 18x22
-      public static final Icon Bottom = IconLoader.getIcon("/ide/shadow/bottom.png"); // 4x14
-      public static final Icon Left = IconLoader.getIcon("/ide/shadow/left.png"); // 10x4
+      public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/bottom-left.svg"); // 18x22
+      public static final Icon Bottom_right = IconLoader.getIcon("/ide/shadow/bottom-right.svg"); // 18x22
+      public static final Icon Bottom = IconLoader.getIcon("/ide/shadow/bottom.svg"); // 4x14
+      public static final Icon Left = IconLoader.getIcon("/ide/shadow/left.svg"); // 11x4
 
       public static class Popup {
         public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/popup/bottom-left.png"); // 20x20
@@ -1362,10 +1362,10 @@ public class AllIcons {
         public static final Icon Top = IconLoader.getIcon("/ide/shadow/popup/top.png"); // 1x4
 
       }
-      public static final Icon Right = IconLoader.getIcon("/ide/shadow/right.png"); // 10x4
-      public static final Icon Top_left = IconLoader.getIcon("/ide/shadow/top-left.png"); // 18x14
-      public static final Icon Top_right = IconLoader.getIcon("/ide/shadow/top-right.png"); // 18x14
-      public static final Icon Top = IconLoader.getIcon("/ide/shadow/top.png"); // 4x6
+      public static final Icon Right = IconLoader.getIcon("/ide/shadow/right.svg"); // 11x4
+      public static final Icon Top_left = IconLoader.getIcon("/ide/shadow/top-left.svg"); // 18x14
+      public static final Icon Top_right = IconLoader.getIcon("/ide/shadow/top-right.svg"); // 18x14
+      public static final Icon Top = IconLoader.getIcon("/ide/shadow/top.svg"); // 4x7
 
     }
     public static final Icon Statusbar_arrows = IconLoader.getIcon("/ide/statusbar_arrows.png"); // 7x10
