@@ -303,15 +303,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
-
-  /**
-   * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
-   */
-  @Deprecated
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
-  }
-
+  
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
