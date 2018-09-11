@@ -1726,10 +1726,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon TreeCollapseNode = AllIcons.General.ArrowDown;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeDownArrow = AllIcons.General.ArrowDown;
+    public static final Icon TreeDownArrow = IconLoader.getIcon("/nodes/treeDownArrow.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
@@ -1741,10 +1741,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon TreeOpen = AllIcons.Nodes.Folder;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeRightArrow = AllIcons.General.ArrowRight;
+    public static final Icon TreeRightArrow = IconLoader.getIcon("/nodes/treeRightArrow.png");
 
   }
 
