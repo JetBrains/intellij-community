@@ -424,7 +424,7 @@ public class HtmlUtil {
   }
 
   public static boolean isHtmlTag(@NotNull XmlTag tag) {
-    if (tag.getLanguage() != HTMLLanguage.INSTANCE) return false;
+    if (!tag.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) return false;
 
     XmlDocument doc = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
 
