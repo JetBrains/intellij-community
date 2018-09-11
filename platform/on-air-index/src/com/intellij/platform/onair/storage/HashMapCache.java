@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
 public class HashMapCache<K, V> implements Cache<K, V> {
-  private final HashMap<K, V> data = new HashMap<>();
+  private final HashMap<K, V> data = new HashMap<>(4000000);
 
   @Override
   public V getIfPresent(@NotNull Object key) {
