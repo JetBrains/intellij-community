@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +184,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         if (element instanceof JsonObject) {
           return ((JsonObject)element).getPropertyList().stream()
             .filter(p -> p.getValue() instanceof JsonContainer)
-            .map(p -> LookupElementBuilder.create(p)
+            .map(p -> LookupElementBuilder.create(p, JsonPointerUtil.escapeForJsonPointer(p.getName()))
             .withIcon(getIcon(p.getValue()))).toArray();
         }
         else if (element instanceof JsonArray) {
