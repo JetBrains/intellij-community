@@ -6898,7 +6898,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'extends' type_parameter_bounds
+  // 'extends' mb_nl type_parameter_bounds
   public static boolean type_parameter_bounds_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameter_bounds_list")) return false;
     if (!nextTokenIs(b, KW_EXTENDS)) return false;
@@ -6906,13 +6906,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, TYPE_PARAMETER_BOUNDS_LIST, null);
     r = consumeToken(b, KW_EXTENDS);
     p = r; // pin = 1
-    r = r && type_parameter_bounds(b, l + 1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && type_parameter_bounds(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   /* ********************************************************** */
-  // '&' type_code_reference
+  // '&' mb_nl type_code_reference
   static boolean type_parameter_bounds_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameter_bounds_tail")) return false;
     if (!nextTokenIs(b, T_BAND)) return false;
@@ -6920,13 +6921,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, T_BAND);
     p = r; // pin = 1
-    r = r && type_code_reference(b, l + 1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && type_code_reference(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   /* ********************************************************** */
-  // '<' mb_nl type_parameters mb_nl '>'
+  // '<' mb_nl type_parameters <<mb_nl_group '>'>>
   public static boolean type_parameter_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameter_list")) return false;
     if (!nextTokenIsFast(b, T_LT)) return false;
@@ -6936,8 +6938,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && report_error_(b, type_parameters(b, l + 1)) && r;
-    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
-    r = p && consumeToken(b, T_GT) && r;
+    r = p && mb_nl_group(b, l + 1, T_GT_parser_) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }

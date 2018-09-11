@@ -1,5 +1,5 @@
 class A<T
-,U> {}
+  extends Number> {}
 -----
 Groovy script
   Class definition
@@ -16,21 +16,20 @@ Groovy script
           <empty list>
       PsiErrorElement:',', '>' or extends expected
         <empty list>
+    PsiElement(new line)('\n  ')
     Extends clause
-      <empty list>
+      PsiElement(extends)('extends')
+      PsiWhiteSpace(' ')
+      Reference element
+        PsiElement(identifier)('Number')
     Implements clause
       <empty list>
-    PsiElement(new line)('\n')
-    PsiErrorElement:'>' or '{' expected, got ','
+    PsiErrorElement:'{' expected, got '>'
       <empty list>
-  PsiElement(,)(',')
-  Relational expression
-    Reference expression
-      PsiElement(identifier)('U')
-    PsiElement(>)('>')
-    PsiWhiteSpace(' ')
-    Closable block
-      PsiElement({)('{')
-      Parameter list
-        <empty list>
-      PsiElement(})('}')
+  PsiElement(>)('>')
+  PsiWhiteSpace(' ')
+  Closable block
+    PsiElement({)('{')
+    Parameter list
+      <empty list>
+    PsiElement(})('}')
