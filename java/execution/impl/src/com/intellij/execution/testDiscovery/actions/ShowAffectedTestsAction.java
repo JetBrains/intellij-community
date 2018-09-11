@@ -43,7 +43,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
@@ -476,10 +478,12 @@ public class ShowAffectedTestsAction extends AnAction {
 
   @NotNull
   public static List<String> getRelativeAffectedPaths(@NotNull Project project, @NotNull Collection<Change> changes) {
-    return changes.stream()
-      .map(Change::getVirtualFile)
+    String basePath = project.getBasePath();
+    VirtualFile baseDir = basePath == null ? null : LocalFileSystem.getInstance().findFileByPath(basePath);
+    if (baseDir == null) return Collections.emptyList();
+    return changes.stream().map(Change::getVirtualFile)
       .filter(Objects::nonNull)
-      .map(file -> "/" + VfsUtilCore.getRelativePath(file, project.getBaseDir()))
-      .collect(Collectors.toList());
+      .map(file -> "/" + VfsUtilCore.getRelativePath(file, baseDir))
+    .collect(Collectors.toList());
   }
 }
