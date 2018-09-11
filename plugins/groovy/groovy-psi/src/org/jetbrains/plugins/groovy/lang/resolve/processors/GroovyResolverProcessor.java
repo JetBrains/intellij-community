@@ -9,6 +9,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import kotlin.Lazy;
@@ -42,6 +43,8 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.*;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
@@ -57,8 +60,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   protected final List<GrResolverProcessor<? extends GroovyResolveResult>> myAccessorProcessors;
   protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
-  protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
 
+  private boolean myCheckValidMethods = false;
   private boolean myStopExecutingMethods = false;
 
   GroovyResolverProcessor(@NotNull GrReferenceExpression ref,
@@ -136,6 +139,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (myStopExecutingMethods) {
         return true;
       }
+      if (myCheckValidMethods) {
+        myCheckValidMethods = false;
+        if (!valid(myCandidates.get(GroovyResolveKind.METHOD)).isEmpty()) {
+          myStopExecutingMethods = true;
+          return true;
+        }
+      }
     }
     else {
       if (!myCandidates.get(kind).isEmpty()) {
@@ -180,9 +190,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       );
     }
 
-    (candidate.isValidResult() ? myCandidates : myInapplicableCandidates).putValue(kind, candidate);
+    myCandidates.putValue(kind, candidate);
 
-    if (candidate.isValidResult() && kind == GroovyResolveKind.VARIABLE) {
+    if (kind == GroovyResolveKind.VARIABLE && candidate.isValidResult()) {
       myStopExecutingMethods = true;
     }
 
@@ -251,8 +261,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @Override
   public void handleEvent(@NotNull Event event, @Nullable Object associated) {
-    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && !myCandidates.get(GroovyResolveKind.METHOD).isEmpty()) {
-      myStopExecutingMethods = true;
+    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event) {
+      myCheckValidMethods = true;
     }
   }
 
@@ -323,27 +333,20 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @NotNull
-  protected List<GroovyResolveResult> getCandidates(@NotNull GroovyResolveKind... kinds) {
-    return getCandidates(true, kinds);
+  protected List<GroovyResolveResult> getAllCandidates(@NotNull GroovyResolveKind kind) {
+    if (kind == GroovyResolveKind.PROPERTY) {
+      final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
+      myAccessorProcessors.forEach(it -> results.addAll(it.getResults()));
+      return results;
+    }
+    else {
+      return new SmartList<>(myCandidates.get(kind));
+    }
   }
 
   @NotNull
-  protected List<GroovyResolveResult> getCandidates(boolean applicable, @NotNull GroovyResolveKind... kinds) {
-    MultiMap<GroovyResolveKind, GroovyResolveResult> map = applicable ? myCandidates : myInapplicableCandidates;
-    final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
-    for (GroovyResolveKind kind : kinds) {
-      if (kind == GroovyResolveKind.PROPERTY) {
-        myAccessorProcessors.forEach(
-          it -> it.getResults().stream().filter(
-            result -> applicable == result.isValidResult()
-          ).forEach(results::add)
-        );
-      }
-      else {
-        results.addAll(map.get(kind));
-      }
-    }
-    return results;
+  protected List<GroovyResolveResult> getCandidates(@NotNull GroovyResolveKind kind) {
+    return singleOrValid(getAllCandidates(kind));
   }
 
   @NotNull

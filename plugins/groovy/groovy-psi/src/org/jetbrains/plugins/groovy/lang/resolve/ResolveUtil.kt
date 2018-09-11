@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
@@ -145,4 +146,12 @@ fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
 
 fun getName(state: ResolveState, element: PsiNamedElement): String? {
   return state[importedNameKey] ?: element.name
+}
+
+fun valid(allCandidates: Collection<GroovyResolveResult>): List<GroovyResolveResult> = allCandidates.filter {
+  it.isValidResult
+}
+
+fun singleOrValid(allCandidates: List<GroovyResolveResult>): List<GroovyResolveResult> {
+  return if (allCandidates.size <= 1) allCandidates else valid(allCandidates)
 }
