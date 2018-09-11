@@ -1529,8 +1529,8 @@ public class AllIcons {
     public static final Icon Cvs_roots = IconLoader.getIcon("/nodes/cvs_roots.svg"); // 16x16
     public static final Icon DataColumn = IconLoader.getIcon("/nodes/dataColumn.svg"); // 16x16
     public static final Icon DataSchema = IconLoader.getIcon("/nodes/dataSchema.svg"); // 16x16
-    public static final Icon DataSource = IconLoader.getIcon("/nodes/dataSource.svg"); // 16x16
-    public static final Icon DataTables = IconLoader.getIcon("/nodes/dataTables.svg"); // 16x16
+    public static final Icon DataSource = IconLoader.getIcon("/nodes/DataSource.svg"); // 16x16
+    public static final Icon DataTables = IconLoader.getIcon("/nodes/DataTables.svg"); // 16x16
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.svg"); // 16x16
     public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.svg"); // 16x16
