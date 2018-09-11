@@ -10,6 +10,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.lexer.PyFStringLiteralLexer;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -46,6 +47,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE),
       PyTokenTypes.TRIPLE_QUOTED_UNICODE
+    );
+    ret.registerLayer(
+      new PyFStringLiteralLexer(), 
+      PyTokenTypes.FSTRING_TEXT
     );
 
     return ret;
