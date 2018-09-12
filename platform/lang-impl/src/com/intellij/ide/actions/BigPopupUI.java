@@ -27,11 +27,14 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
@@ -78,8 +81,63 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   @NotNull
   protected abstract JPanel createSettingsPanel();
 
+  protected void installScrollingActions() {
+    ScrollingUtil.installActions(myResultsList, getSearchField());
+  }
+
+  protected static class SearchField extends ExtendableTextField {
+    public SearchField() {
+      ExtendableTextField.Extension leftExtension = getLeftExtension();
+      ExtendableTextField.Extension rightExtension = getRightExtension();
+      if (leftExtension != null) {
+        addExtension(leftExtension);
+      }
+      if (rightExtension != null) {
+        addExtension(rightExtension);
+      }
+
+      Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
+      Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+      Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0);
+      setBorder(JBUI.Borders.merge(empty, topLine, true));
+      setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
+      setFocusTraversalKeysEnabled(false);
+
+      if (Registry.is("new.search.everywhere.use.editor.font")) {
+        Font editorFont = EditorUtil.getEditorFont();
+        setFont(editorFont);
+      }
+
+      int fontDelta = Registry.intValue("new.search.everywhere.font.size.delta");
+      if (fontDelta != 0) {
+        Font font = getFont();
+        font = font.deriveFont((float)fontDelta + font.getSize());
+        setFont(font);
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = Integer.max(JBUI.scale(29), size.height);
+      return size;
+    }
+
+    @Nullable
+    protected ExtendableTextField.Extension getRightExtension() {
+      return null;
+    }
+
+    @Nullable
+    protected ExtendableTextField.Extension getLeftExtension() {
+      return null;
+    }
+  }
+
   @NotNull
-  protected abstract JBTextField createSearchField();
+  protected ExtendableTextField createSearchField() {
+    return new SearchField();
+  }
 
   protected void initSearchActions() {
     myResultsList.addMouseListener(new MouseAdapter() {
@@ -88,10 +146,6 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
         onMouseClicked(e);
       }
     });
-  }
-
-  protected void installScrollingActions() {
-    ScrollingUtil.installActions(myResultsList, getSearchField());
   }
 
   public void init() {

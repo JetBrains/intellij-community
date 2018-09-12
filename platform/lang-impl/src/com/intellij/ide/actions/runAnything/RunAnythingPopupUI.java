@@ -16,13 +16,9 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
-import com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -47,6 +43,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.OnOffButton;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -57,7 +55,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +64,6 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Collection;
@@ -840,65 +836,6 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
     mySkipFocusGain = false;
   }
 
-  static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
-    public MySearchTextField() {
-      super(false, "RunAnythingHistory");
-      JTextField editor = getTextEditor();
-      editor.setOpaque(false);
-      editor.putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
-      if (UIUtil.isUnderDarcula()) {
-        editor.setBackground(Gray._45);
-        editor.setForeground(Gray._240);
-      }
-    }
-
-    @Override
-    protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
-      if (UIUtil.isUnderDarcula()) {
-        uiConsumer.consume(new RunAnythingIconHandler.MyDarcula());
-        textField.setBorder(new DarculaTextBorder());
-      }
-      else {
-        if (SystemInfo.isMac) {
-          uiConsumer.consume(new RunAnythingIconHandler.MyMacUI());
-          textField.setBorder(new MacIntelliJTextBorder());
-        }
-        else {
-          uiConsumer.consume(new RunAnythingIconHandler.MyWinUI());
-          textField.setBorder(new WinIntelliJTextBorder());
-        }
-      }
-      return true;
-    }
-
-    @Override
-    protected boolean isSearchControlUISupported() {
-      return true;
-    }
-
-    @Override
-    protected boolean hasIconsOutsideOfTextField() {
-      return false;
-    }
-
-    @Override
-    protected void showPopup() {
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-        return getTextEditor().getText();
-      }
-      return null;
-    }
-
-    @Override
-    public void dispose() {
-    }
-  }
-
   public RunAnythingPopupUI(@NotNull AnActionEvent actionEvent) {
     super(actionEvent.getProject());
 
@@ -1019,8 +956,13 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
 
   @NotNull
   @Override
-  protected JBTextField createSearchField() {
-    return new MySearchTextField().getTextEditor();
+  protected ExtendableTextField createSearchField() {
+    ExtendableTextField searchField = super.createSearchField();
+
+    Consumer<? super ExtendableTextComponent.Extension> extensionConsumer = (extension) -> searchField.addExtension(extension);
+    searchField.addPropertyChangeListener(new RunAnythingIconHandler(extensionConsumer, searchField));
+
+    return searchField;
   }
 
   @Override

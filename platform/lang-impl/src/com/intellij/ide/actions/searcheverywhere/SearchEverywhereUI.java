@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -32,7 +31,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -46,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -293,70 +291,6 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     return SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
   }
 
-  @NotNull
-  @Override
-  protected JBTextField createSearchField() {
-    ExtendableTextField searchField = new ExtendableTextField() {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        size.height = Integer.max(JBUI.scale(29), size.height);
-        return size;
-      }
-    };
-
-    ExtendableTextField.Extension searchExtension = new ExtendableTextField.Extension() {
-      @Override
-      public Icon getIcon(boolean hovered) {
-        return AllIcons.Actions.Find;
-      }
-
-      @Override
-      public boolean isIconBeforeText() {
-        return true;
-      }
-
-      @Override
-      public int getIconGap() {
-        return JBUI.scale(10);
-      }
-    };
-    ExtendableTextField.Extension hintExtension = new ExtendableTextField.Extension() {
-      private final TextIcon icon;
-      {
-        icon = new TextIcon(IdeBundle.message("searcheverywhere.switch.scope.hint"), JBColor.GRAY, null, 0);
-        icon.setFont(RelativeFont.SMALL.derive(getFont()));
-      }
-
-      @Override
-      public Icon getIcon(boolean hovered) {
-        return icon;
-      }
-    };
-    searchField.setExtensions(searchExtension, hintExtension);
-
-    Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
-    Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
-    Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0);
-    searchField.setBorder(JBUI.Borders.merge(empty, topLine, true));
-    searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
-    searchField.setFocusTraversalKeysEnabled(false);
-
-    if (Registry.is("new.search.everywhere.use.editor.font")) {
-      Font editorFont = EditorUtil.getEditorFont();
-      searchField.setFont(editorFont);
-    }
-
-    int fontDelta = Registry.intValue("new.search.everywhere.font.size.delta");
-    if (fontDelta != 0) {
-      Font font = searchField.getFont();
-      font = font.deriveFont((float) fontDelta + font.getSize());
-      searchField.setFont(font);
-    }
-
-    return searchField;
-  }
-
   @Override
   @NotNull
   protected JPanel createSettingsPanel() {
@@ -379,6 +313,51 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
     res.add(toolbarComponent);
     return res;
+  }
+
+  @NotNull
+  @Override
+  protected ExtendableTextField createSearchField() {
+    return new SearchField() {
+      @NotNull
+      @Override
+      protected ExtendableTextComponent.Extension getRightExtension() {
+        return new ExtendableTextField.Extension() {
+          private final TextIcon icon;
+
+          {
+            icon = new TextIcon(IdeBundle.message("searcheverywhere.switch.scope.hint"), JBColor.GRAY, null, 0);
+            icon.setFont(RelativeFont.SMALL.derive(getFont()));
+          }
+
+          @Override
+          public Icon getIcon(boolean hovered) {
+            return icon;
+          }
+        };
+      }
+
+      @NotNull
+      @Override
+      protected ExtendableTextComponent.Extension getLeftExtension() {
+        return new ExtendableTextField.Extension() {
+          @Override
+          public Icon getIcon(boolean hovered) {
+            return AllIcons.Actions.Find;
+          }
+
+          @Override
+          public boolean isIconBeforeText() {
+            return true;
+          }
+
+          @Override
+          public int getIconGap() {
+            return JBUI.scale(10);
+          }
+        };
+      }
+    };
   }
 
   @Override
