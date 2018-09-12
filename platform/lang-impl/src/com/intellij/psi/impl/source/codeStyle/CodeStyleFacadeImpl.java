@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
@@ -74,20 +75,22 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public int getEOLSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
-    if (myProject == null) return -1;
+  public int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    if (myProject == null) return 0;
     LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
-    int space = lineIndentProvider != null ? lineIndentProvider.getEOLSpacing(myProject, editor, language, offset) : -1;
+    int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
+                ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(myProject, editor, language, offset)
+                : 0;
     if (space < 0 && allowDocCommit) {
       final Document document = editor.getDocument();
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file == null) return -1;
+      if (file == null) return 0;
       return CodeStyleManager.getInstance(myProject).getSpacing(file, offset);
     }
     return space;
   }
-  
+
   @Override
   public String getLineSeparator() {
     return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();
