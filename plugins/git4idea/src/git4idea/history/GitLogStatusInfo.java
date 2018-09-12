@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * Information about a single file change as returned by {@code git log status --name-status}.
  */
 public class GitLogStatusInfo {
-  
-  private final GitChangeType myType;
+
+  private final Change.Type myType;
   private final String myPath;
   private final String mySecondPath;
 
-  public GitLogStatusInfo(@NotNull GitChangeType type, @NotNull String path, @Nullable String secondPath) {
+  public GitLogStatusInfo(@NotNull Change.Type type, @NotNull String path, @Nullable String secondPath) {
     mySecondPath = secondPath;
     myPath = path;
     myType = type;
@@ -39,7 +40,7 @@ public class GitLogStatusInfo {
   }
 
   @NotNull
-  public GitChangeType getType() {
+  public Change.Type getType() {
     return myType;
   }
 

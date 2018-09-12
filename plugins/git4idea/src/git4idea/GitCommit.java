@@ -27,7 +27,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsStatusDescriptor;
-import git4idea.history.GitChangeType;
 import git4idea.history.GitChangesParser;
 import git4idea.history.GitLogStatusInfo;
 import git4idea.history.GitLogUtil;
@@ -125,11 +124,11 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         int sources = 0;
         int targets = 0;
         for (GitLogStatusInfo info : changesWithParent) {
-          GitChangeType type = info.getType();
-          if (ContainerUtil.set(GitChangeType.DELETED, GitChangeType.RENAMED).contains(type)) {
+          Change.Type type = info.getType();
+          if (ContainerUtil.set(Change.Type.DELETED, Change.Type.MOVED).contains(type)) {
             sources++;
           }
-          if (ContainerUtil.set(GitChangeType.ADDED).contains(type)) {
+          if (ContainerUtil.set(Change.Type.NEW).contains(type)) {
             targets++;
           }
         }
@@ -143,22 +142,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     @NotNull
     @Override
     protected GitLogStatusInfo createStatus(@NotNull Change.Type type, @NotNull String path, @Nullable String secondPath) {
-      return new GitLogStatusInfo(getType(type), path, secondPath);
-    }
-
-    @NotNull
-    private static GitChangeType getType(@NotNull Change.Type type) {
-      switch (type) {
-        case MODIFICATION:
-          return GitChangeType.MODIFIED;
-        case NEW:
-          return GitChangeType.ADDED;
-        case DELETED:
-          return GitChangeType.DELETED;
-        case MOVED:
-          return GitChangeType.RENAMED;
-      }
-      return null;
+      return new GitLogStatusInfo(type, path, secondPath);
     }
 
     @NotNull
@@ -176,22 +160,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     @NotNull
     @Override
     public Change.Type getType(@NotNull GitLogStatusInfo info) {
-      switch (info.getType()) {
-        case ADDED:
-          return Change.Type.NEW;
-        case MODIFIED:
-        case TYPE_CHANGED:
-          return Change.Type.MODIFICATION;
-        case DELETED:
-          return Change.Type.DELETED;
-        case COPIED:
-        case RENAMED:
-          return Change.Type.MOVED;
-        default:
-        case UNRESOLVED:
-          LOG.error("Unsupported status info " + info);
-          throw new RuntimeException(info.toString());
-      }
+      return info.getType();
     }
   }
 }

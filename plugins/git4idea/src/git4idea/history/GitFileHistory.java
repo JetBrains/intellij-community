@@ -284,7 +284,7 @@ public class GitFileHistory {
           // can safely be empty, for example, for simple merge commits that don't change anything.
           return;
         }
-        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
+        if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
           mySkipFurtherOutput.set(true);
         }
       }

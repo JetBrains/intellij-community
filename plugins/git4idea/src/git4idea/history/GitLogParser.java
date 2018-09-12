@@ -363,10 +363,11 @@ public class GitLogParser {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
         if (match.size() == 2) {
-          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), null));
+          myStatuses.add(new GitLogStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(match.get(0))), match.get(1), null));
         }
         else if (match.size() >= 3) {
-          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), match.get(2)));
+          myStatuses
+            .add(new GitLogStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(match.get(0))), match.get(1), match.get(2)));
         }
         else {
           LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
