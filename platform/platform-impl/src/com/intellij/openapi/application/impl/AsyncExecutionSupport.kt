@@ -248,8 +248,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     }
   }
 
-  open class FallbackDispatchException internal constructor(message: String) : Exception(message)
-
   /**
    * Thrown at a cancellation point when the executor is unable to arrange the requested context after a reasonable number of attempts.
    *
@@ -257,11 +255,9 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    *          The fallback context is EDT with a proper modality state, no other guarantee is made.
    */
   class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Collection<CoroutineDispatcher>)
-    : FallbackDispatchException("Too many reschedule requests, probably constraints can't be satisfied all together: " +
-                                lastConstraints.joinToString())
+    : Exception("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
 
-  class DisposedException(disposable: Disposable)
-    : FallbackDispatchException("Already disposed: $disposable")
+  class DisposedException(disposable: Disposable) : CancellationException("Already disposed: $disposable")
 
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
