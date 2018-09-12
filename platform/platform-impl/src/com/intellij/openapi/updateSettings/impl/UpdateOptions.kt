@@ -5,7 +5,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.project.getActiveInitializedProject
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
@@ -51,11 +51,15 @@ class UpdateOptions : BaseState() {
 private val UPDATE_SETTINGS_PROVIDER_EP = ProjectExtensionPointName<UpdateSettingsProvider>("com.intellij.updateSettingsProvider")
 
 internal fun addPluginRepositories(to: MutableList<String>) {
-  val project = getActiveInitializedProject() ?: return
-
-  for (provider in UPDATE_SETTINGS_PROVIDER_EP.getExtensions(project)) {
-    LOG.runAndLogException {
-      to.addAll(provider.getPluginRepositories())
+  for (project in ProjectManager.getInstance().openProjects) {
+    if (!project.isInitialized || project.isDisposed) {
+      return
+    }
+    
+    for (provider in UPDATE_SETTINGS_PROVIDER_EP.getExtensions(project)) {
+      LOG.runAndLogException {
+        to.addAll(provider.getPluginRepositories())
+      }
     }
   }
 }
