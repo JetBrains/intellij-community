@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
@@ -34,7 +35,7 @@ import static java.util.Comparator.comparingInt;
 
 @SuppressWarnings("UnusedReturnValue")
 public class TreeModelBuilder {
-  private static final int UNVERSIONED_MAX_SIZE = 50;
+  private static final int UNVERSIONED_MAX_SIZE = Registry.intValue("vcs.unversioned.files.max.intree", 1000);
 
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
