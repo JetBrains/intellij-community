@@ -5,7 +5,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
@@ -35,8 +34,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug");
   private static final int NOTIFICATION_TIMEOUT = 1500;
-
-  public static final Key<Boolean> IGNORE_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
 
   private Notification myPreviousNotification;
 
@@ -490,7 +487,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
-                  : (!opaque && viewport == pane.getViewport() && !UIUtil.isClientPropertyTrue(vsb, IGNORE_IN_INSETS))) {
+                  : (!opaque && viewport == pane.getViewport() && !UIUtil.isClientPropertyTrue(vsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
                 Alignment va = Alignment.get(vsb);
                 if (va == Alignment.LEFT) {
                   insets.left += vsb.getWidth();
@@ -506,7 +503,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
-                  : (!opaque && viewport == pane.getViewport())) {
+                  : (!opaque && viewport == pane.getViewport() && !UIUtil.isClientPropertyTrue(hsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
                 Alignment ha = Alignment.get(hsb);
                 if (ha == Alignment.TOP) {
                   insets.top += hsb.getHeight();
