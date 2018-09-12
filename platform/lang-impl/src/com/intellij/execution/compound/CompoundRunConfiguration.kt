@@ -80,7 +80,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     isInitialized = true
   }
 
-  override fun getConfigurationEditor(): CompoundRunConfigurationSettingsEditor = CompoundRunConfigurationSettingsEditor(project)
+  override fun getConfigurationEditor() = CompoundRunConfigurationSettingsEditor(project)
 
   override fun checkConfiguration() {
     if (sortedConfigurationsWithTargets.isEmpty()) {
