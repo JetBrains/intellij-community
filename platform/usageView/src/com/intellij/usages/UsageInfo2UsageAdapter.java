@@ -4,7 +4,6 @@ package com.intellij.usages;
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -23,7 +22,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
@@ -112,7 +110,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       chunks = new TextChunk[]{
         new TextChunk(scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME), clsType(element)),
         new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), " "),
-        new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), ((PsiNamedElement)element).getName()),
+        new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), clsName(element)),
       };
     }
     else {
@@ -478,14 +476,17 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @NotNull
   private static String clsType(@NotNull PsiElement psiElement) {
-    final Language lang = psiElement.getLanguage();
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-    final String type = provider.getType(psiElement);
-    if (StringUtil.isNotEmpty(type)) {
-      return type;
-    }
-
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(psiElement.getLanguage());
+    String type = provider.getType(psiElement);
+    if (!type.isEmpty()) return type;
     return ObjectUtils.notNull(TypePresentationService.getService().getTypePresentableName(psiElement.getClass()), "");
+  }
+  @NotNull
+  private static String clsName(@NotNull PsiElement psiElement) {
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(psiElement.getLanguage());
+    String name = provider.getNodeText(psiElement, false);
+    if (!name.isEmpty()) return name;
+    return ObjectUtils.notNull(psiElement instanceof PsiNamedElement ? ((PsiNamedElement)psiElement).getName() : null, "");
   }
 
   @Override
@@ -493,7 +494,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   public String getPlainText() {
     final PsiElement element = getElement();
     if (element instanceof PsiCompiledElement) {
-      return clsType(element) + " " + ((PsiNamedElement)element).getName();
+      return clsType(element) + " " + clsName(element);
     }
     int startOffset;
     if (element != null && (startOffset = getNavigationOffset()) != -1) {
