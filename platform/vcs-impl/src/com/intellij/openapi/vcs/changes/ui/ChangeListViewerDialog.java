@@ -114,7 +114,9 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       AbstractVcs vcs = myChangeList.getVcs();
       return vcs == null ? null : vcs.getKeyInstanceMethod();
     }
-
+    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      return new ChangeList[]{myChangeList};
+    }
     return null;
   }
 
@@ -123,24 +125,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
     final Splitter splitter = new Splitter(true, 0.8f);
-    myChangesBrowser = new CommittedChangesBrowser(myProject) {
-      @NotNull
-      @Override
-      protected List<AnAction> createPopupMenuActions() {
-        return ContainerUtil.append(
-          super.createPopupMenuActions(),
-          ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)
-        );
-      }
-
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-          return new ChangeList[]{myChangeList};
-        }
-        return super.getData(dataId);
-      }
-    };
+    myChangesBrowser = new MyChangesBrowser(myProject);
     myChangesBrowser.setChangesToDisplay(myChangeList.getChanges());
     if (myToSelect != null) myChangesBrowser.getViewer().selectFile(myToSelect);
 
@@ -185,5 +170,20 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
    */
   protected @Nullable String getDescription() {
     return null;
+  }
+
+  private static class MyChangesBrowser extends CommittedChangesBrowser {
+    MyChangesBrowser(@NotNull Project project) {
+      super(project);
+    }
+
+    @NotNull
+    @Override
+    protected List<AnAction> createPopupMenuActions() {
+      return ContainerUtil.append(
+        super.createPopupMenuActions(),
+        ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)
+      );
+    }
   }
 }
