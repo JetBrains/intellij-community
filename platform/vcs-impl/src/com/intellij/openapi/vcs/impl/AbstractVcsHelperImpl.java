@@ -21,8 +21,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -578,55 +576,36 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
     final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
-    final CommittedChangeList[] list = new CommittedChangeList[1];
-    final FilePath[] targetPath = new FilePath[1];
-    final VcsException[] exc = new VcsException[1];
-
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
                                                                            revision, virtualFile.getPath());
+
     if (lock.isLocked()) return;
     lock.lock();
 
-    Task.Backgroundable task = new Task.Backgroundable(project, title, true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          Pair<CommittedChangeList, FilePath> pair = getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
-          if (pair != null) {
-            list[0] = pair.first;
-            targetPath[0] = pair.second;
-          }
-        }
-        catch (VcsException e) {
-          exc[0] = e;
-        }
-      }
+    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject);
+    dlg.setTitle(title);
 
-      @Override
-      public void onFinished() {
-        lock.unlock();
-      }
+    Disposer.register(dlg.getDisposable(), () -> lock.unlock());
 
-      @Override
-      public void onSuccess() {
-        if (exc[0] != null) {
-          showError(exc[0], failedText(virtualFile, revision));
-        }
-        else if (list[0] == null) {
-          Messages.showErrorDialog(project, failedText(virtualFile, revision), getTitle());
-        }
-        else {
-          VirtualFile navigateToFile = targetPath[0] != null ?
-                                       new VcsVirtualFile(targetPath[0].getPath(), null, VcsFileSystem.getInstance()) :
-                                       virtualFile;
-          showChangesListBrowser(list[0], navigateToFile, title);
-        }
-      }
-    };
+    dlg.loadChangesInBackground(() -> {
+      try {
+        Pair<CommittedChangeList, FilePath> pair = getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
+        if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(virtualFile, revision));
 
-    // we can's use runProcessWithProgressAsynchronously(task) because then ModalityState.NON_MODAL would be used
-    CoreProgressManager progressManager = (CoreProgressManager)ProgressManager.getInstance();
-    progressManager.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task), null, ModalityState.current());
+        CommittedChangeList changeList = pair.getFirst();
+        FilePath targetPath = pair.getSecond();
+
+        VirtualFile navigateToFile = targetPath != null ?
+                                     new VcsVirtualFile(targetPath.getPath(), null, VcsFileSystem.getInstance()) :
+                                     virtualFile;
+
+        return new ChangeListViewerDialog.ChangelistData(changeList, navigateToFile);
+      }
+      catch (VcsException e) {
+        throw new VcsException(failedText(virtualFile, revision), e);
+      }
+    });
+    dlg.show();
   }
 
   @Nullable
