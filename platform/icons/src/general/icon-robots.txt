@@ -48,3 +48,4 @@ deprecated: splitDown.png -> /general/arrowDown.svg; to be removed in IDEA 2020 
 deprecated: splitLeft.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
 deprecated: splitRight.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
 deprecated: uninstallPlugin.png; to be removed in IDEA 2020
+deprecated: passwordLock.png; to be removed in IDEA 2020
