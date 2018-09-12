@@ -6,8 +6,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.accessibility.DescAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.regex.Pattern;
 
 /**
  * Interface which should be implemented in order to draw icons in the gutter area and handle events
@@ -22,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
-public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware {
+public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, DescAccessible {
   /**
    * Returns the action group actions from which are used to fill the context menu
    * displayed when the icon is right-clicked.
@@ -106,6 +111,21 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   @Nullable
   public GutterDraggableObject getDraggableObject() {
     return null;
+  }
+
+  @Override
+  @NotNull
+  public String getAccessibleDesc() {
+    Icon icon = getIcon();
+    if (icon instanceof IconLoader.CachedImageIcon) {
+      String path = ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+      if (path != null) {
+        String[] split = path.split(Pattern.quote("/") + "|" + Pattern.quote("\\"));
+        String name = split[split.length - 1];
+        return name.split(Pattern.quote("."))[0];
+      }
+    }
+    return "unknown icon";
   }
 
   public enum Alignment {

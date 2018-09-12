@@ -495,6 +495,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
           // Set the focus to "myContent"
           myFocusManager.requestFocus(getContentToFocus(), true);
+          EventQueue.invokeLater(() -> {
+            myFocusManager.requestFocus(getContentToFocus(), true);
+          });
         }
       });
     }
@@ -609,8 +612,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
    */
   @NotNull
   private Component getContentToFocus() {
-    Component focusComponent = myContent;
+    JComponent focusComponent = myContent;
     while (true) {
+      FocusTraversalPolicy policy = focusComponent.getFocusTraversalPolicy();
+      if (policy instanceof SortingFocusTraversalPolicy &&
+          ((SortingFocusTraversalPolicy)policy).getImplicitDownCycleTraversal())
+      {
+        focusComponent = (JComponent)policy.getDefaultComponent(focusComponent);
+      }
       // Setting focus to a JScrollPane is not very useful. Better setting focus to the
       // contained view. This is useful for Tooltip popups, for example.
       if (focusComponent instanceof JScrollPane) {
@@ -618,7 +627,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         if (viewport == null) {
           break;
         }
-        Component child = viewport.getView();
+        JComponent child = (JComponent)viewport.getView();
         if (child == null) {
           break;
         }

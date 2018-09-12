@@ -403,6 +403,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           updateGutterSize();
         }
 
+        if (highlighter.getGutterIconRenderer() != null) {
+          EditorGutterComponentImpl.MyAccessibleLine.escape(EditorImpl.this, true);
+        }
+
         boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
         if (myDocumentChangeInProgress) {
           // postpone repaint request, as folding model can be in inconsistent state and so coordinate
@@ -1552,6 +1556,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+
+    EditorGutterComponentImpl.MyAccessibleLine.escape(this, true);
 
     validateSize();
 

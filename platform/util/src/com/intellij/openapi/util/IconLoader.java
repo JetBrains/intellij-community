@@ -562,6 +562,10 @@ public final class IconLoader {
       this.useCacheOnLoad = useCacheOnLoad;
     }
 
+    public String getOriginalPath() {
+      return myOriginalPath;
+    }
+
     private void setGlobalFilter(ImageFilter globalFilter) {
       myFilters[0] = globalFilter;
     }

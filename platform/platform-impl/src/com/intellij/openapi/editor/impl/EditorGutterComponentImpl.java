@@ -17,6 +17,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -41,6 +43,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
@@ -55,6 +58,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.JBValue.JBValueGroup;
+import com.intellij.util.ui.accessibility.DescAccessible;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
 import gnu.trove.TIntObjectHashMap;
@@ -63,6 +68,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
@@ -72,6 +79,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -106,7 +115,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *   <li>Folding area</li>
  *</ul>
  */
-class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
+class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final JBValueGroup JBVG = new JBValueGroup();
   private static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
@@ -160,6 +169,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         @Override
         public void exitDumbMode() {
           updateSize();
+        }
+      });
+    }
+    if (ScreenReader.isActive()) {
+      MyAccessibleLine.setup(this);
+    }
+    else {
+      ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent e) {
+          if ((boolean)e.getNewValue()) {
+            MyAccessibleLine.setup(EditorGutterComponentImpl.this);
+            ScreenReader.removePropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, this);
+          }
         }
       });
     }
@@ -307,6 +330,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintFoldingLines(g, clip);
       paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
       paintLineNumbers(g, startVisualLine, endVisualLine);
+      MyAccessibleLine.paintSelection(g);
     }
     finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -1514,7 +1538,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }, myBackgroundIndicator);
   }
 
-  private void tooltipAvailable(@Nullable String toolTip, @NotNull MouseEvent e, @Nullable GutterIconRenderer renderer) {
+  private void tooltipAvailable(@Nullable String toolTip, @NotNull MouseEvent e, @Nullable GutterMark renderer) {
     myCalculatingInBackground = null;
     TooltipController controller = TooltipController.getInstance();
     if (toolTip == null || toolTip.isEmpty() || myEditor.isDisposed()) {
@@ -1547,7 +1571,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       RelativePoint showPoint = new RelativePoint(this, t.get());
 
       TooltipRenderer tr = ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip);
-      HintHint hint = new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition);
+      HintHint hint = new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition).setRequestFocus(ScreenReader.isActive());
       if (myEditor.getComponent().getRootPane() != null) {
         controller.showTooltipByMouseMove(myEditor, showPoint, tr, false, GUTTER_TOOLTIP_GROUP, hint);
       }
@@ -1972,5 +1996,306 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       gutterProvider.gutterClosed();
     }
     myProviderToListener.clear();
+  }
+
+  @Override
+  public boolean isFocusable() {
+    return ScreenReader.isActive();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJComponent() {};
+    }
+    return accessibleContext;
+  }
+
+  private interface MyAccessibleFocusable {}
+
+  /*
+   * The components provide a11y for the elements in the current gutter row. They are transparent,
+   * but in all the other aspects behave like real objects: the components are put into the gutter,
+   * have meaningful bounds and receive focus events (which is essential for a11y to track them).
+   */
+  static class MyAccessibleLine extends JPanel implements MyAccessibleFocusable {
+    private static MyAccessibleLine mySelectedRow;
+    private final EditorImpl myEditor;
+    private final EditorGutterComponentImpl myGutter;
+    private final int myLineNum;
+    private MyAccessibleMarker mySelectedAccessible;
+
+    public static MyAccessibleLine create(@NotNull EditorImpl editor) {
+      return mySelectedRow = new MyAccessibleLine(editor);
+    }
+
+    public static void escape(Editor editor, boolean requestFocusToEditor) {
+      if (isActive()) {
+        Component toPaint = mySelectedRow.myGutter;
+        mySelectedRow.getParent().remove(mySelectedRow);
+        EventQueue.invokeLater(() -> toPaint.repaint());
+      }
+      if (requestFocusToEditor) {
+        IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
+      }
+    }
+
+    public static void paintSelection(Graphics2D g) {
+      if (isActive()) {
+        mySelectedRow.mySelectedAccessible.paintSelection(g);
+      }
+    }
+
+    public static void setup(@NotNull EditorGutterComponentImpl gutter) {
+      installActionHandler(IdeActions.ACTION_EDITOR_ESCAPE, true, (editor) -> escape(editor, true));
+      installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, false, (editor) -> moveRight());
+      installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, false, (editor) -> moveLeft());
+      installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, true, (editor) -> maybeLineChanged());
+      installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, true, (editor) -> maybeLineChanged());
+      installActionHandler(IdeActions.ACTION_EDITOR_ENTER, false, (editor) -> {});
+      installActionHandler("EditorShowGutterIconTooltip", false, (editor) -> showTooltipIfPresent());
+
+      gutter.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          create(gutter.myEditor);
+        }
+      });
+    }
+
+    private static void installActionHandler(String actionId, boolean propagate, Consumer<Editor> action) {
+      EditorActionManager.getInstance().setActionHandler(actionId, new EditorActionHandler() {
+        private final EditorActionHandler origHandler = EditorActionManager.getInstance().getActionHandler(actionId);
+        @Override
+        protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+          if (propagate || !isActive()) {
+            origHandler.execute(editor, caret, dataContext);
+          }
+          if (isActive()) {
+            action.consume(editor);
+          }
+        }
+      });
+    }
+
+    private static void moveRight() {
+      if (isActive()) {
+        IdeFocusManager.getGlobalInstance().requestFocus(
+          mySelectedRow.getFocusTraversalPolicy().getComponentAfter(mySelectedRow, mySelectedRow.mySelectedAccessible), true);
+      }
+    }
+
+    private static void moveLeft() {
+      if (isActive()) {
+        IdeFocusManager.getGlobalInstance().requestFocus(
+          mySelectedRow.getFocusTraversalPolicy().getComponentBefore(mySelectedRow, mySelectedRow.mySelectedAccessible), true);
+      }
+    }
+
+    public static void showTooltipIfPresent() {
+      if (isActive()) {
+        mySelectedRow.mySelectedAccessible.showTooltip();
+      }
+    }
+
+    private MyAccessibleLine(@NotNull EditorImpl editor) {
+      super(null);
+      myEditor = editor;
+      myGutter = editor.getGutterComponentEx();
+      myLineNum = myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition().line;
+      int lineHeight = myEditor.getLineHeight();
+
+      if (myGutter.isLineNumbersShown()) {
+        int width = UIUtilities.stringWidth(myGutter,
+                                            UIUtilities.getFontMetrics(myGutter, myEditor.getColorsScheme().getFont(EditorFontType.PLAIN)),
+                                            String.valueOf(myEditor.getVisibleLineCount()));
+        addNewAccessible(() -> "line " + String.valueOf(myLineNum + 1), null, myGutter.getLineNumberAreaOffset(), 0, width, lineHeight);
+      }
+
+      if (myGutter.isAnnotationsShown()) {
+        int x = myGutter.getAnnotationsAreaOffset();
+        int width = 0;
+        StringBuilder buf = new StringBuilder("annotation ");
+        String tooltipText = null;
+        for (int i = 0; i < myGutter.myTextAnnotationGutters.size(); i++) {
+          TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
+          if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLineNum, myEditor); // [tav] todo: take first non-null?
+          int annotationSize = myGutter.myTextAnnotationGutterSizes.get(i);
+          buf.append(ObjectUtils.notNull(gutterProvider.getLineText(myLineNum, myEditor), ""));
+          width += annotationSize;
+        }
+        if (buf.length() > 0) {
+          addNewAccessible(() -> buf.toString(), tooltipText, x, 0, width, lineHeight);
+        }
+      }
+
+      if (myGutter.areIconsShown()) {
+        List<GutterMark> row = myGutter.getGutterRenderers(myLineNum);
+        if (row != null) {
+          myGutter.processIconsRow(myLineNum, row, (x, y, renderer) -> {
+            Icon icon = myGutter.scaleIcon(renderer.getIcon());
+            addNewAccessible(() -> {
+              if (renderer instanceof DescAccessible) {
+                return "icon " + ((DescAccessible)renderer).getAccessibleDesc();
+              }
+              return "icon " + renderer.getClass().getSimpleName();
+            }, renderer.getTooltipText(), x, 0, icon.getIconWidth(), lineHeight);
+          });
+        }
+      }
+
+      if (myGutter.isLineMarkersShown()) {
+        if (isLineModified()) {
+          int markerWidth = JBUI.scale(8); // [tav] todo: extract real width
+          addNewAccessible(() -> "line modified", null, myGutter.getWhitespaceSeparatorOffset() - markerWidth, 0, markerWidth, lineHeight);
+        }
+      }
+
+      setOpaque(false);
+      setFocusable(false);
+      setFocusCycleRoot(true);
+      setFocusTraversalPolicyProvider(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+      setBounds(0, myEditor.visibleLineToY(myLineNum), myGutter.getWhitespaceSeparatorOffset(), lineHeight);
+
+      myGutter.add(this);
+      mySelectedAccessible = (MyAccessibleMarker)getFocusTraversalPolicy().getFirstComponent(this);
+      if (mySelectedAccessible == null) {
+        Rectangle b = getBounds(); // set above
+        mySelectedAccessible = addNewAccessible(() -> "empty", null, 0, 0, b.width, b.height);
+      }
+
+      IdeFocusManager.getGlobalInstance().requestFocus(mySelectedAccessible, true);
+    }
+
+    @NotNull
+    private MyAccessibleMarker addNewAccessible(DescAccessible name, String tooltipText, int x, int y, int width, int height) {
+      MyAccessibleMarker obj = new MyAccessibleMarker(name, tooltipText, x, y, width, height);
+      add(obj);
+      return obj;
+    }
+
+    @Override
+    public void removeNotify() {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      mySelectedRow = null;
+      EventQueue.invokeLater(() -> repaintRow());
+      super.removeNotify();
+    }
+
+    private static void maybeLineChanged() {
+      if (isActive()) {
+        if (mySelectedRow.myLineNum == mySelectedRow.myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition().line) return;
+
+        EditorImpl editor = mySelectedRow.myEditor;
+        mySelectedRow.getParent().remove(mySelectedRow);
+        create(editor);
+      }
+    }
+
+    public void repaintRow() {
+      int y = myEditor.visibleLineToY(myLineNum);
+      myGutter.repaint(0, y, myGutter.getWhitespaceSeparatorOffset(), y + myEditor.getLineHeight());
+    }
+
+    public boolean isSelected() {
+      return mySelectedRow == this;
+    }
+
+    public static boolean isActive() {
+      return mySelectedRow != null;
+    }
+
+    private boolean isLineModified() {
+      try {
+        // [tav] todo: rewrite it in a good way
+        Class<?> clsProvider = Class.forName("com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl");
+        Object inst = clsProvider.getConstructor(Document.class, Project.class).newInstance(myEditor.getDocument(), myEditor.getProject());
+        return (Boolean)new MethodInvocator(clsProvider, "isLineChanged", int.class).invoke(inst, myLineNum);
+
+      } catch (Throwable ignored) {
+        return false;
+      }
+    }
+
+    /**
+     * Represents an element on the gutter line, like a line number, an icon etc. (including an empty space when no elements are present).
+     */
+    private class MyAccessibleMarker extends JLabel implements MyAccessibleFocusable {
+      private @NotNull final DescAccessible myName;
+      private @Nullable final String myTooltipText;
+
+      MyAccessibleMarker(@NotNull DescAccessible name, @Nullable String tooltipText, int x, int y, int width, int height) {
+        myName = name;
+        myTooltipText = tooltipText;
+
+        setFocusable(true);
+        setBounds(x, y, width, height);
+        setOpaque(false);
+
+        setText(myName.getAccessibleDesc());
+
+        addFocusListener(new FocusListener() {
+          @Override
+          public void focusGained(FocusEvent e) {
+            mySelectedAccessible = MyAccessibleMarker.this;
+            EventQueue.invokeLater(() -> repaintRow());
+          }
+          @Override
+          public void focusLost(FocusEvent e) {
+            if (!(e.getOppositeComponent() instanceof MyAccessibleFocusable) &&
+                (getParent().isSelected() || !isActive()))
+            {
+              escape(myEditor, false);
+            }
+          }
+        });
+      }
+
+      @Override
+      public MyAccessibleLine getParent() {
+        return (MyAccessibleLine)super.getParent();
+      }
+
+      private void paintSelection(Graphics2D g) {
+        Color oldColor = g.getColor();
+        try {
+          g.setColor(JBColor.blue);
+          Point parentLoc = getParent().getLocation();
+          Rectangle bounds = getBounds();
+          bounds.setLocation(parentLoc.x + bounds.x, parentLoc.y + bounds.y);
+          int y = bounds.y + bounds.height - JBUI.scale(1);
+          double pix = 0;//PaintUtil.devPixel(g);
+          LinePainter2D.paint(g, bounds.x, y - pix, bounds.x + bounds.width, y - pix,
+                              StrokeType.INSIDE, JBUI.scale(1));
+        } finally {
+          g.setColor(oldColor);
+        }
+      }
+
+      public void showTooltip() {
+        if (myTooltipText != null) {
+          Rectangle bounds = getBounds();
+          Rectangle pBounds = getParent().getBounds();
+          int x = pBounds.x + bounds.x + bounds.width / 2;
+          int y = pBounds.y + bounds.y + bounds.height / 2;
+          MouseEvent e = new MouseEvent(myGutter, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, x, y, 0, false, MouseEvent.BUTTON1);
+          myGutter.tooltipAvailable(myTooltipText, e, null);
+        }
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJLabel() {
+            @Override
+            public String getAccessibleName() {
+              return getText();
+            }
+          };
+        }
+        return accessibleContext;
+      }
+    }
   }
 }
