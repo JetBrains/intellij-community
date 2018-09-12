@@ -104,9 +104,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private final List<ViewTypeListener> myViewTypeListeners = new ArrayList<>();
   private ViewType myViewType = ViewType.SHORT;
 
-  private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final Alarm mySearchAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final SESearcher mySearcher;
+  private final ThrottlingListenerWrapper myBufferedListener;
   private ProgressIndicator mySearchProgressIndicator;
 
   public SearchEverywhereUI(Project project,
@@ -115,7 +115,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                             Map<String, SearchEverywhereContributorFilter<?>> filters) {
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
 
-    mySearcher = createSearcher();
+    if (Registry.is("new.search.everywhere.single.thread.search")) {
+      mySearcher = new SingleThreadSearcher(mySearchListener, run -> ApplicationManager.getApplication().invokeLater(run));
+      myBufferedListener = null;
+    } else {
+      myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
+      mySearcher = new MultithreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run));
+    }
 
     myProject = project;
     myServiceContributors = serviceContributors;
@@ -206,45 +212,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       size.height -= suggestionsPanel.getPreferredSize().height;
     }
     return size;
-  }
-
-  private SESearcher createSearcher() {
-    SESearcher.Listener listener = new SESearcher.Listener() {
-      @Override
-      public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
-        Map<SearchEverywhereContributor<?>, List<SESearcher.ElementInfo>> map =
-          list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
-
-        map.forEach((key, lst) -> myListModel.addElements(lst, key));
-      }
-
-      @Override
-      public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
-        list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
-      }
-
-      @Override
-      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-        if (myResultsList.isEmpty()) {
-          if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
-            doSetUseNonProjectItems(true, true);
-            notFoundString = getSearchPattern();
-            return;
-          }
-
-          hideHint();
-        }
-
-        myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
-        hasMoreContributors.forEach(myListModel::setHasMore);
-        ScrollingUtil.ensureSelectionExists(myResultsList);
-      }
-    };
-
-    ThrottlingListenerWrapper throttlingListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, listener, Runnable::run);
-    return Registry.is("new.search.everywhere.single.thread.search")
-           ? new SingleThreadSearcher(listener, run -> ApplicationManager.getApplication().invokeLater(run))
-           : new MultithreadSearcher(throttlingListener, run -> ApplicationManager.getApplication().invokeLater(run));
   }
 
   private JPanel createSuggestionsPanel() {
@@ -583,11 +550,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private void rebuildList() {
     assert EventQueue.isDispatchThread() : "Must be EDT";
 
-    mySearchAlarm.cancelAllRequests();
-    if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
-      mySearchProgressIndicator.cancel();
-      mySearchProgressIndicator = null;
-    }
+    stopSearching();
 
     myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
     String pattern = getSearchPattern();
@@ -766,10 +729,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private void stopSearching() {
-    listOperationsAlarm.cancelAllRequests();
     mySearchAlarm.cancelAllRequests();
     if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
       mySearchProgressIndicator.cancel();
+    }
+    if (myBufferedListener != null) {
+      myBufferedListener.clearBuffer();
     }
   }
 
@@ -1315,4 +1280,36 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                         .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
+
+  private final SESearcher.Listener mySearchListener = new SESearcher.Listener() {
+    @Override
+    public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
+      Map<SearchEverywhereContributor<?>, List<SESearcher.ElementInfo>> map =
+        list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
+
+      map.forEach((key, lst) -> myListModel.addElements(lst, key));
+    }
+
+    @Override
+    public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
+      list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
+    }
+
+    @Override
+    public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      if (myResultsList.isEmpty()) {
+        if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
+          doSetUseNonProjectItems(true, true);
+          notFoundString = getSearchPattern();
+          return;
+        }
+
+        hideHint();
+      }
+
+      myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
+      hasMoreContributors.forEach(myListModel::setHasMore);
+      ScrollingUtil.ensureSelectionExists(myResultsList);
+    }
+  };
 }
