@@ -21,26 +21,18 @@ import com.intellij.util.containers.ContainerUtil
 
 abstract class VcsStatusDescriptor<S> {
   fun getMergedStatusInfo(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
-    val firstParent = statuses[0]
-    if (statuses.size == 1) return ContainerUtil.map(firstParent) { info -> MergedStatusInfo(info) }
+    statuses.singleOrNull()?.let { return it.map { MergedStatusInfo(it) } }
 
-    val affectedMap = statuses.map { infos ->
-      val map = ContainerUtil.newLinkedHashMap<String, S>()
-
-      for (info in infos) {
-        val path = getPath(info)
-        if (path != null) map[path] = info
-      }
-
-      map
+    val pathsToStatusesMap = statuses.map { infos ->
+      infos.mapNotNull { info -> getPath(info)?.let { Pair(it, info) } }.toMap(linkedMapOf())
     }
 
     val result = mutableListOf<MergedStatusInfo<S>>()
 
-    outer@ for (path in affectedMap[0].keys) {
-      val statusesList = ContainerUtil.newArrayList<S>()
-      for (infoMap in affectedMap) {
-        val status = infoMap[path] ?: continue@outer
+    outer@ for (path in pathsToStatusesMap.first().keys) {
+      val statusesList = mutableListOf<S>()
+      for (pathsToStatusesForParent in pathsToStatusesMap) {
+        val status = pathsToStatusesForParent[path] ?: continue@outer
         statusesList.add(status)
       }
 
@@ -51,11 +43,10 @@ abstract class VcsStatusDescriptor<S> {
   }
 
   private fun getMergedStatusInfo(path: String, statuses: List<S>): S {
-    val types = statuses.mapTo(mutableSetOf()) { this.getType(it) }
+    val types = statuses.map { getType(it) }.distinct()
 
     if (types.size == 1) {
-      val type = types.single()
-      if (type == Change.Type.MOVED) {
+      if (types.single() == Change.Type.MOVED) {
         var renamedFrom: String? = null
         for (status in statuses) {
           if (renamedFrom == null) {
