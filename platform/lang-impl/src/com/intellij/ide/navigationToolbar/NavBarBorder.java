@@ -35,7 +35,7 @@ public class NavBarBorder implements Border {
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
     if (UISettings.getInstance().getShowMainToolbar()) {
       g.setColor(BORDER_COLOR);
-      g.fillRect(x, y + height - BW.get(), width, BW.get());
+      g.fillRect(x, y, width, BW.get());
     }
   }
 
