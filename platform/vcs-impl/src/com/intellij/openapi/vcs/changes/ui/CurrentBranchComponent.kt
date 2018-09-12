@@ -22,12 +22,14 @@ import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JTree.TREE_MODEL_PROPERTY
 
+private const val BALANCE = 0.08
+private val BACKGROUND = JBColor(Color.BLACK, Color.WHITE)
 private val TEXT_INSETS = insets(5, 3, 4, 2)
 
 class CurrentBranchComponent(val project: Project, val browser: CommitDialogChangesBrowser) : JBLabel() {
   private var branches = setOf<BranchData>()
 
-  private val textIcon = TextIcon(null, TEXT_COLOR, ColorUtil.mix(getTreeBackground(), BACKGROUND, BALANCE), 0).apply {
+  private val textIcon = TextIcon(null, TEXT_COLOR, getBranchPresentationBackground(getTreeBackground()), 0).apply {
     setInsets(TEXT_INSETS)
     setFont(getLabelFont())
   }
@@ -95,9 +97,6 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
   }
 
   companion object {
-    const val BALANCE = 0.08
-    @JvmField
-    val BACKGROUND = JBColor(Color.BLACK, Color.WHITE)
     @JvmField
     val TEXT_COLOR = JBColor(Color(0x7a7a7a), Color(0x909090))
 
@@ -115,6 +114,9 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
     fun getSingleTooltip(branch: BranchData) = if (branch is LinkedBranchData && branch.branchName != null)
       branch.linkedBranchName?.let { "${branch.branchName} ${rightArrow()} $it" } ?: "No tracking branch"
     else null
+
+    @JvmStatic
+    fun getBranchPresentationBackground(background: Color) = ColorUtil.mix(background, BACKGROUND, BALANCE)
 
     private fun getProviders(project: Project) = BranchStateProvider.EP_NAME.getExtensionList(project)
   }

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
@@ -32,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
 import static com.intellij.vcs.log.ui.render.RectanglePainter.LABEL_ARC;
 
 public class LabelPainter {
@@ -46,8 +46,6 @@ public class LabelPainter {
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
-  private static final JBColor BACKGROUND = CurrentBranchComponent.BACKGROUND;
-  private static final double BALANCE = CurrentBranchComponent.BALANCE;
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
   @NotNull private final VcsLogData myLogData;
@@ -258,7 +256,7 @@ public class LabelPainter {
                                                boolean isSelected,
                                                boolean isCompact) {
     if (isSelected) return null;
-    if (!isCompact) return ColorUtil.mix(background, BACKGROUND, BALANCE);
+    if (!isCompact) return getBranchPresentationBackground(background);
 
     boolean paintGreyBackground;
     for (RefGroup group : refGroups) {
@@ -269,7 +267,7 @@ public class LabelPainter {
         paintGreyBackground = !group.getName().isEmpty();
       }
 
-      if (paintGreyBackground) return ColorUtil.mix(background, BACKGROUND, BALANCE);
+      if (paintGreyBackground) return getBranchPresentationBackground(background);
     }
 
     return null;
