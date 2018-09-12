@@ -24,7 +24,10 @@ enum class RunConfigurationSingletonPolicy {
 
 inline fun <reified T : ConfigurationType> runConfigurationType(): T = ConfigurationTypeUtil.findConfigurationType(T::class.java)
 
-abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String? = null, private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
+abstract class ConfigurationTypeBase protected constructor(private val id: String,
+                                                           private val displayName: String,
+                                                           private val description: String? = null,
+                                                           private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
   companion object {
     @JvmStatic
     @Deprecated("Use LazyUtil.create", ReplaceWith("LazyUtil.create(producer)", "com.intellij.util.LazyUtil"))
@@ -32,13 +35,13 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
   }
 
   @Deprecated("")
-  constructor(id: String, displayName: String, description: String?, icon: Lazy<Icon>) : this(id, displayName, description, LazyUtil.create { icon.value })
+  constructor(id: String, displayName: String, description: String?, icon: Lazy<Icon>)
+    : this(id, displayName, description, LazyUtil.create { icon.value })
 
-  constructor(id: String, displayName: String, description: String?, icon: Icon?) : this(id, displayName, description, icon?.let { NotNullLazyValue.createConstantValue(it) })
+  constructor(id: String, displayName: String, description: String?, icon: Icon?)
+    : this(id, displayName, description, icon?.let { NotNullLazyValue.createConstantValue(it) })
 
   private var factories = EMPTY_FACTORIES
-
-  private val description = description.nullize() ?: displayName
 
   protected fun addFactory(factory: ConfigurationFactory) {
     factories = ArrayUtil.append(factories, factory)
@@ -46,45 +49,37 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
 
   override fun getDisplayName() = displayName
 
-  override final fun getConfigurationTypeDescription() = description
+  final override fun getConfigurationTypeDescription() = description.nullize() ?: displayName
 
-  // open due to backward compatibility
-  /**
-   * DO NOT override
-   */
+  /** DO NOT override (not sealed because of backward compatibility) */
   override fun getIcon() = icon?.value
 
-  override final fun getId() = id
+  final override fun getId() = id
 
-  /**
-   * DO NOT override
-   */
+  /** DO NOT override (not sealed because of backward compatibility) */
   override fun getConfigurationFactories() = factories
 }
 
 abstract class SimpleConfigurationType protected constructor(private val id: String,
                                                              private val name: String,
-                                                             description: String? = null,
+                                                             private val description: String? = null,
                                                              private val icon: NotNullLazyValue<Icon>) : ConfigurationType, ConfigurationFactory() {
-  private val description = description.nullize() ?: name
-
   @Suppress("LeakingThis")
   private val factories: Array<ConfigurationFactory> = arrayOf(this)
 
-  override final fun getId() = id
+  final override fun getId() = id
 
-  override final fun getDisplayName() = name
+  final override fun getDisplayName() = name
 
-  override final fun getName() = name
+  final override fun getName() = name
 
-  override final fun getConfigurationTypeDescription() = description
+  final override fun getConfigurationTypeDescription() = description.nullize() ?: displayName
 
-  override final fun getIcon() = icon.value
+  final override fun getIcon() = icon.value
 
-  override final fun getConfigurationFactories() = factories
+  final override fun getConfigurationFactories() = factories
 
-  override final fun getType() = this
+  final override fun getType() = this
 
-  // make final to prohibit override
-  override final fun getIcon(configuration: RunConfiguration) = getIcon()
+  final override fun getIcon(configuration: RunConfiguration) = getIcon()
 }
