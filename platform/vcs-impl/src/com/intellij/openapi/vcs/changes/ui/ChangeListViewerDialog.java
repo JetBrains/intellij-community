@@ -52,14 +52,11 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private JScrollPane commitMessageScroll;
   private VirtualFile myToSelect;
 
-  public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
-    super(project, true);
-    myInAir = false;
-    initCommitMessageArea(project, changeList);
-    initDialog(project, changeList);
+  public ChangeListViewerDialog(@NotNull Project project, @NotNull CommittedChangeList changeList) {
+    this(project, changeList, null);
   }
 
-  public ChangeListViewerDialog(Project project, CommittedChangeList changeList, VirtualFile toSelect) {
+  public ChangeListViewerDialog(@NotNull Project project, @NotNull CommittedChangeList changeList, @Nullable VirtualFile toSelect) {
     super(project, true);
     myInAir = false;
     myToSelect = toSelect;
@@ -67,16 +64,14 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     initDialog(project, changeList);
   }
 
-  public ChangeListViewerDialog(Component parent, Project project, Collection<Change> changes, final boolean inAir) {
+  public ChangeListViewerDialog(Component parent, @NotNull Project project, @NotNull Collection<Change> changes, boolean inAir) {
     super(parent, true);
     myInAir = inAir;
     initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
   }
 
-  public ChangeListViewerDialog(Project project, Collection<Change> changes, final boolean inAir) {
-    super(project, true);
-    myInAir = inAir;
-    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
+  public ChangeListViewerDialog(@NotNull Project project, @NotNull Collection<Change> changes, boolean inAir) {
+    this(null, project, changes, inAir);
   }
 
   private void initDialog(final Project project, final CommittedChangeList changeList) {
