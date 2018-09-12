@@ -1306,7 +1306,6 @@ public class AllIcons {
       public static final Icon Top = IconLoader.getIcon("/ide/dnd/top.png"); // 16x16
 
     }
-    public static final Icon EmptyFatalError = IconLoader.getIcon("/ide/emptyFatalError.svg"); // 16x16
     public static final Icon Error_notifications = IconLoader.getIcon("/ide/error_notifications.png"); // 16x16
     public static final Icon ErrorPoint = IconLoader.getIcon("/ide/errorPoint.png"); // 6x6
     public static final Icon External_link_arrow = IconLoader.getIcon("/ide/external_link_arrow.png"); // 14x14
@@ -1404,6 +1403,11 @@ public class AllIcons {
     public static final Icon Statusbar_arrows = IconLoader.getIcon("/ide/statusbar_arrows.png"); // 7x10
     public static final Icon UpDown = IconLoader.getIcon("/ide/upDown.png"); // 16x16
     public static final Icon Warning_notifications = IconLoader.getIcon("/ide/warning_notifications.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.FatalError_read */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon EmptyFatalError = AllIcons.Ide.FatalError_read;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.FatalError */
     @SuppressWarnings("unused")
