@@ -390,10 +390,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return getUsageInfo().getElement();
   }
 
-  public PsiReference getReference() {
-    return getElement().getReference();
-  }
-
   @Override
   public boolean isNonCodeUsage() {
     return getUsageInfo().isNonCodeUsage;
@@ -411,7 +407,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @Override
-  public void rename(String newName) throws IncorrectOperationException {
+  public void rename(@NotNull String newName) throws IncorrectOperationException {
     final PsiReference reference = getUsageInfo().getReference();
     assert reference != null : this;
     reference.handleElementRename(newName);
