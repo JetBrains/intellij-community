@@ -141,6 +141,13 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     return null;
   }
 
+  /**
+   * Switches which view is currently enabled, if possible.
+   */
+  public void toggleView() {
+    switchSelected(!checkSelected());
+  }
+
   private void setStoredState(String viewName) {
     if (mySelectionStateKey != null) {
       PropertiesComponent.getInstance().setValue(mySelectionStateKey, viewName);
@@ -150,6 +157,30 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   @Nullable
   private String getStoredState() {
     return mySelectionStateKey == null ? null : PropertiesComponent.getInstance().getValue(mySelectionStateKey);
+  }
+
+  private boolean checkSelected() {
+    String enabledViewName = myEnabledViewRef.get();
+    if (enabledViewName == null) return true;
+    Set<String> viewNames = myViewMap.keySet();
+    return viewNames.isEmpty() || enabledViewName.equals(viewNames.iterator().next());
+  }
+
+  /**
+   * Switches the selected view to either the first or the second view contained within the view map.
+   *
+   * @param flag if true selects the first view, otherwise selects the second
+   * @return whether or not the view was changed
+   */
+  private boolean switchSelected(final boolean flag) {
+    if (myViewMap.size() > 1) {
+      List<String> names = new ArrayList<>(myViewMap.keySet());
+      String viewName = flag ? names.get(0) : names.get(1);
+      enableView(viewName);
+      setStoredState(viewName);
+      return true;
+    }
+    return false;
   }
 
   private class SwitchViewAction extends ToggleAction implements DumbAware {
@@ -172,19 +203,13 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
 
     @Override
     public boolean isSelected(@NotNull final AnActionEvent event) {
-      String enabledViewName = myEnabledViewRef.get();
-      if (enabledViewName == null) return true;
-      Set<String> viewNames = myViewMap.keySet();
-      return viewNames.isEmpty() || enabledViewName.equals(viewNames.iterator().next());
+      return checkSelected();
     }
 
     @Override
     public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
-      if (myViewMap.size() > 1) {
-        List<String> names = new ArrayList<>(myViewMap.keySet());
-        String viewName = flag ? names.get(0) : names.get(1);
-        enableView(viewName);
-        setStoredState(viewName);
+      boolean viewChanged = switchSelected(flag);
+      if (viewChanged) {
         ApplicationManager.getApplication().invokeLater(() -> update(event));
       }
     }
