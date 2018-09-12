@@ -955,7 +955,6 @@ public class ExpressionGenerator extends Generator {
     //all refs in script that are not resolved are saved in 'binding' of the script
     if (qualifier == null &&
         (resolved == null ||
-         resolved instanceof GrBindingVariable ||
          resolved instanceof LightElement && !(resolved instanceof ClosureSyntheticParameter)) &&
         (referenceExpression.getParent() instanceof GrIndexProperty || !(referenceExpression.getParent() instanceof GrCall)) &&
         PsiUtil.getContextClass(referenceExpression) instanceof GroovyScriptClass) {
@@ -1389,7 +1388,7 @@ public class ExpressionGenerator extends Generator {
   public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
     final PsiType type = listOrMap.getType();
 
-    LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiClassType);
+    LOG.assertTrue(type instanceof PsiClassType);
 
     if (listOrMap.isMap()) {
       if (listOrMap.getNamedArguments().length == 0) {

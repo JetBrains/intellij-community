@@ -55,7 +55,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
 
     final PsiReferenceExpression operandReference = (PsiReferenceExpression)operand;
     final PsiElement resolved = operandReference.resolve();
-    if (resolved == null || (!(resolved instanceof PsiParameter) && !(resolved instanceof PsiLocalVariable))) {
+    if (!(resolved instanceof PsiParameter) && !(resolved instanceof PsiLocalVariable)) {
       return false;
     }
 

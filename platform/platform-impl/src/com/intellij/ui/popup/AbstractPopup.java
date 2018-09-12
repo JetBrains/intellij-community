@@ -1887,7 +1887,7 @@ public class AbstractPopup implements JBPopup {
    */
   private static Component getFrameOrDialog(Component component) {
     while (component != null) {
-      if (component instanceof Frame || component instanceof Dialog || component instanceof Window) return component;
+      if (component instanceof Window) return component;
       component = component.getParent();
     }
     return null;
