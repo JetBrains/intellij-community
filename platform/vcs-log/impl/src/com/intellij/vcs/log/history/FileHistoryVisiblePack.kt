@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.DataPackBase
 import com.intellij.vcs.log.graph.VisibleGraph
@@ -25,16 +26,21 @@ class FileHistoryVisiblePack(dataPack: DataPackBase,
                              graph: VisibleGraph<Int>,
                              canRequestMore: Boolean,
                              filters: VcsLogFilterCollection,
-                             private val commitsToPaths: Map<Int, MaybeDeletedFilePath>) : VisiblePack(dataPack, graph, canRequestMore,
-                                                                                                       filters) {
+                             commitsToPaths: Map<Int, MaybeDeletedFilePath>) : VisiblePack(dataPack, graph, canRequestMore,
+                                                                                           filters, commitsToPaths) {
+  companion object {
+    private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
+      get() {
+        if (this !is VisiblePack) return emptyMap()
+        val data = this.getAdditionalData<Any>() as? Map<*, *> ?: return emptyMap()
+        return data as Map<Int, MaybeDeletedFilePath>
+      }
 
-  fun getFilePath(commit: Int): FilePath? {
-    val filePath = commitsToPaths[commit] ?: return null
-    return filePath.filePath
-  }
+    @JvmStatic
+    fun VcsLogDataPack.filePath(commit: Int): FilePath? = this.commitsToPathsMap[commit]?.filePath
 
-  fun isFileDeletedInCommit(commit: Int): Boolean {
-    val filePath = commitsToPaths[commit]
-    return filePath != null && filePath.deleted
+    @JvmStatic
+    fun VcsLogDataPack.isDeletedInCommit(commit: Int): Boolean = this.commitsToPathsMap[commit]?.deleted ?: false
   }
 }
+
