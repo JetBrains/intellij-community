@@ -183,7 +183,7 @@ public class NullabilityUtil {
         // only initial nullability
         if (block == null || !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block, ref)) return Nullability.UNKNOWN;
       }
-      return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
+      return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
