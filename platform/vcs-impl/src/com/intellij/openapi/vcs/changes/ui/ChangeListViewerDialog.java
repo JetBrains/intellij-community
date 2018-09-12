@@ -46,8 +46,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private CommittedChangeList myChangeList;
   private CommittedChangesBrowser myChangesBrowser;
   private JEditorPane myCommitMessageArea;
-  // do not related to local data/changes etc
-  private final boolean myInAir;
   private Change[] myChanges;
   private JScrollPane commitMessageScroll;
   private VirtualFile myToSelect;
@@ -58,20 +56,18 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
 
   public ChangeListViewerDialog(@NotNull Project project, @NotNull CommittedChangeList changeList, @Nullable VirtualFile toSelect) {
     super(project, true);
-    myInAir = false;
     myToSelect = toSelect;
     initCommitMessageArea(project, changeList);
     initDialog(project, changeList);
   }
 
-  public ChangeListViewerDialog(Component parent, @NotNull Project project, @NotNull Collection<Change> changes, boolean inAir) {
-    super(parent, true);
-    myInAir = inAir;
-    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
+  public ChangeListViewerDialog(@NotNull Project project, @NotNull Collection<Change> changes) {
+    this(null, project, changes);
   }
 
-  public ChangeListViewerDialog(@NotNull Project project, @NotNull Collection<Change> changes, boolean inAir) {
-    this(null, project, changes, inAir);
+  public ChangeListViewerDialog(Component parent, @NotNull Project project, @NotNull Collection<Change> changes) {
+    super(parent, true);
+    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
   }
 
   private void initDialog(final Project project, final CommittedChangeList changeList) {
@@ -97,6 +93,13 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     commitMessageScroll = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
     myCommitMessageArea.setText(text);
     myCommitMessageArea.setCaretPosition(0);
+  }
+
+  /**
+   * @param inAir true if changes are not related to known VCS roots (ex: local changes, file history, etc)
+   */
+  public void markChangesInAir(boolean inAir) {
+    myChangesBrowser.setUseCase(inAir ? CommittedChangesBrowserUseCase.IN_AIR : null);
   }
 
 
@@ -129,7 +132,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     myChangesBrowser.setChangesToDisplay(myChangeList.getChanges());
     if (myToSelect != null) myChangesBrowser.getViewer().selectFile(myToSelect);
 
-    myChangesBrowser.setUseCase(myInAir ? CommittedChangesBrowserUseCase.IN_AIR : null);
     splitter.setFirstComponent(myChangesBrowser);
 
     if (myCommitMessageArea != null) {

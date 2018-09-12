@@ -1130,7 +1130,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(() -> {
-      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes, true);
+      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes);
+      dlg.markChangesInAir(true);
       dlg.setTitle(title);
       dlg.show();
     });
