@@ -166,7 +166,7 @@ public class TabHeaderComponent extends JComponent {
     repaint();
   }
 
-  private void setSelectionWithEvents(int index) {
+  public void setSelectionWithEvents(int index) {
     mySelectionTab = index;
     myListener.selectionChanged(index);
     repaint();
