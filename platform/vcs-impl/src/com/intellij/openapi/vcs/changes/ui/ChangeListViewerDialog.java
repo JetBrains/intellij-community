@@ -41,7 +41,6 @@ public class ChangeListViewerDialog extends DialogWrapper {
 
     myChangesPanel = new CommittedChangeListPanel(project);
     myChangesPanel.setChangeList(changeList, toSelect);
-    myChangesPanel.setDescription(getDescription());
 
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.message("close.action.name"));
@@ -82,10 +81,9 @@ public class ChangeListViewerDialog extends DialogWrapper {
   }
 
   /**
-   * @return description that is added to the top of this dialog. May be null - then no description is shown.
+   * @param description Text that is added to the top of this dialog. May be null - then no description is shown.
    */
-  @Nullable
-  protected String getDescription() {
-    return null;
+  public void setDescription(@Nullable String description) {
+    myChangesPanel.setDescription(description);
   }
 }
