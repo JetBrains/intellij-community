@@ -13,39 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.history;
+package com.intellij.vcs.log.history
 
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.data.DataPackBase;
-import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.visible.VisiblePack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.data.DataPackBase
+import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.visible.VisiblePack
 
-import java.util.Map;
+class FileHistoryVisiblePack(dataPack: DataPackBase,
+                             graph: VisibleGraph<Int>,
+                             canRequestMore: Boolean,
+                             filters: VcsLogFilterCollection,
+                             private val commitsToPaths: Map<Int, MaybeDeletedFilePath>) : VisiblePack(dataPack, graph, canRequestMore,
+                                                                                                       filters) {
 
-public class FileHistoryVisiblePack extends VisiblePack {
-  @NotNull private final Map<Integer, MaybeDeletedFilePath> myCommitsToPaths;
-
-  public FileHistoryVisiblePack(@NotNull DataPackBase dataPack,
-                                @NotNull VisibleGraph<Integer> graph,
-                                boolean canRequestMore,
-                                @NotNull VcsLogFilterCollection filters,
-                                @NotNull Map<Integer, MaybeDeletedFilePath> commitsToPaths) {
-    super(dataPack, graph, canRequestMore, filters);
-    myCommitsToPaths = commitsToPaths;
+  fun getFilePath(commit: Int): FilePath? {
+    val filePath = commitsToPaths[commit] ?: return null
+    return filePath.filePath
   }
 
-  @Nullable
-  public FilePath getFilePath(int commit) {
-    MaybeDeletedFilePath filePath = myCommitsToPaths.get(commit);
-    if (filePath == null) return null;
-    return filePath.getFilePath();
-  }
-
-  public boolean isFileDeletedInCommit(int commit) {
-    MaybeDeletedFilePath filePath = myCommitsToPaths.get(commit);
-    return filePath != null && filePath.getDeleted();
+  fun isFileDeletedInCommit(commit: Int): Boolean {
+    val filePath = commitsToPaths[commit]
+    return filePath != null && filePath.deleted
   }
 }
