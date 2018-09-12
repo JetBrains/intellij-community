@@ -13,136 +13,93 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+abstract class VcsStatusDescriptor<S> {
+  fun getMergedStatusInfo(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
+    val firstParent = statuses[0]
+    if (statuses.size == 1) return ContainerUtil.map(firstParent) { info -> MergedStatusInfo(info) }
 
-import static com.intellij.openapi.vcs.changes.Change.Type.MODIFICATION;
-import static com.intellij.util.ObjectUtils.notNull;
+    val affectedMap = statuses.map { infos ->
+      val map = ContainerUtil.newLinkedHashMap<String, S>()
 
-public abstract class VcsStatusDescriptor<S> {
-  @NotNull
-  public List<MergedStatusInfo<S>> getMergedStatusInfo(@NotNull List<List<S>> statuses) {
-    List<S> firstParent = statuses.get(0);
-    if (statuses.size() == 1) return ContainerUtil.map(firstParent, info -> new MergedStatusInfo<>(info));
-
-    List<Map<String, S>> affectedMap =
-      ContainerUtil.map(statuses, infos -> {
-        LinkedHashMap<String, S> map = ContainerUtil.newLinkedHashMap();
-
-        for (S info : infos) {
-          String path = getPath(info);
-          if (path != null) map.put(path, info);
-        }
-
-        return map;
-      });
-
-    List<MergedStatusInfo<S>> result = ContainerUtil.newArrayList();
-
-    outer:
-    for (String path : affectedMap.get(0).keySet()) {
-      List<S> statusesList = ContainerUtil.newArrayList();
-      for (Map<String, S> infoMap : affectedMap) {
-        S status = infoMap.get(path);
-        if (status == null) continue outer;
-        statusesList.add(status);
+      for (info in infos) {
+        val path = getPath(info)
+        if (path != null) map[path] = info
       }
 
-      result.add(new MergedStatusInfo<>(getMergedStatusInfo(path, statusesList), statusesList));
+      map
     }
 
-    return result;
+    val result = mutableListOf<MergedStatusInfo<S>>()
+
+    outer@ for (path in affectedMap[0].keys) {
+      val statusesList = ContainerUtil.newArrayList<S>()
+      for (infoMap in affectedMap) {
+        val status = infoMap[path] ?: continue@outer
+        statusesList.add(status)
+      }
+
+      result.add(MergedStatusInfo(getMergedStatusInfo(path, statusesList), statusesList))
+    }
+
+    return result
   }
 
-  @NotNull
-  private S getMergedStatusInfo(@NotNull String path, @NotNull List<S> statuses) {
-    Set<Change.Type> types = ContainerUtil.map2Set(statuses, this::getType);
+  private fun getMergedStatusInfo(path: String, statuses: List<S>): S {
+    val types = statuses.mapTo(mutableSetOf()) { this.getType(it) }
 
-    if (types.size() == 1) {
-      Change.Type type = notNull(ContainerUtil.getFirstItem(types));
-      if (type.equals(Change.Type.MOVED)) {
-        String renamedFrom = null;
-        for (S status : statuses) {
+    if (types.size == 1) {
+      val type = types.single()
+      if (type == Change.Type.MOVED) {
+        var renamedFrom: String? = null
+        for (status in statuses) {
           if (renamedFrom == null) {
-            renamedFrom = getFirstPath(status);
+            renamedFrom = getFirstPath(status)
           }
-          else if (!renamedFrom.equals(getFirstPath(status))) {
-            return createStatus(MODIFICATION, path, null);
+          else if (renamedFrom != getFirstPath(status)) {
+            return createStatus(Change.Type.MODIFICATION, path, null)
           }
         }
       }
-      return statuses.get(0);
+      return statuses[0]
     }
 
-    if (types.contains(Change.Type.DELETED)) return createStatus(Change.Type.DELETED, path, null);
-    return createStatus(MODIFICATION, path, null);
+    return if (types.contains(Change.Type.DELETED)) createStatus(Change.Type.DELETED, path, null)
+    else createStatus(Change.Type.MODIFICATION, path, null)
   }
 
-  @Nullable
-  private String getPath(@NotNull S info) {
-    switch (getType(info)) {
-      case MODIFICATION:
-      case NEW:
-      case DELETED:
-        return getFirstPath(info);
-      case MOVED:
-        return getSecondPath(info);
+  private fun getPath(info: S): String? {
+    when (getType(info)) {
+      Change.Type.MODIFICATION, Change.Type.NEW, Change.Type.DELETED -> return getFirstPath(info)
+      Change.Type.MOVED -> return getSecondPath(info)
     }
-    return null;
   }
 
-  @NotNull
-  protected abstract S createStatus(@NotNull Change.Type type, @NotNull String path, @Nullable String secondPath);
+  protected abstract fun createStatus(type: Change.Type, path: String, secondPath: String?): S
 
-  @NotNull
-  public abstract String getFirstPath(@NotNull S info);
+  abstract fun getFirstPath(info: S): String
 
-  @Nullable
-  public abstract String getSecondPath(@NotNull S info);
+  abstract fun getSecondPath(info: S): String?
 
-  @NotNull
-  public abstract Change.Type getType(@NotNull S info);
+  abstract fun getType(info: S): Change.Type
 
+  class MergedStatusInfo<S> @JvmOverloads constructor(val statusInfo: S, infos: List<S> = ContainerUtil.emptyList()) {
+    val mergedStatusInfos: List<S>
 
-  public static class MergedStatusInfo<S> {
-    @NotNull private final S myStatusInfo;
-    @NotNull private final List<S> myMergedStatusInfos;
-
-    public MergedStatusInfo(@NotNull S info, @NotNull List<S> infos) {
-      myStatusInfo = info;
-      myMergedStatusInfos = new SmartList<>(infos);
+    init {
+      mergedStatusInfos = SmartList(infos)
     }
 
-    public MergedStatusInfo(@NotNull S info) {
-      this(info, ContainerUtil.emptyList());
-    }
-
-    @NotNull
-    public S getStatusInfo() {
-      return myStatusInfo;
-    }
-
-    @NotNull
-    public List<S> getMergedStatusInfos() {
-      return myMergedStatusInfos;
-    }
-
-    @Override
-    public String toString() {
+    override fun toString(): String {
       return "MergedStatusInfo{" +
-             "myStatusInfo=" + myStatusInfo +
-             ", myMergedStatusInfos=" + myMergedStatusInfos +
-             '}';
+             "myStatusInfo=" + statusInfo +
+             ", myMergedStatusInfos=" + mergedStatusInfos +
+             '}'.toString()
     }
   }
 }
