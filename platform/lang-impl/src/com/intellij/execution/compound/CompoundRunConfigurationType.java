@@ -6,8 +6,8 @@ import com.intellij.execution.configurations.RunConfigurationSingletonPolicy;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompoundRunConfigurationType extends SimpleConfigurationType {
@@ -15,7 +15,7 @@ public final class CompoundRunConfigurationType extends SimpleConfigurationType 
     super("CompoundRunConfigurationType",
           "Compound",
           "It runs batch of run configurations at once",
-          LazyUtil.create(() -> LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)));
+          NotNullLazyValue.createValue(() -> LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)));
   }
 
   @NotNull
