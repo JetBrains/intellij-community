@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -174,7 +175,14 @@ public class NullabilityUtil {
       return DfaNullability.toNullability(CommonDataflow.getExpressionFact(expression, DfaFactType.NULLABILITY));
     }
     if (expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+      PsiElement target = (ref).resolve();
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+        PsiElement block = PsiUtil.getVariableCodeBlock((PsiVariable)target, null);
+        // Do not trust the declared nullability of local variable/parameter if it's reassigned as nullability designates
+        // only initial nullability
+        if (block == null || !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block, ref)) return Nullability.UNKNOWN;
+      }
       return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression) {
