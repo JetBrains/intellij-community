@@ -39,8 +39,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   private var sortedConfigurationsWithTargets = TreeMap<RunConfiguration, ExecutionTarget?>(COMPARATOR)
   private var isInitialized = false
 
-  @JvmOverloads
-  fun getConfigurationsWithTargets(runManager: RunManagerImpl? = null): Map<RunConfiguration, ExecutionTarget?> {
+  fun getConfigurationsWithTargets(runManager: RunManagerImpl): Map<RunConfiguration, ExecutionTarget?> {
     initIfNeed(runManager)
     return sortedConfigurationsWithTargets
   }
@@ -56,14 +55,13 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     setConfigurationsWithTargets(value.associate { it to null })
   }
 
-  private fun initIfNeed(_runManager: RunManagerImpl?) {
+  private fun initIfNeed(runManager: RunManagerImpl) {
     if (isInitialized) {
       return
     }
 
     sortedConfigurationsWithTargets.clear()
 
-    val runManager = _runManager ?: RunManagerImpl.getInstanceImpl(project)
     val targetManager = ExecutionTargetManager.getInstance(project) as ExecutionTargetManagerImpl
 
     for ((type, name, targetId) in unsortedConfigurations) {

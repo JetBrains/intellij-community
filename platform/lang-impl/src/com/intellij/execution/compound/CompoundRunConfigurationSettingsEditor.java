@@ -66,7 +66,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       }
     }
     if (candidate instanceof CompoundRunConfiguration) {
-      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets().keySet()) {
+      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets(myRunManager).keySet()) {
         if (!canBeAdded(configuration, root)) {
           return false;
         }
@@ -78,7 +78,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @Override
   protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
-    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets()));
+    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets(myRunManager)));
     mySnapshot = compoundRunConfiguration;
   }
 
@@ -109,7 +109,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
         List<RunConfiguration> configurations = new ArrayList<>();
         for (RunnerAndConfigurationSettings settings : myRunManager.getAllSettings()) {
           RunConfiguration configuration = settings.getConfiguration();
-          if (!mySnapshot.getConfigurationsWithTargets().keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
+          if (!mySnapshot.getConfigurationsWithTargets(myRunManager).keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
             configurations.add(configuration);
           }
         }
