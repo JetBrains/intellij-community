@@ -289,17 +289,18 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
+    DfaValueFactory factory = runner.getFactory();
+    DfaCallArguments callArguments = popCall(instruction, factory, memState);
+
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
-    finalStates.addAll(handleKnownMethods(instruction, runner, memState));
+    finalStates.addAll(handleKnownMethods(instruction, runner, memState, callArguments));
 
     if (finalStates.isEmpty()) {
-      DfaCallArguments callArguments = popCall(instruction, runner, memState, true);
-
       Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
-      DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory());
+      DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, factory);
       if (callArguments.myArguments != null) {
         for (MethodContract contract : instruction.getContracts()) {
-          currentStates = addContractResults(contract, currentStates, runner.getFactory(), finalStates, defaultResult, instruction.getExpression());
+          currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, instruction.getExpression());
           if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
@@ -328,56 +329,49 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction,
+                                                  DataFlowRunner runner,
+                                                  DfaMemoryState memState,
+                                                  DfaCallArguments callArguments) {
+    if (callArguments.myArguments == null) return Collections.emptyList();
     PsiMethod method = instruction.getTargetMethod();
     if (method == null) return Collections.emptyList();
     CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
     if (handler == null) return Collections.emptyList();
-    memState = memState.createCopy();
-    DfaCallArguments callArguments = popCall(instruction, runner, memState, false);
-    DfaValue result = callArguments.myArguments == null ? null : handler.getMethodResult(callArguments, memState, runner.getFactory());
-    if (result != null) {
-      pushExpressionResult(result, instruction, memState);
-      return Collections.singletonList(memState);
-    }
-    return Collections.emptyList();
+    DfaValue result = handler.getMethodResult(callArguments, memState, runner.getFactory());
+    if (result == null) return Collections.emptyList();
+
+    pushExpressionResult(result, instruction, memState);
+    return Collections.singletonList(memState);
   }
 
   @NotNull
-  protected DfaCallArguments popCall(MethodCallInstruction instruction,
-                                     DataFlowRunner runner,
-                                     DfaMemoryState memState,
-                                     boolean contractOnly) {
+  protected DfaCallArguments popCall(MethodCallInstruction instruction, DfaValueFactory factory, DfaMemoryState memState) {
     PsiMethod method = instruction.getTargetMethod();
     MutationSignature sig = MutationSignature.fromMethod(method);
-    DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly, sig);
+    DfaValue[] argValues = popCallArguments(instruction, factory, memState, sig);
     final DfaValue qualifier = popQualifier(instruction, memState, sig);
     return new DfaCallArguments(qualifier, argValues, !instruction.shouldFlushFields());
   }
 
   @Nullable
   private DfaValue[] popCallArguments(MethodCallInstruction instruction,
-                                      DataFlowRunner runner,
+                                      DfaValueFactory factory,
                                       DfaMemoryState memState,
-                                      boolean contractOnly, MutationSignature sig) {
+                                      MutationSignature sig) {
     final int argCount = instruction.getArgCount();
 
     PsiMethod method = instruction.getTargetMethod();
     boolean varargCall = instruction.isVarArgCall();
-    DfaValue[] argValues;
-    if (method == null || (contractOnly && instruction.getContracts().isEmpty())) {
-      argValues = null;
-    } else {
+    DfaValue[] argValues = null;
+    if (method != null) {
       PsiParameterList paramList = method.getParameterList();
       int paramCount = paramList.getParametersCount();
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] =
-            runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
+          argValues[paramCount - 1] = factory.createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
         }
-      } else {
-        argValues = null;
       }
     }
 
