@@ -2,14 +2,20 @@
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
+import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
@@ -17,11 +23,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
@@ -32,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -62,13 +70,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     ReadAction.compute(() -> {
       PsiElement element = getElement();
       PsiFile psiFile = usageInfo.getFile();
-      Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+      Document document = psiFile == null || psiFile instanceof PsiCompiledElement ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
 
       int offset;
       int lineNumber;
       if (document == null) {
         // element over light virtual file
-        offset = element == null ? 0 : element.getTextOffset();
+        offset = element == null || element instanceof PsiCompiledElement ? 0 : element.getTextOffset();
         lineNumber = -1;
       }
       else {
@@ -97,23 +105,33 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @NotNull
   private TextChunk[] initChunks() {
-    PsiFile psiFile = getPsiFile();
-    Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     TextChunk[] chunks;
-    if (document == null) {
-      // element over light virtual file
-      PsiElement element = getElement();
-      if (element == null) {
-        chunks = new TextChunk[]{new TextChunk(SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes(), UsageViewBundle.message("node.invalid"))};
-      }
-      else {
-        chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
-      }
+    PsiElement element = getElement();
+    if (element instanceof PsiCompiledElement) {
+      EditorColorsScheme scheme = UsageTreeColorsScheme.getInstance().getScheme();
+      chunks = new TextChunk[]{
+        new TextChunk(scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME), clsType(element)),
+        new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), " "),
+        new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), ((PsiNamedElement)element).getName()),
+      };
     }
     else {
-      chunks = ChunkExtractor.extractChunks(psiFile, this);
+      PsiFile psiFile = getPsiFile();
+      Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+      if (document == null) {
+        // element over light virtual file
+        if (element == null) {
+          chunks = new TextChunk[]{
+            new TextChunk(SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes(), UsageViewBundle.message("node.invalid"))};
+        }
+        else {
+          chunks = new TextChunk[]{new TextChunk(new TextAttributes(), element.getText())};
+        }
+      }
+      else {
+        chunks = ChunkExtractor.extractChunks(psiFile, this);
+      }
     }
-
     myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
@@ -462,12 +480,27 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return chunks;
   }
 
+  @NotNull
+  private static String clsType(@NotNull PsiElement psiElement) {
+    final Language lang = psiElement.getLanguage();
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
+    final String type = provider.getType(psiElement);
+    if (StringUtil.isNotEmpty(type)) {
+      return type;
+    }
+
+    return ObjectUtils.notNull(TypePresentationService.getService().getTypePresentableName(psiElement.getClass()), "");
+  }
+
   @Override
   @NotNull
   public String getPlainText() {
-    int startOffset = getNavigationOffset();
     final PsiElement element = getElement();
-    if (element != null && startOffset != -1) {
+    if (element instanceof PsiCompiledElement) {
+      return clsType(element) + " " + ((PsiNamedElement)element).getName();
+    }
+    int startOffset;
+    if (element != null && (startOffset = getNavigationOffset()) != -1) {
       final Document document = getDocument();
       if (document != null) {
         int lineNumber = document.getLineNumber(startOffset);
