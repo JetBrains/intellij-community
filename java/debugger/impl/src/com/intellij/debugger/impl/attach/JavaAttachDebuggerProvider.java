@@ -206,12 +206,17 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
                                            pid);
       }
 
+      // prefer sa-jdwp attach if available
+      if (SAJDWPRemoteConnection.isAvailable()) {
+        return new LocalAttachInfo(command, pid);
+      }
+
       // sa pid attach if sa-jdi.jar is available
       if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
         Properties systemProperties = vm.getSystemProperties();
         File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
         if (saJdiJar.exists()) {
-          return new LocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+          return new SAPIDLocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
         }
       }
     }
@@ -237,7 +242,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     final String myAddress;
 
     DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
-      super(aClass, pid, "");
+      super(aClass, pid);
       myUseSocket = socket;
       myAddress = address;
     }
@@ -253,19 +258,31 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  static class LocalAttachInfo {
-    final String myClass;
-    final String myPid;
+  static class SAPIDLocalAttachInfo extends LocalAttachInfo {
     final String mySAJarPath;
 
-    private LocalAttachInfo(String aClass, String pid, String SAJarPath) {
-      myClass = aClass;
-      myPid = pid;
+    SAPIDLocalAttachInfo(String aClass, String pid, String SAJarPath) {
+      super(aClass, pid);
       mySAJarPath = SAJarPath;
     }
 
+    @Override
     RemoteConnection createConnection() {
       return new SAPidRemoteConnection(myPid, mySAJarPath);
+    }
+  }
+
+  static class LocalAttachInfo {
+    final String myClass;
+    final String myPid;
+
+    LocalAttachInfo(String aClass, String pid) {
+      myClass = aClass;
+      myPid = pid;
+    }
+
+    RemoteConnection createConnection() {
+      return new SAJDWPRemoteConnection(myPid);
     }
 
     String getSessionName() {
