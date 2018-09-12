@@ -41,7 +41,7 @@ public interface FileSystemTree extends Disposable {
   VirtualFile getNewFileParent();
 
   @Nullable
-  <T> T getData(DataKey<T> key);
+  <T> T getData(@NotNull DataKey<T> key);
 
   void select(VirtualFile file, @Nullable Runnable onDone);
   void select(VirtualFile[] files, @Nullable Runnable onDone);
