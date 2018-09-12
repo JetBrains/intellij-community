@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -20,14 +19,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
@@ -36,6 +31,8 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -53,8 +50,8 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -125,6 +122,12 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
   @NotNull
   protected SearchListModel createListModel() {
     return new SearchListModel();
+  }
+
+  @NotNull
+  @Override
+  public JBList<Object> createList() {
+    return new JBList<>();
   }
 
   private SESearcher createSearcher() {
@@ -292,7 +295,7 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
 
   @NotNull
   @Override
-  protected JTextField createSearchField() {
+  protected JBTextField createSearchField() {
     ExtendableTextField searchField = new ExtendableTextField() {
       @Override
       public Dimension getPreferredSize() {
@@ -486,6 +489,8 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
 
   @Override
   protected void initSearchActions() {
+    super.initSearchActions();
+
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -539,21 +544,6 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     myNonProjectCB.addItemListener(e -> rebuildList());
     myNonProjectCB.addActionListener(e -> nonProjectCheckBoxAutoSet = false);
 
-    myResultsList.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
-        if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
-          e.consume();
-          final int i = myResultsList.locationToIndex(e.getPoint());
-          if (i > -1) {
-            myResultsList.setSelectedIndex(i);
-            elementsSelected(new int[]{i}, e.getModifiers());
-          }
-        }
-      }
-    });
-
     myResultsList.addListSelectionListener(e -> {
       Object selectedValue = myResultsList.getSelectedValue();
       if (selectedValue != null && myHint != null && myHint.isVisible()) {
@@ -582,6 +572,19 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
         }
       }
     });
+  }
+
+  @Override
+  public void onMouseClicked(@NotNull MouseEvent e) {
+    boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
+    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
+      e.consume();
+      final int i = myResultsList.locationToIndex(e.getPoint());
+      if (i > -1) {
+        myResultsList.setSelectedIndex(i);
+        elementsSelected(new int[]{i}, e.getModifiers());
+      }
+    }
   }
 
   private boolean isHintComponent(Component component) {
@@ -1000,39 +1003,14 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     }
   }
 
-  private class ShowFilterAction extends ToggleAction implements DumbAware {
-    private JBPopup myFilterPopup;
-
-    public ShowFilterAction() {
-      super("Filter", "Filter files by type", AllIcons.General.Filter);
+  private class ShowFilterAction extends BigPopupUI.ShowFilterAction {
+    @Override
+    public boolean isEnabled() {
+      return myContributorFilters.get(getSelectedContributorID()) != null;
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent e) {
-      return myFilterPopup != null && !myFilterPopup.isDisposed();
-    }
-
-    @Override
-    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
-      if (state) {
-        showPopup(e.getInputEvent().getComponent());
-      }
-      else {
-        if (myFilterPopup != null && !myFilterPopup.isDisposed()) {
-          myFilterPopup.cancel();
-        }
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Icon icon = getTemplatePresentation().getIcon();
-      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
-      e.getPresentation().setEnabled(myContributorFilters.get(getSelectedContributorID()) != null);
-      e.getPresentation().putClientProperty(SELECTED_PROPERTY, isSelected(e));
-    }
-
-    private boolean isActive() {
+    protected boolean isActive() {
       String contributorID = getSelectedContributorID();
       SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(contributorID);
       if (filter == null) {
@@ -1041,64 +1019,10 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
       return filter.getAllElements().size() != filter.getSelectedElements().size();
     }
 
-    private void showPopup(Component anchor) {
-      if (myFilterPopup != null) {
-        return;
-      }
-      JBPopupListener popupCloseListener = new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          myFilterPopup = null;
-        }
-      };
-      myFilterPopup = JBPopupFactory.getInstance()
-                                    .createComponentPopupBuilder(createFilterPanel(), null)
-                                    .setModalContext(false)
-                                    .setFocusable(false)
-                                    .setResizable(true)
-                                    .setCancelOnClickOutside(false)
-                                    .setMinSize(new Dimension(200, 200))
-                                    .setDimensionServiceKey(myProject, "Search_Everywhere_Filter_Popup", false)
-                                    .addListener(popupCloseListener)
-                                    .createPopup();
-      Disposer.register(SearchEverywhereUI.this, myFilterPopup);
-      myFilterPopup.showUnderneathOf(anchor);
-    }
-
-    private JComponent createFilterPanel() {
+    @Override
+    protected ElementsChooser<?> createChooser() {
       SearchEverywhereContributorFilter<?> filter = myContributorFilters.get(getSelectedContributorID());
-      ElementsChooser<?> chooser = createChooser(filter);
-
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      panel.add(chooser);
-      JPanel buttons = new JPanel();
-      JButton all = new JButton("All");
-      all.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-          chooser.setAllElementsMarked(true);
-        }
-      });
-      buttons.add(all);
-      JButton none = new JButton("None");
-      none.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-          chooser.setAllElementsMarked(false);
-        }
-      });
-      buttons.add(none);
-      JButton invert = new JButton("Invert");
-      invert.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-          chooser.invertSelection();
-        }
-      });
-      buttons.add(invert);
-      panel.add(buttons);
-      return panel;
+      return createChooser(filter);
     }
 
     private <T> ElementsChooser<T> createChooser(SearchEverywhereContributorFilter<T> filter) {
@@ -1122,24 +1046,6 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
       res.addElementsMarkListener(listener);
       return res;
     }
-  }
-
-  public ViewType getViewType() {
-    return myViewType;
-  }
-
-  public enum ViewType {FULL, SHORT}
-
-  public interface ViewTypeListener {
-    void suggestionsShown(@NotNull ViewType viewType);
-  }
-
-  public void addViewTypeListener(ViewTypeListener listener) {
-    myViewTypeListeners.add(listener);
-  }
-
-  public void removeViewTypeListener(ViewTypeListener listener) {
-    myViewTypeListeners.remove(listener);
   }
 
   private static JLabel groupInfoLabel(String text) {

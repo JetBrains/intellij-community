@@ -63,7 +63,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
   protected static void appendDescription(@NotNull SimpleColoredComponent component, @Nullable String description) {
     if (description != null) {
       component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
-      component.appendTextPadding(480, SwingConstants.RIGHT);
+      component.appendTextPadding(660, SwingConstants.RIGHT);
     }
   }
 }
