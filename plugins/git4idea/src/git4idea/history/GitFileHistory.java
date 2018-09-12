@@ -260,7 +260,7 @@ public class GitFileHistory {
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
     GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
-                                @NotNull Consumer<VcsException> exceptionConsumer) {
+                         @NotNull Consumer<VcsException> exceptionConsumer) {
       myExceptionConsumer = exceptionConsumer;
       myRevisionConsumer = revisionConsumer;
     }
@@ -301,9 +301,11 @@ public class GitFileHistory {
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
       Collection<String> parents = Arrays.asList(record.getParentsHashes());
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),
-                                 null, new Date(record.getAuthorTimeStamp()), parents);
+                                 null, new Date(record.getAuthorTimeStamp()), parents, deleted);
     }
 
     @NotNull

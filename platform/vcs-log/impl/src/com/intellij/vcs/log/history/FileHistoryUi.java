@@ -100,7 +100,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (isFileDeletedInCommit(commit.getId())) return VcsFileRevision.NULL;
     FilePath path = getPathInCommit(commit.getId());
     if (path == null) return null;
-    return new VcsLogFileRevision(commit, myDiffHandler.createContentRevision(path, commit.getId()), path);
+    return new VcsLogFileRevision(commit, myDiffHandler.createContentRevision(path, commit.getId()), path, false);
   }
 
   @Nullable
