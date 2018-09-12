@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 
 public class ThemeColorAnnotator implements Annotator, DumbAware {
   private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("^#([A-Fa-f0-9]{6})$");
-  private static final ColorLineMarkerProvider COLOR_LINE_MARKER_PROVIDER = new ColorLineMarkerProvider();
 
 
   @Override
@@ -47,7 +46,7 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
   }
 
   private static boolean isColorLineMarkerProviderEnabled() {
-    return LineMarkerSettings.getSettings().isEnabled(COLOR_LINE_MARKER_PROVIDER);
+    return LineMarkerSettings.getSettings().isEnabled(ColorLineMarkerProvider.INSTANCE);
   }
 
   private static boolean isTargetElement(@NotNull PsiElement element) {
