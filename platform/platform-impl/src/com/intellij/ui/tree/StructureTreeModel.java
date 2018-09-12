@@ -153,11 +153,11 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return root.get();
   }
 
-  private Node getNode(Object object) {
+  private Node getNode(Object object, boolean validate) {
     if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
     if (isNodeRemoved(node)) return null;
-    if (!node.children.isValid()) {
+    if (validate && !node.children.isValid()) {
       List<Node> newChildren = getValidChildren(node);
       List<Node> oldChildren = node.children.set(newChildren);
       if (oldChildren != null) oldChildren.forEach(child -> child.setParent(null));
@@ -173,7 +173,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   @Override
   public final List<TreeNode> getChildren(Object object) {
-    Node node = getNode(object);
+    Node node = getNode(object, true);
     List<Node> list = node == null ? null : node.children.get();
     if (list == null || list.isEmpty()) return emptyList();
     list.forEach(Node::update);
@@ -182,19 +182,19 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   @Override
   public final int getChildCount(Object object) {
-    Node node = getNode(object);
+    Node node = getNode(object, true);
     return node == null ? 0 : node.getChildCount();
   }
 
   @Override
   public final Object getChild(Object object, int index) {
-    Node node = getNode(object);
+    Node node = getNode(object, true);
     return node == null ? null : node.getChildAt(index);
   }
 
   @Override
   public final boolean isLeaf(Object object) {
-    Node node = getNode(object);
+    Node node = getNode(object, false);
     return node == null || node.isLeaf();
   }
 
