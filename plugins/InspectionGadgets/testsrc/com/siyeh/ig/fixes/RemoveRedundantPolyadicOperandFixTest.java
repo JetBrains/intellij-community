@@ -18,25 +18,25 @@ package com.siyeh.ig.fixes;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.controlflow.PointlessNullCheckInspection;
+import com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection;
 
-public class PointlessNullCheckFixTest extends IGQuickFixesTestCase {
+public class RemoveRedundantPolyadicOperandFixTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new PointlessNullCheckInspection());
+    myFixture.enableInspections(new ConditionCoveredByFurtherConditionInspection());
     myRelativePath = "pointlessnullcheck";
   }
 
   public void testScenario1() {
-    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
+    doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
   }
 
   public void testPolyadicExpression() {
-    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
+    doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
   }
 
   public void testPolyadicExpression2() {
-    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
+    doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
   }
 }
