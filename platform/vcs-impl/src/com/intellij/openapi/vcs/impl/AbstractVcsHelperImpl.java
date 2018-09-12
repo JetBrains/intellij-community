@@ -444,13 +444,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   public void showWhatDiffersBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
-    final ChangeListViewerDialog dlg;
-    if (parent != null) {
-      dlg = new ChangeListViewerDialog(parent, myProject, changes);
-    }
-    else {
-      dlg = new ChangeListViewerDialog(myProject, changes);
-    }
+    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(parent, myProject, changes);
     if (title != null) {
       dlg.setTitle(title);
     }

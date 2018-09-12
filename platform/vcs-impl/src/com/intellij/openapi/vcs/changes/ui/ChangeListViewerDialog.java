@@ -20,10 +20,6 @@ import java.util.Collection;
 public class ChangeListViewerDialog extends DialogWrapper {
   private final CommittedChangeListPanel myChangesPanel;
 
-  public ChangeListViewerDialog(@NotNull Project project, @NotNull CommittedChangeList changeList) {
-    this(project, changeList, null);
-  }
-
   public ChangeListViewerDialog(@NotNull Project project, @NotNull CommittedChangeList changeList, @Nullable VirtualFile toSelect) {
     this(project, null, changeList, toSelect);
   }
@@ -32,7 +28,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
     this(null, project, changes);
   }
 
-  public ChangeListViewerDialog(Component parent, @NotNull Project project, @NotNull Collection<Change> changes) {
+  public ChangeListViewerDialog(@Nullable Component parent, @NotNull Project project, @NotNull Collection<Change> changes) {
     this(project, parent, CommittedChangeListPanel.createChangeList(changes), null);
     myChangesPanel.setShowCommitMessage(false);
   }
