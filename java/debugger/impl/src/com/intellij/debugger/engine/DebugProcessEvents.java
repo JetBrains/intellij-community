@@ -446,9 +446,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Class prepared: " + event.referenceType().name());
     }
-    suspendContext.getDebugProcess().getRequestsManager().processClassPrepared(event);
-
-    getSuspendManager().voteResume(suspendContext);
+    try {
+      suspendContext.getDebugProcess().getRequestsManager().processClassPrepared(event);
+    }
+    finally {
+      getSuspendManager().voteResume(suspendContext);
+    }
   }
 
   private void processStepEvent(SuspendContextImpl suspendContext, StepEvent event) {
