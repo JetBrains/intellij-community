@@ -111,6 +111,7 @@ public abstract class GithubIssueBase {
   @Mandatory private Long number;
   @Mandatory private String title;
   @Mandatory private GithubUser user;
+  @Mandatory private List<GithubIssueLabel> labels;
   @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private GithubUser assignee;
@@ -140,6 +141,11 @@ public abstract class GithubIssueBase {
   @NotNull
   public String getTitle() {
     return title;
+  }
+
+  @NotNull
+  public List<GithubIssueLabel> getLabels() {
+    return labels;
   }
 
   @NotNull
