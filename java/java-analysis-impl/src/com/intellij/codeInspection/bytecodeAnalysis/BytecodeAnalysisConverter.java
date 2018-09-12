@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.ThreadLocalCachedValue;
@@ -36,14 +22,14 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter {
-
-  private static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+  private static final ThreadLocalCachedValue<MessageDigest> DIGEST_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
     @NotNull
     @Override
     public MessageDigest create() {
       try {
         return MessageDigest.getInstance("MD5");
-      } catch (NoSuchAlgorithmException exception) {
+      }
+      catch (NoSuchAlgorithmException exception) {
         throw new RuntimeException(exception);
       }
     }
@@ -55,7 +41,7 @@ public class BytecodeAnalysisConverter {
   };
 
   public static MessageDigest getMessageDigest() {
-    return HASHER_CACHE.getValue();
+    return DIGEST_CACHE.getValue();
   }
 
   /**
@@ -85,7 +71,8 @@ public class BytecodeAnalysisConverter {
       return null;
     }
     PsiClass outerClass = psiClass.getContainingClass();
-    boolean isInnerClassConstructor = psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
+    boolean isInnerClassConstructor =
+      psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     PsiType returnType = psiMethod.getReturnType();
 
@@ -110,11 +97,13 @@ public class BytecodeAnalysisConverter {
     sb.append(')');
     if (returnType == null) {
       sb.append('V');
-    } else {
+    }
+    else {
       desc = descriptor(returnType);
       if (desc == null) {
         return null;
-      } else {
+      }
+      else {
         sb.append(desc);
       }
     }
@@ -137,7 +126,8 @@ public class BytecodeAnalysisConverter {
     String className;
     if (packageName.length() > 0) {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
-    } else {
+    }
+    else {
       className = qname.replace('.', '$');
     }
     StringBuilder sb = new StringBuilder();
@@ -181,7 +171,7 @@ public class BytecodeAnalysisConverter {
     else if (psiType instanceof PsiPrimitiveType) {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < dimensions; i++) {
-         sb.append('[');
+        sb.append('[');
       }
       if (PsiType.VOID.equals(psiType)) {
         sb.append('V');
@@ -219,7 +209,7 @@ public class BytecodeAnalysisConverter {
   /**
    * Given a PSI method and its primary Key enumerate all contract keys for it.
    *
-   * @param psiMethod psi method
+   * @param psiMethod  psi method
    * @param primaryKey primary stable keys
    * @return corresponding (stable!) keys
    */
@@ -234,7 +224,8 @@ public class BytecodeAnalysisConverter {
         keys.add(primaryKey.withDirection(new InOut(i, Value.Null)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.NotNull)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.Null)));
-      } else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
+      }
+      else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
         keys.add(primaryKey.withDirection(new InOut(i, Value.True)));
         keys.add(primaryKey.withDirection(new InOut(i, Value.False)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.True)));
