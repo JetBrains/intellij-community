@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -317,6 +318,14 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
 
   @NotNull
   @Override
+  protected String getInitialHint() {
+    return IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                             KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                             KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
+  }
+
+  @NotNull
+  @Override
   protected ExtendableTextField createSearchField() {
     return new SearchField() {
       @NotNull
@@ -388,7 +397,7 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     public SETab(SearchEverywhereContributor contributor) {
       super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
       myContributor = contributor;
-      Insets insets = JBUI.CurrentTheme.SearchEverywhere.tabInsets();
+      Insets insets = JBUI.CurrentTheme.BigPopup.tabInsets();
       setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
       addMouseListener(new MouseAdapter() {
         @Override
@@ -423,7 +432,7 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     @Override
     public Color getBackground() {
       return mySelectedTab == this
-             ? JBUI.CurrentTheme.SearchEverywhere.selectedTabColor()
+             ? JBUI.CurrentTheme.BigPopup.selectedTabColor()
              : super.getBackground();
     }
   }
@@ -702,7 +711,7 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
       setBackground(UIUtil.getListBackground(false));
       titleLabel = groupInfoLabel("Group");
       SeparatorComponent separatorComponent =
-        new SeparatorComponent(titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.SearchEverywhere.listSeparatorColor(),null);
+        new SeparatorComponent(titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.BigPopup.listSeparatorColor(), null);
 
       JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
                                            .addToCenter(separatorComponent)

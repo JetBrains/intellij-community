@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -83,6 +84,8 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String RUN_ANYTHING = "RunAnything";
+  public static final KeyStroke DOWN_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
+  public static final KeyStroke UP_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
 
   private static final Logger LOG = Logger.getInstance(RunAnythingPopupUI.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
@@ -539,7 +542,7 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
     return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
   }
 
-  private class MyListRenderer extends ColoredListCellRenderer {
+  private class MyListRenderer extends ColoredListCellRenderer<Object> {
     private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
     private final JLabel myTitle = new JLabel();
 
@@ -929,7 +932,7 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
 
   @NotNull
   @Override
-  protected ListCellRenderer createCellRenderer() {
+  protected ListCellRenderer<Object> createCellRenderer() {
     return new MyListRenderer();
   }
 
@@ -952,6 +955,14 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
     res.add(toolbarComponent);
     return res;
+  }
+
+  @NotNull
+  @Override
+  protected String getInitialHint() {
+    return IdeBundle.message("run.anything.hint.initial.text",
+                             KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
+                             KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE));
   }
 
   @NotNull

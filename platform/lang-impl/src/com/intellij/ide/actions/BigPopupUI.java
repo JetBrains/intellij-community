@@ -4,14 +4,11 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -22,7 +19,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -55,8 +51,8 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   protected JBPopup myHint;
   protected Runnable searchFinishedHandler = () -> {
   };
-  protected final List<SearchEverywhereUI.ViewTypeListener> myViewTypeListeners = new ArrayList<>();
-  protected SearchEverywhereUI.ViewType myViewType = SearchEverywhereUI.ViewType.SHORT;
+  protected final List<ViewTypeListener> myViewTypeListeners = new ArrayList<>();
+  protected ViewType myViewType = ViewType.SHORT;
   protected T myListModel; //todo using in different threads? #UX-1
   protected JLabel myHintLabel;
 
@@ -73,13 +69,16 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   public abstract JBList<Object> createList();
 
   @NotNull
-  protected abstract ListCellRenderer createCellRenderer();
+  protected abstract ListCellRenderer<Object> createCellRenderer();
 
   @NotNull
   protected abstract JPanel createTopLeftPanel();
 
   @NotNull
   protected abstract JPanel createSettingsPanel();
+
+  @NotNull
+  protected abstract String getInitialHint();
 
   protected void installScrollingActions() {
     ScrollingUtil.installActions(myResultsList, getSearchField());
@@ -96,11 +95,11 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
         addExtension(rightExtension);
       }
 
-      Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
+      Insets insets = JBUI.CurrentTheme.BigPopup.searchFieldInsets();
       Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
-      Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0);
+      Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
       setBorder(JBUI.Borders.merge(empty, topLine, true));
-      setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
+      setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
       setFocusTraversalKeysEnabled(false);
 
       if (Registry.is("new.search.everywhere.use.editor.font")) {
@@ -149,7 +148,7 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   }
 
   public void init() {
-    withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
+    withBackground(JBUI.CurrentTheme.BigPopup.dialogBackground());
 
     myListModel = createListModel();
     myResultsList = createList();
@@ -162,21 +161,19 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
     myListModel.addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {
-        updateViewType(SearchEverywhereUI.ViewType.FULL);
+        updateViewType(ViewType.FULL);
       }
 
       @Override
       public void intervalRemoved(ListDataEvent e) {
         if (myResultsList.isEmpty() && getSearchPattern().isEmpty()) {
-          updateViewType(SearchEverywhereUI.ViewType.SHORT);
+          updateViewType(ViewType.SHORT);
         }
       }
 
       @Override
       public void contentsChanged(ListDataEvent e) {
-        SearchEverywhereUI.ViewType viewType =
-          myResultsList.isEmpty() && getSearchPattern().isEmpty() ? SearchEverywhereUI.ViewType.SHORT : SearchEverywhereUI.ViewType.FULL;
-        updateViewType(viewType);
+        updateViewType(myResultsList.isEmpty() && getSearchPattern().isEmpty() ? ViewType.SHORT : ViewType.FULL);
       }
     });
     myResultsList.setModel(myListModel);
@@ -213,7 +210,7 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
       .orElse("");
   }
 
-  protected void updateViewType(@NotNull SearchEverywhereUI.ViewType viewType) {
+  protected void updateViewType(@NotNull ViewType viewType) {
     if (myViewType != viewType) {
       myViewType = viewType;
       myViewTypeListeners.forEach(listener -> listener.suggestionsShown(viewType));
@@ -223,14 +220,13 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   private JPanel createSuggestionsPanel() {
     JPanel pnl = new JPanel(new BorderLayout());
     pnl.setOpaque(false);
-    //todo
-    pnl.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0));
+    pnl.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0));
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-    resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.SearchEverywhere.maxListHeight()));
+    resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
 
     myHintLabel = createHint();
@@ -240,10 +236,8 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   }
 
   @NotNull
-  private static JLabel createHint() {
-    String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
-                                    KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
-                                    KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
+  private JLabel createHint() {
+    String hint = getInitialHint();
     JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
@@ -260,7 +254,7 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
 
   @Override
   public Dimension getMinimumSize() {
-    return calcPrefSize(SearchEverywhereUI.ViewType.SHORT);
+    return calcPrefSize(ViewType.SHORT);
   }
 
   @Override
@@ -268,9 +262,9 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
     return calcPrefSize(myViewType);
   }
 
-  private Dimension calcPrefSize(SearchEverywhereUI.ViewType viewType) {
+  private Dimension calcPrefSize(ViewType viewType) {
     Dimension size = super.getPreferredSize();
-    if (viewType == SearchEverywhereUI.ViewType.SHORT) {
+    if (viewType == ViewType.SHORT) {
       size.height -= suggestionsPanel.getPreferredSize().height;
     }
     return size;
