@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.editing;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -67,11 +68,42 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("\n");
   }
 
-  @SuppressWarnings("SameParameterValue")
+  public void testBracket() {
+    doTest("[");
+  }
+
+  public void testBrace() {
+    doTest("{");
+  }
+
+  public void testBackspaceTopLevelBracket() {
+    doBackspaceTest();
+  }
+
+  public void testBackspaceInternalBracket() {
+    doBackspaceTest();
+  }
+
+  public void testBackspaceTopLevelBrace() {
+    doBackspaceTest();
+  }
+
+  public void testBackspaceInternalBrace() {
+    doBackspaceTest();
+  }
+
   private void doTest(@NotNull String insert) {
+    doTest(() -> myFixture.type(insert));
+  }
+
+  private void doBackspaceTest() {
+    doTest(() -> myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE));
+  }
+
+  private void doTest(@NotNull Runnable actions) {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".yml");
-    myFixture.type(insert);
+    actions.run();
     myFixture.checkResultByFile(testName + ".txt");
   }
 
