@@ -15,6 +15,11 @@
  */
 package com.intellij.util.ui.accessibility;
 
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -25,6 +30,9 @@ import java.util.Properties;
 public class ScreenReader {
   public static final String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
   public static final String ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
+
+  private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new ScreenReader());
+  public static final String SCREEN_READER_ACTIVE_PROPERTY = "ScreenReader.active";
 
   private static boolean myActive = false;
 
@@ -42,7 +50,9 @@ public class ScreenReader {
    * support for the application.
    */
   public static void setActive(boolean active) {
+    boolean oldValue = myActive;
     myActive = active;
+    PCS.firePropertyChange(SCREEN_READER_ACTIVE_PROPERTY, oldValue, active);
   }
 
   /**
@@ -86,5 +96,20 @@ public class ScreenReader {
       }
     }
     return false;
+  }
+
+  /**
+   * Adds property change listener. Supported properties:
+   * {@link #SCREEN_READER_ACTIVE_PROPERTY}
+   */
+  public static void addPropertyChangeListener(@NotNull String propertyName, @NotNull PropertyChangeListener listener) {
+    PCS.addPropertyChangeListener(propertyName, listener);
+  }
+
+  /**
+   * Removes property change listener
+   */
+  public static void removePropertyChangeListener(@NotNull String propertyName, @NotNull PropertyChangeListener listener) {
+    PCS.removePropertyChangeListener(propertyName, listener);
   }
 }

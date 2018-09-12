@@ -498,6 +498,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       };
     }
 
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "icon: bookmark " + myBookmark.myMnemonic;
+    }
+
     @Override
     public boolean equals(Object obj) {
       return obj instanceof MyGutterIconRenderer &&
