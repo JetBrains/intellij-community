@@ -248,7 +248,7 @@ public class InvocationExprent extends Exprent {
           if (invocationTyp == INVOKE_SPECIAL) {
             if (!classname.equals(this_classname)) { // TODO: direct comparison to the super class?
               StructClass cl = DecompilerContext.getStructContext().getClass(classname);
-              boolean isInterface = cl != null && (cl.getAccessFlags() & CodeConstants.ACC_INTERFACE) != 0;
+              boolean isInterface = cl != null && cl.hasModifier(CodeConstants.ACC_INTERFACE);
               super_qualifier = !isInterface ? this_classname : classname;
             }
           }
