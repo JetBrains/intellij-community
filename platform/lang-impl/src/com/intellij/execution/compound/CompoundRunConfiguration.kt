@@ -18,12 +18,10 @@ import org.jdom.Element
 import java.util.*
 import javax.swing.Icon
 
-internal data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
-
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
 class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
-  RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
+  RunConfigurationMinimalBase(name, factory, project), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
     internal val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
@@ -162,7 +160,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   }
 
   override fun clone(): RunConfiguration {
-    val clone = super<RunConfigurationBase>.clone() as CompoundRunConfiguration
+    val clone = CompoundRunConfiguration(project, name, factory)
     clone.unsortedConfigurations = unsortedConfigurations
     clone.sortedConfigurationsWithTargets = TreeMap(COMPARATOR)
     clone.sortedConfigurationsWithTargets.putAll(sortedConfigurationsWithTargets)
@@ -170,10 +168,10 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   }
 
   override fun getExecutorIcon(configuration: RunConfiguration, executor: Executor): Icon? {
-    return if (DefaultRunExecutor.EXECUTOR_ID == executor.id && hasRunningSingletons()) {
-      AllIcons.Actions.Restart
+    return when {
+      DefaultRunExecutor.EXECUTOR_ID == executor.id && hasRunningSingletons() -> AllIcons.Actions.Restart
+      else -> executor.icon
     }
-    else executor.icon
   }
 
   private fun hasRunningSingletons(): Boolean {
@@ -198,3 +196,5 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     }.isNotEmpty()
   }
 }
+
+internal data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
