@@ -53,7 +53,7 @@ private val UPDATE_SETTINGS_PROVIDER_EP = ProjectExtensionPointName<UpdateSettin
 internal fun addPluginRepositories(to: MutableList<String>) {
   for (project in ProjectManager.getInstance().openProjects) {
     if (!project.isInitialized || project.isDisposed) {
-      return
+      continue
     }
     
     for (provider in UPDATE_SETTINGS_PROVIDER_EP.getExtensions(project)) {
