@@ -553,7 +553,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   private class MyDataProvider implements TypeSafeDataProvider {
     @Override
-    public void calcData(DataKey key, DataSink sink) {
+    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
         sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
       }

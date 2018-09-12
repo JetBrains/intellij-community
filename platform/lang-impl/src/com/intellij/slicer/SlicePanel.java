@@ -310,7 +310,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
       List<Navigatable> navigatables = getNavigatables();
       if (!navigatables.isEmpty()) {

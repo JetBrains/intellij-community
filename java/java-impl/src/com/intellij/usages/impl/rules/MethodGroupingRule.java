@@ -180,7 +180,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (CommonDataKeys.PSI_ELEMENT == key) {
         sink.put(CommonDataKeys.PSI_ELEMENT, getMethod());

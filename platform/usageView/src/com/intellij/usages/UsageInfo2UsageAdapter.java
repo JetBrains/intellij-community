@@ -424,7 +424,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
     }
