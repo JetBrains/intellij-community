@@ -699,6 +699,11 @@
   <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.System void exit(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_ -&gt; fail&quot;"/>
+    </annotation>
+  </item>
   <item name="java.lang.Thread Thread(java.lang.Runnable, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>

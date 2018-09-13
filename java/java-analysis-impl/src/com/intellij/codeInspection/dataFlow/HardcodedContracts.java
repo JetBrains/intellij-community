@@ -72,8 +72,6 @@ public class HardcodedContracts {
   }
 
   private static final CallMapper<ContractProvider> HARDCODED_CONTRACTS = new CallMapper<ContractProvider>()
-    .register(staticCall("java.lang.System", "exit").parameterCount(1),
-              ContractProvider.of(new StandardMethodContract(new ValueConstraint[0], fail())))
     .register(anyOf(staticCall("com.google.common.base.Preconditions", "checkNotNull"),
                     staticCall(JAVA_UTIL_OBJECTS, "requireNonNull")),
               (call, cnt) -> cnt > 0 ? failIfNull(0, cnt, true) : null)
