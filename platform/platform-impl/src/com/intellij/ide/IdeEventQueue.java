@@ -1223,6 +1223,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
+    if (!delayKeyEvents.get()) return;
     delayKeyEvents.set(false);
     int size = myDelayedKeyEvents.size();
     for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
