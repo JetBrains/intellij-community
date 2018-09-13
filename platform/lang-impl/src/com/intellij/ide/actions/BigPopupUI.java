@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends BorderLayoutPanel implements Disposable {
+public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable {
   protected final Project myProject;
   protected JBTextField mySearchField;
   protected JPanel suggestionsPanel;
@@ -53,7 +53,6 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   };
   protected final List<ViewTypeListener> myViewTypeListeners = new ArrayList<>();
   protected ViewType myViewType = ViewType.SHORT;
-  protected T myListModel; //todo using in different threads? #UX-1
   protected JLabel myHintLabel;
 
   public BigPopupUI(Project project) {
@@ -61,9 +60,6 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   }
 
   protected abstract void onMouseClicked(@NotNull MouseEvent event);
-
-  @NotNull
-  protected abstract T createListModel();
 
   @NotNull
   public abstract JBList<Object> createList();
@@ -150,7 +146,6 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   public void init() {
     withBackground(JBUI.CurrentTheme.BigPopup.dialogBackground());
 
-    myListModel = createListModel();
     myResultsList = createList();
 
     JPanel topLeftPanel = createTopLeftPanel();
@@ -158,25 +153,6 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
     mySearchField = createSearchField();
     suggestionsPanel = createSuggestionsPanel();
 
-    myListModel.addListDataListener(new ListDataListener() {
-      @Override
-      public void intervalAdded(ListDataEvent e) {
-        updateViewType(ViewType.FULL);
-      }
-
-      @Override
-      public void intervalRemoved(ListDataEvent e) {
-        if (myResultsList.isEmpty() && getSearchPattern().isEmpty()) {
-          updateViewType(ViewType.SHORT);
-        }
-      }
-
-      @Override
-      public void contentsChanged(ListDataEvent e) {
-        updateViewType(myResultsList.isEmpty() && getSearchPattern().isEmpty() ? ViewType.SHORT : ViewType.FULL);
-      }
-    });
-    myResultsList.setModel(myListModel);
     myResultsList.setFocusable(false);
     myResultsList.setCellRenderer(createCellRenderer());
 
@@ -201,6 +177,27 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
     addToCenter(suggestionsPanel);
 
     initSearchActions();
+  }
+
+  protected void addListDataListener(@NotNull AbstractListModel<Object> model) {
+    model.addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {
+        updateViewType(ViewType.FULL);
+      }
+
+      @Override
+      public void intervalRemoved(ListDataEvent e) {
+        if (myResultsList.isEmpty() && getSearchPattern().isEmpty()) {
+          updateViewType(ViewType.SHORT);
+        }
+      }
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        updateViewType(myResultsList.isEmpty() && getSearchPattern().isEmpty() ? ViewType.SHORT : ViewType.FULL);
+      }
+    });
   }
 
   @NotNull

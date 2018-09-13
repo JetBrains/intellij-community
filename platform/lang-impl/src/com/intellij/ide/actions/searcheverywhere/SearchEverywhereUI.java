@@ -58,7 +58,7 @@ import java.util.stream.IntStream;
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchListModel> implements DataProvider, QuickSearchComponent {
+public class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -67,6 +67,8 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
   private final List<SearchEverywhereContributor> myServiceContributors;
   private final List<SearchEverywhereContributor> myShownContributors;
   private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
+
+  private SearchListModel myListModel; //todo using in different threads? #UX-1
 
   private SETab mySelectedTab;
   private final JCheckBox myNonProjectCB;
@@ -117,16 +119,13 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     return new CompositeCellRenderer();
   }
 
-  @Override
-  @NotNull
-  protected SearchListModel createListModel() {
-    return new SearchListModel();
-  }
-
   @NotNull
   @Override
   public JBList<Object> createList() {
-    return new JBList<>();
+    myListModel = new SearchListModel();
+    addListDataListener(myListModel);
+
+    return new JBList<>(myListModel);
   }
 
   private SESearcher createSearcher() {

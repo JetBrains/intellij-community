@@ -79,7 +79,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHE
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 @SuppressWarnings("Duplicates")
-public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
+public class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
@@ -105,6 +105,7 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
+  private RunAnythingSearchListModel.RunAnythingMainListModel myListModel;
 
   @Override
   public void onMouseClicked(@NotNull MouseEvent event) {
@@ -864,6 +865,9 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
   @NotNull
   @Override
   public JBList<Object> createList() {
+    myListModel = new RunAnythingSearchListModel.RunAnythingMainListModel();
+    addListDataListener(myListModel);
+
     return new JBList<Object>(myListModel) {
       @Override
       public void clearSelection() {
@@ -922,12 +926,6 @@ public class RunAnythingPopupUI extends BigPopupUI<RunAnythingSearchListModel> {
         }
       });
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("shift BACK_SPACE"), mySearchField, this);
-  }
-
-  @NotNull
-  @Override
-  protected RunAnythingSearchListModel createListModel() {
-    return new RunAnythingSearchListModel.RunAnythingMainListModel();
   }
 
   @NotNull
