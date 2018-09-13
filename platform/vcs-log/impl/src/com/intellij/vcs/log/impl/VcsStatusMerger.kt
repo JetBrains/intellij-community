@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 
-abstract class VcsStatusDescriptor<S> {
+abstract class VcsStatusMerger<S> {
   fun getMergedStatusInfo(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
     statuses.singleOrNull()?.let { return it.map { MergedStatusInfo(it) } }
 
@@ -105,7 +105,7 @@ data class VcsFileStatusInfo(val type: Change.Type, val firstPath: String, val s
   }
 }
 
-class VcsFileStatusInfoDescriptor : VcsStatusDescriptor<VcsFileStatusInfo>() {
+class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo>() {
   override fun createStatus(type: Change.Type, path: String, secondPath: String?): VcsFileStatusInfo {
     return VcsFileStatusInfo(type, path, secondPath)
   }

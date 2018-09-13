@@ -24,7 +24,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
-import com.intellij.vcs.log.impl.VcsFileStatusInfoDescriptor;
+import com.intellij.vcs.log.impl.VcsFileStatusInfoMerger;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
@@ -50,7 +50,7 @@ public class HgCommit extends VcsChangesLazilyParsedDetails {
   private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
     private UnparsedChanges(@NotNull Project project,
                             @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
-      super(project, changesOutput, new VcsFileStatusInfoDescriptor());
+      super(project, changesOutput, new VcsFileStatusInfoMerger());
     }
 
     @NotNull

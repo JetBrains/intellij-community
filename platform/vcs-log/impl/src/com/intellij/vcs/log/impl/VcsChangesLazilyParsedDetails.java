@@ -28,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsStatusDescriptor.MergedStatusInfo;
+import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -133,14 +133,14 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
   protected abstract class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
-    @NotNull private final VcsStatusDescriptor<VcsFileStatusInfo> myDescriptor;
+    @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger;
 
     public UnparsedChanges(@NotNull Project project,
                            @NotNull List<List<VcsFileStatusInfo>> changesOutput,
-                           @NotNull VcsStatusDescriptor<VcsFileStatusInfo> descriptor) {
+                           @NotNull VcsStatusMerger<VcsFileStatusInfo> statusMerger) {
       myProject = project;
       myChangesOutput = changesOutput;
-      myDescriptor = descriptor;
+      myStatusMerger = statusMerger;
     }
 
     @NotNull
@@ -234,7 +234,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
      */
     @NotNull
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
-      return myDescriptor.getMergedStatusInfo(myChangesOutput);
+      return myStatusMerger.getMergedStatusInfo(myChangesOutput);
     }
 
     private class MyMergedChange extends MergedChange {
