@@ -827,7 +827,6 @@ public class AllIcons {
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.svg"); // 16x16
     public static final Icon Divider = IconLoader.getIcon("/general/divider.svg"); // 2x19
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.svg"); // 16x16
-    public static final Icon EditItemInSection = IconLoader.getIcon("/general/editItemInSection.png"); // 16x16
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.png"); // 9x9
     public static final Icon Error = IconLoader.getIcon("/general/error.svg"); // 16x16
     public static final Icon ErrorDialog = IconLoader.getIcon("/general/errorDialog.svg"); // 32x32
@@ -1034,6 +1033,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon EditColors = IconLoader.getIcon("/general/settings.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Edit */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon EditItemInSection = IconLoader.getIcon("/actions/edit.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
@@ -1625,6 +1629,7 @@ public class AllIcons {
 
   }
   public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80
+  public static final Icon Logo_welcomeScreen_CE = IconLoader.getIcon("/Logo_welcomeScreen_CE.png"); // 80x80
 
   public static class Mac {
     public static final Icon AppIconOk512 = IconLoader.getIcon("/mac/appIconOk512.png"); // 55x55
