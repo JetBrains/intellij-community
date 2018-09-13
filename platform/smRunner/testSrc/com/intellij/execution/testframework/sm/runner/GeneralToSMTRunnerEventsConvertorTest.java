@@ -18,6 +18,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +86,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myTreeModel = myResultsViewer.getTreeView().getModel();
 
     myEventsProcessor.onStartTesting();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
   }
 
   @Override
@@ -126,6 +128,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertTrue(proxy.isInProgress());
 
     final Object rootTreeNode = (myTreeModel.getRoot());
+    
     assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
     final SMTestProxy rootProxy = SMTRunnerTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
@@ -247,6 +250,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
     myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10L));
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
 
@@ -256,6 +260,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
     //Tree
     final Object rootTreeNode = myTreeModel.getRoot();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
     assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
     final SMTestProxy rootProxy = SMTRunnerTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
@@ -292,6 +297,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", false, null, null));
     myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10L));
     myEventsProcessor.onFinishTesting();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     //Tree
     final Object rootTreeNode = myTreeModel.getRoot();
@@ -308,6 +314,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", true, null, null));
     myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10L));
     myEventsProcessor.onFinishTesting();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     //Tree
     final Object rootTreeNode = myTreeModel.getRoot();
@@ -324,6 +331,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("test", "", null));
     myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10L));
     myEventsProcessor.onFinishTesting();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     //Tree
     final Object rootTreeNode = myTreeModel.getRoot();
@@ -443,6 +451,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   private void onTestStarted(final String testName, @Nullable final String locationUrl) {
     myEventsProcessor.onTestStarted(new TestStartedEvent(testName, locationUrl));
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
   }
 
   private void onTestSuiteStarted(final String suiteName) {

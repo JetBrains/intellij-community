@@ -93,7 +93,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
       public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                              @NotNull final TestResultsViewer viewer,
                              @NotNull final TestFrameworkRunningModel model) {
-        if (selectedTestProxy == null) {
+        if (selectedTestProxy == null || myResultsViewer.getTreeBuilder().isDisposed()) {
           return;
         }
 
