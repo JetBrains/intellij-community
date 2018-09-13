@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -21,6 +22,7 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.enumeration;
@@ -159,14 +161,18 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
     if (isNodeRemoved(node)) return null;
-    if (validate && !node.children.isValid()) {
+    if (validate) validate(node);
+    return node;
+  }
+
+  private void validate(@NotNull Node node) {
+    if (!node.children.isValid()) {
       List<Node> newChildren = getValidChildren(node);
       List<Node> oldChildren = node.children.set(newChildren);
       if (oldChildren != null) oldChildren.forEach(child -> child.setParent(null));
       if (newChildren != null) newChildren.forEach(child -> child.setParent(node));
       LOG.debug("children updated: ", node);
     }
-    return node;
   }
 
   private boolean isNodeRemoved(@NotNull Node node) {
@@ -197,7 +203,8 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    return node == null || node.isLeaf();
+    // temporary fix for nodes in the Project View, which are non-leaf and have no children
+    return node == null || node.isLeaf(node.getUserObject() instanceof ProjectViewNode ? this::validate : null);
   }
 
   @Override
@@ -378,10 +385,15 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     @Override
     public boolean isLeaf() {
+      return isLeaf(null);
+    }
+
+    private boolean isLeaf(@Nullable Consumer<Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
       if (state != ThreeState.UNSURE) return state.toBoolean();
+      if (validator != null) validator.accept(this);
       return children.isValid() && super.isLeaf();
     }
 
