@@ -257,7 +257,6 @@ public class Alarm implements Disposable {
     return count;
   }
 
-  @TestOnly
   public void flush() {
     List<Pair<Request, Runnable>> requests;
     synchronized (LOCK) {
@@ -281,7 +280,6 @@ public class Alarm implements Disposable {
       }
       request.first.run();
     }
-    UIUtil.dispatchAllInvocationEvents();
   }
 
   /**
