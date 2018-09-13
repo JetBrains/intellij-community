@@ -291,6 +291,13 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
       RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(new UElement[0]));
 
+      for (PsiTypeParameter parameter : uClass.getJavaPsi().getTypeParameters()) {
+        UElement uTypeParameter = UastContextKt.toUElement(parameter);
+        if (uTypeParameter != null) {
+          RefJavaUtil.getInstance().addReferencesTo(uClass, this, uTypeParameter);
+        }
+      }
+
       UField[] uFields = uClass.getFields();
       for (UField uField : uFields) {
         getRefManager().getReference(uField.getPsi());
