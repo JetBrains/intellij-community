@@ -901,7 +901,6 @@ public class AllIcons {
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
     public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
     public static final Icon ShowWarning = IconLoader.getIcon("/general/showWarning.svg"); // 16x16
-    public static final Icon SmallConfigurableVcs = IconLoader.getIcon("/general/smallConfigurableVcs.png"); // 16x16
     public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png"); // 6x17
     public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
     public static final Icon Tab_white_center = IconLoader.getIcon("/general/tab-white-center.png"); // 1x17
@@ -1050,7 +1049,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
+    public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png");
 
     /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
     @SuppressWarnings("unused")
@@ -1180,12 +1179,12 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
+    public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
+    public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1225,12 +1224,17 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon SearchEverywhereGear = IconLoader.getIcon("/general/searchEverywhereGear.png"); // 16x16
+    public static final Icon SearchEverywhereGear = IconLoader.getIcon("/general/searchEverywhereGear.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon SecondaryGroup = AllIcons.General.GearPlain;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SmallConfigurableVcs = AllIcons.Actions.ShowAsTree;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterH */
     @SuppressWarnings("unused")
