@@ -35,8 +35,6 @@ import static java.util.Comparator.comparingInt;
 
 @SuppressWarnings("UnusedReturnValue")
 public class TreeModelBuilder {
-  private static final int UNVERSIONED_MAX_SIZE = Registry.intValue("vcs.unversioned.files.max.intree", 1000);
-
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> newHashMap());
@@ -161,7 +159,7 @@ public class TreeModelBuilder {
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
     int dirsCount = count(unversionedFiles, it -> it.isDirectory());
     int filesCount = unversionedFiles.size() - dirsCount;
-    boolean manyFiles = unversionedFiles.size() > UNVERSIONED_MAX_SIZE;
+    boolean manyFiles = unversionedFiles.size() > getUnversionedMaxSize();
     ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, filesCount, dirsCount, manyFiles);
     return insertSpecificNodeToModel(unversionedFiles, node);
   }
@@ -171,9 +169,13 @@ public class TreeModelBuilder {
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
     int dirsCount = count(ignoredFiles, it -> it.isDirectory());
     int filesCount = ignoredFiles.size() - dirsCount;
-    boolean manyFiles = ignoredFiles.size() > UNVERSIONED_MAX_SIZE;
+    boolean manyFiles = ignoredFiles.size() > getUnversionedMaxSize();
     ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, filesCount, dirsCount, manyFiles, updatingMode);
     return insertSpecificNodeToModel(ignoredFiles, node);
+  }
+
+  private static int getUnversionedMaxSize() {
+    return Registry.intValue("vcs.unversioned.files.max.intree", 1000);
   }
 
   @NotNull
