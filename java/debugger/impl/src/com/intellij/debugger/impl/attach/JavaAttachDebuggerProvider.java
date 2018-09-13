@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -206,17 +207,20 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
                                            pid);
       }
 
-      // prefer sa-jdwp attach if available
-      if (SAJDWPRemoteConnection.isAvailable()) {
-        return new LocalAttachInfo(command, pid);
-      }
+      //do not allow further for idea process
+      if (!pid.equals(OSProcessUtil.getApplicationPid())) {
+        // prefer sa-jdwp attach if available
+        if (SAJDWPRemoteConnection.isAvailable()) {
+          return new LocalAttachInfo(command, pid);
+        }
 
-      // sa pid attach if sa-jdi.jar is available
-      if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
-        Properties systemProperties = vm.getSystemProperties();
-        File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
-        if (saJdiJar.exists()) {
-          return new SAPIDLocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+        // sa pid attach if sa-jdi.jar is available
+        if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
+          Properties systemProperties = vm.getSystemProperties();
+          File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
+          if (saJdiJar.exists()) {
+            return new SAPIDLocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+          }
         }
       }
     }
