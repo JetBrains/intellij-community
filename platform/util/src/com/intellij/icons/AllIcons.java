@@ -874,7 +874,6 @@ public class AllIcons {
     public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png"); // 8x8
     public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png"); // 8x8
     public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png"); // 8x8
-    public static final Icon MessageHistory = IconLoader.getIcon("/general/messageHistory.png"); // 16x16
     public static final Icon Modified = IconLoader.getIcon("/general/modified.svg"); // 24x16
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.svg"); // 16x16
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
@@ -1139,6 +1138,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.History */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon MessageHistory = AllIcons.Vcs.History;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
     @SuppressWarnings("unused")
