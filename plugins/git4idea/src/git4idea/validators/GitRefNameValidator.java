@@ -69,6 +69,6 @@ public final class GitRefNameValidator implements InputValidator {
 
   @NotNull
   public String cleanUpBranchName(@NotNull String branchName) {
-    return branchName.replaceAll(ILLEGAL.pattern(), "_");
+    return branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", "");
   }
 }
