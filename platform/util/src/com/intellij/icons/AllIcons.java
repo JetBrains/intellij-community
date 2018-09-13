@@ -839,7 +839,6 @@ public class AllIcons {
     public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.svg"); // 16x16
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
-    public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
     public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
     public static final Icon HideDown = IconLoader.getIcon("/general/hideDown.png"); // 16x16
     public static final Icon HideDownHover = IconLoader.getIcon("/general/hideDownHover.png"); // 16x16
@@ -1076,6 +1075,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ExternalToolsSmall = AllIcons.General.ExternalTools;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Floating = AllIcons.Actions.MoveTo2;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
