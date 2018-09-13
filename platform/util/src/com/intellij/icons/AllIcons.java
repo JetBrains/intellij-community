@@ -1138,7 +1138,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon PasswordLock = IconLoader.getIcon("/general/passwordLock.png"); // 64x64
+    public static final Icon PasswordLock = IconLoader.getIcon("/general/passwordLock.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
