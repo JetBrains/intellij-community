@@ -213,7 +213,7 @@ class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
     return if (wasClickOnCheckBox(cmp, cp))
       "checkboxTree($path).clickCheckbox()"
     else
-      "checkboxTree($path).clickPath()"
+      "checkboxTree($path).clickLabel()"
   }
 }
 
@@ -297,7 +297,7 @@ class JTreeGenerator : ComponentCodeGenerator<JTree> {
   override fun generate(cmp: JTree, me: MouseEvent, cp: Point): String {
     val path = getJTreePath(cmp, cmp.getPath(cp))
     if (me.isRightButton()) return "jTree($path).rightClickPath()"
-    return "jTree($path).clickPath()"
+    return "jTree($path).clickLabel()"
   }
 }
 
