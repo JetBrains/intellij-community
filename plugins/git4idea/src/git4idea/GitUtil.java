@@ -35,6 +35,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
@@ -1046,5 +1047,9 @@ public class GitUtil {
     if (content == null) return false;
     String pathToDir = parsePathToRepository(content);
     return findRealRepositoryDir(rootDir, pathToDir) != null;
+  }
+
+  public static void generateGitignoreFileIfNeeded(@NotNull Project project){
+    VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project));
   }
 }
