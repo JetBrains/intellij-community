@@ -21,6 +21,8 @@ fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().f
 
 fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
+fun uExpression(): UElementPattern.Capture<UExpression> = capture(UExpression::class.java)
+
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
@@ -37,17 +39,19 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
       override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean = filter(t)
     })
 
-  fun filter(filter: (T) -> Boolean): Self =
+  fun filterWithContext(filter: (T, ProcessingContext?) -> Boolean): Self =
     with(object : PatternCondition<T>(null) {
-      override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t)
+      override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t, context)
     })
+
+  fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, processingContext -> filter(t) }
 
   fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
     filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
 
   fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
     filter {
-      val call = it.getUCallExpression() as? UCallExpressionEx ?: return@filter false
+      val call = it.uastParent.getUCallExpression() as? UCallExpressionEx ?: return@filter false
       call.getArgumentForParameter(parameterIndex) == it && callPattern.accepts(call)
     }
 
