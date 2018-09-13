@@ -1,8 +1,8 @@
 <html>
 <body>
 <p>Reports a <b>null</b> check followed by a method call which will surely return <b>false</b> when
-  <b>null</b> is passed (e.g. <b>Class.isInstance</b>). Such check looks useless as the method call would
-  return false anyways.
+  <b>null</b> is passed (e.g. <b>Class.isInstance</b>). Such check looks redundant as the method call would
+  return false anyway.
 </p>
 <p>Here is an example of a violation: </p>
 <pre><code>    if (x != null && myClass.isInstance(x)) { ... }</code></pre>

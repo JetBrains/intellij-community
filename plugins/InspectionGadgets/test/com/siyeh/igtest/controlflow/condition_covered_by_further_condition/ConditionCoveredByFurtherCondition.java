@@ -91,4 +91,15 @@ public class ConditionCoveredByFurtherCondition {
     void testNullCheck(Object o1, Object o2) {
         if(<warning descr="Condition '(o1 != null || o2 != null)' covered by subsequent condition 'o1 != o2'">(o1 != null || o2 != null)</warning> && o1 != o2) {}
     }
+
+    void testAlwaysTrue(@NotNull Object obj, Object obj2) {
+        // obj != null is true, but does not depend on the second condition, do not report it (will be reported by CC&E)
+        if(obj != null && obj2 != null) {
+
+        }
+    }
+
+    void testDereferenceNotNull(@NotNull Object obj) {
+        if(obj != null && obj.hashCode() == 10) {}
+    }
 }
