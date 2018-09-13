@@ -25,7 +25,7 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
     static {
       Connector connector = null;
       try {
-        connector = DebugProcessImpl.findConnector("com.intellij.rt.sa.SAJDWPAttachingConnector");
+        connector = DebugProcessImpl.findConnector("com.jetbrains.sa.SAJDWPAttachingConnector");
       }
       catch (ExecutionException ignored) {
       }
