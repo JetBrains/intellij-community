@@ -173,38 +173,34 @@ public class ShowAffectedTestsAction extends AnAction {
   public static PsiMethod[] findMethods(@NotNull Project project, @NotNull Change... changes) {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
-    List<PsiElement> methods = PsiDocumentManager.getInstance(project).commitAndRunReadAction(
-      () ->
-        FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
-          if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
-          ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-          if (!index.isInSource(file)) return null;
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
-          Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (document == null) return null;
+    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(
+      () -> FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+        if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
+        ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+        if (!index.isInSource(file)) return null;
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null) return null;
 
-          List<PsiElement> physicalMethods = ContainerUtil.newSmartList();
-          psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitElement(PsiElement element) {
-              UMethod method = UastContextKt.toUElement(element, UMethod.class);
-              if (method != null) {
-                ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());
-              }
-              super.visitElement(element);
+        List<PsiElement> physicalMethods = ContainerUtil.newSmartList();
+        psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            UMethod method = UastContextKt.toUElement(element, UMethod.class);
+            if (method != null) {
+              ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());
             }
-          });
-          return physicalMethods;
-        }));
-
-    return methods
-      .stream()
-      .map(m -> UastContextKt.toUElement(m))
-      .filter(Objects::nonNull)
-      .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
-      .filter(Objects::nonNull)
-      .toArray(PsiMethod.ARRAY_FACTORY::create);
+            super.visitElement(element);
+          }
+        });
+        return physicalMethods;
+      }).stream()
+        .map(m -> UastContextKt.toUElement(m))
+        .filter(Objects::nonNull)
+        .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
+        .filter(Objects::nonNull)
+        .toArray(PsiMethod.ARRAY_FACTORY::create));
   }
 
   public static boolean isEnabled(@Nullable Project project) {
