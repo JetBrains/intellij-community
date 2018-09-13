@@ -157,15 +157,15 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return root.get();
   }
 
-  private Node getNode(Object object, boolean validate) {
+  private Node getNode(Object object, boolean validateChildren) {
     if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
     if (isNodeRemoved(node)) return null;
-    if (validate) validate(node);
+    if (validateChildren) validateChildren(node);
     return node;
   }
 
-  private void validate(@NotNull Node node) {
+  private void validateChildren(@NotNull Node node) {
     if (!node.children.isValid()) {
       List<Node> newChildren = getValidChildren(node);
       List<Node> oldChildren = node.children.set(newChildren);
@@ -204,7 +204,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
     // temporary fix for nodes in the Project View, which are non-leaf and have no children
-    return node == null || node.isLeaf(node.getUserObject() instanceof ProjectViewNode ? this::validate : null);
+    return node == null || node.isLeaf(node.getUserObject() instanceof ProjectViewNode ? this::validateChildren : null);
   }
 
   @Override
