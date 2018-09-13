@@ -871,7 +871,6 @@ public class AllIcons {
     public static final Icon LayoutPreviewOnly = IconLoader.getIcon("/general/layoutPreviewOnly.svg"); // 16x16
     public static final Icon LinkDropTriangle = IconLoader.getIcon("/general/linkDropTriangle.svg"); // 14x14
     public static final Icon Locate = IconLoader.getIcon("/general/locate.svg"); // 16x16
-    public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png"); // 16x16
     public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png"); // 8x8
     public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png"); // 8x8
     public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png"); // 8x8
@@ -1135,6 +1134,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon LocateHover = IconLoader.getIcon("/general/locateHover.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
     @SuppressWarnings("unused")

@@ -67,8 +67,6 @@ public class AbstractPopup implements JBPopup {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
-  private static final Object SUPPRESS_MAC_CORNER = new Object();
-
   private PopupComponent myPopup;
   private MyContentPanel myContent;
   private JComponent     myPreferredFocusedComponent;
@@ -233,7 +231,7 @@ public class AbstractPopup implements JBPopup {
                                  PopupBorder.Factory.create(true, showShadow) :
                                  PopupBorder.Factory.createEmpty();
     myShadowed = showShadow;
-    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
+    myContent = createContentPanel(resizable, myPopupBorder, false);
     myMayBeParent = mayBeParent;
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
 
@@ -333,26 +331,7 @@ public class AbstractPopup implements JBPopup {
 
   @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, PopupBorder border, boolean isToDrawMacCorner) {
-    return new MyContentPanel(resizable, border, isToDrawMacCorner);
-  }
-
-  private boolean isToDrawMacCorner() {
-    if (!SystemInfo.isMac || myComponent.getComponentCount() <= 0) {
-      return false;
-    }
-
-    if (SystemInfo.isMacOSYosemite) {
-      return false;
-    }
-
-    if (myComponent.getComponentCount() > 0) {
-      Component component = myComponent.getComponent(0);
-      if (component instanceof JComponent && Boolean.TRUE.equals(((JComponent)component).getClientProperty(SUPPRESS_MAC_CORNER))) {
-        return false;
-      }
-    }
-
-    return true;
+    return new MyContentPanel(border);
   }
 
   public void setShowHints(boolean show) {
@@ -365,8 +344,8 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  @Deprecated
   public static void suppressMacCornerFor(JComponent popupComponent) {
-    popupComponent.putClientProperty(SUPPRESS_MAC_CORNER, Boolean.TRUE);
   }
 
 
@@ -872,7 +851,7 @@ public class AbstractPopup implements JBPopup {
       WindowResizeListener resizeListener = new WindowResizeListener(
         myComponent,
         myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
-        isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
+        null) {
         private Cursor myCursor;
 
         @Override
@@ -1091,7 +1070,7 @@ public class AbstractPopup implements JBPopup {
           bounds.x -= 2;
           bounds.y -= 2;
           bounds.width += 4;
-          bounds.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
+          bounds.height += 4;
         }
         if (bounds == null || !bounds.contains(e.getLocationOnScreen())) {
           cancel();
@@ -1440,26 +1419,16 @@ public class AbstractPopup implements JBPopup {
   }
 
   public static class MyContentPanel extends JPanel implements DataProvider {
-    private final boolean myResizable;
-    private final boolean myDrawMacCorner;
     @Nullable private DataProvider myDataProvider;
 
+    @Deprecated
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
-      super(new BorderLayout());
-      myResizable = resizable;
-      myDrawMacCorner = drawMacCorner;
-      setBorder(border);
+      this(border);
     }
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-
-      if (myResizable && myDrawMacCorner) {
-        AllIcons.General.MacCorner.paintIcon(this, g,
-                                             getX() + getWidth() - AllIcons.General.MacCorner.getIconWidth(),
-                                             getY() + getHeight() - AllIcons.General.MacCorner.getIconHeight());
-      }
+    public MyContentPanel(PopupBorder border) {
+      super(new BorderLayout());
+      setBorder(border);
     }
 
     public Dimension computePreferredSize() {
