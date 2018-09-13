@@ -34,6 +34,19 @@ deprecated: gearHover.png; to be removed in IDEA 2020
 deprecated: getProjectfromVCS.png -> /welcome/fromVCS.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS
 deprecated: help.png -> /general/contextHelp.svg; to be removed in IDEA 2020 - use AllIcons.General.ContextHelp
 deprecated: help_small.png -> /general/contextHelp.svg; to be removed in IDEA 2020 - use AllIcons.General.ContextHelp
+deprecated: hideDown.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideDownHover.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideDownPart.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideDownPartHover.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideLeft.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideLeftHover.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideLeftPart.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideLeftPartHover.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideRight.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideRightHover.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideRightPart.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideRightPartHover.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
+deprecated: hideToolWindowInactive.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
 deprecated: hideWarnings.png; to be removed in IDEA 2020
 deprecated: ijLogo.png; to be removed in IDEA 2020
 deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import

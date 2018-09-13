@@ -839,20 +839,7 @@ public class AllIcons {
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
     public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
-    public static final Icon HideDown = IconLoader.getIcon("/general/hideDown.png"); // 16x16
-    public static final Icon HideDownHover = IconLoader.getIcon("/general/hideDownHover.png"); // 16x16
-    public static final Icon HideDownPart = IconLoader.getIcon("/general/hideDownPart.png"); // 16x16
-    public static final Icon HideDownPartHover = IconLoader.getIcon("/general/hideDownPartHover.png"); // 16x16
-    public static final Icon HideLeft = IconLoader.getIcon("/general/hideLeft.png"); // 16x16
-    public static final Icon HideLeftHover = IconLoader.getIcon("/general/hideLeftHover.png"); // 16x16
-    public static final Icon HideLeftPart = IconLoader.getIcon("/general/hideLeftPart.png"); // 16x16
-    public static final Icon HideLeftPartHover = IconLoader.getIcon("/general/hideLeftPartHover.png"); // 16x16
-    public static final Icon HideRight = IconLoader.getIcon("/general/hideRight.png"); // 16x16
-    public static final Icon HideRightHover = IconLoader.getIcon("/general/hideRightHover.png"); // 16x16
-    public static final Icon HideRightPart = IconLoader.getIcon("/general/hideRightPart.png"); // 16x16
-    public static final Icon HideRightPartHover = IconLoader.getIcon("/general/hideRightPartHover.png"); // 16x16
     public static final Icon HideToolWindow = IconLoader.getIcon("/general/hideToolWindow.svg"); // 16x16
-    public static final Icon HideToolWindowInactive = IconLoader.getIcon("/general/hideToolWindowInactive.png"); // 14x14
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
     public static final Icon Information = IconLoader.getIcon("/general/information.svg"); // 16x16
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.svg"); // 32x32
@@ -1097,6 +1084,71 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Help_small = AllIcons.General.ContextHelp;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideDown = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideDownHover = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideDownPart = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideDownPartHover = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideLeft = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideLeftHover = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideLeftPart = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideLeftPartHover = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideRight = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideRightHover = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideRightPart = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideRightPartHover = AllIcons.General.HideToolWindow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HideToolWindowInactive = AllIcons.General.HideToolWindow;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
