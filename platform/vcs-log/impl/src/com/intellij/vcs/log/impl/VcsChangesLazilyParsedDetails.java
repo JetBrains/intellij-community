@@ -184,8 +184,8 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     public Collection<String> getModifiedPaths(int parent) {
       Set<String> changes = ContainerUtil.newHashSet();
       for (VcsFileStatusInfo status : myChangesOutput.get(parent)) {
-        if (myDescriptor.getSecondPath(status) == null) {
-          changes.add(absolutePath(myDescriptor.getFirstPath(status)));
+        if (status.getSecondPath() == null) {
+          changes.add(absolutePath(status.getFirstPath()));
         }
       }
       return changes;
@@ -196,9 +196,9 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     public Collection<Couple<String>> getRenamedPaths(int parent) {
       Set<Couple<String>> renames = ContainerUtil.newHashSet();
       for (VcsFileStatusInfo status : myChangesOutput.get(parent)) {
-        String secondPath = myDescriptor.getSecondPath(status);
+        String secondPath = status.getSecondPath();
         if (secondPath != null) {
-          renames.add(Couple.of(absolutePath(myDescriptor.getFirstPath(status)), absolutePath(secondPath)));
+          renames.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(secondPath)));
         }
       }
       return renames;

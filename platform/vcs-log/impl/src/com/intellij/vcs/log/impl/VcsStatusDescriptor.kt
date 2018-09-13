@@ -73,11 +73,11 @@ abstract class VcsStatusDescriptor<S> {
 
   protected abstract fun createStatus(type: Change.Type, path: String, secondPath: String?): S
 
-  abstract fun getFirstPath(info: S): String
+  protected abstract fun getFirstPath(info: S): String
 
-  abstract fun getSecondPath(info: S): String?
+  protected abstract fun getSecondPath(info: S): String?
 
-  abstract fun getType(info: S): Change.Type
+  protected abstract fun getType(info: S): Change.Type
 
   class MergedStatusInfo<S> @JvmOverloads constructor(val statusInfo: S, infos: List<S> = ContainerUtil.emptyList()) {
     val mergedStatusInfos: List<S>
