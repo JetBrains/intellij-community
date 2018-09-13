@@ -36,6 +36,8 @@ import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static java.lang.Math.max;
+
 public class CodeStyleFacadeImpl extends CodeStyleFacade {
   private final @Nullable Project myProject;
 
@@ -80,15 +82,15 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
     int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
                 ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(myProject, editor, language, offset)
-                : 0;
+                : -1;
     if (space < 0 && allowDocCommit) {
       final Document document = editor.getDocument();
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file == null) return 0;
-      return CodeStyleManager.getInstance(myProject).getSpacing(file, offset);
+      return max(0, CodeStyleManager.getInstance(myProject).getSpacing(file, offset));
     }
-    return space;
+    return max(0, space);
   }
 
   @Override

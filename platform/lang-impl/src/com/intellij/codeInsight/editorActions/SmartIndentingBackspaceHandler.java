@@ -65,7 +65,11 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
       if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
         int spacing = codeStyleFacade.getJoinedLinesSpacing(editor, file.getLanguage(), endOffset, true);
-        myReplacement = StringUtil.repeatSymbol(' ', Math.max(0, spacing));
+        if (spacing < 0) {
+          LOG.error("The call `codeStyleFacade.getJoinedLinesSpacing` should not return the negative value");
+          spacing = 0;
+        }
+        myReplacement = StringUtil.repeatSymbol(' ', spacing);
       }
     }
   }

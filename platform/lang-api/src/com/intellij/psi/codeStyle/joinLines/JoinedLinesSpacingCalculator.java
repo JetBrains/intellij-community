@@ -22,7 +22,7 @@ public interface JoinedLinesSpacingCalculator {
    * @param editor   The editor for which the spacing must be returned.
    * @param language Context language
    * @param offset   Offset in the editor after the indent in the second joining line.
-   * @return {@code -1}, if LineIndentProvider can't calculate the spacing.
+   * @return {@code -1}, if JoinedLinesSpacingCalculator can't calculate the spacing.
    */
   default int getJoinedLinesSpacing(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     return -1;
