@@ -196,8 +196,10 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                        builderForFile +
                                        "; chars length:" +
                                        chars.length();
-        commentRanges.add(new CommentRange(start, end,
-                                           builderForFile == null ? "" : builderForFile.getCharsAllowedInContinuationPrefix(tokenType)));
+        if (start != end) {
+          commentRanges.add(new CommentRange(start, end,
+                                             builderForFile == null ? "" : builderForFile.getCharsAllowedInContinuationPrefix(tokenType)));
+        }
         lastEndOffset = end;
       }
     }
