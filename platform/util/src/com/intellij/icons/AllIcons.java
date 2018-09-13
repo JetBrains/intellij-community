@@ -837,7 +837,6 @@ public class AllIcons {
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
     public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
-    public static final Icon Help = IconLoader.getIcon("/general/help.png"); // 10x10
     public static final Icon HideDown = IconLoader.getIcon("/general/hideDown.png"); // 16x16
     public static final Icon HideDownHover = IconLoader.getIcon("/general/hideDownHover.png"); // 16x16
     public static final Icon HideDownPart = IconLoader.getIcon("/general/hideDownPart.png"); // 16x16
@@ -1092,6 +1091,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon GetProjectfromVCS = AllIcons.Welcome.FromVCS;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ContextHelp */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Help = AllIcons.General.ContextHelp;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ContextHelp */
     @SuppressWarnings("unused")
