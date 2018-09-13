@@ -907,6 +907,7 @@ public class AllIcons {
     public static final Icon Settings = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
     public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
+    public static final Icon ShowWarning = IconLoader.getIcon("/general/showWarning.svg"); // 16x16
     public static final Icon SmallConfigurableVcs = IconLoader.getIcon("/general/smallConfigurableVcs.png"); // 16x16
     public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png"); // 6x17
     public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
@@ -1133,10 +1134,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png");
 
-    /** @deprecated to be removed in IDEA 2020 */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Locate */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon LocateHover = IconLoader.getIcon("/general/locateHover.png");
+    public static final Icon LocateHover = AllIcons.General.Locate;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1193,10 +1194,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon Recursive = AllIcons.Actions.ShowAsTree;
 
-    /** @deprecated to be removed in IDEA 2020 */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.RunConfigurations.TestState.Run */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Run = IconLoader.getIcon("/general/run.png");
+    public static final Icon Run = AllIcons.RunConfigurations.TestState.Run;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")

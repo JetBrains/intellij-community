@@ -634,7 +634,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowWarningsAction extends ToggleAction implements DumbAware {
     ShowWarningsAction() {
-      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.BalloonWarning);
+      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
     }
 
     @Override
