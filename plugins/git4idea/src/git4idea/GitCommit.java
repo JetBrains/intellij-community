@@ -27,7 +27,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
-import com.intellij.vcs.log.impl.VcsFileStatusInfoMerger;
 import git4idea.history.GitChangesParser;
 import git4idea.history.GitLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +94,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
 
     private UnparsedChanges(@NotNull Project project,
                             @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
-      super(project, changesOutput, new VcsFileStatusInfoMerger());
+      super(project, changesOutput);
     }
 
     @Override

@@ -133,14 +133,12 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
   protected abstract class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
-    @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger;
+    @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
 
     public UnparsedChanges(@NotNull Project project,
-                           @NotNull List<List<VcsFileStatusInfo>> changesOutput,
-                           @NotNull VcsStatusMerger<VcsFileStatusInfo> statusMerger) {
+                           @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
       myProject = project;
       myChangesOutput = changesOutput;
-      myStatusMerger = statusMerger;
     }
 
     @NotNull
