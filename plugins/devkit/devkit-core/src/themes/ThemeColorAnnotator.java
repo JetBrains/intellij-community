@@ -104,10 +104,11 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
 
           Color newColor = ColorChooser.chooseColor(editor.getComponent(),
                                                     DevKitBundle.message("theme.choose.color.dialog.title"),
-                                                    currentColor);
+                                                    currentColor,
+                                                    isRgbaColorHex(myColorHex));
           if (newColor == null || newColor.equals(currentColor)) return;
 
-          String newColorHex = ColorUtil.toHtmlColor(newColor);
+          String newColorHex = "#" + ColorUtil.toHex(newColor, true);
           Project project = myLiteral.getProject();
           JsonStringLiteral newLiteral = new JsonElementGenerator(project).createStringLiteral(newColorHex);
 
@@ -118,14 +119,14 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
 
     @Nullable
     private static Color getColor(@NotNull String colorHex) {
-      boolean withAlpha = colorHex.length() == HEX_COLOR_LENGTH_RGBA;
-      if (!withAlpha && colorHex.length() != HEX_COLOR_LENGTH_RGB) return null;
+      boolean isRgba = isRgbaColorHex(colorHex);
+      if (!isRgba && !isRgbColorHex(colorHex)) return null;
 
       try {
-        String alpha = withAlpha ? colorHex.substring(HEX_COLOR_LENGTH_RGB) : null;
-        String colorHexWithoutAlpha = withAlpha ? colorHex.substring(0, HEX_COLOR_LENGTH_RGB) : colorHex;
+        String alpha = isRgba ? colorHex.substring(HEX_COLOR_LENGTH_RGB) : null;
+        String colorHexWithoutAlpha = isRgba ? colorHex.substring(0, HEX_COLOR_LENGTH_RGB) : colorHex;
         Color color = Color.decode(colorHexWithoutAlpha);
-        if (withAlpha) {
+        if (isRgba) {
           color = ColorUtil.toAlpha(color, Integer.parseInt(alpha, 16));
         }
 
@@ -134,6 +135,14 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
       catch (NumberFormatException ignored) {
         return null;
       }
+    }
+
+    private static boolean isRgbaColorHex(@NotNull String colorHex) {
+      return colorHex.length() == HEX_COLOR_LENGTH_RGBA;
+    }
+
+    private static boolean isRgbColorHex(@NotNull String colorHex) {
+      return colorHex.length() == HEX_COLOR_LENGTH_RGB;
     }
 
     @Override
