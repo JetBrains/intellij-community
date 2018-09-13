@@ -826,7 +826,6 @@ public class AllIcons {
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.svg"); // 16x16
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.svg"); // 16x16
     public static final Icon Divider = IconLoader.getIcon("/general/divider.svg"); // 2x19
-    public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.svg"); // 16x16
     public static final Icon EditItemInSection = IconLoader.getIcon("/general/editItemInSection.png"); // 16x16
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.png"); // 9x9
@@ -887,9 +886,7 @@ public class AllIcons {
     public static final Icon OpenDiskHover = IconLoader.getIcon("/general/openDiskHover.svg"); // 16x16
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
-    public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
-    public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
     public static final Icon Print = IconLoader.getIcon("/general/print.svg"); // 16x16
     public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.svg"); // 9x9
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.svg"); // 16x16
@@ -899,7 +896,6 @@ public class AllIcons {
     public static final Icon Reset = IconLoader.getIcon("/general/reset.svg"); // 16x16
     public static final Icon RunWithCoverage = IconLoader.getIcon("/general/runWithCoverage.svg"); // 16x16
     public static final Icon SafeMode = IconLoader.getIcon("/general/safeMode.png"); // 13x13
-    public static final Icon SearchEverywhereGear = IconLoader.getIcon("/general/searchEverywhereGear.png"); // 16x16
     public static final Icon SeparatorH = IconLoader.getIcon("/general/separatorH.png"); // 17x11
     public static final Icon Settings = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
@@ -1051,6 +1047,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png");
 
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
+
     /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1179,6 +1180,16 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
+    public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Progress = IconLoader.getIcon("/general/progress.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ProjectConfigurable */
@@ -1210,6 +1221,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Run = AllIcons.RunConfigurations.TestState.Run;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SearchEverywhereGear = IconLoader.getIcon("/general/searchEverywhereGear.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
