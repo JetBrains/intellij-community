@@ -903,14 +903,6 @@ public class AllIcons {
     public static final Icon ShowWarning = IconLoader.getIcon("/general/showWarning.svg"); // 16x16
     public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png"); // 6x17
     public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
-    public static final Icon Tab_white_center = IconLoader.getIcon("/general/tab-white-center.png"); // 1x17
-    public static final Icon Tab_white_left = IconLoader.getIcon("/general/tab-white-left.png"); // 4x17
-    public static final Icon Tab_white_right = IconLoader.getIcon("/general/tab-white-right.png"); // 4x17
-    public static final Icon Tab_grey_bckgrnd = IconLoader.getIcon("/general/tab_grey_bckgrnd.png"); // 1x17
-    public static final Icon Tab_grey_left = IconLoader.getIcon("/general/tab_grey_left.png"); // 4x17
-    public static final Icon Tab_grey_left_inner = IconLoader.getIcon("/general/tab_grey_left_inner.png"); // 4x17
-    public static final Icon Tab_grey_right = IconLoader.getIcon("/general/tab_grey_right.png"); // 4x17
-    public static final Icon Tab_grey_right_inner = IconLoader.getIcon("/general/tab_grey_right_inner.png"); // 4x17
     public static final Icon TbHidden = IconLoader.getIcon("/general/tbHidden.svg"); // 16x16
     public static final Icon TbShown = IconLoader.getIcon("/general/tbShown.svg"); // 16x16
     public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/TemplateProjectSettings.png"); // 32x32
@@ -1265,6 +1257,46 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon SplitUp = AllIcons.General.ArrowUp;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_white_center = IconLoader.getIcon("/general/tab-white-center.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_white_left = IconLoader.getIcon("/general/tab-white-left.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_white_right = IconLoader.getIcon("/general/tab-white-right.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_grey_bckgrnd = IconLoader.getIcon("/general/tab_grey_bckgrnd.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_grey_left = IconLoader.getIcon("/general/tab_grey_left.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_grey_left_inner = IconLoader.getIcon("/general/tab_grey_left_inner.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_grey_right = IconLoader.getIcon("/general/tab_grey_right.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tab_grey_right_inner = IconLoader.getIcon("/general/tab_grey_right_inner.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
