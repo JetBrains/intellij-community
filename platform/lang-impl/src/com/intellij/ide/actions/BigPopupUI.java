@@ -37,8 +37,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -58,8 +56,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   public BigPopupUI(Project project) {
     myProject = project;
   }
-
-  protected abstract void onMouseClicked(@NotNull MouseEvent event);
 
   @NotNull
   public abstract JBList<Object> createList();
@@ -134,15 +130,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return new SearchField();
   }
 
-  protected void initSearchActions() {
-    myResultsList.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        onMouseClicked(e);
-      }
-    });
-  }
-
   public void init() {
     withBackground(JBUI.CurrentTheme.BigPopup.dialogBackground());
 
@@ -175,8 +162,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     addToTop(topPanel);
     addToCenter(suggestionsPanel);
-
-    initSearchActions();
   }
 
   protected void addListDataListener(@NotNull AbstractListModel<Object> model) {

@@ -107,8 +107,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private String myLastInputText = null;
   private RunAnythingSearchListModel.RunAnythingMainListModel myListModel;
 
-  @Override
-  public void onMouseClicked(@NotNull MouseEvent event) {
+  private void onMouseClicked(@NotNull MouseEvent event) {
     int clickCount = event.getClickCount();
     if (clickCount > 1 && clickCount % 2 == 0) {
       event.consume();
@@ -851,6 +850,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     init();
 
+    initSearchActions();
+
     initResultsList();
 
     initSearchField();
@@ -886,9 +887,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
     };
   }
 
-  @Override
-  protected void initSearchActions() {
-    super.initSearchActions();
+  private void initSearchActions() {
+    myResultsList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        onMouseClicked(e);
+      }
+    });
 
     DumbAwareAction.create(e -> RunAnythingUtil.jumpNextGroup(true, myResultsList))
       .registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), mySearchField, this);

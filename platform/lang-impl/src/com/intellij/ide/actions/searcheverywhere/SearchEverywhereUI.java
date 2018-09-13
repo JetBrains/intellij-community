@@ -99,6 +99,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     init();
 
+    initSearchActions();
+
     myResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myResultsList.addListSelectionListener(e -> {
       int[] selectedIndices = myResultsList.getSelectedIndices();
@@ -474,9 +476,13 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }, 200);
   }
 
-  @Override
-  protected void initSearchActions() {
-    super.initSearchActions();
+  private void initSearchActions() {
+    myResultsList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        onMouseClicked(e);
+      }
+    });
 
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
@@ -561,8 +567,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     });
   }
 
-  @Override
-  public void onMouseClicked(@NotNull MouseEvent e) {
+  private void onMouseClicked(@NotNull MouseEvent e) {
     boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
     if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
       e.consume();
