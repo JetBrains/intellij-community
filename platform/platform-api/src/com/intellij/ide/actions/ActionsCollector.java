@@ -25,10 +25,10 @@ public abstract class ActionsCollector {
    * Only actions from platform and JB plugins are recorded.
    */
   public void record(@Nullable String actionId, @NotNull Class context) {
-    record(actionId, context, false);
+    record(actionId, context, false, null);
   }
 
-  public abstract void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu);
+  public abstract void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu, @Nullable String place);
 
   public abstract State getState();
 

@@ -23,7 +23,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   private static final String DEFAULT_ID = "third.party.plugin.action";
 
   @Override
-  public void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu) {
+  public void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu, @Nullable String place) {
     if (actionId == null) return;
 
     State state = getState();
@@ -39,6 +39,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (isContextMenu) {
       count = state.myContextMenuValues.get(key);
       value = count == null ? 1 : count + 1;
+      if (place != null) {
+        key = "[" + place + "] " + key;
+      }
       state.myContextMenuValues.put(key, value);
     }
   }
