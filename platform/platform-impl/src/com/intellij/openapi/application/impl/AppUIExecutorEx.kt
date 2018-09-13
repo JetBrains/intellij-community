@@ -29,7 +29,11 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
     }
   }
 
-  override fun submit(task: Runnable): CancellablePromise<*> = submit(task::run as Callable<*>)
+  override fun submit(task: Runnable): CancellablePromise<*> {
+    return submit<Any> {
+      task.run()
+    }
+  }
 
   override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
     val deferred = async(createJobContext()) {
