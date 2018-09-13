@@ -192,7 +192,7 @@ public class ClassPath {
     }
 
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      Loader loader = createLoader(url, index, new File(path), true);
+      Loader loader = createLoader(url, index, new File(path), index == 0);
       if (loader != null) {
         initLoader(url, lastOne, loader);
       }

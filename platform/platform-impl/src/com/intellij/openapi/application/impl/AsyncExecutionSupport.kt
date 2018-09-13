@@ -101,33 +101,25 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     private fun dispatchChain(context: CoroutineContext, block: Runnable) {
       for (dispatcher in myChain) {
         if (dispatcher.isScheduleNeeded(context)) {
-          dispatcher.doSchedule(context) { isRetryDispatchNeeded ->
-            if (isRetryDispatchNeeded) {
-              LOG.assertTrue(!dispatcher.isScheduleNeeded(context), this)
-              this.retryDispatch(context, block, causeDispatcher = dispatcher)
-            }
-            else {
-              block.run()
-            }
-          }
-          return
+          return dispatcher.doSchedule(context, Runnable {
+            LOG.assertTrue(!dispatcher.isScheduleNeeded(context), this)
+            this.retryDispatch(context, block, causeDispatcher = dispatcher)
+          })
         }
       }
       block.run()
     }
 
-    protected open fun retryDispatch(context: CoroutineContext,
-                                     block: Runnable,
+    protected open fun retryDispatch(context: CoroutineContext, block: Runnable,
                                      causeDispatcher: ChainedDispatcher) = this.dispatch(context, block)
 
     protected abstract fun isScheduleNeeded(context: CoroutineContext): Boolean
-    protected abstract fun doSchedule(context: CoroutineContext,
-                                      block: (isRetryDispatchNeeded: Boolean) -> Unit)
+    protected abstract fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable)
   }
 
   /** A DelegateDispatcher backed by a ContextConstraint. */
   internal abstract class ChainedConstraintDispatcher(delegate: CoroutineDispatcher,
-                                                      protected val constraint: ContextConstraint) : ChainedDispatcher(delegate) {
+                                                      protected open val constraint: ContextConstraint) : ChainedDispatcher(delegate) {
     override fun isScheduleNeeded(context: CoroutineContext): Boolean = !constraint.isCorrectContext
     override fun toString() = constraint.toString()
   }
@@ -135,19 +127,15 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   /** @see SimpleContextConstraint */
   internal class SimpleConstraintDispatcher(delegate: CoroutineDispatcher,
                                             constraint: SimpleContextConstraint) : ChainedConstraintDispatcher(delegate, constraint) {
-
-
-    override fun doSchedule(context: CoroutineContext,
-                            block: (isRetryDispatchNeeded: Boolean) -> Unit) {
-      (constraint as SimpleContextConstraint).schedule(Runnable {
-        block(true)
-      })
+    override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
+      (constraint as SimpleContextConstraint).schedule(retryDispatchRunnable)
     }
   }
 
   /** @see ExpirableContextConstraint */
   internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
                                                constraint: ExpirableContextConstraint) : ChainedConstraintDispatcher(delegate, constraint) {
+    override val constraint get() = super.constraint as ExpirableContextConstraint
 
     private val myInvokeOnDisposal = object : THashSet<Runnable>(ContainerUtil.identityStrategy()) {
       var isDisposed: Boolean = false
@@ -174,28 +162,30 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
     override fun initializeJob(job: Job) {
       super.initializeJob(job)
-      (constraint as ExpirableContextConstraint).expirable.cancelJobOnDisposal(job) {
+      constraint.expirable.cancelJobOnDisposal(job) {
         myInvokeOnDisposal.disposeAndGet().forEach(Runnable::run)
       }
     }
 
-    override fun isScheduleNeeded(context: CoroutineContext): Boolean = myInvokeOnDisposal.isDisposed || !constraint.isCorrectContext
+    override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(myInvokeOnDisposal.isDisposed || constraint.isCorrectContext)
 
-    override fun doSchedule(context: CoroutineContext,
-                            block: (isRetryDispatchNeeded: Boolean) -> Unit) {
+    override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
-      val fallbackRunnable = runOnce.runnable {
+      val unscheduledRunnable = runOnce.runnable {
+        LOG.assertTrue(myInvokeOnDisposal.isDisposed, "Must only be called on disposal of ${constraint.expirable}")
         LOG.assertTrue(context[Job]!!.isCancelled, "Job should have been cancelled through initializeJob()")
-        fallbackDispatch(context) { block(false) }
+        // Although it is tempting to invoke the retryDispatchRunnable directly,
+        // it is better to avoid executing arbitrary code from inside the disposal handler.
+        fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
       }
-      if (!myInvokeOnDisposal.register(fallbackRunnable)) {
-        fallbackRunnable.run()
+      if (!myInvokeOnDisposal.register(unscheduledRunnable)) {
+        unscheduledRunnable.run()
       }
       else {
-        (constraint as ExpirableContextConstraint).scheduleExpirable(runOnce.runnable {
-          myInvokeOnDisposal.unregister(fallbackRunnable)
-          block(true)
+        constraint.scheduleExpirable(runOnce.runnable {
+          myInvokeOnDisposal.unregister(unscheduledRunnable)
+          retryDispatchRunnable.run()
         })
       }
     }
@@ -211,7 +201,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean = false
     override fun doSchedule(context: CoroutineContext,
-                            block: (isRetryDispatchNeeded: Boolean) -> Unit) = throw UnsupportedOperationException()
+                            retryDispatchRunnable: Runnable) = throw UnsupportedOperationException()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       resetAttemptCount()
@@ -230,7 +220,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
         // The continuation block MUST be invoked at some point in order to give the coroutine a chance
         // to handle the cancellation exception and exit gracefully.
         // At this point we can only provide a guarantee to resume it on EDT with a proper modality state.
-        fallbackDispatch(context) { block.run() }
+        fallbackDispatch(context, block)
       }
     }
 
@@ -248,8 +238,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     }
   }
 
-  open class FallbackDispatchException internal constructor(message: String) : Exception(message)
-
   /**
    * Thrown at a cancellation point when the executor is unable to arrange the requested context after a reasonable number of attempts.
    *
@@ -257,11 +245,9 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    *          The fallback context is EDT with a proper modality state, no other guarantee is made.
    */
   class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Collection<CoroutineDispatcher>)
-    : FallbackDispatchException("Too many reschedule requests, probably constraints can't be satisfied all together: " +
-                                lastConstraints.joinToString())
+    : Exception("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
 
-  class DisposedException(disposable: Disposable)
-    : FallbackDispatchException("Already disposed: $disposable")
+  class DisposedException(disposable: Disposable) : CancellationException("Already disposed: $disposable")
 
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
@@ -291,17 +277,17 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       }
     }
 
-    internal fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: () -> Unit) {
+    internal fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: Runnable) {
       val primaryDispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
       val fallbackDispatcher = primaryDispatcher?.chainFallbackDispatcher ?: this.chainFallbackDispatcher
 
 //      fallbackDispatcher.dispatchIfNeededOrInvoke(context, block)
       if (fallbackDispatcher !== Unconfined) {
         // Invoke later unconditionally to avoid running arbitrary code from inside dispose() handler.
-        fallbackDispatcher.dispatch(context, Runnable { block() })
+        fallbackDispatcher.dispatch(context, block)
       }
       else {
-        block()
+        block.run()
       }
     }
 

@@ -209,6 +209,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myStack.peek();
   }
 
+  @Nullable
+  @Override
+  public DfaValue getStackValue(int offset) {
+    int index = myStack.size() - 1 - offset;
+    return index < 0 ? null : myStack.get(index);
+  }
+
   @Override
   public void push(@NotNull DfaValue value) {
     myCachedHash = null;
@@ -416,6 +423,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return index == -1 ? null : myEqClasses.get(index);
   }
 
+  /**
+   * Returns existing equivalence class index or -1 if not found
+   * @param dfaValue value to find a class for
+   * @return class index or -1 if not found
+   */
   int getEqClassIndex(@NotNull DfaValue dfaValue) {
     dfaValue = canonicalize(dfaValue);
     final int id = unwrap(dfaValue).getID();
@@ -796,6 +808,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     return applyCondition(condition);
+  }
+
+  @Override
+  public boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2) {
+    if (!(value1 instanceof DfaConstValue) && !(value1 instanceof DfaVariableValue)) return false;
+    if (!(value2 instanceof DfaConstValue) && !(value2 instanceof DfaVariableValue)) return false;
+    if (value1 == value2) return true;
+    int index1 = getEqClassIndex(value1);
+    int index2 = getEqClassIndex(value2);
+    return index1 != -1 && index1 == index2;
   }
 
   @Override

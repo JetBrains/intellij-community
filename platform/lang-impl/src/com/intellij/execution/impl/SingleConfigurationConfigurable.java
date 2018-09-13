@@ -61,7 +61,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myDisplayName = getSettings().getName();
     myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
 
-    myBrokenConfiguration = configuration instanceof UnknownRunConfiguration;
+    myBrokenConfiguration = !configuration.getType().isManaged();
     setFolderName(getSettings().getFolderName());
 
     setNameText(configuration.getName());
@@ -359,14 +359,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
-      boolean isUnknownRunConfiguration = settings.getConfiguration() instanceof UnknownRunConfiguration;
+      boolean isManagedRunConfiguration = settings.getConfiguration().getType().isManaged();
       myStoreProjectConfiguration = settings.isShared();
-      myCbStoreProjectConfiguration.setEnabled(!isUnknownRunConfiguration);
+      myCbStoreProjectConfiguration.setEnabled(isManagedRunConfiguration);
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
       myIsAllowRunningInParallel = settings.getConfiguration().isAllowRunningInParallel();
-      myIsAllowRunningInParallelCheckBox.setEnabled(!isUnknownRunConfiguration);
+      myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
       myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
       myIsAllowRunningInParallelCheckBox.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }

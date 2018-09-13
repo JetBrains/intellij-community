@@ -396,6 +396,28 @@ public class PluginManagerConfigurableNew
     return panel;
   }
 
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    if (StringUtil.isEmpty(option) && myCurrentSearchPanel.isEmpty()) {
+      return null;
+    }
+
+    return () -> {
+      hideSearchPanel();
+
+      if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
+        myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
+      }
+
+      mySearchTextField.setTextIgnoreEvents(option);
+
+      if (!StringUtil.isEmpty(option)) {
+        showSearchPanel(option);
+      }
+    };
+  }
+
   private void updateSearchForSelectedTab(int index) {
     String text;
     String historyPropertyName;

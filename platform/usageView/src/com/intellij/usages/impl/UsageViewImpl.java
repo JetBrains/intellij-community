@@ -1862,7 +1862,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (key == CommonDataKeys.PROJECT) {
         sink.put(CommonDataKeys.PROJECT, myProject);
       }

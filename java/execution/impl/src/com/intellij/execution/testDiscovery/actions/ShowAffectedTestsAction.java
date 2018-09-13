@@ -43,7 +43,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
@@ -61,6 +64,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -476,10 +480,28 @@ public class ShowAffectedTestsAction extends AnAction {
 
   @NotNull
   public static List<String> getRelativeAffectedPaths(@NotNull Project project, @NotNull Collection<Change> changes) {
-    return changes.stream()
-      .map(Change::getVirtualFile)
-      .filter(Objects::nonNull)
-      .map(file -> "/" + VfsUtilCore.getRelativePath(file, project.getBaseDir()))
-      .collect(Collectors.toList());
+    String basePath = project.getBasePath();
+    VirtualFile baseDir = basePath == null ? null : LocalFileSystem.getInstance().findFileByPath(basePath);
+    return baseDir == null ?
+           Collections.emptyList() :
+           changes.stream()
+             .map(change -> relativePath(baseDir, change))
+             .filter(Objects::nonNull)
+             .map(s -> "/" + s)
+             .collect(Collectors.toList());
+  }
+
+  @Nullable
+  private static String relativePath(@NotNull VirtualFile baseDir, @NotNull Change change) {
+    VirtualFile file = change.getVirtualFile();
+
+    if (file == null) {
+      ContentRevision before = change.getBeforeRevision();
+      if (before != null) {
+        return VcsFileUtil.relativePath(baseDir, before.getFile());
+      }
+    }
+
+    return file == null ? null : VfsUtilCore.getRelativePath(file, baseDir);
   }
 }

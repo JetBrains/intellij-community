@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.HotfixData;
@@ -152,17 +153,22 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return null;
     }
 
+    final String okActionName = CommonBundle.getAddButtonText();
+    final String cancelActionName = CommonBundle.getCancelButtonText();
+
     if (files.size() == 1 && singleFileTitle != null && singleFilePromptTemplate != null) {
       String filePrompt = MessageFormat.format(singleFilePromptTemplate,
                                                FileUtil.getLocationRelativeToUserHome(files.get(0).getPresentableUrl()));
       if (ConfirmationDialog
-        .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
+        .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon(),
+                                okActionName, cancelActionName)) {
         return files;
       }
       return null;
     }
 
-    SelectFilesDialog dlg = SelectFilesDialog.init(myProject, files, prompt, confirmationOption, true, false);
+    SelectFilesDialog dlg = SelectFilesDialog.init(myProject, files, prompt, confirmationOption, true, false,
+                                                   okActionName, cancelActionName);
     dlg.setTitle(title);
     if (!confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);

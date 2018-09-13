@@ -563,7 +563,7 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof WindowEvent) {
+    if (e instanceof WindowEvent || e instanceof FocusEvent) {
       ActivityTracker.getInstance().inc();
     }
 

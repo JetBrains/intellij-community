@@ -61,7 +61,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   private int currentLine;
   private final boolean myEnabled;
 
-  ShowDiffFromAnnotation(final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
+  ShowDiffFromAnnotation(@NotNull FileAnnotation fileAnnotation, @NotNull AbstractVcs vcs, @NotNull VirtualFile file) {
     ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     myFileAnnotation = fileAnnotation;
     myVcs = vcs;

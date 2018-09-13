@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -60,26 +61,20 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
-    myRegionTree = new RangeMarkerTree<FoldRegionImpl>(editor.getDocument()) {
+    myRegionTree = new HardReferencingRangeMarkerTree<FoldRegionImpl>(editor.getDocument()) {
       @NotNull
       @Override
-      protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
-                                                     int start,
-                                                     int end,
-                                                     boolean greedyToLeft,
-                                                     boolean greedyToRight,
-                                                     boolean stickingToRight,
-                                                     int layer) {
-        return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
-          @Override
-          protected Getter<FoldRegionImpl> createGetter(@NotNull FoldRegionImpl region) {
-            // Fold region shouldn't disappear even if no one holds a reference to it, so folding tree needs a strong reference to a region
-            return region;
-          }
-
+      protected Node<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                   int start,
+                                                   int end,
+                                                   boolean greedyToLeft,
+                                                   boolean greedyToRight,
+                                                   boolean stickingToRight,
+                                                   int layer) {
+        return new Node<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
           @Override
           void onRemoved() {
-            for (Getter<FoldRegionImpl> getter: intervals) {
+            for (Getter<FoldRegionImpl> getter : intervals) {
               removeRegionFromGroup(getter.get());
             }
           }
@@ -90,6 +85,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       @Override
       protected boolean isFoldingEnabled() {
         return FoldingModelImpl.this.isFoldingEnabled();
+      }
+
+      @Override
+      protected int getBlockInlaysHeight(int startOffset, int endOffset) {
+        return EditorUtil.getTotalInlaysHeight(myEditor.getInlayModel().getBlockElementsInRange(startOffset, endOffset));
       }
     };
     myFoldRegionsProcessed = false;
@@ -205,7 +205,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
       ((ScrollingModelImpl)myEditor.getScrollingModel()).finishAnimation();
-      mySavedCaretShift = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
+      mySavedCaretShift = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
     }
 
     myIsBatchFoldingProcessing = true;
@@ -454,7 +454,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     if (mySavedCaretShift > 0) {
       final ScrollingModel scrollingModel = myEditor.getScrollingModel();
       scrollingModel.disableAnimation();
-      scrollingModel.scrollVertically(myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift);
+      scrollingModel.scrollVertically(myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift);
       scrollingModel.enableAnimation();
     }
   }
@@ -490,6 +490,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       return 0;
     }
     return myFoldTree.getTotalNumberOfFoldedLines();
+  }
+
+  int getHeightOfFoldedBlockInlaysBefore(int offset) {
+    return myFoldTree.getHeightOfFoldedBlockInlaysBefore(offset);
+  }
+
+  int getTotalHeightOfFoldedBlockInlays() {
+    return myFoldTree.getTotalHeightOfFoldedBlockInlays();
   }
 
   @Override

@@ -1402,6 +1402,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
 
+      if (myLastTimePerformed == lastEventCount && !Registry.is("actionSystem.always.update.toolbar.actions")) {
+        return;
+      }
+
       boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
       try {

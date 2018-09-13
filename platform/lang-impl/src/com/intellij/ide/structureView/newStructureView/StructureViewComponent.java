@@ -142,7 +142,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
 
     myStructureTreeModel = new StructureTreeModel(myTreeStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, this);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
 

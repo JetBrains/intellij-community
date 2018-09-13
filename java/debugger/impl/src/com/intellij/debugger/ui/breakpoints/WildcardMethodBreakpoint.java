@@ -127,10 +127,6 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
       return;
     }
     if (isEmulated()) {
-      if (!MethodBreakpointBase.canBeEmulated(debugProcess)) {
-        disableEmulation();
-        return;
-      }
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
       Pattern pattern = PatternUtil.fromMask(getClassPattern());

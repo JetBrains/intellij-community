@@ -216,7 +216,7 @@
       <action id="Diff.FocusOppositePaneAndScroll" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
       <action id="Diff.ShowSettingsPopup" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Diff Settings Popup..."/>
-      <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalToolsSmall"
+      <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalTools"
               text="Show Diff in External Tool"/>
       <separator/>
 
@@ -673,8 +673,8 @@
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
 
-      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
-      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
+      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.ToolbarDecorator.Import"/>
+      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.ToolbarDecorator.Export"/>
 
       <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
       <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
@@ -814,7 +814,6 @@
           <abbreviation value="shm"/>
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
-        <action id="DialogResizer" internal="true" class="com.intellij.internal.ui.DialogResizerAction" text="Dialog Resizer"/>
         <action id="HidpiInfo" internal="true" class="com.intellij.internal.HidpiInfo" text="Show &amp;HiDPI Info"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig" text="&amp;GrayFilter"/>
         <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig" text="&amp;TextGrayFilter"/>

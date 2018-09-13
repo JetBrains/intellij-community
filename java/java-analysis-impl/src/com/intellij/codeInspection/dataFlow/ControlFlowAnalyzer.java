@@ -1373,7 +1373,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
-      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, type, i));
+      addInstruction(new BinopInstruction(op, expression, type, i));
 
       lExpr = rExpr;
       lType = rType;

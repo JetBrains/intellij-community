@@ -57,8 +57,13 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return bindings;
     }
 
+    return getAllCandidates();
+  }
+
+  @NotNull
+  protected List<GroovyResolveResult> getAllCandidates() {
     for (GroovyResolveKind kind : myAcceptableKinds) {
-      Collection<GroovyResolveResult> results = getCandidates(false, kind);
+      List<GroovyResolveResult> results = getAllCandidates(kind);
       if (!results.isEmpty()) {
         return ContainerUtil.newArrayList(ResolveUtil.filterSameSignatureCandidates(
           filterCorrectParameterCount(results)
@@ -69,7 +74,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     return Collections.emptyList();
   }
 
-  private List<GroovyResolveResult> filterCorrectParameterCount(Collection<GroovyResolveResult> candidates) {
+  protected List<GroovyResolveResult> filterCorrectParameterCount(Collection<? extends GroovyResolveResult> candidates) {
     PsiType[] argumentTypes = myArgumentTypes.getValue();
     if (argumentTypes == null) return ContainerUtil.newArrayList(candidates);
     final List<GroovyResolveResult> result = ContainerUtil.newSmartList();
@@ -87,7 +92,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     return ContainerUtil.newArrayList(candidates);
   }
 
-  private List<GroovyResolveResult> filterMethodCandidates(List<GroovyResolveResult> candidates) {
+  protected List<GroovyResolveResult> filterMethodCandidates(List<GroovyResolveResult> candidates) {
     if (candidates.size() <= 1) return candidates;
 
     final List<GroovyResolveResult> results = ContainerUtil.newArrayList();

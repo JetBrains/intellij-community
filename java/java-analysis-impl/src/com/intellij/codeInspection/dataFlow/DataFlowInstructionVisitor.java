@@ -49,16 +49,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         }
       } else {
         DfaValue value = memState.peek();
-        // Reporting of floating zero is skipped, because this produces false-positives on the code like
-        // if(x == -0.0) x = 0.0;
-        if (value instanceof DfaVariableValue || (value instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)value).getValue()))) {
-          DfaMemoryState copy = memState.createCopy();
-          copy.pop();
-          DfaValue target = copy.peek();
-          boolean sameValue =
-            !isAssignmentToDefaultValueInConstructor(instruction, runner, target) &&
-            !copy.applyCondition(runner.getFactory().createCondition(value, DfaRelationValue.RelationType.NE, target));
-          mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
+        DfaValue target = memState.getStackValue(1);
+        if (target != null && memState.areEqual(value, target) &&
+            !(value instanceof DfaConstValue && isFloatingZero(((DfaConstValue)value).getValue())) &&
+            !isAssignmentToDefaultValueInConstructor(instruction, runner, target)) {
+          mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
         }
         else {
           mySameValueAssigned.put(left, Boolean.FALSE);
@@ -94,6 +89,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return method != null && method.isConstructor();
   }
 
+  // Reporting of floating zero is skipped, because this produces false-positives on the code like
+  // if(x == -0.0) x = 0.0;
   private static boolean isFloatingZero(Object value) {
     if (value instanceof Double) {
       return ((Double)value).doubleValue() == 0.0;

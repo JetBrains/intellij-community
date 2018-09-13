@@ -7,12 +7,13 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InactiveEditorRule implements GetDataRule {
   @Override
   @Nullable
-  public Object getData(final DataProvider dataProvider) {
+  public Object getData(@NotNull final DataProvider dataProvider) {
     return dataProvider.getData(CommonDataKeys.EDITOR.getName());
   }
 }

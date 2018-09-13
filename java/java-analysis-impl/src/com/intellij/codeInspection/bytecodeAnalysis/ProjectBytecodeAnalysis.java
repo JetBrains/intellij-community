@@ -514,7 +514,7 @@ public class ProjectBytecodeAnalysis {
       }
       return c1;
     }).nonNull().findFirst().orElse(null);
-    if(soleContract != null) {
+    if (soleContract != null) {
       contractClauses =
         Collections.singletonList(StandardMethodContract.trivialContract(soleContract.getParameterCount(), soleContract.getReturnValue()));
     }
@@ -571,11 +571,11 @@ public class ProjectBytecodeAnalysis {
       String className = StringUtil.getShortName(internalClassName, '/');
       PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
       if (aPackage == null) {
-        PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope
-          .allScope(myProject));
-        if(psiClass != null) {
+        PsiClass psiClass = JavaPsiFacade.getInstance(myProject)
+          .findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.allScope(myProject));
+        if (psiClass != null) {
           PsiModifierListOwner compiledClass = PsiUtil.preferCompiledElement(psiClass);
-          if(compiledClass instanceof ClsClassImpl) {
+          if (compiledClass instanceof ClsClassImpl) {
             return compiledClass.getContainingFile().getVirtualFile();
           }
         }
@@ -651,4 +651,4 @@ class ParameterAnnotations {
   }
 }
 
-class EquationsLimitException extends Exception {}
+class EquationsLimitException extends Exception { }

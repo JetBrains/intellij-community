@@ -60,7 +60,7 @@ public class PyTokenSeparatorGenerator implements TokenSeparatorGenerator {
   }
 
   private static boolean isStatementOrFunction(PsiElement element) {
-    return element instanceof PyFunction || element instanceof PyStatement;
+    return element instanceof PyStatement;
   }
 
   private static ASTNode createSpace(PsiManager manager) {

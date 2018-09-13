@@ -653,7 +653,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     return myStructureViewComponent;
   }
 
-  private Object getData(final String dataId) {
+  private Object getData(@NotNull String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       VirtualFile file = getSelectedPropertiesFile();
       return file == null ? null : new FileSelectInContext(myProject, file);

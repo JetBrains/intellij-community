@@ -594,7 +594,7 @@ public class ShelvedChangesViewManager implements Disposable {
       String fileName;
       String directory;
       if (pos >= 0) {
-        directory = path.substring(0, pos).replace(File.separatorChar, File.separatorChar);
+        directory = path.substring(0, pos);
         fileName = path.substring(pos+1);
       }
       else {

@@ -224,7 +224,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   // cannot be private - used externally
   fun writeExternal(element: Element) {
     val configuration = configuration
-    if (configuration !is UnknownRunConfiguration) {
+    if (configuration.type.isManaged) {
       if (isTemplate) {
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
       }
@@ -263,12 +263,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
     serializeConfigurationInto(configuration, element)
 
-    if (configuration !is UnknownRunConfiguration) {
+    if (configuration.type.isManaged) {
       runnerSettings.getState(element)
       configurationPerRunnerSettings.getState(element)
     }
 
-    if (configuration !is UnknownRunConfiguration) {
+    if (configuration.type.isManaged) {
       manager.writeBeforeRunTasks(configuration)?.let {
         element.addContent(it)
       }
@@ -393,9 +393,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   override fun getSchemeState(): SchemeState? {
     val configuration = _configuration
-    return when (configuration) {
-      null -> SchemeState.UNCHANGED
-      is UnknownRunConfiguration -> if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+    return when {
+      configuration == null -> SchemeState.UNCHANGED
+      configuration is UnknownRunConfiguration -> if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+      !configuration.type.isManaged -> SchemeState.NON_PERSISTENT
       else -> null
     }
   }
