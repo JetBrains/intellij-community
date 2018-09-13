@@ -232,7 +232,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
      */
     @NotNull
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
-      return myStatusMerger.getMergedStatusInfo(myChangesOutput);
+      return myStatusMerger.merge(myChangesOutput);
     }
 
     private class MyMergedChange extends MergedChange {

@@ -20,7 +20,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 
 abstract class VcsStatusMerger<S> {
-  fun getMergedStatusInfo(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
+  fun merge(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
     statuses.singleOrNull()?.let { return it.map { MergedStatusInfo(it) } }
 
     val pathsToStatusesMap = statuses.map { infos ->
@@ -36,13 +36,13 @@ abstract class VcsStatusMerger<S> {
         statusesList.add(status)
       }
 
-      result.add(MergedStatusInfo(getMergedStatusInfo(path, statusesList), statusesList))
+      result.add(MergedStatusInfo(merge(path, statusesList), statusesList))
     }
 
     return result
   }
 
-  private fun getMergedStatusInfo(path: String, statuses: List<S>): S {
+  private fun merge(path: String, statuses: List<S>): S {
     val types = statuses.map { getType(it) }.distinct()
 
     if (types.size == 1) {

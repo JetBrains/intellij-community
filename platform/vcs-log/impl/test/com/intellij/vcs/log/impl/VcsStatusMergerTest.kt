@@ -15,7 +15,7 @@ class VcsStatusMergerTest {
                           listOf(modified("file1"),
                                  modified("file2"),
                                  modified("file4")))
-    val mergedStatusInfo = VcsFileStatusInfoMerger().getMergedStatusInfo(statuses)
+    val mergedStatusInfo = VcsFileStatusInfoMerger().merge(statuses)
     assertEquals(listOf(modified("file1"),
                         modified("file2")), mergedStatusInfo.map { it.statusInfo })
   }
@@ -24,7 +24,7 @@ class VcsStatusMergerTest {
   fun renamedModifiedTest() {
     val statuses = listOf(listOf(renamed("before", "after")),
                           listOf(modified("after")))
-    val mergedStatusInfo = VcsFileStatusInfoMerger().getMergedStatusInfo(statuses)
+    val mergedStatusInfo = VcsFileStatusInfoMerger().merge(statuses)
     assertEquals(listOf(), mergedStatusInfo.map { it.statusInfo })
   }
 
@@ -32,7 +32,7 @@ class VcsStatusMergerTest {
   fun addedModifiedTest() {
     val statuses = listOf(listOf(added("file1")),
                           listOf(modified("file1")))
-    val mergedStatusInfo = VcsFileStatusInfoMerger().getMergedStatusInfo(statuses)
+    val mergedStatusInfo = VcsFileStatusInfoMerger().merge(statuses)
     assertEquals(listOf(modified("file1")), mergedStatusInfo.map { it.statusInfo })
   }
 
@@ -40,7 +40,7 @@ class VcsStatusMergerTest {
   fun deletedRenamedTest() {
     val statuses = listOf(listOf(renamed("before", "after")),
                           listOf(deleted("before")))
-    val mergedStatusInfo = VcsFileStatusInfoMerger().getMergedStatusInfo(statuses)
+    val mergedStatusInfo = VcsFileStatusInfoMerger().merge(statuses)
     assertEquals(listOf(deleted("before")), mergedStatusInfo.map { it.statusInfo })
   }
 
