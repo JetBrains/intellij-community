@@ -124,7 +124,7 @@ public class AbstractTreeBuilder implements Disposable {
 
 
   @NotNull
-  AbstractTreeNode createSearchingTreeNodeWrapper() {
+  AbstractTreeNode<Object> createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
   }
 
@@ -191,7 +191,7 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.doUpdateNode(node);
   }
 
-  protected boolean validateNode(final Object child) {
+  protected boolean validateNode(@NotNull Object child) {
     AbstractTreeStructure structure = getTreeStructure();
     return structure != null && structure.isValid(child);
   }
@@ -278,7 +278,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @deprecated
    */
   @Deprecated
-  public void buildNodeForElement(Object element) {
+  public void buildNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
   }
@@ -288,7 +288,7 @@ public class AbstractTreeBuilder implements Disposable {
    */
   @Deprecated
   @Nullable
-  public DefaultMutableTreeNode getNodeForElement(Object element) {
+  public DefaultMutableTreeNode getNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getNodeForElement(element, false);
   }
@@ -336,7 +336,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   @Nullable
-  protected Object findNodeByElement(final Object element) {
+  protected Object findNodeByElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.findNodeByElement(element);
   }
@@ -454,7 +454,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   @NotNull
-  public Promise<Object> revalidateElement(Object element) {
+  public Promise<Object> revalidateElement(@NotNull Object element) {
     AbstractTreeStructure structure = getTreeStructure();
     if (structure == null) {
       return Promises.rejectedPromise();

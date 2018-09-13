@@ -221,9 +221,10 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return -1;
   }
 
+  @NotNull
   public abstract SimpleNode[] getChildren();
 
-  public void accept(SimpleNodeVisitor visitor) {
+  public void accept(@NotNull SimpleNodeVisitor visitor) {
     visitor.accept(this);
   }
 

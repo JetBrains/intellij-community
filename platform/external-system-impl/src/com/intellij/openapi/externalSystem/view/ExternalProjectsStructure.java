@@ -79,6 +79,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;

@@ -24,13 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractTreeStructure {
+  @NotNull
   public abstract Object getRootElement();
-  public abstract Object[] getChildElements(Object element);
+  @NotNull
+  public abstract Object[] getChildElements(@NotNull Object element);
   @Nullable
-  public abstract Object getParentElement(Object element);
+  public abstract Object getParentElement(@NotNull Object element);
 
   @NotNull
-  public abstract NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor);
+  public abstract NodeDescriptor createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor);
 
   public abstract void commit();
   public abstract boolean hasSomethingToCommit();
@@ -60,19 +62,20 @@ public abstract class AbstractTreeStructure {
     return ActionCallback.DONE;
   }
 
-  public boolean isToBuildChildrenInBackground(Object element){
+  public boolean isToBuildChildrenInBackground(@NotNull Object element){
     return false;
   }
   
-  public boolean isValid(Object element) {
+  public boolean isValid(@NotNull Object element) {
     return true;
   }
 
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return false;
   }
 
-  public AsyncResult<Object> revalidateElement(Object element) {
+  @NotNull
+  public AsyncResult<Object> revalidateElement(@NotNull Object element) {
     return AsyncResult.done(element);
   }
 }

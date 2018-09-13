@@ -69,7 +69,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public final NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
+  public final NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)element;
     }
@@ -80,7 +80,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final boolean isToBuildChildrenInBackground(final Object element) {
+  public final boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor){
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       final Object[] cachedChildren = descriptor.getCachedChildren();
@@ -89,8 +89,9 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return false;
   }
 
+  @NotNull
   @Override
-  public final Object[] getChildElements(final Object element) {
+  public final Object[] getChildElements(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       Object[] cachedChildren = descriptor.getCachedChildren();
@@ -114,7 +115,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final Object getParentElement(final Object element) {
+  public final Object getParentElement(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       return ((HierarchyNodeDescriptor)element).getParentDescriptor();
     }
@@ -140,6 +141,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   @NotNull
   protected abstract Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor);
 
+  @NotNull
   @Override
   public final Object getRootElement() {
     return myRoot;

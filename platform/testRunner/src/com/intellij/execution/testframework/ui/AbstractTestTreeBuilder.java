@@ -41,7 +41,7 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder implem
   }
 
   @Override
-  public void repaintWithParents(final AbstractTestProxy testProxy) {
+  public void repaintWithParents(@NotNull AbstractTestProxy testProxy) {
     AbstractTestProxy current = testProxy;
     do {
       DefaultMutableTreeNode node = getNodeForElement(current);

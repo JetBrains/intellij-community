@@ -24,6 +24,7 @@ import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -1942,16 +1943,16 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertSame(myRoot.getElement(), myStructure.getParentElement(fabrique));
 
     myStructure.setReValidator(new ReValidator() {
-      @Nullable
+      @NotNull
       @Override
-      public AsyncResult<Object> revalidate(NodeElement element) {
+      public AsyncResult<Object> revalidate(@NotNull NodeElement element) {
         if (element == actionSystem) {
           return AsyncResult.done(newActionSystem);
         }
         else if (element == fabrique) {
           return AsyncResult.done(newFabrique);
         }
-        return null;
+        return AsyncResult.done(null);
       }
     });
 
@@ -1985,11 +1986,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     };
     final Ref<Object> reValidatedElement = new Ref<>();
     myStructure.setReValidator(new ReValidator() {
-      @Nullable
+      @NotNull
       @Override
-      public AsyncResult<Object> revalidate(NodeElement element) {
+      public AsyncResult<Object> revalidate(@NotNull NodeElement element) {
         reValidatedElement.set(element);
-        return null;
+        return AsyncResult.done(null);
       }
     });
 

@@ -26,9 +26,10 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
-    LOG.assertTrue(element instanceof AbstractTreeNode, element != null ? element.getClass().getName() : null);
+  public Object[] getChildElements(@NotNull Object element) {
+    LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
     if (elements.stream().anyMatch(Objects::isNull)) LOG.error("node contains null child: " + treeNode);
@@ -53,12 +54,12 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isValid(Object element) {
+  public boolean isValid(@NotNull Object element) {
     return element instanceof AbstractTreeNode;
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof AbstractTreeNode){
       return ((AbstractTreeNode)element).getParent();
     }
@@ -67,7 +68,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
   }
 
