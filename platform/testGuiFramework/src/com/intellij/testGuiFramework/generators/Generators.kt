@@ -297,7 +297,7 @@ class JTreeGenerator : ComponentCodeGenerator<JTree> {
   override fun generate(cmp: JTree, me: MouseEvent, cp: Point): String {
     val path = getJTreePath(cmp, cmp.getPath(cp))
     if (me.isRightButton()) return "jTree($path).rightClickPath()"
-    return "jTree($path).clickLabel()"
+    return "jTree($path).clickPath()"
   }
 }
 
