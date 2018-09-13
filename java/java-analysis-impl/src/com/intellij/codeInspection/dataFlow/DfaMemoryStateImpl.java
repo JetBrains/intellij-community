@@ -429,9 +429,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * @return class index or -1 if not found
    */
   int getEqClassIndex(@NotNull DfaValue dfaValue) {
-    dfaValue = canonicalize(dfaValue);
-    final int id = unwrap(dfaValue).getID();
-    int[] classes = myIdToEqClassesIndices.get(id);
+    int[] classes = myIdToEqClassesIndices.get(unwrap(dfaValue).getID());
+    if (classes == null) {
+      dfaValue = canonicalize(dfaValue);
+      classes = myIdToEqClassesIndices.get(unwrap(dfaValue).getID());
+    }
 
     int result = -1;
     if (classes != null) {
@@ -495,6 +497,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return newBoxedValue;
   }
 
+  DfaVariableValue getCanonicalVariable(DfaValue val) {
+    EqClass eqClass = getEqClass(val);
+    return eqClass == null ? null : eqClass.getCanonicalVariable();
+  }
+
   /**
    * Unite equivalence classes containing given values
    *
@@ -503,7 +510,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * @return true if classes were successfully united.
    */
   private boolean uniteClasses(DfaValue val1, DfaValue val2) {
-    if (!mergeCanonical(val1, val2)) return false;
+    DfaVariableValue var1 = getCanonicalVariable(val1);
+    DfaVariableValue var2 = getCanonicalVariable(val2);
     Integer c1Index = getOrCreateEqClassIndex(val1);
     Integer c2Index = getOrCreateEqClassIndex(val2);
     if (c1Index == null || c2Index == null || c1Index.equals(c2Index)) {
@@ -546,18 +554,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myEqClasses.set(c2Index, null);
     checkInvariants();
 
-    return true;
-  }
-
-  private boolean mergeCanonical(DfaValue val1, DfaValue val2) {
-    EqClass c1 = getEqClass(val1);
-    EqClass c2 = getEqClass(val2);
-    if (c1 == null || c2 == null) return true;
-
-    DfaVariableValue var1 = c1.getCanonicalVariable();
-    DfaVariableValue var2 = c2.getCanonicalVariable();
     if (var1 == null || var2 == null || var1 == var2) return true;
-
     int compare = EqClass.CANONICAL_VARIABLE_COMPARATOR.compare(var1, var2);
     return compare < 0 ? convertQualifiers(var2, var1) : convertQualifiers(var1, var2);
   }
