@@ -928,7 +928,6 @@ public class AllIcons {
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.svg"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.svg"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.svg"); // 16x16
-    public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png"); // 16x16
     public static final Icon ZoomIn = IconLoader.getIcon("/general/zoomIn.svg"); // 16x16
     public static final Icon ZoomOut = IconLoader.getIcon("/general/zoomOut.svg"); // 16x16
 
@@ -1226,6 +1225,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon UninstallPlugin = IconLoader.getIcon("/general/uninstallPlugin.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png");
 
   }
 
