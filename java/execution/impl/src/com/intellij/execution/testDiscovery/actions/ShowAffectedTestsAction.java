@@ -67,8 +67,10 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
-import org.jetbrains.uast.visitor.AbstractUastVisitor;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -141,9 +143,9 @@ public class ShowAffectedTestsAction extends AnAction {
     if (key == null) return;
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
-    String presentableName =
-      PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
-    showDiscoveredTestsByMethods(project, dataContext, presentableName, Collections.emptyList(), method);
+    String presentableName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
+    DiscoveredTestsTree tree = showTree(project, dataContext, presentableName);
+    processMethods(project, new PsiMethod[]{method}, Collections.emptyList(), createTreeProcessor(tree), () -> tree.setPaintBusy(false));
   }
 
   private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
@@ -157,39 +159,44 @@ public class ShowAffectedTestsAction extends AnAction {
                                                   @NotNull Change[] changes,
                                                   @NotNull String title,
                                                   @NotNull DataContext dataContext) {
-    PsiMethod[] asJavaMethods = findMethods(project, changes);
-    List<String> filePaths = getRelativeAffectedPaths(project, Arrays.asList(changes));
+    DiscoveredTestsTree tree = showTree(project, dataContext, title);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
-    showDiscoveredTestsByMethods(project, dataContext, title, filePaths, asJavaMethods);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      PsiMethod[] methods = findMethods(project, changes);
+      List<String> filePaths = getRelativeAffectedPaths(project, Arrays.asList(changes));
+      processMethods(project, methods, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+    });
   }
 
   @NotNull
   public static PsiMethod[] findMethods(@NotNull Project project, @NotNull Change... changes) {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
-    List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
-      if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
-      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-      if (!index.isInSource(file)) return null;
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document == null) return null;
-      UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
-      if (uFile == null) return null;
+    List<PsiElement> methods = PsiDocumentManager.getInstance(project).commitAndRunReadAction(
+      () ->
+        FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+          if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
+          ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+          if (!index.isInSource(file)) return null;
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
+          Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document == null) return null;
 
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      List<PsiElement> physicalMethods = new ArrayList<>();
-      uFile.accept(new AbstractUastVisitor() {
-        @Override
-        public boolean visitMethod(@NotNull UMethod node) {
-          ContainerUtil.addAllNotNull(physicalMethods, node.getSourcePsi());
-          return true;
-        }
-      });
-
-      return physicalMethods;
-    });
+          List<PsiElement> physicalMethods = ContainerUtil.newSmartList();
+          psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+              UMethod method = UastContextKt.toUElement(element, UMethod.class);
+              if (method != null) {
+                ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());
+              }
+              super.visitElement(element);
+            }
+          });
+          return physicalMethods;
+        }));
 
     return methods
       .stream()
@@ -229,15 +236,6 @@ public class ShowAffectedTestsAction extends AnAction {
       if (!(prev instanceof PsiWhiteSpace)) return prev;
     }
     return at;
-  }
-
-  private static void showDiscoveredTestsByMethods(@NotNull Project project,
-                                                   @NotNull DataContext dataContext,
-                                                   @NotNull String title,
-                                                   @NotNull List<String> filePaths,
-                                                   @NotNull PsiMethod... methods) {
-    DiscoveredTestsTree tree = showTree(project, dataContext, title);
-    processMethods(project, methods, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
   }
 
   @NotNull

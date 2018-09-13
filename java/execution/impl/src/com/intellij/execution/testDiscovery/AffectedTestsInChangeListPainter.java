@@ -4,6 +4,7 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
@@ -121,14 +122,16 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
       Collection<Change> changes = list.getChanges();
       if (changes.isEmpty()) continue;
 
-      PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
-      List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
-      if (methods.length == 0 && paths.isEmpty()) continue;
-      ReadAction.run(
-        () -> ShowAffectedTestsAction.processMethods(myProject, methods, paths, (clazz, method, parameter) -> {
-          myCache.add(list.getId());
-          return false;
-        }, this::scheduleRefresh));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
+        List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
+        if (methods.length == 0 && paths.isEmpty()) return;
+        ReadAction.run(
+          () -> ShowAffectedTestsAction.processMethods(myProject, methods, paths, (clazz, method, parameter) -> {
+            myCache.add(list.getId());
+            return false;
+          }, this::scheduleRefresh));
+      });
     }
   }
 }
