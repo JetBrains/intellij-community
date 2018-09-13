@@ -130,14 +130,14 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
   }
 
-  protected abstract class UnparsedChanges<S> implements Changes {
+  protected abstract class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
-    @NotNull protected final List<List<S>> myChangesOutput;
-    @NotNull private final VcsStatusDescriptor<S> myDescriptor;
+    @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
+    @NotNull private final VcsStatusDescriptor<VcsFileStatusInfo> myDescriptor;
 
     public UnparsedChanges(@NotNull Project project,
-                           @NotNull List<List<S>> changesOutput,
-                           @NotNull VcsStatusDescriptor<S> descriptor) {
+                           @NotNull List<List<VcsFileStatusInfo>> changesOutput,
+                           @NotNull VcsStatusDescriptor<VcsFileStatusInfo> descriptor) {
       myProject = project;
       myChangesOutput = changesOutput;
       myDescriptor = descriptor;
@@ -154,7 +154,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
 
     @NotNull
     private List<Change> parseMergedChanges() throws VcsException {
-      List<MergedStatusInfo<S>> statuses = getMergedStatusInfo();
+      List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
       List<Change> changes = parseStatusInfo(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
       LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
       if (getParents().size() <= 1) return changes;
@@ -183,7 +183,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     @Override
     public Collection<String> getModifiedPaths(int parent) {
       Set<String> changes = ContainerUtil.newHashSet();
-      for (S status : myChangesOutput.get(parent)) {
+      for (VcsFileStatusInfo status : myChangesOutput.get(parent)) {
         if (myDescriptor.getSecondPath(status) == null) {
           changes.add(absolutePath(myDescriptor.getFirstPath(status)));
         }
@@ -195,7 +195,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     @Override
     public Collection<Couple<String>> getRenamedPaths(int parent) {
       Set<Couple<String>> renames = ContainerUtil.newHashSet();
-      for (S status : myChangesOutput.get(parent)) {
+      for (VcsFileStatusInfo status : myChangesOutput.get(parent)) {
         String secondPath = myDescriptor.getSecondPath(status);
         if (secondPath != null) {
           renames.add(Couple.of(absolutePath(myDescriptor.getFirstPath(status)), absolutePath(secondPath)));
@@ -225,7 +225,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
 
     @NotNull
-    protected abstract List<Change> parseStatusInfo(@NotNull List<S> changes, int parentIndex) throws VcsException;
+    protected abstract List<Change> parseStatusInfo(@NotNull List<VcsFileStatusInfo> changes, int parentIndex) throws VcsException;
 
     /*
      * This method mimics result of `-c` option added to `git log` command.
@@ -233,15 +233,15 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
      * If a commit is not a merge, all statuses are returned.
      */
     @NotNull
-    private List<MergedStatusInfo<S>> getMergedStatusInfo() {
+    private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myDescriptor.getMergedStatusInfo(myChangesOutput);
     }
 
     private class MyMergedChange extends MergedChange {
-      @NotNull private final MergedStatusInfo<S> myStatusInfo;
+      @NotNull private final MergedStatusInfo<VcsFileStatusInfo> myStatusInfo;
       @NotNull private final Supplier<List<Change>> mySourceChanges;
 
-      MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<S> statusInfo) {
+      MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<VcsFileStatusInfo> statusInfo) {
         super(change);
         myStatusInfo = statusInfo;
         mySourceChanges = Suppliers.memoize(() -> {

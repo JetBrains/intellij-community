@@ -47,7 +47,7 @@ public class HgCommit extends VcsChangesLazilyParsedDetails {
     myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
   }
 
-  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<VcsFileStatusInfo> {
+  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
     private UnparsedChanges(@NotNull Project project,
                             @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
       super(project, changesOutput, new VcsFileStatusInfoDescriptor());

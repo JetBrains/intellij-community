@@ -90,7 +90,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     return size;
   }
 
-  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<VcsFileStatusInfo> {
+  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
     @NotNull private final String myRootPath = ourPathsInterner.intern(getRoot().getPath());
 
     private UnparsedChanges(@NotNull Project project,
