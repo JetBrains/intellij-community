@@ -673,7 +673,7 @@ public static native Object choose(Object o1, Object o2);
     assert c == ['_, !null -> !null']
   }
 
-  void "test delegate to System.exit"() {
+  void "test delegate to System exit"() {
     def c = inferContracts("""
 public static void test(Object obj, int i) {
   System.exit(0);
