@@ -94,3 +94,25 @@ abstract class VcsStatusDescriptor<S> {
     }
   }
 }
+
+data class VcsFileStatusInfo(val type: Change.Type, val firstPath: String, val secondPath: String?) {
+  override fun toString(): String {
+    var s = type.toString() + " " + firstPath
+    if (secondPath != null) {
+      s += " -> $secondPath"
+    }
+    return s
+  }
+}
+
+class VcsFileStatusInfoDescriptor : VcsStatusDescriptor<VcsFileStatusInfo>() {
+  override fun createStatus(type: Change.Type, path: String, secondPath: String?): VcsFileStatusInfo {
+    return VcsFileStatusInfo(type, path, secondPath)
+  }
+
+  override fun getFirstPath(info: VcsFileStatusInfo): String = info.firstPath
+
+  override fun getSecondPath(info: VcsFileStatusInfo): String? = info.secondPath
+
+  override fun getType(info: VcsFileStatusInfo): Change.Type = info.type
+}

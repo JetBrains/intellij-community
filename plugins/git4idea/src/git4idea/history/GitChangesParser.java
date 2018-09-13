@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class GitChangesParser {
   @NotNull
   public static List<Change> parse(@NotNull Project project,
                                    @NotNull VirtualFile root,
-                                   @NotNull List<GitLogStatusInfo> statusInfos,
+                                   @NotNull List<VcsFileStatusInfo> statusInfos,
                                    @NotNull String hash,
                                    @NotNull Date date,
                                    @Nullable String parentsHash) throws VcsException {
@@ -47,7 +48,7 @@ public class GitChangesParser {
     GitRevisionNumber parentRevision = parentsHash == null ? null : new GitRevisionNumber(parentsHash);
 
     List<Change> result = new ArrayList<>();
-    for (GitLogStatusInfo statusInfo : statusInfos) {
+    for (VcsFileStatusInfo statusInfo : statusInfos) {
       result.add(parseChange(project, root, thisRevision, parentRevision, statusInfo));
     }
     return result;
@@ -58,7 +59,7 @@ public class GitChangesParser {
                                     @NotNull VirtualFile vcsRoot,
                                     @NotNull VcsRevisionNumber thisRevision,
                                     @Nullable VcsRevisionNumber parentRevision,
-                                    @NotNull GitLogStatusInfo statusInfo) throws VcsException {
+                                    @NotNull VcsFileStatusInfo statusInfo) throws VcsException {
     final ContentRevision before;
     final ContentRevision after;
     final String path = statusInfo.getFirstPath();
