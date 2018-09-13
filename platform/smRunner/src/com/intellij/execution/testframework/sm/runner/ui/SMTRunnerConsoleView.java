@@ -19,12 +19,10 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +96,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         }
 
         // print selected content
-        SMRunnerUtil.runInEventDispatchThread(() -> getPrinter().updateOnTestSelected(selectedTestProxy), ModalityState.NON_MODAL);
+        getPrinter().updateOnTestSelected(selectedTestProxy);
       }
     });
   }

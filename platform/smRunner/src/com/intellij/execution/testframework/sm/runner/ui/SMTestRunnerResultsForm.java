@@ -25,7 +25,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
@@ -38,7 +37,6 @@ import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -622,12 +620,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       return;
     }
 
-    SMRunnerUtil.runInEventDispatchThread(() -> {
-      if (myTreeBuilder.isDisposed()) {
-        return;
-      }
-      myTreeBuilder.select(testProxy, onDone);
-    }, ModalityState.NON_MODAL);
+    if (myTreeBuilder.isDisposed()) {
+      return;
+    }
+    myTreeBuilder.select(testProxy, onDone);
   }
 
   private void updateStatusLabel(final boolean testingFinished) {
