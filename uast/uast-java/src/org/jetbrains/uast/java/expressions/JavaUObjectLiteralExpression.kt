@@ -20,6 +20,8 @@ import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
+import org.jetbrains.uast.visitor.UastTypedVisitor
+import org.jetbrains.uast.visitor.UastVisitor
 
 class JavaUObjectLiteralExpression(
   override val psi: PsiNewExpression,
@@ -51,4 +53,12 @@ class JavaUObjectLiteralExpression(
 
   override fun multiResolve(): Iterable<ResolveResult> =
     psi.classReference?.multiResolve(false)?.asIterable() ?: emptyList()
+
+  override fun accept(visitor: UastVisitor) {
+    super<UCallExpressionEx>.accept(visitor)
+  }
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R {
+    return super<UCallExpressionEx>.accept(visitor, data)
+  }
 }
