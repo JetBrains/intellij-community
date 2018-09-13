@@ -238,7 +238,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       }
 
       @Override
-      protected void runOnYieldingDone(Runnable onDone) {
+      protected void runOnYieldingDone(@NotNull Runnable onDone) {
         SwingUtilities.invokeLater(onDone);
       }
     };

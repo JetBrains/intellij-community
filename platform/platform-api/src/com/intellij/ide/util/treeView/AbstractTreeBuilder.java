@@ -27,6 +27,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
@@ -124,15 +125,8 @@ public class AbstractTreeBuilder implements Disposable {
 
 
   @NotNull
-  AbstractTreeNode<Object> createSearchingTreeNodeWrapper() {
+  static AbstractTreeNode<Object> createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
-  }
-
-  @NotNull
-  public final AbstractTreeBuilder setClearOnHideDelay(final long clearOnHideDelay) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.setClearOnHideDelay(clearOnHideDelay);
-    return this;
   }
 
   @Nullable
@@ -345,12 +339,7 @@ public class AbstractTreeBuilder implements Disposable {
     return AbstractTreeUi.isLoadingNode(node);
   }
 
-  boolean isChildrenResortingNeeded(NodeDescriptor descriptor) {
-    return true;
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  void runOnYeildingDone(Runnable onDone) {
+  void runOnYieldingDone(@NotNull Runnable onDone) {
     AbstractTreeUi ui = getUi();
     if (ui == null) return;
 
@@ -376,10 +365,6 @@ public class AbstractTreeBuilder implements Disposable {
         if (!isDisposed()) runnable.run();
       });
     }
-  }
-
-  boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
-    return true;
   }
 
   public boolean isToEnsureSelectionOnFocusGained() {
@@ -547,8 +532,8 @@ public class AbstractTreeBuilder implements Disposable {
 
   @Nullable
   public static AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
-    final WeakReference ref = (WeakReference)tree.getClientProperty(TREE_BUILDER);
-    return (AbstractTreeBuilder)SoftReference.dereference(ref);
+    Reference<AbstractTreeBuilder> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
+    return SoftReference.dereference(ref);
   }
 
   @Nullable
