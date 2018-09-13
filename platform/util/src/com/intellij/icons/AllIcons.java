@@ -800,7 +800,6 @@ public class AllIcons {
   public static class General {
     public static final Icon ActualZoom = IconLoader.getIcon("/general/actualZoom.svg"); // 16x16
     public static final Icon Add = IconLoader.getIcon("/general/add.svg"); // 16x16
-    public static final Icon AddFavoritesList = IconLoader.getIcon("/general/addFavoritesList.svg"); // 16x16
     public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.svg"); // 16x16
     public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.svg"); // 16x16
     public static final Icon ArrowDownSmall = IconLoader.getIcon("/general/arrowDownSmall.svg"); // 9x5
@@ -933,6 +932,11 @@ public class AllIcons {
     public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png"); // 16x16
     public static final Icon ZoomIn = IconLoader.getIcon("/general/zoomIn.svg"); // 16x16
     public static final Icon ZoomOut = IconLoader.getIcon("/general/zoomOut.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Add */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon AddFavoritesList = AllIcons.General.Add;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
