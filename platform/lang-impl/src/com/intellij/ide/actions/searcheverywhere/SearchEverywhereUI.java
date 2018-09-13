@@ -7,8 +7,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
+import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -305,7 +307,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new ShowInFindToolWindowAction());
-    actionGroup.addAction(new ShowFilterAction());
+    actionGroup.addAction(new SearchEverywhereShowFilterAction(this));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -995,7 +997,11 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
   }
 
-  private class ShowFilterAction extends BigPopupUI.ShowFilterAction {
+  private class SearchEverywhereShowFilterAction extends ShowFilterAction {
+    public SearchEverywhereShowFilterAction(@NotNull Disposable parentDisposable) {
+      super(parentDisposable, myProject);
+    }
+
     @Override
     public boolean isEnabled() {
       return myContributorFilters.get(getSelectedContributorID()) != null;

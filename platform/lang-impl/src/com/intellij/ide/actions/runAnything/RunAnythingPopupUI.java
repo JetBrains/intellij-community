@@ -8,6 +8,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BigPopupUI;
+import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGeneralGroup;
@@ -19,6 +20,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -948,7 +950,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     res.setOpaque(false);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new ShowFilterAction());
+    actionGroup.addAction(new RunAnythingShowFilterAction(this));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -984,7 +986,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     resetFields();
   }
 
-  private class ShowFilterAction extends BigPopupUI.ShowFilterAction {
+  private class RunAnythingShowFilterAction extends ShowFilterAction {
+    public RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
+      super(parentDisposable, myProject);
+    }
+
     @Override
     protected boolean isEnabled() {
       return true;
