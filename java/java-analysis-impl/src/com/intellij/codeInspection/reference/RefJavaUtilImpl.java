@@ -40,7 +40,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     for (UElement element : findIn) {
       if (element == null) continue;
       element.accept(new AbstractUastVisitor() {
-
+                       @Override
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
