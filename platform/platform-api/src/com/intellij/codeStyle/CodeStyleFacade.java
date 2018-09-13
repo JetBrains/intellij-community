@@ -93,7 +93,7 @@ public abstract class CodeStyleFacade {
    * @param allowDocCommit Allow calculation using committed document.
    *                       <p>
    *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
-   * @return {@code 0}, if spacing cannot be calculated.
+   * @return non-negative spacing between end- and start-line tokens after the join.
    */
   @ApiStatus.Experimental
   public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
