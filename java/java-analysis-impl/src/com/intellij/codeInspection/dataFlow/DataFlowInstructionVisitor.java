@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,18 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
+  private final Map<PsiReferenceExpression, Boolean> mySameArguments = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
+
+  private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "min", "max").parameterCount(2),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "replace").parameterCount(2)
+  );
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -105,6 +116,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return StreamEx.ofKeys(mySameValueAssigned, Boolean::booleanValue);
   }
 
+  StreamEx<PsiReferenceExpression> pointlessSameArguments() {
+    return StreamEx.ofKeys(mySameArguments, Boolean::booleanValue);
+  }
+
   @Override
   protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
     myCCEInstructions.add(instruction);
@@ -166,6 +181,17 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     expression.accept(new ExpressionVisitor(value, memState));
     if (range == null) {
       reportConstantExpressionValue(value, memState, expression);
+    }
+  }
+
+  @Override
+  protected void beforeMethodCall(@NotNull PsiExpression expression,
+                                  @NotNull DfaCallArguments arguments,
+                                  @NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState memState) {
+    PsiReferenceExpression reference = USELESS_SAME_ARGUMENTS.getReferenceIfMatched(expression);
+    if (reference != null) {
+      mySameArguments.merge(reference, memState.areEqual(arguments.myArguments[0], arguments.myArguments[1]), Boolean::logicalAnd);
     }
   }
 

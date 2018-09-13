@@ -287,10 +287,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected void onInstructionProducesCCE(TypeCastInstruction instruction) {}
 
+  protected void beforeMethodCall(@NotNull PsiExpression expression,
+                                  @NotNull DfaCallArguments arguments,
+                                  @NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState memState) {
+
+  }
+
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
     DfaValueFactory factory = runner.getFactory();
     DfaCallArguments callArguments = popCall(instruction, factory, memState);
+
+    if (callArguments.myArguments != null && instruction.getExpression() != null) {
+      beforeMethodCall(instruction.getExpression(), callArguments, runner, memState);
+    }
 
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     finalStates.addAll(handleKnownMethods(instruction, runner, memState, callArguments));

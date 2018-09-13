@@ -292,6 +292,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                InspectionsBundle.message("dataflow.message.immutable.passed"));
 
     reportDuplicateAssignments(holder, reportedAnchors, visitor);
+    reportPointlessSameArguments(holder, reportedAnchors, visitor);
   }
 
   private void reportConstants(ProblemsHolder holder, DataFlowInstructionVisitor visitor, HashSet<PsiElement> reportedAnchors) {
@@ -362,6 +363,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
     holder.registerProblem(ref, MessageFormat.format("{0} <code>#ref</code> #loc is always ''{1}''", valueText, presentableName),
                            type, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+  }
+
+  private static void reportPointlessSameArguments(ProblemsHolder holder,
+                                                   HashSet<PsiElement> reportedAnchors,
+                                                   DataFlowInstructionVisitor visitor) {
+    visitor.pointlessSameArguments().forEach(expr -> {
+      PsiElement name = expr.getReferenceNameElement();
+      if (name != null && reportedAnchors.add(name)) {
+        holder.registerProblem(name, InspectionsBundle.message("dataflow.message.pointless.same.arguments"));
+      }
+    });
   }
 
   private void reportDuplicateAssignments(ProblemsHolder holder,
