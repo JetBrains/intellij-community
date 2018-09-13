@@ -611,10 +611,10 @@ public class PluginManagerConfigurableNew
         Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
         Set<String> excludeDescriptors = new HashSet<>();
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sort_by:featured");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sort_by:updates");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sort_by:downloads");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sort_by:rating");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
           List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
@@ -782,7 +782,7 @@ public class PluginManagerConfigurableNew
         if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
           attributes.add("repository:");
         }
-        attributes.add("sort_by:");
+        attributes.add("sortBy:");
         return attributes;
       }
 
@@ -806,8 +806,8 @@ public class PluginManagerConfigurableNew
             return myAllTagSorted;
           case "repository:":
             return UpdateSettings.getInstance().getPluginHosts();
-          case "sort_by:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updates");
+          case "sortBy:":
+            return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
         }
         return null;
       }
@@ -978,14 +978,13 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       protected List<String> getAttributes() {
-        return ContainerUtil.list("status:");
+        return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
       }
 
       @Nullable
       @Override
       protected List<String> getValues(@NotNull String attribute) {
-        return attribute.equals("status:") ? ContainerUtil
-          .list("disabled", "enabled", "inactive", "installed", "bundled", "invalid", "outdated", "uninstalled") : null;
+        return null;
       }
 
       @Override
