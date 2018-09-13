@@ -46,9 +46,9 @@ import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
@@ -86,7 +86,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     if (revisionNumber == null) return;
 
     final VcsException[] exc = new VcsException[1];
-    final List<Change> changes = new LinkedList<>();
+    final List<Change> changes = new ArrayList<>();
     final FilePath[] targetPath = new FilePath[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
                                                               "Loading revision " + revisionNumber.asString() + " contents", true) {
