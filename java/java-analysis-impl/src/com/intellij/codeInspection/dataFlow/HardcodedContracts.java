@@ -147,7 +147,16 @@ public class HardcodedContracts {
                   ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
                   ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse()))))
     .register(instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT),
-              (call, paramCount) -> equalsContracts(call));
+              (call, paramCount) -> equalsContracts(call))
+    .register(anyOf(
+      staticCall(JAVA_UTIL_OBJECTS, "equals").parameterCount(2),
+      staticCall("com.google.common.base.Objects", "equal").parameterCount(2)),
+              ContractProvider.list(() -> Arrays.asList(
+                singleConditionContract(ContractValue.argument(0), DfaRelationValue.RelationType.EQ, ContractValue.argument(1),
+                                        returnTrue()),
+                new StandardMethodContract(new ValueConstraint[]{NULL_VALUE, NOT_NULL_VALUE}, returnFalse()),
+                new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE, NULL_VALUE}, returnFalse())
+              )));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
