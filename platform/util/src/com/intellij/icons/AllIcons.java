@@ -868,7 +868,6 @@ public class AllIcons {
     public static final Icon InspectionsPause = IconLoader.getIcon("/general/inspectionsPause.svg"); // 14x14
     public static final Icon InspectionsTrafficOff = IconLoader.getIcon("/general/inspectionsTrafficOff.svg"); // 14x14
     public static final Icon InspectionsTypos = IconLoader.getIcon("/general/inspectionsTypos.svg"); // 14x14
-    public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
     public static final Icon Layout = IconLoader.getIcon("/general/layout.svg"); // 16x16
     public static final Icon LayoutEditorOnly = IconLoader.getIcon("/general/layoutEditorOnly.svg"); // 16x16
     public static final Icon LayoutEditorPreview = IconLoader.getIcon("/general/layoutEditorPreview.svg"); // 16x16
@@ -880,8 +879,7 @@ public class AllIcons {
     public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png"); // 8x8
     public static final Icon Modified = IconLoader.getIcon("/general/modified.svg"); // 24x16
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.svg"); // 16x16
-    public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
-    public static final Icon MouseShortcut = IconLoader.getIcon("/general/mouseShortcut.png"); // 13x13
+    public static final Icon Mouse = IconLoader.getIcon("/general/mouse.svg"); // 16x16
     public static final Icon Note = IconLoader.getIcon("/general/note.svg"); // 16x16
     public static final Icon NotificationError = IconLoader.getIcon("/general/notificationError.svg"); // 24x24
     public static final Icon NotificationInfo = IconLoader.getIcon("/general/notificationInfo.svg"); // 24x24
@@ -1132,6 +1130,11 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
+    public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Locate */
@@ -1148,6 +1151,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon MessageHistory = AllIcons.Vcs.History;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon MouseShortcut = IconLoader.getIcon("/general/mouseShortcut.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
     @SuppressWarnings("unused")
