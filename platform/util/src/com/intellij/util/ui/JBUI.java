@@ -1740,7 +1740,7 @@ public class JBUI {
     }
 
     //todo #UX-1 maybe move to popup
-    public static class SearchEverywhere {
+    public static class BigPopup {
       public static Color dialogBackground() {
         return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
       }
