@@ -8,7 +8,7 @@ class CastPreventsNPEDetection {
 
     void f() {
         ((ChildCastImpl)this).getParent().toString();
-        ((CastPreventsNPEDetection)this).getParent().toString();
+        ((<warning descr="Casting 'this' to 'CastPreventsNPEDetection' is redundant">CastPreventsNPEDetection</warning>)this).getParent().toString();
     }
 }
 
