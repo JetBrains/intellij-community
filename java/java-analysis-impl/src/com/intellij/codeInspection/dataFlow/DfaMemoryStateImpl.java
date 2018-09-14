@@ -504,32 +504,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue var2 = getCanonicalVariable(val2);
     Integer c1Index = getOrCreateEqClassIndex(val1);
     Integer c2Index = getOrCreateEqClassIndex(val2);
-    if (c1Index == null || c2Index == null || c1Index.equals(c2Index)) {
-      // Could be already united during mergeCanonical call
-      return true;
-    }
+    if (c1Index == null || c2Index == null || c1Index.equals(c2Index)) return true;
 
     if (!myDistinctClasses.unite(c1Index, c2Index)) return false;
 
     EqClass c1 = myEqClasses.get(c1Index);
     EqClass c2 = myEqClasses.get(c2Index);
 
-    Set<DfaVariableValue> vars = ContainerUtil.newTroveSet();
-    Set<DfaVariableValue> negatedVars = ContainerUtil.newTroveSet();
-    int[] cs = new int[c1.size() + c2.size()];
-    c1.set(0, cs, 0, c1.size());
-    c2.set(0, cs, c1.size(), c2.size());
-
-    int nConst = 0;
-    for (int c : cs) {
-      DfaValue dfaValue = unwrap(myFactory.getValue(c));
-      if (dfaValue instanceof DfaConstValue) nConst++;
-      if (dfaValue instanceof DfaVariableValue) {
-        vars.add((DfaVariableValue)dfaValue);
-      }
-      if (nConst > 1) return false;
-    }
-    if (ContainerUtil.intersects(vars, negatedVars)) return false;
+    if (c1.findConstant(true) != null && c2.findConstant(true) != null) return false;
 
     EqClass newClass = new EqClass(c1);
 
