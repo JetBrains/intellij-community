@@ -23,8 +23,6 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveUnusedAssignmentTest extends LightQuickFixTestCase {
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

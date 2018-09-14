@@ -33,8 +33,6 @@ public class AnnotateMethodTest extends LightQuickFixTestCase {
     return new LocalInspectionTool[]{new NullableStuffInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_5;

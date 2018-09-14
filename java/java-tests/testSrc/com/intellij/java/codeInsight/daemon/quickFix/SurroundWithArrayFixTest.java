@@ -20,11 +20,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.pom.java.LanguageLevel;
 
 public class SurroundWithArrayFixTest extends LightQuickFixParameterizedTestCase {
-   public void test() {
-     doAllTests();
-   }
-
-  @Override
+   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/surroundWithArray";
   }

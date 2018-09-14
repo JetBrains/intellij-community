@@ -7,8 +7,6 @@ import com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class WrapperTypeMayBePrimitiveFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
