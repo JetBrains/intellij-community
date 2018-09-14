@@ -6,6 +6,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.util.regex.Pattern
 
@@ -51,6 +55,14 @@ class CrossPlatformDistributionBuilder {
       Map<String, File> linuxFiles = collectFilesUnder(linuxDistPath)
       Map<String, File> macFiles = collectFilesUnder(macDistPath)
       def commonFiles = checkCommonFilesAreTheSame(linuxFiles, macFiles)
+
+      new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(zipDir, [
+        new ProductInfoLaunchData(OsFamily.WINDOWS.osName, "bin/${executableName}.bat", null, "bin/win/${executableName}64.exe.vmoptions",
+                                  null),
+        new ProductInfoLaunchData(OsFamily.LINUX.osName, "bin/${executableName}.sh", null, "bin/linux/${executableName}64.vmoptions",
+                                  LinuxDistributionBuilder.getFrameClass(buildContext)),
+        new ProductInfoLaunchData(OsFamily.MACOS.osName, "MacOS/$executableName", null, "bin/mac/${executableName}.vmoptions", null)
+      ])
 
       String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
@@ -138,6 +150,7 @@ class CrossPlatformDistributionBuilder {
           include(name: "fsnotifier*")
         }
       }
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "")
       buildContext.notifyArtifactBuilt(targetPath)
     }
   }
