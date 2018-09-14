@@ -285,7 +285,7 @@ class StateMerger {
       DfaVariableState variableState = state.getVariableState(var);
       LongRangeSet range = variableState.getFact(RANGE);
       if (range == null) {
-        range = LongRangeSet.fromType(var.getVariableType());
+        range = LongRangeSet.fromType(var.getType());
         if (range == null) return null;
       }
       merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::union);

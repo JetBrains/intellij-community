@@ -364,17 +364,17 @@ public class DfaUtil {
     return null;
   }
 
-  public static DfaValue boxUnbox(DfaValue value, PsiType type) {
+  public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (value instanceof DfaConstValue || value instanceof DfaUnboxedValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(((DfaVariableValue)value).getVariableType()))) {
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(value.getType()))) {
         DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value);
         return boxed == null ? DfaUnknownValue.getInstance() : boxed;
       }
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       if (value instanceof DfaBoxedValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(((DfaVariableValue)value).getVariableType()))) {
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
         return value.getFactory().getBoxedFactory().createUnboxed(value);
       }
     }

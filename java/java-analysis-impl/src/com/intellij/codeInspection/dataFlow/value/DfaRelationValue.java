@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -234,6 +235,12 @@ public class DfaRelationValue extends DfaValue {
   @NotNull
   public RelationType getRelation() {
     return myRelation;
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType() {
+    return PsiType.BOOLEAN;
   }
 
   @NonNls public String toString() {

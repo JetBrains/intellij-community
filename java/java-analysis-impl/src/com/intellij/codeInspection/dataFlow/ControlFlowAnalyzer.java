@@ -673,7 +673,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(loopVar, null, true));
       addInstruction(new PushInstruction(loopVar, null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT, null), null));
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getVariableType()));
+      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType()));
       addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
     }
@@ -807,7 +807,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         DfaVariableValue var = myInlinedBlockContext.myTarget;
         addInstruction(new PushInstruction(var, null, true));
         returnValue.accept(this);
-        generateBoxingUnboxingInstructionFor(returnValue, var.getVariableType());
+        generateBoxingUnboxingInstructionFor(returnValue, var.getType());
         if (myInlinedBlockContext.myForceNonNullBlockResult) {
           addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.nullableFunctionReturn.problem(returnValue)));
         }

@@ -273,8 +273,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (dfaNullability == null) {
         dfaNullability = DfaNullability.fromNullability(((DfaVariableValue)value).getInherentNullability());
       }
-      return myFactory.withFact(myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), Nullability.UNKNOWN),
-                                DfaFactType.NULLABILITY, dfaNullability);
+      return myFactory.withFact(myFactory.createTypeValue(value.getType(), Nullability.UNKNOWN), DfaFactType.NULLABILITY, dfaNullability);
     }
     return value;
   }
@@ -402,7 +401,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    return dfaValue instanceof DfaVariableValue && TypeConversionUtil.isFloatOrDoubleType(((DfaVariableValue)dfaValue).getVariableType());
+    return dfaValue instanceof DfaVariableValue && TypeConversionUtil.isFloatOrDoubleType(dfaValue.getType());
   }
 
 
@@ -455,7 +454,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return cacheable((DfaConstValue)valueToWrap);
       }
       if (valueToWrap instanceof DfaVariableValue) {
-        if (PsiType.BOOLEAN.equals(((DfaVariableValue)valueToWrap).getVariableType())) return true;
+        if (PsiType.BOOLEAN.equals(valueToWrap.getType())) return true;
         for (DfaValue value : getEquivalentValues(valueToWrap)) {
           if (value instanceof DfaConstValue && cacheable((DfaConstValue)value)) return true;
         }
@@ -910,9 +909,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return relationType == RelationType.NE;
     }
     if ((canBeNaN(dfaLeft) && !isNull(dfaRight)) || (canBeNaN(dfaRight) && !isNull(dfaLeft))) {
-      if (dfaLeft == dfaRight &&
-          dfaLeft instanceof DfaVariableValue &&
-          !(((DfaVariableValue)dfaLeft).getVariableType() instanceof PsiPrimitiveType)) {
+      if (dfaLeft == dfaRight && dfaLeft instanceof DfaVariableValue && !(dfaLeft.getType() instanceof PsiPrimitiveType)) {
         return !dfaRelation.isNonEquality();
       }
 
@@ -924,7 +921,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
-    if (!(dfaVar.getVariableType() instanceof PsiPrimitiveType)) {
+    if (!(dfaVar.getType() instanceof PsiPrimitiveType)) {
       if (value instanceof DfaConstValue) {
         Object constValue = ((DfaConstValue)value).getValue();
         if (constValue == null) {
@@ -1015,7 +1012,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyBoxedRelation(@NotNull DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
-    if (!TypeConversionUtil.isPrimitiveAndNotNull(dfaLeft.getVariableType())) return true;
+    if (!TypeConversionUtil.isPrimitiveAndNotNull(dfaLeft.getType())) return true;
 
     DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
     DfaValue boxedLeft = boxedFactory.createBoxed(dfaLeft);
@@ -1028,7 +1025,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       // from the fact "wrappers are not the same" it does not follow that "unboxed values are not equal"
       return true;
     }
-    PsiType type = dfaLeft.getVariableType();
+    PsiType type = dfaLeft.getType();
     if (!TypeConversionUtil.isPrimitiveWrapper(type)) {
       return true;
     }
@@ -1094,11 +1091,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyBooleanInequality(DfaValue var, DfaValue value) {
-    if (!(var instanceof DfaVariableValue) || !PsiType.BOOLEAN.equals(((DfaVariableValue)var).getVariableType())) return false;
+    if (!(var instanceof DfaVariableValue) || !PsiType.BOOLEAN.equals(var.getType())) return false;
     if (!(value instanceof DfaConstValue)) return false;
-    Object constValue = ((DfaConstValue)value).getValue();
-    if (!(constValue instanceof Boolean)) return false;
-    return applyRelation(var, myFactory.getBoolean(!((Boolean)constValue)), false);
+    Boolean constValue = ObjectUtils.tryCast(((DfaConstValue)value).getValue(), Boolean.class);
+    return constValue != null && applyRelation(var, myFactory.getBoolean(!constValue), false);
   }
 
   private boolean applyLessThanRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight) {
@@ -1128,14 +1124,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue var = (DfaVariableValue)value;
     PsiModifierListOwner owner = var.getPsiVariable();
     if (!(owner instanceof PsiMethod)) return false;
-    if (var.getVariableType() instanceof PsiPrimitiveType) return false;
+    if (var.getType() instanceof PsiPrimitiveType) return false;
     if (PropertyUtilBase.isSimplePropertyGetter((PsiMethod)owner)) return false;
     if (isNull(var)) return false;
     return true;
   }
 
   private static boolean isPrimitive(DfaValue value) {
-    return value instanceof DfaVariableValue && ((DfaVariableValue)value).getVariableType() instanceof PsiPrimitiveType;
+    return value instanceof DfaVariableValue && value.getType() instanceof PsiPrimitiveType;
   }
 
   private static boolean preserveConstantDistinction(final Object c1, final Object c2) {
@@ -1181,7 +1177,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (value instanceof DfaVariableValue) {
       DfaVariableValue varValue = (DfaVariableValue)value;
-      if (varValue.getVariableType() instanceof PsiPrimitiveType) return true;
+      if (varValue.getType() instanceof PsiPrimitiveType) return true;
       if (isNotNull(varValue)) return true;
       return getVariableState(varValue).getNullability() != Nullability.NULLABLE;
     }

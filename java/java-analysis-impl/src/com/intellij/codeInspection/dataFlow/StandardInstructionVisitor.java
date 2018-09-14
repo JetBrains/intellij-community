@@ -425,7 +425,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         memState.forceVariableFact((DfaVariableValue)value, DfaFactType.MUTABILITY, Mutability.MUTABLE);
       }
     }
-    if (value instanceof DfaVariableValue && !(((DfaVariableValue)value).getVariableType() instanceof PsiArrayType)) {
+    if (value instanceof DfaVariableValue && !(value.getType() instanceof PsiArrayType)) {
       if (instruction.shouldFlushFields() || !(instruction.getResultType() instanceof PsiPrimitiveType)) {
         // For now drop locality on every qualified call except primitive returning pure calls
         // as value might escape through the return value

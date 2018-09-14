@@ -93,7 +93,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     if (!(dest instanceof DfaConstValue)) return false;
     Object value = ((DfaConstValue)dest).getValue();
 
-    PsiType type = var.getVariableType();
+    PsiType type = var.getType();
     boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) || Long.valueOf(0L).equals(value) && PsiType.INT.equals(type);
     if (!isDefaultValue) return false;
     PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);

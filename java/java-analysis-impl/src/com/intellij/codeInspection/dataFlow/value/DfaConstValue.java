@@ -174,6 +174,7 @@ public class DfaConstValue extends DfaValue {
     return myValue.toString();
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return myType;
