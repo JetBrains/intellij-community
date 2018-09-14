@@ -5,8 +5,7 @@ import com.intellij.lexer.HtmlHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.html.HtmlFileImpl;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,19 +13,9 @@ public class HtmlIndexPatternBuilder extends XmlIndexPatternBuilder {
   @Nullable
   @Override
   public Lexer getIndexingLexer(@NotNull PsiFile file) {
-    if (file instanceof HtmlFileImpl) {
+    if (HtmlUtil.isHtmlFile(file)) {
       return new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS"));
     }
     return null;
   }
-
-  @Nullable
-  @Override
-  public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
-    if (file instanceof HtmlFileImpl) {
-      return XML_COMMENT_BIT_SET;
-    }
-    return null;
-  }
-
 }
