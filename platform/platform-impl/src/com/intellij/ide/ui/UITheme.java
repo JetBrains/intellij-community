@@ -10,7 +10,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,9 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.util.ui.JBUI.Borders.customLine;
+import static com.intellij.util.ui.JBUI.asUIResource;
 
 /**
  * @author Konstantin Bulenkov
@@ -256,13 +258,13 @@ public class UITheme {
         if (ints.size() == 4) {
           return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
         } else if (ints.size() == 5) {
-          return JBUI.Borders.customLine(ColorUtil.fromHex(ints.get(4)),
+          return asUIResource(customLine(ColorUtil.fromHex(ints.get(4)),
                                          Integer.parseInt(ints.get(0)),
                                          Integer.parseInt(ints.get(1)),
                                          Integer.parseInt(ints.get(2)),
-                                         Integer.parseInt(ints.get(3)));
+                                         Integer.parseInt(ints.get(3))));
         } else if (ColorUtil.fromHex(value, null) != null) {
-          return JBUI.Borders.customLine(ColorUtil.fromHex(value), 1);
+          return asUIResource(customLine(ColorUtil.fromHex(value), 1));
         } else {
           return Class.forName(value).newInstance();
         }
