@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -49,9 +36,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
   private static class RepeatedSpaceVisitor extends RegExpElementVisitor {
 
     private final ProblemsHolder myHolder;
-    private int myCount = 0;
-    private RegExpChar myFirstChar = null;
-    private boolean quoted = false;
+    private boolean myQuoted;
 
     RepeatedSpaceVisitor(ProblemsHolder holder) {
       myHolder = holder;
@@ -59,49 +44,44 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpChar(RegExpChar aChar) {
-      if (!quoted && !(aChar.getParent() instanceof RegExpClass) && aChar.getType() == RegExpChar.Type.CHAR && aChar.getValue() == ' ') {
-        if (myFirstChar == null) {
-          myFirstChar = aChar;
-        }
-        myCount++;
+      if (myQuoted || !isSpace(aChar) || isSpace(aChar.getPrevSibling())) {
+        return;
       }
-      else {
-        super.visitRegExpChar(aChar);
+      final PsiElement parent = aChar.getParent();
+      if (parent instanceof RegExpClass || parent instanceof RegExpCharRange) {
+        return;
+      }
+      int count = 1;
+      PsiElement next = aChar.getNextSibling();
+      while (isSpace(next)) {
+        count++;
+        next = next.getNextSibling();
+      }
+      if (count > 1) {
+        final String message = count + " consecutive spaces in RegExp";
+        final int offset = aChar.getStartOffsetInParent();
+        myHolder.registerProblem(parent, new TextRange(offset, offset + count), message, new RepeatedSpaceFix(count));
       }
     }
 
     @Override
     public void visitWhiteSpace(PsiWhiteSpace space) {
       super.visitWhiteSpace(space);
-      final String text = space.getText();
-      if (text.equals("\\Q")) {
-        quoted = true;
+      final String text = InjectedLanguageManager.getInstance(space.getProject()).getUnescapedText(space);
+      if ("\\Q".equals(text)) {
+        myQuoted = true;
       }
-      else if (text.equals("\\E")) {
-        quoted = false;
+      else if ("\\E".equals(text)) {
+        myQuoted = false;
       }
-      myFirstChar = null;
-      myCount = 0;
     }
 
-    @Override
-    public void visitRegExpClass(RegExpClass expClass) {
-      super.visitRegExpClass(expClass);
-      myFirstChar = null;
-      myCount = 0;
-    }
-
-    @Override
-    public void visitRegExpElement(RegExpElement element) {
-      super.visitRegExpElement(element);
-      if (myFirstChar != null && myCount > 1) {
-        final int offset = myFirstChar.getStartOffsetInParent();
-        final String message = myCount + " consecutive spaces in RegExp";
-        myHolder.registerProblem(myFirstChar.getParent(), new TextRange(offset, offset + myCount), message,
-                                 new RepeatedSpaceFix(myCount));
+    private static boolean isSpace(PsiElement element) {
+      if (!(element instanceof RegExpChar)) {
+        return false;
       }
-      myFirstChar = null;
-      myCount = 0;
+      final RegExpChar aChar = (RegExpChar)element;
+      return aChar.getType() == RegExpChar.Type.CHAR && aChar.getValue() == ' ';
     }
   }
 
@@ -132,20 +112,22 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
       if (!(element instanceof RegExpBranch)) {
         return;
       }
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
       final TextRange range = descriptor.getTextRangeInElement();
       final StringBuilder text = new StringBuilder();
-      final PsiElement[] children = element.getChildren();
+      PsiElement child = element.getFirstChild();
       boolean inserted = false;
-      for (PsiElement child : children) {
+      while (child != null) {
         if (!range.contains(child.getStartOffsetInParent())) {
-          text.append(child.getText());
+          text.append(injectedLanguageManager.getUnescapedText(child));
         }
         else if (!inserted) {
           text.append(" {").append(range.getLength()).append('}');
           inserted = true;
         }
+        child = child.getNextSibling();
       }
-      element.replace(RegExpFactory.createBranchFromText(text, element));
+      RegExpReplacementUtil.replaceInContext(element, text.toString());
     }
   }
 }
