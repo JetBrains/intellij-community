@@ -94,4 +94,5 @@ public class DataFlowInspectionAncientTest extends LightCodeInsightFixtureTestCa
   public void testSwitchEnumCases() { doTest(); }
 
   public void testSCR15406() { doTest(); }
+  public void testWrongParameter() { doTest(); }
 }
