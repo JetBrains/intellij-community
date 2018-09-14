@@ -1,8 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInspection.bytecodeAnalysis.data;
+package bytecodeAnalysis.data;
 
-import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectContract;
-import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectNotNull;
+import bytecodeAnalysis.*;
 
 import java.io.File;
 import java.io.FileReader;
@@ -49,9 +47,7 @@ public class Test01 {
   }
 
   @ExpectContract(pure = true)
-  static void v(Object o) {
-
-  }
+  static void v(Object o) { }
 
   @ExpectContract("null->null")
   static String toString1(Object o) {
@@ -114,9 +110,10 @@ public class Test01 {
 
   @ExpectNotNull
   public MySupplier lambdaBranching(@ExpectNotNull String s, String t, boolean b) {
-    if(b) {
+    if (b) {
       System.out.println(s);
-    } else {
+    }
+    else {
       System.out.println(t);
     }
     return () -> s.trim();
@@ -124,14 +121,14 @@ public class Test01 {
 
   @ExpectContract(value="null,_->fail", pure = true)
   public static void assertNotNull(@ExpectNotNull Object obj, String message) {
-    if(obj == null) {
+    if (obj == null) {
       throw new IllegalArgumentException(message);
     }
   }
 
   @ExpectContract(value="false,_,_->fail;true,_,_->true", pure = true)
   public static boolean assertTrue(boolean val, String message, int data) {
-    if(!val) {
+    if (!val) {
       throw new IllegalArgumentException(message+":"+data);
     }
     return val;
@@ -139,7 +136,7 @@ public class Test01 {
 
   @ExpectContract(value="true,_->fail;_,_->false", pure = true)
   public static boolean assertFalse(boolean val, String message) {
-    if(val) {
+    if (val) {
       throw new IllegalArgumentException(message);
     }
     return false;
@@ -246,7 +243,7 @@ public class Test01 {
 
   @ExpectContract(pure = true)
   void testThrow(@ExpectNotNull String s) {
-    if(s.isEmpty()) {
+    if (s.isEmpty()) {
       throw new IllegalArgumentException();
     }
   }
@@ -267,9 +264,7 @@ public class Test01 {
       Files.createDirectories(file.toPath());
       return true;
     }
-    catch (IOException ignored) {
-
-    }
+    catch (IOException ignored) { }
     return false;
   }
 
@@ -279,9 +274,7 @@ public class Test01 {
       Files.createDirectories(file.toPath());
       return true;
     }
-    catch (Throwable ignored) {
-
-    }
+    catch (Throwable ignored) { }
     return false;
   }
 
