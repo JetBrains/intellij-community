@@ -246,14 +246,14 @@ public class SearchUtil {
     if (label != null) {
       if (isComponentHighlighted(label, option, force, configurable)) {
         highlight = true;
-        hilightComponent(rootComponent, option);
+        highlightComponent(rootComponent, option);
       }
     }
     else if (rootComponent instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
       if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
         highlight = true;
-        hilightComponent(rootComponent, option);
+        highlightComponent(rootComponent, option);
       }
     }
     else if (rootComponent instanceof JTabbedPane) {
@@ -263,7 +263,7 @@ public class SearchUtil {
         final int index = getSelection(path, tabbedPane);
         if (index > -1 && index < tabbedPane.getTabCount()) {
           if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
-            hilightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
+            highlightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
           }
         }
       }
@@ -274,7 +274,7 @@ public class SearchUtil {
       if (path != null) {
         final int index = getSelection(path, tabbedPaneWrapper);
         if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
-          hilightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
+          highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
         }
       }
     }
@@ -290,7 +290,7 @@ public class SearchUtil {
             final String title = ((TitledBorder)border).getTitle();
             if (isComponentHighlighted(title, option, force, configurable)) {
               highlight = true;
-              hilightComponent(rootComponent, option);
+              highlightComponent(rootComponent, option);
               rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
             }
           }
@@ -305,7 +305,7 @@ public class SearchUtil {
     return highlight;
   }
 
-  private static void hilightComponent(@NotNull JComponent rootComponent, @NotNull String searchString) {
+  private static void highlightComponent(@NotNull JComponent rootComponent, @NotNull String searchString) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighligtingListener.TOPIC).highlight(rootComponent, searchString);
   }
 
