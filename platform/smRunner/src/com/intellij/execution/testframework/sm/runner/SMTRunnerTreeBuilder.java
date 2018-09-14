@@ -10,6 +10,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +22,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   private final AbstractTreeStructure myTreeStructure;
   private boolean myDisposed;
   private StructureTreeModel myTreeModel;
+  private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   public SMTRunnerTreeBuilder(final JTree tree, final SMTRunnerTreeStructure structure) {
     myTree = tree;
@@ -107,12 +109,13 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
 
   public void select(Object proxy, Runnable onDone) {
     if (!(proxy instanceof AbstractTestProxy)) return;
-    TreeUtil.promiseSelect(getTree(), visitor((AbstractTestProxy)proxy))
+    mySelectionAlarm.cancelAllRequests();
+    mySelectionAlarm.addRequest(() -> TreeUtil.promiseSelect(getTree(), visitor((AbstractTestProxy)proxy))
       .onSuccess(path -> {
         if (onDone != null) {
           onDone.run();
         }
-      });
+      }), 50);
   }
 
   @NotNull

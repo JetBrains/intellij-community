@@ -208,13 +208,15 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertFalse(proxy.isInProgress());
   }
 
-  public void testOnTestFailure_Twice() {
+  public void testOnTestFailure_Twice() throws InterruptedException {
     myMockResettablePrinter.resetIfNecessary();
     onTestStarted("some_test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 1", "trace 1", false, null, null));
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 2", "trace 2", false, null, null));
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
+    Thread.sleep(150);
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
     assertEquals("\nmsg 1\ntrace 1\n\nmsg 2\ntrace 2\n", myMockResettablePrinter.getStdErr());
   }
 
