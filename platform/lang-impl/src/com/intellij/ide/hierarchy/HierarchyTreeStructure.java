@@ -38,6 +38,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.tree.LeafState;
 import com.intellij.usageView.UsageViewLongNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ArrayUtil;
@@ -213,6 +214,14 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     public final boolean update() {
       return true;
     }
+  }
+
+  @NotNull
+  @Override
+  public LeafState getLeafState(@NotNull Object element) {
+    if (isAlwaysShowPlus()) return LeafState.NEVER;
+    LeafState state = super.getLeafState(element);
+    return state != LeafState.DEFAULT ? state : LeafState.ASYNC;
   }
 
   public boolean isAlwaysShowPlus() {

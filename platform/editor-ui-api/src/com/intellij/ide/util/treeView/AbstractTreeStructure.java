@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.tree.LeafState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,21 @@ public abstract class AbstractTreeStructure {
   
   public boolean isValid(@NotNull Object element) {
     return true;
+  }
+
+  /**
+   * @param element an object that represents a node in this tree structure
+   * @return a leaf state for the given element
+   * @see LeafState.Supplier#getLeafState()
+   */
+  @NotNull
+  public LeafState getLeafState(@NotNull Object element) {
+    if (isAlwaysLeaf(element)) return LeafState.ALWAYS;
+    if (element instanceof LeafState.Supplier) {
+      LeafState.Supplier supplier = (LeafState.Supplier)element;
+      return supplier.getLeafState();
+    }
+    return LeafState.DEFAULT;
   }
 
   public boolean isAlwaysLeaf(@NotNull Object element) {

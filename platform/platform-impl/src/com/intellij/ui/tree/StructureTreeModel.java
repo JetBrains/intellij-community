@@ -1,15 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
@@ -203,8 +200,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    // temporary fix for nodes in the Project View, which are non-leaf and have no children
-    return node == null || node.isLeaf(node.getUserObject() instanceof ProjectViewNode ? this::validateChildren : null);
+    return node == null || node.isLeaf(this::validateChildren);
   }
 
   @Override
@@ -259,7 +255,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     if (!isValid(parent)) return null;
 
     Object[] elements = structure.getChildElements(parent);
-    if (elements == null || elements.length == 0) return null;
+    if (elements.length == 0) return null;
 
     List<Node> list = new ArrayList<>(elements.length);
     for (Object element : elements) {
@@ -287,16 +283,16 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   private static final class Node extends DefaultMutableTreeNode {
     private final Reference<List<Node>> children = new Reference<>();
-    private final ThreeState isLeaf;
+    private final LeafState leafState;
 
     private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor parent) {
-      this(structure.createDescriptor(element, parent), getLeafState(structure, element));
+      this(structure.createDescriptor(element, parent), structure.getLeafState(element));
     }
 
-    private Node(@NotNull NodeDescriptor descriptor, @NotNull ThreeState isLeaf) {
-      super(descriptor, isLeaf != ThreeState.YES);
-      this.isLeaf = isLeaf;
-      if (isLeaf == ThreeState.YES) children.set(null); // validate children for leaf node
+    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState) {
+      super(descriptor, leafState != LeafState.ALWAYS);
+      this.leafState = leafState;
+      if (leafState == LeafState.ALWAYS) children.set(null); // validate children for leaf node
       update(); // an exception may be thrown while updating
     }
 
@@ -307,7 +303,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private boolean canReuse(@NotNull Node node, Object element) {
-      if (isLeaf != node.isLeaf) return false;
+      if (leafState != node.leafState) return false;
       if (element != null && !element.equals(getElement())) return false;
       userObject = node.userObject; // replace old descriptor
       return true;
@@ -319,7 +315,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private void invalidate() {
-      if (isLeaf != ThreeState.YES) {
+      if (leafState != LeafState.ALWAYS) {
         children.invalidate();
         LOG.debug("node invalidated: ", this);
         getChildren().forEach(Node::invalidate);
@@ -392,8 +388,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
-      if (isLeaf != ThreeState.UNSURE) return isLeaf.toBoolean();
-      if (validator != null) validator.accept(this);
+      if (leafState == LeafState.ALWAYS) return true;
+      if (leafState == LeafState.NEVER) return false;
+      if (leafState == LeafState.DEFAULT && validator != null) validator.accept(this);
       return children.isValid() && super.isLeaf();
     }
 
@@ -417,21 +414,5 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   @Override
   public String toString() {
     return String.valueOf(structure);
-  }
-
-  @NotNull
-  private static ThreeState getLeafState(@NotNull AbstractTreeStructure structure, @NotNull Object element) {
-    if (structure.isAlwaysLeaf(element)) return ThreeState.YES;
-    if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)element;
-      if (node.isAlwaysShowPlus()) return ThreeState.NO;
-      if (node.isAlwaysLeaf()) return ThreeState.YES;
-    }
-    else if (element instanceof SimpleNode) {
-      SimpleNode node = (SimpleNode)element;
-      if (node.isAlwaysShowPlus()) return ThreeState.NO;
-      if (node.isAlwaysLeaf()) return ThreeState.YES;
-    }
-    return ThreeState.UNSURE;
   }
 }
