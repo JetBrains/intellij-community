@@ -13,8 +13,13 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogDiffHandler;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.VcsChangesMerger;
+import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +28,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class FileHistoryUtil {
   @Nullable
@@ -41,11 +47,11 @@ public class FileHistoryUtil {
   @NotNull
   static List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details,
                                              @NotNull Condition<Change> isRelevant) {
-    List<Change> changes = ContainerUtil.filter(details.getChanges(), isRelevant);
+    List<Change> changes = filter(details.getChanges(), isRelevant);
     if (!changes.isEmpty()) return changes;
     if (details.getParents().size() > 1) {
       for (int parent = 0; parent < details.getParents().size(); parent++) {
-        List<Change> changesToParent = ContainerUtil.filter(details.getChanges(parent), isRelevant);
+        List<Change> changesToParent = filter(details.getChanges(parent), isRelevant);
         if (!changesToParent.isEmpty()) return changesToParent;
       }
     }
@@ -61,5 +67,65 @@ public class FileHistoryUtil {
   static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
     FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
     return VfsUtilCore.isAncestor(directory.getIOFile(), file.getIOFile(), false);
+  }
+
+  @Nullable
+  static Change createChangeToParents(int commitRow, @NotNull List<Integer> parentRows,
+                                      @NotNull VisiblePack visiblePack, @NotNull VcsLogDiffHandler diffHandler,
+                                      @NotNull VcsLogData logData) {
+    int commitIndex = visiblePack.getVisibleGraph().getRowInfo(commitRow).getCommit();
+    FilePath path = FileHistoryVisiblePack.filePath(visiblePack, commitIndex);
+    if (path == null) return null;
+    Hash commitHash = logData.getCommitId(commitIndex).getHash();
+    ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
+
+    List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
+    if (parentCommits.isEmpty() && commitRow + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
+      parentCommits = Collections.singletonList(visiblePack.getVisibleGraph().getRowInfo(commitRow + 1).getCommit());
+    }
+    if (parentCommits.isEmpty()) {
+      if (afterRevision == null) return null;
+      return new Change(null, afterRevision);
+    }
+
+    List<Hash> parentHashes = map(parentCommits, c -> logData.getCommitId(c).getHash());
+    List<Change> parentChanges = map2List(toCollection(zip(parentCommits, parentHashes)), parent -> {
+      ContentRevision beforeRevision = createContentRevision(parent.second, parent.first, visiblePack, diffHandler);
+      return new Change(beforeRevision, afterRevision);
+    });
+    if (parentChanges.size() <= 1) {
+      return getFirstItem(parentChanges);
+    }
+    return new MyVcsChangesMerger(commitHash, parentHashes, diffHandler).merge(path, parentChanges);
+  }
+
+  @Nullable
+  private static ContentRevision createContentRevision(@NotNull Hash commitHash, int commitIndex, @NotNull VcsLogDataPack visiblePack,
+                                                       @NotNull VcsLogDiffHandler diffHandler) {
+    boolean isDeleted = FileHistoryVisiblePack.isDeletedInCommit(visiblePack, commitIndex);
+    if (isDeleted) return null;
+    FilePath path = FileHistoryVisiblePack.filePath(visiblePack, commitIndex);
+    if (path == null) return null;
+    return diffHandler.createContentRevision(path, commitHash);
+  }
+
+  private static class MyVcsChangesMerger extends VcsChangesMerger {
+    @NotNull private final Hash myCommit;
+    @NotNull private final Hash myFirstParent;
+    @NotNull private final VcsLogDiffHandler myDiffHandler;
+
+    private MyVcsChangesMerger(@NotNull Hash commit, @NotNull List<Hash> parentCommits, @NotNull VcsLogDiffHandler diffHandler) {
+      myCommit = commit;
+      myFirstParent = notNull(getFirstItem(parentCommits));
+      myDiffHandler = diffHandler;
+    }
+
+    @NotNull
+    @Override
+    protected Change createChange(@NotNull Change.Type type, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
+      ContentRevision beforeRevision = beforePath == null ? null : myDiffHandler.createContentRevision(beforePath, myFirstParent);
+      ContentRevision afterRevision = afterPath == null ? null : myDiffHandler.createContentRevision(afterPath, myCommit);
+      return new Change(beforeRevision, afterRevision);
+    }
   }
 }

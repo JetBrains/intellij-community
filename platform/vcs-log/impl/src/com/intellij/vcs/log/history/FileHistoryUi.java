@@ -128,6 +128,23 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                                                               .affectsFile(change, filePath, isFileDeletedInCommit(details.getId())));
   }
 
+  @Nullable
+  public Change getSelectedChange() {
+    if (myPath.isDirectory()) return null;
+
+    int[] rows = getTable().getSelectedRows();
+    if (rows.length == 0) return null;
+    int row = rows[0];
+    List<Integer> parentRows;
+    if (rows.length == 1) {
+      parentRows = myVisiblePack.getVisibleGraph().getRowInfo(row).getAdjacentRows(true);
+    }
+    else {
+      parentRows = Collections.singletonList(rows[rows.length - 1]);
+    }
+    return FileHistoryUtil.createChangeToParents(row, parentRows, myVisiblePack, myDiffHandler, myLogData);
+  }
+
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, boolean commitExists,
                                           @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
