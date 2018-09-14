@@ -29,7 +29,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
 
   @Override
   public void repaintWithParents(final AbstractTestProxy testProxy) {
-    TreeUtil.promiseMakeVisible(getTree(), visitor(testProxy))
+    TreeUtil.promiseVisit(getTree(), visitor(testProxy))
       .onSuccess(path -> {
         if (path != null) {
           myTreeModel.invalidate(path, true);
