@@ -28,7 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Alexander Koshevoy
+ * For anything but plain code execution consider introducing a separate
+ * extension point with implementations for different
+ * {@link com.intellij.remote.CredentialsType} using
+ * {@link PyRemoteSdkAdditionalDataBase#switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[])}.
+ *
+ * @see PyRemoteProcessStarterManagerUtil
  */
 public interface PyRemoteProcessStarterManager {
   ExtensionPointName<PyRemoteProcessStarterManager> EP_NAME = ExtensionPointName.create("Pythonid.remoteProcessStarterManager");
