@@ -121,23 +121,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
     if (myCachedHash != null && that.myCachedHash != null && !myCachedHash.equals(that.myCachedHash)) return false;
-    return equalsSuperficially(that) && equalsByRelations(that) && equalsByVariableStates(that);
+    return myEphemeral == that.myEphemeral && myStack.equals(that.myStack) &&
+           getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) &&
+           getDistinctClassPairs().equals(that.getDistinctClassPairs()) &&
+           myVariableStates.equals(that.myVariableStates);
   }
 
   Object getSuperficialKey() {
     return Pair.create(myEphemeral, myStack);
-  }
-
-  private boolean equalsSuperficially(DfaMemoryStateImpl other) {
-    return myEphemeral == other.myEphemeral && myStack.equals(other.myStack);
-  }
-
-  boolean equalsByRelations(DfaMemoryStateImpl that) {
-    return getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) && getDistinctClassPairs().equals(that.getDistinctClassPairs());
-  }
-
-  boolean equalsByVariableStates(DfaMemoryStateImpl that) {
-    return myVariableStates.equals(that.myVariableStates);
   }
 
   DistinctPairSet getDistinctClassPairs() {
