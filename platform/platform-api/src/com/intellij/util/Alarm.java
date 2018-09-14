@@ -17,7 +17,6 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Async;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -224,18 +222,19 @@ public class Alarm implements Disposable {
 
   public boolean cancelRequest(@NotNull Runnable request) {
     synchronized (LOCK) {
-      cancelRequest(request, myRequests);
-      cancelRequest(request, myPendingRequests);
+      cancelAndRemoveRequestFrom(request, myRequests);
+      cancelAndRemoveRequestFrom(request, myPendingRequests);
       return true;
     }
   }
 
-  private void cancelRequest(@NotNull Runnable request, @NotNull List<Request> list) {
+  private void cancelAndRemoveRequestFrom(@NotNull Runnable request, @NotNull List<Request> list) {
     for (int i = list.size()-1; i>=0; i--) {
       Request r = list.get(i);
       if (r.myTask == request) {
         r.cancel();
         list.remove(i);
+        break;
       }
     }
   }
@@ -316,11 +315,6 @@ public class Alarm implements Disposable {
     }
   }
 
-  private static boolean isEventDispatchThread() {
-    final Application app = ApplicationManager.getApplication();
-    return app != null && app.isDispatchThread() || EventQueue.isDispatchThread();
-  }
-
   private class Request implements Runnable {
     private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
@@ -355,17 +349,6 @@ public class Alarm implements Disposable {
       catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.error(e);
-      }
-    }
-
-    void invokeLater(@NotNull Runnable scheduledTask) {
-      final Application app = ApplicationManager.getApplication();
-      if (app == null) {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(scheduledTask);
-      }
-      else {
-        app.invokeLater(scheduledTask, myModalityState == null ? ModalityState.any() : myModalityState);
       }
     }
 
