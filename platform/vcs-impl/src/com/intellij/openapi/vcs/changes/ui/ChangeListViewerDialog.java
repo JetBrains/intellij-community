@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
@@ -76,12 +77,16 @@ public class ChangeListViewerDialog extends DialogWrapper {
   }
 
   public void loadChangesInBackground(@NotNull ThrowableComputable<? extends ChangelistData, ? extends VcsException> computable) {
+    StatusText emptyText = myChangesPanel.getChangesBrowser().getViewer().getEmptyText();
+    emptyText.setText("");
+
     BackgroundTaskUtil.executeAndTryWait(indicator -> {
       try {
         ChangelistData result = computable.compute();
         return () -> {
           myLoadingPanel.stopLoading();
           myChangesPanel.setChangeList(result.changeList, result.toSelect);
+          emptyText.setText(DiffBundle.message("diff.count.differences.status.text", 0));
         };
       }
       catch (Exception e) {
@@ -89,10 +94,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
         return () -> {
           myLoadingPanel.stopLoading();
           myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()), null);
-
-          StatusText emptyText = myChangesPanel.getChangesBrowser().getViewer().getEmptyText();
-          emptyText.clear();
-          emptyText.appendText(e.getMessage(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          emptyText.setText(e.getMessage(), SimpleTextAttributes.ERROR_ATTRIBUTES);
         };
       }
     }, () -> myLoadingPanel.startLoading(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
