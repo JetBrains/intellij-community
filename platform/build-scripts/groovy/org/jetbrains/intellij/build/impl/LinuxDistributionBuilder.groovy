@@ -184,6 +184,15 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux .snap package") {
       buildContext.messages.progress("Preparing files")
 
+      String unixSnapDistPath = "$buildContext.paths.buildOutputRoot/dist.unix.snap"
+      buildContext.ant.copy(todir: unixSnapDistPath) {
+        fileset(dir: unixDistPath) {
+          exclude(name: "bin/fsnotifier")
+          exclude(name: "bin/fsnotifier-arm")
+          exclude(name: "bin/libyjpagent-linux.so")
+        }
+      }
+
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/${customizer.snapName}.desktop") {
@@ -211,16 +220,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      buildContext.ant.delete(quiet: true) {
-        fileset(dir: "${unixDistPath}/bin") {
-          include(name: "fsnotifier")
-          include(name: "fsnotifier-arm")
-          include(name: "libyjpagent-linux.so")
-        }
-      }
-
       buildContext.ant.chmod(perm: "755") {
-        fileset(dir: unixDistPath) {
+        fileset(dir: unixSnapDistPath) {
           include(name: "bin/*.sh")
           include(name: "bin/*.py")
           include(name: "bin/fsnotifier*")
@@ -243,7 +244,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
         arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
-        arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
+        arg(value: "--volume=${unixSnapDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
         arg(value: buildContext.options.snapDockerImage)
