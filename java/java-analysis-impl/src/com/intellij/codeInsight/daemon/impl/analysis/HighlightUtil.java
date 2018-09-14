@@ -1036,27 +1036,15 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (value != null) {
-        if (!StringUtil.endsWithChar(text, '\'')) {
-          String message = JavaErrorMessages.message("unclosed.char.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-      }
-      else {
+      if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) {
           return null;
         }
-        if (StringUtil.endsWithChar(text, '\'')) {
-          if (text.length() == 1) {
-            String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-          }
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
+        if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
+          String message = JavaErrorMessages.message("unclosed.char.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+        text = text.substring(1, text.length() - 1);
 
         StringBuilder chars = new StringBuilder();
         boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
