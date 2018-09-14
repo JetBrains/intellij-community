@@ -3,7 +3,6 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionCoveredByFurtherCondition {
-
     public void testInstanceOf(Object arg) {
         if (<warning descr="Condition 'arg != null' covered by subsequent condition 'arg instanceof String'">arg != null</warning> && arg instanceof String) {
             System.out.println("this should trigger a warning");
@@ -102,4 +101,32 @@ public class ConditionCoveredByFurtherCondition {
     void testDereferenceNotNull(@NotNull Object obj) {
         if(obj != null && obj.hashCode() == 10) {}
     }
+
+    void testDereference(Object obj) {
+        if(obj != null && obj.hashCode() == 10) {}
+    }
+
+    void testIncomplete(String s) {
+        if(s != null && <error descr="Operator '!' cannot be applied to 'java.lang.String'">!s</error>) {}
+        if(<error descr="Operator '&&' cannot be applied to 'boolean', 'java.lang.String'">s != null && s</error>) {}
+    }
+
+    void testUnboxing(Integer x, Boolean b) {
+        if(x != null && x > 5) {}
+        if(b != null && b) {}
+    }
+
+    void testEnum(X x) {
+        if(<warning descr="Condition 'x != null' covered by subsequent condition 'x == X.A'">x != null</warning> && x == X.A) {}
+        if(<warning descr="Condition 'x != X.A' covered by subsequent condition 'x == X.B'">x != X.A</warning> && x == X.B) {}
+        if(<warning descr="Condition 'x == X.A' covered by subsequent condition 'x != X.C'">x == X.A</warning> || x != X.C) {}
+    }
+
+    void testDereferenceOk(int[] arr1, int[] arr2) {
+        if(<warning descr="Condition 'arr1.length == 0' covered by subsequent conditions">arr1.length == 0</warning> || arr2.length == 0 || arr1.length != arr2.length) {
+
+        }
+    }
+
 }
+enum X {A, B, C}

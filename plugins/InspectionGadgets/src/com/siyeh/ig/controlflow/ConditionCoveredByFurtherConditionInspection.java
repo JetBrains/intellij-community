@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
@@ -13,10 +12,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -68,12 +67,13 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
           return false;
         }
         if (element instanceof PsiReferenceExpression) {
-          PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-          if (qualifier != null && NullabilityUtil.getExpressionNullability(qualifier) != Nullability.NOT_NULL) {
+          PsiReferenceExpression ref = (PsiReferenceExpression)element;
+          PsiType type = ref.getType();
+          PsiType expectedType = ExpectedTypeUtils.findExpectedType(ref, false);
+          if (type != null && !(type instanceof PsiPrimitiveType) && expectedType instanceof PsiPrimitiveType) {
+            // Unboxing is possible
             return false;
           }
-          PsiType type = ((PsiReferenceExpression)element).getType();
-          return !TypeConversionUtil.isPrimitiveWrapper(type);
         }
         if (element instanceof PsiPolyadicExpression) {
           PsiPolyadicExpression expr = (PsiPolyadicExpression)element;
@@ -84,7 +84,6 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
             Object divisor = ExpressionUtils.computeConstantExpression(operands[1]);
             if ((!(divisor instanceof Integer) && !(divisor instanceof Long)) || ((Number)divisor).longValue() == 0) return false;
           }
-          return true;
         }
         return true;
       });
@@ -143,6 +142,13 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       DataFlowRunner runner = new StandardDataFlowRunner(false, context);
       Map<PsiExpression, ThreeState> values = new HashMap<>();
       StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
+        @Override
+        protected boolean checkNotNullable(DfaMemoryState state,
+                                           DfaValue value,
+                                           @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+          return true;
+        }
+
         @Override
         protected void beforeExpressionPush(@NotNull DfaValue value,
                                             @NotNull PsiExpression expression,
