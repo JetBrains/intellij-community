@@ -23,7 +23,6 @@ import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
-import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,13 +37,12 @@ import java.util.Set;
 
 import static com.intellij.testFramework.PlatformTestUtil.notNull;
 
-@SuppressWarnings("JUnitTestClassNamingConvention")
-public class TreeUiTest extends AbstractTreeBuilderTest {
-  public TreeUiTest(boolean passThrough) {
+abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
+  TreeUiTestCase(boolean passThrough) {
     super(passThrough);
   }
 
-  public TreeUiTest(boolean yieldingUiBuild, boolean bgStructureBuilding) {
+  TreeUiTestCase(boolean yieldingUiBuild, boolean bgStructureBuilding) {
     super(yieldingUiBuild, bgStructureBuilding);
   }
 
@@ -2377,157 +2375,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTrue(released);
   }
 
-
-  public static class SyncUpdate extends TreeUiTest {
-    public SyncUpdate() {
-      super(false, false);
-    }
-  }
-
-
-  public static class PassThrough extends TreeUiTest {
-    public PassThrough() {
-      super(true);
-    }
-
-    @Override
-    public void testSelectionGoesToParentWhenOnlyChildMoved2() {
-      //todo
-    }
-
-    @Override
-    public void testQueryStructureWhenExpand() {
-      //todo
-    }
-
-    @Override
-    public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() {
-      // doesn't make sense since pass-through mode is always serial, it doesn't queue for updates
-    }
-
-    @Override
-    public void testElementMove1() {
-      //todo
-    }
-
-    @Override
-    public void testClear() {
-      //todo
-    }
-
-    @Override
-    public void testDoubleCancelUpdate() {
-      // doesn't make sense in pass-through mode
-    }
-
-    @Override
-    public void testNoExtraJTreeModelUpdate() {
-      // doesn't make sense in pass-through mode
-    }
-
-    @Override
-    public void testSelectWhenUpdatesArePending() {
-      // doesn't make sense in pass-through mode
-    }
-
-    @Override
-    public void testBigTreeUpdate() {
-      // doesn't make sense in pass-through mode
-    }
-  }
-
-
-  public static class YieldingUpdate extends TreeUiTest {
-    public YieldingUpdate() {
-      super(true, false);
-    }
-  }
-
-
-  public static class BgLoadingSyncUpdate extends TreeUiTest {
-    public BgLoadingSyncUpdate() {
-      super(false, true);
-    }
-
-    @Override
-    protected int getChildrenLoadingDelay() {
-      return 50;
-    }
-
-    @Override
-    protected int getNodeDescriptorUpdateDelay() {
-      return 50;
-    }
-
-    @Override
-    public void testNoInfiniteSmartExpand() {
-      //todo
-    }
-
-    @Override
-    public void testBigTreeUpdate() {
-      //to slow, tested the same in VeryQuickBgLoadingTest
-    }
-  }
-
-  public static class QuickBgLoadingSyncUpdate extends TreeUiTest {
-    public QuickBgLoadingSyncUpdate() {
-      super(false, true);
-    }
-
-    @Override
-    protected int getNodeDescriptorUpdateDelay() {
-      return 30;
-    }
-
-    @Override
-    public void testNoInfiniteSmartExpand() {
-      //todo
-    }
-
-    @Override
-    public void testBigTreeUpdate() {
-      //to slow, tested the same in VeryQuickBgLoadingTest
-    }
-  }
-
-
-  public static class VeryQuickBgLoadingSyncUpdate extends TreeUiTest {
-    public VeryQuickBgLoadingSyncUpdate() {
-      super(false, true);
-    }
-
-    @Override
-    public void testNoInfiniteSmartExpand() {
-      // todo;
-    }
-
-    @Override
-    public void testReleaseBuilderDuringUpdate() {
-      // todo
-    }
-
-    @Override
-    public void testReleaseBuilderDuringGetChildren() {
-      // todo
-    }
-  }
-
-
-  public static TestSuite suite() {
-    TestSuite suite = new TestSuite();
-
-    suite.addTestSuite(PassThrough.class);
-    suite.addTestSuite(SyncUpdate.class);
-    suite.addTestSuite(YieldingUpdate.class);
-    suite.addTestSuite(BgLoadingSyncUpdate.class);
-
-    // to run on suspecting of race conditions in background loading
-    //suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
-    //suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
-
-    return suite;
-  }
 
   private abstract static class MyRunnable implements Runnable {
     @Override
