@@ -48,7 +48,4 @@ public interface PyRemoteProcessStarterManager {
                                      @Nullable String workingDir,
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                      @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
-
-  String getFullInterpreterPath(@NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData)
-    throws ExecutionException, InterruptedException;
 }
