@@ -71,7 +71,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     });
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
-    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()));
+    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()).withClickCount(1));
     actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()));
 
     List<AnAction> actions = generateSelectRebaseActionActions();
