@@ -891,8 +891,6 @@ public class AllIcons {
     public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
     public static final Icon TbHidden = IconLoader.getIcon("/general/tbHidden.svg"); // 16x16
     public static final Icon TbShown = IconLoader.getIcon("/general/tbShown.svg"); // 16x16
-    public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/TemplateProjectSettings.png"); // 32x32
-    public static final Icon TemplateProjectStructure = IconLoader.getIcon("/general/TemplateProjectStructure.png"); // 32x32
     public static final Icon Tip = IconLoader.getIcon("/general/tip.png"); // 32x32
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.svg"); // 16x16
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.svg"); // 16x16
@@ -1353,6 +1351,16 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Tab_grey_right_inner = IconLoader.getIcon("/general/tab_grey_right_inner.png");
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/settings.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.ProjectStructure */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TemplateProjectStructure = IconLoader.getIcon("/general/projectStructure.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
