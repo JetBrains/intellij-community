@@ -77,7 +77,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return (later() as AppUIExecutorImpl).withConstraint(object : ExpirableContextConstraint {
+    return withConstraint(object : ExpirableContextConstraint {
       override val expirable = project
 
       override val isCorrectContext: Boolean
