@@ -12,22 +12,6 @@ public final class Member implements MemberDescriptor {
   final String methodName;
   final String methodDesc;
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Member method = (Member) o;
-    return internalClassName.equals(method.internalClassName) && methodDesc.equals(method.methodDesc) && methodName.equals(method.methodName);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = internalClassName.hashCode();
-    result = 31 * result + methodName.hashCode();
-    result = 31 * result + methodDesc.hashCode();
-    return result;
-  }
-
   /**
    * Primary constructor
    *
@@ -35,7 +19,7 @@ public final class Member implements MemberDescriptor {
    * @param methodName method name
    * @param methodDesc method descriptor in asm format
    */
-  public Member(String internalClassName, String methodName, String methodDesc) {
+  public Member(@NotNull String internalClassName, @NotNull String methodName, @NotNull String methodDesc) {
     this.internalClassName = internalClassName;
     this.methodName = methodName;
     this.methodDesc = methodDesc;
@@ -50,6 +34,22 @@ public final class Member implements MemberDescriptor {
     this.internalClassName = mNode.owner;
     this.methodName = mNode.name;
     this.methodDesc = mNode.desc;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Member method = (Member) o;
+    return internalClassName.equals(method.internalClassName) && methodDesc.equals(method.methodDesc) && methodName.equals(method.methodName);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = internalClassName.hashCode();
+    result = 31 * result + methodName.hashCode();
+    result = 31 * result + methodDesc.hashCode();
+    return result;
   }
 
   @NotNull

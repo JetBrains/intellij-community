@@ -3,7 +3,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,63 +49,50 @@ public class BytecodeAnalysisConverter {
    */
   @Nullable
   public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction) {
-    final PsiClass psiClass = psiMethod.getContainingClass();
-    if (psiClass == null) {
-      return null;
+    PsiClass psiClass = psiMethod.getContainingClass();
+    if (psiClass != null) {
+      String className = descriptor(psiClass, 0, false);
+      String methodSig = methodSignature(psiMethod, psiClass);
+      if (className != null && methodSig != null) {
+        String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
+        return new EKey(new Member(className, methodName, methodSig), direction, true, false);
+      }
     }
-    String className = descriptor(psiClass, 0, false);
-    String methodSig = methodSignature(psiMethod);
-    if (className == null || methodSig == null) {
-      return null;
-    }
-    String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
-    return new EKey(new Member(className, methodName, methodSig), direction, true, false);
+    return null;
   }
 
   @Nullable
-  private static String methodSignature(@NotNull PsiMethod psiMethod) {
+  private static String methodSignature(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiClass) {
     StringBuilder sb = new StringBuilder();
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
-    if (psiClass == null) {
-      return null;
-    }
-    PsiClass outerClass = psiClass.getContainingClass();
-    boolean isInnerClassConstructor =
-      psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
-    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    PsiType returnType = psiMethod.getReturnType();
 
     sb.append('(');
-
-    String desc;
-
-    if (isInnerClassConstructor) {
-      desc = descriptor(outerClass, 0, true);
-      if (desc == null) {
-        return null;
+    if (psiMethod.isConstructor() && !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass outerClass = psiClass.getContainingClass();
+      if (outerClass != null) {
+        String desc = descriptor(outerClass, 0, true);
+        if (desc == null) return null;
+        sb.append(desc);
       }
-      sb.append(desc);
     }
-    for (PsiParameter parameter : parameters) {
-      desc = descriptor(parameter.getType());
+    for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+      String desc = descriptor(parameter.getType());
       if (desc == null) {
         return null;
       }
       sb.append(desc);
     }
     sb.append(')');
+
+    PsiType returnType = psiMethod.getReturnType();
     if (returnType == null) {
       sb.append('V');
     }
     else {
-      desc = descriptor(returnType);
-      if (desc == null) {
-        return null;
-      }
-      else {
-        sb.append(desc);
-      }
+      String desc = descriptor(returnType);
+      if (desc == null) return null;
+      sb.append(desc);
     }
+
     return sb.toString();
   }
 
