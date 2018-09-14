@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 
 @JvmField
-val NON_CODE: Key<Boolean?> = Key.create<Boolean?>("groovy.process.non.code.members")
+val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")
 
 fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
 
