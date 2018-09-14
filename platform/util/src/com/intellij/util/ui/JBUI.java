@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.image.ImageObserver;
@@ -1508,6 +1509,11 @@ public class JBUI {
     public RasterJBIcon() {
       super(ScaleContext.create());
     }
+  }
+
+  public static Border asUIResource(@NotNull Border border) {
+    if (border instanceof UIResource) return border;
+    return new BorderUIResource(border);
   }
 
   public static class CurrentTheme {
