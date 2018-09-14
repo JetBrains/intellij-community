@@ -77,14 +77,18 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(object : SimpleContextConstraint {
+    return (later() as AppUIExecutorImpl).withConstraint(object : ExpirableContextConstraint {
+      override val expirable = project
+
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun schedule(runnable: Runnable) = runnable.run()
+      override fun scheduleExpirable(runnable: Runnable) {
+        DumbService.getInstance(project).runWhenSmart(runnable)
+      }
 
       override fun toString() = "inSmartMode"
-    }).expireWith(project)
+    })
   }
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
