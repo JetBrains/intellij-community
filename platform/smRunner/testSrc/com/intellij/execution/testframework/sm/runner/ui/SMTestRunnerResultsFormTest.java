@@ -253,8 +253,9 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     final DefaultMutableTreeNode suite2Node =
       (DefaultMutableTreeNode)myTreeModel.getChild(suite1Node, 0);
 
-    assertTrue(myResultsViewer.getTreeView().isExpanded(new TreePath(suite1Node.getPath())));
-    assertTrue(myResultsViewer.getTreeView().isExpanded(new TreePath(suite2Node.getPath())));
+    //todo auto expand is disabled
+    assertFalse(myResultsViewer.getTreeView().isExpanded(new TreePath(suite1Node.getPath())));
+    assertFalse(myResultsViewer.getTreeView().isExpanded(new TreePath(suite2Node.getPath())));
   }
 
   //with test tree build before start actual tests
