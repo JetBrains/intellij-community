@@ -3415,7 +3415,7 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public int getAccessibleChildrenCount() {
-      return getTabCount();
+      return getComponentCount();
     }
 
     @Override
