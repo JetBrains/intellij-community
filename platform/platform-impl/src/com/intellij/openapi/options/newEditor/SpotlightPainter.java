@@ -105,7 +105,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
   }
 
   @Override
-  public void hilight(@NotNull JComponent component, @NotNull String searchString) {
+  public void highlight(@NotNull JComponent component, @NotNull String searchString) {
     myGlassPanel.addSpotlight(component);
   }
 }
