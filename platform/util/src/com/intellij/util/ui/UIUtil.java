@@ -2651,7 +2651,7 @@ public class UIUtil {
     builder.append("}\n");
 
     builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-    builder.append("ul {list-style:disc outside;}\n");
+    builder.append("ul {list-style:disc; margin-left:15px;}\n");
     return builder.append("</style>").toString();
   }
 
