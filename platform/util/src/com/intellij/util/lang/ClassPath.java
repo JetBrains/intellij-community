@@ -436,7 +436,7 @@ public class ClassPath {
 
   private static String[] loadManifestClasspath(JarLoader loader) {
     try {
-      String classPath = loader.getManifestAttributes().getValue(Attributes.Name.CLASS_PATH);
+      String classPath = loader.getClassPathManifestAttribute();
 
       if (classPath != null) {
         String[] urls = classPath.split(" ");

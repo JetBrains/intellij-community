@@ -49,7 +49,8 @@ class JarLoader extends Loader {
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private volatile Map<Resource.Attribute, String> myAttributes;
-  private volatile SoftReference<Attributes> myCachedManifestAttributes;
+  private volatile String myClassPathManifestAttribute; 
+  private static final String NULL_STRING = "<null>";
 
   JarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
@@ -61,7 +62,7 @@ class JarLoader extends Loader {
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
       if (configuration.myPreloadJarContents) {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myAttributes);
+        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), this);
         if (loader != null) {
           myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
         }
@@ -71,9 +72,15 @@ class JarLoader extends Loader {
     }
   }
 
-  Attributes getManifestAttributes() {
-    loadAttributes();
-    return myCachedManifestAttributes.get();
+  Map<Resource.Attribute, String> getAttributes() {
+    loadManifestAttributes();
+    return myAttributes;
+  }
+  
+  @Nullable String getClassPathManifestAttribute() {
+    loadManifestAttributes();
+    String manifestAttribute = myClassPathManifestAttribute;
+    return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 
   private static String urlToFilePath(URL url) {
@@ -100,11 +107,11 @@ class JarLoader extends Loader {
     return map;
   }
 
-  private void loadAttributes() {
-    if (myCachedManifestAttributes != null) return;
+  private void loadManifestAttributes() {
+    if (myClassPathManifestAttribute != null) return;
     synchronized (this) {
       try {
-        if (myCachedManifestAttributes != null) return;
+        if (myClassPathManifestAttribute != null) return;
         ZipFile zipFile = getZipFile();
         try {
           Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
@@ -116,7 +123,8 @@ class JarLoader extends Loader {
           }
 
           myAttributes = getAttributes(manifestAttributes);
-          myCachedManifestAttributes = new SoftReference<Attributes>(manifestAttributes);
+          Object attribute = manifestAttributes.get(Attributes.Name.CLASS_PATH);
+          myClassPathManifestAttribute = attribute instanceof String ? (String)attribute : NULL_STRING;
         }
         finally {
           releaseZipFile(zipFile);
@@ -223,7 +231,7 @@ class JarLoader extends Loader {
 
     @Override
     public String getValue(Attribute key) {
-      loadAttributes();
+      loadManifestAttributes();
       return myAttributes != null ? myAttributes.get(key) : null;
     }
   }
