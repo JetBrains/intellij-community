@@ -9,7 +9,6 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashSet
 import kotlinx.coroutines.experimental.*
-import java.lang.UnsupportedOperationException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.experimental.ContinuationInterceptor
@@ -45,12 +44,14 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    * (possibly wrapped using the [createCoroutineDispatcher] method), which takes care to establish the necessary execution context.
    */
   override fun createJobContext(context: CoroutineContext, parent: Job?): CoroutineContext {
+    val exceptionHandler = context[CoroutineExceptionHandler] ?: CoroutineExceptionHandler(::handleUncaughtException)
+
     val dispatcher = createCoroutineDispatcher()
     val delegateChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }.toList().asReversed()
 
     val job = createChildJob(parent ?: context[Job], delegateChain)
 
-    return newCoroutineContext(context, job) + dispatcher
+    return newCoroutineContext(context, job) + dispatcher + exceptionHandler
   }
 
   protected open fun createChildJob(parent: Job?, dispatchers: List<DelegateDispatcher>): Job =
@@ -65,6 +66,18 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
   protected open fun createCoroutineDispatcher(): FallbackDispatcherSupport =
     RescheduleAttemptLimitAwareDispatcher(dispatcher)
+
+  // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
+  // #562 "Exceptions thrown by CoroutineExceptionHandler must be caught by handleCoroutineException()"
+  protected open fun handleUncaughtException(coroutineContext: CoroutineContext, throwable: Throwable) {
+    try {
+      LOG.error("Uncaught exception from $coroutineContext", throwable)  // throws AssertionError in unit testing mode
+    }
+    catch (e: Throwable) {
+      // rethrow on EDT outside the Coroutines machinery
+      dispatcher.fallbackDispatch(coroutineContext, Runnable { throw e })
+    }
+  }
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
   internal abstract class FallbackDispatcherSupport : CoroutineDispatcher() {
