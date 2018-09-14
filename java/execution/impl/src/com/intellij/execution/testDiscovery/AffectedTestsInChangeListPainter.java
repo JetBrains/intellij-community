@@ -4,7 +4,6 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
@@ -16,6 +15,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.PowerStatus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
@@ -33,6 +34,8 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
   private final ChangeListAdapter myChangeListListener;
   private final Alarm myAlarm;
   private final Set<String> myCache = new HashSet<>();
+  private final ScheduledExecutorService myExecutorService =
+    AppExecutorUtil.createBoundedScheduledExecutorService("AffectedTestsInChangeListPainter Service", 1);
 
   public AffectedTestsInChangeListPainter(@NotNull Project project, ChangeListManager changeListManager) {
     myProject = project;
@@ -70,11 +73,13 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
   @Override
   public void projectClosed() {
     myAlarm.cancelAllRequests();
+    myExecutorService.shutdownNow();
   }
 
   @Override
   public void disposeComponent() {
     myAlarm.cancelAllRequests();
+    myExecutorService.shutdownNow();
     myCache.clear();
     myChangeListManager.removeChangeListListener(myChangeListListener);
   }
@@ -122,7 +127,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
       Collection<Change> changes = list.getChanges();
       if (changes.isEmpty()) continue;
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myExecutorService.submit(() -> {
         PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
         List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
         if (methods.length == 0 && paths.isEmpty()) return;
