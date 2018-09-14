@@ -93,6 +93,10 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
       new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
         .addExpected("ello,", ProcessOutputTypes.STDOUT.toString())
     ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
+        .addExpected("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT.toString())
+    ));
   }
 
   public void testIncompleteEscapeSequences() {
