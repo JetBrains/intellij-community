@@ -362,9 +362,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
         final URL url = getClass().getResource(myProgressTailIconName);
-        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
+        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url);
         if (image != null) {
-          myProgressTailIcon = new ImageIcon(image);
+          myProgressTailIcon = new JBImageIcon(image);
         }
       } catch (Exception ignore) {}
     }
