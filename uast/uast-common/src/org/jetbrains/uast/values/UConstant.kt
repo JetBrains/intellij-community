@@ -124,11 +124,11 @@ class UIntConstant(
     else -> super.div(other)
   }
 
-  override fun rem(other: UValue): UValue = when (other) {
+  override fun mod(other: UValue): UValue = when (other) {
     is UIntConstant -> UIntConstant(value % other.value, type.merge(other.type))
     is ULongConstant -> ULongConstant(value % other.value)
     is UFloatConstant -> UFloatConstant.create(value % other.value, type.merge(other.type))
-    else -> super.rem(other)
+    else -> super.mod(other)
   }
 
   override fun unaryMinus(): UIntConstant = UIntConstant(-value, type)
@@ -197,11 +197,11 @@ class ULongConstant(override val value: Long, source: ULiteralExpression? = null
     else -> super.div(other)
   }
 
-  override fun rem(other: UValue): UValue = when (other) {
+  override fun mod(other: UValue): UValue = when (other) {
     is ULongConstant -> ULongConstant(value % other.value)
     is UIntConstant -> ULongConstant(value % other.value)
     is UFloatConstant -> UFloatConstant.create(value % other.value, type.merge(other.type))
-    else -> super.rem(other)
+    else -> super.mod(other)
   }
 
   override fun unaryMinus(): ULongConstant = ULongConstant(-value)
@@ -273,11 +273,11 @@ open class UFloatConstant protected constructor(
     else -> super.div(other)
   }
 
-  override fun rem(other: UValue): UValue = when (other) {
+  override fun mod(other: UValue): UValue = when (other) {
     is ULongConstant -> create(value % other.value, type.merge(other.type))
     is UIntConstant -> create(value % other.value, type.merge(other.type))
     is UFloatConstant -> create(value % other.value, type.merge(other.type))
-    else -> super.rem(other)
+    else -> super.mod(other)
   }
 
   override fun greater(other: UValue): UValue = when (other) {

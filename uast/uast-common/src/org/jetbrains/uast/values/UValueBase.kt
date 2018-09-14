@@ -28,7 +28,7 @@ abstract class UValueBase : UValue {
   override operator fun div(other: UValue): UValue =
     (other as? UDependentValue)?.inverseDiv(this) ?: UUndeterminedValue
 
-  override operator fun rem(other: UValue): UValue =
+  override operator fun mod(other: UValue): UValue =
     (other as? UDependentValue)?.inverseMod(this) ?: UUndeterminedValue
 
   override fun unaryMinus(): UValue = UUndeterminedValue
