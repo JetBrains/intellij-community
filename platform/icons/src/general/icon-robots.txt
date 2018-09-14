@@ -25,6 +25,7 @@ deprecated: defaultKeymap.png; to be removed in IDEA 2020
 deprecated: downloadPlugin.png; to be removed in IDEA 2020
 deprecated: editColors.png -> /general/settings.svg; to be removed in IDEA 2020 - AllIcons.General.Settings
 deprecated: editItemInSection.png -> /actions/edit.svg; to be removed in IDEA 2020 - AllIcons.Actions.Edit
+deprecated: errorsInProgress.png; to be removed in IDEA 2020
 deprecated: expandAll.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
 deprecated: expandAllHover.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
 deprecated: ExportSettings.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export

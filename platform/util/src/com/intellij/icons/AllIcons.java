@@ -830,7 +830,6 @@ public class AllIcons {
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.svg"); // 9x9
     public static final Icon Error = IconLoader.getIcon("/general/error.svg"); // 16x16
     public static final Icon ErrorDialog = IconLoader.getIcon("/general/errorDialog.svg"); // 32x32
-    public static final Icon ErrorsInProgress = IconLoader.getIcon("/general/errorsInProgress.png"); // 12x12
     public static final Icon ExclMark = IconLoader.getIcon("/general/exclMark.svg"); // 16x16
     public static final Icon ExpandComponent = IconLoader.getIcon("/general/expandComponent.svg"); // 12x12
     public static final Icon ExpandComponentHover = IconLoader.getIcon("/general/expandComponentHover.svg"); // 12x12
@@ -1036,6 +1035,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon EditItemInSection = IconLoader.getIcon("/actions/edit.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ErrorsInProgress = IconLoader.getIcon("/general/errorsInProgress.png");
 
     /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
