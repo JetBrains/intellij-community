@@ -857,9 +857,6 @@ public class AllIcons {
     public static final Icon LayoutPreviewOnly = IconLoader.getIcon("/general/layoutPreviewOnly.svg"); // 16x16
     public static final Icon LinkDropTriangle = IconLoader.getIcon("/general/linkDropTriangle.svg"); // 14x14
     public static final Icon Locate = IconLoader.getIcon("/general/locate.svg"); // 16x16
-    public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png"); // 8x8
-    public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png"); // 8x8
-    public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png"); // 8x8
     public static final Icon Modified = IconLoader.getIcon("/general/modified.svg"); // 24x16
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.svg"); // 16x16
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.svg"); // 16x16
@@ -1200,6 +1197,21 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use EmptyIcon.ICON_16 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.History */
     @SuppressWarnings("unused")
