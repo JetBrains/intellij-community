@@ -60,7 +60,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       // Disallow anything which may throw or produce side effect
       return PsiTreeUtil.processElements(expression, element -> {
         if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
-            element instanceof PsiTypeCastExpression) {
+            element instanceof PsiTypeCastExpression || element instanceof PsiErrorElement) {
           return false;
         }
         if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
