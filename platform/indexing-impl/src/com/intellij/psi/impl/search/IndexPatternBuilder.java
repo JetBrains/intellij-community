@@ -33,4 +33,8 @@ public interface IndexPatternBuilder {
   default String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
     return "";
   }
+
+  default int getCommentStartDelta(@NotNull IElementType tokenType, @NotNull CharSequence tokenText) {
+    return getCommentStartDelta(tokenType);
+  }
 }

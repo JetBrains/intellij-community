@@ -167,7 +167,8 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       boolean isComment = commentTokens.contains(tokenType) || CacheUtil.isInComments(tokenType);
 
       if (isComment) {
-        final int startDelta = builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType()) : 0;
+        final int startDelta =
+          builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType(), lexer.getTokenSequence()) : 0;
         final int endDelta = builderForFile != null ? builderForFile.getCommentEndDelta(lexer.getTokenType()) : 0;
 
         int start = lexer.getTokenStart() + startDelta;
