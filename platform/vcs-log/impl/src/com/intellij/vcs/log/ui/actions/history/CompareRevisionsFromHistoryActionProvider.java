@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -115,19 +115,19 @@ public class CompareRevisionsFromHistoryActionProvider implements AnActionExtens
     }
 
     if (commits.size() != 1) return;
-    
-    List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
-    ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
-      VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
-      List<Change> changes = ui.collectRelevantChanges(detail);
-      if (filePath.isDirectory()) {
+
+    if (!filePath.isDirectory()) {
+      ShowDiffAction.showDiffForChange(project, Collections.singletonList(ui.getSelectedChange()));
+    }
+    else {
+      List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
+      ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
+        VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
+        List<Change> changes = ui.collectRelevantChanges(detail);
         VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.getId().toShortString() + " for " + filePath.getName(),
                                       ContainerUtil.newArrayList(changes));
-      }
-      else {
-        ShowDiffAction.showDiffForChange(project, changes, 0, new ShowDiffContext());
-      }
-    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
-                                                          MessageType.ERROR), null);
+      }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
+                                                            MessageType.ERROR), null);
+    }
   }
 }
