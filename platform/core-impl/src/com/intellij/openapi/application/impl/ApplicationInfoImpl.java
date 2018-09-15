@@ -241,6 +241,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     else if (PlatformUtils.isIdeaUltimate()) {
       prefix = "IU";
     }
+    else if (PlatformUtils.isAndroidStudio()) {
+      // Android Studio: b/117215446: ApplicationComponents may not receive the correct product code in dev mode (i.e. release builds
+      // receive the proper product code without this change, but dev builds don't). This happens because the product code is parsed from
+      // AndroidStudioApplicationInfo.xml, which has __BUILD_NUMBER__ in dev mode, but is patched in during a release build.
+      // Having the prefix here acts as a fallback in dev mode, and allows application components to look at the product code.
+      prefix = "AI";
+    }
     return prefix;
   }
 
