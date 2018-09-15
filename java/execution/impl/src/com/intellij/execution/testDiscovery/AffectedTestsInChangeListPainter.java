@@ -72,14 +72,15 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
 
   @Override
   public void projectClosed() {
-    myAlarm.cancelAllRequests();
-    myExecutorService.shutdownNow();
+    disposeComponent();
   }
 
   @Override
   public void disposeComponent() {
     myAlarm.cancelAllRequests();
-    myExecutorService.shutdownNow();
+    if (!myExecutorService.isShutdown()) {
+      myExecutorService.shutdownNow();
+    }
     myCache.clear();
     myChangeListManager.removeChangeListListener(myChangeListListener);
   }
@@ -117,7 +118,9 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     if (!Registry.is("show.affected.tests.in.changelists")) return;
     if (!ShowAffectedTestsAction.isEnabled(myProject)) return;
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> update(), updateDelay());
+    if (!myAlarm.isDisposed()) {
+      myAlarm.addRequest(() -> update(), updateDelay());
+    }
   }
 
   private void update() {
