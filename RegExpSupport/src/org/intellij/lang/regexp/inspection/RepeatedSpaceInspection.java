@@ -14,6 +14,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -36,7 +37,6 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
   private static class RepeatedSpaceVisitor extends RegExpElementVisitor {
 
     private final ProblemsHolder myHolder;
-    private boolean myQuoted;
 
     RepeatedSpaceVisitor(ProblemsHolder holder) {
       myHolder = holder;
@@ -44,10 +44,23 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpChar(RegExpChar aChar) {
-      if (myQuoted || !isSpace(aChar) || isSpace(aChar.getPrevSibling())) {
+      if (!isSpace(aChar) || isSpace(aChar.getPrevSibling())) {
         return;
       }
+      PsiElement prev = aChar.getPrevSibling();
+      while (prev != null) {
+        if (isEscapeSequenceStart(prev)) {
+          return;
+        }
+        prev = prev.getPrevSibling();
+      }
       final PsiElement parent = aChar.getParent();
+      if (parent instanceof RegExpBranch) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof RegExpPattern && isEscapeSequenceStart(grandParent.getPrevSibling())) {
+          return;
+        }
+      }
       if (parent instanceof RegExpClass || parent instanceof RegExpCharRange) {
         return;
       }
@@ -64,16 +77,9 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
       }
     }
 
-    @Override
-    public void visitWhiteSpace(PsiWhiteSpace space) {
-      super.visitWhiteSpace(space);
-      final String text = InjectedLanguageManager.getInstance(space.getProject()).getUnescapedText(space);
-      if ("\\Q".equals(text)) {
-        myQuoted = true;
-      }
-      else if ("\\E".equals(text)) {
-        myQuoted = false;
-      }
+    private static boolean isEscapeSequenceStart(@Nullable PsiElement element) {
+      return element instanceof PsiWhiteSpace &&
+             "\\Q".equals(InjectedLanguageManager.getInstance(element.getProject()).getUnescapedText(element));
     }
 
     private static boolean isSpace(PsiElement element) {
