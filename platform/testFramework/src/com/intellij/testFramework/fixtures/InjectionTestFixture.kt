@@ -17,8 +17,11 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   val injectedLanguageManager: InjectedLanguageManager
     get() = InjectedLanguageManager.getInstance(javaFixture.project)
 
+  val injectedElement: PsiElement?
+    get() = injectedLanguageManager.findInjectedElementAt(topLevelFile, topLevelCaretPosition)
+
   fun assertInjectedLangAtCaret(lang: String?) {
-    val injectedElement = injectedLanguageManager.findInjectedElementAt(topLevelFile, topLevelCaretPosition)
+    val injectedElement = injectedElement
     if (lang != null) {
       TestCase.assertNotNull("injection of '$lang' expected", injectedElement)
       TestCase.assertEquals(lang, injectedElement!!.language.id)
