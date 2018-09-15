@@ -405,7 +405,7 @@ public class IdeEventQueue extends EventQueue {
             runnable.run();
           }
           catch (Exception exc) {
-            LOG.info(exc);
+            LOG.error(exc);
           }
         });
     }
