@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.ExpectedTypesProvider
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -283,5 +284,35 @@ class A {
 
     def types = ExpectedTypesProvider.getExpectedTypes(expr, false)
     assertNotNull(types.find {it.defaultType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)})
+  }
+
+  void 'test typing generics'() {
+    myFixture.configureByText 'a.java', '''\
+class A {
+    {
+        pass<caret>Class(String.class)
+    }
+}
+'''
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    try {
+      doAction "Create method 'passClass' in 'A'"
+      myFixture.type('\t')
+      myFixture.type('Class<?>\n')
+      myFixture.checkResult '''\
+class A {
+    {
+        passClass(String.class)
+    }
+
+    private void passClass(Class<?> <selection>stringClass</selection>) {
+    }
+}
+'''
+    }
+    finally {
+      CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    }
   }
 }

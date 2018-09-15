@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -160,8 +159,7 @@ class CompletionAssertions {
     WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
-            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR);
+            shouldAddCompletionChar(completionChar));
     }
 
     @Override
