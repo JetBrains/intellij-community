@@ -14,7 +14,7 @@ abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
                                            private val revisionNumber: VcsRevisionNumber) : ContentRevision {
 
   override fun getFile(): FilePath {
-    return VcsUtil.getFilePath(submodule.root)
+    return VcsUtil.getFilePath(submodule.root.path, false) // NB: treating submodule folder as a file in the parent repository
   }
 
   override fun getRevisionNumber(): VcsRevisionNumber {
