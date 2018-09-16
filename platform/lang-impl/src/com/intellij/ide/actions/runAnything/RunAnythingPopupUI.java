@@ -17,8 +17,6 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -45,7 +43,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -566,29 +563,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }
-
-        if (value instanceof BooleanOptionDescription) {
-          final JPanel panel = new JPanel(new BorderLayout());
-          panel.setBackground(UIUtil.getListBackground(isSelected));
-          panel.add(cmp, BorderLayout.CENTER);
-          final Component rightComponent;
-          final OnOffButton button = new OnOffButton();
-          button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
-          rightComponent = button;
-          panel.add(rightComponent, BorderLayout.EAST);
-
-          JLabel settingLabel = new JLabel(RunAnythingUtil.getSettingText((OptionDescription)value));
-          settingLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-          panel.add(settingLabel, BorderLayout.WEST);
-          panel.add(rightComponent, BorderLayout.EAST);
-          cmp = panel;
-        }
       }
 
       Color bg = cmp.getBackground();
       if (bg == null) {
         cmp.setBackground(UIUtil.getListBackground(isSelected));
         bg = cmp.getBackground();
+      }
+
+      Color foreground = cmp.getForeground();
+      if (foreground == null) {
+        cmp.setForeground(UIUtil.getListForeground(isSelected));
+        foreground = cmp.getBackground();
       }
       myMainPanel.removeAll();
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
@@ -601,6 +587,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
       JPanel wrapped = new JPanel(new BorderLayout());
       wrapped.setBackground(bg);
+      wrapped.setForeground(foreground);
       wrapped.setBorder(RENDERER_BORDER);
       wrapped.add(cmp, BorderLayout.CENTER);
       myMainPanel.add(wrapped, BorderLayout.CENTER);
