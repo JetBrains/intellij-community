@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any calls to
-<b>java.util.Random.getDouble()</b> which are then multiplied
-by some factor and cast to an integer. For generating a random integer in some range,
-<b>java.util.Random.getInt()</b> is more efficient.
+Reports calls to
+<b>java.util.Random.nextDouble()</b>, which are used to create a positive integer number, by multiplying
+the call with a factor and casting to an integer. For generating a random positive integer in a range,
+<b>java.util.Random.nextInt(int)</b> is simpler and more efficient.
 <!-- tooltip end -->
 <p>
 
