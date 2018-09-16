@@ -269,7 +269,7 @@ class StateMerger {
 
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
-          myState.removeEquivalenceRelations(var);
+          myState.removeEquivalenceForVariableAndWrappers(var);
           myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
@@ -523,7 +523,7 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      state.removeEquivalenceRelations(myVar);
+      state.removeEquivalenceForVariableAndWrappers(myVar);
     }
   }
 

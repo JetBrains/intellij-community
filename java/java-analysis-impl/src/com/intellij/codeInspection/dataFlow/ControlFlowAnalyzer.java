@@ -1987,8 +1987,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (typeElement != null && operand != null && operand.getType() != null) {
       if (typeElement.getType() instanceof PsiPrimitiveType &&
           !UnnecessaryExplicitNumericCastInspection.isUnnecessaryPrimitiveNumericCast(castExpression)) {
-        addInstruction(new PopInstruction());
-        pushUnknown();
+        if (!typeElement.getType().equals(PsiPrimitiveType.getUnboxedType(operand.getType()))) {
+          addInstruction(new PopInstruction());
+          pushUnknown();
+        }
       } else {
         addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
       }

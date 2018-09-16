@@ -16,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -362,6 +363,10 @@ public class DfaUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isComparedByEquals(PsiType type) {
+    return type != null && (TypeUtils.isJavaLangString(type) || TypeConversionUtil.isPrimitiveWrapper(type));
   }
 
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {

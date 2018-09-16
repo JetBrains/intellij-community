@@ -676,7 +676,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       isStringComparison(instruction.getExpression()) &&
+       dfaLeft != dfaRight && isComparedByEquals(instruction.getExpression()) &&
        !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
@@ -718,11 +718,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private static boolean isStringComparison(PsiExpression expression) {
+  private static boolean isComparedByEquals(PsiExpression expression) {
     if (expression instanceof PsiBinaryExpression) {
       PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (TypeUtils.isJavaLangString(left.getType()) && TypeUtils.isJavaLangString(right.getType()));
+      return right != null && (DfaUtil.isComparedByEquals(left.getType()) && DfaUtil.isComparedByEquals(right.getType()));
     }
     return false;
   }

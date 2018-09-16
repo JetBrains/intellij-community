@@ -118,10 +118,8 @@ public class DfaConstValue extends DfaValue {
           value = numeric;
         }
       }
-      if (value instanceof Double || value instanceof Float) {
-        double doubleValue = ((Number)value).doubleValue();
-        if (doubleValue == -0.0) doubleValue = +0.0;
-        value = doubleValue;
+      if (value instanceof Float) {
+        value = ((Float)value).doubleValue();
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
