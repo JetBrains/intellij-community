@@ -2,14 +2,9 @@
 package com.intellij.psi.util;
 
 import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class CachedValueProfiler {
   private static final CachedValueProfiler ourInstance = new CachedValueProfiler();
@@ -54,58 +49,8 @@ public class CachedValueProfiler {
     return info;
   }
 
-  @NotNull
-  public String dumpStorage() {
-    List<TotalInfo> list = ContainerUtil.newArrayList();
-    myStorage.entrySet().forEach((entry) -> list.add(new TotalInfo(entry.getKey(), entry.getValue())));
-
-    Collections.sort(list, Comparator.comparing(info -> ((double)info.getTotalUseCount()) / info.getInfos().size()));
-
-    StringBuilder builder = new StringBuilder();
-    for (TotalInfo info : list) {
-      builder
-        .append(info.getOrigin()).append('\n')
-        .append("                ").append("total lifetime: ").append(info.getTotalLifeTime()).append(" ms").append('\n')
-        .append("                ").append("total use count: ").append(info.getTotalUseCount()).append('\n')
-        .append("                ").append("created : ").append(info.getInfos().size()).append('\n')
-        .append("                ").append("use count/created: ").append(((double)info.getTotalUseCount()) / info.getInfos().size()).append('\n')
-        .append('\n');
-    }
-
-    return builder.toString();
-  }
-
-  private static class TotalInfo {
-    private final StackTraceElement myOrigin;
-    private final long myTotalLifeTime;
-    private final long myTotalUseCount;
-
-    private final List<ProfilingInfo> myInfos;
-
-    public TotalInfo(StackTraceElement origin, Collection<ProfilingInfo> infos) {
-      myOrigin = origin;
-      myInfos = Collections.unmodifiableList(ContainerUtil.newArrayList(infos));
-
-      myTotalLifeTime = myInfos.stream().mapToLong(value -> value.getLifetime()).sum();
-      myTotalUseCount = myInfos.stream().mapToLong(value -> value.getUseCount()).sum();
-    }
-
-    public StackTraceElement getOrigin() {
-      return myOrigin;
-    }
-
-    public long getTotalLifeTime() {
-      return myTotalLifeTime;
-    }
-
-    public long getTotalUseCount() {
-      return myTotalUseCount;
-    }
-
-    @NotNull
-    public List<ProfilingInfo> getInfos() {
-      return myInfos;
-    }
+  public MultiMap<StackTraceElement, ProfilingInfo> getStorageSnapshot() {
+    return myStorage.copy();
   }
 
   @Nullable
