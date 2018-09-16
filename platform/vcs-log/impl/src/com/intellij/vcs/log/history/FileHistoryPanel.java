@@ -40,7 +40,6 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +64,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                           @NotNull FilePath filePath) {
     myUi = ui;
     myFilePath = filePath;
-    myRoot = notNull(VcsUtil.getVcsRootFor(logData.getProject(), myFilePath));
+    myRoot = notNull(VcsLogUtil.getActualRoot(logData.getProject(), myFilePath));
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack, myUi::requestMore) {
       @Override
       protected boolean isSpeedSearchEnabled() {

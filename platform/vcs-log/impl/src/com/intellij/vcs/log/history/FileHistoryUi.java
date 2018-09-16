@@ -45,15 +45,12 @@ import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
@@ -185,7 +182,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
           if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
             if (commitId instanceof Hash) {
               mainLogUi.jumpToCommit((Hash)commitId,
-                                     notNull(VcsUtil.getVcsRootFor(myProject, myPath)),
+                                     myRoot,
                                      SettableFuture.create());
             }
             else if (commitId instanceof String) {
