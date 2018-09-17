@@ -60,6 +60,12 @@ public class ExternalDiffTool {
                           @NotNull final DiffRequestChain chain,
                           @NotNull final DiffDialogHints hints) {
     try {
+      List<? extends DiffRequestProducer> allProducers = chain.getRequests();
+      if (allProducers.isEmpty()) return;
+
+      // TODO: show all changes on explicit selection
+      List<? extends DiffRequestProducer> producers = Collections.singletonList(allProducers.get(chain.getIndex()));
+
       //noinspection unchecked
       final Ref<List<DiffRequest>> requestsRef = new Ref<>();
       final Ref<Throwable> exceptionRef = new Ref<>();
@@ -67,7 +73,7 @@ public class ExternalDiffTool {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            requestsRef.set(collectRequests(project, chain, indicator));
+            requestsRef.set(collectRequests(project, producers, indicator));
           }
           catch (Throwable e) {
             exceptionRef.set(e);
@@ -101,15 +107,12 @@ public class ExternalDiffTool {
 
   @NotNull
   private static List<DiffRequest> collectRequests(@Nullable Project project,
-                                                   @NotNull final DiffRequestChain chain,
+                                                   @NotNull List<? extends DiffRequestProducer> producers,
                                                    @NotNull ProgressIndicator indicator) {
     List<DiffRequest> requests = new ArrayList<>();
 
     UserDataHolderBase context = new UserDataHolderBase();
     List<String> errorRequests = new ArrayList<>();
-
-    // TODO: show all changes on explicit selection
-    List<? extends DiffRequestProducer> producers = Collections.singletonList(chain.getRequests().get(chain.getIndex()));
 
     for (DiffRequestProducer producer : producers) {
       try {
