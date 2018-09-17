@@ -22,16 +22,13 @@ import com.intellij.openapi.util.text.StringUtil
 
 class PyCreateSetupPyFromTemplateHandler : DefaultCreateFromTemplateHandler() {
 
-  override fun handlesTemplate(template: FileTemplate?): Boolean {
-    return template == FileTemplateManager.getDefaultInstance().getInternalTemplate(CreateSetupPyAction.SETUP_SCRIPT_TEMPLATE_NAME)
-  }
+  override fun handlesTemplate(template: FileTemplate): Boolean =
+    template == FileTemplateManager.getDefaultInstance().getInternalTemplate(CreateSetupPyAction.SETUP_SCRIPT_TEMPLATE_NAME)
 
-  override fun prepareProperties(props: MutableMap<String, Any>?) {
-    if (props != null) {
-      val description = props["Description"]
-      if (description is String) {
-        props["Description"] = StringUtil.escapeChar(description, '\'')
-      }
+  override fun prepareProperties(props: MutableMap<String, Any>) {
+    val description = props["Description"]
+    if (description is String) {
+      props["Description"] = StringUtil.escapeChar(description, '\'')
     }
   }
 }

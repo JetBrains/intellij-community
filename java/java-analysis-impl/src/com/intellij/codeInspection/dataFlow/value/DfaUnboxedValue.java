@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class DfaUnboxedValue extends DfaValue {
   private final DfaVariableValue myVariable;
@@ -32,6 +35,12 @@ public class DfaUnboxedValue extends DfaValue {
 
   public DfaVariableValue getVariable() {
     return myVariable;
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType() {
+    return PsiPrimitiveType.getUnboxedType(myVariable.getType());
   }
 
   @Override

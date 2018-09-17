@@ -547,7 +547,7 @@ public abstract class LongRangeSet {
       return fromConstant(((DfaConstValue)value).getValue());
     }
     if (value instanceof DfaVariableValue) {
-      return fromType(((DfaVariableValue)value).getVariableType());
+      return fromType(value.getType());
     }
     return null;
   }

@@ -52,7 +52,8 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
     FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
                                                                   ui -> ui.matches(path, hash));
-    if (fileHistoryUi == null) {
+    boolean firstTime = fileHistoryUi == null;
+    if (firstTime) {
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       assert logManager != null;
       String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
@@ -62,6 +63,9 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
 
     if (hash != null) {
       fileHistoryUi.jumpToNearestCommit(hash);
+    }
+    else if (firstTime) {
+      fileHistoryUi.jumpToRow(0);
     }
   }
 }

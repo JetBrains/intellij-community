@@ -241,4 +241,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupAmbiguousAnnotations("foo", myFixture);
     doTest();
   }
+  public void testObjectsEquals() { doTest(); }
 }

@@ -175,7 +175,7 @@ public class UpdaterTreeState {
           }
         });
       }
-    }, false, true, true, false);
+    });
 
     return true;
   }
@@ -266,7 +266,7 @@ public class UpdaterTreeState {
 
           processHangByParent(hangByParent).notify(result);
         }
-      }, false, true, true);
+      }, false, true);
     } else {
       result.setDone();
     }

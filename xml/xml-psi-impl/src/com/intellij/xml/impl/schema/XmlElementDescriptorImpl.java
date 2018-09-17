@@ -16,6 +16,7 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -437,7 +438,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl)element1;
       final String namespaceByContext = element.getNamespaceByContext(context);
 
-      if (element.getName().equals(localName)) {
+      if (StringUtil.equals(element.getName(), localName)) {
         if (namespace == null ||
             namespace.equals(namespaceByContext) ||
             namespaceByContext.equals(XmlUtil.EMPTY_URI) ||

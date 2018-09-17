@@ -20,8 +20,6 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class AddTypeArgumentsConditionalTest extends LightQuickFixTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/addTypeArgumentsConditional";

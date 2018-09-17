@@ -25,8 +25,6 @@ public class RemoveRedundantElseFixTest extends LightQuickFixParameterizedTestCa
     enableInspectionTool(new ConfusingElseInspection());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeRedundantElse";

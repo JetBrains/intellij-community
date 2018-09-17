@@ -41,11 +41,45 @@ class EditorCoordinateMapper {
   }
 
   int visualLineToY(int line) {
-    return myView.getInsets().top + Math.max(0, line) * myView.getLineHeight();
+    if (line < 0) line = 0;
+    return myView.getInsets().top +
+           line * myView.getLineHeight() +
+           myView.getEditor().getInlayModel().getHeightOfBlockElementsBeforeVisualLine(line);
   }
 
   int yToVisualLine(int y) {
-    return Math.max(0, y - myView.getInsets().top) / myView.getLineHeight();
+    int lineHeight = myView.getLineHeight();
+    y = Math.max(0, y - myView.getInsets().top);
+    if (y < lineHeight) return 0;
+    int lineMin = 0;
+    int yMin = 0;
+    int lineMax = myView.getEditor().getVisibleLineCount() - 1;
+    int yMax = visualLineToY(lineMax + 1);
+    if (y >= yMax) {
+      return lineMax + 1 + (y - yMax) / lineHeight;
+    }
+    while (lineMin < lineMax) {
+      if ((yMax - yMin) == (lineMax - lineMin + 1) * lineHeight) return lineMin + (y - yMin) / lineHeight;
+      int lineMid = (lineMin + lineMax) / 2;
+      int yMid = visualLineToY(lineMid);
+      if (y < yMid) {
+        int yMidMin = yMid - getInlaysHeight(lineMid, true);
+        if (y >= yMidMin) return lineMid;
+        lineMax = lineMid - 1;
+        yMax = yMidMin;
+      }
+      else {
+        int yMidMax = yMid + lineHeight + getInlaysHeight(lineMid, false);
+        if (y < yMidMax) return lineMid;
+        lineMin = lineMid + 1;
+        yMin = yMidMax;
+      }
+    }
+    return lineMin;
+  }
+
+  private int getInlaysHeight(int visualLine, boolean above) {
+    return EditorUtil.getTotalInlaysHeight(myView.getEditor().getInlayModel().getBlockElementsForVisualLine(visualLine, above));
   }
 
   @NotNull

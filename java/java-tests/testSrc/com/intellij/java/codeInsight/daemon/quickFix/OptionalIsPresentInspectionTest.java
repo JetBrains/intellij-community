@@ -38,8 +38,6 @@ public class OptionalIsPresentInspectionTest extends LightQuickFixParameterizedT
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/optionalIsPresent";

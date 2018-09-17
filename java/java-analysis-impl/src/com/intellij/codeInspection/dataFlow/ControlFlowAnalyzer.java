@@ -673,7 +673,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(loopVar, null, true));
       addInstruction(new PushInstruction(loopVar, null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT, null), null));
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getVariableType()));
+      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType()));
       addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
     }
@@ -807,7 +807,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         DfaVariableValue var = myInlinedBlockContext.myTarget;
         addInstruction(new PushInstruction(var, null, true));
         returnValue.accept(this);
-        generateBoxingUnboxingInstructionFor(returnValue, var.getVariableType());
+        generateBoxingUnboxingInstructionFor(returnValue, var.getType());
         if (myInlinedBlockContext.myForceNonNullBlockResult) {
           addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.nullableFunctionReturn.problem(returnValue)));
         }
@@ -1373,7 +1373,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
-      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, type, i));
+      addInstruction(new BinopInstruction(op, expression, type, i));
 
       lExpr = rExpr;
       lType = rType;
@@ -1987,8 +1987,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (typeElement != null && operand != null && operand.getType() != null) {
       if (typeElement.getType() instanceof PsiPrimitiveType &&
           !UnnecessaryExplicitNumericCastInspection.isUnnecessaryPrimitiveNumericCast(castExpression)) {
-        addInstruction(new PopInstruction());
-        pushUnknown();
+        if (!typeElement.getType().equals(PsiPrimitiveType.getUnboxedType(operand.getType()))) {
+          addInstruction(new PopInstruction());
+          pushUnknown();
+        }
       } else {
         addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
       }
@@ -2084,8 +2086,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner(),
+  static final CallInliner[] INLINERS = {
+    new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
-    new AssertAllInliner()};
+    new AssertAllInliner(), new BoxingInliner()
+  };
 }
 

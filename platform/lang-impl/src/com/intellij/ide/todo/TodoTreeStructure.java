@@ -144,6 +144,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return asyncCommitDocuments(myProject);
   }
 
+  @NotNull
   @Override
   public final Object getRootElement(){
     return myRootElement;

@@ -19,22 +19,19 @@ import java.util.Map;
 public class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
-  private boolean myWithRules;
-  private DataProvider myDataProvider;
+  private final boolean myWithRules;
+  private final DataProvider myDataProvider;
 
   private SimpleDataContext(String dataId, Object data, DataContext parent) {
-    myDataId2Data = new HashMap<>(1);
+    this(new HashMap<>(1), parent, false);
     myDataId2Data.put(dataId, data);
-    myParent = parent;
   }
   
   private SimpleDataContext(@NotNull Map<String, Object> dataId2data, DataContext parent, boolean withRules) {
     myDataId2Data = dataId2data;
     myParent = parent;
     myWithRules = withRules;
-    if (withRules) {
-      myDataProvider = dataId -> getDataFromSelfOrParent(dataId);
-    }
+    myDataProvider = withRules ? dataId -> getDataFromSelfOrParent(dataId) : __ -> null;
   }
 
   @Override

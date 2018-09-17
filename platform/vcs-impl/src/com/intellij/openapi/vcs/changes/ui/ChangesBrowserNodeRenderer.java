@@ -10,6 +10,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   @NotNull private final Project myProject;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
+  @Nullable private JBInsets myBackgroundInsets;
 
   public ChangesBrowserNodeRenderer(@NotNull Project project, @NotNull BooleanGetter showFlattenGetter, boolean highlightProblems) {
     myShowFlatten = showFlattenGetter;
@@ -60,8 +62,21 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void clear() {
+    setBackgroundInsets(null);
     setToolTipText(null);
     super.clear();
+  }
+
+  @Override
+  protected void doPaintFragmentBackground(@NotNull Graphics2D g, int index, @NotNull Color bgColor, int x, int y, int width, int height) {
+    if (myBackgroundInsets != null) {
+      g.setColor(bgColor);
+      g.fillRect(x + myBackgroundInsets.left, y + myBackgroundInsets.top, width - myBackgroundInsets.width(),
+                 height - myBackgroundInsets.height());
+    }
+    else {
+      super.doPaintFragmentBackground(g, index, bgColor, x, y, width, height);
+    }
   }
 
   public void appendTextWithIssueLinks(@NotNull String text, @NotNull SimpleTextAttributes baseStyle) {
@@ -71,6 +86,10 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   public void setIcon(@NotNull FileType fileType, boolean isDirectory) {
     Icon icon = isDirectory ? PlatformIcons.FOLDER_ICON : fileType.getIcon();
     setIcon(icon);
+  }
+
+  public void setBackgroundInsets(@Nullable JBInsets backgroundInsets) {
+    myBackgroundInsets = backgroundInsets;
   }
 
   public boolean isShowingLocalChanges() {

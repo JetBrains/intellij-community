@@ -43,10 +43,20 @@ public class DfaBoxedValue extends DfaValue {
 
   public static class Factory {
     private final Map<Object, DfaBoxedValue> cachedValues = new HashMap<>();
+    private final Map<DfaVariableValue, DfaUnboxedValue> cachedUnboxedValues = ContainerUtil.newTroveMap();
+
     private final DfaValueFactory myFactory;
 
     public Factory(DfaValueFactory factory) {
       myFactory = factory;
+    }
+
+    public DfaValue getWrappedIfExists(DfaVariableValue variable) {
+      DfaBoxedValue boxed = cachedValues.get(variable);
+      if (boxed != null) {
+        return boxed;
+      }
+      return cachedUnboxedValues.get(variable);
     }
 
     @Nullable
@@ -62,8 +72,6 @@ public class DfaBoxedValue extends DfaValue {
       }
       return boxedValue;
     }
-
-    private final Map<DfaVariableValue, DfaUnboxedValue> cachedUnboxedValues = ContainerUtil.newTroveMap();
 
     @NotNull
     public DfaValue createUnboxed(DfaValue value) {

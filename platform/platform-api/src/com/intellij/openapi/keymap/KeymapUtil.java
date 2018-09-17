@@ -90,6 +90,7 @@ public class KeymapUtil {
   }
 
   @NotNull
+  @Deprecated
   public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       return AllIcons.General.KeyboardShortcut;

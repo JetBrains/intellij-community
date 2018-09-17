@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
@@ -167,18 +164,18 @@ public enum SpecialField implements DfaVariableSource {
   /**
    * @return a list of method contracts which equivalent to checking this special field for zero
    */
-  public List<MethodContract> getEmptyContracts() {
+  public MethodContract[] getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
-    return Arrays
-      .asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), returnTrue()),
-              MethodContract.trivialContract(returnFalse()));
+    return new MethodContract[]{
+      MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), returnTrue()),
+      MethodContract.trivialContract(returnFalse())};
   }
 
-  public List<MethodContract> getEqualsContracts() {
-    return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
+  public MethodContract[] getEqualsContracts() {
+    return new MethodContract[]{new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          MethodContract.singleConditionContract(
                            ContractValue.qualifier().specialField(this), DfaRelationValue.RelationType.NE,
-                           ContractValue.argument(0).specialField(this), returnFalse()));
+                           ContractValue.argument(0).specialField(this), returnFalse())};
   }
 
   @Override

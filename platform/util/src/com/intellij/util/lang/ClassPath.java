@@ -192,7 +192,7 @@ public class ClassPath {
     }
 
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      Loader loader = createLoader(url, index, new File(path), true);
+      Loader loader = createLoader(url, index, new File(path), index == 0);
       if (loader != null) {
         initLoader(url, lastOne, loader);
       }
@@ -436,7 +436,7 @@ public class ClassPath {
 
   private static String[] loadManifestClasspath(JarLoader loader) {
     try {
-      String classPath = loader.getManifestAttributes().getValue(Attributes.Name.CLASS_PATH);
+      String classPath = loader.getClassPathManifestAttribute();
 
       if (classPath != null) {
         String[] urls = classPath.split(" ");

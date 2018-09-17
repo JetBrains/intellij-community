@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -140,5 +141,11 @@ public class InsertionContext {
   public CommonCodeStyleSettings getCodeStyleSettings() {
     Language lang = PsiUtilCore.getLanguageAtOffset(getFile(), getTailOffset());
     return CodeStyle.getLanguageSettings(getFile(), lang);
+  }
+
+  public static boolean shouldAddCompletionChar(char completionChar) {
+    return completionChar != Lookup.AUTO_INSERT_SELECT_CHAR &&
+           completionChar != Lookup.REPLACE_SELECT_CHAR &&
+           completionChar != Lookup.NORMAL_SELECT_CHAR;
   }
 }

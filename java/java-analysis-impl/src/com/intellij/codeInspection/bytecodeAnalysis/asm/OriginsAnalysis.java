@@ -16,7 +16,6 @@ import java.util.LinkedList;
  * @author lambdamix
  */
 public class OriginsAnalysis {
-
   private static final SourceInterpreter ourInterpreter = new SourceInterpreter(Opcodes.API_VERSION) {
     @Override
     public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {
@@ -56,7 +55,7 @@ public class OriginsAnalysis {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null) return false;
+      if (!(o instanceof InsnLocation)) return false;
       InsnLocation insnLocation = (InsnLocation)o;
       if (local != insnLocation.local) return false;
       if (insnIndex != insnLocation.insnIndex) return false;
@@ -73,16 +72,15 @@ public class OriginsAnalysis {
   }
 
   /**
-   *
-   * @param frames fixpoint of frames
+   * @param frames       fix point of frames
    * @param instructions method instructions
-   * @param graph method control flow graph
+   * @param graph        method control flow graph
    * @return array, array[i] == true means that the result of a method execution may originate at an i-th instruction
    * @throws AnalyzerException
    */
   @NotNull
-  public static boolean[] resultOrigins(Frame<Value>[] frames, InsnList instructions, ControlFlowGraph graph) throws AnalyzerException {
-
+  public static boolean[] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
+    throws AnalyzerException {
     TIntArrayList[] backTransitions = new TIntArrayList[instructions.size()];
     for (int i = 0; i < backTransitions.length; i++) {
       backTransitions[i] = new TIntArrayList();
@@ -116,7 +114,8 @@ public class OriginsAnalysis {
         if (opcode != Opcodes.INVOKEINTERFACE && opcode != Opcodes.GETFIELD && !(opcode >= Opcodes.IALOAD && opcode <= Opcodes.SALOAD)) {
           result[insnIndex] = true;
         }
-      } else {
+      }
+      else {
         TIntArrayList froms = backTransitions[insnIndex];
         for (int i = 0; i < froms.size(); i++) {
           InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getQuick(i), preLocation.slot);
@@ -131,15 +130,14 @@ public class OriginsAnalysis {
   }
 
   /**
-   *
-   * @param frame a start frame with an interesting value
+   * @param frame    a start frame with an interesting value
    * @param location location of an interesting value *after* execution of an instruction
-   * @param insn an executed instruction
+   * @param insn     an executed instruction
    * @return location of an interesting value *before* execution of an instruction (in the past) or null if it is not traceable
    * @throws AnalyzerException
    */
   @Nullable
-  private static Location previousLocation(Frame<Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
+  private static Location previousLocation(Frame<? extends Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
     int insnType = insn.getType();
     if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
       return location;
@@ -156,7 +154,8 @@ public class OriginsAnalysis {
         PreValue val = (PreValue)preVal;
         return new Location(val.local, val.slot);
       }
-    } else {
+    }
+    else {
       SourceValue preVal = preFrame.getStack(location.slot);
       if (preVal instanceof PreValue) {
         PreValue val = (PreValue)preVal;
@@ -167,7 +166,7 @@ public class OriginsAnalysis {
   }
 
   @NotNull
-  private static Frame<SourceValue> makePreFrame(@NotNull Frame<Value> frame) {
+  private static Frame<SourceValue> makePreFrame(@NotNull Frame<? extends Value> frame) {
     Frame<SourceValue> preFrame = new Frame<>(frame.getLocals(), frame.getMaxStackSize());
     for (int i = 0; i < frame.getLocals(); i++) {
       preFrame.setLocal(i, new PreValue(true, i, frame.getLocal(i).getSize()));
@@ -178,5 +177,3 @@ public class OriginsAnalysis {
     return preFrame;
   }
 }
-
-

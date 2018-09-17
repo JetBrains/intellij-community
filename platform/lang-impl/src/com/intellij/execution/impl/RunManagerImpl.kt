@@ -636,7 +636,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private fun runConfigurationFirstLoaded() {
     if (selectedConfiguration == null) {
-      selectedConfiguration = allSettings.firstOrNull { it.type !== UnknownConfigurationType.getInstance() }
+      selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
     }
   }
 
@@ -941,7 +941,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {
-    if (configuration is UnknownRunConfiguration) {
+    if (!configuration.type.isManaged) {
       return
     }
 

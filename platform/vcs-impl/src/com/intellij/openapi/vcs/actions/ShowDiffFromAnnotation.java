@@ -29,7 +29,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.changes.Change;
@@ -40,34 +42,27 @@ import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CacheOneStepIterator;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
   private final FileAnnotation myFileAnnotation;
   private final AbstractVcs myVcs;
-  private final VirtualFile myFile;
-  private int currentLine;
-  private final boolean myEnabled;
+  private final FileAnnotation.RevisionChangesProvider myChangesProvider;
+  private int currentLine = -1;
 
-  ShowDiffFromAnnotation(final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
+  ShowDiffFromAnnotation(@NotNull FileAnnotation fileAnnotation,
+                         @NotNull AbstractVcs vcs) {
     ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     myFileAnnotation = fileAnnotation;
     myVcs = vcs;
-    myFile = file;
-    currentLine = -1;
-    myEnabled = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsFor(myFile) != null;
+    myChangesProvider = fileAnnotation.getRevisionsChangesProvider();
   }
 
   @Override
@@ -78,8 +73,8 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   @Override
   public void update(@NotNull AnActionEvent e) {
     final int number = currentLine;
-    e.getPresentation().setVisible(myEnabled);
-    e.getPresentation().setEnabled(myEnabled && number >= 0 && number < myFileAnnotation.getLineCount());
+    e.getPresentation().setVisible(myChangesProvider != null);
+    e.getPresentation().setEnabled(myChangesProvider != null && number >= 0 && number < myFileAnnotation.getLineCount());
   }
 
   @Override
@@ -88,49 +83,47 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     if (actualNumber < 0) return;
 
     final VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);
-    if (revisionNumber != null) {
-      final VcsException[] exc = new VcsException[1];
-      final List<Change> changes = new LinkedList<>();
-      final FilePath[] targetPath = new FilePath[1];
-      ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
-                                                                "Loading revision " + revisionNumber.asString() + " contents", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
-          try {
-            final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(myFile, revisionNumber);
-            if (pair == null || pair.getFirst() == null) {
-              VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
-              return;
-            }
-            targetPath[0] = pair.getSecond() == null ? VcsUtil.getFilePath(myFile) : pair.getSecond();
-            final CommittedChangeList cl = pair.getFirst();
-            changes.addAll(cl.getChanges());
-            Collections.sort(changes, ChangesComparator.getInstance(true));
-          }
-          catch (VcsException e1) {
-            exc[0] = e1;
-          }
-        }
+    if (revisionNumber == null) return;
 
-        @Override
-        public void onSuccess() {
-          if (exc[0] != null) {
-            VcsBalloonProblemNotifier
-              .showOverChangesView(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
+    final VcsException[] exc = new VcsException[1];
+    final List<Change> changes = new ArrayList<>();
+    final FilePath[] targetPath = new FilePath[1];
+    ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
+                                                              "Loading revision " + revisionNumber.asString() + " contents", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          final Pair<? extends CommittedChangeList, FilePath> pair = myChangesProvider.getChangesIn(actualNumber);
+          if (pair == null || pair.getFirst() == null || pair.getSecond() == null) {
+            VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
+            return;
           }
-          else if (!changes.isEmpty()) {
-            int idx = findSelfInList(changes, targetPath[0]);
-            final ShowDiffContext context = new ShowDiffContext(DiffDialogHints.FRAME);
-            if (idx != -1) {
-              context.putChangeContext(changes.get(idx), DiffUserDataKeysEx.NAVIGATION_CONTEXT, createDiffNavigationContext(actualNumber));
-            }
-            if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
-            ShowDiffAction.showDiffForChange(myVcs.getProject(), changes, idx, context);
-          }
+          targetPath[0] = pair.getSecond();
+          changes.addAll(pair.getFirst().getChanges());
+          Collections.sort(changes, ChangesComparator.getInstance(true));
         }
-      });
-    }
+        catch (VcsException e1) {
+          exc[0] = e1;
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        if (exc[0] != null) {
+          VcsBalloonProblemNotifier
+            .showOverChangesView(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
+        }
+        else if (!changes.isEmpty()) {
+          int idx = findSelfInList(changes, targetPath[0]);
+          final ShowDiffContext context = new ShowDiffContext(DiffDialogHints.FRAME);
+          if (idx != -1) {
+            context.putChangeContext(changes.get(idx), DiffUserDataKeysEx.NAVIGATION_CONTEXT, createDiffNavigationContext(actualNumber));
+          }
+          if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
+          ShowDiffAction.showDiffForChange(myVcs.getProject(), changes, idx, context);
+        }
+      }
+    });
   }
 
   private static int findSelfInList(@NotNull List<Change> changes, @NotNull FilePath filePath) {

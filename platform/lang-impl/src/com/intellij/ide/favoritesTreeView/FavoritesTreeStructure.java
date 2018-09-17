@@ -66,8 +66,9 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     if (!(element instanceof AbstractTreeNode)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -135,7 +136,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     AbstractTreeNode parent = null;
     if (element == getRootElement()) {
       return null;
@@ -151,7 +152,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);
   }
 

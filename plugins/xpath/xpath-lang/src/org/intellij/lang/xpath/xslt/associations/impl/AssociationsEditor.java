@@ -245,8 +245,9 @@ class AssociationsEditor {
       return Collections.EMPTY_LIST;
     }
 
+    @NotNull
     @Override
-    public Object[] getChildElements(Object obj) {
+    public Object[] getChildElements(@NotNull Object obj) {
       final Object[] childElements = super.getChildElements(obj);
       List l = new ArrayList(childElements.length);
       for (Object o : childElements) {

@@ -19,8 +19,9 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   private CompilerTester myCompilerTester;
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void tearDown() throws Exception {
+    myCompilerTester = null;
+    super.tearDown();
   }
 
   protected final void installCompiler() {

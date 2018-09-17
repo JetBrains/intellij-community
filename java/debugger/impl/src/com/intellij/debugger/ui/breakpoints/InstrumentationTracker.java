@@ -89,6 +89,9 @@ public class InstrumentationTracker {
   }
 
   private void noticeRedefineClass(ReferenceType type) {
+    if (!ourNoticeRedefineClassMethod.getDeclaringClass().isAssignableFrom(type.getClass())) {
+      return;
+    }
     List<Requestor> requestors = StreamEx.of(type.virtualMachine().eventRequestManager().breakpointRequests())
       .filter(r -> type.equals(r.location().declaringType()))
       .map(RequestManagerImpl::findRequestor)

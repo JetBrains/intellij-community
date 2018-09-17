@@ -405,7 +405,7 @@ public class IdeEventQueue extends EventQueue {
             runnable.run();
           }
           catch (Exception exc) {
-            LOG.info(exc);
+            LOG.error(exc);
           }
         });
     }
@@ -563,7 +563,7 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof WindowEvent) {
+    if (e instanceof WindowEvent || e instanceof FocusEvent) {
       ActivityTracker.getInstance().inc();
     }
 
@@ -1223,6 +1223,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
+    if (!delayKeyEvents.get()) return;
     delayKeyEvents.set(false);
     int size = myDelayedKeyEvents.size();
     for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {

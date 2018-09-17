@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.image.ImageObserver;
@@ -1510,6 +1511,11 @@ public class JBUI {
     }
   }
 
+  public static Border asUIResource(@NotNull Border border) {
+    if (border instanceof UIResource) return border;
+    return new BorderUIResource(border);
+  }
+
   public static class CurrentTheme {
     public static class ActionButton {
       @NotNull
@@ -1734,7 +1740,7 @@ public class JBUI {
     }
 
     //todo #UX-1 maybe move to popup
-    public static class SearchEverywhere {
+    public static class BigPopup {
       public static Color dialogBackground() {
         return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
       }
