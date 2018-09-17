@@ -86,7 +86,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
       generateMavenMetadata("myGroup", "myArtifact")
     }
 
-    resolver.resolveSync(myProject, library, "myGroup:myArtifact:1.0")
+    resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
     assertTrue(library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
   }
 
