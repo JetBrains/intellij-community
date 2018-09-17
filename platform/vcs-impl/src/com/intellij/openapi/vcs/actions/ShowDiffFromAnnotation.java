@@ -40,9 +40,11 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation.RevisionChangesProvider;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.CacheOneStepIterator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +124,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
       }
 
       FilePath targetPath = pair.getSecond();
-      List<Change> changes = new ArrayList<>(pair.getFirst().getChanges());
+      List<Change> changes = ContainerUtil.sorted(pair.getFirst().getChanges(), ChangesComparator.getInstance(true));
 
       Map<Change, Map<Key, Object>> context = new HashMap<>();
       int idx = findSelfInList(changes, targetPath);
