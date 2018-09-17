@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,11 +49,14 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   @Override
   public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
     Rectangle rect = new Rectangle(component.getSize());
+    /* Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details
     JBInsets.removeFrom(rect, component.getInsets());
+       Android Studio */
     paintBackgroundWithColor(g, rect, color);
-    // Android Studio: added by Change Ia6abcc69 / commit 0ccfb87
+    // Android Studio: We want to show focus on these buttons for accessibility
     if (component.hasFocus()) {
-      DarculaUIUtil.paintFocusOval((Graphics2D)g, 3, 3, component.getWidth() - 6, component.getHeight() - 6);
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+      DarculaUIUtil.paintFocusBorder((Graphics2D)g, rect.width, rect.height, arc, true);
     }
   }
 
@@ -91,7 +93,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   public void paintBorder(Graphics g, JComponent component, int state) {
     if (state != ActionButtonComponent.NORMAL) {
       Rectangle rect = new Rectangle(component.getSize());
+      /* Android Studio: Removed insets adjustment to get full button size hover effect see: IDEA-199027 for details
       JBInsets.removeFrom(rect, component.getInsets());
+         Android Studio */
       paintBorder(g, rect, state);
     }
   }
