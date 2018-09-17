@@ -42,6 +42,7 @@ import java.util.Map;
 public class JavaColorSettingsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ourDescriptors = {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), JavaHighlightingColors.KEYWORD),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.primitive"), JavaHighlightingColors.PRIMITIVE),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), JavaHighlightingColors.NUMBER),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.string"), JavaHighlightingColors.STRING),

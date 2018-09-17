@@ -32,6 +32,8 @@ public class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("JAVA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
   public static final TextAttributesKey KEYWORD 
     = TextAttributesKey.createTextAttributesKey("JAVA_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey PRIMITIVE 
+    = TextAttributesKey.createTextAttributesKey("JAVA_PRIMITIVE", DefaultLanguageHighlighterColors.KEYWORD);
   public static final TextAttributesKey NUMBER 
     = TextAttributesKey.createTextAttributesKey("JAVA_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
   public static final TextAttributesKey STRING 

@@ -139,6 +139,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
       "JAVA_DOT { color: #000000;  font-style: normal; }\n" +
       "JAVA_INVALID_STRING_ESCAPE { color: #008000;  background-color: #ffcccc;  font-style: normal; }\n" +
       "JAVA_KEYWORD { color: #000080;  font-style: normal;  font-weight: bold; }\n" +
+      "JAVA_PRIMITIVE { color: #000080;  font-style: normal;  font-weight: bold; }\n" +
       "JAVA_LINE_COMMENT { color: #808080;  font-style: italic; }\n" +
       "JAVA_NUMBER { color: #0000ff;  font-style: normal; }\n" +
       "JAVA_OPERATION_SIGN { color: #000000;  font-style: normal; }\n" +
@@ -191,6 +192,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
       "JAVA_DOT { color: #a9b7c6;  font-style: normal; }\n" +
       "JAVA_INVALID_STRING_ESCAPE { color: #6a8759;  font-style: normal; text-decoration: underline #ff0000wavy; }\n" +
       "JAVA_KEYWORD { color: #cc7832;  font-style: normal; }\n" +
+      "JAVA_PRIMITIVE { color: #cc7832;  font-style: normal; }\n" +
       "JAVA_LINE_COMMENT { color: #808080;  font-style: normal; }\n" +
       "JAVA_NUMBER { color: #6897bb;  font-style: normal; }\n" +
       "JAVA_OPERATION_SIGN { color: #a9b7c6;  font-style: normal; }\n" +
