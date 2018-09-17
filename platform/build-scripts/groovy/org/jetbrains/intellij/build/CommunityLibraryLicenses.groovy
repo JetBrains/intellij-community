@@ -224,8 +224,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html"),
     new LibraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
-    new LibraryLicense(name: "jayatana", libraryName: "jayatana", version: "1.2.4", license: "MIT License",
-                       url: "https://code.google.com/p/java-swing-ayatana/", licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", version: "1.0.0", license: "ISC License",
                        licenseUrl: "https://github.com/jeremyh/jBCrypt/blob/master/LICENSE", url: "https://github.com/jeremyh/jBCrypt"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
