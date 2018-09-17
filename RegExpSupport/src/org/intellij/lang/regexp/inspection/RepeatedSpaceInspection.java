@@ -44,23 +44,10 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpChar(RegExpChar aChar) {
-      if (!isSpace(aChar) || isSpace(aChar.getPrevSibling())) {
+      if (!isSpace(aChar) || isSpace(aChar.getPrevSibling()) || isInEscapeSequence(aChar)) {
         return;
       }
-      PsiElement prev = aChar.getPrevSibling();
-      while (prev != null) {
-        if (isEscapeSequenceStart(prev)) {
-          return;
-        }
-        prev = prev.getPrevSibling();
-      }
       final PsiElement parent = aChar.getParent();
-      if (parent instanceof RegExpBranch) {
-        final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof RegExpPattern && isEscapeSequenceStart(grandParent.getPrevSibling())) {
-          return;
-        }
-      }
       if (parent instanceof RegExpClass || parent instanceof RegExpCharRange) {
         return;
       }
@@ -75,6 +62,22 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
         final int offset = aChar.getStartOffsetInParent();
         myHolder.registerProblem(parent, new TextRange(offset, offset + count), message, new RepeatedSpaceFix(count));
       }
+    }
+
+    private static boolean isInEscapeSequence(RegExpChar aChar) {
+      PsiElement prev = aChar.getPrevSibling();
+      while (prev instanceof RegExpChar) {
+        prev = prev.getPrevSibling();
+      }
+      if (isEscapeSequenceStart(prev)) {
+        return true;
+      }
+      final PsiElement parent = aChar.getParent();
+      if (prev != null || !(parent instanceof RegExpBranch)) {
+        return false;
+      }
+      final PsiElement grandParent = parent.getParent();
+      return grandParent instanceof RegExpPattern && isEscapeSequenceStart(grandParent.getPrevSibling());
     }
 
     private static boolean isEscapeSequenceStart(@Nullable PsiElement element) {
