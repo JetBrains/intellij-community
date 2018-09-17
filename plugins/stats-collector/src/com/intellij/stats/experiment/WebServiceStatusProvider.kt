@@ -22,6 +22,7 @@ import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
+import java.util.concurrent.TimeUnit
 
 
 class WebServiceStatusProvider(
@@ -37,9 +38,14 @@ class WebServiceStatusProvider(
         private val SALT = "completion.stats.experiment.salt"
         private val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
         private val PERFORM_EXPERIMENT_KEY = "completion.ml.perform.experiment"
+        private val STATUS_UPDATED_TIMESTAMP_KEY = "completion.stats.status.updated.ts"
+
+        private val INFO_TTL = TimeUnit.DAYS.toMillis(7)
+        private val DEFAULT_INFO = ExperimentInfo(0, "", false)
     }
 
-    @Volatile private var info: ExperimentInfo = loadInfo()
+    @Volatile
+    private var info: ExperimentInfo = loadInfoIfActual()
     @Volatile private var serverStatus = ""
     @Volatile private var dataServerUrl = ""
 
@@ -92,20 +98,33 @@ class WebServiceStatusProvider(
         }
     }
 
-    private fun loadInfo(): ExperimentInfo {
-        return with (PropertiesComponent.getInstance()) {
-            val salt = getValue(SALT, "")
-            val experimentVersion = getInt(EXPERIMENT_VERSION_KEY, 0)
-            val performExperiment = getBoolean(PERFORM_EXPERIMENT_KEY, false)
-            ExperimentInfo(experimentVersion, salt, performExperiment)
+    private fun loadInfoIfActual(): ExperimentInfo {
+        val updatedTimestamp = PropertiesComponent.getInstance().getOrInitLong(STATUS_UPDATED_TIMESTAMP_KEY, 0)
+        if (updatedTimestamp != 0L && System.currentTimeMillis() - updatedTimestamp < INFO_TTL) {
+            return loadInfo() ?: DEFAULT_INFO
         }
+
+        return DEFAULT_INFO
+    }
+
+    private fun loadInfo(): ExperimentInfo? {
+        val properties = PropertiesComponent.getInstance()
+        val salt = properties.getValue(SALT)
+        val experimentVersion = properties.getInt(EXPERIMENT_VERSION_KEY, -1)
+        val performExperiment = if (properties.isValueSet(PERFORM_EXPERIMENT_KEY)) properties.isTrueValue(PERFORM_EXPERIMENT_KEY) else null
+        if (salt != null && experimentVersion != -1 && performExperiment != null) {
+            return ExperimentInfo(experimentVersion, salt, performExperiment)
+        }
+
+        return null
     }
 
     private fun saveInfo(info: ExperimentInfo) {
-        with (PropertiesComponent.getInstance()) {
+        with(PropertiesComponent.getInstance()) {
             setValue(SALT, info.salt)
             setValue(EXPERIMENT_VERSION_KEY, info.experimentVersion.toString())
             setValue(PERFORM_EXPERIMENT_KEY, info.performExperiment)
+            setValue(STATUS_UPDATED_TIMESTAMP_KEY, System.currentTimeMillis().toString())
         }
     }
 
