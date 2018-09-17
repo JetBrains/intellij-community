@@ -70,6 +70,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
   // #562 "Exceptions thrown by CoroutineExceptionHandler must be caught by handleCoroutineException()"
   protected open fun handleUncaughtException(coroutineContext: CoroutineContext, throwable: Throwable) {
+    if (throwable is CancellationException) return  // TODO[eldar] remove once updated to kotlinx.coroutines v0.25.0
     try {
       LOG.error("Uncaught exception from $coroutineContext", throwable)  // throws AssertionError in unit testing mode
     }

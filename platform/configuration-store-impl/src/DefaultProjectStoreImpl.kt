@@ -17,7 +17,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
   override val isUseVfsForWrite: Boolean
     get() = false
 
-  override public fun loadLocalData(): Element? {
+  public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
     try {
       return element.getChild("component").getChild("defaultProject")

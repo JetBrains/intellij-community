@@ -229,7 +229,7 @@ private abstract class LegacyConfigurationManager<
   /**
    * If one of these fields is not empty -- legacy configuration makes sence
    */
-  open protected fun getFieldsToCheckForEmptiness() = listOf(legacyConfig.scriptName, legacyConfig.className, legacyConfig.methodName)
+  protected open fun getFieldsToCheckForEmptiness() = listOf(legacyConfig.scriptName, legacyConfig.className, legacyConfig.methodName)
 
   /**
    * @return true of legacy configuration loaded, false if configuration is pure new

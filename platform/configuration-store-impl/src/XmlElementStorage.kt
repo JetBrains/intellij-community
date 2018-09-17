@@ -34,7 +34,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   protected abstract fun loadLocalData(): Element?
 
-  override final fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? = storageData.getState(componentName, archive)
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? = storageData.getState(componentName, archive)
 
   override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
@@ -396,7 +396,7 @@ internal fun DataWriter?.writeTo(file: Path, lineSeparator: String = LineSeparat
 }
 
 internal abstract class StringDataWriter : DataWriter {
-  override final fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
+  final override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
     output.bufferedWriter().use {
       write(it, lineSeparator, filter)
     }

@@ -74,7 +74,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onTestsReporterAttached() {
-    ((Runnable)() -> fireOnTestsReporterAttached(myTestsRootProxy)).run();
+    fireOnTestsReporterAttached(myTestsRootProxy);
   }
 
   @Override
