@@ -1,5 +1,3 @@
-from contextlib import contextmanager
-
 from _pydevd_bundle.pydevd_constants import get_frame
 from _pydev_imps._pydev_saved_modules import thread, threading
 
