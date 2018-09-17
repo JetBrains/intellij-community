@@ -298,7 +298,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (int i = 0; i < myStack.size(); i++) {
       if (!isSuperValue(myStack.get(i), that.myStack.get(i))) return false;
     }
-    if (!that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) return false;
     Set<EqClass> thisClasses = this.getNonTrivialEqClasses();
     Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
     if(!thisClasses.equals(thatClasses)) {
@@ -308,6 +307,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           return false;
         }
       }
+    }
+    for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
+      // As we already compared eqClasses, we are sure that all values from any our EqClass belong
+      // to the same EqClass in `that`, thus we can just check any value from the corresponding classes
+      DfaValue firstValue = myFactory.getValue(pair.getFirst().get(0));
+      DfaValue secondValue = myFactory.getValue(pair.getSecond().get(0));
+      RelationType relation = that.getRelation(firstValue, secondValue);
+      if (relation == null || relation == RelationType.EQ || pair.isOrdered() && relation != RelationType.LT) return false;
     }
     Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
     values.addAll(that.myVariableStates.keySet());
@@ -684,6 +691,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     int index1 = getEqClassIndex(value1);
     int index2 = getEqClassIndex(value2);
     return index1 != -1 && index1 == index2;
+  }
+
+  /**
+   * Returns a relation between given values within this state, if known
+   * @param left first value
+   * @param right second value
+   * @return a relation (EQ, NE, GT, LT), or null if not known.
+   */
+  @Nullable
+  private RelationType getRelation(DfaValue left, DfaValue right) {
+    int leftClass = getEqClassIndex(left);
+    int rightClass = getEqClassIndex(right);
+    if (leftClass == -1 || rightClass == -1) return null;
+    if (leftClass == rightClass) return RelationType.EQ;
+    return myDistinctClasses.getRelation(leftClass, rightClass);
   }
 
   @Override
