@@ -17,6 +17,9 @@
       <add-to-group group-id="RevealGroup" anchor="last"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
+    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.MoveToEditorAction" text="Move to Editor">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>
