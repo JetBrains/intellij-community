@@ -111,4 +111,4 @@ class WebServiceStatusProvider(
 
 }
 
-data class ExperimentInfo(var experimentVersion: Int, var salt: String, var performExperiment: Boolean)
+data class ExperimentInfo(val experimentVersion: Int, val salt: String, val performExperiment: Boolean)
