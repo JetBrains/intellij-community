@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,9 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
         MultiMap<Object, TreeModelBuilder.GenericNodeData> groups = new MultiMap<>();
         List<? extends DiffRequestProducer> producers = chain.getRequests();
         for (int i = 0; i < producers.size(); i++) {
-          Producer producer = (Producer)producers.get(i);
+          Producer producer = ObjectUtils.tryCast(producers.get(i), Producer.class);
+          if (producer == null) continue;
+
           FilePath filePath = producer.getFilePath();
           FileStatus fileStatus = producer.getFileStatus();
           Object tag = producer.getPopupTag();
