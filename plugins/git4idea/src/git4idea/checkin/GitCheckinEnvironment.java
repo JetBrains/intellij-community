@@ -909,7 +909,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean rc = true;
     if (!added.isEmpty()) {
       try {
-        GitFileUtils.addPaths(project, root, added);
+        GitFileUtils.addPathsForce(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
