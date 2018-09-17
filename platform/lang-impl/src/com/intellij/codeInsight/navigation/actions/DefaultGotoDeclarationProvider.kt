@@ -5,6 +5,7 @@ import com.intellij.codeInsight.findReferences
 import com.intellij.codeInsight.navigation.GotoDeclarationProvider
 import com.intellij.codeInsight.navigation.PsiElementNavigationTarget
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.findTargetElementsFromProviders
+import com.intellij.navigation.NavigationService
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -21,8 +22,9 @@ class DefaultGotoDeclarationProvider : GotoDeclarationProvider {
       }
       return
     }
+    val navigationService = NavigationService.getInstance(project)
     for (reference in findReferences(editor, file)) {
-      for (target in reference.getNavigationTargets(project)) {
+      for (target in navigationService.getNavigationTargets(reference)) {
         consumer.accept(target)
       }
     }
