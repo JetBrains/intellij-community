@@ -371,16 +371,21 @@ public class GeneralCommandLineTest {
     catch (IllegalArgumentException ignored) { }
 
     try {
-      env.put("a=b", "-");
-      fail("keys with '=' should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
-
-    try {
       env.put("a\0b", "-");
       fail("keys with '\\0' should be rejected");
     }
     catch (IllegalArgumentException ignored) { }
+
+    if (SystemInfo.isUnix) {
+      try {
+        env.put("a=b", "-");
+        fail("keys with '=' should be rejected");
+      }
+      catch (IllegalArgumentException ignored) { }
+    }
+    else {
+      env.put("a=b", "-");
+    }
 
     try {
       env.put("key1", null);
