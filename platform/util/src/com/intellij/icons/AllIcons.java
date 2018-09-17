@@ -1667,7 +1667,7 @@ public class AllIcons {
 
   public static class Modules {
     public static final Icon AddExcludedRoot = IconLoader.getIcon("/modules/addExcludedRoot.svg"); // 16x16
-    public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.png"); // 16x16
+    public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.svg"); // 16x16
     public static final Icon DeleteContentFolder = IconLoader.getIcon("/modules/deleteContentFolder.png"); // 9x9
     public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); // 9x9
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 9x9
@@ -1689,16 +1689,16 @@ public class AllIcons {
     public static final Icon SourceRoot = IconLoader.getIcon("/modules/sourceRoot.svg"); // 16x16
     public static final Icon SourceRootFileLayer = IconLoader.getIcon("/modules/sourceRootFileLayer.png"); // 16x16
     public static final Icon Sources = IconLoader.getIcon("/modules/sources.svg"); // 16x16
-    public static final Icon Split = IconLoader.getIcon("/modules/split.png"); // 16x16
+    public static final Icon Split = IconLoader.getIcon("/modules/split.svg"); // 16x16
     public static final Icon TestResourcesRoot = IconLoader.getIcon("/modules/testResourcesRoot.svg"); // 16x16
     public static final Icon TestRoot = IconLoader.getIcon("/modules/testRoot.svg"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/modules/testSourceFolder.svg"); // 16x16
 
     public static class Types {
-      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
+      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.svg"); // 16x16
 
     }
-    public static final Icon UnloadedModule = IconLoader.getIcon("/modules/unloadedModule.png"); // 16x16
+    public static final Icon UnloadedModule = IconLoader.getIcon("/modules/unloadedModule.svg"); // 16x16
     public static final Icon UnmarkWebroot = IconLoader.getIcon("/modules/unmarkWebroot.svg"); // 16x16
     public static final Icon WebRoot = IconLoader.getIcon("/modules/webRoot.svg"); // 16x16
 
@@ -2289,7 +2289,7 @@ public class AllIcons {
 
   public static class Toolbar {
     public static final Icon Filterdups = IconLoader.getIcon("/toolbar/filterdups.svg"); // 16x16
-    public static final Icon Unknown = IconLoader.getIcon("/toolbar/unknown.png"); // 16x16
+    public static final Icon Unknown = IconLoader.getIcon("/toolbar/unknown.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.GroupByPackage */
     @SuppressWarnings("unused")
