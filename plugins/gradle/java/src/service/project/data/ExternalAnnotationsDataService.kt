@@ -7,29 +7,43 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import java.util.concurrent.TimeUnit
 
 @Order(value = ExternalSystemConstants.UNORDERED)
 class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Library>() {
   override fun getTargetDataKey(): Key<LibraryData> = ProjectKeys.LIBRARY
 
-  override fun postProcess(toImport: MutableCollection<DataNode<LibraryData>>,
-                           projectData: ProjectData?,
-                           project: Project,
-                           modelsProvider: IdeModifiableModelsProvider) {
+  override fun onSuccessImport(imported: MutableCollection<DataNode<LibraryData>>,
+                               projectData: ProjectData?,
+                               project: Project,
+                               modelsProvider: IdeModelsProvider) {
 
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
-    toImport.forEach {
-      val libraryData = it.data
-      val libraryName = libraryData.internalName
-      val library = modelsProvider.getLibraryByName(libraryName)
-      if (library != null) {
-        resolver.resolveAsync(project, library, "${libraryData.groupId}:${libraryData.artifactId}:${libraryData.version}")
+    val totalSize = imported.size.toDouble()
+
+    runBackgroundableTask("Resolving external annotations", project) { indicator ->
+      indicator.isIndeterminate = false
+      imported.forEachIndexed { index, dataNode ->
+        if (indicator.isCanceled) {
+          return@runBackgroundableTask
+        }
+        indicator.fraction = (index.toDouble() + 1) / totalSize
+        val libraryData = dataNode.data
+        val libraryName = libraryData.internalName
+        val library = modelsProvider.getLibraryByName(libraryName)
+        if (library != null) {
+          indicator.text = "Looking for annotations for '$libraryName'"
+          resolver.resolveAsync(project, library, "${libraryData.groupId}:${libraryData.artifactId}:${libraryData.version}")
+            .blockingGet(1, TimeUnit.MINUTES)
+        }
+
       }
     }
   }
