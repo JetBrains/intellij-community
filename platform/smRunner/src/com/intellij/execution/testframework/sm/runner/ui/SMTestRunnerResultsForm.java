@@ -582,7 +582,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final SMTestProxy parentSuite = newTestOrSuite.getParent();
     assert parentSuite != null;
 
-    myTreeBuilder.updateTestsSubtree(parentSuite);
+    myTreeBuilder.updateTestsSubtree(newTestOrSuite);
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
 
@@ -674,7 +674,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       totalTestCount = myTotalTestCount;
       doneTestCount = myFinishedTestCount;
     }
-    TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount, updateWithAttention);
+    UIUtil.invokeLaterIfNeeded(() -> TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount, updateWithAttention));
   }
 
 
