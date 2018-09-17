@@ -394,7 +394,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     LOG.debug(String.format("Updating index for partial changes: changes: %s", partialChanges));
@@ -599,7 +599,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     List<FilePath> pathsToDelete = map(explicitMoves, move -> move.getBefore());
     LOG.debug(String.format("Updating index for explicit movements: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     for (Movement move : explicitMoves) {
@@ -918,7 +918,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitFileUtils.delete(project, root, removed, "--ignore-unmatch", "--cached");
+        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -988,7 +988,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitFileUtils.delete(myProject, root, e.getValue());
+        GitFileUtils.deletePaths(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {
