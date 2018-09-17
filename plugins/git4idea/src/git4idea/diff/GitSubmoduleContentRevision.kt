@@ -9,6 +9,7 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.GitSubmodule
 
 abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
                                            private val revisionNumber: VcsRevisionNumber) : ContentRevision {
@@ -51,8 +52,8 @@ abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
 
   companion object {
     @JvmStatic
-    fun createRevision(parentRepo: GitRepository, submodule: GitRepository, revisionNumber: VcsRevisionNumber): ContentRevision {
-      return GitSubmoduleContentRevision.Committed(parentRepo, submodule, revisionNumber)
+    fun createRevision(submodule: GitSubmodule, revisionNumber: VcsRevisionNumber): ContentRevision {
+      return GitSubmoduleContentRevision.Committed(submodule.parent, submodule.repository, revisionNumber)
     }
 
     @JvmStatic
