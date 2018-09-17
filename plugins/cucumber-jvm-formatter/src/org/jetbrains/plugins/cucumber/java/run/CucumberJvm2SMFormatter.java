@@ -88,15 +88,15 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void handleTestCaseStarted(TestCaseStarted event) {
     if (currentFilePath == null) {
-      outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event),
-                               getFeatureFileDescription(getEventUri(event))));
+      outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), escape(getEventUri(event)),
+                               escape(getFeatureFileDescription(getEventUri(event)))));
     }
     else if (!getEventUri(event).equals(currentFilePath)) {
       closeCurrentScenarioOutline();
       outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(),
-                               getFeatureFileDescription(currentFilePath)));
-      outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event),
-                               getFeatureFileDescription(getEventUri(event))));
+                               escape(getFeatureFileDescription(currentFilePath))));
+      outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), escape(getEventUri(event)),
+                               escape(getFeatureFileDescription(getEventUri(event)))));
     }
 
     if (isScenarioOutline(event.testCase)) {
@@ -107,7 +107,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
         currentScenarioOutlineLine = mainScenarioLine;
         currentScenarioOutlineName = getEventName(event);
         outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(),
-                                 getEventUri(event) + ":" + currentScenarioOutlineLine, currentScenarioOutlineName));
+                                 escape(getEventUri(event)) + ":" + currentScenarioOutlineLine, escape(currentScenarioOutlineName)));
         outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), "", EXAMPLES_CAPTION));
       }
     } else {
@@ -116,34 +116,34 @@ public class CucumberJvm2SMFormatter implements Formatter {
     currentFilePath = getEventUri(event);
 
     outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(),
-                             getEventUri(event) + ":" + getEventLine(event), getScenarioName(event)));
+                             escape(getEventUri(event)) + ":" + getEventLine(event), escape(getScenarioName(event))));
   }
 
   private void handleTestCaseFinished(TestCaseFinished event) {
-    outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(event)));
+    outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), escape(getScenarioName(event))));
   }
 
   private void handleTestRunFinished(TestRunFinished event) {
     closeCurrentScenarioOutline();
     outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(),
-                             getFeatureFileDescription(currentFilePath)));
+                             escape(getFeatureFileDescription(currentFilePath))));
   }
   private void handleTestStepStarted(TestStepStarted event) {
-    outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), getStepLocation(event),
-                             getStepName(event)));
+    outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), escape(getStepLocation(event)),
+                             escape(getStepName(event))));
   }
 
   private void handleTestStepFinished(TestStepFinished event) {
     if (event.result.getStatus() == PASSED) {
       // write nothing
     } else if (event.result.getStatus() == SKIPPED || event.result.getStatus() == PENDING) {
-      outCommand(String.format(TEMPLATE_TEST_PENDING, getStepName(event), getCurrentTime()));
+      outCommand(String.format(TEMPLATE_TEST_PENDING, escape(getStepName(event)), getCurrentTime()));
     } else {
       outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "",
                                escape(event.result.getErrorMessage()), getStepName(event), ""));
     }
     Long duration = event.result.getDuration() != null ? event.result.getDuration() / 1000000: 0;
-    outCommand(String.format(TEMPLATE_TEST_FINISHED, getCurrentTime(), duration, getStepName(event)));
+    outCommand(String.format(TEMPLATE_TEST_FINISHED, getCurrentTime(), duration, escape(getStepName(event))));
   }
 
   private String getFeatureFileDescription(String uri) {
@@ -161,7 +161,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
   private void closeCurrentScenarioOutline() {
     if (currentScenarioOutlineLine > 0) {
       outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), EXAMPLES_CAPTION));
-      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), currentScenarioOutlineName));
+      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), escape(currentScenarioOutlineName)));
       currentScenarioOutlineLine = 0;
       currentScenarioOutlineName = null;
     }
@@ -200,7 +200,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
     } else {
       stepName = step.getStepText();
     }
-    return escape(stepName);
+    return stepName;
   }
 
   private void outCommand(String s) {
@@ -235,7 +235,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
     if (isScenarioOutline(testCase)) {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
-    return escape(testCase.getName());
+    return testCase.getName();
   }
 
   protected String getScenarioName(TestCaseStarted testCaseStarted) {
