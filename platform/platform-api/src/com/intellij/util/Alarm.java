@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -257,27 +256,24 @@ public class Alarm implements Disposable {
   }
 
   public void flush() {
-    List<Pair<Request, Runnable>> requests;
+    List<Runnable> unfinishedTasks;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {
         return;
       }
 
-      requests = new SmartList<>();
+      unfinishedTasks = new ArrayList<>(myRequests.size());
       for (Request request : myRequests) {
         Runnable existingTask = request.cancel();
         if (existingTask != null) {
-          requests.add(Pair.create(request, existingTask));
+          unfinishedTasks.add(existingTask);
         }
       }
       myRequests.clear();
     }
 
-    for (Pair<Request, Runnable> request : requests) {
-      synchronized (LOCK) {
-        request.first.myTask = request.second;
-      }
-      request.first.run();
+    for (Runnable task : unfinishedTasks) {
+      task.run();
     }
   }
 

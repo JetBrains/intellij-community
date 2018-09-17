@@ -48,7 +48,6 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiParameter superParameter = superParameters[i];
-      PsiType parameterType = parameter.getType();
       PsiType superParameterType = superSubstitutor.substitute(superParameter.getType());
       infos[i] = new ParameterInfoImpl(i, parameter.getName(), superParameterType);
     }
