@@ -68,8 +68,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -187,46 +185,25 @@ public class JarRepositoryManager {
                                                             boolean loadJavadoc,
                                                             @Nullable String copyTo,
                                                             @Nullable Collection<RemoteRepositoryDescription> repositories) {
-    return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, true);
-  }
-
-
-  private static Collection<OrderRoot> loadDependenciesImpl(@NotNull Project project,
-                                                            @NotNull RepositoryLibraryProperties libraryProps,
-                                                            boolean loadSources,
-                                                            boolean loadJavadoc,
-                                                            @Nullable String copyTo,
-                                                            @Nullable Collection<RemoteRepositoryDescription> repositories, boolean modal) {
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
     if (libDescriptor.getMavenId() != null) {
-      if (repositories == null || repositories.isEmpty()) {
-        repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
-      }
-      if (!repositories.isEmpty()) {
-        final EnumSet<ArtifactKind> kinds = EnumSet.of(ArtifactKind.ARTIFACT);
-        if (loadSources) {
-          kinds.add(ArtifactKind.SOURCES);
-        }
-        if (loadJavadoc) {
-          kinds.add(ArtifactKind.JAVADOC);
-        }
-        try {
-          if (modal) {
-            return submitModalJob(
-              project, "Resolving Maven dependencies...", newOrderRootResolveJob(libDescriptor, kinds, repositories, copyTo)
-            );
-          }
-          return submitBackgroundJob(
-            project, "Resolving Maven dependencies...", newOrderRootResolveJob(libDescriptor, kinds, repositories, copyTo)
-          ).blockingGet(10, TimeUnit.MINUTES);
-        }
-        catch (TimeoutException | ExecutionException e) {
-          LOG.info(e);
-        }
-      }
+      EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc);;
+      return loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo);
     }
     return Collections.emptyList();
   }
+
+  public static Collection<OrderRoot> loadDependenciesModal(@NotNull Project project,
+                                                            @NotNull JpsMavenRepositoryLibraryDescriptor desc,
+                                                            final Set<ArtifactKind> artifactKinds,
+                                                            @Nullable Collection<RemoteRepositoryDescription> repositories,
+                                                            @Nullable String copyTo) {
+    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repositories);
+    return submitModalJob(
+      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
+    );
+  }
+
 
   public static Promise<List<OrderRoot>> loadDependenciesAsync(@NotNull Project project,
                                                                RepositoryLibraryProperties libraryProps,
@@ -234,13 +211,7 @@ public class JarRepositoryManager {
                                                                boolean loadJavadoc,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
-    final EnumSet<ArtifactKind> kinds = EnumSet.of(ArtifactKind.ARTIFACT);
-    if (loadSources) {
-      kinds.add(ArtifactKind.SOURCES);
-    }
-    if (loadJavadoc) {
-      kinds.add(ArtifactKind.JAVADOC);
-    }
+    EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc);
     return loadDependenciesAsync(
       project,
       libraryProps.getRepositoryLibraryDescriptor(),
@@ -253,12 +224,30 @@ public class JarRepositoryManager {
                                                                final Set<ArtifactKind> artifactKinds,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
-    if (repos == null || repos.isEmpty()) {
-      repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
-    }
+    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
     return submitBackgroundJob(
-      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, repos, copyTo)
+      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
     );
+  }
+
+  @NotNull
+  protected static Collection<RemoteRepositoryDescription> addDefaultsIfEmpty(@NotNull Project project,
+                                                                              @Nullable Collection<RemoteRepositoryDescription> repositories) {
+    if (repositories == null || repositories.isEmpty()) {
+      repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+    }
+    return repositories;
+  }
+
+  protected static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc) {
+    final EnumSet<ArtifactKind> kinds = EnumSet.of(ArtifactKind.ARTIFACT);
+    if (loadSources) {
+      kinds.add(ArtifactKind.SOURCES);
+    }
+    if (loadJavadoc) {
+      kinds.add(ArtifactKind.JAVADOC);
+    }
+    return kinds;
   }
 
   @NotNull
