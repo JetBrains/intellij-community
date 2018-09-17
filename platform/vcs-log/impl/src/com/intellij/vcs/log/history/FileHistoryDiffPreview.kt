@@ -38,6 +38,10 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
     }
   }
 
+  override fun getFastLoadingTimeMillis(): Int {
+    return 10
+  }
+
   private inner class MyChangeWrapper internal constructor(private val change: Change) : ChangeViewDiffRequestProcessor.Wrapper() {
 
     override fun getUserObject(): Any {
