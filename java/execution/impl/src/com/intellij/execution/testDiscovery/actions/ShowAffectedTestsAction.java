@@ -145,7 +145,7 @@ public class ShowAffectedTestsAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     String presentableName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
     DiscoveredTestsTree tree = showTree(project, dataContext, presentableName);
-    processMethods(project, new PsiMethod[]{method}, Collections.emptyList(), createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+    processMethodsAsync(project, new PsiMethod[]{method}, Collections.emptyList(), createTreeProcessor(tree), () -> tree.setPaintBusy(false));
   }
 
   private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
@@ -165,7 +165,7 @@ public class ShowAffectedTestsAction extends AnAction {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       PsiMethod[] methods = findMethods(project, changes);
       List<String> filePaths = getRelativeAffectedPaths(project, Arrays.asList(changes));
-      processMethods(project, methods, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+      processMethodsAsync(project, methods, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
     });
   }
 
@@ -312,27 +312,28 @@ public class ShowAffectedTestsAction extends AnAction {
     return tree;
   }
 
-  public static void processMethods(@NotNull Project project,
-                                    @NotNull PsiMethod[] methods,
-                                    @NotNull List<String> filePaths,
-                                    @NotNull TestDiscoveryProducer.PsiTestProcessor consumer,
-                                    @Nullable Runnable doWhenDone) {
+  public static void processMethodsAsync(@NotNull Project project,
+                                         @NotNull PsiMethod[] methods,
+                                         @NotNull List<String> filePaths,
+                                         @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
+                                         @Nullable Runnable doWhenDone) {
     if (DumbService.isDumb(project)) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      processMethodsInner(project, methods, consumer, filePaths);
+      processMethods(project, methods, filePaths, processor);
       if (doWhenDone != null) {
         EdtInvocationManager.getInstance().invokeLater(doWhenDone);
       }
     });
   }
 
-  private static void processMethodsInner(@NotNull Project project,
-                                          @NotNull PsiMethod[] methods,
-                                          @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
-                                          @NotNull List<String> filePaths) {
+  public static void processMethods(@NotNull Project project,
+                                    @NotNull PsiMethod[] methods,
+                                    @NotNull List<String> filePaths,
+                                    @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
     if (DumbService.isDumb(project)) return;
     List<Couple<String>> classesAndMethods =
-      Arrays.stream(methods).map(method -> ReadAction.compute(() -> getMethodKey(method))).filter(Objects::nonNull).collect(Collectors.toList());
+      ReadAction.compute(() -> Arrays.stream(methods)
+      .map(method -> getMethodKey(method)).filter(Objects::nonNull).collect(Collectors.toList()));
     processTestDiscovery(project, processor, classesAndMethods, filePaths);
   }
 
