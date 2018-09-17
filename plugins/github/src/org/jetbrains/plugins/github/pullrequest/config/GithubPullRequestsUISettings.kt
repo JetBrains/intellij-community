@@ -22,7 +22,7 @@ class GithubPullRequestsUISettings : PersistentStateComponentWithModificationTra
     changeEventDispatcher.addListener(listener, disposable)
 
   class SettingsState : BaseState() {
-    var showDetails: Boolean by property(true)
+    var showDetails by property(true)
   }
 
   override fun getState() = state

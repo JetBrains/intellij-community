@@ -21,7 +21,7 @@ public final class CompoundRunConfigurationType extends SimpleConfigurationType 
   @NotNull
   @Override
   public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-    return new CompoundRunConfiguration(project, "Compound Run Configuration", this);
+    return new CompoundRunConfiguration("Compound", project, this);
   }
   
   @NotNull

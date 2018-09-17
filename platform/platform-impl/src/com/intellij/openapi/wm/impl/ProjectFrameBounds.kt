@@ -49,7 +49,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
 
 class FrameInfo : BaseState() {
   // flat is used due to backward compatibility
-  @get:Property(flat = true) var bounds by property<Rectangle>()
+  @get:Property(flat = true) var bounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
   @get:Attribute var extendedState by property(Frame.NORMAL)
 
   @get:Attribute var fullScreen by property(false)
