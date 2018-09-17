@@ -155,7 +155,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return SimpleDataContext.getSimpleContext(
       ContainerUtil.<String, Object>immutableMapBuilder()
         .put(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile)
-        .put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new VirtualFile[] {selectedFile})
+        .put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
         .put(CommonDataKeys.PROJECT.getName(), getProject())
         .put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent())
         .build(),
