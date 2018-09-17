@@ -255,7 +255,8 @@ public class Alarm implements Disposable {
     return count;
   }
 
-  public void flush() {
+  @TestOnly
+  public void drainRequestsInTest() {
     List<Runnable> unfinishedTasks;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {
