@@ -131,7 +131,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       if (operands.size() == 1) {
         expressionToAnalyze = operands.get(0);
         reversedOperands = operands;
-        isOperand = Predicate.isEqual(expressionToAnalyze);
+        isOperand = Predicate.isEqual(PsiUtil.skipParenthesizedExprDown(expressionToAnalyze));
       }
       else {
         expressionToAnalyze = JavaPsiFacade.getElementFactory(context.getProject())

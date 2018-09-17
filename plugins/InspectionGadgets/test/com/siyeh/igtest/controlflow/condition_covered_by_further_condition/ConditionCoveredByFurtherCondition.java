@@ -133,5 +133,9 @@ public class ConditionCoveredByFurtherCondition {
         if(<warning descr="Condition '!(obj instanceof Integer)' covered by subsequent condition '!(obj instanceof Number)'">!(obj instanceof Integer)</warning> && !(obj instanceof Number) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error>Number<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {}
     }
 
+    void testInstanceOfUnknown(Object obj) {
+        if(obj instanceof <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error> || obj == null) { }
+        if((obj instanceof <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>) || obj == null) { }
+    }
 }
 enum X {A, B, C}
