@@ -847,11 +847,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!checkCompareWithBooleanLiteral(dfaLeft, dfaRight, isNegated)) {
       return false;
     }
-    if (dfaLeft instanceof DfaVariableValue) {
-      return applyUnboxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated);
-    }
-
-    return true;
+    return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
   }
 
   @NotNull
@@ -880,21 +876,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private boolean applyUnboxedRelation(@NotNull DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
-    if (negated) {
-      // from the fact "wrappers are not the same" it does not follow that "unboxed values are not equal"
-      return true;
-    }
-    PsiType type = dfaLeft.getType();
-    if (!TypeConversionUtil.isPrimitiveWrapper(type)) {
+  private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
+    if (!(dfaLeft instanceof DfaBoxedValue) && !TypeConversionUtil.isPrimitiveWrapper(dfaLeft.getType())) {
       return true;
     }
 
     DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
     DfaValue unboxedLeft = boxedFactory.createUnboxed(dfaLeft);
     DfaValue unboxedRight = boxedFactory.createUnboxed(dfaRight);
-    return applyRelation(unboxedLeft, unboxedRight, false) &&
-           checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, false);
+    if (negated && (PsiType.FLOAT.equals(unboxedLeft.getType()) || PsiType.DOUBLE.equals(unboxedLeft.getType()))) {
+      // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0
+      return true;
+    }
+    return applyRelation(unboxedLeft, unboxedRight, negated) &&
+           checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, negated);
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
