@@ -450,7 +450,7 @@ class FindInProjectTask {
       }
     }
     VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
-    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null) {
+    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null || sourceVirtualFile.getFileType().isBinary()) {
       return null;
     }
 
