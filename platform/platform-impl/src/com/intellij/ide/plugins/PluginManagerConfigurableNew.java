@@ -338,6 +338,17 @@ public class PluginManagerConfigurableNew
 
     myCardPanel = new CardLayoutPanel<Object, Object, JComponent>() {
       @Override
+      public ActionCallback select(Object key, boolean now) {
+        ActionCallback callback = super.select(key, now);
+        callback.doWhenDone(() -> {
+          panel.doLayout();
+          panel.revalidate();
+          panel.repaint();
+        });
+        return callback;
+      }
+
+      @Override
       protected Object prepare(Object key) {
         return key;
       }
