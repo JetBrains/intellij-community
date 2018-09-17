@@ -1,2 +1,3 @@
 deprecated: addContentEntry.png -> /general/add.svg; to be removed in IDEA 2020 - use AllIcons.General.Add
 deprecated: edit.png -> /actions/edit.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Edit
+deprecated: sources.svg; to be removed in IDEA 2020

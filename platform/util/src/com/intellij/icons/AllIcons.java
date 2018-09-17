@@ -1688,7 +1688,6 @@ public class AllIcons {
     public static final Icon SourceFolder = IconLoader.getIcon("/modules/sourceFolder.svg"); // 16x16
     public static final Icon SourceRoot = IconLoader.getIcon("/modules/sourceRoot.svg"); // 16x16
     public static final Icon SourceRootFileLayer = IconLoader.getIcon("/modules/sourceRootFileLayer.png"); // 16x16
-    public static final Icon Sources = IconLoader.getIcon("/modules/sources.svg"); // 16x16
     public static final Icon Split = IconLoader.getIcon("/modules/split.svg"); // 16x16
     public static final Icon TestResourcesRoot = IconLoader.getIcon("/modules/testResourcesRoot.svg"); // 16x16
     public static final Icon TestRoot = IconLoader.getIcon("/modules/testRoot.svg"); // 16x16
@@ -1711,6 +1710,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Edit = AllIcons.Actions.Edit;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Sources = IconLoader.getIcon("/modules/sources.svg");
 
   }
 
