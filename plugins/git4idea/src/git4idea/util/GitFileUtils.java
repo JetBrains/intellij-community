@@ -78,7 +78,9 @@ public class GitFileUtils {
 
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
     throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
@@ -108,7 +110,9 @@ public class GitFileUtils {
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<FilePath> files) throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkPaths(root, files));
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
   }
 
@@ -125,19 +129,15 @@ public class GitFileUtils {
   }
 
   private static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                               @NotNull List<List<String>> chunkedPaths) throws VcsException {
-    for (List<String> paths : chunkedPaths) {
-      paths = excludeIgnoredFiles(project, root, paths);
+                               @NotNull List<String> paths) throws VcsException {
+    paths = excludeIgnoredFiles(project, root, paths);
+    if (paths.isEmpty()) return;
 
-      if (paths.isEmpty()) {
-        continue;
-      }
-      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
-      handler.addParameters("--ignore-errors", "-A");
-      handler.endOptions();
-      handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).throwOnError();
-    }
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
+    handler.addParameters("--ignore-errors", "-A");
+    handler.endOptions();
+    handler.addParameters(paths);
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   @NotNull
