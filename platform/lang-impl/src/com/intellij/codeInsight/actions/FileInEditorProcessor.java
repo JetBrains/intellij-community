@@ -56,6 +56,7 @@ public class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
 
   private final Editor myEditor;
+  private final boolean myShouldCleanupCode;
 
   private boolean myNoChangesDetected = false;
   private final boolean myProcessChangesTextOnly;
@@ -77,6 +78,7 @@ public class FileInEditorProcessor {
     myProject = file.getProject();
     myEditor = editor;
 
+    myShouldCleanupCode = runOptions.isApplyCodeCleanup();
     myShouldOptimizeImports = runOptions.isOptimizeImports();
     myShouldRearrangeCode = runOptions.isRearrangeCode();
     myProcessSelectedText = myEditor != null && runOptions.getTextRangeType() == SELECTED_TEXT;
@@ -104,6 +106,10 @@ public class FileInEditorProcessor {
       myProcessor = mixWithRearrangeProcessor(myProcessor);
     }
 
+    if (myShouldCleanupCode) {
+      myProcessor = mixWithCleanupProcessor(myProcessor);
+    }
+
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(() -> {
@@ -114,6 +120,17 @@ public class FileInEditorProcessor {
     }
 
     myProcessor.run();
+  }
+
+  @NotNull
+  private AbstractLayoutCodeProcessor mixWithCleanupProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
+    if (myProcessSelectedText) {
+      processor = new CodeCleanupCodeProcessor(processor, myEditor.getSelectionModel());
+    }
+    else {
+      processor = new CodeCleanupCodeProcessor(processor);
+    }
+    return processor;
   }
 
   private AbstractLayoutCodeProcessor mixWithRearrangeProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
