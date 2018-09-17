@@ -911,7 +911,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
     return applyRelation(unboxedLeft, unboxedRight, negated) &&
-           checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, negated);
+           ((negated && !isNotNull(dfaLeft)) || checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, negated));
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
