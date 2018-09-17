@@ -4,13 +4,14 @@ package com.intellij.externalSystem;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 
 import java.util.Objects;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.UNORDERED;
-
 public class MavenRepositoryData extends AbstractExternalEntityData {
-  public static final Key<MavenRepositoryData> KEY = Key.create(MavenRepositoryData.class, UNORDERED);
+  // Maven repository info may be required to process libraries
+  public static final Key<MavenRepositoryData> KEY = Key.create(MavenRepositoryData.class,
+                                                                ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER - 1);
 
   private final String myName;
   private final String myUrl;
