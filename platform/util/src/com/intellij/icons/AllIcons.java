@@ -2308,12 +2308,10 @@ public class AllIcons {
     public static final Icon AddPattern = IconLoader.getIcon("/toolbarDecorator/addPattern.svg"); // 16x16
     public static final Icon AddRemoteDatasource = IconLoader.getIcon("/toolbarDecorator/addRemoteDatasource.svg"); // 16x16
     public static final Icon AddYouTrack = IconLoader.getIcon("/toolbarDecorator/addYouTrack.svg"); // 16x16
-    public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/analyze.png"); // 14x14
     public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
     public static final Icon Import = IconLoader.getIcon("/toolbarDecorator/import.svg"); // 16x16
 
     public static class Mac {
-      public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/mac/analyze.png"); // 14x14
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Add */
       @SuppressWarnings("unused")
@@ -2370,6 +2368,11 @@ public class AllIcons {
       @Deprecated
       public static final Icon AddYouTrack = AllIcons.ToolbarDecorator.AddYouTrack;
 
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/mac/analyze.png");
+
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
       @SuppressWarnings("unused")
       @Deprecated
@@ -2401,6 +2404,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon AddPackage = AllIcons.ToolbarDecorator.AddFolder;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/analyze.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
