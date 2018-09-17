@@ -13,7 +13,7 @@ import org.junit.Test
 class InstallPluginGuiTest : KotlinGuiTestCase() {
   @Test
   fun installKotlinPlugin() {
-//    TODO: uncomment when IDEA-198938 fixing
+//    TODO: uncomment when IDEA-198938, IDEA-198785 fixing
 //    if (pluginsDialogScenarios.isPluginRequiredVersionInstalled(
 //        KOTLIN_PLUGIN_NAME, KotlinTestProperties.kotlin_plugin_version_full
 //      ).not()) {
