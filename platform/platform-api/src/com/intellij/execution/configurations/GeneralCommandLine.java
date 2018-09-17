@@ -508,14 +508,11 @@ public class GeneralCommandLine implements UserDataHolder {
 
     @Override
     public String put(String key, String value) {
-      if (key == null || value == null) {
-        LOG.error(new Exception("Nulls are not allowed"));
-        return null;
+      if (key == null || key.isEmpty() || key.indexOf('=') != -1 || key.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Illegal environment variable name: " + key);
       }
-      if (key.isEmpty()) {
-        // Windows: passing an environment variable with empty name causes "CreateProcess error=87, The parameter is incorrect"
-        LOG.warn("Skipping environment variable with empty name, value: " + value);
-        return null;
+      if (value == null || value.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Illegal environment variable value: " + key);
       }
       return super.put(key, value);
     }

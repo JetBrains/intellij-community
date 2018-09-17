@@ -359,17 +359,47 @@ public class GeneralCommandLineTest {
     env.putAll(null);
 
     try {
+      env.put(null, "-");
+      fail("null keys should be rejected");
+    }
+    catch (IllegalArgumentException ignored) { }
+
+    try {
+      env.put("", "-");
+      fail("empty keys should be rejected");
+    }
+    catch (IllegalArgumentException ignored) { }
+
+    try {
+      env.put("a=b", "-");
+      fail("keys with '=' should be rejected");
+    }
+    catch (IllegalArgumentException ignored) { }
+
+    try {
+      env.put("a\0b", "-");
+      fail("keys with '\\0' should be rejected");
+    }
+    catch (IllegalArgumentException ignored) { }
+
+    try {
       env.put("key1", null);
       fail("null values should be rejected");
     }
-    catch (AssertionError ignored) { }
+    catch (IllegalArgumentException ignored) { }
+
+    try {
+      env.put("key1", "a\0b");
+      fail("values with '\\0' should be rejected");
+    }
+    catch (IllegalArgumentException ignored) { }
 
     try {
       Map<String, String> indirect = newHashMap(pair("key2", null));
       env.putAll(indirect);
       fail("null values should be rejected");
     }
-    catch (AssertionError ignored) { }
+    catch (IllegalArgumentException ignored) { }
   }
 
   @Test(timeout = 60000)
@@ -393,14 +423,6 @@ public class GeneralCommandLineTest {
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
     checkEnvPassing(command, testEnv, true);
     checkEnvPassing(command, testEnv, false);
-  }
-
-  @Test(timeout = 60000)
-  public void emptyEnvironmentPassing() throws Exception {
-    Map<String, String> env = newHashMap(pair("a", "b"), pair("", "c"));
-    Map<String, String> expected = newHashMap(pair("a", "b"));
-    Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
-    checkEnvPassing(command, env, expected, false);
   }
 
   @Test
