@@ -208,7 +208,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       if (submodule != null) {
         ContentRevision revision = GitSubmoduleContentRevision.createRevision(submodule, revisionNumber);
         String content = revision.getContent();
-        diffContent = content != null ? myDiffContentFactory.create(content) : myDiffContentFactory.createEmpty();
+        diffContent = content != null ? myDiffContentFactory.create(myProject, content) : myDiffContentFactory.createEmpty();
       }
       else {
         try {
