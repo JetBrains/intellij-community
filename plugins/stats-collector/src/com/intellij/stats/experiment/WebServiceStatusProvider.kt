@@ -42,6 +42,7 @@ class WebServiceStatusProvider(
 
         private val INFO_TTL = TimeUnit.DAYS.toMillis(7)
         private val DEFAULT_INFO = ExperimentInfo(0, "", false)
+        private val EMULATED_EXPERIMENT = EmulatedExperiment()
     }
 
     @Volatile
@@ -58,10 +59,7 @@ class WebServiceStatusProvider(
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
     override fun isExperimentOnCurrentIDE(): Boolean {
-        if (!info.performExperiment) {
-            return false
-        }
-        return experimentDecision.isPerformExperiment(info.salt)
+        return info.performExperiment
     }
     
     override fun updateStatus() {
@@ -79,8 +77,15 @@ class WebServiceStatusProvider(
 
             if (salt != null && experimentVersion != null) {
                 //should be Int always
-                val floatVersion = experimentVersion.toFloat()
-                info = ExperimentInfo(floatVersion.toInt(), salt, performExperiment.toBoolean())
+                val intVersion = experimentVersion.toFloat().toInt()
+                val perform = performExperiment.toBoolean()
+                val emulatedValues = EMULATED_EXPERIMENT.emulate(intVersion, perform, salt)
+                info = if (emulatedValues != null) {
+                    ExperimentInfo(emulatedValues.first, salt, emulatedValues.second)
+                }
+                else {
+                    ExperimentInfo(intVersion, salt, perform)
+                }
                 saveInfo(info)
             }
             
