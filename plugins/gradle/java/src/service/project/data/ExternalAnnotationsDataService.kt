@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.registry.Registry
 import java.util.concurrent.TimeUnit
 
 @Order(value = ExternalSystemConstants.UNORDERED)
@@ -24,6 +25,9 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
                                projectData: ProjectData?,
                                project: Project,
                                modelsProvider: IdeModelsProvider) {
+    if (!Registry.`is`("external.system.import.resolve.annotations")) {
+      return
+    }
 
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
     val totalSize = imported.size.toDouble()
