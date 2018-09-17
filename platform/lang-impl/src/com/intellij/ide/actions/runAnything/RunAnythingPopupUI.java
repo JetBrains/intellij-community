@@ -77,7 +77,6 @@ import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PR
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHED_PROVIDER_PROPERTY;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-@SuppressWarnings("Duplicates")
 public class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
@@ -637,6 +636,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
             //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
+              if (DumbService.getInstance(myProject).isDumb()) {
+                myResultsList.setEmptyText(IdeBundle.message("run.anything.indexing.mode.not.supported"));
+                return;
+              }
+
               if (!myDone.isRejected()) {
                 myResultsList.setModel(myListModel);
                 updatePopup();
@@ -920,6 +924,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
         }
       });
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("shift BACK_SPACE"), mySearchField, this);
+
+    myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void exitDumbMode() {
+        ApplicationManager.getApplication().invokeLater(() -> rebuildList());
+      }
+    });
   }
 
   @NotNull
