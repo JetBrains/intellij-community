@@ -17,11 +17,12 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
+import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -40,9 +41,11 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation.RevisionChangesProvider;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +95,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     DiffManager.getInstance().showDiff(myVcs.getProject(), requestChain, DiffDialogHints.FRAME);
   }
 
-  private static class MyLoadingRequestChain extends AsyncDiffRequestChain {
+  private static class MyLoadingRequestChain extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
     @NotNull private final FileAnnotation myFileAnnotation;
     @NotNull private final RevisionChangesProvider myChangesProvider;
     private final int myLineNumber;
@@ -108,15 +111,21 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
 
     @NotNull
     @Override
-    protected ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
+    protected ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
       return loadRequests(myFileAnnotation, myChangesProvider, myLineNumber);
+    }
+
+    @NotNull
+    @Override
+    public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
+      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected);
     }
   }
 
   @NotNull
-  private static ListSelection<? extends DiffRequestProducer> loadRequests(@NotNull FileAnnotation fileAnnotation,
-                                                                           @NotNull RevisionChangesProvider changesProvider,
-                                                                           int actualNumber) throws DiffRequestProducerException {
+  private static ListSelection<ChangeDiffRequestProducer> loadRequests(@NotNull FileAnnotation fileAnnotation,
+                                                                       @NotNull RevisionChangesProvider changesProvider,
+                                                                       int actualNumber) throws DiffRequestProducerException {
     try {
       Pair<? extends CommittedChangeList, FilePath> pair = changesProvider.getChangesIn(actualNumber);
       if (pair == null || pair.getFirst() == null || pair.getSecond() == null) {
