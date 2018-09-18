@@ -44,7 +44,6 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
-import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
 import javax.swing.text.html.*;
@@ -2828,7 +2827,6 @@ public class UIUtil {
       return null;
     }
 
-    private static final Method MODEL_CHANGED = ReflectionUtil.getDeclaredMethod(BasicTextUI.class, "modelChanged");
     private final StyleSheet style;
     private final HyperlinkListener myHyperlinkListener;
 
@@ -2842,37 +2840,25 @@ public class UIUtil {
       myHyperlinkListener = new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
+          Element element = e.getSourceElement();
+          if (element == null) return;
+
           if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-            setUnderlined(true, e.getSourceElement());
+            setUnderlined(true, element);
           } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-            setUnderlined(false, e.getSourceElement());
-          }
-          if (MODEL_CHANGED == null) {
-            LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
-            return;
-          }
-          try {
-            MODEL_CHANGED.invoke(((JEditorPane)e.getSource()).getUI());
-          }
-          catch (IllegalAccessException exception) {
-            LOG.error(exception);
-          }
-          catch (InvocationTargetException exception) {
-            LOG.error(exception);
+            setUnderlined(false, element);
           }
         }
 
         private void setUnderlined(boolean underlined, Element element) {
-          if (element == null) return;
           AttributeSet attributes = element.getAttributes();
           Object attribute = attributes.getAttribute(HTML.Tag.A);
           if (attribute instanceof MutableAttributeSet) {
             MutableAttributeSet a = (MutableAttributeSet)attribute;
-            if (underlined) {
-              a.addAttribute(CSS.Attribute.TEXT_DECORATION, "underline");
-            } else {
-              a.removeAttribute(CSS.Attribute.TEXT_DECORATION);
-            }
+            a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
+            ((StyledDocument)element.getDocument()).setCharacterAttributes(element.getStartOffset(),
+                                                                           element.getEndOffset() - element.getStartOffset(),
+                                                                           a, false);
           }
         }
       };
