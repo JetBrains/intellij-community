@@ -1262,7 +1262,7 @@ public class IdeEventQueue extends EventQueue {
     return shortcutsShowingPopups;
   }
 
-  private final List<KeyEvent> myDelayedKeyEvents = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<KeyEvent> myDelayedKeyEvents = Collections.synchronizedList(new LinkedList<>());
   private final AtomicBoolean delayKeyEvents = new AtomicBoolean();
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
