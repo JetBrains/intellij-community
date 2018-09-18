@@ -118,6 +118,7 @@ public abstract class Identikit {
     private PsiElement findParent(int startOffset, int endOffset, PsiElement anchor) {
       TextRange range = anchor.getTextRange();
 
+      if (range == null) throw new AssertionError("Null range for " + anchor.getClass());
       if (range.getStartOffset() != startOffset) return null;
       while (range.getEndOffset() < endOffset) {
         anchor = anchor.getParent();
