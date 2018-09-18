@@ -240,15 +240,24 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
+  private boolean myBusy = false;
+
   @Override
   public void doLayout() {
-    Dimension prefSize = getMinimumSize();
-    if (myBalloon instanceof AbstractPopup && !myBalloon.isDisposed()) {
-      Window window = ((AbstractPopup)myBalloon).getPopupWindow();
-      Dimension minimumSize = window != null ? window.getMinimumSize() : null;
-      myBalloon.setMinimumSize(prefSize);
-      if (minimumSize != null && prefSize.width > minimumSize.width) {
-        myBalloon.moveToFitScreen();
+    if (!myBusy) {
+      myBusy = true;
+      try {
+        Dimension prefSize = getMinimumSize();
+        if (myBalloon instanceof AbstractPopup && !myBalloon.isDisposed()) {
+          Window window = ((AbstractPopup)myBalloon).getPopupWindow();
+          Dimension minimumSize = window != null ? window.getMinimumSize() : null;
+          myBalloon.setMinimumSize(prefSize);
+          if (minimumSize != null && prefSize.width > minimumSize.width) {
+            myBalloon.moveToFitScreen();
+          }
+        }
+      } finally {
+        myBusy = false;
       }
     }
     super.doLayout();
