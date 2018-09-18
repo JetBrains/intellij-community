@@ -9,7 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import junit.framework.TestCase;

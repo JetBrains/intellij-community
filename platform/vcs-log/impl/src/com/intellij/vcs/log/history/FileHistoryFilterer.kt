@@ -27,7 +27,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsLogRevisionFilterImpl
+import com.intellij.vcs.log.visible.filters.VcsLogRevisionFilterImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.CommitCountStage

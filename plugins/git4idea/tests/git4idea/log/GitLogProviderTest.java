@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import git4idea.config.GitVersion;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;

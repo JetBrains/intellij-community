@@ -17,7 +17,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;

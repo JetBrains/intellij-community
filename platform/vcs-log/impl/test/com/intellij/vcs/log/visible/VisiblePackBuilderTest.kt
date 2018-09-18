@@ -15,6 +15,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl
 import com.intellij.vcs.log.visible.filters.createFilterCollection
 import org.junit.Test
 import java.util.*
