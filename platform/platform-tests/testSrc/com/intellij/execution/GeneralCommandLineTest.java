@@ -358,51 +358,32 @@ public class GeneralCommandLineTest {
     //noinspection ConstantConditions
     env.putAll(null);
 
-    try {
-      env.put(null, "-");
-      fail("null keys should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
-
-    try {
-      env.put("", "-");
-      fail("empty keys should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
-
-    try {
-      env.put("a\0b", "-");
-      fail("keys with '\\0' should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
-
-    if (SystemInfo.isUnix) {
-      try {
-        env.put("a=b", "-");
-        fail("keys with '=' should be rejected");
-      }
-      catch (IllegalArgumentException ignored) { }
+    checkEnvVar(env, null, "-", "null keys should be rejected");
+    checkEnvVar(env, "", "-", "empty keys should be rejected");
+    checkEnvVar(env, "a\0b", "-", "keys with '\\0' should be rejected");
+    checkEnvVar(env, "a=b", "-", "keys with '=' should be rejected");
+    if (SystemInfo.isWindows) {
+      env.put("=wtf", "-");
     }
     else {
-      env.put("a=b", "-");
+      checkEnvVar(env, "=wtf", "-", "keys with '=' should be rejected");
     }
 
-    try {
-      env.put("key1", null);
-      fail("null values should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
-
-    try {
-      env.put("key1", "a\0b");
-      fail("values with '\\0' should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
+    checkEnvVar(env, "key1", null, "null values should be rejected");
+    checkEnvVar(env, "key1", "a\0b", "values with '\\0' should be rejected");
 
     try {
       Map<String, String> indirect = newHashMap(pair("key2", null));
       env.putAll(indirect);
       fail("null values should be rejected");
+    }
+    catch (IllegalArgumentException ignored) { }
+  }
+
+  private static void checkEnvVar(Map<String, String> env, String name, String value, String message) {
+    try {
+      env.put(name, value);
+      fail(message);
     }
     catch (IllegalArgumentException ignored) { }
   }
