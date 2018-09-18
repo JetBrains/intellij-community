@@ -147,6 +147,7 @@ if sys.platform == 'win32':
 
 
 elif IS_JYTHON and IS_WINDOWS:
+
     def get_path_with_real_case(filename):
         from java.io import File
         f = File(filename)
@@ -159,6 +160,7 @@ elif IS_JYTHON and IS_WINDOWS:
 if IS_WINDOWS:
 
     if IS_JYTHON:
+
         def normcase(filename):
             return filename.lower()
 
@@ -190,16 +192,20 @@ def set_ide_os(os):
     :param os:
         'UNIX' or 'WINDOWS'
     '''
+    global _ide_os
+    prev = _ide_os
     if os == 'WIN':  # Apparently PyCharm uses 'WIN' (https://github.com/fabioz/PyDev.Debugger/issues/116)
         os = 'WINDOWS'
-    
+
     assert os in ('WINDOWS', 'UNIX')
 
-    global _ide_os
-    _ide_os = os
+    if prev != os:
+        _ide_os = os
+        # We need to (re)setup how the client <-> server translation works to provide proper separators.
+        setup_client_server_paths(_last_client_server_paths_set)
 
 
-DEBUG_CLIENT_SERVER_TRANSLATION = False
+DEBUG_CLIENT_SERVER_TRANSLATION = os.environ.get('DEBUG_PYDEVD_PATHS_TRANSLATION', 'False').lower() in ('1', 'true')
 
 # Caches filled as requested during the debug session.
 NORM_PATHS_CONTAINER = {}
@@ -372,11 +378,29 @@ norm_file_to_client = _original_file_to_client
 norm_file_to_server = _original_file_to_server
 
 
+def _fix_path(path, sep):
+    if path.endswith('/') or path.endswith('\\'):
+        path = path[:-1]
+
+    if sep != '/':
+        path = path.replace('/', sep)
+    return path
+
+
+_last_client_server_paths_set = []
+
+
 def setup_client_server_paths(paths):
     '''paths is the same format as PATHS_FROM_ECLIPSE_TO_PYTHON'''
 
     global norm_file_to_client
     global norm_file_to_server
+    global _last_client_server_paths_set
+    _last_client_server_paths_set = paths[:]
+
+    # Work on the client and server slashes.
+    python_sep = '\\' if IS_WINDOWS else '/'
+    eclipse_sep = '\\' if _ide_os == 'WINDOWS' else '/'
 
     norm_filename_to_server_container = {}
     norm_filename_to_client_container = {}
@@ -391,6 +415,10 @@ def setup_client_server_paths(paths):
                 path0 = path0.encode(sys.getfilesystemencoding())
             if isinstance(path1, unicode):
                 path1 = path1.encode(sys.getfilesystemencoding())
+                
+        path0 = _fix_path(path0, eclipse_sep)
+        path1 = _fix_path(path1, python_sep)
+        initial_paths[i] = (path0, path1)
 
         paths_from_eclipse_to_python[i] = (normcase(path0), normcase(path1))
 
@@ -400,19 +428,17 @@ def setup_client_server_paths(paths):
         norm_file_to_server = _original_file_to_server
         return
 
-    # Work on the client and server slashes.
-    python_sep = '\\' if IS_WINDOWS else '/'
-
     # only setup translation functions if absolutely needed!
-    def _norm_file_to_server(filename):
+    def _norm_file_to_server(filename, cache=norm_filename_to_server_container):
         # Eclipse will send the passed filename to be translated to the python process
         # So, this would be 'NormFileFromEclipseToPython'
         try:
-            return norm_filename_to_server_container[filename]
+            return cache[filename]
         except KeyError:
-            # Note: compute eclipse_sep lazily so that _ide_os is taken into account.
-            # (https://www.brainwy.com/tracker/PyDev/930)
-            eclipse_sep = '\\' if _ide_os == 'WINDOWS' else '/'
+            if eclipse_sep != python_sep:
+                # Make sure that the separators are what we expect from the IDE.
+                filename = filename.replace(python_sep, eclipse_sep)
+
             # used to translate a path from the client to the debug server
             translated = normcase(filename)
             for eclipse_prefix, server_prefix in paths_from_eclipse_to_python:
@@ -433,19 +459,15 @@ def setup_client_server_paths(paths):
                 translated = translated.replace(eclipse_sep, python_sep)
             translated = _NormFile(translated)
 
-            norm_filename_to_server_container[filename] = translated
+            cache[filename] = translated
             return translated
 
-    def _norm_file_to_client(filename):
+    def _norm_file_to_client(filename, cache=norm_filename_to_client_container):
         # The result of this method will be passed to eclipse
         # So, this would be 'NormFileFromPythonToEclipse'
         try:
-            return norm_filename_to_client_container[filename]
+            return cache[filename]
         except KeyError:
-            # Note: compute eclipse_sep lazily so that _ide_os is taken into account.
-            # (https://www.brainwy.com/tracker/PyDev/930)
-            eclipse_sep = '\\' if _ide_os == 'WINDOWS' else '/'
-            
             # used to translate a path from the debug server to the client
             translated = _NormFile(filename)
 
@@ -485,7 +507,7 @@ def setup_client_server_paths(paths):
 
             # The resulting path is not in the python process, so, we cannot do a _NormFile here,
             # only at the beginning of this method.
-            norm_filename_to_client_container[filename] = translated
+            cache[filename] = translated
             return translated
 
     norm_file_to_server = _norm_file_to_server
