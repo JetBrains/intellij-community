@@ -455,7 +455,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 
     cmd.extend([
         "--eval-command='call dlopen(\"%s\", 2)'" % target_dll,
-        "--eval-command='call DoAttach(%s, \"%s\", %s)'" % (
+        "--eval-command='call (int)DoAttach(%s, \"%s\", %s)'" % (
             is_debug, python_code, show_debug_info)
     ])
 
