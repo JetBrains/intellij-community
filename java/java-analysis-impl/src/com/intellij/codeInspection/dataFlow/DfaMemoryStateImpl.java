@@ -425,7 +425,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (int i = 0; i < c2.size(); i++) {
       int c = c2.get(i);
       newClass.add(c);
-      myIdToEqClassesIndices.remove(c);
       myIdToEqClassesIndices.put(c, c1Index);
     }
 
