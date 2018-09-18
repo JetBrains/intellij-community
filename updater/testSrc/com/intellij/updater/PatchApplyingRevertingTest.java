@@ -23,7 +23,7 @@ import static org.junit.Assume.assumeTrue;
 
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
-  private PatchSpec myPatchSpec;
+  PatchSpec myPatchSpec;  // Android Studio: used in PatchFileCreatorLargeFileTest
   private boolean myDoBackup;
 
   @Before
