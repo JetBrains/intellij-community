@@ -502,20 +502,13 @@ public class GeneralCommandLineTest {
   private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
                                Map<String, String> testEnv,
                                boolean passParentEnv) throws ExecutionException, IOException {
-    checkEnvPassing(command, testEnv, testEnv, passParentEnv);
-  }
-
-  private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
-                               Map<String, String> testEnv,
-                               Map<String, String> expectedOutputEnv,
-                               boolean passParentEnv) throws ExecutionException, IOException {
     command.first.withEnvironment(testEnv);
     command.first.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     String output = execHelper(command);
 
     Set<String> lines = ContainerUtil.newHashSet(StringUtil.convertLineSeparators(output).split("\n"));
 
-    for (Map.Entry<String, String> entry : expectedOutputEnv.entrySet()) {
+    for (Map.Entry<String, String> entry : testEnv.entrySet()) {
       String str = CommandTestHelper.format(entry);
       assertTrue("\"" + str + "\" should be in " + lines,
                  lines.contains(str));
