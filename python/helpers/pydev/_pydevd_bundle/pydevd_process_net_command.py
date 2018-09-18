@@ -24,6 +24,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR, IS_WINDOWS
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+from _pydev_imps._pydev_saved_modules import threading
 
 def process_net_command(py_db, cmd_id, seq, text):
     '''Processes a command received from the Java side
@@ -114,31 +115,46 @@ def process_net_command(py_db, cmd_id, seq, text):
                 py_db.post_internal_command(int_cmd, text)
 
             elif cmd_id == CMD_THREAD_SUSPEND:
-                # Yes, thread suspend is still done at this point, not through an internal command!
-                t = pydevd_find_thread_by_id(text)
-                if t and not getattr(t, 'pydev_do_not_trace', None):
-                    additional_info = set_additional_thread_info(t)
-                    frame = additional_info.get_topmost_frame(t)
-                    if frame is not None:
-                        try:
-                            py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
-                        finally:
-                            frame = None
-
-                    py_db.set_suspend(t, CMD_THREAD_SUSPEND)
+                # Yes, thread suspend is done at this point, not through an internal command.
+                threads = []
+                if text.strip() == '*':
+                    threads = threading.enumerate()
+                
                 elif text.startswith('__frame__:'):
                     sys.stderr.write("Can't suspend tasklet: %s\n" % (text,))
+                    
+                else:
+                    threads = [pydevd_find_thread_by_id(text)]
+                    
+                for t in threads:
+                    if t and not getattr(t, 'pydev_do_not_trace', None):
+                        additional_info = set_additional_thread_info(t)
+                        frame = additional_info.get_topmost_frame(t)
+                        if frame is not None:
+                            try:
+                                py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                            finally:
+                                frame = None
+    
+                        py_db.set_suspend(t, CMD_THREAD_SUSPEND)
 
             elif cmd_id == CMD_THREAD_RUN:
-                t = pydevd_find_thread_by_id(text)
-                if t:
-                    t.additional_info.pydev_step_cmd = -1
-                    t.additional_info.pydev_step_stop = None
-                    t.additional_info.pydev_state = STATE_RUN
-
+                threads = []
+                if text.strip() == '*':
+                    threads = threading.enumerate()
+                
                 elif text.startswith('__frame__:'):
                     sys.stderr.write("Can't make tasklet run: %s\n" % (text,))
+                    
+                else:
+                    threads = [pydevd_find_thread_by_id(text)]
 
+                for t in threads:
+                    if t and not getattr(t, 'pydev_do_not_trace', None):
+                        additional_info = set_additional_thread_info(t)
+                        additional_info.pydev_step_cmd = -1
+                        additional_info.pydev_step_stop = None
+                        additional_info.pydev_state = STATE_RUN
 
             elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                     cmd_id == CMD_STEP_INTO_MY_CODE:
