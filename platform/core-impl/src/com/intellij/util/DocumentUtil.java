@@ -146,9 +146,9 @@ public final class DocumentUtil {
 
   /**
    * Calculates indent of the line containing {@code offset}
-   * @return amount of characters in indent
+   * @return Whitespaces at the beginning of the line
    */
-  public static int getIndent(@NotNull Document document, int offset) {
+  public static CharSequence getIndent(@NotNull Document document, int offset) {
     int lineOffset = getLineStartOffset(offset, document);
     int result = 0;
     while (lineOffset + result < document.getTextLength() &&
@@ -158,6 +158,6 @@ public final class DocumentUtil {
     if (result + lineOffset > document.getTextLength()) {
       result--;
     }
-    return Math.max(result, 0);
+    return document.getCharsSequence().subSequence(lineOffset, lineOffset + Math.max(result, 0));
   }
 }
