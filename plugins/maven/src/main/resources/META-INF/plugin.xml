@@ -316,6 +316,7 @@
     </pluginDescriptor>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
 
