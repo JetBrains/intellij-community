@@ -53,14 +53,12 @@ open class GuiTestCaseExt : GuiTestCase() {
 
   @Before
   open fun setUp() {
-    guiTestRule.IdeHandling().setUp()
     logStartTest(testMethod.methodName)
   }
 
   @After
   fun tearDown() {
     logEndTest(testMethod.methodName)
-    guiTestRule.IdeHandling().tearDown()
   }
 
   open fun isIdeFrameRun(): Boolean = true
