@@ -1795,7 +1795,7 @@ public class FSRecords {
   }
 
   @Contract("_->fail")
-  static void handleError(Throwable e) throws RuntimeException, Error {
+  public static void handleError(Throwable e) throws RuntimeException, Error {
     DbConnection.handleError(e);
   }
 }
