@@ -322,7 +322,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
 
   @Nullable
-  private static PsiElement getNamedElement(@Nullable final PsiElement element) {
+  public static PsiElement getNamedElement(@Nullable final PsiElement element) {
     if (element == null) return null;
 
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());

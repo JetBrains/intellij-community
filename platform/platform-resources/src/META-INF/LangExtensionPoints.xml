@@ -271,6 +271,7 @@
     <extensionPoint name="searchRequestor" interface="com.intellij.model.search.SearchRequestor"/>
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="declarationSearcher" interface="com.intellij.model.SymbolDeclarationSearcher"/>
 
     <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="searchScopeEnlarger" interface="com.intellij.psi.search.SearchScopeEnlarger"/>

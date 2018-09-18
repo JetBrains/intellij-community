@@ -323,6 +323,8 @@
                     serviceImplementation="com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration"/>
     <projectService serviceInterface="com.intellij.navigation.NavigationService"
                     serviceImplementation="com.intellij.navigation.NavigationServiceImpl"/>
+    <projectService serviceInterface="com.intellij.model.SymbolService"
+                    serviceImplementation="com.intellij.model.SymbolServiceImpl"/>
     <preloadingActivity implementation="com.intellij.ide.actions.GotoClassPresentationUpdater"/>
 
     <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"
@@ -1164,6 +1166,9 @@
     <projectService serviceInterface="com.intellij.build.DebugTasksViewManager"
                     serviceImplementation="com.intellij.build.DebugTasksViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
+    
+    <declarationSearcher implementation="com.intellij.model.PomSymbolDeclarationSearcher"/>
+    <declarationSearcher implementation="com.intellij.model.FallbackSymbolDeclarationSearcher"/>
   </extensions>
 </idea-plugin>
 
