@@ -1208,7 +1208,7 @@ public class IdeEventQueue extends EventQueue {
         int size = myDelayedKeyEvents.size();
         TYPEAHEAD_LOG.debug("Stop delaying events. Events to post: " + size);
         for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
-          KeyEvent theEvent = myDelayedKeyEvents.remove();
+          KeyEvent theEvent = myDelayedKeyEvents.remove(0);
           TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
           super.postEvent(theEvent);
         }
@@ -1227,7 +1227,7 @@ public class IdeEventQueue extends EventQueue {
     delayKeyEvents.set(false);
     int size = myDelayedKeyEvents.size();
     for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
-      KeyEvent theEvent = myDelayedKeyEvents.remove();
+      KeyEvent theEvent = myDelayedKeyEvents.remove(0);
       TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
       super.postEvent(theEvent);
     }
@@ -1262,7 +1262,7 @@ public class IdeEventQueue extends EventQueue {
     return shortcutsShowingPopups;
   }
 
-  private final LinkedList<KeyEvent> myDelayedKeyEvents = new LinkedList<>();
+  private final List<KeyEvent> myDelayedKeyEvents = ContainerUtil.createLockFreeCopyOnWriteList();
   private final AtomicBoolean delayKeyEvents = new AtomicBoolean();
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
