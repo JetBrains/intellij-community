@@ -1,8 +1,22 @@
 import time
+
+
+class ProceedContainer:
+    proceed = False
+
+
+def exit_while_loop():
+    ProceedContainer.proceed = True
+    return 'ok'
+
+
+def sleep():
+    while not ProceedContainer.proceed:  # The debugger should change the proceed to True to exit the loop.
+        time.sleep(.1)
+
+
 if __name__ == '__main__':
-    for i in range(6):
-        print('here %s' % i)
-        time.sleep(1)
-    
+    sleep()
+
     print('TEST SUCEEDED')
-        
+
