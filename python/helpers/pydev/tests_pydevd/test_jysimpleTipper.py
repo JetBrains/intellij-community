@@ -129,11 +129,11 @@ class TestMod(unittest.TestCase):
         assert 'byte[]' in tup[1]
 
         f, tip = _pydev_jy_imports_tipper.generate_tip('__builtin__.str')
-        assert f.endswith('jython.jar')
+        assert f is None or f.endswith('jython.jar')  # Depends on jython version
         self.assert_in('find'          , tip)
 
         f, tip = _pydev_jy_imports_tipper.generate_tip('__builtin__.dict')
-        assert f.endswith('jython.jar')
+        assert f is None or f.endswith('jython.jar')  # Depends on jython version
         self.assert_in('get'          , tip)
 
 
