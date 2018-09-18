@@ -240,13 +240,9 @@ public class JarRepositoryManager {
   }
 
   protected static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc) {
-    final EnumSet<ArtifactKind> kinds = EnumSet.of(ArtifactKind.ARTIFACT);
-    if (loadSources) {
-      kinds.add(ArtifactKind.SOURCES);
-    }
-    if (loadJavadoc) {
-      kinds.add(ArtifactKind.JAVADOC);
-    }
+
+    final EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc);
+    kinds.add(ArtifactKind.ARTIFACT);
     return kinds;
   }
 
