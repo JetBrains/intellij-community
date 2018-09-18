@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -59,6 +58,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,7 +84,6 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author: Roman Chernyatchik
@@ -126,6 +125,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private boolean myDisposed = false;
   private SMTestProxy myLastFailed;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
+  private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this); 
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -176,6 +176,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.setModel(structureTreeModel);
     myTreeBuilder.setTestsComparator(this);
     Disposer.register(this, myTreeBuilder);
+    Disposer.register(this, asyncTreeModel);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
@@ -292,6 +293,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateIconProgress(true);
 
     myAnimator.stopMovie();
+
+    myRequests.clear();
+    myUpdateTreeRequests.cancelAllRequests();
     myTreeBuilder.updateFromRoot();
 
     LvcsHelper.addLabel(this);
@@ -588,15 +592,22 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final Update update = new Update(parentSuite) {
       @Override
       public void run() {
-        myRequests.remove(this);
-        myTreeBuilder.updateTestsSubtree(parentSuite);
+        if (parentSuite.getParent() == null) {
+          myUpdateTreeRequests.cancelAllRequests();
+          myRequests.clear();
+          myTreeBuilder.updateFromRoot();
+        }
+        else {
+          myRequests.remove(this);
+          myTreeBuilder.updateTestsSubtree(parentSuite);
+        }
       }
     };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
     }
-    else if (myRequests.add(update) && !myDisposed) {
-      JobScheduler.getScheduler().schedule(update, 100, TimeUnit.MILLISECONDS);
+    else if (!myDisposed && myRequests.add(update)) {
+      myUpdateTreeRequests.addRequest(update, 100);
     }
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
