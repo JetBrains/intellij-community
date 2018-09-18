@@ -37,8 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.forLanguage;
-
 public class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 
@@ -50,8 +48,10 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
   private CommonCodeStyleSettings myCommonSettings;
 
-  public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile file, @NotNull TextRange range) {
-    myProvider = forLanguage(file.getLanguage());
+  public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile file,
+                                             @NotNull TextRange range, 
+                                             @NotNull LanguageCodeStyleSettingsProvider settingsProvider) {
+    myProvider = settingsProvider;
     myProject = file.getProject();
     myFile =
       PsiFileFactory.getInstance(myProject).createFileFromText("copy" + file.getName(), file.getLanguage(), file.getText(), true, false);
