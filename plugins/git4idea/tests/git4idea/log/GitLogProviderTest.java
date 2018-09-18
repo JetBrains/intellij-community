@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import git4idea.config.GitVersion;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
@@ -25,6 +24,7 @@ import java.util.Set;
 import static com.intellij.openapi.vcs.Executor.echo;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl.createTextFilter;
+import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.readAllRefs;
 import static java.util.Collections.singleton;
@@ -138,7 +138,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<String> hashes = generateHistoryForFilters(true, false);
     VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
     repo.update();
-    List<String> actualHashes = getFilteredHashes(new VcsLogFilterCollectionBuilder().with(branchFilter).build());
+    List<String> actualHashes = getFilteredHashes(createFilterCollection(branchFilter));
     assertEquals(hashes, actualHashes);
   }
 
@@ -150,7 +150,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
                                                            Collections.emptyMap(),
                                                            singleton(user));
     repo.update();
-    List<String> actualHashes = getFilteredHashes(new VcsLogFilterCollectionBuilder().with(branchFilter).with(userFilter).build());
+    List<String> actualHashes = getFilteredHashes(createFilterCollection(branchFilter, userFilter));
     assertEquals(hashes, actualHashes);
   }
 
@@ -173,11 +173,11 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     String text = "[git]";
     assertEquals(Collections.singletonList(smallBrackets),
-                 getFilteredHashes(new VcsLogFilterCollectionBuilder().with(createTextFilter(text, false, true)).build()));
+                 getFilteredHashes(createFilterCollection(createTextFilter(text, false, true))));
     assertEquals(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
-                 getFilteredHashes(new VcsLogFilterCollectionBuilder(createTextFilter(text, true, false)).build()));
+                 getFilteredHashes(createFilterCollection(createTextFilter(text, true, false))));
     assertEquals(Arrays.asList(smallNoBrackets, smallBrackets, initial),
-                 getFilteredHashes(new VcsLogFilterCollectionBuilder(createTextFilter(text, true, true)).build()));
+                 getFilteredHashes(createFilterCollection(createTextFilter(text, true, true))));
   }
 
   public void test_filter_by_text_no_regex() throws Exception {
@@ -191,8 +191,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     String bigBrackets = addCommit(repo, "[GIT] " + fileName);
     echo(fileName, "content" + Math.random());
 
-    assertEquals(Arrays.asList(bigBrackets, smallBrackets), getFilteredHashes(
-      new VcsLogFilterCollectionBuilder().with(createTextFilter("[git]", false, false)).build()));
+    assertEquals(Arrays.asList(bigBrackets, smallBrackets),
+                 getFilteredHashes(createFilterCollection(createTextFilter("[git]", false, false))));
   }
 
   private void assumeFixedStringsWorks() {
@@ -207,8 +207,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
                                                            Collections.emptyMap(),
                                                            singleton(user));
-    assertEquals(hashes, getFilteredHashes(new VcsLogFilterCollectionBuilder().with(userFilter).
-      with(createTextFilter(regexp ? ".*" : "", regexp, false)).build()));
+    assertEquals(hashes, getFilteredHashes(createFilterCollection(userFilter, createTextFilter(regexp ? ".*" : "", regexp, false))));
   }
 
   public void test_filter_by_text_with_regex_and_user() throws Exception {

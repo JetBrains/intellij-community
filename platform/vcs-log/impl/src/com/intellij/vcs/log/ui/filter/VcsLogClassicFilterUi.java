@@ -26,7 +26,6 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -38,6 +37,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.util.*;
+
+import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 
 /**
  *
@@ -123,17 +124,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       getFiltersFromTextArea(myTextFilterModel.getFilter(),
                              myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
                              myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
-    return new VcsLogFilterCollectionBuilder().with(myBranchFilterModel.getFilter())
-      .with(myUserFilterModel.getFilter())
-      .with(filtersFromText.second)
-      .with(myDateFilterModel.getFilter())
-      .with(filtersFromText.first)
-      .with(myStructureFilterModel.getFilter() == null
-            ? null
-            : myStructureFilterModel.getFilter().getStructureFilter())
-      .with(myStructureFilterModel.getFilter() == null
-            ? null
-            : myStructureFilterModel.getFilter().getRootFilter()).build();
+    return createFilterCollection(myBranchFilterModel.getFilter(), myUserFilterModel.getFilter(), filtersFromText.second,
+                                  myDateFilterModel.getFilter(), filtersFromText.first,
+                                  myStructureFilterModel.getFilter() == null
+                                  ? null
+                                  : myStructureFilterModel.getFilter().getStructureFilter(),
+                                  myStructureFilterModel.getFilter() == null
+                                  ? null
+                                  : myStructureFilterModel.getFilter().getRootFilter());
   }
 
   @NotNull

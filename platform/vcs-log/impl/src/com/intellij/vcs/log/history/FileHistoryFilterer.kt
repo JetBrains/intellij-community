@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -41,7 +27,6 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
 import com.intellij.vcs.log.impl.VcsLogRevisionFilterImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -50,6 +35,7 @@ import com.intellij.vcs.log.visible.VcsLogFilterer
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.visible.filters.createFilterCollection
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   private val project = logData.project
@@ -250,7 +236,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         revision != null -> VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
         else -> VcsLogBranchFilterImpl.fromBranch("HEAD")
       }
-      return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build()
+      return createFilterCollection(fileFilter, revisionFilter)
     }
   }
 }
