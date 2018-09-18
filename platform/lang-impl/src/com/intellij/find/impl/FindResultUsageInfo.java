@@ -82,14 +82,14 @@ public class FindResultUsageInfo extends UsageInfo {
     myTimestamp = document.getModificationStamp();
 
     Segment segment = getSegment();
-    boolean isFileOrCompiled = isFileOrCompiled();
-    if (segment == null && !isFileOrCompiled) {
+    boolean isFileOrBinary = isFileOrBinary();
+    if (segment == null && !isFileOrBinary) {
       myCachedResult = false;
       return false;
     }
 
     VirtualFile file = getPsiFile().getVirtualFile();
-    if (isFileOrCompiled) {
+    if (isFileOrBinary) {
       myCachedResult = file.isValid();
       return myCachedResult;
     }
