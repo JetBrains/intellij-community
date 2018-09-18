@@ -72,16 +72,6 @@ public abstract class GroupedElementsRenderer {
     return myRendererComponent;
   }
 
-  /** @deprecated backgrounds are set uniformly via setSelected() / setDeselected() (to be removed in IDEA 16) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected static void adjustOpacity(JComponent component, boolean selected) {
-    if (!selected) {
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        component.setOpaque(false);
-      }
-    }
-  }
-
   protected final void setSelected(JComponent aComponent) {
     setSelected(aComponent, true);
   }

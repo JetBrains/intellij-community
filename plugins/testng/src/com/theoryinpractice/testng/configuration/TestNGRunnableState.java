@@ -30,13 +30,9 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
@@ -46,9 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
-import org.testng.remote.RemoteArgs;
-import org.testng.remote.RemoteTestNG;
-import org.testng.remote.strprotocol.SerializedMessageSender;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,6 +142,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return "none";
   }
 
+  @Override
   public SearchingForTestsTask createSearchingForTestsTask() {
     return new SearchingForTestsTask(myServerSocket, config, myTempFile) {
       @Override
@@ -184,15 +178,18 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     }
   }
 
+  @Override
   @NotNull
   protected String getFrameworkId() {
     return "testng";
   }
 
+  @Override
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
     parametersList.add("-temp", tempFilePath);
   }
 
+  @Override
   @NotNull
   public TestNGConfiguration getConfiguration() {
     return config;
@@ -203,6 +200,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return getConfiguration().getPersistantData().getScope();
   }
 
+  @Override
   protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
     final ParametersList parametersList = parameters.getProgramParametersList();
     final List<String> params = parametersList.getParameters();

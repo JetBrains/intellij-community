@@ -248,31 +248,37 @@ public abstract class ContextProvider {
           }
         }
 
+        @Override
         @NotNull
         public ContextType getContextType() {
             return myContextType;
         }
 
+        @Override
         @Nullable
         public XmlElement getContextElement() {
             return myContextElement;
         }
 
+        @Override
         @Nullable
         public NamespaceContext getNamespaceContext() {
           return myNamespaceContext;
         }
 
+        @Override
         @Nullable
         public VariableContext getVariableContext() {
             return null;
         }
 
+        @Override
         @Nullable
         public Set<QName> getAttributes(boolean forValidation) {
             return null;
         }
 
+        @Override
         @Nullable
         public Set<QName> getElements(boolean forValidation) {
             return null;

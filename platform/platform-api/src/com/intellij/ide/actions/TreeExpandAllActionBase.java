@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,14 +31,16 @@ public abstract class TreeExpandAllActionBase extends AnAction implements DumbAw
   @Nullable
   protected abstract TreeExpander getExpander(DataContext dataContext);
 
-  public final void actionPerformed(AnActionEvent e) {
+  @Override
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     TreeExpander expander = getExpander(e.getDataContext());
     if (expander == null) return;
     if (!expander.canExpand()) return;
     expander.expandAll();
   }
 
-  public final void update(AnActionEvent event) {
+  @Override
+  public final void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());
     presentation.setVisible(expander == null || expander.isVisible(event));

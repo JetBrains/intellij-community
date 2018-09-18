@@ -26,6 +26,7 @@ enum class ValueType {
   STRING,
   FUNCTION,
   BOOLEAN,
+  BIGINT,
 
   ARRAY,
   NODE,

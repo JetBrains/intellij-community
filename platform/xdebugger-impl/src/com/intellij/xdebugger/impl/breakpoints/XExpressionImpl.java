@@ -81,9 +81,9 @@ public class XExpressionImpl implements XExpression {
 
     XExpressionImpl that = (XExpressionImpl)o;
 
-    if (myCustomInfo != null ? !myCustomInfo.equals(that.myCustomInfo) : that.myCustomInfo != null) return false;
+    if (!Objects.equals(myCustomInfo, that.myCustomInfo)) return false;
     if (!myExpression.equals(that.myExpression)) return false;
-    if (myLanguage != null ? !myLanguage.equals(that.myLanguage) : that.myLanguage != null) return false;
+    if (!Objects.equals(myLanguage, that.myLanguage)) return false;
     if (myMode != that.myMode) return false;
 
     return true;

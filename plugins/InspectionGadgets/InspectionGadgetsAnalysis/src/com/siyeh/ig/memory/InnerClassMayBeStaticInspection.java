@@ -92,7 +92,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
       WriteAction.run(() -> makeStatic(innerClass, references));
     }
 
-    private static void makeStatic(PsiClass innerClass, Collection<PsiReference> references) {
+    private static void makeStatic(PsiClass innerClass, Collection<? extends PsiReference> references) {
       final Project project = innerClass.getProject();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

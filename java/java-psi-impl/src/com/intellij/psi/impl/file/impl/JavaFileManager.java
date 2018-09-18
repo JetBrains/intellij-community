@@ -30,14 +30,6 @@ import java.util.Collection;
  * @author max
  */
 public interface JavaFileManager {
-  class SERVICE {
-    private SERVICE() { }
-
-    /** @deprecated use {@link JavaFileManager#getInstance(Project)} (to be removed in IDEA 2018) */
-    public static JavaFileManager getInstance(@NotNull Project project) {
-      return JavaFileManager.getInstance(project);
-    }
-  }
 
   static JavaFileManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, JavaFileManager.class);

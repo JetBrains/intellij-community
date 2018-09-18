@@ -11,6 +11,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -27,8 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
+public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationWithDiscoverySupport> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
     super(type);
   }
@@ -46,7 +48,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
 
   @Override
-  protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
+  protected boolean setupConfigurationFromContext(final JavaTestConfigurationWithDiscoverySupport configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
     if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
@@ -72,7 +74,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return false;
   }
 
-  private Module getTargetModule(JavaTestConfigurationBase configuration,
+  private Module getTargetModule(JavaTestConfigurationWithDiscoverySupport configuration,
                                  ConfigurationContext configurationContext,
                                  Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) {
     final RunnerAndConfigurationSettings template =
@@ -148,7 +150,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  protected Module findModule(JavaTestConfigurationBase configuration, Module contextModule) {
+  protected Module findModule(JavaTestConfigurationWithDiscoverySupport configuration, Module contextModule) {
     return null;
   }
 
@@ -184,12 +186,21 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  public boolean isConfigurationFromContext(JavaTestConfigurationBase configuration, ConfigurationContext configurationContext) {
+  public boolean isConfigurationFromContext(JavaTestConfigurationWithDiscoverySupport configuration, ConfigurationContext configurationContext) {
     final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
     return position != null && position.equals(getPosition(configuration));
   }
 
-  private class MyRunProfile implements RunProfile, ConfigurationWithCommandLineShortener {
+  protected static LinkedHashSet<String> collectMethodPatterns(@NotNull Location<PsiMethod>[] testMethods) {
+    return Arrays.stream(testMethods)
+          .map(method -> {
+            Iterator<Location<PsiClass>> ancestors = method.getAncestors(PsiClass.class, true);
+            return JavaExecutionUtil.getRuntimeQualifiedName(ancestors.next().getPsiElement()) + "," + method.getPsiElement().getName();
+          })
+          .collect(Collectors.toCollection(LinkedHashSet::new));
+  }
+
+  private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>, RunConfiguration, ConfigurationWithCommandLineShortener, RunProfileWithCompileBeforeLaunchOption {
     private final Location<PsiMethod>[] myTestMethods;
     private final Module myModule;
     private final JavaTestConfigurationBase myConfiguration;
@@ -230,9 +241,41 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       myConfiguration.setShortenCommandLine(mode);
     }
 
+    @Nullable
+    @Override
+    public ConfigurationFactory getFactory() {
+      return myConfiguration.getFactory();
+    }
+
+    @Override
+    public void setName(String name) {
+    }
+
+    @NotNull
+    @Override
+    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+      return myConfiguration.getConfigurationEditor();
+    }
+
     @Override
     public Project getProject() {
       return myConfiguration.getProject();
+    }
+
+    @Override
+    public RunConfiguration clone() {
+      return new MyRunProfile(myTestMethods, myModule, myConfiguration, myConfigurationName);
+    }
+
+    @Override
+    public RunConfiguration getPeer() {
+      return myConfiguration;
+    }
+
+    @NotNull
+    @Override
+    public Module[] getModules() {
+      return myConfiguration.getModules();
     }
   }
 }

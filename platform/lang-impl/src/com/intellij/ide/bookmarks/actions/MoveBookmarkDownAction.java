@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -40,7 +41,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     int modelSize = myList.getModel().getSize();
     if (modelSize == 0 || !BookmarksAction.notFiltered(myList) || UISettings.getInstance().getSortBookmarks()) {
       e.getPresentation().setEnabled(false);
@@ -53,7 +54,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ListUtil.moveSelectedItemsDown(myList);
     BookmarkManager.getInstance(myProject).moveBookmarkDown(BookmarksAction.getSelectedBookmarks(myList).get(0));
   }

@@ -19,16 +19,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 
 public class AutoShowProcessPopupAction extends ToggleAction {
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return Registry.is("ide.windowSystem.autoShowProcessPopup");
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Registry.get("ide.windowSystem.autoShowProcessPopup").setValue(state);
   }
 }

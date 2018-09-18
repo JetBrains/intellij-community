@@ -67,7 +67,7 @@ public class GitFileUtils {
     handler.addParameters(additionalOptions);
     handler.endOptions();
     handler.addParameters(paths);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
@@ -136,7 +136,7 @@ public class GitFileUtils {
       handler.addParameters("--ignore-errors", "-A");
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 

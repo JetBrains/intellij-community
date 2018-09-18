@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 public class GroovyGenerationSettingsProvider extends CodeStyleSettingsProvider {
+  @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new GroovyCodeStyleGenerationConfigurable(settings);

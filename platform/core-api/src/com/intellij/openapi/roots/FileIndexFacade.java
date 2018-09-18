@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -75,4 +76,15 @@ public abstract class FileIndexFacade {
    */
   @NotNull
   public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+
+  /**
+   * @return true if the {@code file} is {@link #isInContent} except when it's in {@link #isInLibraryClasses} and not in {@link #isInLibrarySource}
+   */
+  public boolean isInProjectScope(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWindow) return true;
+
+    if (isInLibraryClasses(file) && !isInSourceContent(file)) return false;
+
+    return isInContent(file);
+  }
 }

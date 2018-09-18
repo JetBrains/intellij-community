@@ -16,7 +16,8 @@
 package com.intellij.openapi.diff.impl;
 
 
+import org.jetbrains.annotations.NotNull;
 
 public interface ContentChangeListener {
-  void onContentChangedIn(EditorSource source);
+  void onContentChangedIn(@NotNull EditorSource source);
 }

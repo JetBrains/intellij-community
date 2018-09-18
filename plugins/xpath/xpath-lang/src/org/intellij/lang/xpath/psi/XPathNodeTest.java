@@ -35,6 +35,7 @@ public interface XPathNodeTest extends XPathElement, QNameElement {
 
     boolean isNameTest();
 
+    @Override
     @Nullable
     PrefixedName getQName();
 }

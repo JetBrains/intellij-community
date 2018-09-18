@@ -125,12 +125,12 @@ public class BasicsTest extends IntegrationTestCase {
     ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
       @Override
       public Object compute() throws IOException {
-    JarOutputStream jar = new JarOutputStream(new FileOutputStream(f));
+        try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
 
-    jar.putNextEntry(new JarEntry("file.txt"));
-    jar.write(1);
-    jar.closeEntry();
-    jar.close();
+          jar.putNextEntry(new JarEntry("file.txt"));
+          jar.write(1);
+          jar.closeEntry();
+        }
         return null;
       }
     });
@@ -146,14 +146,14 @@ public class BasicsTest extends IntegrationTestCase {
     ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
       @Override
       public Object compute() throws IOException {
-        JarOutputStream jar = new JarOutputStream(new FileOutputStream(f));
+        try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
 
-        JarEntry e = new JarEntry("file.txt");
-        e.setTime(f.lastModified() + 10000);
-        jar.putNextEntry(e);
-        jar.write(2);
-        jar.closeEntry();
-        jar.close();
+          JarEntry e = new JarEntry("file.txt");
+          e.setTime(f.lastModified() + 10000);
+          jar.putNextEntry(e);
+          jar.write(2);
+          jar.closeEntry();
+        }
         f.setLastModified(f.lastModified() + 10000);
         return null;
       }

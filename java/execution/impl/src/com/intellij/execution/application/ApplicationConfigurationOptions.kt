@@ -23,5 +23,5 @@ open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
   var isPassParentEnv: Boolean by property(true)
 
   @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
-  var env: MutableMap<String, String> by property(LinkedHashMap<String, String>())
+  var env: MutableMap<String, String> by property(LinkedHashMap())
 }

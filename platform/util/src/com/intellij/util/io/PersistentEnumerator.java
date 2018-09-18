@@ -76,7 +76,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
       for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
         final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
         if (vector < 0) {
-          for (int record = -vector; record != 0; record = nextCanditate(record)) {
+          for (int record = -vector; record != 0; record = nextCandidate(record)) {
             if (!p.process(record)) return false;
           }
         }
@@ -141,7 +141,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
             return collision;
           }
 
-          collision = nextCanditate(collision);
+          collision = nextCandidate(collision);
         }
         while (collision != 0);
 
@@ -211,7 +211,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return pos;
   }
 
-  private int nextCanditate(final int idx) throws IOException {
+  private int nextCandidate(final int idx) throws IOException {
     return -myStorage.getInt(idx);
   }
 

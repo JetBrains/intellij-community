@@ -38,7 +38,7 @@ final class ScrollSettings {
     Application application = getApplication();
     if (application == null || application.isUnitTestMode()) return false;
     if (PowerSaveMode.isEnabled()) return false;
-    if (RemoteDesktopService.isAnimationDisabled()) return false;
+    if (RemoteDesktopService.isRemoteSession()) return false;
 
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getSmoothScrolling();

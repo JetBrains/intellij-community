@@ -258,7 +258,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       myTargetClass = targetClass;
     }
 
-    @SuppressWarnings("unused") // dummy is used to distinguish constructors
+    // dummy is used to distinguish constructors
     private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy) {
       try {
         myTarget = fieldClass.getField(fieldName);

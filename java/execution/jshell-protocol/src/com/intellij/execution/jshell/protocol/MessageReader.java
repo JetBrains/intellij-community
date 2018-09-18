@@ -17,7 +17,7 @@ public class MessageReader<T> extends Endpoint {
     myContext = JAXBContext.newInstance(msgType);
   }
 
-  public T receive(final Consumer<String> unparsedOutputSink) throws IOException {
+  public T receive(final Consumer<? super String> unparsedOutputSink) throws IOException {
     while (true) {
       String line = myIn.readLine();
       if (line == null) {

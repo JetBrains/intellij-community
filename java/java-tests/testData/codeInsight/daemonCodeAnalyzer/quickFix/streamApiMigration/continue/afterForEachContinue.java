@@ -5,6 +5,7 @@ import java.util.Collection;
 
 public class Test {
   void test(int[] arr) {
+      // comment
       Arrays.stream(arr).forEach(x -> {
           int y = x * 2;
           if (x > y) return;

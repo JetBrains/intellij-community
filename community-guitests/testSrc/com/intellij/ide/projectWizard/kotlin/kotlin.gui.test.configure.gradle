@@ -36,7 +36,7 @@ task updateXmlParsing(dependsOn: downloadUpdateXml) {
         project.ext.pluginZipName = 'kotlin-plugin-' + plugins.plugin[0].@version + '.zip'
         project.ext.pluginInstallPath = project.ext.downloadPath + File.separator + project.ext.pluginZipName
         project.ext.fullVersion = plugins.plugin[0].@version
-        project.ext.isFinalRelease = (project.ext.versionKind == "release").toString()
+        project.ext.isFinalRelease = ((project.ext.versionKind == "release") && (!project.ext.releaseVersion.contains("M"))).toString()
     }
 }
 

@@ -176,7 +176,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     final Document document = valueField.getDocument();
     document.addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent evt) {
+      public void textChanged(@NotNull DocumentEvent evt) {
         try {
           valueField.commitEdit();
           final Number number = (Number)valueField.getValue();

@@ -69,7 +69,7 @@ public class YamlEnumType extends YamlScalarType {
   protected void validateScalarValue(@NotNull YAMLScalar scalarValue, @NotNull ProblemsHolder holder) {
     super.validateScalarValue(scalarValue, holder);
 
-    String text = scalarValue.getTextValue().trim();
+    String text = scalarValue.getTextValue();
     if (text.length() == 0) {
       // not our business
       return;

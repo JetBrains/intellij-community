@@ -53,7 +53,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     data.setPresentableText("Remote Libraries");
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
@@ -128,7 +128,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
     }
 
     @Override
-    protected void updateImpl(PresentationData data) {
+    protected void updateImpl(@NotNull PresentationData data) {
       data.setPresentableText(myRemotePath);
       data.setIcon(PlatformIcons.FOLDER_ICON);
     }

@@ -20,15 +20,16 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CustomizeThreadsViewAction extends DebuggerAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ShowSettingsUtil.getInstance().editConfigurable(e.getProject(), new ThreadsViewConfigurable(ThreadsViewSettings.getInstance()));
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_THREADS_VIEW));
   }

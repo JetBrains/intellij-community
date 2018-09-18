@@ -25,8 +25,8 @@ import java.util.StringTokenizer;
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
   private static final int CHILDREN_COUNT_LIMIT = 100;
 
-  static final String ELEMENTS_SEPARATOR = ";";
-  static final String ELEMENT_TOKENS_SEPARATOR = "#";
+  protected static final String ELEMENTS_SEPARATOR = ";";
+  protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
 
   private static final String ESCAPE_CHAR = "\\";
   private static final List<String> ESCAPE_FROM = Arrays.asList(ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR);

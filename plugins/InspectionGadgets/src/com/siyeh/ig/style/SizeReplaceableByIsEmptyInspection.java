@@ -93,9 +93,9 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
-      PsiExpression operand = binaryExpression.getLOperand();
+      PsiExpression operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
       if (!(operand instanceof PsiMethodCallExpression)) {
-        operand = binaryExpression.getROperand();
+        operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       }
       if (!(operand instanceof PsiMethodCallExpression)) {
         return;
@@ -131,8 +131,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (!ComparisonUtils.isComparison(expression)) {
         return;
       }
-      final PsiExpression rhs = expression.getROperand();
-      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final boolean flipped;
       if (lhs instanceof PsiMethodCallExpression) {
         flipped = false;

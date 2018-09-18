@@ -5,6 +5,7 @@ import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.GuiTestSuiteParam
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.impl.waitForGradleReimport
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
@@ -78,14 +79,16 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
       projectPath = projectFolder,
       gradleOptions = gradleOptions
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false
     )
     gradleReimport()
-    waitAMoment(extraTimeOut)
+    waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
+    waitAMoment()
 
     projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
       project, kotlinVersion, gradleOptions.artifact, expectedFacet

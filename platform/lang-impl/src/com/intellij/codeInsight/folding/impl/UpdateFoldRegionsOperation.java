@@ -250,7 +250,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldRemoveRegion(FoldRegion region, EditorFoldingInfo info,
-                                     Map<TextRange, Boolean> rangeToExpandStatusMap, Ref<FoldingUpdate.RegionInfo> matchingInfo) {
+                                     Map<TextRange, Boolean> rangeToExpandStatusMap, Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
     matchingInfo.set(null);
     PsiElement element = info.getPsiElement(region);
     if (element != null) {

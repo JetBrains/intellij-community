@@ -168,7 +168,7 @@ public class PersistentFsTest extends PlatformTestCase {
       VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
       assertNotNull(jarRoot);
       assertTrue(jarRoot.isValid());
-      assertEquals(0, jarRoot.getChildren().length);
+      assertEmpty(jarRoot.getChildren());
       String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
       assertNull(VirtualFileManager.getInstance().findFileByUrl(entryUrl));
 

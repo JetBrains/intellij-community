@@ -3,13 +3,13 @@
     <id>foo</id>
 
     <extensionPoints>
-        <extensionPoint name="bar"/>
+        <extensionPoint name="bar" interface="java.util.List"/>
         <xi:include href="/extensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="foo">
 
-        <bar/>
+        <bar implementation="java.util.ArrayList"/>
         <extension/>
     </extensions>
 

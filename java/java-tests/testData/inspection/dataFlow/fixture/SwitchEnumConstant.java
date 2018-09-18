@@ -31,7 +31,7 @@ class InspectionTest {
   void testTernary(@Nullable String foo, X x) {
     switch (foo == null ? X.A : x) {
       case A:
-        System.out.println(foo.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+        System.out.println(foo.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
         break;
       case B:
         System.out.println(foo.trim());

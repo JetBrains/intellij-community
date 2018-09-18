@@ -218,7 +218,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.addText("<root>", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -229,7 +229,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.addText(getElement(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
@@ -240,7 +240,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       CertificateWrapper wrapper = getElement();
       SimpleTextAttributes attr = wrapper.isValid() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : STRIKEOUT_ATTRIBUTES;
       presentation.addText(wrapper.getSubjectField(COMMON_NAME), attr);

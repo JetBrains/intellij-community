@@ -1,33 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHandler {
   private static final Logger LOG = Logger.getInstance(SmartIndentingBackspaceHandler.class);
@@ -90,6 +81,12 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
     int endOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), caretModel.getOffset(), " \t");
+
+    if (editor instanceof EditorWindow) {
+      List<TextRange> ranges = InjectedLanguageManager.getInstance(file.getProject())
+                                                      .intersectWithAllEditableFragments(file, new TextRange(myStartOffset, endOffset));
+      if (ranges.size() != 1 || !ranges.get(0).equalsToRange(myStartOffset, endOffset)) return false;
+    }
 
     document.replaceString(myStartOffset, endOffset, myReplacement);
     caretModel.moveToOffset(myStartOffset + myReplacement.length());

@@ -51,6 +51,7 @@ public class MavenImportingSettingsForm {
     myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }

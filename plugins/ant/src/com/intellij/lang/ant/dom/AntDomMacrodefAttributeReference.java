@@ -43,15 +43,18 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
     super(element, range, true);
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("unknown.macro.attribute", getCanonicalText());
   }
 
+  @Override
   public PsiElement resolve() {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
-  @NotNull 
+  @Override
+  @NotNull
   public Object[] getVariants() {
     final AntDomMacroDef parentMacrodef = getParentMacrodef();
     if (parentMacrodef != null) {
@@ -69,7 +72,7 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
     return EMPTY_ARRAY;
   }
 
-  @Nullable 
+  @Nullable
   private AntDomMacroDef getParentMacrodef() {
     final PsiElement element = getElement();
     if (element == null) {
@@ -83,9 +86,10 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
-    
+
     static final MyResolver INSTANCE = new MyResolver();
-    
+
+    @Override
     public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
       final PsiElement element = psiReference.getElement();
       if (element == null) {

@@ -23,7 +23,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,6 +77,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     reset();
@@ -88,18 +92,22 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myRepos = null;
   }
 
+  @Override
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return HgVcsMessages.message("hg4idea.commit");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -208,10 +216,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return choice[0] == Messages.OK;
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     final List<HgFile> filesWithRoots = new ArrayList<>();
     for (FilePath filePath : files) {
@@ -230,13 +240,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(final List<VirtualFile> files) {
     new HgAddCommand(myProject).addWithProgress(files);
     return null;
-  }
-
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
   }
 
   @Override

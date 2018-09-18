@@ -202,7 +202,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     final String colorName = myModel.getColor(file, getProject());
     return colorName == null ? null : getColor(colorName);
   }
-  
+
+  @Override
   @Nullable
   public Color getScopeColor(@NotNull String scopeName) {
     initProjectLevelConfigurations();

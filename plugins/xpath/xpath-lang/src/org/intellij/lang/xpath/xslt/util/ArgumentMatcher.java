@@ -15,14 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplateInvocation;
-
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ArgumentMatcher implements ResolveUtil.Matcher {
     private final XsltTemplateInvocation myCall;
@@ -31,14 +30,17 @@ public class ArgumentMatcher implements ResolveUtil.Matcher {
         myCall = call;
     }
 
+    @Override
     public XmlTag getRoot() {
         return myCall.getTag();
     }
 
+    @Override
     public boolean isRecursive() {
         return false;
     }
 
+    @Override
     @Nullable
     public Result match(XmlTag element) {
         if (element.getLocalName().equals("with-param") && XsltSupport.isXsltTag(element)) {
@@ -51,6 +53,7 @@ public class ArgumentMatcher implements ResolveUtil.Matcher {
         return element;
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
         throw new UnsupportedOperationException();
     }

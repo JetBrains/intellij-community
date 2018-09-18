@@ -16,7 +16,6 @@ import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,8 +34,10 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     this(project, (ModuleGroup)value, viewSettings);
   }
 
+  @NotNull
   protected abstract AbstractTreeNode createModuleNode(Module module) throws
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
+  @NotNull
   protected abstract ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup);
 
   @Override
@@ -78,10 +79,6 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     List<Module> modules = getModulesByFile(file);
-    if (modules.isEmpty() && file.getFileSystem() instanceof ArchiveFileSystem) {
-      VirtualFile archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
-      if (archiveFile != null) modules = getModulesByFile(archiveFile);
-    }
     List<String> thisGroupPath = getValue().getGroupPathList();
     ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
     for (Module module : modules) {
@@ -101,7 +98,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   protected abstract List<Module> getModulesByFile(@NotNull VirtualFile file);
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(getPresentableName());
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
@@ -144,13 +141,13 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   }
 
   @Override
-  public boolean canDrop(TreeNode[] sourceNodes) {
+  public boolean canDrop(@NotNull TreeNode[] sourceNodes) {
     final List<Module> modules = extractModules(sourceNodes);
     return !modules.isEmpty();
   }
 
   @Override
-  public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
+  public void drop(@NotNull TreeNode[] sourceNodes, @NotNull DataContext dataContext) {
     final List<Module> modules = extractModules(sourceNodes);
     MoveModulesToGroupAction.doMove(modules.toArray(Module.EMPTY_ARRAY), getValue(), null);
   }

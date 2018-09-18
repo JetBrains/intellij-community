@@ -394,7 +394,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int[] selectedRows = myTable.getSelectedRows();
       String initial = (String)myModel.getValueAt(selectedRows[0], NEW_NAME_COLUMN);
       String newName = Messages.showInputDialog(myTable, "New name", "Rename Selected", null, initial, new InputValidatorEx() {
@@ -432,7 +432,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     protected abstract boolean isValidName(String inputString, int selectedRow);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTable.getSelectedRows().length > 0);
     }
   }

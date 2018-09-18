@@ -16,13 +16,11 @@
 
 package com.intellij.openapi.ui;
 
-import com.intellij.util.ObjectUtils;
-
-import java.awt.*;
-
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface Painter {
 
@@ -33,7 +31,7 @@ public interface Painter {
   void removeListener(Listener listener);
 
   interface Listener {
-    void onNeedsRepaint(Painter painter, @Nullable JComponent dirtyComponent);
+    void onNeedsRepaint(@NotNull Painter painter, @Nullable JComponent dirtyComponent);
   }
 
 }

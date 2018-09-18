@@ -36,7 +36,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         event.getContent().release();
       }
     });

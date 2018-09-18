@@ -20,8 +20,6 @@ class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFi
 
   fun getFunction() = functionRef?.element
 
-  override fun getVariants() = emptyArray<Any>()
-
   override fun isSoft() = true
 
   override fun handleElementRename(newElementName: String) = myElement.replace(

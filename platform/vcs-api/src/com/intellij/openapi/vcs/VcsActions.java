@@ -17,10 +17,9 @@ package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface VcsActions {
 
   @NonNls String ACTION_COPY_REVISION_NUMBER = "Vcs.CopyRevisionNumberAction";
+  @NonNls String VCS_LOG_CHANGES_BROWSER_TOOLBAR = "Vcs.Log.ChangesBrowser.Toolbar";
+  @NonNls String VCS_OPERATIONS_POPUP = "Vcs.Operations.Popup";
 }

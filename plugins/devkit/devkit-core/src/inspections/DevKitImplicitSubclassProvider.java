@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ public class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
 
   @Override
   public boolean isApplicableTo(@NotNull PsiClass psiClass) {
+    if (psiClass instanceof PsiAnonymousClass) return false;
+
     return DevKitImplicitUsageProvider.isDomElementClass(psiClass) ||
            InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement");
   }

@@ -102,7 +102,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   private static String suggestUniqueVariableName(@NotNull @NonNls String baseName,
                                                   PsiElement place,
                                                   boolean lookForward,
-                                                  Predicate<PsiVariable> canBeReused) {
+                                                  Predicate<? super PsiVariable> canBeReused) {
     int index = 0;
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
@@ -149,7 +149,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @NotNull
   @Override
-  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused) {
+  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
     return suggestUniqueVariableName(baseName, place, true, canBeReused);
   }
 

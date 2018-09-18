@@ -34,6 +34,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor>{
     myValue = value;
   }
 
+  @Override
   protected WatchItemDescriptor createDescriptorImpl(@NotNull final Project project) {
     return myValue == null ? new WatchItemDescriptor(project, myText) : new WatchItemDescriptor(project, myText, myValue);
   }
@@ -49,6 +50,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor>{
     return myText.hashCode();
   }
 
+  @Override
   public DisplayKey<WatchItemDescriptor> getDisplayKey() {
     return new SimpleDisplayKey<>(myText.getText());
   }

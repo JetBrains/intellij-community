@@ -30,6 +30,7 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
     return ((RunnerAndConfigurationSettings)runConfiguration).getName();
   }
 
+  @Override
   public void execute(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper wrapper) {
     RunnerAndConfigurationSettings configuration = (RunnerAndConfigurationSettings)wrapper.getValue();
     Project project = fetchProject(dataContext);

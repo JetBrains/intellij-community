@@ -17,12 +17,10 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
-import com.intellij.psi.util.PsiTreeUtil;
-
-import java.util.Comparator;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaPsiEquivalenceUtil {
-  public static boolean areExpressionsEquivalent(PsiExpression expr1, PsiExpression expr2) {
+  public static boolean areExpressionsEquivalent(@NotNull PsiExpression expr1, @NotNull PsiExpression expr2) {
     return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2, (o1, o2) -> {
       if (o1 instanceof PsiParameter && o2 instanceof PsiParameter) {
         final PsiElement scope1 = ((PsiParameter)o1).getDeclarationScope();

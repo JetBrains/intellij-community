@@ -1,4 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -15,9 +29,8 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,7 +97,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (startFindUsages(editor, element)) {
+          if (startFindUsages(editor, project, element)) {
             return;
           }
 
@@ -103,7 +116,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       PsiElement element = elements[0];
       if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
-          startFindUsages(editor, element)) {
+          startFindUsages(editor, project, element)) {
         return;
       }
 
@@ -121,18 +134,25 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
-    if (element != null) {
+  private static boolean startFindUsages(@NotNull Editor editor, @NotNull Project project, PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    if (DumbService.getInstance(project).isDumb()) {
+      AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
+      String name = action.getTemplatePresentation().getText();
+      DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
+    }
+    else {
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
-      return true;
     }
-    return false;
+    return true;
   }
 
-  public static <T> T underModalProgress(@NotNull Project project,
-                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
-                                         @NotNull Computable<T> computable) throws ProcessCanceledException {
+  static <T> T underModalProgress(@NotNull Project project,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                  @NotNull Computable<T> computable) throws ProcessCanceledException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       DumbService.getInstance(project).setAlternativeResolveEnabled(true);
       try {
@@ -308,7 +328,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
         Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {

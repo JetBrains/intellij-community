@@ -15,12 +15,16 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 
-public class DelegatingFix extends InspectionGadgetsFix {
+import javax.swing.*;
+
+public class DelegatingFix extends InspectionGadgetsFix implements Iconable, PriorityAction {
 
   protected final LocalQuickFix delegate;
 
@@ -42,5 +46,16 @@ public class DelegatingFix extends InspectionGadgetsFix {
   @Override
   public boolean startInWriteAction() {
     return delegate.startInWriteAction();
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return delegate instanceof Iconable ? ((Iconable)delegate).getIcon(flags) : null;
+  }
+
+  @NotNull
+  @Override
+  public Priority getPriority() {
+    return delegate instanceof PriorityAction ? ((PriorityAction)delegate).getPriority() : Priority.NORMAL;
   }
 }

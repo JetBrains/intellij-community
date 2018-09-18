@@ -175,10 +175,4 @@ public class ClsParsingUtil {
     }
     return null;
   }
-
-  /** @deprecated use {@link #getJdkVersionByBytecode(int)} (to be removed in IDEA 2019) */
-  public static LanguageLevel getLanguageLevelByVersion(int major) {
-    JavaSdkVersion sdkVersion = getJdkVersionByBytecode(major);
-    return sdkVersion != null ? sdkVersion.getMaxLanguageLevel() : null;
-  }
 }

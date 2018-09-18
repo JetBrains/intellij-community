@@ -34,14 +34,7 @@ public interface BatchFileChangeListener {
    * @param project Project where many file changes are expected to happen
    * @param activityName the name of the activity (a noun phrase) causing this file change
    */
-  default void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
-    batchChangeStarted(project);
-  }
-
-  /** @see #batchChangeStarted(Project, String) */
-  @Deprecated
-  default void batchChangeStarted(@NotNull Project project) {}
+  default void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {}
 
   default void batchChangeCompleted(@NotNull Project project) {}
-
 }

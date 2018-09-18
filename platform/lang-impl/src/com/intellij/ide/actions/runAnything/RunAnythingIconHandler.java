@@ -19,10 +19,10 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   private static final String FOREGROUND_PROPERTY = "foreground";
   protected static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
 
-  private final Consumer<ExtendableTextComponent.Extension> myConsumer;
+  private final Consumer<? super ExtendableTextComponent.Extension> myConsumer;
   private final JTextComponent myComponent;
 
-  public RunAnythingIconHandler(@NotNull Consumer<ExtendableTextComponent.Extension> consumer, @NotNull JTextComponent component) {
+  public RunAnythingIconHandler(@NotNull Consumer<? super ExtendableTextComponent.Extension> consumer, @NotNull JTextComponent component) {
     myConsumer = consumer;
     myComponent = component;
 
@@ -49,7 +49,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     myConsumer.consume(new RunConfigurationTypeExtension((Icon)variant));
   }
 
-  private static void installIconListeners(@NotNull Consumer<ExtendableTextComponent.Extension> extensionConsumer,
+  private static void installIconListeners(@NotNull Consumer<? super ExtendableTextComponent.Extension> extensionConsumer,
                                            @NotNull JTextComponent component) {
     RunAnythingIconHandler handler = new RunAnythingIconHandler(extensionConsumer, component);
     component.addPropertyChangeListener(handler);

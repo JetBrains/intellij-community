@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 
 public class GroovyPsiElementVisitor extends PsiElementVisitor {
   protected GroovyElementVisitor myGroovyElementVisitor;
@@ -17,9 +16,5 @@ public class GroovyPsiElementVisitor extends PsiElementVisitor {
     if (element instanceof GroovyPsiElement) {
       ((GroovyPsiElement) element).accept(myGroovyElementVisitor);
     }
-  }
-
-  @Deprecated // to be removed
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
   }
 }

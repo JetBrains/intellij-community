@@ -27,4 +27,15 @@ public class NavigateToAlreadyDeclaredVariableFixTest extends LightCodeInsightFi
     myFixture.launchAction(intention);
     assertEquals(14, myFixture.getCaretOffset());
   }
+
+  public void testNavigateFromParameter() {
+    myFixture.configureByText("A.java", "class A {void f(String[] elements){\n" +
+                                        "        String element = \"hello\";\n" +
+                                        "for (String el<caret>ement : elements){}" +
+                                        "}}");
+    IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("navigate.variable.declaration.text", "element"));
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    assertEquals(51, myFixture.getCaretOffset());
+  }
 }

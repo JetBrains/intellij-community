@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.Application;
@@ -39,14 +39,17 @@ public class LiveProvider implements BunchProvider {
     myRepositoryUrl = repositoryUrl;
   }
 
+  @Override
   public long getEarliestRevision() {
     return -1;
   }
 
+  @Override
   public boolean isEmpty() {
     return false;
   }
 
+  @Override
   public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
                                              final boolean includeYoungest, final boolean includeOldest) throws VcsException {
     return getEarliestBunchInIntervalImpl(earliestRevision, oldestRevision, desirableSize, includeYoungest, includeOldest, earliestRevision);

@@ -14,35 +14,43 @@ class Undo extends UndoRedo {
     super(manager, editor);
   }
 
+  @Override
   protected UndoRedoStacksHolder getStackHolder() {
     return myManager.getUndoStacksHolder();
   }
 
+  @Override
   protected UndoRedoStacksHolder getReverseStackHolder() {
     return myManager.getRedoStacksHolder();
   }
 
+  @Override
   protected String getActionName() {
     return CommonBundle.message("undo.dialog.title");
   }
 
+  @Override
   protected String getActionName(String commandName) {
     if (StringUtil.isEmpty(commandName))commandName = ActionsBundle.message("action.undo.description.empty");
     return CommonBundle.message("undo.command.confirmation.text", commandName);
   }
 
+  @Override
   protected void performAction() {
     myUndoableGroup.undo();
   }
 
+  @Override
   protected EditorAndState getBeforeState() {
     return myUndoableGroup.getStateAfter();
   }
 
+  @Override
   protected EditorAndState getAfterState() {
     return myUndoableGroup.getStateBefore();
   }
 
+  @Override
   protected void setBeforeState(EditorAndState state) {
     myUndoableGroup.setStateAfter(state);
   }

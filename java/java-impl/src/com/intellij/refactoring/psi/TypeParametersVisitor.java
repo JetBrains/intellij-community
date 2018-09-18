@@ -28,6 +28,7 @@ public class TypeParametersVisitor extends JavaRecursiveElementWalkingVisitor {
        this.params = params;
    }
 
+   @Override
    public void visitTypeElement(PsiTypeElement typeElement) {
        super.visitTypeElement(typeElement);
        final PsiType type = typeElement.getType();

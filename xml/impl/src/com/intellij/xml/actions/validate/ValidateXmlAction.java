@@ -42,7 +42,7 @@ public class ValidateXmlAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile != null && psiFile.getVirtualFile() != null) {
       doRunAction(psiFile);
@@ -76,7 +76,7 @@ public class ValidateXmlAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
 
     Presentation presentation = event.getPresentation();

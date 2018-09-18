@@ -812,7 +812,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return ActionManager.getInstance().getKeyboardShortcut(ID);
   }
 
-  private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
+  private static int filtered(@NotNull List<? extends Usage> usages, @NotNull UsageViewImpl usageView) {
     return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
@@ -823,7 +823,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return element.getTextRange().getStartOffset();
   }
 
-  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<Usage> usages) {
+  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<? extends Usage> usages) {
     Editor editor = getEditorFor(visibleUsage);
     if (editor == null) return false;
     int offset = getUsageOffset(visibleUsage);
@@ -868,8 +868,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  private static List<UsageNode> collectData(@NotNull List<Usage> usages,
-                                             @NotNull Collection<UsageNode> visibleNodes,
+  private static List<UsageNode> collectData(@NotNull List<? extends Usage> usages,
+                                             @NotNull Collection<? extends UsageNode> visibleNodes,
                                              @NotNull UsageViewImpl usageView,
                                              @NotNull UsageViewPresentation presentation) {
     @NotNull List<UsageNode> data = new ArrayList<>();
@@ -1151,7 +1151,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();
         if (selected.length == 1) {

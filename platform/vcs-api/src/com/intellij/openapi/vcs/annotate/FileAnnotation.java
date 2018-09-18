@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,9 +195,10 @@ public abstract class FileAnnotation {
    * If `this` is visible, hide it and show new one instead.
    * If `this` is not visible, do nothing.
    *
-   * @param newFileAnnotation annotations to be shown
+   * @param newFileAnnotation annotations to be shown or `null` to load annotations again
    */
-  public synchronized final void reload(@NotNull FileAnnotation newFileAnnotation) {
+  @CalledInAwt
+  public synchronized final void reload(@Nullable FileAnnotation newFileAnnotation) {
     if (myReloader != null) myReloader.consume(newFileAnnotation);
   }
 
@@ -210,7 +211,7 @@ public abstract class FileAnnotation {
   }
 
   /**
-   * @see #reload()
+   * @see #reload(FileAnnotation)
    */
   public synchronized final void setReloader(@Nullable Consumer<FileAnnotation> reloader) {
     if (myIsClosed) return;

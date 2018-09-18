@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "CompilerWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerWorkspaceConfiguration");
-  
+
   static {
     LOG.info("Available processors: " + Runtime.getRuntime().availableProcessors());
   }
@@ -39,10 +39,12 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);
   }
 
+  @Override
   public CompilerWorkspaceConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull CompilerWorkspaceConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }

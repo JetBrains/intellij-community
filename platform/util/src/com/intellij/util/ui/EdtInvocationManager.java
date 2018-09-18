@@ -31,7 +31,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 public abstract class EdtInvocationManager {
 
-  @NotNull private static volatile EdtInvocationManager ourInstance = new SwingEdtInvocationManager();
+  @NotNull private static final EdtInvocationManager ourInstance = new SwingEdtInvocationManager();
 
   public abstract boolean isEventDispatchThread();
 
@@ -42,11 +42,6 @@ public abstract class EdtInvocationManager {
   @NotNull
   public static EdtInvocationManager getInstance() {
     return ourInstance;
-  }
-
-  @SuppressWarnings("unused") // Used in upsource
-  public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
-    ourInstance = edtInvocationManager;
   }
 
   /**

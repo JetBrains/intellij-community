@@ -136,7 +136,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public abstract String getDisplayName ();
-  
+
   public String getShortName() {
     return getDisplayName();
   }
@@ -508,7 +508,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       @Override
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         removeBreakpoint();
       }
 
@@ -564,10 +564,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return TextWithImportsImpl.fromXExpression(myXBreakpoint.getConditionExpression());
   }
 
+  @Override
   public boolean isEnabled() {
     return myXBreakpoint.isEnabled();
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myXBreakpoint.setEnabled(enabled);
   }
@@ -706,6 +708,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
   }
 
+  @Override
   public boolean isConditionEnabled() {
     XExpression condition = myXBreakpoint.getConditionExpression();
     if (XDebuggerUtilImpl.isEmptyExpression(condition)) {

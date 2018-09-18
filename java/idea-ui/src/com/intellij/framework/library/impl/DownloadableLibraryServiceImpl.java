@@ -19,7 +19,10 @@ import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.RequiredFrameworkVersion;
 import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.FrameworkVersion;
-import com.intellij.framework.library.*;
+import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.DownloadableLibraryService;
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -43,6 +46,7 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
   public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull final URL... localUrls) {
     return new LibraryVersionsFetcher(groupId, localUrls) {
       //todo[nik] pull up this method after moving corresponding API to intellij.platform.lang
+      @Override
       @NotNull
       protected FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
         RequiredFrameworkVersion groupVersion = version.getRequiredFrameworkVersion();

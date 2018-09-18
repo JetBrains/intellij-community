@@ -12,11 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 public class NonBundledPluginsUsagesCollector extends ApplicationUsagesCollector {
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.plugins.non.bundled";
   }
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();

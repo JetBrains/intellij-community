@@ -23,9 +23,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +36,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4AnnotatedMethodInJUnit3TestCaseInspectionBase {
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+
+public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspection {
+
+  protected static final String IGNORE = "org.junit.Ignore";
 
   @NotNull
   @Override
@@ -59,6 +66,32 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
     final String className = aClass.getName();
     fixes.add(new ConvertToJUnit4Fix(className));
     return fixes.toArray(new InspectionGadgetsFix[0]);
+  }
+
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    if (AnnotationUtil.isAnnotated((PsiMethod)infos[1], IGNORE, 0)) {
+      return InspectionGadgetsBundle.message("ignore.test.method.in.class.extending.junit3.testcase.problem.descriptor");
+    }
+    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new Junit4AnnotatedMethodInJunit3TestCaseVisitor();
   }
 
   private static void deleteAnnotation(ProblemDescriptor descriptor, final String qualifiedName) {
@@ -283,6 +316,30 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
       WriteAction.run(() -> deleteAnnotation(descriptor, "org.junit.Test"));
       if (myNewName != null) {
         super.doFix(project, descriptor);
+      }
+    }
+  }
+
+  private static class Junit4AnnotatedMethodInJunit3TestCaseVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!TestUtils.isJUnitTestClass(containingClass)) {
+        return;
+      }
+
+      if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) {
+        return;
+      }
+
+      if (AnnotationUtil.isAnnotated(method, IGNORE, 0) && method.getName().startsWith("test") ||
+          TestUtils.isJUnit4TestMethod(method)) {
+        registerMethodError(method, containingClass, method);
       }
     }
   }

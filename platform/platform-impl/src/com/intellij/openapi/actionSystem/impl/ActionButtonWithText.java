@@ -79,6 +79,7 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     Dimension basicSize = super.getPreferredSize();
 
@@ -127,6 +128,7 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
     int position = horizontalTextPosition();
@@ -174,12 +176,10 @@ public class ActionButtonWithText extends ActionButton {
     return UIUtil.getInactiveTextColor();
   }
 
-  @SuppressWarnings("unused")
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
     myHorizontalTextPosition = position;
   }
 
-  @SuppressWarnings("unused")
   public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
     myHorizontalTextAlignment = alignment;
   }
@@ -220,6 +220,7 @@ public class ActionButtonWithText extends ActionButton {
     return -1;
   }
 
+  @NotNull
   private String getText() {
     final String text = myPresentation.getText();
     return text != null ? text : "";

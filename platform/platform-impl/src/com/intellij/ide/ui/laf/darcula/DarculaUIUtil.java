@@ -4,8 +4,8 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
@@ -40,18 +40,21 @@ import static javax.swing.SwingConstants.WEST;
 public class DarculaUIUtil {
   public enum Outline {
     error {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         g.setColor(JBUI.CurrentTheme.Focus.errorColor(focused));
       }
     },
 
     warning {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         g.setColor(JBUI.CurrentTheme.Focus.warningColor(focused));
       }
     },
 
     defaultButton {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         if (focused) {
           g.setColor(JBUI.CurrentTheme.Focus.defaultButtonColor());
@@ -60,6 +63,7 @@ public class DarculaUIUtil {
     },
 
     focus {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         if (focused) {
           g.setColor(JBUI.CurrentTheme.Focus.focusColor());
@@ -242,7 +246,7 @@ public class DarculaUIUtil {
           g2.translate(x, y);
 
           Object op = editorTextField.getClientProperty("JComponent.outline");
-          if (op != null) {
+          if (editorTextField.isEnabled() && op != null) {
             paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
           } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
             paintFocusBorder(g2, width, height, 0, true);
@@ -255,7 +259,7 @@ public class DarculaUIUtil {
 
       @Override
     public Insets getBorderInsets(Component c) {
-      return isTableCellEditor(c) ? JBUI.insets(2).asUIResource() :
+      return isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2).asUIResource() :
              isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }
@@ -263,15 +267,15 @@ public class DarculaUIUtil {
   public static class WinEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
     public WinEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
       super(editorTextField, editor);
-      editor.addEditorMouseListener(new EditorMouseAdapter() {
+      editor.addEditorMouseListener(new EditorMouseListener() {
         @Override
-        public void mouseEntered(EditorMouseEvent e) {
+        public void mouseEntered(@NotNull EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
           editorTextField.repaint();
         }
 
         @Override
-        public void mouseExited(EditorMouseEvent e) {
+        public void mouseExited(@NotNull EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
           editorTextField.repaint();
         }
@@ -319,7 +323,7 @@ public class DarculaUIUtil {
         int bw = 1;
 
         Object op = editorTextField.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (editorTextField.isEnabled() && op != null) {
           Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
           bw = isCellRenderer ? 1 : 2;
         } else {
@@ -419,7 +423,7 @@ public class DarculaUIUtil {
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
   /**
-   * @Deprecated use LW.get() instead
+   * @deprecated use LW.get() instead
    */
   @SuppressWarnings("unused")
   @Deprecated
@@ -428,7 +432,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @Deprecated use BW.get() instead
+   * @deprecated use BW.get() instead
    */
   @Deprecated
   public static float bw() {
@@ -436,7 +440,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @Deprecated use COMPONENT_ARC.get() instead
+   * @deprecated use COMPONENT_ARC.get() instead
    */
   @Deprecated
   public static float arc() {
@@ -445,7 +449,7 @@ public class DarculaUIUtil {
 
   /**
    *
-   * @Deprecated use BUTTON_ARC.get() instead
+   * @deprecated use BUTTON_ARC.get() instead
    */
   @Deprecated
   public static float buttonArc() {
@@ -458,13 +462,15 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? new JBColor(0x87AFDA, 0x466D94) : new JBColor(Gray.xBF, Gray._100) :
-           new JBColor(Gray.xCF, Gray._100);
+            focused ? JBColor.namedColor("Outline.focusedColor", 0x87AFDA) : JBColor.namedColor("Outline.color", Gray.xBF) :
+           JBColor.namedColor("Outline.disabledColor", Gray.xCF);
   }
 
-  public static Color getArrowButtonBackgroundColor(boolean enabled) {
-    Color color = UIManager.getColor("ComboBox.darcula.arrowButtonBackground");
-    return enabled && color != null ? color : UIUtil.getPanelBackground();
+  public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
+    return enabled ?
+      editable ? JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC) :
+                 JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC)
+      : UIUtil.getPanelBackground();
   }
 
   public static Color getArrowButtonForegroundColor(boolean enabled) {

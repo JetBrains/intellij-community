@@ -43,6 +43,17 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
+  protected boolean isValidElement(PsiElement element) {
+    PsiJavaCodeReferenceElement ref = element instanceof PsiNewExpression ? ((PsiNewExpression)element).getClassOrAnonymousClassReference() : null;
+    return ref != null && ref.resolve() != null;
+  }
+
+  @Override
+  protected boolean rejectQualifier(PsiExpression qualifier) {
+    return false;
+  }
+
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     PsiNewExpression newExpression = getNewExpression();
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
@@ -61,7 +72,9 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
       }
     }
 
-    if (!targetClass.isInterface() && (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression))) {
+    if (!targetClass.isInterface() && 
+        newExpression.getQualifier() == null &&
+        (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression))) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     created = (PsiClass)targetClass.add(created);

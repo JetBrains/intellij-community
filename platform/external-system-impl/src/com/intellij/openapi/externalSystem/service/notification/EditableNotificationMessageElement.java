@@ -16,12 +16,14 @@
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.errorTreeView.*;
+import com.intellij.ide.errorTreeView.EditableMessageElement;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.*;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +95,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     }
   }
 
+  @Override
   protected void updateStyle(@NotNull JEditorPane editorPane, @Nullable JTree tree, Object value, boolean selected, boolean hasFocus) {
     super.updateStyle(editorPane, tree, value, selected, hasFocus);
 

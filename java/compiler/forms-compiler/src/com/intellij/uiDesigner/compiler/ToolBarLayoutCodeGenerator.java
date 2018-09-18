@@ -26,6 +26,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 public class ToolBarLayoutCodeGenerator extends LayoutCodeGenerator {
   private final static Method ourAddMethod = Method.getMethod("java.awt.Component add(java.awt.Component)");
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

@@ -49,6 +49,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   private Map<String, String> myPropertiesToCreateByArtifact;
 
+  @Override
   public void setupRootModel(ModifiableRootModel rootModel) {
     final Project project = rootModel.getProject();
 
@@ -103,6 +104,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return MavenIcons.MavenLogo;
   }
 
+  @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -126,13 +128,16 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
+  @Override
   public List<Pair<String, String>> getSourcePaths() {
     return Collections.emptyList();
   }
 
+  @Override
   public void setSourcePaths(List<Pair<String, String>> sourcePaths) {
   }
 
+  @Override
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
   }
 

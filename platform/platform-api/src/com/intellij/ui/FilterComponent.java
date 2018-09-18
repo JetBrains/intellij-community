@@ -68,6 +68,7 @@ public abstract class FilterComponent extends JPanel {
     };
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
+      @Override
       public void keyPressed(final KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
@@ -79,14 +80,17 @@ public abstract class FilterComponent extends JPanel {
     });
 
     myFilter.addDocumentListener(new DocumentListener() {
+      @Override
       public void insertUpdate(DocumentEvent e) {
         onChange();
       }
 
+      @Override
       public void removeUpdate(DocumentEvent e) {
         onChange();
       }
 
+      @Override
       public void changedUpdate(DocumentEvent e) {
         onChange();
       }
@@ -94,7 +98,7 @@ public abstract class FilterComponent extends JPanel {
 
     myFilter.setHistorySize(historySize);
     AccessibleContextUtil.setName(myFilter.getTextEditor(), "Message text filter");
-    add(myFilter, BorderLayout.CENTER);    
+    add(myFilter, BorderLayout.CENTER);
   }
 
   protected JComponent getPopupLocationComponent() {
@@ -139,6 +143,7 @@ public abstract class FilterComponent extends JPanel {
     myFilter.selectText();
   }
 
+  @Override
   public boolean requestFocusInWindow() {
     return myFilter.requestFocusInWindow();
   }

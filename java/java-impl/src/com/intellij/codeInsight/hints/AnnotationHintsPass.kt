@@ -59,18 +59,18 @@ class AnnotationHintsPass(
   }
 
   class ToggleExternalAnnotationsHintsAction : ToggleAction() {
-    override fun isSelected(e: AnActionEvent?): Boolean = CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE
+    override fun isSelected(e: AnActionEvent): Boolean = CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE
 
-    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE = state
       AnnotationHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
     }
   }
 
   class ToggleInferredAnnotationsHintsAction : ToggleAction() {
-    override fun isSelected(e: AnActionEvent?): Boolean = CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE
+    override fun isSelected(e: AnActionEvent): Boolean = CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE
 
-    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE = state
       AnnotationHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
     }

@@ -30,6 +30,7 @@ public class MakeMethodDelegate extends FixableUsageInfo {
         this.delegate = delegate;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         final PsiCodeBlock body = method.getBody();
         assert body != null;

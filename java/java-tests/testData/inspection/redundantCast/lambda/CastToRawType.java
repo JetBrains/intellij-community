@@ -9,7 +9,7 @@ class Main {
   }
 
   public BreakpointState foo2(String type, BreakpointState<?, ?, ?> defaults) {
-    return (<warning descr="Casting 'myBreakpointsDefaults.computeIfAbsent(type, k -> defaults)' to 'BreakpointState' is redundant">BreakpointState</warning>) myBreakpointsDefaults.computeIfAbsent(type, k -> defaults);
+    return (<warning descr="Casting 'myBreakpointsDefaults.computeIfAbsent(...)' to 'BreakpointState' is redundant">BreakpointState</warning>) myBreakpointsDefaults.computeIfAbsent(type, k -> defaults);
   }
 
   private static class BreakpointState<A, B, C> {}

@@ -53,19 +53,22 @@ final class EditorsMessageParser extends AbstractMessageParser {
 		this.cvsFileSystem = cvsFileSystem;
 
 		cvsFiles.visit(new ICvsFilesVisitor() {
-			public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
+			@Override
+                        public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
 				final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 				fileSet.add(file);
 			}
 
-			public void handleDirectory(DirectoryObject directoryObject) {
+			@Override
+                        public void handleDirectory(DirectoryObject directoryObject) {
 			}
 		});
 	}
 
 	// Implemented ============================================================
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (isErrorMessage) {
 			return;
 		}
@@ -106,7 +109,8 @@ final class EditorsMessageParser extends AbstractMessageParser {
 		}
 	}
 
-	public void outputDone() {
+	@Override
+        public void outputDone() {
 		if (editorsFileInfo != null) {
 			fireFileInfoEvent(editorsFileInfo, true);
 			editorsFileInfo = null;

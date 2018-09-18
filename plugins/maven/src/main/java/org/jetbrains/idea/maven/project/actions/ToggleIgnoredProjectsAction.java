@@ -31,7 +31,7 @@ import java.util.List;
 
 public class ToggleIgnoredProjectsAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!isAvailable(e)) return;
 
@@ -52,7 +52,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
     final DataContext context = e.getDataContext();

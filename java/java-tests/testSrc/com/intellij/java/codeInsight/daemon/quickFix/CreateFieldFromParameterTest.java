@@ -16,7 +16,6 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 /**
@@ -26,14 +25,7 @@ public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX = "my";
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX = "";
-    //noinspection SuperTearDownInFinally
-    super.tearDown();
+    JavaCodeStyleSettings.getInstance(getProject()).FIELD_NAME_PREFIX = "my";
   }
 
   public void test() {

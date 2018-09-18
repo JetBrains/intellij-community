@@ -20,6 +20,7 @@ import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -30,7 +31,7 @@ public class DummySyncViewManager extends SyncViewManager {
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if(event instanceof FinishBuildEvent) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(event.getMessage());

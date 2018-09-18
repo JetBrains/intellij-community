@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -65,8 +51,6 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   }
 
   private static int extractArgNum(String[] options) {
-
-
     for (String value : options) {
       Integer parsedValue = parseArgNum(value);
       if (parsedValue != null) {
@@ -75,7 +59,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     }
 
     if (options.length == 1) {
-      return StringUtilRt.parseInt(options[0], 0);
+      return StringUtil.parseInt(options[0], 0);
     }
 
     return 0;
@@ -90,7 +74,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     }
 
     if (options.length == 1) {
-      return StringUtilRt.parseBoolean(options[0], false);
+      return Boolean.parseBoolean(options[0]);
     }
 
     return false;
@@ -100,9 +84,8 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
-    Boolean parsedValue = StringUtilRt.parseBoolean(pair.getSecond(), false);
     if ("index".equals(pair.getFirst())) {
-      return parsedValue;
+      return Boolean.valueOf(pair.getSecond());
     }
 
     return null;
@@ -112,9 +95,8 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
-    Integer parsedValue = StringUtilRt.parseInt(pair.getSecond(), 0);
     if ("argNum".equals(pair.getFirst())) {
-      return parsedValue;
+      return StringUtil.parseInt(pair.getSecond(), 0);
     }
 
     return null;
@@ -122,12 +104,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
 
   @Nullable
   private static Couple<String> parseValue(String value) {
-    String[] splitted = value.split("=");
-
-    if (splitted.length == 2) {
-      return Couple.of(splitted[0].trim(), splitted[1].trim());
-    }
-
-    return null;
+    String[] split = value.split("=");
+    return split.length == 2 ? Couple.of(split[0].trim(), split[1].trim()) : null;
   }
 }

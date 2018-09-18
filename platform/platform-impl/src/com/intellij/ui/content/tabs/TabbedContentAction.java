@@ -41,7 +41,8 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       myContent = content;
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
     }
@@ -52,11 +53,13 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myManager.removeContent(myContent, true);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(myManager.canCloseContents() && myContent.isCloseable());
       presentation.setText(myManager.getCloseActionName());
@@ -68,7 +71,8 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS), UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
         if (myContent != content && content.isCloseable()) {
@@ -78,7 +82,8 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       myManager.setSelectedContent(myContent);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(myManager.getCloseAllButThisActionName());
       presentation.setEnabledAndVisible(myManager.canCloseContents() && hasOtherCloseableContents());
@@ -100,7 +105,8 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS), UIBundle.message("tabbed.pane.close.all.action.name"), manager);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
         if (content.isCloseable()) {
@@ -109,7 +115,8 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       }
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
     }
@@ -119,11 +126,13 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB), manager);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myManager.selectNextContent();
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getNextContentActionName());
     }
@@ -134,11 +143,13 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB), manager);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myManager.selectPreviousContent();
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());
     }

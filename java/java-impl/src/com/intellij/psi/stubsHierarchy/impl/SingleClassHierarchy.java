@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
@@ -259,15 +260,8 @@ public class SingleClassHierarchy extends ClassHierarchy {
   }
 
   private int getFirst(int fileId) {
-    int lo = 0;
-    int hi = myClassAnchorsByFileIds.length - 1;
-    while (lo <= hi) {
-      int mid = lo + (hi - lo) / 2;
-      int midFileId = myClassAnchors.getFileId(myClassAnchorsByFileIds[mid]);
-      if      (fileId < midFileId) hi = mid - 1;
-      else if (fileId > midFileId) lo = mid + 1;
-      else return myClassAnchorsByFileIds[mid];
-    }
-    return -1;
+    int i = ObjectUtils.binarySearch(0, myClassAnchorsByFileIds.length,
+                                     mid -> Integer.compare(myClassAnchors.getFileId(myClassAnchorsByFileIds[mid]), fileId));
+    return i < 0 ? -1 : myClassAnchorsByFileIds[i];
   }
 }

@@ -227,6 +227,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
         return false;
       }
 
+      @Override
       public void remove() {
         XDebuggerUtilImpl.removeBreakpointWithConfirmation(getProject(), XLineBreakpointImpl.this);
       }

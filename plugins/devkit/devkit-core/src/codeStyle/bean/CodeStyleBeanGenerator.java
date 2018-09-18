@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.codeStyle.bean;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -140,17 +139,23 @@ public class CodeStyleBeanGenerator {
   private List<CustomCodeStyleSettings> getCustomSettings() {
     CodeStyleSettings rootSettings = new CodeStyleSettings();
     List<CustomCodeStyleSettings> customSettingsList = new ArrayList<>();
-    for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
-      if (provider.getLanguage() == myLanguage) {
-        CustomCodeStyleSettings customSettings = provider.createCustomSettings(rootSettings);
-        if (customSettings != null && resolveClass(customSettings.getClass().getName(), myFile) != null) {
-          customSettingsList.add(customSettings);
-        }
-      }
-    }
+    addCustomSettings(customSettingsList, rootSettings, CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
+    addCustomSettings(customSettingsList, rootSettings, LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
     return customSettingsList;
   }
 
+  private void addCustomSettings(@NotNull List<CustomCodeStyleSettings> list,
+                                 @NotNull CodeStyleSettings rootSettings,
+                                 @NotNull List<? extends CodeStyleSettingsProvider> providerList) {
+    for (CodeStyleSettingsProvider provider : providerList) {
+      if (provider.getLanguage() == myLanguage) {
+        CustomCodeStyleSettings customSettings = provider.createCustomSettings(rootSettings);
+        if (customSettings != null && resolveClass(customSettings.getClass().getName(), myFile) != null) {
+          list.add(customSettings);
+        }
+      }
+    }
+  }
 
   @Nullable
   static PsiClass resolveClass(@NotNull String classFQN, @NotNull PsiFile file) {

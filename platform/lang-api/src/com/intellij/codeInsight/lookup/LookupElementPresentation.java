@@ -160,12 +160,6 @@ public class LookupElementPresentation {
     return myTail != null && myTail.get(0).myGrayed;
   }
 
-  @Nullable
-  @Deprecated
-  public Color getTailForeground() {
-    return myTail != null ? myTail.get(0).myFgColor : null;
-  }
-
   public boolean isItemTextBold() {
     return myItemTextBold;
   }

@@ -38,7 +38,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
-  private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Pair<Loader, Consumer<? super Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
 
   public BaseSpellChecker(@NotNull Project project) {
@@ -55,7 +55,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     }
   }
 
-  private void loadDictionaryAsync(@NotNull final Loader loader, @NotNull final Consumer<Dictionary> consumer) {
+  private void loadDictionaryAsync(@NotNull final Loader loader, @NotNull final Consumer<? super Dictionary> consumer) {
     if (myLoadingDictionaries.compareAndSet(false, true)) {
       LOG.debug("Loading " + loader.getName());
       doLoadDictionaryAsync(loader, consumer);
@@ -65,7 +65,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     }
   }
 
-  private void doLoadDictionaryAsync(Loader loader, Consumer<Dictionary> consumer) {
+  private void doLoadDictionaryAsync(Loader loader, Consumer<? super Dictionary> consumer) {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
       LOG.debug("Loading " + loader.getName());
       Application app = ApplicationManager.getApplication();
@@ -79,7 +79,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
         while (!myDictionariesToLoad.isEmpty()) {
           if (app.isDisposed()) return;
 
-          Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
+          Pair<Loader, Consumer<? super Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
           Loader nextDictionaryLoader = nextDictionary.getFirst();
           dictionary = CompressedDictionary.create(nextDictionaryLoader, transform);
           LOG.debug(nextDictionaryLoader.getName() + " loaded!");
@@ -102,7 +102,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     });
   }
 
-  private void queueDictionaryLoad(final Loader loader, final Consumer<Dictionary> consumer) {
+  private void queueDictionaryLoad(final Loader loader, final Consumer<? super Dictionary> consumer) {
     LOG.debug("Queuing load for: " + loader.getName());
     myDictionariesToLoad.add(Pair.create(loader, consumer));
   }

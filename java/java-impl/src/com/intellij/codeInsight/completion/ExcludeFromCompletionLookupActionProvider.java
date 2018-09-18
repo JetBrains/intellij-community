@@ -53,7 +53,7 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
     }
   }
 
-  private static void addExcludes(Consumer<LookupElementAction> consumer, PsiMember element, @Nullable String qname) {
+  private static void addExcludes(Consumer<? super LookupElementAction> consumer, PsiMember element, @Nullable String qname) {
     if (qname == null) return;
     final Project project = element.getProject();
     for (final String s : AddImportAction.getAllExcludableStrings(qname)) {

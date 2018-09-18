@@ -70,7 +70,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
 
 
   @Override
-  public void update(PresentationData data) {
+  public void update(@NotNull PresentationData data) {
     final PsiElement value = getPsiElement();
     if (value == null || !value.isValid()) {
       setValue(null);

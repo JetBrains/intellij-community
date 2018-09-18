@@ -320,9 +320,6 @@ public class TransformationContextImpl implements TransformationContext {
 
   @NotNull
   private PsiClassType[] getExtendsListTypesArray() {
-    if (getExtendsTypes().size() > 1 && !getCodeClass().isInterface()) {
-      throw new IllegalStateException("More than one type supertype for non-interface");
-    }
     return getExtendsTypes().toArray(PsiClassType.EMPTY_ARRAY);
   }
 

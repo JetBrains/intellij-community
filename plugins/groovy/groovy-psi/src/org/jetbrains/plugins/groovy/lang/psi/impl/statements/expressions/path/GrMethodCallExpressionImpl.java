@@ -15,6 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrMethodCallImpl;
 
+import static com.intellij.psi.util.PsiTreeUtil.getChildrenOfTypeAsList;
+
 /**
  * @author ilyas
  */
@@ -65,6 +67,6 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
   @Override
   @NotNull
   public GrClosableBlock[] getClosureArguments() {
-    return findChildrenByClass(GrClosableBlock.class);
+    return getChildrenOfTypeAsList(this, GrClosableBlock.class).toArray(GrClosableBlock.EMPTY_ARRAY);
   }
 }

@@ -328,7 +328,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  public static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
+  public static List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     ArrayList<HighlightInfo> result = new ArrayList<>();
     for (final HighlightInfo info : infos) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
@@ -348,7 +348,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return false;
   }
 
-  protected static void findAndInvokeIntentionAction(@NotNull Collection<HighlightInfo> infos,
+  protected static void findAndInvokeIntentionAction(@NotNull Collection<? extends HighlightInfo> infos,
                                                      @NotNull String intentionActionName,
                                                      @NotNull Editor editor,
                                                      @NotNull PsiFile file) {
@@ -366,7 +366,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @Nullable
-  protected static IntentionAction findIntentionAction(@NotNull Collection<HighlightInfo> infos,
+  protected static IntentionAction findIntentionAction(@NotNull Collection<? extends HighlightInfo> infos,
                                                        @NotNull String intentionActionName,
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
@@ -375,7 +375,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  protected static List<IntentionAction> getIntentionActions(@NotNull Collection<HighlightInfo> infos,
+  protected static List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
                                                            @NotNull Editor editor,
                                                            @NotNull PsiFile file) {
 

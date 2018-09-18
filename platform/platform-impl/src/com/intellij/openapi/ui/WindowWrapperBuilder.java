@@ -184,7 +184,7 @@ public class WindowWrapperBuilder {
     private static class MyDialogWrapper extends DialogWrapper {
       @NotNull private final JComponent myComponent;
       @Nullable private String myDimensionServiceKey;
-      @Nullable private Computable<JComponent> myPreferredFocusedComponent;
+      @Nullable private Computable<? extends JComponent> myPreferredFocusedComponent;
 
       public MyDialogWrapper(@Nullable Project project, @NotNull JComponent component) {
         super(project, true);
@@ -197,7 +197,7 @@ public class WindowWrapperBuilder {
       }
 
       public void setParameters(@Nullable String dimensionServiceKey,
-                                @Nullable Computable<JComponent> preferredFocusedComponent) {
+                                @Nullable Computable<? extends JComponent> preferredFocusedComponent) {
         myDimensionServiceKey = dimensionServiceKey;
         myPreferredFocusedComponent = preferredFocusedComponent;
       }
@@ -327,13 +327,13 @@ public class WindowWrapperBuilder {
     }
 
     private static class MyFrameWrapper extends FrameWrapper {
-      private Computable<JComponent> myPreferredFocusedComponent;
+      private Computable<? extends JComponent> myPreferredFocusedComponent;
 
       public MyFrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey) {
         super(project, dimensionServiceKey);
       }
 
-      public void setParameters(@Nullable Computable<JComponent> preferredFocusedComponent) {
+      public void setParameters(@Nullable Computable<? extends JComponent> preferredFocusedComponent) {
         myPreferredFocusedComponent = preferredFocusedComponent;
       }
 

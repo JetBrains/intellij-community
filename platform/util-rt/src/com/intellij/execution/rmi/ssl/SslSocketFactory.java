@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.security.CompositeX509TrustManager;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +35,7 @@ public class SslSocketFactory extends SSLSocketFactory {
       String caCertPath = System.getProperty(SSL_CA_CERT_PATH);
       String clientCertPath = System.getProperty(SSL_CLIENT_CERT_PATH);
       String clientKeyPath = System.getProperty(SSL_CLIENT_KEY_PATH);
-      boolean trustEverybody = StringUtilRt.parseBoolean(System.getProperty(SSL_TRUST_EVERYBODY), false);
+      boolean trustEverybody = Boolean.parseBoolean(System.getProperty(SSL_TRUST_EVERYBODY));
 
       tms = trustEverybody ? new TrustManager[]{new MyTrustEverybodyManager()} :
             caCertPath == null ? new TrustManager[]{} : createTrustManagers(caCertPath);
@@ -88,35 +73,42 @@ public class SslSocketFactory extends SSLSocketFactory {
     }
   }
 
+  @Override
   @NotNull
   public Socket createSocket(InetAddress host, int port) throws IOException {
     return myFactory.createSocket(host, port);
   }
 
+  @Override
   @NotNull
   public Socket createSocket(String host, int port) throws IOException {
     return myFactory.createSocket(host, port);
   }
 
+  @Override
   @NotNull
   public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
     return myFactory.createSocket(host, port, localHost, localPort);
   }
 
+  @Override
   @NotNull
   public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
     return myFactory.createSocket(address, port, localAddress, localPort);
   }
 
+  @Override
   public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
     return myFactory.createSocket(socket, host, port, autoClose);
   }
 
+  @Override
   @NotNull
   public String[] getDefaultCipherSuites() {
     return myFactory.getDefaultCipherSuites();
   }
 
+  @Override
   @NotNull
   public String[] getSupportedCipherSuites() {
     return myFactory.getSupportedCipherSuites();

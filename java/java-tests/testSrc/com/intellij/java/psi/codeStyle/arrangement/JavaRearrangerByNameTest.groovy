@@ -15,6 +15,9 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import com.intellij.application.options.CodeStyle
+import com.intellij.formatting.fileSet.NamedScopeDescriptor
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
@@ -85,6 +88,32 @@ class Test {
   public void getB() {}
   private void getC() {}
   public void test() {}
+}''',
+      rules: [ruleWithOrder(BY_NAME, nameRule("get.*"))]
+    )
+  }
+
+  void "test with formatting disabled"() {
+    CodeStyleSettings settings = CodeStyle.getSettings(project)
+    NamedScopeDescriptor descriptor = new NamedScopeDescriptor("testScope");
+    descriptor.setPattern("file:*.java")
+    settings.getExcludedFiles().addDescriptor(descriptor)
+
+    doTest(
+      initial: '''\
+class Test {
+  private void getC() {}
+  public void test() {}
+  public void getA() {}
+  public void getB() {}
+}''',
+
+      expected: '''\
+class Test {
+  private void getC() {}
+  public void test() {}
+  public void getA() {}
+  public void getB() {}
 }''',
       rules: [ruleWithOrder(BY_NAME, nameRule("get.*"))]
     )

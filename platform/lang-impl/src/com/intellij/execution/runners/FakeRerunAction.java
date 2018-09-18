@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -55,6 +56,7 @@ public class FakeRerunAction extends AnAction  {
   public void actionPerformed(@NotNull AnActionEvent event) {
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
+      MacroManager.getInstance().cacheMacrosPreview(event.getDataContext());
       ExecutionUtil.restart(environment);
     }
   }

@@ -43,7 +43,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(getUiAware().getProjectIcon());
   }

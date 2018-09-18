@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -37,12 +37,13 @@ import static java.lang.Math.max;
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements Disposable, ApplicationComponent {
+public class UpdateCheckerComponent implements Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.HOUR * 8; // Android Studio: check every 8 hours
   //private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";//must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myCheckRunnable = () -> {
@@ -110,7 +111,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
       return;
     }
 
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    app.getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         // Android Studio: always check for update at startup
@@ -151,10 +152,11 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
   private static void checkIfPreviousUpdateFailed() {
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
-      File updateErrorsLog = new File(PathManager.getLogPath(), "idea_updater_error.log");
+      File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
       try {
         if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
           FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "update.failed");
+          LOG.info("Previous update of the IDE failed");
         }
       }
       catch (IOException ignored) {

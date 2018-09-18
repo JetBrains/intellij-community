@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorBundle;
@@ -49,7 +50,7 @@ public class PsiElementNavigatable implements Navigatable {
             int offset = ReadAction.compute(() -> element.isValid() ? element.getTextOffset() : -1);  // may trigger decompilation
             indicator.checkCanceled();
             if (offset >= 0) {
-              OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, offset);
+              Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
               Condition<?> expired = or(myProject.getDisposed(), o -> !file.isValid());
               ApplicationManager.getApplication().invokeLater(() -> descriptor.navigate(requestFocus), expired);
             }

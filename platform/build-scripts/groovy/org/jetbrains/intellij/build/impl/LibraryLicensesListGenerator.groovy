@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.containers.ContainerUtil
 import groovy.text.SimpleTemplateEngine
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
@@ -40,13 +41,12 @@ class LibraryLicensesListGenerator {
     this.licensesList = licensesList
   }
 
-  static String getLibraryName(JpsLibrary lib) {
+  static List<String> getLibraryNames(JpsLibrary lib) {
     def name = lib.name
     if (name.startsWith("#")) {
-      File file = lib.getFiles(JpsOrderRootType.COMPILED)[0]
-      return file.name
+      return ContainerUtil.map(lib.getFiles(JpsOrderRootType.COMPILED), {f->f.getName()})
     }
-    return name
+    return Collections.singletonList(name)
   }
 
   void generateLicensesTable(String filePath, Set<String> usedModulesNames) {
@@ -56,7 +56,9 @@ class LibraryLicensesListGenerator {
     Map<String, String> usedLibraries = [:]
     usedModules.each { JpsModule module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each { item ->
-        usedLibraries[getLibraryName(item)] = module.name
+        getLibraryNames(item).forEach { String name ->
+          usedLibraries[name] = module.name
+        }
       }
     }
 

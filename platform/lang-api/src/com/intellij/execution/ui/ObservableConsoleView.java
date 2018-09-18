@@ -26,7 +26,7 @@ public interface ObservableConsoleView  {
   void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent);
 
   interface ChangeListener {
-    void contentAdded(Collection<ConsoleViewContentType> types);
+    void contentAdded(@NotNull Collection<ConsoleViewContentType> types);
   }
 
 }

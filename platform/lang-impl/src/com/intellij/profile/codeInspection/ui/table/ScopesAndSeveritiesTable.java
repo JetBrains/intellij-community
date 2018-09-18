@@ -162,7 +162,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
   }
 
   @NotNull
-  public static HighlightSeverity getSeverity(final List<ScopeToolState> scopeToolStates) {
+  public static HighlightSeverity getSeverity(final List<? extends ScopeToolState> scopeToolStates) {
     HighlightSeverity previousValue = null;
     for (final ScopeToolState scopeToolState : scopeToolStates) {
       final HighlightSeverity currentValue = scopeToolState.getLevel().getSeverity();

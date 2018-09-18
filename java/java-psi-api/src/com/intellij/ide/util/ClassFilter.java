@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 */
 public interface ClassFilter {
   ClassFilter INSTANTIABLE = new ClassFilter() {
+    @Override
     public boolean isAccepted(PsiClass aClass) {
       return PsiUtil.isInstantiatable(aClass);
     }
@@ -31,6 +32,7 @@ public interface ClassFilter {
 
   boolean isAccepted(PsiClass aClass);
   ClassFilter ALL = new ClassFilter() {
+    @Override
     public boolean isAccepted(PsiClass aClass) {
       return true;
     }

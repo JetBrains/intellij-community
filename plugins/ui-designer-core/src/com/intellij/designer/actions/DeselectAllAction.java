@@ -18,6 +18,7 @@ package com.intellij.designer.actions;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class DeselectAllAction extends AnAction {
   private final EditableArea myArea;
@@ -28,7 +29,7 @@ public class DeselectAllAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myArea.deselectAll();
   }
 }

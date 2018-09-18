@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /** @deprecated trivial to implement; to be remove din IDEA 2019 */
+@Deprecated
 public class ProjectJdkListRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {

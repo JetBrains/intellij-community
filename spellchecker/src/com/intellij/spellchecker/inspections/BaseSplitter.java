@@ -46,7 +46,7 @@ public abstract class BaseSplitter implements Splitter {
     consumer.consume(found);
   }
 
-  protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<TextRange> words) {
+  protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<? extends TextRange> words) {
     for (TextRange word : words) {
       CharacterIterator it = new StringCharacterIterator(text, word.getStartOffset(), word.getEndOffset(), word.getStartOffset());
       for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
@@ -58,7 +58,7 @@ public abstract class BaseSplitter implements Splitter {
     return true;
   }
 
-  protected static boolean containsShortWord(@NotNull List<TextRange> words) {
+  protected static boolean containsShortWord(@NotNull List<? extends TextRange> words) {
     for (TextRange word : words) {
       if (word.getLength() < MIN_RANGE_LENGTH) {
         return true;

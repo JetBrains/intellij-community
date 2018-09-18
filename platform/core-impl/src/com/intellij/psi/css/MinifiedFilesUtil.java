@@ -122,7 +122,7 @@ public class MinifiedFilesUtil {
 
       if (whitespaceTokens.contains(tokenType)) {
         lastWhiteSpaceWasHandled = false;
-        if (!commentTokens.contains(lastTokenType) && tokenLength > 1) {
+        if (tokenLength > 1 && !commentTokens.contains(lastTokenType)) {
           lexer.advance();
           if (lexer.getTokenType() == null) {
             // it was last token

@@ -140,11 +140,13 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   public static class MyState implements State<GradleProjectSettings> {
     private final Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
 
+    @Override
     @XCollection(elementTypes = {GradleProjectSettings.class})
     public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {
       return myProjectSettings;
     }
 
+    @Override
     public void setLinkedExternalProjectsSettings(Set<GradleProjectSettings> settings) {
       if (settings != null) {
         myProjectSettings.addAll(settings);

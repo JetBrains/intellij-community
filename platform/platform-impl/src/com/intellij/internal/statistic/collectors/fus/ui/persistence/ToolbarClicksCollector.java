@@ -33,10 +33,12 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
 
   private ClicksState myState = new ClicksState();
 
+  @Override
   public ClicksState getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull final ClicksState state) {
     myState = state;
   }

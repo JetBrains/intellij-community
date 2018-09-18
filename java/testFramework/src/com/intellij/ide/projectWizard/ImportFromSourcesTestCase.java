@@ -33,7 +33,7 @@ public abstract class ImportFromSourcesTestCase extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myBuilder = new ProjectFromSourcesBuilderImpl(new WizardContext(null), ModulesProvider.EMPTY_MODULES_PROVIDER);
+    myBuilder = new ProjectFromSourcesBuilderImpl(new WizardContext(null, getTestRootDisposable()), ModulesProvider.EMPTY_MODULES_PROVIDER);
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager.isApplicableFor;
 
@@ -18,7 +19,7 @@ import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager
  */
 public class MarkAsPlainTextAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     if (project == null || typeManager == null) return;
@@ -29,7 +30,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       typeManager == null ? JBIterable.empty() :

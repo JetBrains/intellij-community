@@ -53,6 +53,7 @@ public class DomPatterns {
   /**
    * @deprecated use {@link #tagWithDom(String, ElementPattern)} and  {@link #attributeWithDom(String, ElementPattern)}
    */
+  @Deprecated
   public static XmlElementPattern.Capture withDom(final ElementPattern<? extends DomElement> pattern) {
     return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("tagWithDom") {
       @Override

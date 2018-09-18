@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -172,7 +172,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
         PsiMember member = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMember.class);
         if (member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
           // ignore usages other than initializing
-          if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
+          if (rValue == null || !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
           }
           initializingAssignments.add(assignmentExpression);

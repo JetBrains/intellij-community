@@ -35,7 +35,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
   }
 
   @Override
-  protected void requestRebuild(Throwable e) {
+  protected void requestRebuild(@NotNull Throwable e) {
     //TODO index corrupted
   }
 

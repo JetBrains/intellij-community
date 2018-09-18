@@ -12,10 +12,12 @@ import org.jetbrains.annotations.NotNull;
 public class UpdateCopyrightCheckinHandlerState implements PersistentStateComponent<UpdateCopyrightCheckinHandlerState> {
   public boolean UPDATE_COPYRIGHT = false;
 
+  @Override
   public UpdateCopyrightCheckinHandlerState getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull UpdateCopyrightCheckinHandlerState state) {
     XmlSerializerUtil.copyBean(state, this);
   }

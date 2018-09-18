@@ -15,54 +15,42 @@
  */
 package org.jetbrains.yaml.breadcrumbs;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import org.jetbrains.yaml.YAMLFileType;
+import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.YAMLBundle;
 
+import javax.swing.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase {
+  private final String COPY_ACTION = YAMLBundle.message("YAMLBreadcrumbsInfoProvider.copy.key.to.clipboard");
 
-  private static final String INPUT = "---\n" +
-                                      "items:\n" +
-                                      "    - part_no:   A4786\n" +
-                                      "      descrip:   Water Bucket (Filled)\n" +
-                                      "      price:     1.47\n" +
-                                      "      quantity:  4\n" +
-                                      "\n" +
-                                      "    - part_no:   E1628\n" +
-                                      "      descrip:   High Heeled<caret> \"Ruby\" Slippers\n" +
-                                      "      size:      8\n" +
-                                      "      price:     133.7\n" +
-                                      "      quantity:  1\n" +
-                                      "\n" +
-                                      "specialDelivery:  >\n" +
-                                      "    Follow the Yellow Brick\n" +
-                                      "    Road to the Emerald City.\n" +
-                                      "    Pay no attention<caret> to the\n" +
-                                      "    man behind the curtain.\n" +
-                                      "---\n" +
-                                      "{\n" +
-                                      "foo: salkdjkalsd,\n" +
-                                      "bar: asjdjkas,\n" +
-                                      "baz: [foo: qoo, boo: fo<caret>o, doo: 123]\n" +
-                                      "}\n" +
-                                      "---\n" +
-                                      "foo: \n" +
-                                      "  bar:\n" +
-                                      "- av<caret>r\n" +
-                                      "...";
-  private static final String OUTPUT = "[Document 1/3;null][items:;null][Item 2/2;null][descrip:;null][High Heeled \"Ruby\" S...;null]\n" +
-                                       "------\n" +
-                                       "[Document 1/3;null][specialDelivery:;null][Follow the Yellow Br...;null]\n" +
-                                       "------\n" +
-                                       "[Document 2/3;null][baz:;null][Item 2/3;null][boo:;null][foo;null]\n" +
-                                       "------\n" +
-                                       "[Document 3/3;null][foo:;null][Item;null][avr;null]";
+  @Override
+  protected String getTestDataPath() {
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/breadcrumbs/data/";
+  }
 
-  public void testAll() {
-    myFixture.configureByText(YAMLFileType.YML, INPUT);
+  public void testText() {
+    doTest(crumb -> "[" + crumb.getText() + "]");
+  }
+
+  public void testCopyPathAction() {
+    doTest(crumb -> applyActions(crumb, action -> getActionName(action).equals(COPY_ACTION)));
+  }
+
+  private void doTest(@NotNull Function<? super Crumb, String> crumbToString) {
+    myFixture.configureByFile("all.yml");
     final CaretModel caretModel = myFixture.getEditor().getCaretModel();
     final String result = caretModel.getAllCarets().stream()
       .map(Caret::getOffset)
@@ -70,12 +58,47 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
       .map((offset) -> {
         caretModel.moveToOffset(offset);
         return myFixture.getBreadcrumbsAtCaret().stream()
-          .map(crumb -> "[" + crumb.getText() + ";" + crumb.getTooltip() + "]")
-          .reduce((left, right) -> left + right).orElse("[]");
+                        .map(crumbToString)
+                        .reduce((left, right) -> left + right).orElse("[]");
       })
       .reduce((left, right) -> left + "\n------\n" + right).orElse("");
 
-    assertSameLines(OUTPUT, result);
+    assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".txt", result);
   }
 
+  @NotNull
+  private String applyAction(@NotNull Action action) {
+    try {
+      return applySingleAction(action);
+    }
+    catch (IOException | UnsupportedFlavorException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @NotNull
+  private String applySingleAction(@NotNull Action action) throws IOException, UnsupportedFlavorException {
+    String actionName = getActionName(action);
+    ActionEvent event = new ActionEvent(myFixture.getEditor().getComponent(), ActionEvent.ACTION_PERFORMED, actionName);
+
+    if (actionName.equals(COPY_ACTION)) {
+      action.actionPerformed(event);
+      return (String)CopyPasteManager.getInstance().getContents().getTransferData(DataFlavor.stringFlavor);
+    }
+    throw new IllegalArgumentException("Unknown action: " + actionName);
+  }
+
+  @NotNull
+  private String applyActions(@NotNull Crumb crumb, Predicate<Action> filter) {
+    String applied = crumb.getContextActions().stream().filter(filter).map(this::applyAction)
+                          .reduce((left, right) -> left + ", " + right).orElse("");
+    return "{" + applied + "}";
+  }
+
+  @NotNull
+  private static String getActionName(@NotNull Action action) {
+    Object actionNameValue = action.getValue("Name");
+    assert actionNameValue instanceof String;
+    return (String)actionNameValue;
+  }
 }

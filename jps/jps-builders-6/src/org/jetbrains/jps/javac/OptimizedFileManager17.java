@@ -23,7 +23,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -412,6 +412,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       return absFile;
     }
 
+    @Override
     public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
       CharBuffer cb = ourUseContentCache? fileManager.getCachedContent(this) : null;
       if (cb == null) {
@@ -438,6 +439,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
 
+  @Override
   public void close() {
     try {
       super.close();

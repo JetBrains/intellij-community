@@ -104,12 +104,6 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     return PsiAnnotationMethod.EMPTY_ARRAY;
   }
 
-  @Nullable
-  @Override
-  public Object[] getParametersForDocumentation(PsiAnnotationMethod method, ParameterInfoContext context) {
-    return new PsiAnnotationMethod[]{method};
-  }
-
   @Override
   public GrAnnotationArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     return findAnchor(context.getEditor(), context.getFile());
@@ -166,16 +160,6 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
       offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
     }
     return offset1;
-  }
-
-  @Override
-  public String getParameterCloseChars() {
-    return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
   }
 
   @Override

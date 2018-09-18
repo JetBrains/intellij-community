@@ -20,7 +20,6 @@ import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 @State(name = "GroovyCompilerProjectConfiguration", storages = @Storage("groovyc.xml"))
 public class GroovyCompilerConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {
   private String myConfigScript = "";
-  private String myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
   private boolean myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
   public boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration(null);
@@ -28,7 +27,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
   @Override
   public JpsGroovySettings getState() {
     final JpsGroovySettings bean = new JpsGroovySettings();
-    bean.heapSize = myHeapSize;
     bean.configScript = myConfigScript;
     bean.invokeDynamic = myInvokeDynamic;
     bean.transformsOk = transformsOk;
@@ -46,7 +44,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
 
   @Override
   public void loadState(@NotNull JpsGroovySettings state) {
-    myHeapSize = state.heapSize;
     myConfigScript = state.configScript;
     myInvokeDynamic = state.invokeDynamic;
     transformsOk = state.transformsOk;
@@ -58,16 +55,8 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
     return ServiceManager.getService(project, GroovyCompilerConfiguration.class);
   }
 
-  public String getHeapSize() {
-    return myHeapSize;
-  }
-
   public boolean isInvokeDynamic() {
     return myInvokeDynamic;
-  }
-
-  public void setHeapSize(String heapSize) {
-    myHeapSize = heapSize;
   }
 
   public void setInvokeDynamic(boolean invokeDynamic) {

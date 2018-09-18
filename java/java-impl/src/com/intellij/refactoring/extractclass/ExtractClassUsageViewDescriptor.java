@@ -31,19 +31,23 @@ class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
     }
 
 
+    @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
         return RefactorJBundle.message("references.to.extract") + MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
     }
 
+    @Override
     public String getProcessedElementsHeader() {
         return RefactorJBundle.message("extracting.from.class");
     }
 
+    @Override
     @NotNull
     public PsiElement[] getElements() {
         return new PsiElement[]{aClass};
     }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
         return null;
     }

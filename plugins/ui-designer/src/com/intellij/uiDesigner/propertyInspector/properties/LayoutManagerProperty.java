@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -53,6 +39,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
       });
     }
 
+    @Override
     public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
       if (UIFormXmlConstants.LAYOUT_XY.equals(value)) {
         myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
@@ -71,6 +58,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     super(null, "Layout Manager");
   }
 
+  @Override
   public String getValue(RadContainer component) {
     RadContainer container = component;
     while(container != null) {
@@ -83,6 +71,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
 
+  @Override
   protected void setValueImpl(RadContainer component, String value) throws Exception {
     final RadLayoutManager oldLayout = component.getLayoutManager();
     if (oldLayout != null && Comparing.equal(oldLayout.getName(), value)) {
@@ -93,10 +82,12 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     newLayoutManager.changeContainerLayout(component);
   }
 
+  @Override
   @NotNull public PropertyRenderer<String> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<String> getEditor() {
     return myEditor;
   }

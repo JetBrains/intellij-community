@@ -71,7 +71,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       }
     };
 
-    if (!progressManager.runProcessWithProgressSynchronously(findUnusedImports, "Optimizing imports (Groovy) ... ", false, project)) {
+    if (!progressManager.runProcessWithProgressSynchronously(findUnusedImports, "Optimizing Imports (Groovy) ... ", false, project)) {
       return;
     }
 

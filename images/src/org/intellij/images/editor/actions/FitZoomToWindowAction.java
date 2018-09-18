@@ -24,9 +24,11 @@ import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.intellij.images.options.ZoomOptions;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 public final class FitZoomToWindowAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (decorator != null) {
       ImageZoomModel zoomModel = decorator.getZoomModel();
@@ -34,7 +36,8 @@ public final class FitZoomToWindowAction extends AnAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     if (ImageEditorActionUtil.setEnabled(e)) {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();

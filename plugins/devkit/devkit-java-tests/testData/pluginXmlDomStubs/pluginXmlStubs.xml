@@ -16,9 +16,9 @@
   <extensions defaultExtensionNs="defaultExtensionNs" xmlns="extensionXmlNs"/>
 
   <actions>
-    <action id="actionId" text="actionText" class="actionClass"/>
-    <group id="groupId" class="groupClass">
-      <action id="groupAction" text="groupActionText" class="actionClass"/>
+    <action id="actionId" text="actionText" description="descriptionText" class="actionClass" popup="false"/>
+    <group id="groupId" class="groupClass" description="groupDescriptionText" text="groupText" popup="true">
+      <action id="groupAction" text="groupActionText" description="groupActionDescriptionText" class="actionClass"/>
       <group id="nestedGroup">
         <action id="nestedGroupActionId" text="nestedGroupActionText" class="actionClass"/>
       </group>

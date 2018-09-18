@@ -28,8 +28,9 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   /**
-   * @deprecated use {@link #createFrom(Image, float, ImageObserver)} instead
+   * @deprecated use {@link #createFrom(Image, double, ImageObserver)} instead
    */
+  @Deprecated
   @NotNull
   public static Image createFrom(Image image, int scale, ImageObserver observer) {
     return createFrom(image, (float)scale, observer);
@@ -83,6 +84,7 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean isAppleHiDPIScaledImage(@SuppressWarnings("unused") Image image) {
     return false;
   }

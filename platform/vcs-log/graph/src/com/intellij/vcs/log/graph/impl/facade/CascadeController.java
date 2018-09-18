@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
@@ -42,6 +43,20 @@ public abstract class CascadeController implements LinearGraphController {
     }
     if (answer != null) return answer;
     return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
+  }
+
+  @Nullable
+  GraphChanges<Integer> performAction(@NotNull Function<CascadeController, GraphChanges<Integer>> action) {
+    GraphChanges<Integer> graphChanges = action.fun(this);
+    if (graphChanges != null) return graphChanges;
+
+    if (myDelegateController instanceof CascadeController) {
+      GraphChanges<Integer> result = ((CascadeController)myDelegateController).performAction(action);
+      if (result != null) {
+        return delegateGraphChanged(new LinearGraphController.LinearGraphAnswer(result)).getGraphChanges();
+      }
+    }
+    return null;
   }
 
   @Nullable

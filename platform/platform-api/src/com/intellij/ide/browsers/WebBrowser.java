@@ -29,7 +29,7 @@ public abstract class WebBrowser {
   @Nullable
   public abstract BrowserSpecificSettings getSpecificSettings();
 
-  public void addOpenUrlParameter(@NotNull List<String> command, @NotNull String url) {
+  public void addOpenUrlParameter(@NotNull List<? super String> command, @NotNull String url) {
     command.add(url);
   }
 }

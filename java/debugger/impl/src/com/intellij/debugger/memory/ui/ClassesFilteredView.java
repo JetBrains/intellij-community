@@ -114,7 +114,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     });
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processAttached(DebugProcess process) {
+      public void processAttached(@NotNull DebugProcess process) {
         debugProcess.removeDebugProcessListener(this);
         managerThread.invoke(new DebuggerCommandImpl() {
           @Override

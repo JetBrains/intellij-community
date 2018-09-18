@@ -34,16 +34,16 @@ public class FileUtils {
 
   public static File saveStreamContentAsFile(String fullFileName, InputStream stream) throws IOException {
     fullFileName = findFreeFileName(fullFileName);
-    OutputStream ostream = new FileOutputStream(fullFileName);
-    byte[] buf = new byte[8192];
+    try (OutputStream ostream = new FileOutputStream(fullFileName)) {
+      byte[] buf = new byte[8192];
 
-    while(true) {
-      int read = stream.read(buf,0,buf.length);
-      if (read == -1) break;
-      ostream.write(buf,0,read);
+      while (true) {
+        int read = stream.read(buf, 0, buf.length);
+        if (read == -1) break;
+        ostream.write(buf, 0, read);
+      }
+      ostream.flush();
     }
-    ostream.flush();
-    ostream.close();
     return new File(fullFileName);
   }
 
@@ -61,18 +61,16 @@ public class FileUtils {
   }
 
   public static boolean copyFile(File in, File out) {
-    try {
-      FileInputStream fis = new FileInputStream(in);
-      FileOutputStream fos = new FileOutputStream(out);
+    try (FileInputStream fis = new FileInputStream(in);
+         FileOutputStream fos = new FileOutputStream(out)) {
       byte[] buf = new byte[1024];
       int i;
       while ((i = fis.read(buf)) != -1) {
         fos.write(buf, 0, i);
       }
-      fis.close();
-      fos.close();
       return true;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return false;
     }
   }

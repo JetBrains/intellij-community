@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import org.jetbrains.annotations.NotNull;
 
 public class EditRunConfigurationsAction extends DumbAwareAction {
   public EditRunConfigurationsAction() {
@@ -34,7 +35,7 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null && project.isDisposed()) {
       return;
@@ -48,7 +49,7 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     presentation.setEnabled(project == null || !DumbService.isDumb(project));

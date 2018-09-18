@@ -42,7 +42,7 @@ public class InlineElementData extends HighlightData {
   public void addHighlToView(Editor view, EditorColorsScheme scheme, Map<TextAttributesKey, String> displayText) {
     int offset = getStartOffset();
     ParameterHintsPresentationManager hintsPresentationManager = ParameterHintsPresentationManager.getInstance();
-    Inlay hint = hintsPresentationManager.addHint(view, offset, false, myText, false);
+    Inlay hint = hintsPresentationManager.addHint(view, offset, false, myText, null, false);
     hintsPresentationManager.setHighlighted(hint, 
                                             DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED.equals(getHighlightKey()));
     hintsPresentationManager.setCurrent(hint, myText.contains("current"));
@@ -59,7 +59,7 @@ public class InlineElementData extends HighlightData {
   }
 
   @Override
-  public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
+  public void addToCollection(@NotNull Collection<? super HighlightData> list, boolean highlighted) {
     list.add(new InlineElementData(getStartOffset(), getHighlightKey(), myText, highlighted, getAdditionalColorKey()));
   }
 

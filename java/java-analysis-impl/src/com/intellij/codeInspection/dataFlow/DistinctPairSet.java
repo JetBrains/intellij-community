@@ -186,6 +186,15 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myList.get(mySecond);
     }
 
+    public void check() {
+      if (myList.get(myFirst) == null) {
+        throw new IllegalStateException(this + ": EqClass " + myFirst + " is missing");
+      }
+      if (myList.get(mySecond) == null) {
+        throw new IllegalStateException(this + ": EqClass " + mySecond + " is missing");
+      }
+    }
+
     public boolean isOrdered() {
       return myOrdered;
     }
@@ -218,7 +227,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
 
     @Override
     public String toString() {
-      return "{" + getFirst() + (myOrdered ? "<" : "!=") + getSecond() + "}";
+      return "{" + myList.get(myFirst) + (myOrdered ? "<" : "!=") + myList.get(mySecond) + "}";
     }
   }
 }

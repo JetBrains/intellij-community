@@ -100,7 +100,7 @@ public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElemen
   }
 
   @Override
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)psiElement).getPresentation();

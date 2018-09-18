@@ -48,7 +48,7 @@ public class TestMethodNode extends MethodNode {
   }
 
   @Override
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     super.updateImpl(data);
 
     data.setIcon(myIcon);

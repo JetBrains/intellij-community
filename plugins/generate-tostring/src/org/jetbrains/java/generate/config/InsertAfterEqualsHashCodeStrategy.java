@@ -34,6 +34,7 @@ public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrateg
         return instance;
     }
 
+    @Override
     public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
         PsiMethod methodHashCode = PsiAdapter.findHashCodeMethod(clazz);
         PsiMethod methodEquals = PsiAdapter.findEqualsMethod(clazz);

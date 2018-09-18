@@ -78,7 +78,7 @@ public abstract class LanguageInjectionSupport {
 
   public abstract Configurable[] createSettings(final Project project, final Configuration configuration);
 
-  public abstract AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer);
+  public abstract AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer);
 
-  public abstract AnAction createEditAction(final Project project, final Factory<BaseInjection> producer);
+  public abstract AnAction createEditAction(final Project project, final Factory<? extends BaseInjection> producer);
 }

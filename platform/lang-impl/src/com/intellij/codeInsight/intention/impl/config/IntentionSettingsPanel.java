@@ -160,7 +160,7 @@ public class IntentionSettingsPanel implements MasterDetails {
   }
 
   private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean forceInclude,
-                                             final List<Set<String>> keySetList, final HashSet<String> quoted) {
+                                             final List<? extends Set<String>> keySetList, final HashSet<String> quoted) {
     if (StringUtil.containsIgnoreCase(metaData.getFamily(), filter)) {
       return true;
     }

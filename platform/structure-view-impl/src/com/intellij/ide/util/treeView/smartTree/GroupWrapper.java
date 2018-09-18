@@ -38,7 +38,7 @@ public class GroupWrapper extends CachingChildrenTreeNode<Group> {
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.updateFrom(getValue().getPresentation());
   }
 

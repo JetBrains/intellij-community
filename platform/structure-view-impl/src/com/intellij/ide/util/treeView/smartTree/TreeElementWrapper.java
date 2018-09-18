@@ -37,7 +37,7 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     if (((StructureViewTreeElement)getValue()).getValue() != null) {
       presentation.updateFrom(getValue().getPresentation());
     }

@@ -143,7 +143,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
           double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g, RoundingMode.FLOOR);
-          @SuppressWarnings("TestOnlyProblems")
           double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), font), g, RoundingMode.FLOOR);
           drawLine(g, x, y - offset, width, thickness, this);
         }
@@ -155,7 +154,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     return height > 7 && Registry.is("ide.text.effect.new.scale") ? height / 2 : 3;
   }
 
-  @SuppressWarnings("TestOnlyProblems")
   private static void paintUnderline(Graphics2D g, double x, double y, double width, double height, Font font, double thickness, EffectPainter2D painter) {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {

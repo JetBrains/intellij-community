@@ -28,15 +28,6 @@ import java.util.List;
 public abstract class RecursionGuard {
 
   /**
-   * @deprecated Use {@link #doPreventingRecursion(Object, boolean, Computable)} with memoization disabled instead
-   */
-  @Deprecated
-  @Nullable
-  public <T> T doPreventingRecursion(@NotNull Object key, @NotNull Computable<T> computation) {
-    return doPreventingRecursion(key, false, computation);
-  }
-
-  /**
    * @param key an id of the computation. Is stored internally to ensure that a recursive calls with the same key won't lead to endless recursion.
    * @param memoize whether the result of the computation may me cached thread-locally until the last currently active doPreventingRecursion call
    *                completes. May be used to speedup things when recursion re-entrance happens: otherwise nothing would be cached at all and

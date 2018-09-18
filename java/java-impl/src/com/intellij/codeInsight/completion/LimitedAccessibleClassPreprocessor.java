@@ -33,14 +33,14 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   private final PsiElement myContext;
   private final CompletionParameters myParameters;
   private final boolean myFilterByScope;
-  private final Consumer<PsiClass> myConsumer;
+  private final Consumer<? super PsiClass> myConsumer;
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private int myCount;
   private final Set<String> myQNames = new THashSet<>();
   private final boolean myPkgContext;
   private final String myPackagePrefix;
 
-  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Consumer<PsiClass> consumer) {
+  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Consumer<? super PsiClass> consumer) {
     myContext = parameters.getPosition();
     myParameters = parameters;
     myFilterByScope = filterByScope;

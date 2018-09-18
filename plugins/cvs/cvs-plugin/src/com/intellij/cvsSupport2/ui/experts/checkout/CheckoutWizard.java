@@ -58,6 +58,7 @@ public class CheckoutWizard extends CvsWizard {
     init();
   }
 
+  @Override
   protected void doOKAction() {
     CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
 
@@ -106,6 +107,7 @@ public class CheckoutWizard extends CvsWizard {
     }
   }
 
+  @Override
   protected String getHelpID() {
     return "cvs.checkOutPrj";
   }

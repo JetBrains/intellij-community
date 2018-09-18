@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
@@ -55,16 +55,19 @@ class SvnChangeProviderContext implements StatusReceiver {
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
   }
 
+  @Override
   public void process(FilePath path, Status status) throws SvnBindException {
     if (status != null) {
       processStatusFirstPass(path, status);
     }
   }
 
+  @Override
   public void processIgnored(VirtualFile vFile) {
     myChangelistBuilder.processIgnoredFile(vFile);
   }
 
+  @Override
   public void processUnversioned(VirtualFile vFile) {
     myChangelistBuilder.processUnversionedFile(vFile);
   }
@@ -138,9 +141,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     if (parent != null) {
       Url copyFromUrl = myCopyFromURLs.get(parent);
-
-      //noinspection ConstantConditions
-      result = parent == filePath ? copyFromUrl : append(copyFromUrl, FileUtil.getRelativePath(parent.getIOFile(), filePath.getIOFile()));
+      result = parent == filePath ? copyFromUrl : append(copyFromUrl, getRelativePath(parent.getPath(), filePath.getPath()));
     }
 
     return result;

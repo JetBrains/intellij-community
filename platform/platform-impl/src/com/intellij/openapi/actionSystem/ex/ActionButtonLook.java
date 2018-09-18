@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,13 +62,17 @@ public abstract class ActionButtonLook {
     paintBorder(g, button, getState(button));
   }
 
-  public abstract void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
-
-  public abstract void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
-  
-  public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
-    
+  public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
+    if (state != ActionButtonComponent.NORMAL) {
+      paintBackground(g, component, state == ActionButtonComponent.PUSHED ?
+                                    JBUI.CurrentTheme.ActionButton.pressedBackground() :
+                                    JBUI.CurrentTheme.ActionButton.hoverBackground());
+    }
   }
+
+  public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {}
+  
+  public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {}
 
   public void updateUI() {}
 

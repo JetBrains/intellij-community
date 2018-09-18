@@ -30,9 +30,10 @@ import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
 
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
@@ -42,6 +43,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     super(wordWithTypo);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return FIX_NAME;
@@ -60,11 +62,13 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   }
 
 
+  @Override
   @NotNull
   public Anchor getPopupActionAnchor() {
     return Anchor.FIRST;
   }
 
+  @Override
   @SuppressWarnings({"SSBasedInspection"})
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     DictionarySuggestionProvider provider = findProvider();

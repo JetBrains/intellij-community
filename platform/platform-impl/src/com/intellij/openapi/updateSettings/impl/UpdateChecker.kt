@@ -69,7 +69,7 @@ object UpdateChecker {
    * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
    */
   @Suppress("MemberVisibilityCanBePrivate")
-  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf<String>()
+  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
@@ -399,9 +399,9 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+        val patches = checkForUpdateResult.patches
         val forceHttps = updateSettings.canUseSecureConnection()
-        UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, patches, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
@@ -680,12 +680,12 @@ object UpdateChecker {
 
     val channel: UpdateChannel?
     val newBuild: BuildInfo?
-    val patch: PatchInfo?
+    val patches: UpdateChain?
     if (forceUpdate) {
       val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
       channel = UpdateChannel(node)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
-      patch = newBuild.patches.firstOrNull()
+      patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
     }
     else {
       val updateInfo = UpdatesInfo(loadElement(updateInfoText))
@@ -693,12 +693,12 @@ object UpdateChecker {
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
-      patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+      patches = checkForUpdateResult.patches
     }
 
     if (channel != null && newBuild != null) {
       val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(channel, newBuild, patch, patchFile).show()
+      UpdateInfoDialog(channel, newBuild, patches, patchFile).show()
     }
     else {
       NoUpdatesDialog(true).show()

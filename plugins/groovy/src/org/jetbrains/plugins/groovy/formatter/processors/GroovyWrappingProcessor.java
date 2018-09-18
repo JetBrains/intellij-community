@@ -130,6 +130,12 @@ public class GroovyWrappingProcessor {
       }
     }
 
+    if (myParentType == PARAMETER_LIST) {
+      if (childType == T_LPAREN || childType == T_RPAREN) {
+        return createNoneWrap();
+      }
+    }
+
     if (ANNOTATION_CONTAINERS.contains(myParentType)) {
       final ASTNode leftSibling = getLeftSibling(childNode);
       if (leftSibling != null && leftSibling.getElementType() == GroovyElementTypes.MODIFIERS && endsWithAnnotation(leftSibling)) {

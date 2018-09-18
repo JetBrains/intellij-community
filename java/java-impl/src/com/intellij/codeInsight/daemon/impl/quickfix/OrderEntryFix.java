@@ -216,7 +216,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static void createModuleFixes(PsiJavaModuleReference reference,
                                         Module currentModule,
                                         DependencyScope scope,
-                                        List<LocalQuickFix> result) {
+                                        List<? super LocalQuickFix> result) {
     ProjectFileIndex index = ProjectRootManager.getInstance(currentModule.getProject()).getFileIndex();
     List<PsiElement> targets = Stream.of(reference.multiResolve(true))
       .map(ResolveResult::getElement)
@@ -255,7 +255,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                             Module currentModule,
                                             DependencyScope scope,
                                             QuickFixActionRegistrar registrar,
-                                            List<LocalQuickFix> result) {
+                                            List<? super LocalQuickFix> result) {
     String fullReferenceText = reference.getCanonicalText();
     ThreeState refToAnnotation = isReferenceToAnnotation(psiElement);
     for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {

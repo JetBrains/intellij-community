@@ -100,7 +100,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     val actionGroup = DefaultActionGroup(null, false)
     configurationTypes.forEach {
       actionGroup.add(object : AnAction(it.displayName, null, it.icon) {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           listModel.add(it)
           listModel.sort(IGNORE_CASE_DISPLAY_NAME_COMPARATOR)
           list.selectedIndex = listModel.getElementIndex(it)
@@ -109,7 +109,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     }
     if (hiddenCount > 0) {
       actionGroup.add(object : AnAction(ExecutionBundle.message("show.irrelevant.configurations.action.name", hiddenCount)) {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           showAddPopup(button, false)
         }
       })

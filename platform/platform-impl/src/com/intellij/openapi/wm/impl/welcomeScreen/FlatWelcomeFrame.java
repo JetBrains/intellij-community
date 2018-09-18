@@ -1,12 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -113,7 +115,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
 
-    if (Registry.is("suppress.focus.stealing")) {
+    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
 
@@ -123,7 +125,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });
@@ -268,6 +270,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
+      setTransferHandler(new TransferHandler(null) {
+        @Override
+        public boolean canImport(TransferSupport support) {
+          return true;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
+          if (list != null && list.size() > 0) {
+            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+          }
+          return false;
+        }
+      });
 
       TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
@@ -380,7 +397,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                     ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
-          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
       JComponent panel = createActionLink(text, icon, ref, action);
@@ -396,7 +412,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       link.setPaintUnderline(false);
       link.setNormalColor(getLinkNormalColor());
       JActionLinkPanel panel = new JActionLinkPanel(link);
-      panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
+      panel.setBorder(JBUI.Borders.empty(4, 6));
       panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
@@ -460,7 +476,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
         return myTouchbarActions;
       return null;
@@ -595,14 +611,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
@@ -740,7 +750,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
-            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -763,7 +772,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static Runnable createUsageTracker(final AnAction action) {
-    return () -> UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+    return () -> {
+    };
   }
 
   private static JLabel createArrow(final ActionLink link) {
@@ -939,12 +949,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     };
     list.addListSelectionListener(selectionListener);
     if (backAction != null) {
-      new AnAction() {
+      new DumbAwareAction() {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StackingPopupDispatcher.getInstance().isPopupFocused());
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           backAction.run();
         }
-      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
+      }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, main, parentDisposable);
     }
     installQuickSearch(list);
 

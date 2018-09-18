@@ -212,7 +212,7 @@ public class CommandLineUtil {
    *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
    *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-  private static void addToWindowsCommandLine(String command, List<String> parameters, List<String> commandLine) {
+  private static void addToWindowsCommandLine(String command, List<String> parameters, List<? super String> commandLine) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 

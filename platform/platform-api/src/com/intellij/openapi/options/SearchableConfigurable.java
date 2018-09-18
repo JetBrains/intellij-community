@@ -26,7 +26,7 @@ import javax.swing.*;
 
 /**
  * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
- * {@link #com.intellij.ide.ui.search.TraverseUIStarter}
+ * {@link com.intellij.ide.ui.search.TraverseUIStarter}
  * 
  * @see SearchableOptionContributor
  */
@@ -46,7 +46,8 @@ public interface SearchableConfigurable extends Configurable {
    * @return an action to perform when this configurable is opened when a search filter query is entered by the user in setting dialog.
    * This action, for example, can select something in a tree or a list embedded in this setting page that matches the query. 
    */
-  default @Nullable Runnable enableSearch(String option) {
+  @Nullable
+  default Runnable enableSearch(String option) {
     return null;
   }
 
@@ -114,7 +115,7 @@ public interface SearchableConfigurable extends Configurable {
     @NotNull
     @Override
     public String getId() {
-      return (myConfigurable instanceof SearchableConfigurable)
+      return myConfigurable instanceof SearchableConfigurable
              ? ((SearchableConfigurable)myConfigurable).getId()
              : myConfigurable.getClass().getName();
     }
@@ -122,7 +123,7 @@ public interface SearchableConfigurable extends Configurable {
     @Nullable
     @Override
     public Runnable enableSearch(String option) {
-      return (myConfigurable instanceof SearchableConfigurable)
+      return myConfigurable instanceof SearchableConfigurable
              ? ((SearchableConfigurable)myConfigurable).enableSearch(option)
              : null;
     }

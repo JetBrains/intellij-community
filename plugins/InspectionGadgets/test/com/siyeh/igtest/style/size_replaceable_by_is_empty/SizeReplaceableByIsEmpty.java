@@ -17,6 +17,10 @@ public class SizeReplaceableByIsEmpty {
     return <warning descr="'c.size() == 0' can be replaced with 'c.isEmpty()'">c.size() == 0</warning>;
   }
 
+  boolean parens(Collection c) {
+    return <warning descr="'(c.size()) == (0)' can be replaced with 'c.isEmpty()'">(c.size()) == (0)</warning>;
+  }
+
   class String {
     public int length() {
       return 1;

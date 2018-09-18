@@ -37,14 +37,17 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     getEmptyText().setText(XDebuggerBundle.message("debugger.threads.not.available"));
   }
 
+  @Override
   protected NodeManagerImpl createNodeManager(Project project) {
     return new NodeManagerImpl(project, this) {
+      @Override
       public String getContextKey(StackFrameProxyImpl frame) {
         return "ThreadsView";
       }
     };
   }
 
+  @Override
   protected boolean isExpandable(DebuggerTreeNodeImpl node) {
     NodeDescriptorImpl descriptor = node.getDescriptor();
     if(descriptor instanceof StackFrameDescriptorImpl) {
@@ -53,10 +56,11 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     return descriptor.isExpandable();
   }
 
+  @Override
   protected void build(DebuggerContextImpl context) {
     DebuggerSession session = context.getDebuggerSession();
     final RefreshThreadsTreeCommand command = new RefreshThreadsTreeCommand(session);
-    
+
     final DebuggerSession.State state = session != null ? session.getState() : DebuggerSession.State.DISPOSED;
     if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.State.PAUSED || state == DebuggerSession.State.RUNNING) {
       showMessage(MessageDescriptor.EVALUATING);
@@ -74,6 +78,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       mySession = session;
     }
 
+    @Override
     protected void action() {
       final DebuggerTreeNodeImpl root = getNodeFactory().getDefaultNode();
 
@@ -84,7 +89,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       final DebuggerContextImpl context = mySession.getContextManager().getContext();
       final SuspendContextImpl suspendContext = context.getSuspendContext();
       final ThreadReferenceProxyImpl suspendContextThread = suspendContext != null? suspendContext.getThread() : null;
-      
+
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
         final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ? suspendContextThread : null;
@@ -196,6 +201,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
           SwingUtilities.invokeLater(() -> getModel().removeTreeModelListener(listener));
         }
 
+        @Override
         public void treeStructureChanged(TreeModelEvent event) {
           if(event.getPath().length <= 1) {
             removeListener();

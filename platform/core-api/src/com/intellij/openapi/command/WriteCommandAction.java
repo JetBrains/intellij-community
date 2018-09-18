@@ -260,7 +260,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult[] results = {result};
 
     doExecuteCommand(() -> {
-      //noinspection deprecation
       ApplicationManager.getApplication().runWriteAction(() -> {
         results[0].run();
         results[0] = null;
@@ -375,13 +374,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return writeCommandAction(project).compute(computable);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
   /**
    * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
    */
-  @SuppressWarnings("unused")
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
-  //</editor-fold>}
 }

@@ -30,8 +30,6 @@ import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider {
   @NotNull
   public static final String TAB_NAME = "History";
@@ -52,12 +50,18 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   @Override
   public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
-    if (!VcsLogContentUtil.findAndSelectContent(project, FileHistoryUi.class,
-                                                ui -> ui.getPath().equals(path) && Objects.equals(ui.getRevision(), hash))) {
+    FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
+                                                                  ui -> ui.matches(path, hash));
+    if (fileHistoryUi == null) {
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       assert logManager != null;
       String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
-      VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix, new FileHistoryUiFactory(path, hash), true);
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix,
+                                                   new FileHistoryUiFactory(path, hash), true);
+    }
+
+    if (hash != null) {
+      fileHistoryUi.jumpToNearestCommit(hash);
     }
   }
 }

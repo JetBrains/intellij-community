@@ -40,6 +40,7 @@ public class TypeCastEvaluator implements Evaluator {
     myIsPrimitive = isPrimitive;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {

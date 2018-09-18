@@ -192,7 +192,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
+  public void handleUnzippedDirectories(File dir, List<? super File> filesToRefresh) throws IOException {
     if (myModuleDescriptions == null) {
       filesToRefresh.add(dir);
       return;
@@ -242,7 +242,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       return result;
     }
 
-    static void writeRoots(Element element, List<RootDescription> rootDescriptions) {
+    static void writeRoots(Element element, List<? extends RootDescription> rootDescriptions) {
       Element rootsElement = new Element(ROOTS_ELEMENT);
       for (LocalArchivedTemplate.RootDescription description : rootDescriptions) {
         description.write(rootsElement);

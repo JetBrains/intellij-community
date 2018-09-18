@@ -65,7 +65,7 @@ public class MostlySingularMultiMapTest extends TestCase {
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
 
     for (int i = 4; i < 24; i++) {
-      map.add("multiKey", "multi" + Integer.toString(i));
+      map.add("multiKey", "multi" + i);
     }
     assertEquals(2 + 20, ContainerUtil.newArrayList(map.get("multiKey")).size());
     assertEquals(2 + 20, map.valuesForKey("multiKey"));
@@ -76,7 +76,7 @@ public class MostlySingularMultiMapTest extends TestCase {
     assertEquals(1, map.valuesForKey("otherKey"));
 
     for (int i = 23; i >= 4; i--) {
-      map.remove("multiKey", "multi" + Integer.toString(i));
+      map.remove("multiKey", "multi" + i);
     }
     assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
     assertEquals(Collections.singletonList("single"), map.get("key"));

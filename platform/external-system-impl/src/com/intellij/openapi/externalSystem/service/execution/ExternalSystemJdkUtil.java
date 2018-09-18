@@ -122,6 +122,7 @@ public class ExternalSystemJdkUtil {
   }
 
   /** @deprecated trivial (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
     try {
       final Sdk sdk = getJdk(project, jdkName);
@@ -132,7 +133,7 @@ public class ExternalSystemJdkUtil {
   }
 
   public static boolean isValidJdk(@Nullable String homePath) {
-    return !StringUtil.isEmptyOrSpaces(homePath) && (JdkUtil.checkForJdk(homePath) || JdkUtil.checkForJre(homePath));
+    return !StringUtil.isEmptyOrSpaces(homePath) && JdkUtil.checkForJdk(homePath) && JdkUtil.checkForJre(homePath);
   }
 
   @NotNull

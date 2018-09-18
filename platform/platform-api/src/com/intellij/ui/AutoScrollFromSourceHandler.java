@@ -104,11 +104,13 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
             AllIcons.General.AutoscrollFromSource);
     }
 
-    public boolean isSelected(final AnActionEvent event) {
+    @Override
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       return isAutoScrollEnabled();
     }
 
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    @Override
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       setAutoScrollEnabled(flag);
     }
   }

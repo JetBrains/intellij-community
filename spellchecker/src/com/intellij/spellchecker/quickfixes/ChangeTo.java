@@ -29,17 +29,20 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     super(wordWithTypo);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return FIX_NAME;
   }
 
+  @Override
   @NotNull
   public Anchor getPopupActionAnchor() {
     return Anchor.FIRST;
   }
 
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (element == null) return;

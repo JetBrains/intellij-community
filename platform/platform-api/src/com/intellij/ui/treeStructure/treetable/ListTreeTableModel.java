@@ -33,34 +33,42 @@ public class ListTreeTableModel extends DefaultTreeModel implements TreeTableMod
     myColumns = columns;
   }
 
+  @Override
   public int getColumnCount() {
     return myColumns.length;
   }
 
+  @Override
   public String getColumnName(int column) {
     return myColumns[column].getName();
   }
 
+  @Override
   public Object getValueAt(Object node, int column) {
     return myColumns[column].valueOf(node);
   }
 
+  @Override
   public int getChildCount(Object parent) {
     return ((TreeNode)parent).getChildCount();
   }
 
+  @Override
   public Object getChild(Object parent, int index) {
     return ((TreeNode)parent).getChildAt(index);
   }
 
+  @Override
   public Class getColumnClass(int column) {
     return myColumns[column].getColumnClass();
   }
 
+  @Override
   public boolean isCellEditable(Object node, int column) {
     return myColumns[column].isCellEditable(node);
   }
 
+  @Override
   public void setValueAt(Object aValue, Object node, int column) {
     myColumns[column].setValue(node, aValue);
   }

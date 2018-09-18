@@ -52,12 +52,12 @@ public interface TreeVisitor {
     private final Function<TreePath, T> converter;
     private final C component;
 
-    public ByComponent(@NotNull C component, @NotNull Function<Object, T> converter) {
+    public ByComponent(@NotNull C component, @NotNull Function<Object, ? extends T> converter) {
       this.converter = currentPath -> converter.fun(currentPath.getLastPathComponent());
       this.component = component;
     }
 
-    public ByComponent(@NotNull C component, @NotNull Class<T> type) {
+    public ByComponent(@NotNull C component, @NotNull Class<? extends T> type) {
       this(component, object -> type.isInstance(object) ? type.cast(object) : null);
     }
 
@@ -103,11 +103,11 @@ public interface TreeVisitor {
     private final TreePath path;
     private final int count;
 
-    public ByTreePath(@NotNull TreePath path, @NotNull Function<Object, T> converter) {
+    public ByTreePath(@NotNull TreePath path, @NotNull Function<Object, ? extends T> converter) {
       this(false, path, converter);
     }
 
-    public ByTreePath(boolean ignoreRoot, @NotNull TreePath path, @NotNull Function<Object, T> converter) {
+    public ByTreePath(boolean ignoreRoot, @NotNull TreePath path, @NotNull Function<Object, ? extends T> converter) {
       this.converter = currentPath -> converter.fun(currentPath.getLastPathComponent());
       this.ignoreRoot = ignoreRoot;
       this.path = path;

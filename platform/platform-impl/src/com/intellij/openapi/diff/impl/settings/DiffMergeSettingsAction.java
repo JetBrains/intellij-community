@@ -56,12 +56,12 @@ public class DiffMergeSettingsAction extends ActionGroup {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return getPreference(mySetting);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       setPreference(mySetting, state);
       for (Editor editor : myEditors) {
         mySetting.apply(editor, state);

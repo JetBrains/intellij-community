@@ -26,6 +26,7 @@ public abstract class JpsModelTestCase extends UsefulTestCase {
   protected TestJpsEventDispatcher myDispatcher;
   protected JpsProject myProject;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myDispatcher = new TestJpsEventDispatcher();

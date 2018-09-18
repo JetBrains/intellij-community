@@ -62,6 +62,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
     myProject = project;
   }
 
+  @Override
   public void reset() {
     ExcludeEntryDescription[] descriptions = myConfiguration.getExcludeEntryDescriptions();
     disposeMyDescriptions();
@@ -83,6 +84,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
     myExcludeEntryDescriptions.clear();
   }
 
+  @Override
   public void apply() {
     myConfiguration.removeAllExcludeEntryDescriptions();
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
@@ -91,6 +93,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
     FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
   }
 
+  @Override
   public boolean isModified() {
     ExcludeEntryDescription[] excludeEntryDescriptions = myConfiguration.getExcludeEntryDescriptions();
     if(excludeEntryDescriptions.length != myExcludeEntryDescriptions.size()) {
@@ -105,6 +108,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
     return false;
   }
 
+  @Override
   public JComponent createComponent() {
     if (myExcludedEntriesPanel == null) {
       myExcludedEntriesPanel = new ExcludedEntriesPanel();
@@ -112,6 +116,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
     return myExcludedEntriesPanel;
   }
 
+  @Override
   public void disposeUIResources() {
     myExcludedEntriesPanel = null;
   }
@@ -124,14 +129,17 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       initPanel();
     }
 
+    @Override
     protected String getLabelText(){
       return null;
     }
 
+    @Override
     protected JButton[] createButtons(){
       final JButton addButton = new JButton(IdeBundle.message("button.add"));
       addButton.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e){
             addPath(myDescriptor);
           }
@@ -141,6 +149,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       myRemoveButton = new JButton(IdeBundle.message("button.remove"));
       myRemoveButton.addActionListener(
         new ActionListener(){
+          @Override
           public void actionPerformed(ActionEvent e){
             removePaths();
           }
@@ -148,6 +157,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       );
       myRemoveButton.setEnabled(false);
       myRemoveButton.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           if (myExcludedTable.getSelectedRow() == -1) {
             myRemoveButton.setEnabled(false);
@@ -233,6 +243,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       });
     }
 
+    @Override
     protected JComponent createMainComponent(){
       final String[] names = {
         CompilerBundle.message("exclude.from.compile.table.path.column.name"),
@@ -240,14 +251,17 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       };
       // Create a model of the data.
       TableModel dataModel = new AbstractTableModel() {
+        @Override
         public int getColumnCount() {
           return names.length;
         }
 
+        @Override
         public int getRowCount() {
           return myExcludeEntryDescriptions.size();
         }
 
+        @Override
         public Object getValueAt(int row, int col) {
           ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
           if(col == 0) {
@@ -264,10 +278,12 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
           return null;
         }
 
+        @Override
         public String getColumnName(int column) {
           return names[column];
         }
 
+        @Override
         public Class getColumnClass(int c) {
           if(c == 0) {
             return String.class;
@@ -278,6 +294,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
           return null;
         }
 
+        @Override
         public boolean isCellEditable(int row, int col) {
           if(col == 1) {
             ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
@@ -286,6 +303,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
           return true;
         }
 
+        @Override
         public void setValueAt(Object aValue, int row, int col) {
           ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
           if (col == 1) {
@@ -311,6 +329,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       cbColumn.setMaxWidth(cbWidth);
       myExcludedTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       myExcludedTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           myRemoveButton.setEnabled(myExcludedTable.getSelectedRow() >= 0);
         }
@@ -348,6 +367,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       setHorizontalAlignment(CENTER);
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
@@ -378,6 +398,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       setUI(new RightAlignedLabelUI());
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       final ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);

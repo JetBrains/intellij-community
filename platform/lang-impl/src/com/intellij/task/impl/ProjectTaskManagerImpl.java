@@ -140,7 +140,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(getTaskRunners())
-          .filter(runner -> runner.canRun(aTask))
+          .filter(runner -> runner.canRun(myProject, aTask))
           .findFirst()
           .orElse(myDummyTaskRunner))
       );

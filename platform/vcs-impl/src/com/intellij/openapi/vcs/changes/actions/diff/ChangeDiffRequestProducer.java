@@ -60,6 +60,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
@@ -419,7 +420,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     ContentRevision aRev = change.getAfterRevision();
     FilePath bPath = bRev != null ? bRev.getFile() : null;
     FilePath aPath = aRev != null ? aRev.getFile() : null;
-    return DiffRequestFactoryImpl.getTitle(bPath, aPath, " -> ");
+    return DiffRequestFactoryImpl.getTitle(bPath, aPath, DIFF_TITLE_RENAME_SEPARATOR);
   }
 
   @NotNull

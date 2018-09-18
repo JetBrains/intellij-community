@@ -3,6 +3,7 @@
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="vcsLogIndexService" interface="com.intellij.vcs.log.VcsLogIndexService"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -16,8 +17,8 @@
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogTabsProperties"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsLogTabsProperties"/>
+    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogProjectTabsProperties"
+                    serviceImplementation="com.intellij.vcs.log.impl.VcsLogProjectTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.history.FileHistoryUiProperties"
@@ -87,7 +88,7 @@
             text="Open Repository Version" description="Open editor with selected revision of the file"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
-            text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
+            text="Get" description="Get version from repository" icon="AllIcons.Actions.Download"/>
     <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
             use-shortcut-of="Annotate"
             text="Annotate" description="Annotate Revision" icon="AllIcons.Actions.Annotate"/>

@@ -97,27 +97,32 @@ public class SearchCommand {
     final MatchResultSink sink = new MatchResultSink() {
       int count;
 
+      @Override
       public void setMatchingProcess(MatchingProcess _process) {
         process = _process;
         findStarted();
       }
 
+      @Override
       public void processFile(PsiFile element) {
         final VirtualFile virtualFile = element.getVirtualFile();
         if (virtualFile != null)
           progress.setText(SSRBundle.message("looking.in.progress.message", virtualFile.getPresentableName()));
       }
 
+      @Override
       public void matchingFinished() {
         if (mySearchContext.getProject().isDisposed()) return;
         findEnded();
         progress.setText(SSRBundle.message("found.progress.message", count));
       }
 
+      @Override
       public ProgressIndicator getProgressIndicator() {
         return progress;
       }
 
+      @Override
       public void newMatch(MatchResult result) {
         UsageInfo info;
 

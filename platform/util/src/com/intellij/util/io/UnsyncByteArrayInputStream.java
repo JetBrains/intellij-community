@@ -30,11 +30,11 @@ public class UnsyncByteArrayInputStream extends InputStream {
     this(buf, 0, buf.length);
   }
 
-  public UnsyncByteArrayInputStream(byte[] buf, int offset, int length) {
+  public UnsyncByteArrayInputStream(@NotNull byte[] buf, int offset, int length) {
     init(buf, offset, length);
   }
 
-  public void init(byte[] buf, int offset, int length) {
+  public void init(@NotNull byte[] buf, int offset, int length) {
     myBuffer = buf;
     myPosition = offset;
     myCount = length;

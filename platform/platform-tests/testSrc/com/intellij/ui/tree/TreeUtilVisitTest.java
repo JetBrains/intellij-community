@@ -12,6 +12,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.ui.tree.TreePathUtil.convertArrayToTreePath;
 import static com.intellij.ui.tree.TreeTestUtil.node;
@@ -435,9 +436,185 @@ public final class TreeUtilVisitTest {
 
   private static void testMakeVisible(String expected, String... array) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test
-      -> TreeUtil.makeVisible(test.getTree(), new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString), path
+      -> TreeUtil.makeVisible(test.getTree(), convertArrayToVisitor(array), path
       -> test.addSelection(path, ()
       -> test.assertTree(expected, true, test::done))));
+  }
+
+  @Test
+  public void testSelect11() {
+    testSelect(convertArrayToVisitor("1", "11"),
+               "-Root\n" +
+               " -1\n" +
+               "  +[11]\n" +
+               "  +12\n" +
+               "  +13\n" +
+               " +2\n" +
+               " +3\n");
+  }
+
+  @Test
+  public void testSelect222() {
+    testSelect(convertArrayToVisitor("2", "22", "222"),
+               "-Root\n" +
+               " +1\n" +
+               " -2\n" +
+               "  +21\n" +
+               "  -22\n" +
+               "   +221\n" +
+               "   +[222]\n" +
+               "   +223\n" +
+               "  +23\n" +
+               " +3\n");
+  }
+
+  @Test
+  public void testSelect3333() {
+    testSelect(convertArrayToVisitor("3", "33", "333", "3333"),
+               "-Root\n" +
+               " +1\n" +
+               " +2\n" +
+               " -3\n" +
+               "  +31\n" +
+               "  +32\n" +
+               "  -33\n" +
+               "   +331\n" +
+               "   +332\n" +
+               "   -333\n" +
+               "    3331\n" +
+               "    3332\n" +
+               "    [3333]\n");
+  }
+
+  private static void testSelect(TreeVisitor visitor, String expected) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+      -> TreeUtil.select(test.getTree(), visitor, path
+      -> test.assertTree(expected, true, test::done)));
+  }
+
+  @Test
+  public void testMultiSelect3333and222and11andRoot() {
+    TreeVisitor[] array = {
+      convertArrayToVisitor("3", "33", "333", "3333"),
+      convertArrayToVisitor("2", "22", "222"),
+      convertArrayToVisitor("1", "11"),
+      path -> TreeVisitor.Action.INTERRUPT,
+    };
+    testMultiSelect(array, array.length,
+                    "-[Root]\n" +
+                    " -1\n" +
+                    "  +[11]\n" +
+                    "  +12\n" +
+                    "  +13\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   +[222]\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " -3\n" +
+                    "  +31\n" +
+                    "  +32\n" +
+                    "  -33\n" +
+                    "   +331\n" +
+                    "   +332\n" +
+                    "   -333\n" +
+                    "    3331\n" +
+                    "    3332\n" +
+                    "    [3333]\n");
+  }
+
+  @Test
+  public void testMultiSelectNothingExceptRoot() {
+    TreeVisitor[] array = {
+      convertArrayToVisitor("3", "33", "333", "[3333]"),
+      convertArrayToVisitor("2", "22", "[222]"),
+      convertArrayToVisitor("1", "[11]"),
+      path -> TreeVisitor.Action.INTERRUPT,
+      null,
+    };
+    testMultiSelect(array, 1,
+                    "-[Root]\n" +
+                    " -1\n" +
+                    "  +11\n" +
+                    "  +12\n" +
+                    "  +13\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   +222\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " -3\n" +
+                    "  +31\n" +
+                    "  +32\n" +
+                    "  -33\n" +
+                    "   +331\n" +
+                    "   +332\n" +
+                    "   -333\n" +
+                    "    3331\n" +
+                    "    3332\n" +
+                    "    3333\n");
+  }
+
+  @Test
+  public void testMultiSelectNothing() {
+    TreeVisitor[] array = {null, null, null};
+    testMultiSelect(array, 0, "+Root\n");
+  }
+
+  private static void testMultiSelect(@NotNull TreeVisitor[] array, int count, @NotNull String expected) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test -> TreeUtil.promiseSelect(test.getTree(), Stream.of(array)).onProcessed(paths -> {
+      test.invokeSafely(() -> {
+        if (count == 0) {
+          Assert.assertNull(paths);
+        }
+        else {
+          Assert.assertNotNull(paths);
+          Assert.assertEquals(count, paths.size());
+        }
+        test.assertTree(expected, true, test::done);
+      });
+    }));
+  }
+
+  @Test
+  public void testSelectFirstEmpty() {
+    testSelectFirst(() -> null, true, "");
+  }
+
+  @Test
+  public void testSelectFirstWithRoot() {
+    testSelectFirst(TreeUtilVisitTest::rootDeep, true, "+[Root]\n");
+  }
+
+  @Test
+  public void testSelectFirstWithoutRoot() {
+    testSelectFirst(TreeUtilVisitTest::rootDeep, false, " +[1]\n" + " +2\n" + " +3\n");
+  }
+
+  private static void testSelectFirst(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
+    TreeTest.test(root, test -> {
+      test.getTree().setRootVisible(visible);
+      TreeUtil.promiseSelectFirst(test.getTree()).onProcessed(path -> {
+        test.invokeSafely(() -> {
+          if (expected.isEmpty()) {
+            Assert.assertNull(path);
+          }
+          else {
+            Assert.assertNotNull(path);
+            Assert.assertTrue(test.getTree().isVisible(path));
+          }
+          test.assertTree(expected, true, test::done);
+        });
+      });
+    });
+  }
+
+  private static TreeVisitor convertArrayToVisitor(@NotNull String... array) {
+    return new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString);
   }
 
   private static String value(TreePath path) {

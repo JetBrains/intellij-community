@@ -26,14 +26,17 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class PsiViewerMethodExtension extends JavaPsiViewerExtension {
+  @Override
   public String getName() {
     return "Java Method";
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.METHOD_ICON;
   }
 
+  @Override
   public PsiElement createElement(Project project, String text) {
     return getFactory(project).createMethodFromText(text, null);
   }

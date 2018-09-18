@@ -305,7 +305,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     }
 
     @Override
-    protected void update(final PresentationData presentation) {
+    protected void update(@NotNull final PresentationData presentation) {
       presentation.setPresentableText(myName);
     }
 

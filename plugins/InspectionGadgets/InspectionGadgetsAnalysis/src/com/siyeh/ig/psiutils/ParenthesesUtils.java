@@ -185,7 +185,9 @@ public class ParenthesesUtils {
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
       PsiExpression newExpression = ExpressionUtils.replacePolyadicWithParent(parenthesizedExpression, body);
       if (newExpression == null){
-        newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
+        CommentTracker commentTracker = new CommentTracker();
+        commentTracker.markUnchanged(body);
+        newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);
       }
       removeParentheses(newExpression, ignoreClarifyingParentheses);
     }

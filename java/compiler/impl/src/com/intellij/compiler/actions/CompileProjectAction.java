@@ -27,6 +27,7 @@ import com.intellij.task.ProjectTaskResult;
 import org.jetbrains.annotations.NotNull;
 
 public class CompileProjectAction extends CompileActionBase {
+  @Override
   protected void doAction(DataContext dataContext, final Project project) {
     ProjectTaskManager.getInstance(project).rebuildAllModules(new ProjectTaskNotification() {
       @Override
@@ -43,7 +44,8 @@ public class CompileProjectAction extends CompileActionBase {
     });
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     if (!presentation.isEnabled()) {

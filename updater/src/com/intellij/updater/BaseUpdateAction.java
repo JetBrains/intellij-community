@@ -1,19 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
+
+import com.intellij.updater.Utils.OpenByteArrayOutputStream;
+import ie.wombat.jbdiff.JBDiff;
+import ie.wombat.jbdiff.JBPatch;
 
 import java.io.*;
 import java.util.Objects;
@@ -40,10 +30,10 @@ import java.util.zip.ZipOutputStream;
  * </p>
  */
 public abstract class BaseUpdateAction extends PatchAction {
+
   private final String mySource;
   private final boolean myIsMove;
   private final boolean myInPlace;
-
 
   public BaseUpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
     super(patch, path, checksum);
@@ -75,11 +65,7 @@ public abstract class BaseUpdateAction extends PatchAction {
     return new File(toDir, mySource);
   }
 
-  public String getSourcePath() {
-    return mySource;
-  }
-
-  public boolean isMove() {
+  protected boolean isMove() {
     return myIsMove;
   }
 
@@ -103,13 +89,24 @@ public abstract class BaseUpdateAction extends PatchAction {
       result = doValidateAccess(getFile(toDir), ValidationResult.Action.UPDATE, true);
       if (result != null) return result;
     }
-    return doValidateNotChanged(fromFile, ValidationResult.Kind.ERROR, ValidationResult.Action.UPDATE);
+    return doValidateNotChanged(fromFile, ValidationResult.Action.UPDATE);
   }
 
   @Override
-  protected void doBackup(File toFile, File backupFile) throws IOException {
+  public boolean mandatoryBackup() {
+    return !myInPlace;
+  }
+
+  @Override
+  public void backup(File toDir, File backupDir) throws IOException {
     if (myInPlace) {
-      Utils.copy(toFile, backupFile);
+      Utils.copy(getFile(toDir), getFile(backupDir));
+    }
+    else {
+      File moveBackup = getSource(backupDir);
+      if (!moveBackup.exists()) {
+        Utils.copy(getSource(toDir), moveBackup);
+      }
     }
   }
 
@@ -130,12 +127,6 @@ public abstract class BaseUpdateAction extends PatchAction {
     else {
       Utils.delete(toFile);
     }
-  }
-
-  protected void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
-    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(olderFile, newerFile, isCritical(), myPatch.getLargeFileCutoff());
-    patchOutput.write(algorithm.getId());
-    algorithm.writeDiff(olderFile, newerFile, patchOutput);
   }
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {

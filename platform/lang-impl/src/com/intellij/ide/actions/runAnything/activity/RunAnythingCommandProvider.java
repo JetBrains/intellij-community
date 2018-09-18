@@ -35,6 +35,7 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
   public final String AD_DELETE_COMMAND_TEXT =
     IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
 
+  @Override
   public void execute(@NotNull DataContext dataContext, @NotNull String value) {
     VirtualFile workDirectory = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
     Executor executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY);
@@ -57,8 +58,11 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
 
     dataContext = RunAnythingCommandCustomizer.customizeContext(dataContext);
 
-    GeneralCommandLine initialCommandLine = new GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
-      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+    GeneralCommandLine initialCommandLine =
+      new GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+        .withWorkDirectory(workDirectory.getPath());
+
     GeneralCommandLine commandLine = RunAnythingCommandCustomizer.customizeCommandLine(dataContext, workDirectory, initialCommandLine);
     try {
       RunAnythingRunProfile runAnythingRunProfile = new RunAnythingRunProfile(

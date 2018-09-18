@@ -38,6 +38,7 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
     return myWrappee;
   }
 
+  @Override
   public PsiElement getParent() {
     return myWrappee.getParent();
   }
@@ -52,10 +53,12 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
     myNavigatable.navigate(requestFocus);
   }
 
+  @Override
   public String getTypeName() {
     return "Property";
   }
 
+  @Override
   public Icon getIcon() {
     return MavenIcons.MavenLogo;
   }

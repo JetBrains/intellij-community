@@ -12,10 +12,10 @@
  */
 package org.netbeans.lib.cvsclient.admin;
 
+import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
 import org.netbeans.lib.cvsclient.file.*;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -54,7 +54,8 @@ public final class AdminReader
 	/**
 	 * Get the Entry for the specified file, if one exists
 	 */
-	public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+	@Override
+        public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
 		final File directory = cvsFileSystem.getAdminFileSystem().getFile(fileObject.getParent());
 
 		try {
@@ -67,7 +68,8 @@ public final class AdminReader
 		}
 	}
 
-	public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
+	@Override
+        public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
 		final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
 
 		try {
@@ -89,7 +91,8 @@ public final class AdminReader
 	 * However, the path stored in that file is relative to the repository
 	 * path
 	 */
-	public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) throws IOException {
+	@Override
+        public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) throws IOException {
 		final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
 		// if there is no "CVS/Repository" file, try to search up the file-hierarchy
 		File repositoryFile;
@@ -133,11 +136,13 @@ public final class AdminReader
 		// must be a forward slash, regardless of the local filing system
 	}
 
-	public String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
 		return AdminUtils.getStickyTagForDirectory(directoryObject, cvsFileSystem);
 	}
 
-	public boolean hasCvsDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public boolean hasCvsDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
 		BugLog.getInstance().assertNotNull(directoryObject);
 		BugLog.getInstance().assertNotNull(cvsFileSystem);
 
@@ -145,11 +150,13 @@ public final class AdminReader
 		return new File(directory, CVS_DIR_NAME).isDirectory();
 	}
 
-	public boolean isModified(FileObject fileObject, Date entryLastModified, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public boolean isModified(FileObject fileObject, Date entryLastModified, ICvsFileSystem cvsFileSystem) {
 		final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 		return !DateComparator.getInstance().equals(file.lastModified(), entryLastModified.getTime());
 	}
 
+    @Override
     public boolean isStatic(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
         BugLog.getInstance().assertNotNull(directoryObject);
         BugLog.getInstance().assertNotNull(cvsFileSystem);

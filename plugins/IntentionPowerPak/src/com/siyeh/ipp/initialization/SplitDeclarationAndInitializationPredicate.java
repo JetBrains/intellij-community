@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 class SplitDeclarationAndInitializationPredicate
   implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiField)) {

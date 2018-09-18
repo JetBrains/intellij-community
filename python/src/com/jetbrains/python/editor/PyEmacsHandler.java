@@ -95,7 +95,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     int caretLine = document.getLineNumber(caretOffset);
-    if (isLineContainsWhiteSpacesOnlyEmpty(document, caretLine)) {
+    if (DocumentUtil.isLineEmpty(document, caretLine)) {
       return Result.CONTINUE;
     }
     
@@ -124,7 +124,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     PsiElement element = context.file.findElementAt(context.editor.getCaretModel().getOffset());
 
     int prevLine = context.targetLine - 1;
-    while (prevLine >= 0 && isLineContainsWhiteSpacesOnlyEmpty(context.document, prevLine)) {
+    while (prevLine >= 0 && DocumentUtil.isLineEmpty(context.document, prevLine)) {
       prevLine--;
     }
 
@@ -187,7 +187,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
 
     int newIndent = -1;
     for (int line = 0; line < context.targetLine; line++) {
-      if (isLineContainsWhiteSpacesOnlyEmpty(context.document, line)) {
+      if (DocumentUtil.isLineEmpty(context.document, line)) {
         continue;
       }
       int indent = getLineIndent(context, line);
@@ -220,12 +220,10 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
   }
 
   private static boolean containsNonWhiteSpaceData(@NotNull Document document, int startLine, int endLine) {
-    CharSequence text = document.getCharsSequence();
-    int start = document.getLineStartOffset(startLine);
-    int end = document.getLineStartOffset(endLine);
+    final int start = document.getLineStartOffset(startLine);
+    final int end = document.getLineStartOffset(endLine);
     for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
-      if (c != ' ' && c != '\t' && c != '\n') {
+      if (!DocumentUtil.isLineEmpty(document, i)) {
         return true;
       }
     }
@@ -253,7 +251,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
     int indentUsedLastTime = Integer.MAX_VALUE;
     for (int i = targetLine - 1; i >= 0 && indentUsedLastTime > targetLineIndent; i--) {
-      if (isLineContainsWhiteSpacesOnlyEmpty(context.document, i)) {
+      if (DocumentUtil.isLineEmpty(context.document, i)) {
         continue;
       }
       int indent = getLineIndent(context, i);
@@ -273,20 +271,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
     return result;
   }
-  
-  private static boolean isLineContainsWhiteSpacesOnlyEmpty(@NotNull Document document, int line) {
-    int start = document.getLineStartOffset(line);
-    int end = document.getLineEndOffset(line);
-    CharSequence text = document.getCharsSequence();
-    for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
-      if (c != ' ' && c != '\t') {
-        return false;
-      }
-    }
-    return true;
-  }
-  
+
   private static boolean isLineStartsWithCompoundStatement(@NotNull ChangeIndentContext context, int line) {
     PsiElement element = context.file.findElementAt(context.document.getLineStartOffset(line) + getLineIndent(context, line));
     if (element == null) {

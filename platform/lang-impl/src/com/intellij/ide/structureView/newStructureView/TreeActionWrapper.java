@@ -23,7 +23,7 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware, Action
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     ActionPresentation actionPresentation = myAction.getPresentation();
@@ -34,12 +34,12 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware, Action
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return TreeModelWrapper.isActive(myAction, myStructureView);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     myStructureView.setActionActive(myAction.getName(), TreeModelWrapper.shouldRevert(myAction) ?  !state : state);
   }
 

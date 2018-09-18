@@ -78,7 +78,7 @@ class SwitchStatementBranch {
     return m_hasStatements;
   }
 
-  public void addPendingVariableDeclarations(Set<PsiLocalVariable> vars) {
+  public void addPendingVariableDeclarations(Set<? extends PsiLocalVariable> vars) {
     m_pendingVariableDeclarations.addAll(vars);
   }
 

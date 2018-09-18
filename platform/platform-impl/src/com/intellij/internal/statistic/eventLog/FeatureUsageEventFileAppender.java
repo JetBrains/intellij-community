@@ -48,10 +48,12 @@ public class FeatureUsageEventFileAppender extends FileAppender {
     return (CountingQuietWriter)this.qw;
   }
 
+  @Override
   protected void setQWForFiles(Writer writer) {
     this.qw = new CountingQuietWriter(writer, errorHandler);
   }
 
+  @Override
   public synchronized void setFile(String fileName, boolean append, boolean bufferedIO, int bufferSize) throws IOException {
     super.setFile(fileName, append, bufferedIO, bufferSize);
     if (append && qw instanceof CountingQuietWriter) {
@@ -60,6 +62,7 @@ public class FeatureUsageEventFileAppender extends FileAppender {
     }
   }
 
+  @Override
   protected void subAppend(LoggingEvent event) {
     super.subAppend(event);
     if (fileName != null && qw != null) {

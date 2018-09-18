@@ -76,10 +76,10 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
   protected abstract PackagingElement<?> createElement(ArtifactEditorContext context, F facet);
 
   protected static class FacetBasedSourceItem<F extends Facet> extends PackagingSourceItem {
-    private final FacetBasedPackagingSourceItemsProvider<F, ?> myProvider;
+    private final FacetBasedPackagingSourceItemsProvider<? super F, ?> myProvider;
     private final F myFacet;
 
-    public FacetBasedSourceItem(FacetBasedPackagingSourceItemsProvider<F, ?> provider, F facet) {
+    public FacetBasedSourceItem(FacetBasedPackagingSourceItemsProvider<? super F, ?> provider, F facet) {
       myProvider = provider;
       myFacet = facet;
     }

@@ -44,8 +44,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(revisions.size(), versions);
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
-    assertEquals(revisions.get(1).getContent(), INITIAL_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(0).loadContent(), UPDATED_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(1).loadContent(), INITIAL_FILE_CONTENT.getBytes());
   }
 
   /**
@@ -78,8 +78,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(revisions.size(), versions);
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
-    assertEquals(revisions.get(2).getContent(), INITIAL_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(0).loadContent(), UPDATED_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(2).loadContent(), INITIAL_FILE_CONTENT.getBytes());
   }
   
   @Test
@@ -108,8 +108,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(revisions.size(), versions);
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
-    assertEquals(revisions.get(1).getContent(), INITIAL_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(0).loadContent(), UPDATED_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(1).loadContent(), INITIAL_FILE_CONTENT.getBytes());
     
   }
 

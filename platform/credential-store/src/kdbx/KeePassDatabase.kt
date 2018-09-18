@@ -29,7 +29,7 @@ private const val ROOT_ELEMENT_NAME = "Root"
 
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
-class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
+internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
   private val dbMeta: Element
     get() = rootElement.getChild("Meta") ?: throw IllegalStateException("no meta")
 

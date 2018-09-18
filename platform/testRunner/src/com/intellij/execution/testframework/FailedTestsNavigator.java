@@ -20,6 +20,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -30,14 +31,17 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");
   private TestFrameworkRunningModel myModel;
 
+  @Override
   public boolean hasNextOccurence() {
     return myModel != null && getNextOccurenceInfo().hasNextOccurence();
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return myModel != null && getPreviousOccurenceInfo().hasNextOccurence();
   }
 
+  @Override
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
     final FailedTestInfo result = getNextOccurenceInfo();
     myModel.selectAndNotify(result.getDefect());
@@ -48,12 +52,14 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
     Disposer.register(myModel, new Disposable() {
+      @Override
       public void dispose() {
         myModel = null;
       }
     });
   }
 
+  @Override
   public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
     final FailedTestInfo result = getPreviousOccurenceInfo();
     myModel.selectAndNotify(result.getDefect());
@@ -61,10 +67,14 @@ public class FailedTestsNavigator implements OccurenceNavigator {
                              result.getDefectsCount());
   }
 
+  @NotNull
+  @Override
   public String getNextOccurenceActionName() {
     return NEXT_NAME;
   }
 
+  @NotNull
+  @Override
   public String getPreviousOccurenceActionName() {
     return PREVIOUS_NAME;
   }
@@ -147,20 +157,24 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   }
 
   private class NextFailedTestInfo extends FailedTestInfo {
+    @Override
     protected int nextIndex(final int defectIndex) {
       return defectIndex + 1;
     }
 
+    @Override
     protected int getBoundIndex() {
       return getDefectsCount() - 1;
     }
   }
 
   private class PreviousFailedTestInfo extends FailedTestInfo {
+    @Override
     protected int nextIndex(final int defectIndex) {
       return defectIndex - 1;
     }
 
+    @Override
     protected int getBoundIndex() {
       return 0;
     }

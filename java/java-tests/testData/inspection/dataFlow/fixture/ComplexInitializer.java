@@ -13,7 +13,7 @@ class InitializerTest {
     z = "foo";
   }
 
-  boolean b = <warning descr="Condition 'z.startsWith(\"bar\")' is always 'false'">z.startsWith("bar")</warning>;
+  boolean b = <warning descr="Result of 'z.startsWith(\"bar\")' is always 'false'">z.startsWith("bar")</warning>;
 
   static final String ABC;
   static {
@@ -24,7 +24,7 @@ class InitializerTest {
     }
   }
 
-  static final String XYZ = ABC.<warning descr="Method invocation 'toLowerCase' may produce 'java.lang.NullPointerException'">toLowerCase</warning>();
+  static final String XYZ = ABC.<warning descr="Method invocation 'toLowerCase' may produce 'NullPointerException'">toLowerCase</warning>();
 
   static {
     new InitializerTest(); // INITIALIZED is not initialized yet here

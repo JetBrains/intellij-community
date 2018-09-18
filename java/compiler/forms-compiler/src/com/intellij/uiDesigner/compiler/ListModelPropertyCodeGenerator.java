@@ -32,6 +32,7 @@ public class ListModelPropertyCodeGenerator extends PropertyCodeGenerator {
     myListModelType = Type.getType(aClass);
   }
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     String[] items = (String[]) value;
     int listModelLocal = generator.newLocal(myListModelType);

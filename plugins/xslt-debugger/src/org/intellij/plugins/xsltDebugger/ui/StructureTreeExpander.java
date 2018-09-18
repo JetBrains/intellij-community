@@ -28,18 +28,22 @@ public class StructureTreeExpander implements TreeExpander {
     myTree = tree;
   }
 
+  @Override
   public void expandAll() {
     TreeUtil.expandAll(myTree);
   }
 
+  @Override
   public boolean canExpand() {
     return true;
   }
 
+  @Override
   public void collapseAll() {
     TreeUtil.collapseAll(myTree, 1);
   }
 
+  @Override
   public boolean canCollapse() {
     return true;
   }

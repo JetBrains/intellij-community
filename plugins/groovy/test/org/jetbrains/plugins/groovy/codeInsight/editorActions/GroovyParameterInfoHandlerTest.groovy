@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.EditorHintFixture
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.EdtRule
 import org.jetbrains.plugins.groovy.util.FixtureRule
@@ -26,6 +27,7 @@ class GroovyParameterInfoHandlerTest implements ResolveTest {
   @Rule
   public final TestRule myRules = RuleChain.outerRule(myNameRule).around(myFixtureRule).around(new EdtRule())
 
+  @NotNull
   @Override
   CodeInsightTestFixture getFixture() {
     myFixtureRule.fixture

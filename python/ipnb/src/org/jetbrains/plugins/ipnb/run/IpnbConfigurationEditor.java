@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.run;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -40,6 +41,7 @@ public class IpnbConfigurationEditor extends SettingsEditor<IpnbRunConfiguration
     fileChooserDescriptor.setTitle(title);
   }
 
+  @Override
   protected void resetEditorFrom(@NotNull IpnbRunConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myCommonOptionsForm);
     setHost(s.getHost());
@@ -47,6 +49,7 @@ public class IpnbConfigurationEditor extends SettingsEditor<IpnbRunConfiguration
     myAdditionalOptionsTextField.setText(s.getAdditionalOptions());
   }
 
+  @Override
   protected void applyEditorTo(@NotNull IpnbRunConfiguration s) throws ConfigurationException {
     AbstractPythonRunConfiguration.copyParams(myCommonOptionsForm, s);
 
@@ -73,6 +76,7 @@ public class IpnbConfigurationEditor extends SettingsEditor<IpnbRunConfiguration
     myPortTextField.setText(StringUtil.isEmptyOrSpaces(port) ? DEFAULT_PORT : port);
   }
 
+  @Override
   @NotNull
   protected JComponent createEditor() {
     return myPanel;

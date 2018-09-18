@@ -29,14 +29,6 @@ public class LocationUtil {
     return isJarAttached(location, aPackage.getDirectories(), fqn);
   }
 
-  /**
-   * @see #isJarAttached(Location, PsiDirectory[], String...) or {@link #isJarAttached(Location, PsiPackage, String...)}
-   */
-  @Deprecated
-  public static boolean isJarAttached(@NotNull Location location, String fqn, PsiDirectory[] directories) {
-    return isJarAttached(location, directories, fqn);
-  }
-
   public static boolean isJarAttached(@NotNull Location location,
                                       final PsiDirectory[] directories,
                                       final String... fqns) {

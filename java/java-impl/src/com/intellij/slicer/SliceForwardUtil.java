@@ -44,7 +44,7 @@ import java.util.Set;
 class SliceForwardUtil {
   static boolean processUsagesFlownFromThe(@NotNull PsiElement element,
                                            @NotNull final JavaSliceUsage parent,
-                                           @NotNull final Processor<SliceUsage> processor) {
+                                           @NotNull final Processor<? super SliceUsage> processor) {
     PsiExpression expression = getMethodCallTarget(element);
     if (expression != null) {
       SliceUsage usage = SliceUtil.createSliceUsage(expression, parent, parent.getSubstitutor(), parent.indexNesting, "");
@@ -105,7 +105,7 @@ class SliceForwardUtil {
   private static boolean processAssignedFrom(@NotNull PsiElement from,
                                              @NotNull PsiElement context,
                                              @NotNull JavaSliceUsage parent,
-                                             @NotNull final Processor<SliceUsage> processor) {
+                                             @NotNull final Processor<? super SliceUsage> processor) {
     if (from instanceof PsiLocalVariable) {
       return searchReferencesAndProcessAssignmentTarget(from, context, parent, processor);
     }
@@ -187,7 +187,7 @@ class SliceForwardUtil {
   private static boolean searchReferencesAndProcessAssignmentTarget(@NotNull PsiElement element,
                                                                     @Nullable final PsiElement context,
                                                                     @NotNull JavaSliceUsage parent,
-                                                                    @NotNull Processor<SliceUsage> processor) {
+                                                                    @NotNull Processor<? super SliceUsage> processor) {
     return ReferencesSearch.search(element).forEach(reference -> {
       PsiElement element1 = reference.getElement();
       if (context != null && element1.getTextOffset() < context.getTextOffset()) return true;
@@ -197,7 +197,7 @@ class SliceForwardUtil {
 
   private static boolean processAssignmentTarget(@NotNull PsiElement element,
                                                  @NotNull JavaSliceUsage parent,
-                                                 @NotNull Processor<SliceUsage> processor) {
+                                                 @NotNull Processor<? super SliceUsage> processor) {
     if (!parent.params.scope.contains(element)) return true;
     if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
     if (element.getLanguage() != JavaLanguage.INSTANCE) {

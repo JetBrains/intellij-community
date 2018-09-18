@@ -14,6 +14,7 @@ public class KeyShortcutCommand extends TypeCommand {
     super(text, line, false);
   }
 
+  @Override
   public Promise<Object> _execute(PlaybackContext context) {
     final String one = getText().substring(PREFIX.length());
     if (!one.endsWith(POSTFIX)) {

@@ -54,7 +54,7 @@ class InitializationDependencyUtils {
 
   @SuppressWarnings({"MethodWithMultipleLoops"})
   static void tabulateInitializationDependencyClasses(
-    RefElement element, Set<RefClass> dependencies) {
+    RefElement element, Set<? super RefClass> dependencies) {
     final Collection<RefElement> references = element.getOutReferences();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     for (RefElement reference : references) {
@@ -88,7 +88,7 @@ class InitializationDependencyUtils {
   }
 
   private static void tabulateTransitiveInitializationDependencyClasses(
-    RefClass refClass, Set<RefClass> newDependencies) {
+    RefClass refClass, Set<? super RefClass> newDependencies) {
     final LinkedList<RefClass> pendingClasses = new LinkedList<>();
     final Set<RefClass> processedClasses = new HashSet<>();
     pendingClasses.addLast(refClass);
@@ -125,7 +125,7 @@ class InitializationDependencyUtils {
 
   @SuppressWarnings({"MethodWithMultipleLoops"})
   private static void tabulateInitializationDependentClasses(
-    RefElement element, Set<RefClass> dependents) {
+    RefElement element, Set<? super RefClass> dependents) {
     final Collection<RefElement> references = element.getInReferences();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     for (RefElement reference : references) {
@@ -158,7 +158,7 @@ class InitializationDependencyUtils {
   }
 
   private static void tabulateInitializationTransitiveDependentClasses(
-    RefClass refClass, Set<RefClass> newDependents) {
+    RefClass refClass, Set<? super RefClass> newDependents) {
     final LinkedList<RefClass> pendingClasses = new LinkedList<>();
     final Set<RefClass> processedClasses = new HashSet<>();
     pendingClasses.addLast(refClass);

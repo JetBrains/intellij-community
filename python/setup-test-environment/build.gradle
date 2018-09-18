@@ -77,7 +77,7 @@ envs {
   }
 
   createPython("py2_django18_full",
-               "2.7.14",
+               "2.7.15",
                ["django==1.8", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
                 + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ) //win32api is required for pypiwin32
                ,
@@ -98,7 +98,7 @@ envs {
                true)
 
   createPython("py36_django1_11",
-               "3.6.4",
+               "3.6.6",
                ["django==1.11", "jinja2", "pandas"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
                true)
@@ -107,7 +107,7 @@ envs {
     createPython("pyqt_env", "3.5.4", ["pyqt5==5.10.1"], "pyqt5", true)
   }
 
-  createPython("django_latest", "3.5.3", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
+  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave"], "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango20", true)
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
 

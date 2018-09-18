@@ -210,7 +210,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
     }, myProject);
     VcsLogRefresherImpl refresher =
-      new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
+      new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(),
+                              myLogData.getModifiableIndex(),
                               new VcsLogProgress(myProject, myLogData),
                               myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
       ) {

@@ -126,6 +126,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       return psiClass.isEnum() ? psiClass : null;
     }
 
+    @Override
     protected boolean isConstant(PsiField field) {
       return field instanceof PsiEnumConstant;
     }
@@ -166,6 +167,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       return getPsiClass();
     }
 
+    @Override
     protected boolean isConstant(PsiField field) {
       return field.hasModifierProperty(PsiModifier.STATIC) &&
              field.hasModifierProperty(PsiModifier.FINAL) &&

@@ -40,6 +40,7 @@ import org.jetbrains.idea.maven.dom.model.presentation.MavenArtifactCoordinatesP
  */
 @Presentation(typeName = "Dependency", icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
 public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoordinates {
+  @Override
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getVersion();
 

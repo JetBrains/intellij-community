@@ -237,8 +237,11 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     if (name == null) return false;
     return CachedValuesManager.getCachedValue(element, () -> {
       PsiFile file = element.getContainingFile();
-      int[] occurrences = new StringSearcher(name, true, true).findAllOccurrences(file.getViewProvider().getContents());
-      return CachedValueProvider.Result.create(occurrences.length <= MAX_OCCURRENCES, file);
+      StringSearcher searcher = new StringSearcher(name, true, true);
+      CharSequence contents = file.getViewProvider().getContents();
+      int[] count = new int[1];
+      boolean cheapEnough = searcher.processOccurrences(contents, __->++count[0] <= MAX_OCCURRENCES);
+      return CachedValueProvider.Result.create(cheapEnough, file);
     });
   }
 }

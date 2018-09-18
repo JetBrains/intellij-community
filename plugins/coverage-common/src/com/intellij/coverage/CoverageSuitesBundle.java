@@ -149,6 +149,9 @@ public class CoverageSuitesBundle {
 
   public void restoreCoverageData() {
     myData = new SoftReference<>(null);
+    for (CoverageSuite suite : mySuites) {
+      suite.restoreCoverageData();
+    }
   }
 
   public String getPresentableName() {

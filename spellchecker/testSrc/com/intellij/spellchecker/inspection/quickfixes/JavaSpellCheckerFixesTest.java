@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.inspection.quickfixes;
 
 public class JavaSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
+  @Override
   protected String getExtension() {
     return ".java";
   }
@@ -23,7 +24,7 @@ public class JavaSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   public void testSimpleWordChangeTo() {
     doChangeToTest();
   }
-  
+
   public void testInjectionChangeTo() {
     doChangeToTest();
   }

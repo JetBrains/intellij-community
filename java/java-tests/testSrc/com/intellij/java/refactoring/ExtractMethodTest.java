@@ -272,7 +272,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testFinalParamUsedInsideAnon() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = false;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = false;
     doTestWithJava17();
   }
 
@@ -289,7 +289,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testNonFinalWritableParam() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = true;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = true;
     doTest();
   }
 
@@ -557,15 +557,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testReassignedVarAfterCall() throws Exception {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
-    try {
-      settings.GENERATE_FINAL_LOCALS = true;
-      doTest();
-    }
-    finally {
-      settings.GENERATE_FINAL_LOCALS = oldGenerateFinalLocals;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.GENERATE_FINAL_LOCALS = true;
+    doTest();
   }
 
   public void testNonPhysicalAssumptions() throws Exception {
@@ -1013,15 +1007,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testDefaultNamesConflictResolution() throws Exception {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    final String oldPrefix = settings.LOCAL_VARIABLE_NAME_PREFIX;
-    try {
-      settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
-      doTest();
-    }
-    finally {
-      settings.LOCAL_VARIABLE_NAME_PREFIX = oldPrefix;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
+    doTest();
   }
 
   public void testInferredNotNull() throws Exception {
@@ -1290,6 +1278,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testArgumentFoldingMethodCall() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testBoxedConditionalReturn() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testAvoidGenericArgumentCast() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testAvoidGenericArgumentCastLocalClass() throws Exception {
     doDuplicatesTest();
   }
 

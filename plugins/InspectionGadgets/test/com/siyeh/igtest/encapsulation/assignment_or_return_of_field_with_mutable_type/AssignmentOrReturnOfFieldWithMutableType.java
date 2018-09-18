@@ -172,3 +172,14 @@ class ReturnImmutableCollection {
         return names;
     }
 }
+
+class NoArrayInitializer {
+    static final String[] EMPTY;
+    static {
+        EMPTY = new String[0];
+    }
+
+    String[] getStr() {
+        return EMPTY;
+    }
+}

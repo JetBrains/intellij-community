@@ -117,6 +117,7 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   /** @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead */
+  @Deprecated
   public static Sdk getModuleJdk(final Module module) throws CantRunException {
     return getValidJdkToRunModule(module, false);
   }

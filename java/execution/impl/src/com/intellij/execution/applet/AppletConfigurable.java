@@ -62,19 +62,23 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
   private static final ColumnInfo[] PARAMETER_COLUMNS = new ColumnInfo[]{
     new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")) {
+      @Override
       public String valueOf(final AppletParameter appletParameter) {
         return appletParameter.getName();
       }
 
+      @Override
       public void setValue(final AppletParameter appletParameter, final String name) {
         appletParameter.setName(name);
       }
     },
     new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.value.column")) {
+      @Override
       public String valueOf(final AppletParameter appletParameter) {
         return appletParameter.getValue();
       }
 
+      @Override
       public void setValue(final AppletParameter appletParameter, final String value) {
         appletParameter.setValue(value);
       }
@@ -129,11 +133,13 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     getVMParametersComponent().setDialogCaption(myVMParameters.getRawText());
 
     myMainClass.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         changePanel();
       }
     });
     myURL.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         changePanel();
       }
@@ -199,12 +205,14 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return s.length() == 0 ? null : s.replace(File.separatorChar, '/');
   }
 
+  @Override
   public void applyEditorTo(@NotNull final AppletConfiguration configuration) {
     checkEditorData(configuration);
     myTable.stopEditing();
     configuration.getOptions().setAppletParameters(cloneParameters(myParameters.getItems()));
   }
 
+  @Override
   public void resetEditorFrom(@NotNull AppletConfiguration runConfiguration) {
     AppletConfigurationOptions configuration = runConfiguration.getOptions();
     getClassNameComponent().setText(configuration.getMainClassName());
@@ -235,11 +243,13 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     return myWholePanel;
   }
 
+  @Override
   public void checkEditorData(@NotNull AppletConfiguration runConfiguration) {
     AppletConfigurationOptions configuration = runConfiguration.getOptions();
     runConfiguration.setMainClassName(getClassNameComponent().getText().trim());
@@ -286,12 +296,14 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       super(name);
     }
 
+    @Override
     public TableCellEditor getEditor(final AppletParameter item) {
       final JTextField textField = new JTextField();
       textField.setBorder(BorderFactory.createLineBorder(Color.BLACK));
       return new DefaultCellEditor(textField);
     }
 
+    @Override
     public boolean isCellEditable(final AppletParameter appletParameter) {
       return true;
     }

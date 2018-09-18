@@ -234,7 +234,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
                                                    final Editor editor,
                                                    final PsiMethod constructor,
                                                    final PsiField[] fields,
-                                                   final List<SmartPsiElementPointer<PsiElement>> cleanupElements) throws IncorrectOperationException {
+                                                   final List<? super SmartPsiElementPointer<PsiElement>> cleanupElements) throws IncorrectOperationException {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     ParameterInfoImpl[] newParamInfos = new ParameterInfoImpl[parameters.length + fields.length];
@@ -317,7 +317,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static boolean doCreate(Project project, Editor editor, PsiParameter[] parameters, SmartPsiElementPointer constructorPointer,
-                                  ParameterInfoImpl[] parameterInfos, Map<PsiField, String> fields, List<SmartPsiElementPointer<PsiElement>> cleanupElements) {
+                                  ParameterInfoImpl[] parameterInfos, Map<PsiField, String> fields, List<? super SmartPsiElementPointer<PsiElement>> cleanupElements) {
     PsiMethod constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();

@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -266,6 +267,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
 
     addTypeParametersFolding(list, document, parameterList, 3, quick);
+  }
+
+  private static void addLocalVariableTypeFolding(@NotNull List<? super FoldingDescriptor> list,
+                                                  @NotNull PsiVariable expression,
+                                                  boolean quick) {
+    if (quick) return; // presentable text may require resolve
+    PsiTypeElement typeElement = expression.getTypeElement();
+    if (typeElement == null) return;
+    if (!typeElement.isInferredType()) return;
+    String presentableText = expression.getType().getPresentableText();
+    list.add(new NamedFoldingDescriptor(typeElement.getNode(), typeElement.getTextRange(), null, presentableText, true, Collections.emptySet()));
   }
 
   private static boolean resolvesCorrectly(@NotNull PsiReferenceExpression expression) {
@@ -549,7 +561,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
 
     PsiCodeBlock body = method.getBody();
-    if (body != null && !oneLiner) {
+    if (body != null) {
       addCodeBlockFolds(list, body, processedComments, document, quick);
     }
   }
@@ -678,6 +690,15 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
+      public void visitVariable(PsiVariable variable) {
+        if (!dumb && JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType()) {
+          addLocalVariableTypeFolding(list, variable, quick);
+        }
+
+        super.visitVariable(variable);
+      }
+
+      @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         if (!dumb) {
           addMethodGenericParametersFolding(list, expression, document, quick);
@@ -703,6 +724,14 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                     JavaCodeFoldingSettings.getInstance().isCollapseAnonymousClasses());
         }
         super.visitLambdaExpression(expression);
+      }
+
+      @Override
+      public void visitCodeBlock(PsiCodeBlock block) {
+        if (Registry.is("java.folding.icons.for.control.flow", true) && block.getStatementCount() > 0) {
+          addToFold(list, block, document, false, getCodeBlockPlaceholder(block), block.getTextRange(), false);
+        }
+        super.visitCodeBlock(block);
       }
 
       @Override

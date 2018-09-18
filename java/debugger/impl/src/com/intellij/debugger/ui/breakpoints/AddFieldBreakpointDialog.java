@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -33,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -53,14 +40,17 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myClassChooser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
+      @Override
+      public void textChanged(@NotNull DocumentEvent event) {
         updateUI();
       }
     });
 
     myClassChooser.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(DebuggerBundle.message("add.field.breakpoint.dialog.classchooser.title"));
@@ -82,6 +72,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     });
 
     myFieldChooser.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         PsiClass selectedClass = getSelectedClass();
         if (selectedClass != null) {
@@ -117,6 +108,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassChooser.getTextField();
   }
@@ -125,6 +117,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     return myClassChooser.getText();
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
   }
@@ -135,6 +128,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
 
   protected abstract boolean validateData();
 
+  @Override
   protected void doOKAction() {
     if(validateData()) {
       super.doOKAction();

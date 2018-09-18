@@ -25,6 +25,8 @@ public interface GroovyTokenSets {
     KW_WHILE
   );
 
+  TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);
+
   TokenSet LOGICAL_OPERATORS = create(T_LAND, T_LOR);
   TokenSet EQUALITY_OPERATORS = create(T_EQ, T_NEQ, T_ID, T_NID);
   TokenSet RELATIONAL_OPERATORS = create(T_GT, T_GE, T_LT, T_LE, T_COMPARE);

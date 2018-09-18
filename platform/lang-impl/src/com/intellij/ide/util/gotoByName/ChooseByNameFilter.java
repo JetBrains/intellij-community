@@ -131,7 +131,7 @@ public abstract class ChooseByNameFilter<T> {
    */
   @NotNull
   protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
-                                             @NotNull final ChooseByNameFilterConfiguration<T> filterConfiguration) {
+                                             @NotNull final ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
     List<T> elements = new ArrayList<>(getAllFilterValues());
     final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
       @Override
@@ -195,7 +195,7 @@ public abstract class ChooseByNameFilter<T> {
         .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myPopup = null;
       }
     });
@@ -217,12 +217,12 @@ public abstract class ChooseByNameFilter<T> {
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myPopup != null;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         createPopup();
       }

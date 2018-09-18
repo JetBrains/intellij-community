@@ -1,0 +1,5 @@
+top:
+  <caret>first: value1
+  next:
+  - item1
+  - item2

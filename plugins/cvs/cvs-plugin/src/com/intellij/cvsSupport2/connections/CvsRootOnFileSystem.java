@@ -82,10 +82,12 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
     return getRootFor(file.getParentFile());
   }
 
+  @Override
   public String getRepository() {
     return myCvsEnvironment.getRepository();
   }
 
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return RevisionOrDate.EMPTY;
   }

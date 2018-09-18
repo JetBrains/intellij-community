@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonReferenceExpressionImpl extends JsonValueImpl implements JsonReferenceExpression {
 
-  public JsonReferenceExpressionImpl(ASTNode node) {
+  public JsonReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 

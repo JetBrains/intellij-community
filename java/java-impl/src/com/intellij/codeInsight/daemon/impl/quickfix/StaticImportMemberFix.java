@@ -86,7 +86,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
   }
 
-  @NotNull protected abstract QuestionAction createQuestionAction(List<T> methodsToImport, @NotNull Project project, Editor editor);
+  @NotNull protected abstract QuestionAction createQuestionAction(List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
 
   @Nullable protected abstract PsiElement getElement();
   @Nullable protected abstract PsiElement getQualifierExpression();

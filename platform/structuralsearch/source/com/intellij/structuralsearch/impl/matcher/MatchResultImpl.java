@@ -69,6 +69,7 @@ public final class MatchResultImpl extends MatchResult {
     this.name = name;
   }
 
+  @Override
   public List<MatchResult> getChildren() {
     return Collections.unmodifiableList(myChildren);
   }
@@ -104,6 +105,7 @@ public final class MatchResultImpl extends MatchResult {
     matchImage = null;
   }
 
+  @Override
   public boolean hasChildren() {
     return !myChildren.isEmpty();
   }
@@ -131,6 +133,19 @@ public final class MatchResultImpl extends MatchResult {
 
       if (name.equals(res.getName())) {
         return res;
+      }
+    }
+    return null;
+  }
+
+  public static MatchResultImpl findChildDeep(MatchResult match , String name) {
+    for (MatchResult child : match.getChildren()) {
+      if (name.equals(child.getName())) {
+        return (MatchResultImpl)child;
+      }
+      final MatchResultImpl deep = findChildDeep(child, name);
+      if (deep != null) {
+        return deep;
       }
     }
     return null;

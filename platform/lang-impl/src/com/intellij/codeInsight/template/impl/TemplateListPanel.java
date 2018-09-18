@@ -600,7 +600,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
         }
       }).addExtraAction(new AnActionButton("Restore deleted defaults", AllIcons.General.TodoDefault) {
@@ -670,7 +670,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     final DefaultActionGroup move = new DefaultActionGroup("Move", true) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         boolean enabled = !templates.isEmpty();
         e.getPresentation().setEnabled(enabled);

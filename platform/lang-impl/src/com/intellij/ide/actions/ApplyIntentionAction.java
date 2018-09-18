@@ -36,7 +36,7 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
     ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText());
   }

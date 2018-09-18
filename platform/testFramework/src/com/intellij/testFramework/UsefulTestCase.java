@@ -6,10 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.lang.Language;
-import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -67,6 +64,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static final String TEMP_DIR_MARKER = "unitTest_";
   public static final boolean OVERWRITE_TESTDATA = Boolean.getBoolean("idea.tests.overwrite.data");
 
+  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
 
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
@@ -84,8 +82,6 @@ public abstract class UsefulTestCase extends TestCase {
   static String ourPathToKeep;
   private final List<String> myPathsToKeep = new ArrayList<>();
 
-  private CodeStyleSettings myOldCodeStyleSettings;
-  private CodeInsightSettings myOldCodeInsightSettings;
   private String myTempDir;
 
   static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
@@ -93,6 +89,23 @@ public abstract class UsefulTestCase extends TestCase {
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
+
+    try {
+      CodeInsightSettings defaultSettings = new CodeInsightSettings();
+      Element oldS = new Element("temp");
+      defaultSettings.writeExternal(oldS);
+      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public UsefulTestCase() {
+  }
+
+  public UsefulTestCase(String name) {
+    super(name);
   }
 
   protected boolean shouldContainTempFiles() {
@@ -219,36 +232,7 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected void checkForSettingsDamage() {
-    Application app = ApplicationManager.getApplication();
-    if (isStressTest() || app == null || app instanceof MockApplication) {
-      return;
-    }
-
-    // AndroidStudio: we override the default CodeInsightSettings in AndroidInitialConfigurator, so we have the correct values by the time
-    // PlatformTestCase#storeSettings is called (instead of during the static initializer of this class.)
-    CodeInsightSettings oldCodeInsightSettings = myOldCodeInsightSettings;
-    if (oldCodeInsightSettings == null) {
-      return;
-    }
-
-    myOldCodeInsightSettings = null;
-
-    checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance());
-
-    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
-    if (oldCodeStyleSettings == null) {
-      return;
-    }
-
-    myOldCodeStyleSettings = null;
-
-    // Android Studio: modified by Change I8dd3d7dc / commit a20e5f3
-    checkForStyleSettingsDamage(oldCodeStyleSettings, CodeStyle.getDefaultSettings());
-  }
-
-  public static void checkForInsightSettingsDamage(@NotNull CodeInsightSettings oldCodeInsightSettings,
-                                                   @NotNull CodeInsightSettings currentCodeInsightSettings) {
+  static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -257,14 +241,13 @@ public abstract class UsefulTestCase extends TestCase {
         try {
           Element newS = new Element("temp");
           settings.writeExternal(newS);
-          Assert.assertEquals("Code insight settings damaged",
-                              JDOMUtil.writeElement(oldCodeInsightSettings.getState(), "\n"),
-                              JDOMUtil.writeElement(currentCodeInsightSettings.getState(), "\n"));
+          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
         }
         catch (AssertionError error) {
-          for (Field field : oldCodeInsightSettings.getClass().getFields()) {
+          CodeInsightSettings clean = new CodeInsightSettings();
+          for (Field field : clean.getClass().getFields()) {
             try {
-              ReflectionUtil.copyFieldValue(oldCodeInsightSettings, settings, field);
+              ReflectionUtil.copyFieldValue(clean, settings, field);
             }
             catch (Exception ignored) {
             }
@@ -272,13 +255,6 @@ public abstract class UsefulTestCase extends TestCase {
           throw error;
         }
       })
-      .run();
-  }
-
-  public static void checkForStyleSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                                 @NotNull CodeStyleSettings currentCodeStyleSettings) {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    new RunAll()
       .append(() -> {
         currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
         try {
@@ -291,14 +267,6 @@ public abstract class UsefulTestCase extends TestCase {
       .append(() -> InplaceRefactoring.checkCleared())
       .append(() -> StartMarkAction.checkCleared())
       .run();
-  }
-
-  void storeSettings() {
-    if (!isStressTest() && ApplicationManager.getApplication() != null) {
-      myOldCodeStyleSettings = CodeStyle.getDefaultSettings().clone();
-      myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-      myOldCodeInsightSettings = CodeInsightSettings.getInstance().clone();
-    }
   }
 
   @NotNull
@@ -678,7 +646,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static <T> Throwable accepts(@NotNull Consumer<T> condition, final T actual) {
+  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
     try {
       condition.consume(actual);
       return null;
@@ -714,7 +682,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOneOf(T value, @NotNull T... values) {
     boolean found = false;
     for (T v : values) {
-      if (value == v || value != null && value.equals(v)) {
+      if (Objects.equals(value, v)) {
         found = true;
       }
     }
@@ -730,7 +698,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertNotEmpty(final Collection<?> collection) {
-    if (collection == null) return;
+    assertNotNull(collection);
     assertTrue(!collection.isEmpty());
   }
 
@@ -747,24 +715,25 @@ public abstract class UsefulTestCase extends TestCase {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static <T> void assertEmpty(final String errorMsg, final Collection<T> collection) {
+  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<T> collection) {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
-  public static void assertSize(int expectedSize, final Object[] array) {
+  public static void assertSize(int expectedSize, @NotNull Object[] array) {
     assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
   }
 
-  public static void assertSize(int expectedSize, final Collection<?> c) {
+  public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
     assertEquals(toString(c), expectedSize, c.size());
   }
 
-  protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
+  @NotNull
+  protected <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
 
-  public static void assertSameLines(String expected, String actual) {
+  public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
     Assert.assertEquals(expectedText, actualText);
@@ -784,20 +753,21 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  public static String getTestName(String name, boolean lowercaseFirstLetter) {
+  public static String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  @NotNull
   protected String getTestDirectoryName() {
     final String testName = getTestName(true);
     return testName.replaceAll("_.*", "");
   }
 
-  public static void assertSameLinesWithFile(String filePath, String actualText) {
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
     assertSameLinesWithFile(filePath, actualText, true);
   }
 
-  public static void assertSameLinesWithFile(String filePath, String actualText, boolean trimBeforeComparing) {
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -843,7 +813,6 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings) {
     if (expected == null || settings == null) return;
 
@@ -859,7 +828,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public boolean isPerformanceTest() {
     String testName = getName();
-    String className = getClass().getName();
+    String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 

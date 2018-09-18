@@ -5,6 +5,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.junit.Test
+import java.util.*
 
 class XmlSerializerListTest {
   @Test
@@ -19,6 +20,46 @@ class XmlSerializerListTest {
     check(bean) {
       bean.values = it
     }
+  }
+
+  @Test
+  fun `empty list`() {
+    @Tag("bean")
+    class Bean {
+      @JvmField
+      var values = emptyList<String>()
+    }
+
+    val data = Bean()
+    data.values = listOf("foo")
+    testSerializer("""
+    <bean>
+      <option name="values">
+        <list>
+          <option value="foo" />
+        </list>
+      </option>
+    </bean>""", data)
+  }
+
+  @Test
+  fun `empty java list`() {
+    @Tag("bean")
+    class Bean {
+      @JvmField
+      var values = Collections.emptyList<String>()
+    }
+
+    val data = Bean()
+    data.values = listOf("foo")
+    testSerializer("""
+    <bean>
+      <option name="values">
+        <list>
+          <option value="foo" />
+        </list>
+      </option>
+    </bean>""", data)
   }
 
   @Test

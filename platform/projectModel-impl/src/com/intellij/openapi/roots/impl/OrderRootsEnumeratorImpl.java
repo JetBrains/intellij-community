@@ -37,7 +37,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderRootsEnumeratorImpl");
   private final OrderEnumeratorBase myOrderEnumerator;
   private final OrderRootType myRootType;
-  private final NotNullFunction<OrderEntry, OrderRootType> myRootTypeProvider;
+  private final NotNullFunction<? super OrderEntry, ? extends OrderRootType> myRootTypeProvider;
   private boolean myUsingCache;
   private NotNullFunction<OrderEntry, VirtualFile[]> myCustomRootProvider;
   private boolean myWithoutSelfModuleOutput;
@@ -49,7 +49,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   }
 
   OrderRootsEnumeratorImpl(@NotNull OrderEnumeratorBase orderEnumerator,
-                           @NotNull NotNullFunction<OrderEntry, OrderRootType> rootTypeProvider) {
+                           @NotNull NotNullFunction<? super OrderEntry, ? extends OrderRootType> rootTypeProvider) {
     myOrderEnumerator = orderEnumerator;
     myRootType = null;
     myRootTypeProvider = rootTypeProvider;
@@ -205,10 +205,10 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void collectModuleRoots(@NotNull OrderRootType type,
                                   ModuleRootModel rootModel,
-                                  @NotNull Collection<VirtualFile> result,
+                                  @NotNull Collection<? super VirtualFile> result,
                                   final boolean includeProduction,
                                   final boolean includeTests,
-                                  @NotNull List<OrderEnumerationHandler> customHandlers) {
+                                  @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
         Collections.addAll(result, rootModel.getSourceRoots(includeTests));
@@ -240,7 +240,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void collectModuleRootsUrls(OrderRootType type,
                                       ModuleRootModel rootModel,
-                                      Collection<String> result, final boolean includeProduction, final boolean includeTests) {
+                                      Collection<? super String> result, final boolean includeProduction, final boolean includeTests) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
         Collections.addAll(result, rootModel.getSourceRootUrls(includeTests));

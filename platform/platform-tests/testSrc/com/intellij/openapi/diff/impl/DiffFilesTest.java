@@ -140,7 +140,7 @@ public class DiffFilesTest extends TestSuite {
           processLine(highlighter, result, editor);
         }
         else {
-          fail("Unknown highlighter: " + String.valueOf(targetArea));
+          fail("Unknown highlighter: " + targetArea);
         }
         result.append('\n');
       }
@@ -162,7 +162,7 @@ public class DiffFilesTest extends TestSuite {
         result.append('B');
       }
       else {
-        fail("Unknown placement: " + String.valueOf(placement) + "(" + result + ")");
+        fail("Unknown placement: " + placement + "(" + result + ")");
       }
       int line = editor.getDocument().getLineNumber(highlighter.getStartOffset());
       result.append(' ');

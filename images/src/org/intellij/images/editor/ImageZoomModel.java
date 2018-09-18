@@ -22,8 +22,12 @@ package org.intellij.images.editor;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ImageZoomModel {
-    int MACRO_ZOOM_LIMIT = 32;
-    int MICRO_ZOOM_LIMIT = 8;
+    int MACRO_ZOOM_POWER_LIMIT = 5;
+    int MICRO_ZOOM_POWER_LIMIT = 8;
+    double MACRO_ZOOM_RATIO = 2.0d;
+    double MICRO_ZOOM_RATIO = 1.5d;
+    double MACRO_ZOOM_LIMIT = Math.pow(MACRO_ZOOM_RATIO, MACRO_ZOOM_POWER_LIMIT);
+    double MICRO_ZOOM_LIMIT = Math.pow(1 / MICRO_ZOOM_RATIO, MICRO_ZOOM_POWER_LIMIT);
 
     double getZoomFactor();
 

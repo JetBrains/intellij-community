@@ -102,7 +102,6 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements D
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LayeredIcon)) return false;
-    if (!super.equals(o)) return false;
 
     final LayeredIcon icon = (LayeredIcon)o;
 

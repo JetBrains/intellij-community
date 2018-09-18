@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
  * @author nik
  */
 public class FileNameMatcherFactoryImpl extends FileNameMatcherFactory {
+  @Override
   @NotNull
   public FileNameMatcher createMatcher(@NotNull String pattern) {
     if (pattern.startsWith("*.") &&

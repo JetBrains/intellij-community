@@ -4,7 +4,7 @@ Groovy script
   Multiplicative expression
     Multiplicative expression
       Literal
-        PsiElement(Gstring)('"""a"""')
+        PsiElement(triple double quoted string)('"""a"""')
       PsiWhiteSpace(' ')
       PsiElement(/)('/')
       Reference expression

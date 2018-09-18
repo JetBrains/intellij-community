@@ -338,6 +338,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     return true;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     final PsiClass containingClass = myMethod.getContainingClass();
@@ -357,8 +358,10 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
     @Override
     public void visitClass(PsiClass aClass) {}
+    @Override
     public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
+    @Override
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
 

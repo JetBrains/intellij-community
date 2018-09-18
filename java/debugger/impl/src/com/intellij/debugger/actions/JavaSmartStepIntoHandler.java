@@ -157,6 +157,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
         }
 
+        @Override
         public void visitLambdaExpression(PsiLambdaExpression expression) {
           boolean inLambda = myInsideLambda;
           myInsideLambda = true;
@@ -257,6 +258,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           return false;
         }
 
+        @Override
         public void visitExpressionList(PsiExpressionList expressionList) {
           PsiMethod psiMethod = myContextStack.peekFirst();
           if (psiMethod != null) {

@@ -20,7 +20,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
   private lateinit var fs: ArchiveFileSystem

@@ -49,7 +49,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabled()) {
         final InspectionResultsView view = getInvoker(e);

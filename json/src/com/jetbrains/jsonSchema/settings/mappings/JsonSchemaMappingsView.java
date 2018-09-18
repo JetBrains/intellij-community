@@ -2,11 +2,11 @@
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -103,7 +103,7 @@ public class JsonSchemaMappingsView implements Disposable {
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         mySchemaPathChangedCallback.accept(mySchemaField.getText());
       }
     });
@@ -166,7 +166,7 @@ public class JsonSchemaMappingsView implements Disposable {
         balloon.showInCenterOf(mySchemaField);
         return;
       }
-      new OpenFileDescriptor(myProject, virtualFile).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(myProject, virtualFile, -1).navigate(true);
     }).registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
   }
 

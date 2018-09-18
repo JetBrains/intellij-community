@@ -47,7 +47,7 @@ public class MockDomElementsEditor {
     myModule = module;
   }
 
-  protected final <T extends DomElement> T addEditedElement(final Class<T> aClass, final EditedElementDescription<T> description) {
+  protected final <T extends DomElement> T addEditedElement(final Class<? extends T> aClass, final EditedElementDescription<T> description) {
     final DomManager domManager = DomManager.getDomManager(myModule.getProject());
     final T t = domManager.createStableValue(() -> {
       T t1 = description.find();

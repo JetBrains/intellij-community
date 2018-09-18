@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,12 +70,6 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return null;
   }
 
-  @NotNull
-  @Override
-  public String getClassNameText() {
-    return myClassName;
-  }
-
   @Override
   public GrCodeReferenceElement getQualifier() {
     return null;
@@ -132,7 +125,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
@@ -142,14 +135,8 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myManager.areElementsEquivalent(element, resolve());
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

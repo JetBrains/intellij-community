@@ -117,7 +117,8 @@ fun PersistentStateComponent<*>.serializeStateInto(element: Element) {
   state?.let { serializeObjectInto(it, element) }
 }
 
-fun serializeObjectInto(o: Any, target: Element) {
+@JvmOverloads
+fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = null) {
   if (o is Element) {
     val iterator = o.children.iterator()
     for (child in iterator) {
@@ -134,7 +135,7 @@ fun serializeObjectInto(o: Any, target: Element) {
   }
 
   val binding = serializer.getClassBinding(o.javaClass)
-  (binding as BeanBinding).serializeInto(o, target, if (o is BaseState) null else getDefaultSerializationFilter())
+  (binding as BeanBinding).serializeInto(o, target, if (o is BaseState) null else (filter ?: getDefaultSerializationFilter()))
 }
 
 private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {

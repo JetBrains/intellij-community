@@ -184,6 +184,7 @@ public class BreakpointChooser {
       return myDetailViewDelegate.getEditorState();
     }
 
+    @Override
     public void setCurrentItem(ItemWrapper currentItem) {
       myCurrentItem = currentItem;
     }

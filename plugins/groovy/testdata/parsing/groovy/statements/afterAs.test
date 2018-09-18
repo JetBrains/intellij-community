@@ -35,4 +35,4 @@ Groovy script
       PsiElement(<)('<')
       PsiElement(<)('<')
     Literal
-      PsiElement(Gstring)('"test"')
+      PsiElement(double quoted string)('"test"')

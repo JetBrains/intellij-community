@@ -341,7 +341,7 @@ public class DiffString extends CharArrayCharSequence {
     }
 
     @Override
-    protected void addLine(List<DiffString> lines, int start, int end, boolean appendNewLine) {
+    protected void addLine(List<? super DiffString> lines, int start, int end, boolean appendNewLine) {
       if (appendNewLine) {
         lines.add(myText.substring(start, end).append('\n'));
       }

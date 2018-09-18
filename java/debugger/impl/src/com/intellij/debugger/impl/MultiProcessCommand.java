@@ -25,6 +25,7 @@ import java.util.List;
 public class MultiProcessCommand implements Runnable{
   private final List<Pair<DebugProcessImpl,  DebuggerCommandImpl>> myCommands = new LinkedList<>();
 
+  @Override
   public void run() {
     while(true) {
       Pair<DebugProcessImpl,  DebuggerCommandImpl> pair;

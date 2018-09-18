@@ -31,11 +31,13 @@ class YAMLStructureViewFile extends PsiTreeElementBase<YAMLFile> {
     return getFilePresentation().getPresentableText();
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     return getFilePresentation().getLocationString();
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean unused) {
     return getFilePresentation().getIcon(unused);

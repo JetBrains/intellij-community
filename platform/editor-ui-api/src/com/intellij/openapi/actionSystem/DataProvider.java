@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see DataContext
  */
+@FunctionalInterface
 public interface DataProvider {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported
@@ -37,5 +39,5 @@ public interface DataProvider {
    * @return the value, or null if no value is available in the current context for this identifier.
    */
   @Nullable
-  Object getData(@NonNls String dataId);
+  Object getData(@NotNull @NonNls String dataId);
 }

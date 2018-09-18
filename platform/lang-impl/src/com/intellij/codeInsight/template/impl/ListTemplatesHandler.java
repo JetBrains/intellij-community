@@ -213,7 +213,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return chars.subSequence(start, offset).toString();
   }
 
-  private static class MyLookupAdapter extends LookupAdapter {
+  private static class MyLookupAdapter implements LookupListener {
     private final Map<TemplateImpl, String> myTemplate2Argument;
     private final PsiFile myFile;
 
@@ -228,7 +228,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void itemSelected(final LookupEvent event) {
+    public void itemSelected(@NotNull final LookupEvent event) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       final LookupElement item = event.getItem();
       final Lookup lookup = event.getLookup();

@@ -75,7 +75,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(() -> {
             try {
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

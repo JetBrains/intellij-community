@@ -41,10 +41,9 @@ public abstract class BaseActionRunnable<T> {
     return execute();
   }
 
-  //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link ApplicationManager#getApplication()} (to be removed in IDEA 2018) */
+  @Deprecated
   protected Application getApplication() {
     return ApplicationManager.getApplication();
   }
-  //</editor-fold>
 }

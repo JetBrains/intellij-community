@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.removemiddleman;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
@@ -35,15 +21,10 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings({"OverridableMethodCallInConstructor"})
 public class RemoveMiddlemanDialog extends RefactoringDialog {
-
   private final JTextField fieldNameLabel;
-
   private final List<MemberInfo> delegateMethods;
-
   private final PsiField myField;
-
 
   RemoveMiddlemanDialog(PsiField field, MemberInfo[] delegateMethods) {
     super(field.getProject(), true);
@@ -51,16 +32,17 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     this.delegateMethods = Arrays.asList(delegateMethods);
     fieldNameLabel = new JTextField();
     fieldNameLabel.setText(
-      PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY));
+      PsiFormatUtil.formatVariable(myField, PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY));
     setTitle(RefactorJBundle.message("remove.middleman.title"));
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "RefactorJ.RemoveMiddleman";
   }
 
-
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
@@ -92,6 +74,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     return panel;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     fieldNameLabel.setEditable(false);
     final JPanel sourceClassPanel = new JPanel(new BorderLayout());
@@ -100,10 +83,12 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     return sourceClassPanel;
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.RemoveMiddleman);
+  @Override
+  protected String getHelpId() {
+    return HelpID.RemoveMiddleman;
   }
 
+  @Override
   protected void doAction() {
     invokeRefactoring(new RemoveMiddlemanProcessor(myField, delegateMethods));
   }

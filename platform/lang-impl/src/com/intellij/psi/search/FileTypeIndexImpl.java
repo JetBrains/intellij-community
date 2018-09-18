@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -119,22 +117,5 @@ public class FileTypeIndexImpl extends ScalarIndexExtension<FileType>
   @Override
   public Map<FileType, Void> map(@NotNull FileContent inputData) {
     return Collections.singletonMap(inputData.getFileType(), null);
-  }
-
-  public static boolean containsFileOfType(@NotNull FileType type, @NotNull GlobalSearchScope scope) {
-    return !processFiles(type, file -> false, scope);
-  }
-
-  @NotNull
-  public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
-  }
-
-  public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<VirtualFile> processor, GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().processValues(
-      NAME,
-      fileType,
-      null,
-      (file, value) -> processor.process(file), scope);
   }
 }

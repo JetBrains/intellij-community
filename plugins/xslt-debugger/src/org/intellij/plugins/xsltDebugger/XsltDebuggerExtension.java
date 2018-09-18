@@ -75,17 +75,20 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   @NonNls
   private static final String SAXON_9_JAR = "saxon9he.jar";
 
+  @Override
   protected boolean supports(XsltRunConfiguration config, boolean debugger) {
     return (debugger || XsltDebuggerRunner.ACTIVE.get() == Boolean.TRUE) &&
            config.getOutputType() == XsltRunConfiguration.OutputType.CONSOLE; // ?
   }
 
+  @Override
   public ProcessListener createProcessListener(Project project, UserDataHolder extensionData) {
     final Integer port = extensionData.getUserData(PORT);
     assert port != null;
     return new DebugProcessListener(project, port);
   }
 
+  @Override
   public boolean createTabs(Project project,
                             AdditionalTabComponentManager manager,
                             @NotNull AdditionalTabComponent outputConsole,
@@ -102,6 +105,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     return true;
   }
 
+  @Override
   public void patchParameters(final SimpleJavaParameters parameters, XsltRunConfiguration configuration, UserDataHolder extensionData)
     throws CantRunException {
     final XsltRunConfiguration.OutputType outputType = configuration.getOutputType();

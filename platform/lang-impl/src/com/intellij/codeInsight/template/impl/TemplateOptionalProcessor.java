@@ -72,7 +72,7 @@ public interface TemplateOptionalProcessor {
   /**
    * @deprecated Please override {@link #isVisible(Template, TemplateContext)}
    */
-  @SuppressWarnings("unused")
+  @Deprecated
   default boolean isVisible(final Template template) {
     return true;
   }

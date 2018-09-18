@@ -328,7 +328,7 @@ public final class ActionMenu extends JBMenu {
       if (Presentation.PROP_VISIBLE.equals(name)) {
         setVisible(myPresentation.isVisible());
         if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
-          validateTree();
+          validate();
         }
       }
       else if (Presentation.PROP_ENABLED.equals(name)) {

@@ -89,7 +89,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
       myOptionsConfigurable.reset(myProject);
     }
   }
-  
+
   private void init() {
     mySeverityChooser = new MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar());
     mySeverityChooserPanel.add(mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation()), BorderLayout.CENTER);
@@ -132,8 +132,9 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
       myEventDispatcher.getMulticaster().onSeverityChanged(severity);
     }
 
+    @NotNull
     @Override
-    public JComponent createCustomComponent(Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation) {
       return createComboBoxButton(presentation);
     }
   }

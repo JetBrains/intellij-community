@@ -49,8 +49,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.xml.namespace.QName;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
 
@@ -105,6 +105,7 @@ public class EditContextDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel p = ToolbarDecorator.createDecorator(myVariableTable)
       .setAddAction(new AnActionButtonRunnable() {
@@ -158,6 +159,7 @@ public class EditContextDialog extends DialogWrapper {
     return mySplitter;
   }
 
+  @Override
   @NotNull
   protected String getDimensionServiceKey() {
     return getClass().getName() + ".DIMENSION_SERVICE_KEY";
@@ -169,6 +171,7 @@ public class EditContextDialog extends DialogWrapper {
     return Pair.create(myNamespaceTableModel.getNamespaces(), myVariableTableModel.getVariables());
   }
 
+  @Override
   protected void doOKAction() {
     stopVarEditing();
     stopNamespaceEditing();
@@ -231,26 +234,32 @@ public class EditContextDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public Class<?> getColumnClass(int columnIndex) {
       return columnIndex == 0 ? String.class : Expression.class;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return true;
     }
 
+    @Override
     public String getColumnName(int column) {
       return column == 0 ? "Name" : "Expression";
     }
 
+    @Override
     public int getRowCount() {
       return myVariables.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final Variable variable = myVariables.get(rowIndex);
       if (columnIndex == 0) {
@@ -261,6 +270,7 @@ public class EditContextDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (rowIndex >= myVariables.size()) {
         return;
@@ -308,6 +318,7 @@ public class EditContextDialog extends DialogWrapper {
       this.myVariables = variables;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object _value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, _value, isSelected, hasFocus, row, column);
@@ -340,31 +351,38 @@ public class EditContextDialog extends DialogWrapper {
       return myNamespaces;
     }
 
+    @Override
     public Class<?> getColumnClass(int columnIndex) {
       return String.class;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 0;
     }
 
+    @Override
     public String getColumnName(int column) {
       return column == 0 ? "Prefix" : "URI";
     }
 
+    @Override
     public int getRowCount() {
       return myNamespaces.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final Namespace namespace = myNamespaces.get(rowIndex);
       return columnIndex == 0 ? namespace.getPrefix() : namespace.getUri();
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
         final Namespace namespace = myNamespaces.get(rowIndex);
@@ -391,6 +409,7 @@ public class EditContextDialog extends DialogWrapper {
       this.myNamespaces = namespaces;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -414,11 +433,13 @@ public class EditContextDialog extends DialogWrapper {
   }
 
   private class MyNamespaceContext implements NamespaceContext {
+    @Override
     @Nullable
     public String getNamespaceURI(String prefix, XmlElement context) {
       return Namespace.makeMap(myNamespaceTableModel.getNamespaces()).get(prefix);
     }
 
+    @Override
     @Nullable
     public String getPrefixForURI(String uri, XmlElement context) {
       final BidirectionalMap<String, String> bidiMap = new BidirectionalMap<>();
@@ -427,16 +448,19 @@ public class EditContextDialog extends DialogWrapper {
       return list != null && list.size() > 0 ? list.get(0) : null;
     }
 
+    @Override
     @NotNull
     public Collection<String> getKnownPrefixes(XmlElement context) {
       return Namespace.makeMap(myNamespaceTableModel.getNamespaces()).keySet();
     }
 
+    @Override
     @Nullable
     public PsiElement resolve(String prefix, XmlElement context) {
       return null;
     }
 
+    @Override
     public IntentionAction[] getUnresolvedNamespaceFixes(@NotNull PsiReference reference, String localName) {
       return IntentionAction.EMPTY_ARRAY;
     }
@@ -448,6 +472,7 @@ public class EditContextDialog extends DialogWrapper {
   }
 
   private class MyVariableContext extends SimpleVariableContext {
+    @Override
     @NotNull
     public String[] getVariablesInScope(XPathElement element) {
       final Collection<Variable> variables = myVariableTableModel.getVariables();
@@ -466,31 +491,37 @@ public class EditContextDialog extends DialogWrapper {
       myVariableContext = new MyVariableContext();
     }
 
+    @Override
     @NotNull
     public ContextType getContextType() {
       return myContextProvider.getContextType();
     }
 
+    @Override
     @Nullable
     public XmlElement getContextElement() {
       return myContextProvider.getContextElement();
     }
 
+    @Override
     @Nullable
     public NamespaceContext getNamespaceContext() {
       return myNamespaceContext;
     }
 
+    @Override
     @Nullable
     public VariableContext getVariableContext() {
       return myVariableContext;
     }
 
+    @Override
     @Nullable
     public Set<QName> getAttributes(boolean forValidation) {
       return myContextProvider.getAttributes(forValidation);
     }
 
+    @Override
     @Nullable
     public Set<QName> getElements(boolean forValidation) {
       return myContextProvider.getElements(forValidation);

@@ -29,12 +29,4 @@ public abstract class KeymapGroupFactory {
 
   public abstract KeymapGroup createGroup(String name);
   public abstract KeymapGroup createGroup(String name, Icon icon);
-
-  /**
-   * closed/open icons supposed to be the same
-   */
-  @Deprecated
-  public KeymapGroup createGroup(String name, Icon closedIcon, @SuppressWarnings("unused") Icon openIcon) {
-    return createGroup(name, closedIcon);
-  }
 }

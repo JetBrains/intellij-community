@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
@@ -134,7 +135,7 @@ public abstract class GitHandler {
   }
 
   @NotNull
-  static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
+  private static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
     if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
       return Collections.emptyList();
     }
@@ -184,7 +185,7 @@ public abstract class GitHandler {
    *
    * @param listener a listener
    */
-  protected void addListener(ProcessEventListener listener) {
+  protected void addListener(@NotNull ProcessEventListener listener) {
     myListeners.addListener(listener);
   }
 
@@ -204,7 +205,6 @@ public abstract class GitHandler {
    *
    * @param parameters a parameters to add
    */
-  @SuppressWarnings({"WeakerAccess"})
   public void addParameters(@NonNls @NotNull String... parameters) {
     addParameters(Arrays.asList(parameters));
   }
@@ -253,7 +253,6 @@ public abstract class GitHandler {
    * @param filePaths a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
    */
-  @SuppressWarnings({"WeakerAccess"})
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
@@ -272,7 +271,6 @@ public abstract class GitHandler {
    * @param files a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
    */
-  @SuppressWarnings({"WeakerAccess"})
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
@@ -340,7 +338,6 @@ public abstract class GitHandler {
    *
    * @param charset a character set
    */
-  @SuppressWarnings({"SameParameterValue"})
   public void setCharset(@NotNull Charset charset) {
     myCommandLine.setCharset(charset);
   }
@@ -491,6 +488,9 @@ public abstract class GitHandler {
       myProcess = startProcess();
       startHandlingStreams();
     }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
@@ -531,13 +531,13 @@ public abstract class GitHandler {
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
-  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
+  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
   @Deprecated
   private final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
   private boolean myProgressParameterAllowed = false;
   @Deprecated
-  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
+  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.

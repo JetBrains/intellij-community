@@ -150,76 +150,6 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
   }
 
-  private fun checkLineChanges(fragments: List<LineFragment>, expected: List<Couple<IntPair>>) {
-    val changes = convertLineFragments(fragments)
-    assertOrderedEquals(expected, changes)
-  }
-
-  private fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Couple<IntPair>>) {
-    val changes = convertDiffFragments(fragments)
-    assertOrderedEquals(expected, changes)
-  }
-
-  private fun checkMergeChanges(fragments: List<MergeWordFragment>, expected: List<Trio<IntPair>>) {
-    val changes = convertMergeFragments(fragments)
-    assertOrderedEquals(expected, changes)
-  }
-
-  private fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {
-    val set1 = BitSet()
-    val set2 = BitSet()
-    for (fragment in fragments) {
-      set1.set(fragment.startLine1, fragment.endLine1)
-      set2.set(fragment.startLine2, fragment.endLine2)
-    }
-
-    assertSetsEquals(matchings.first, set1, "Before")
-    assertSetsEquals(matchings.second, set2, "After")
-  }
-
-  private fun checkDiffMatching(fragments: List<DiffFragment>, matchings: Couple<BitSet>) {
-    val set1 = BitSet()
-    val set2 = BitSet()
-    for (fragment in fragments) {
-      set1.set(fragment.startOffset1, fragment.endOffset1)
-      set2.set(fragment.startOffset2, fragment.endOffset2)
-    }
-
-    assertSetsEquals(matchings.first, set1, "Before")
-    assertSetsEquals(matchings.second, set2, "After")
-  }
-
-  private fun checkMergeMatching(fragments: List<MergeWordFragment>, matchings: Trio<BitSet>) {
-    val set1 = BitSet()
-    val set2 = BitSet()
-    val set3 = BitSet()
-    for (fragment in fragments) {
-      set1.set(fragment.getStartOffset(ThreeSide.LEFT), fragment.getEndOffset(ThreeSide.LEFT))
-      set2.set(fragment.getStartOffset(ThreeSide.BASE), fragment.getEndOffset(ThreeSide.BASE))
-      set3.set(fragment.getStartOffset(ThreeSide.RIGHT), fragment.getEndOffset(ThreeSide.RIGHT))
-    }
-
-    assertSetsEquals(matchings.data1, set1, "Left")
-    assertSetsEquals(matchings.data2, set2, "Base")
-    assertSetsEquals(matchings.data3, set3, "Right")
-  }
-
-  private fun convertDiffFragments(fragments: List<DiffFragment>): List<Couple<IntPair>> {
-    return fragments.map { Couple(IntPair(it.startOffset1, it.endOffset1), IntPair(it.startOffset2, it.endOffset2)) }
-  }
-
-  private fun convertLineFragments(fragments: List<LineFragment>): List<Couple<IntPair>> {
-    return fragments.map { Couple(IntPair(it.startLine1, it.endLine1), IntPair(it.startLine2, it.endLine2)) }
-  }
-
-  private fun convertMergeFragments(fragments: List<MergeWordFragment>): List<Trio<IntPair>> {
-    return fragments.map {
-      Trio(IntPair(it.getStartOffset(ThreeSide.LEFT), it.getEndOffset(ThreeSide.LEFT)),
-           IntPair(it.getStartOffset(ThreeSide.BASE), it.getEndOffset(ThreeSide.BASE)),
-           IntPair(it.getStartOffset(ThreeSide.RIGHT), it.getEndOffset(ThreeSide.RIGHT)))
-    }
-  }
-
   private fun checkLineOffsets(fragment: LineFragment, before: Document, after: Document) {
     checkLineOffsets(before, fragment.startLine1, fragment.endLine1, fragment.startOffset1, fragment.endOffset1)
 
@@ -243,37 +173,6 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   //
   // Test Builder
   //
-
-  private fun parseLineMatching(matching: String, document: Document): BitSet {
-    assertEquals(matching.length, document.textLength)
-
-    val lines1 = matching.split('_', '*')
-    val lines2 = document.charsSequence.split('\n')
-    assertEquals(lines1.size, lines2.size)
-    for (i in 0..lines1.size - 1) {
-      assertEquals(lines1[i].length, lines2[i].length, "line $i")
-    }
-
-
-    val set = BitSet()
-
-    var index = 0
-    var lineNumber = 0
-    while (index < matching.length) {
-      var end = matching.indexOfAny(listOf("_", "*"), index) + 1
-      if (end == 0) end = matching.length
-
-      val line = matching.subSequence(index, end)
-      if (line.find { it != ' ' && it != '_' } != null) {
-        assert(!line.contains(' '))
-        set.set(lineNumber)
-      }
-      lineNumber++
-      index = end
-    }
-
-    return set
-  }
 
   internal enum class TestType {
     LINE, LINE_INNER, WORD, CHAR, SPLITTER
@@ -425,22 +324,6 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       changes.ignore = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
-    fun mod(line1: Int, line2: Int, count1: Int, count2: Int): Couple<IntPair> {
-      assert(count1 != 0)
-      assert(count2 != 0)
-      return Couple(IntPair(line1, line1 + count1), IntPair(line2, line2 + count2))
-    }
-
-    fun del(line1: Int, line2: Int, count1: Int): Couple<IntPair> {
-      assert(count1 != 0)
-      return Couple(IntPair(line1, line1 + count1), IntPair(line2, line2))
-    }
-
-    fun ins(line1: Int, line2: Int, count2: Int): Couple<IntPair> {
-      assert(count2 != 0)
-      return Couple(IntPair(line1, line1), IntPair(line2, line2 + count2))
-    }
-
 
     fun postprocess(squash: Boolean, trim: Boolean): Unit {
       shouldSquash = squash
@@ -496,5 +379,94 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
         ComparisonPolicy.TRIM_WHITESPACES -> trim ?: default
         ComparisonPolicy.DEFAULT -> default
       }
+  }
+
+  companion object {
+    fun checkLineChanges(fragments: List<LineFragment>, expected: List<Couple<IntPair>>) {
+      val changes = convertLineFragments(fragments)
+      assertOrderedEquals(expected, changes)
+    }
+
+    fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Couple<IntPair>>) {
+      val changes = convertDiffFragments(fragments)
+      assertOrderedEquals(expected, changes)
+    }
+
+    fun checkMergeChanges(fragments: List<MergeWordFragment>, expected: List<Trio<IntPair>>) {
+      val changes = convertMergeFragments(fragments)
+      assertOrderedEquals(expected, changes)
+    }
+
+    fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {
+      val set1 = BitSet()
+      val set2 = BitSet()
+      for (fragment in fragments) {
+        set1.set(fragment.startLine1, fragment.endLine1)
+        set2.set(fragment.startLine2, fragment.endLine2)
+      }
+
+      assertSetsEquals(matchings.first, set1, "Before")
+      assertSetsEquals(matchings.second, set2, "After")
+    }
+
+    fun checkDiffMatching(fragments: List<DiffFragment>, matchings: Couple<BitSet>) {
+      val set1 = BitSet()
+      val set2 = BitSet()
+      for (fragment in fragments) {
+        set1.set(fragment.startOffset1, fragment.endOffset1)
+        set2.set(fragment.startOffset2, fragment.endOffset2)
+      }
+
+      assertSetsEquals(matchings.first, set1, "Before")
+      assertSetsEquals(matchings.second, set2, "After")
+    }
+
+    fun checkMergeMatching(fragments: List<MergeWordFragment>, matchings: Trio<BitSet>) {
+      val set1 = BitSet()
+      val set2 = BitSet()
+      val set3 = BitSet()
+      for (fragment in fragments) {
+        set1.set(fragment.getStartOffset(ThreeSide.LEFT), fragment.getEndOffset(ThreeSide.LEFT))
+        set2.set(fragment.getStartOffset(ThreeSide.BASE), fragment.getEndOffset(ThreeSide.BASE))
+        set3.set(fragment.getStartOffset(ThreeSide.RIGHT), fragment.getEndOffset(ThreeSide.RIGHT))
+      }
+
+      assertSetsEquals(matchings.data1, set1, "Left")
+      assertSetsEquals(matchings.data2, set2, "Base")
+      assertSetsEquals(matchings.data3, set3, "Right")
+    }
+
+    fun convertDiffFragments(fragments: List<DiffFragment>): List<Couple<IntPair>> {
+      return fragments.map { Couple(IntPair(it.startOffset1, it.endOffset1), IntPair(it.startOffset2, it.endOffset2)) }
+    }
+
+    fun convertLineFragments(fragments: List<LineFragment>): List<Couple<IntPair>> {
+      return fragments.map { Couple(IntPair(it.startLine1, it.endLine1), IntPair(it.startLine2, it.endLine2)) }
+    }
+
+    fun convertMergeFragments(fragments: List<MergeWordFragment>): List<Trio<IntPair>> {
+      return fragments.map {
+        Trio(IntPair(it.getStartOffset(ThreeSide.LEFT), it.getEndOffset(ThreeSide.LEFT)),
+             IntPair(it.getStartOffset(ThreeSide.BASE), it.getEndOffset(ThreeSide.BASE)),
+             IntPair(it.getStartOffset(ThreeSide.RIGHT), it.getEndOffset(ThreeSide.RIGHT)))
+      }
+    }
+
+
+    fun mod(line1: Int, line2: Int, count1: Int, count2: Int): Couple<IntPair> {
+      assert(count1 != 0)
+      assert(count2 != 0)
+      return Couple(IntPair(line1, line1 + count1), IntPair(line2, line2 + count2))
+    }
+
+    fun del(line1: Int, line2: Int, count1: Int): Couple<IntPair> {
+      assert(count1 != 0)
+      return Couple(IntPair(line1, line1 + count1), IntPair(line2, line2))
+    }
+
+    fun ins(line1: Int, line2: Int, count2: Int): Couple<IntPair> {
+      assert(count2 != 0)
+      return Couple(IntPair(line1, line1), IntPair(line2, line2 + count2))
+    }
   }
 }

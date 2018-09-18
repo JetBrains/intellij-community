@@ -28,10 +28,10 @@ import java.util.*;
  */
 public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
   private final Map<XmlName, T> myMap = new THashMap<>();
-  private final ChildrenDescriptionsHolder<T> myDelegate;
+  private final ChildrenDescriptionsHolder<? extends T> myDelegate;
   private volatile List<T> myCached = null;
 
-  public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<T> delegate) {
+  public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<? extends T> delegate) {
     myDelegate = delegate;
   }
 
@@ -45,7 +45,7 @@ public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
     return t;
   }
 
-  final void addDescriptions(@NotNull Collection<T> collection) {
+  final void addDescriptions(@NotNull Collection<? extends T> collection) {
     for (final T t : collection) {
       addDescription(t);
     }

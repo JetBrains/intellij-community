@@ -15,15 +15,19 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MapReplaceableByEnumMapInspection extends BaseInspection {
 
@@ -42,6 +46,21 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MapReplaceableByEnumMapVisitor();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    if (infos.length != 1) return null;
+    PsiLocalVariable localVariable = (PsiLocalVariable)infos[0];
+    PsiType[] parameters = CollectionReplaceableByEnumCollectionVisitor.extractParameterType(localVariable, 2);
+    if (parameters == null) return null;
+    PsiType enumParameter = parameters[0];
+    String parameterListText = Arrays.stream(parameters).map(p -> p.getCanonicalText()).collect(Collectors.joining(",", "<", ">"));
+    PsiClass probablyEnum = PsiUtil.resolveClassInClassTypeOnly(enumParameter);
+    if (probablyEnum == null || !probablyEnum.isEnum()) return null;
+    String text = "new java.util.EnumMap" + parameterListText + "(" + enumParameter.getCanonicalText() + ".class)";
+    return new ReplaceExpressionWithTextFix(text, InspectionGadgetsBundle.message("map.replaceable.by.enum.map.fix.name"));
   }
 
   private static class MapReplaceableByEnumMapVisitor extends CollectionReplaceableByEnumCollectionVisitor {

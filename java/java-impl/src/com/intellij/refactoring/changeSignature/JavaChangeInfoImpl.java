@@ -233,16 +233,19 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
   }
 
+  @Override
   @NotNull
   public JavaParameterInfo[] getNewParameters() {
     return newParms;
   }
 
+  @Override
   @PsiModifier.ModifierConstant
   public String getNewVisibility() {
     return newVisibility;
   }
 
+  @Override
   public boolean isParameterSetOrOrderChanged() {
     return isParameterSetOrOrderChanged;
   }
@@ -290,14 +293,17 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
   }
 
+  @Override
   public PsiMethod getMethod() {
     return method;
   }
 
+  @Override
   public CanonicalTypes.Type getNewReturnType() {
     return newReturnType;
   }
 
+  @Override
   public void updateMethod(PsiMethod method) {
     this.method = method;
   }
@@ -317,6 +323,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     return result.toArray(new ParameterInfoImpl[0]);
   }
 
+  @Override
   @Nullable
   public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
@@ -324,84 +331,104 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
   }
 
+  @Override
   public boolean isVisibilityChanged() {
     return isVisibilityChanged;
   }
 
+  @Override
   public boolean isNameChanged() {
     return isNameChanged;
   }
 
+  @Override
   public boolean isReturnTypeChanged() {
     return isReturnTypeChanged;
   }
 
+  @Override
   public String getNewName() {
     return newName;
   }
 
+  @Override
   public Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
+  @Override
   public boolean isExceptionSetChanged() {
     return isExceptionSetChanged;
   }
 
+  @Override
   public boolean isExceptionSetOrOrderChanged() {
     return isExceptionSetOrOrderChanged;
   }
 
+  @Override
   public boolean isParameterNamesChanged() {
     return isParameterNamesChanged;
   }
 
+  @Override
   public boolean isParameterTypesChanged() {
     return isParameterTypesChanged;
   }
 
+  @Override
   public boolean isGenerateDelegate() {
     return isGenerateDelegate;
   }
 
+  @Override
   @NotNull
   public String[] getOldParameterNames() {
     return oldParameterNames;
   }
 
+  @Override
   @NotNull
   public String[] getOldParameterTypes() {
     return oldParameterTypes;
   }
 
+  @Override
   public ThrownExceptionInfo[] getNewExceptions() {
     return newExceptions;
   }
 
+  @Override
   public boolean isRetainsVarargs() {
     return retainsVarargs;
   }
 
+  @Override
   public boolean isObtainsVarags() {
     return obtainsVarags;
   }
 
+  @Override
   public boolean isArrayToVarargs() {
     return arrayToVarargs;
   }
 
+  @Override
   public PsiIdentifier getNewNameIdentifier() {
     return newNameIdentifier;
   }
 
+  @Override
   public String getOldName() {
     return oldName;
   }
 
+  @Override
   public boolean wasVararg() {
     return wasVararg;
   }
 
+  @Override
   public boolean[] toRemoveParm() {
     return toRemoveParm;
   }

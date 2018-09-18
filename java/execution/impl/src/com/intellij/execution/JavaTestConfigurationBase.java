@@ -36,8 +36,6 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
     super(configurationModule, factory);
   }
 
-  public abstract byte getTestFrameworkId();
-
   public abstract void bePatternConfiguration(List<PsiClass> classes, PsiMethod method);
 
   public abstract void beMethodConfiguration(Location<PsiMethod> location);

@@ -1,0 +1,17 @@
+<idea-plugin>
+  <name>IntelliJ Configuration Script</name>
+  <id>com.intellij.configurationScript</id>
+  <vendor>JetBrains</vendor>
+
+  <!--<depends>org.jetbrains.kotlin</depends>-->
+
+  <!--<extensions defaultExtensionNs="org.jetbrains.kotlin">-->
+  <!--<scriptDefinitionContributor implementation="com.intellij.configurationScript.ConfigurationScriptContributor" order="first"/>-->
+  <!--</extensions>-->
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.configurationScript.IntellijConfigurationAppInitializer"/>
+  </extensions>
+</idea-plugin>

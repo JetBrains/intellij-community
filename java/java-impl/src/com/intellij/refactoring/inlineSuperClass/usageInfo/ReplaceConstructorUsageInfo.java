@@ -89,6 +89,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression newExpression = (PsiNewExpression)getElement();
     if (newExpression != null) {
@@ -126,6 +127,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
   }
 
+  @Override
   public String getConflictMessage() {
     return myConflict;
   }

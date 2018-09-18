@@ -9,12 +9,12 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class JavadocParser {
   private static final TokenSet TAG_VALUES_SET = TokenSet.create(
@@ -25,14 +25,14 @@ public class JavadocParser {
   private static final TokenSet INLINE_TAG_BORDERS_SET = TokenSet.create(
     JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END);
 
-  public static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
+  private static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
 
   private static final String SEE_TAG = "@see";
   private static final String LINK_TAG = "@link";
   private static final String LINK_PLAIN_TAG = "@linkplain";
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
-  private static final Set<String> REFERENCE_TAGS = newTroveSet("@throws", "@exception", "@provides", "@uses");
+  private static final Set<String> REFERENCE_TAGS = new THashSet<>(Arrays.asList("@throws", "@exception", "@provides", "@uses"));
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 

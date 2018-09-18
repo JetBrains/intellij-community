@@ -55,7 +55,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   private final Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
 
-  public JBTerminalWidget(Project project, JBTerminalSystemSettingsProviderBase settingsProvider, Disposable parent) {
+  public JBTerminalWidget(Project project,
+                          JBTerminalSystemSettingsProviderBase settingsProvider,
+                          Disposable parent) {
     this(project, 80, 24, settingsProvider, parent);
   }
 
@@ -211,5 +213,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
         }
       }
     });
+  }
+
+  public void start(TtyConnector connector) {
+    setTtyConnector(connector);
+    start();
   }
 }

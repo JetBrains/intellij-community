@@ -37,7 +37,7 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
     if (TestFinderHelper.getFinders().length == 0) {

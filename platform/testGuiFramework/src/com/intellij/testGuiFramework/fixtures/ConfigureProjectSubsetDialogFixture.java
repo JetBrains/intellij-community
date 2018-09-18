@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.Robot;
 import org.fest.swing.core.matcher.DialogMatcher;
 import org.fest.swing.fixture.DialogFixture;
@@ -36,7 +37,7 @@ public class ConfigureProjectSubsetDialogFixture {
   @NotNull
   public static ConfigureProjectSubsetDialogFixture find(@NotNull Robot robot) {
     DialogMatcher matcher = withTitle("Select Modules to Include in Project Subset").andShowing();
-    DialogFixture dialog = findDialog(matcher).withTimeout(GuiTestUtil.INSTANCE.getSHORT_TIMEOUT().duration()).using(robot);
+    DialogFixture dialog = findDialog(matcher).withTimeout(Timeouts.INSTANCE.getMinutes02().duration()).using(robot);
     return new ConfigureProjectSubsetDialogFixture(dialog);
   }
 

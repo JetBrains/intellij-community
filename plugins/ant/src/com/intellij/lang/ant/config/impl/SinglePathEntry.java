@@ -51,15 +51,18 @@ public class SinglePathEntry implements AntClasspathEntry {
     myFile = new File(PathUtil.toPresentableUrl(value));
   }
 
+  @Override
   public void writeExternal(final Element element) {
     String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, myFile.getAbsolutePath().replace(File.separatorChar, '/'));
     element.setAttribute(PATH, url);
   }
 
+  @Override
   public void addFilesTo(final List<File> files) {
     files.add(myFile);
   }
 
+  @Override
   public CellAppearanceEx getAppearance() {
     return FileAppearanceService.getInstance().forIoFile(myFile);
   }

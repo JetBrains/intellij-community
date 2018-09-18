@@ -58,10 +58,8 @@ public class CorruptedBuildCachesTest extends BaseCompilerTestCase {
   }
 
   private static void corruptCaches(File file) {
-    try {
-      DataOutputStream stream = new DataOutputStream(new FileOutputStream(file.getAbsolutePath()));
+    try (DataOutputStream stream = new DataOutputStream(new FileOutputStream(file.getAbsolutePath()))) {
       stream.writeInt(-1);
-      stream.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);

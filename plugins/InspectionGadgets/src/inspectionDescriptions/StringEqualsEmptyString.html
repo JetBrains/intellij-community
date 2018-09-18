@@ -1,10 +1,11 @@
 <html>
 <body>
-Reports <b>.equals()</b> being called
-to compare a String with an empty string. It is normally more performant to test a String for emptiness
-by comparing its <b>.length()</b> to zero instead.
+Reports <b>.equals()</b> being called to compare a String with an empty string.
+Using <b>.isEmpty()</b> is more clear and could be slightly more performant.
 <!-- tooltip end -->
 <p>
-
+  The check like <b>"".equals(str)</b> returns false when <b>str</b> is null, so
+  an explicit null-check could be inserted when replacing with <b>isEmpty()</b>.
+  Use a checkbox below to suppress warning when value could be nullable.
 </body>
 </html>

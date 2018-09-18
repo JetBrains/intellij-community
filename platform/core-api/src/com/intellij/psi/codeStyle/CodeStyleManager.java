@@ -188,6 +188,7 @@ public abstract class CodeStyleManager  {
   /**
    * @deprecated this method is not intended to be used by plugins.
    */
+  @Deprecated
   public abstract boolean isLineToBeIndented(@NotNull PsiFile file, int offset);
 
   /**
@@ -232,16 +233,19 @@ public abstract class CodeStyleManager  {
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract Indent getIndent(String text, FileType fileType);
 
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract String fillIndent(Indent indent, FileType fileType);
 
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract Indent zeroIndent();
 
   /**

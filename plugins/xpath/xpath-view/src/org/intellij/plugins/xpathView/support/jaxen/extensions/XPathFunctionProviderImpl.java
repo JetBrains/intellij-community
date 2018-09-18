@@ -52,6 +52,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
         myFunctions.put(new QName(null, "ends-with"), new JaxenEndsWith());
     }
 
+    @Override
     @NotNull
     public Map<QName, ? extends Function> getFunctions(ContextType contextType) {
         if (contextType == XPathSupport.TYPE) {
@@ -68,6 +69,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new EvaluateFunction();
         }
@@ -80,6 +82,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
                     new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new LowerFunction();
         }
@@ -92,6 +95,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
                     new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new UpperFunction();
         }
@@ -104,6 +108,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED));
         }
 
+        @Override
         public org.jaxen.Function getImplementation() {
             return new EndsWithFunction();
         }

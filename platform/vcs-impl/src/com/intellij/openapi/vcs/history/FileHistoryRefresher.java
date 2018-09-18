@@ -1,63 +1,61 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
 /**
  * Refreshes file history.
+ *
  * @author irengrig
  * @author Kirill Likhodedov
  */
 public class FileHistoryRefresher implements FileHistoryRefresherI {
-  private final FileHistorySessionPartner mySessionPartner;
-  private final VcsHistoryProvider myVcsHistoryProvider;
-  private final FilePath myPath;
-  private final AbstractVcs myVcs;
+  @NotNull private static final ExecutorService ourExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
+  @NotNull private final FileHistorySessionPartner mySessionPartner;
+  @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
+  @NotNull private final FilePath myPath;
+  @NotNull private final AbstractVcs myVcs;
   @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
-  private boolean myCanUseCache;
-  private boolean myIsRefresh;
+  private boolean myFirstTime = true;
 
-  public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
-                              final FilePath path,
-                              final AbstractVcs vcs) {
+  public FileHistoryRefresher(@NotNull VcsHistoryProvider vcsHistoryProvider,
+                              @NotNull FilePath path,
+                              @NotNull AbstractVcs vcs) {
     this(vcsHistoryProvider, path, null, vcs);
   }
-  
-  public FileHistoryRefresher(final VcsHistoryProviderEx vcsHistoryProvider,
-                              final FilePath path,
-                              @Nullable VcsRevisionNumber startingRevisionNumber, 
-                              final AbstractVcs vcs) {
+
+  public FileHistoryRefresher(@NotNull VcsHistoryProviderEx vcsHistoryProvider,
+                              @NotNull FilePath path,
+                              @Nullable VcsRevisionNumber startingRevisionNumber,
+                              @NotNull AbstractVcs vcs) {
     this((VcsHistoryProvider)vcsHistoryProvider, path, startingRevisionNumber, vcs);
   }
-  
-  private FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
-                               final FilePath path,
-                               @Nullable VcsRevisionNumber startingRevisionNumber, 
-                               final AbstractVcs vcs) {
+
+  private FileHistoryRefresher(@NotNull VcsHistoryProvider vcsHistoryProvider,
+                               @NotNull FilePath path,
+                               @Nullable VcsRevisionNumber startingRevisionNumber,
+                               @NotNull AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
     myStartingRevisionNumber = startingRevisionNumber;
     mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, startingRevisionNumber, vcs, this);
-    myCanUseCache = true;
+
+    RefreshRequest request = new RefreshRequest(20_000, mySessionPartner);
+    request.schedule();
   }
 
   @NotNull
@@ -73,32 +71,80 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
                                                    @NotNull FilePath path,
                                                    @NotNull AbstractVcs vcs,
                                                    @Nullable VcsRevisionNumber startingRevisionNumber) {
-    FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, startingRevisionNumber);
+    FileHistoryRefresherI refresher =
+      FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, startingRevisionNumber);
     return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, startingRevisionNumber, vcs) : refresher;
   }
 
+  @Override
+  public void selectContent() {
+    mySessionPartner.createOrSelectContent();
+  }
+
+  @Override
+  public boolean isInRefresh() {
+    return VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myPath, myStartingRevisionNumber)
+                            .isLocked();
+  }
+
   /**
-   * @param canUseLastRevision
+   * @param canUseCache
    */
   @Override
-  public void run(boolean isRefresh, boolean canUseLastRevision) {
-    myIsRefresh = isRefresh;
+  public void refresh(boolean canUseCache) {
     mySessionPartner.beforeRefresh();
+
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
       VcsCachingHistory.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
     }
     else {
-      VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, myCanUseCache, canUseLastRevision);
+      boolean collectedFromCache = false;
+      if (myFirstTime) {
+        collectedFromCache = VcsCachingHistory.collectFromCache(myVcs, myPath, mySessionPartner);
+      }
+
+      if (!collectedFromCache) {
+        VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, canUseCache);
+      }
     }
-    myCanUseCache = false;
+
+    myFirstTime = false;
   }
 
-  /**
-   * Was the refresher called for the first time or via refresh.
-   * @return
-   */
-  @Override
-  public boolean isFirstTime() {
-    return !myIsRefresh;
+  private class RefreshRequest implements Runnable {
+    @NotNull private final Alarm myUpdateAlarm;
+    private final int myDelayMillis;
+    @Nullable Future<?> myLastTask;
+
+    public RefreshRequest(int delayMillis, @NotNull Disposable parent) {
+      myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
+      myDelayMillis = delayMillis;
+    }
+
+    @Override
+    public void run() {
+      if (myLastTask != null) {
+        myLastTask.cancel(false);
+      }
+      if (myVcs.getProject().isDisposed()) {
+        return;
+      }
+
+      myUpdateAlarm.cancelAllRequests();
+      if (myUpdateAlarm.isDisposed()) return;
+      schedule();
+
+      if (!ApplicationManager.getApplication().isActive()) return;
+
+      myLastTask = ourExecutor.submit(() -> {
+        if (!myUpdateAlarm.isDisposed() && mySessionPartner.shouldBeRefreshed()) {
+          ApplicationManager.getApplication().invokeLater(() -> refresh(true));
+        }
+      });
+    }
+
+    public void schedule() {
+      myUpdateAlarm.addRequest(this, myDelayMillis);
+    }
   }
 }

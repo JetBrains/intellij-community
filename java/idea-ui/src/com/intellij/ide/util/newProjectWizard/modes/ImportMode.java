@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.newProjectWizard.modes;
 
@@ -27,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ImportChooserStep;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,11 +29,13 @@ public class ImportMode extends WizardMode {
     myProviders = providers;
   }
 
+  @Override
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName());
   }
 
+  @Override
   @NotNull
   public String getDescription(final WizardContext context) {
     final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
@@ -57,6 +44,7 @@ public class ImportMode extends WizardMode {
       provider -> provider.getName(), ", "));
   }
 
+  @Override
   @Nullable
   protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence stepSequence = new StepSequence();
@@ -72,15 +60,18 @@ public class ImportMode extends WizardMode {
     return stepSequence;
   }
 
+  @Override
   public boolean isAvailable(WizardContext context) {
     return Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER).length > 0;
   }
 
+  @Override
   @Nullable
   public ProjectBuilder getModuleBuilder() {
     return myBuilder;
   }
 
+  @Override
   public void onChosen(final boolean enabled) {}
 
   @Override

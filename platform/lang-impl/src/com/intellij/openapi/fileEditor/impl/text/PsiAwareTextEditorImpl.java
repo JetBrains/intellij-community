@@ -105,7 +105,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     }
 
     @Override
-    public Object getData(final String dataId) {
+    public Object getData(@NotNull final String dataId) {
       if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
         if (lookup != null && lookup.isVisible()) {

@@ -146,6 +146,9 @@ public class SnippetEditorDecorator extends EditorNotifications.Provider<Snippet
             return sdk;
           }
         }
+        if (javaSdkType.isValidSdkHome(pathOrName)) {
+          return javaSdkType.createJdk(javaSdkType.suggestSdkName("JShell JDK", pathOrName), pathOrName, false);
+        }
       }
       return null;
     }

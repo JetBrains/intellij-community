@@ -34,46 +34,56 @@ public class DefaultDebugExecutor extends Executor {
   private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
   private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 
+  @Override
   public String getToolWindowId() {
     return ToolWindowId.DEBUG;
   }
 
+  @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowDebugger;
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return AllIcons.Actions.StartDebugger;
   }
 
+  @Override
   public Icon getDisabledIcon() {
     return AllIcons.Process.DisabledDebug;
   }
 
+  @Override
   @NotNull
   public String getActionName() {
     return UIBundle.message("tool.window.name.debug");
   }
 
+  @Override
   @NotNull
   public String getId() {
     return EXECUTOR_ID;
   }
 
+  @Override
   public String getContextActionId() {
     return "DebugClass";
   }
 
+  @Override
   @NotNull
   public String getStartActionText() {
     return myStartActionText;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }
 
+  @Override
   public String getHelpId() {
     return "debugging.DebugWindow";
   }

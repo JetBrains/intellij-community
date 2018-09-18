@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -31,12 +32,12 @@ class ResourceBundleEditorKeepEmptyValueToggleAction extends CheckboxAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return keepEmptyProperties();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     PropertiesComponent.getInstance().setValue(SELECTION_KEY, state, true);
   }
 

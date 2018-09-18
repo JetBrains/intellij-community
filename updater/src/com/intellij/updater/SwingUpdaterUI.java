@@ -58,6 +58,40 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
     }
   }
 
+/* Android Studio: removed by Change Ia67907f7 / commit 82a9fb9
+  @Override
+  public void setDescription(String oldBuildDesc, String newBuildDesc) {
+    setDescription("Updating " + oldBuildDesc + " to " + newBuildDesc + " ...");
+  }
+
+  @Override
+  public void setDescription(String text) {
+    invokeLater(() -> myProcessTitle.setText(text.isEmpty() ? " " : text));
+  }
+
+  @Override
+  public void startProcess(String title) {
+    invokeLater(() -> {
+      myProcessStatus.setText(title);
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(0);
+    });
+  }
+
+  @Override
+  public void setProgress(int percentage) {
+    invokeLater(() -> {
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(percentage);
+    });
+  }
+
+  @Override
+  public void setProgressIndeterminate() {
+    invokeLater(() -> myProcessProgress.setIndeterminate(true));
+  }
+Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
+
   @Override
   public void checkCancelled() throws OperationCancelledException {
     while (myPaused) Utils.pause(10);
@@ -90,7 +124,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
     boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
     Map<String, ValidationResult.Option> result = new HashMap<>();
 
@@ -194,7 +228,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
 
     private final List<Item> myItems = new ArrayList<>();
 
-    public MyTableModel(List<ValidationResult> validationResults) {
+    public MyTableModel(List<? extends ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
         myItems.add(new Item(each, each.options.get(0)));
       }

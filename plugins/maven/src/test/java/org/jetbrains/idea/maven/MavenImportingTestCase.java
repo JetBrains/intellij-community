@@ -29,7 +29,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -365,12 +364,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     importProjectWithProfiles();
   }
 
-  protected void importProjectWithErrors(boolean maven2) {
-    doImportProjects(maven2, Collections.singletonList(myProjectPom), false);
+  protected void importProjectWithErrors() {
+    doImportProjects(Collections.singletonList(myProjectPom), false);
   }
 
   protected void importProjectWithProfiles(String... profiles) {
-    doImportProjects(true, Collections.singletonList(myProjectPom), true, profiles);
+    doImportProjects(Collections.singletonList(myProjectPom), true, profiles);
   }
 
   protected void importProject(VirtualFile file) {
@@ -378,28 +377,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void importProjects(VirtualFile... files) {
-    doImportProjects(true, Arrays.asList(files), true);
+    doImportProjects(Arrays.asList(files), true);
   }
 
   protected void importProjectsWithErrors(VirtualFile... files) {
-    doImportProjects(true, Arrays.asList(files), false);
+    doImportProjects(Arrays.asList(files), false);
   }
 
-  protected void importProjectWithMaven3(@Language(value = "XML", prefix = "<project>", suffix = "</project>") @NonNls String xml) {
-    createProjectPom(xml);
-    importProjectWithMaven3();
-  }
-
-  protected void importProjectWithMaven3() {
-    importProjectWithMaven3WithProfiles();
-  }
-
-  protected void importProjectWithMaven3WithProfiles(String... profiles) {
-    doImportProjects(false, Collections.singletonList(myProjectPom), true, profiles);
-  }
-
-  private void doImportProjects(boolean useMaven2, final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
-    MavenServerManager.getInstance().setUseMaven2(useMaven2);
+  private void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     initProjectsManager(false);
 
     readProjects(files, profiles);

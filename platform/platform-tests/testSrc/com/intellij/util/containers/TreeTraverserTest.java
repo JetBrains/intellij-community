@@ -846,6 +846,7 @@ public class TreeTraverserTest extends TestCase {
       boolean value;
       F(boolean initialVal) { value = initialVal; }
 
+      @Override
       public boolean value(Integer integer) {
         return count ++ > 0 == value;
       }

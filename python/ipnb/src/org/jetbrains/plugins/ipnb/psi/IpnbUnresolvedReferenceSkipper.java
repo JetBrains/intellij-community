@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
@@ -19,8 +18,7 @@ import java.util.List;
 
 public class IpnbUnresolvedReferenceSkipper implements PyUnresolvedReferenceSkipperExtPoint {
   @Override
-  public boolean unusedImportShouldBeSkipped(@NotNull final PyImportedNameDefiner importNameDefiner,
-                                             final TypeEvalContext typeEvalContext) {
+  public boolean unusedImportShouldBeSkipped(@NotNull final PyImportedNameDefiner importNameDefiner) {
     final PsiFile file = importNameDefiner.getContainingFile();
     if (file instanceof IpnbPyFragment) {
       final IpnbFilePanel panel = ((IpnbPyFragment)file).getFilePanel();

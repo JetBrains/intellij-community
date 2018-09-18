@@ -26,6 +26,7 @@ public final class GzipStreamRequest extends AbstractRequest {
 
         // Implemented ============================================================
 
+        @Override
         public String getRequestString() {
                 return REQUEST + ' ' + COMPRESSION_LEVEL + '\n';
         }

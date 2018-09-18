@@ -192,7 +192,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                         @Nullable PsiElement context,
                                         @NotNull Processor<Object> consumer,
                                         boolean preferStartMatches,
-                                        List<MatchResult> namesList, 
+                                        List<? extends MatchResult> namesList,
                                         FindSymbolParameters parameters) {
     List<Object> sameNameElements = new SmartList<>();
     final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
@@ -307,7 +307,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                             @NotNull final String[] names,
                                             @NotNull final String pattern,
                                             final ProgressIndicator indicator,
-                                            @NotNull final Consumer<MatchResult> consumer) {
+                                            @NotNull final Consumer<? super MatchResult> consumer) {
     MinusculeMatcher matcher = buildPatternMatcher(pattern);
     Processor<String> processor = name -> {
       ProgressManager.checkCanceled();

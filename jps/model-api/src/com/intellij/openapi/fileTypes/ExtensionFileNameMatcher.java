@@ -37,6 +37,7 @@ public class ExtensionFileNameMatcher extends FileNameMatcherEx {
     return StringUtilRt.endsWithIgnoreCase(fileName, myDotExtension);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getPresentableString() {

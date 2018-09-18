@@ -42,6 +42,7 @@ public class RepositoryLibraryPropertiesModel {
     myExcludedDependencies = new ArrayList<>(excludedDependencies);
   }
 
+  @Override
   public RepositoryLibraryPropertiesModel clone() {
     return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs, includeTransitiveDependencies,
                                                 new ArrayList<>(myExcludedDependencies));

@@ -5,10 +5,7 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
@@ -18,6 +15,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
 import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
+import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -45,6 +43,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -113,7 +112,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(@NotNull PsiAssignmentExpression expr) {
     return new ReplaceAssignmentWithComparisonFix(expr);
   }
 
@@ -266,7 +265,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable) {
+  public IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable) {
     return new NavigateToAlreadyDeclaredVariableFix(variable);
   }
 
@@ -499,7 +498,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression) {
+  public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
   }
 
@@ -533,12 +532,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     if (JvmElementActionFactories.useInterlaguageActions()) {
       return CreateConstructorFromUsage.generateConstructorActions(call);
     }
-    else {
-      return Arrays.asList(
-        createCreateConstructorFromSuperFix(call),
-        createCreateConstructorFromThisFix(call)
-      );
-    }
+    return Arrays.asList(
+      createCreateConstructorFromSuperFix(call),
+      createCreateConstructorFromThisFix(call)
+    );
   }
 
   @NotNull
@@ -577,9 +574,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     if (JvmElementActionFactories.useInterlaguageActions()) {
       return CreateConstructorFromUsage.generateConstructorActions(call);
     }
-    else {
-      return Collections.singletonList(createCreateConstructorFromCallFix(call));
-    }
+    return Collections.singletonList(createCreateConstructorFromCallFix(call));
   }
 
   @NotNull
@@ -732,7 +727,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull final String qualifiedName) {
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(@NotNull Project project, @NotNull final String qualifiedName) {
     EntryPointsManagerBase entryPointsManagerBase = EntryPointsManagerBase.getInstance(project);
     return entryPointsManagerBase.new AddImplicitlyWriteAnnotation(qualifiedName);
   }
@@ -871,6 +866,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
     boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
       .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
+        if (error.type instanceof LocalInspectionsPass.InspectionHighlightInfoType) return true;
         int infoStart = error.getActualStartOffset();
         int infoEnd = error.getActualEndOffset();
 
@@ -890,14 +886,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
+  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, @NotNull PsiMethod method) {
     return new InsertMethodCallFix(call, method);
   }
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef,
-                                                                                      JavaResolveResult result) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(@NotNull PsiReferenceExpression methodRef,
+                                                                                      @NotNull JavaResolveResult result) {
     return new AccessStaticViaInstanceFix(methodRef, result, true);
   }
 
@@ -917,5 +913,17 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName) {
     return CreateClassInPackageInModuleFix.createFix(module, packageName);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createPushDownMethodFix() {
+    return new RunRefactoringAction(new JavaPushDownHandler(), "Push method down...") {
+      @NotNull
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+    };
   }
 }

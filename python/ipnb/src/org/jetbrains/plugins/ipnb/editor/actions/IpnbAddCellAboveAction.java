@@ -32,7 +32,7 @@ public class IpnbAddCellAboveAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     final IpnbFileEditor editor = IpnbFileEditor.DATA_KEY.getData(context);
     if (editor == null) {

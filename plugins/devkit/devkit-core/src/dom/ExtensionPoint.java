@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +26,6 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-/**
- * @author mike
- */
 @Presentation(typeName = "Extension Point")
 public interface ExtensionPoint extends DomElement {
   enum Area {
@@ -35,6 +33,11 @@ public interface ExtensionPoint extends DomElement {
     IDEA_MODULE,
     IDEA_APPLICATION
   }
+
+
+  @NotNull
+  @Override
+  XmlTag getXmlTag();
 
   @NotNull
   @Stubbed

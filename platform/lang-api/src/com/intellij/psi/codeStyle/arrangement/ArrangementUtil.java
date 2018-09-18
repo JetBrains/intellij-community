@@ -288,7 +288,7 @@ public class ArrangementUtil {
 
   @NotNull
   public static ArrangementUiComponent buildUiComponent(@NotNull StdArrangementTokenUiRole role,
-                                                        @NotNull List<ArrangementSettingsToken> tokens,
+                                                        @NotNull List<? extends ArrangementSettingsToken> tokens,
                                                         @NotNull ArrangementColorsProvider colorsProvider,
                                                         @NotNull ArrangementStandardSettingsManager settingsManager)
     throws IllegalArgumentException
@@ -316,7 +316,7 @@ public class ArrangementUtil {
 
   //region Arrangement Sections
   @NotNull
-  public static List<StdArrangementMatchRule> collectMatchRules(@NotNull List<ArrangementSectionRule> sections) {
+  public static List<StdArrangementMatchRule> collectMatchRules(@NotNull List<? extends ArrangementSectionRule> sections) {
     final List<StdArrangementMatchRule> matchRules = ContainerUtil.newArrayList();
     for (ArrangementSectionRule section : sections) {
       matchRules.addAll(section.getMatchRules());

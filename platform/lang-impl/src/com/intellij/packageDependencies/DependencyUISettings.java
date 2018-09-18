@@ -10,13 +10,7 @@ import com.intellij.packageDependencies.ui.PatternDialectProvider;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(
-  name = "DependencyUISettings",
-  storages = {
-    @Storage("ui.lnf.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "DependencyUISettings", storages = @Storage("ui.lnf.xml"))
 public class DependencyUISettings implements PersistentStateComponent<DependencyUISettings> {
   public boolean UI_FLATTEN_PACKAGES = true;
   public boolean UI_SHOW_FILES = true;

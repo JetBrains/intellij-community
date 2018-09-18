@@ -35,6 +35,7 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
         return instance;
     }
 
+    @Override
     public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
 
         // if main method exists and is the last then add toString just before main method

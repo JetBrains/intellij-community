@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
-import com.intellij.internal.statistic.UsageTrigger
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -30,65 +29,75 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.InputEvent
-import javax.swing.Icon
 import javax.swing.JList
 
 private val LOG = Logger.getInstance(BaseOpenInBrowserAction::class.java)
 
-abstract class BaseOpenInBrowserAction : DumbAwareAction {
-  @Suppress("unused")
-  protected constructor(browser: WebBrowser) : super(browser.name, null, browser.icon)
+internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
+  try {
+    val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
+    if (!urls.isEmpty()) {
+      chooseUrl(urls)
+        .onSuccess { url ->
+          ApplicationManager.getApplication().saveAll()
+          BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
+        }
+    }
+  }
+  catch (e: WebBrowserUrlProvider.BrowserException) {
+    Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
+  }
+  catch (e: Exception) {
+    LOG.error(e)
+  }
+}
 
-  @Suppress("unused")
-  protected constructor(text: String?, description: String?, icon: Icon?) : super(text, description, icon)
+internal fun openInBrowser(event: AnActionEvent, browser: WebBrowser?) {
+  createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = true)?.let {
+    openInBrowser(it, BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
+  }
+}
 
+internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction(browser.name, null, browser.icon) {
   companion object {
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
-      val request = createRequest(event.dataContext)
+      val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
       val applicable = request != null && WebBrowserServiceImpl.getProvider(request) != null
       event.presentation.isEnabledAndVisible = applicable
-      return if (applicable) request else null
-    }
-
-    fun open(event: AnActionEvent, browser: WebBrowser?) {
-      open(createRequest(event.dataContext), BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
-    }
-
-    fun open(request: OpenInBrowserRequest?, preferLocalUrl: Boolean, browser: WebBrowser?) {
-      if (request == null) {
-        return
-      }
-
-      try {
-        val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
-        if (!urls.isEmpty()) {
-          chooseUrl(urls)
-              .onSuccess { url ->
-                ApplicationManager.getApplication().saveAll()
-                BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
-              }
-        }
-      }
-      catch (e: WebBrowserUrlProvider.BrowserException) {
-        Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
+      return if (applicable) request else  null
     }
   }
 
-  protected abstract fun getBrowser(event: AnActionEvent): WebBrowser?
+  private fun getBrowser(): WebBrowser? {
+    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) {
+      return browser
+    }
+    else {
+      return null
+    }
+  }
 
   override fun update(e: AnActionEvent) {
-    val browser = getBrowser(e)
+    val browser = getBrowser()
     if (browser == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    val result = doUpdate(e) ?: return
+    val result: OpenInBrowserRequest?
+    if (e.place == ActionPlaces.UNKNOWN) {
+      result = createRequest(e.dataContext, isForceFileUrlIfNoUrlProvider = true)
+      val isApplicable = result?.isPhysicalFile() ?: false
+      e.presentation.isEnabledAndVisible = isApplicable
+      if (!isApplicable) {
+        return
+      }
+      result!!
+    }
+    else {
+      result = doUpdate(e) ?: return
+    }
 
     var description = templatePresentation.text
     if (ActionPlaces.CONTEXT_TOOLBAR == e.place) {
@@ -110,30 +119,15 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    getBrowser(e)?.let {
-      UsageTrigger.trigger("OpenInBrowser.${it.name}")
-      open(e, it)
+    getBrowser()?.let {
+      openInBrowser(e, it)
     }
   }
 }
 
-private fun createRequest(context: DataContext): OpenInBrowserRequest? {
+private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: Boolean): OpenInBrowserRequest? {
   val editor = CommonDataKeys.EDITOR.getData(context)
-  if (editor != null) {
-    val project = editor.project
-    if (project != null && project.isInitialized) {
-      val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-      if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
-        return object : OpenInBrowserRequest(psiFile) {
-          private val _element by lazy { file.findElementAt(editor.caretModel.offset) }
-
-          override val element: PsiElement
-            get() = _element ?: file
-        }
-      }
-    }
-  }
-  else {
+  if (editor == null) {
     var psiFile = CommonDataKeys.PSI_FILE.getData(context)
     val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context)
     val project = CommonDataKeys.PROJECT.getData(context)
@@ -142,7 +136,21 @@ private fun createRequest(context: DataContext): OpenInBrowserRequest? {
     }
 
     if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
-      return createOpenInBrowserRequest(psiFile)
+      return createOpenInBrowserRequest(psiFile, isForceFileUrlIfNoUrlProvider)
+    }
+  }
+  else {
+    val project = editor.project
+    if (project != null && project.isInitialized) {
+      val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+      if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
+        return object : OpenInBrowserRequest(psiFile, isForceFileUrlIfNoUrlProvider) {
+          private val lazyElement by lazy { file.findElementAt(editor.caretModel.offset) }
+
+          override val element: PsiElement
+            get() = lazyElement ?: file
+        }
+      }
     }
   }
   return null

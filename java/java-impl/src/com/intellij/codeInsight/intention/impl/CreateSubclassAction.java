@@ -296,7 +296,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
-            public void templateFinished(Template template, boolean brokenOff) {
+            public void templateFinished(@NotNull Template template, boolean brokenOff) {
               try {
                 LOG.assertTrue(startClassOffset.isValid(), startClassOffset);
                 final PsiClass aTargetClass;

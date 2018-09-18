@@ -1,14 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -67,7 +65,7 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameF
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
+public class ShelveChangesManager implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
@@ -99,6 +97,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       .getPath();
   }
 
+  private final Project myProject;
   private final MessageBus myBus;
 
   @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";
@@ -107,8 +106,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   private boolean myShowRecycled;
 
   public ShelveChangesManager(final Project project, final MessageBus bus) {
-    super(project);
-    myPathMacroSubstitutor = PathMacroManager.getInstance(myProject);
+    myPathMacroSubstitutor = PathMacroManager.getInstance(project);
+    myProject = project;
     myBus = bus;
     mySchemeManager = createShelveSchemeManager(project, VcsConfiguration.getInstance(project).CUSTOM_SHELF_PATH);
 

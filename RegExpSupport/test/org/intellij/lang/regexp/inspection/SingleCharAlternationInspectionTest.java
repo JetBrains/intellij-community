@@ -39,6 +39,16 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
                  "([.\\[\\](){}^?*|+\\-$])ab", "Replace with '[.\\[\\](){}^?*|+\\-$]'");
   }
 
+  public void testRedundantEscapeReplacement() {
+    quickfixTest("(<warning descr=\"Single character alternation in RegExp\">\\[<caret>|\\]</warning>)", "([\\[\\]])", "Replace with '[\\[\\]]");
+  }
+
+  public void testRedundantEscapeReplacement2() {
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\+|\\-|\\*|/|=|<|>|\\[|\\]|\\.|,|:|;|\\(|\\^</warning>",
+                 "[+\\-*/=<>\\[\\].,:;(^]",
+                 "Replace with '[+\\-*/=<>\\[\\].,:;(^]'");
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool getInspection() {

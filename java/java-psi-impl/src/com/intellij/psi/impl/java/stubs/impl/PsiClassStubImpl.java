@@ -25,6 +25,7 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,7 +49,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private final short myFlags;
   private String mySourceFileName;
 
-  public PsiClassStubImpl(final JavaClassElementType type,
+  public PsiClassStubImpl(@NotNull JavaClassElementType type,
                           final StubElement parent,
                           @Nullable final String qualifiedName,
                           @Nullable final String name,

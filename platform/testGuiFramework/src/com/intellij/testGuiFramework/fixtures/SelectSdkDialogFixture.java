@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.treeStructure.Tree;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -77,7 +78,7 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 
@@ -88,7 +89,7 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
         JButton button = GuiTestUtil.INSTANCE.findButton(SelectSdkDialogFixture.this, "OK", myRobot);
         return button.isEnabled();
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     GuiTestUtil.INSTANCE.findAndClickOkButton(this);
   }

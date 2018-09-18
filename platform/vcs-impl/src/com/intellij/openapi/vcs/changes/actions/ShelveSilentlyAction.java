@@ -24,13 +24,14 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 public class ShelveSilentlyAction extends AnAction implements DumbAware {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = ObjectUtils.assertNotNull(getEventProject(e));
     FileDocumentManager.getInstance().saveAllDocuments();
     Change[] changes = ObjectUtils.assertNotNull(e.getData(VcsDataKeys.CHANGES));
@@ -38,7 +39,7 @@ public class ShelveSilentlyAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     e.getPresentation().setEnabled(getEventProject(e) != null && changes != null && changes.length > 0);
   }

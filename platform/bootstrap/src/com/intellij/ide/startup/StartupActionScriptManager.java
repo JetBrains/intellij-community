@@ -49,7 +49,7 @@ public class StartupActionScriptManager {
     addActionCommands(Collections.singletonList(command));
   }
 
-  public static synchronized void addActionCommands(List<ActionCommand> commands) throws IOException {
+  public static synchronized void addActionCommands(List<? extends ActionCommand> commands) throws IOException {
     if (Boolean.getBoolean(STARTUP_WIZARD_MODE)) {
       for (ActionCommand command : commands) {
         command.execute();

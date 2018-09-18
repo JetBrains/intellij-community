@@ -126,7 +126,7 @@ public abstract class PsiAugmentProvider {
     return result.get();
   }
 
-  private static void forEach(Project project, Processor<PsiAugmentProvider> processor) {
+  private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
     boolean dumb = DumbService.isDumb(project);
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (!dumb || DumbService.isDumbAware(provider)) {

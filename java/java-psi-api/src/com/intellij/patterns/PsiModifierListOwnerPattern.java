@@ -23,6 +23,7 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
 
   public Self withModifiers(final String... modifiers) {
     return with(new PatternCondition<T>("withModifiers") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return ContainerUtil.and(modifiers, s -> t.hasModifierProperty(s));
       }
@@ -31,6 +32,7 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
 
   public Self withoutModifiers(final String... modifiers) {
     return with(new PatternCondition<T>("withoutModifiers") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return ContainerUtil.and(modifiers, s -> !t.hasModifierProperty(s));
       }
@@ -39,6 +41,7 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
 
   public Self withAnnotation(@NonNls final String qualifiedName) {
     return with(new PatternCondition<T>("withAnnotation") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         final PsiModifierList modifierList = t.getModifierList();
         return modifierList != null && modifierList.hasAnnotation(qualifiedName);
@@ -48,6 +51,7 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
 
   public Self withAnnotations(@NonNls final String... qualifiedNames) {
     return with(new PatternCondition<T>("withAnnotations") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return AnnotationUtil.findAnnotation(t, qualifiedNames) != null;
       }

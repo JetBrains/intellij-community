@@ -39,7 +39,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
@@ -55,6 +54,7 @@ public class CvsServicesImpl extends CvsServices {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.impl.CvsServicesImpl");
 
+  @Override
   public CvsModule[] chooseModules(Project project,
                                    boolean allowRootSelection,
                                    boolean allowMultipleSelection,
@@ -72,6 +72,7 @@ public class CvsServicesImpl extends CvsServices {
     return moduleChooser.getSelectedModules();
   }
 
+  @Override
   public CvsRepository[] getConfiguredRepositories() {
     List<CvsRootConfiguration> configurations = CvsApplicationLevelConfiguration.getInstance().CONFIGURATIONS;
     CvsRepository[] result = new CvsRepository[configurations.size()];
@@ -94,11 +95,13 @@ public class CvsServicesImpl extends CvsServices {
 
   }
 
+  @Override
   public String getScrambledPasswordForPServerCvsRoot(String cvsRoot) {
     return PServerLoginProvider.getInstance()
       .getScrambledPasswordForCvsRoot(cvsRoot);
   }
 
+  @Override
   public boolean saveRepository(CvsRepository repository) {
     CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     CvsRootConfiguration config = CvsRootConfiguration.createOn(repository);
@@ -107,6 +110,7 @@ public class CvsServicesImpl extends CvsServices {
     return configuration.CONFIGURATIONS.contains(config);
   }
 
+  @Override
   public void openInEditor(Project project, CvsModule cvsFile) {
     CvsRepository repository = cvsFile.getRepository();
     RevisionOrDate revisionOrDate = RevisionOrDateImpl.createOn(new DateOrRevisionSettings().updateFrom(repository.getDateOrRevision()));
@@ -126,6 +130,7 @@ public class CvsServicesImpl extends CvsServices {
     FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, false);
   }
 
+  @Override
   public byte[] getFileContent(Project project, CvsModule cvsFile) throws IOException {
     final GetFileContentOperation operation = new GetFileContentOperation(new File(cvsFile.getPathInCvs()),
                                                                           CvsRootConfiguration.createOn(cvsFile.getRepository()),
@@ -141,6 +146,7 @@ public class CvsServicesImpl extends CvsServices {
     return operation.getFileBytes();
   }
 
+  @Override
   public CvsResult checkout(String[] modules,
                             File checkoutTo,
                             String directory,

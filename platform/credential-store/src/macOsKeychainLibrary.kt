@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.SystemInfo
@@ -32,6 +18,8 @@ private const val errSecItemNotFound = -25300
 private const val errSecInvalidRecord = -67701
 // or if Deny clicked on access dialog
 private const val errUserNameNotCorrect = -25293
+// https://developer.apple.com/documentation/security/1542001-security_framework_result_codes/errsecusercanceled?language=objc
+private const val errSecUserCanceled = -128
 private const val kSecFormatUnknown = 0
 private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
 
@@ -91,12 +79,15 @@ internal class KeyChainCredentialStore : CredentialStore {
   }
 }
 
-fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
+private fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
   val accountNameBytes = accountName?.toByteArray()
   val passwordSize = IntArray(1)
   val passwordRef = PointerByReference()
   val itemRef = PointerByReference()
-  checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
+  val errorCode = checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
+  if (errorCode == errSecUserCanceled) {
+    return ACCESS_TO_KEY_CHAIN_DENIED
+  }
 
   val pointer = passwordRef.value ?: return null
   val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
@@ -170,9 +161,9 @@ internal class SecKeychainAttributeInfo : Structure() {
   override fun getFieldOrder() = listOf("count", "tag", "format")
 }
 
-private fun checkForError(message: String, code: Int) {
+private fun checkForError(message: String, code: Int): Int {
   if (code == errSecSuccess || code == errSecItemNotFound) {
-    return
+    return code
   }
 
   val translated = LIBRARY.SecCopyErrorMessageString(code, null)
@@ -189,12 +180,14 @@ private fun checkForError(message: String, code: Int) {
     builder.append(buf).append(" (").append(code).append(')')
   }
 
-  if (code == errUserNameNotCorrect || code == -25299 /* The specified item already exists in the keychain */) {
+  if (code == errUserNameNotCorrect || code == errSecUserCanceled || code == -25299 /* The specified item already exists in the keychain */) {
     LOG.warn(builder.toString())
   }
   else {
     LOG.error(builder.toString())
   }
+
+  return code
 }
 
 @Suppress("FunctionName")

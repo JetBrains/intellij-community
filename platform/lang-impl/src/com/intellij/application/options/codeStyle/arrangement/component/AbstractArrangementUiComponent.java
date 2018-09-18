@@ -95,7 +95,7 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myAvailableTokens.addAll(Arrays.asList(availableTokens));
   }
 
-  protected AbstractArrangementUiComponent(@NotNull Collection<ArrangementSettingsToken> availableTokens) {
+  protected AbstractArrangementUiComponent(@NotNull Collection<? extends ArrangementSettingsToken> availableTokens) {
     myAvailableTokens.addAll(availableTokens);
   }
 

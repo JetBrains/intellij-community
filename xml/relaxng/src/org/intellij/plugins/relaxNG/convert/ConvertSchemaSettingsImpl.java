@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +31,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   public ConvertSchemaSettingsImpl(Project project, @NotNull SchemaType inputType, VirtualFile firstFile) {
     myProject = project;
     myInputType = inputType;
-    
+
     final FileType type;
     switch (inputType) {
       case RNG:
@@ -118,7 +118,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
     myEncoding.setSelectedItem(charset.name());
 
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings styleSettings = CodeStyle.getSettings(project);
     final int indent = styleSettings.getIndentSize(type);
     myIndent.setText(String.valueOf(indent));
 
@@ -136,7 +136,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myPropertyChangeSupport.firePropertyChange(OUTPUT_PATH, null, getOutputDestination());
       }
     });
@@ -199,7 +199,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   public int getLineLength() {
     return parseInt(myLineLength.getText());
   }
-  
+
   @Override
   public String getOutputDestination() {
     return myOutputDestination.getText();

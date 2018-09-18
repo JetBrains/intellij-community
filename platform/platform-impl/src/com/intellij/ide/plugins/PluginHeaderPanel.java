@@ -164,6 +164,7 @@ public class PluginHeaderPanel {
   private void createUIComponents() {
     myInstallButton = new RoundedActionButton(2, 8) {
 
+      @Override
       @NotNull
       protected Color getButtonForeground() {
         switch (myActionId) {
@@ -175,6 +176,7 @@ public class PluginHeaderPanel {
         return new JBColor(Gray._80, Gray._60);
       }
 
+      @Override
       @NotNull
       protected Paint getBackgroundPaint() {
         switch (myActionId) {
@@ -189,6 +191,7 @@ public class PluginHeaderPanel {
         return Gray._238;
       }
 
+      @Override
       @NotNull
       protected Paint getBackgroundBorderPaint() {
         switch (myActionId) {

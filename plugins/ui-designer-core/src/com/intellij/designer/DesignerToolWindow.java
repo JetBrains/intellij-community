@@ -30,6 +30,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -133,7 +134,7 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
   AnAction[] createActions() {
     AnAction expandAll = new AnAction("Expand All", null, AllIcons.Actions.Expandall) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {
           TreeUtil.expandAll(myComponentTree);
         }
@@ -142,7 +143,7 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
 
     AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.Actions.Collapseall) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {
           TreeUtil.collapseAll(myComponentTree, 1);
         }

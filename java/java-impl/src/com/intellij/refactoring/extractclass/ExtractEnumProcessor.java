@@ -78,7 +78,7 @@ public class ExtractEnumProcessor {
     return myTypeMigrationProcessor != null;
   }
 
-  public List<FixableUsageInfo> findEnumConstantUsages(List<FixableUsageInfo> fieldUsages) {
+  public List<FixableUsageInfo> findEnumConstantUsages(List<? extends FixableUsageInfo> fieldUsages) {
     final List<FixableUsageInfo> result = new ArrayList<>();
     if (!myEnumConstants.isEmpty()) {
       final Set<PsiSwitchStatement> switchStatements = new HashSet<>();

@@ -39,6 +39,7 @@
     <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
     <orderEntry type="library" scope="TEST" name="batik" level="project" />
     <orderEntry type="library" scope="TEST" name="xmlgraphics-commons" level="project" />
+    <orderEntry type="module" module-name="intellij.configurationScript" scope="TEST" />
     <orderEntry type="module" module-name="android.sdktools.common" scope="TEST" />
     <orderEntry type="module" module-name="android.sdktools.testutils" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="HdrHistogram" level="project" />

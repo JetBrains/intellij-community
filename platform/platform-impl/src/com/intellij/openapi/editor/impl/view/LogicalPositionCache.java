@@ -44,13 +44,13 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     myUpdateInProgress = true;
     myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     try {
       int startLine = myDocument.getLineNumber(event.getOffset());
       int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
@@ -91,7 +91,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     LineData lineData = getLineInfo(line);
     return new LogicalPosition(line, lineData.offsetToLogicalColumn(myDocument, line, myTabSize, offset));
   }
-  
+
   synchronized int offsetToLogicalColumn(int line, int intraLineOffset) {
     if (myUpdateInProgress) throw new IllegalStateException();
     if (line < 0 || line >= myDocument.getLineCount()) return 0;
@@ -223,9 +223,9 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   private static class LineData {
     private static final LineData TRIVIAL = new LineData(null);
     private static final int CACHE_FREQUENCY = 1024; // logical column will be cached for each CACHE_FREQUENCY-th character on the line
-    
+
     private final int[] columnCache;
-    
+
     private LineData(int[] columnData) {
       columnCache = columnData;
     }
@@ -272,7 +272,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       int startColumn = cacheIndex == 0 ? 0 : columnCache[cacheIndex - 1];
       return calcColumn(document.getImmutableCharSequence(), startOffset, startColumn, offset, tabSize);
     }
-    
+
     private int logicalColumnToOffset(@NotNull Document document, int line, int tabSize, int logicalColumn) {
       int lineStartOffset = document.getLineStartOffset(line);
       int lineEndOffset = document.getLineEndOffset(line);

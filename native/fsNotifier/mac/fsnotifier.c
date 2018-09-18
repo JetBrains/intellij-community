@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <CoreServices/CoreServices.h>
 #include <pthread.h>
@@ -30,7 +16,7 @@ static void reportEvent(char *event, char *path) {
     size_t len = 0;
     if (path != NULL) {
         len = strlen(path);
-        for (char* p = path; *p != '\0'; p++) {
+        for (char *p = path; *p != '\0'; p++) {
             if (*p == '\n') {
                 *p = '\0';
             }
@@ -63,17 +49,15 @@ static void callback(ConstFSEventStreamRef streamRef,
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
             reportEvent("RECDIRTY", paths[i]);
-        }
-        else if (flags != kFSEventStreamEventFlagNone) {
+        } else if (flags != kFSEventStreamEventFlagNone) {
             reportEvent("RESET", NULL);
-        }
-        else {
+        } else {
             reportEvent("DIRTY", paths[i]);
         }
     }
 }
 
-static void * EventProcessingThread(void *data) {
+static void *EventProcessingThread(void *data) {
     FSEventStreamRef stream = (FSEventStreamRef) data;
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     FSEventStreamStart(stream);
@@ -105,8 +89,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
                     if (rootLen == mountLen || root[mountLen] == '/' || strcmp(mount, "/") == 0) {
                         CFArrayAppendValue(mounts, root);
                     }
-                }
-                else if (strncmp(root, mount, rootLen) == 0) {
+                } else if (strncmp(root, mount, rootLen) == 0) {
                     // root over mount point
                     if (strcmp(root, "/") == 0 || mount[rootLen] == '/') {
                         CFArrayAppendValue(mounts, mount);
@@ -139,7 +122,7 @@ static void ParseRoots() {
     while (TRUE) {
         fscanf(stdin, "%s", command);
         if (strcmp(command, "#") == 0 || feof(stdin)) break;
-        char* path = command[0] == '|' ? command + 1 : command;
+        char *path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
         if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
             has_private_root = true;
@@ -159,18 +142,18 @@ static void ParseRoots() {
     CFRelease(roots);
 }
 
-int main(const int argc, const char* argv[]) {
+int main(const int argc, const char *argv[]) {
     CFStringRef path = CFSTR("/");
     CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
     CFAbsoluteTime latency = 0.3;  // Latency in seconds
     FSEventStreamRef stream = FSEventStreamCreate(
-        NULL,
-        &callback,
-        NULL,
-        pathsToWatch,
-        kFSEventStreamEventIdSinceNow,
-        latency,
-        kFSEventStreamCreateFlagNoDefer
+            NULL,
+            &callback,
+            NULL,
+            pathsToWatch,
+            kFSEventStreamEventIdSinceNow,
+            latency,
+            kFSEventStreamCreateFlagNoDefer
     );
     if (stream == NULL) {
         printf("GIVEUP\n");

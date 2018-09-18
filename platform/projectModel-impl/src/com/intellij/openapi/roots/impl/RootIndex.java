@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,16 +30,15 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
 public class RootIndex {
-  public static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
+  static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
     String name1 = o1.getOwnerModule().getName();
     String name2 = o2.getOwnerModule().getName();
     return name1.compareTo(name2);
@@ -66,14 +51,11 @@ public class RootIndex {
 
   private final Map<VirtualFile, DirectoryInfo> myRootInfos = ContainerUtil.newHashMap();
   private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
-  private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
-  private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<>();
   @NotNull private final Project myProject;
   private final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
 
-  // made public for Upsource
-  public RootIndex(@NotNull Project project) {
+  RootIndex(@NotNull Project project) {
     myProject = project;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -137,7 +119,7 @@ public class RootIndex {
         for (final SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
           final VirtualFile sourceFolderRoot = sourceFolder.getFile();
           if (sourceFolderRoot != null && ensureValid(sourceFolderRoot, sourceFolder)) {
-            info.rootTypeId.put(sourceFolderRoot, getRootTypeId(sourceFolder.getRootType()));
+            info.sourceFolders.put(sourceFolderRoot, sourceFolder);
             info.classAndSourceRoots.add(sourceFolderRoot);
             info.sourceRootOf.putValue(sourceFolderRoot, module);
             info.packagePrefix.put(sourceFolderRoot, sourceFolder.getPackagePrefix());
@@ -287,13 +269,12 @@ public class RootIndex {
    * <p>Each edge carries with it the associated OrderEntry that caused the dependency.
    */
   private static class OrderEntryGraph {
-
     private static class Edge {
       Module myKey;
       ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       boolean myRecursive; // Whether this edge should be descended into during graph walk
 
-      public Edge(Module key, ModuleOrderEntry orderEntry, boolean recursive) {
+      Edge(@NotNull Module key, @NotNull ModuleOrderEntry orderEntry, boolean recursive) {
         myKey = key;
         myOrderEntry = orderEntry;
         myRecursive = recursive;
@@ -330,7 +311,7 @@ public class RootIndex {
     private MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
     private MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
-    public OrderEntryGraph(Project project, RootInfo rootInfo) {
+    OrderEntryGraph(@NotNull Project project, @NotNull RootInfo rootInfo) {
       myProject = project;
       myRootInfo = rootInfo;
       myAllRoots = myRootInfo.getAllRoots();
@@ -338,7 +319,7 @@ public class RootIndex {
       myCache = new SynchronizedSLRUCache<VirtualFile, List<OrderEntry>>(cacheSize, cacheSize) {
         @NotNull
         @Override
-        public List<OrderEntry> createValue(VirtualFile key) {
+        public List<OrderEntry> createValue(@NotNull VirtualFile key) {
           return collectOrderEntries(key);
         }
       };
@@ -347,7 +328,7 @@ public class RootIndex {
         new SynchronizedSLRUCache<Module, Set<String>>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
           @NotNull
           @Override
-          public Set<String> createValue(Module key) {
+          public Set<String> createValue(@NotNull Module key) {
             return collectDependentUnloadedModules(key);
           }
         };
@@ -437,6 +418,7 @@ public class RootIndex {
       myLibSourceRootEntries = libSourceRootEntries;
     }
 
+    @NotNull
     private List<OrderEntry> getOrderEntries(@NotNull VirtualFile file) {
       return myCache.get(file);
     }
@@ -444,12 +426,12 @@ public class RootIndex {
     /**
      * Traverses the graph from the given file, collecting all encountered order entries.
      */
+    @NotNull
     private List<OrderEntry> collectOrderEntries(@NotNull VirtualFile file) {
       List<VirtualFile> roots = getHierarchy(file, myAllRoots, myRootInfo);
       if (roots == null) {
         return Collections.emptyList();
       }
-      List<OrderEntry> result = new ArrayList<>();
       Stack<Node> stack = new Stack<>();
       for (VirtualFile root : roots) {
         Collection<Node> nodes = myRoots.get(root);
@@ -459,6 +441,7 @@ public class RootIndex {
       }
 
       Set<Node> seen = new HashSet<>();
+      List<OrderEntry> result = new ArrayList<>();
       while (!stack.isEmpty()) {
         Node node = stack.pop();
         if (seen.contains(node)) {
@@ -481,8 +464,8 @@ public class RootIndex {
       @Nullable Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
       @Nullable Pair<VirtualFile, Collection<Object>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
       result.addAll(myRootInfo.getLibraryOrderEntries(roots,
-                                                      libraryClassRootInfo != null ? libraryClassRootInfo.first : null,
-                                                      librarySourceRootInfo != null ? librarySourceRootInfo.first : null,
+                                                      Pair.getFirst(libraryClassRootInfo),
+                                                      Pair.getFirst(librarySourceRootInfo),
                                                       myLibClassRootEntries, myLibSourceRootEntries));
 
       VirtualFile moduleContentRoot = myRootInfo.findNearestContentRoot(roots);
@@ -493,17 +476,19 @@ public class RootIndex {
       return result;
     }
 
-    public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    @NotNull
+    Set<String> getDependentUnloadedModules(@NotNull Module module) {
       return myDependentUnloadedModulesCache.get(module);
     }
 
     /**
      * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
      */
+    @NotNull
     private Set<String> collectDependentUnloadedModules(@NotNull Module module) {
-      ArrayDeque<OrderEntryGraph.Node> stack = new ArrayDeque<>();
       Node start = myGraph.myNodes.get(module);
       if (start == null) return Collections.emptySet();
+      Deque<Node> stack = new ArrayDeque<>();
       stack.push(start);
       Set<Node> seen = new HashSet<>();
       Set<String> result = null;
@@ -533,20 +518,6 @@ public class RootIndex {
     }
   }
 
-
-  private int getRootTypeId(@NotNull JpsModuleSourceRootType<?> rootType) {
-    if (myRootTypeId.containsKey(rootType)) {
-      return myRootTypeId.get(rootType);
-    }
-
-    int id = myRootTypes.size();
-    if (id > DirectoryInfoImpl.MAX_ROOT_TYPE_ID) {
-      LOG.error("Too many different types of module source roots (" + id + ") registered: " + myRootTypes);
-    }
-    myRootTypes.add(rootType);
-    myRootTypeId.put(rootType, id);
-    return id;
-  }
 
   @NotNull
   DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
@@ -606,14 +577,9 @@ public class RootIndex {
   }
 
   @Nullable
-  protected static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
+  private static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
     if (parentPackageName == null) return null;
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
-  }
-
-  @Nullable
-  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo directoryInfo) {
-    return myRootTypes.get(directoryInfo.getSourceRootTypeId());
   }
 
   boolean resetOnEvents(@NotNull List<? extends VFileEvent> events) {
@@ -652,7 +618,7 @@ public class RootIndex {
     @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, String> contentRootOfUnloaded = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<>();
+    @NotNull final Map<VirtualFile, SourceFolder> sourceFolders = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
@@ -870,13 +836,13 @@ public class RootIndex {
                                                                @NotNull RootInfo info) {
     VirtualFile moduleContentRoot = info.findNearestContentRoot(hierarchy);
     Pair<VirtualFile, Collection<Object>> librarySourceRootInfo = info.findLibraryRootInfo(hierarchy, true);
-    VirtualFile librarySourceRoot = librarySourceRootInfo != null ? librarySourceRootInfo.first : null;
+    VirtualFile librarySourceRoot = Pair.getFirst(librarySourceRootInfo);
 
     Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
-    VirtualFile libraryClassRoot = libraryClassRootInfo != null ? libraryClassRootInfo.first : null;
+    VirtualFile libraryClassRoot = Pair.getFirst(libraryClassRootInfo);
 
     boolean inProject = moduleContentRoot != null ||
-                        ((libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromSdkRoots.contains(root));
+                        (libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromSdkRoots.contains(root);
 
     VirtualFile nearestContentRoot;
     if (inProject) {
@@ -894,7 +860,7 @@ public class RootIndex {
     VirtualFile moduleSourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, null);
     boolean inModuleSources = moduleSourceRoot != null;
     boolean inLibrarySource = librarySourceRoot != null;
-    int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
+    SourceFolder sourceFolder = moduleSourceRoot != null ? info.sourceFolders.get(moduleSourceRoot) : null;
 
     Module module = info.contentRootOf.get(nearestContentRoot);
     String unloadedModuleName = info.contentRootOfUnloaded.get(nearestContentRoot);
@@ -903,11 +869,12 @@ public class RootIndex {
     Condition<VirtualFile> libraryExclusionPredicate = getLibraryExclusionPredicate(librarySourceRootInfo);
 
     DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExclusionPredicate != null
-                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, libraryClassRoot,
-                                                                         inModuleSources, inLibrarySource, !inProject, typeId,
+                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, sourceFolder, 
+                                                                         libraryClassRoot, inModuleSources, inLibrarySource, !inProject,
                                                                          contentExcludePatterns, libraryExclusionPredicate, unloadedModuleName)
-                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources,
-                                                          inLibrarySource, !inProject, typeId, unloadedModuleName);
+                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, sourceFolder, 
+                                                          libraryClassRoot, inModuleSources, inLibrarySource, 
+                                                          !inProject, unloadedModuleName);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 
@@ -935,7 +902,7 @@ public class RootIndex {
   }
 
   @NotNull
-  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  Set<String> getDependentUnloadedModules(@NotNull Module module) {
     return getOrderEntryGraph().getDependentUnloadedModules(module);
   }
 
@@ -946,12 +913,12 @@ public class RootIndex {
   abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K, V> {
     protected final Object myLock = new Object();
 
-    protected SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
+    SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
       super(protectedQueueSize, probationalQueueSize);
     }
 
     @NotNull
-    public abstract V createValue(K key);
+    public abstract V createValue(@NotNull K key);
 
     @Override
     @NotNull

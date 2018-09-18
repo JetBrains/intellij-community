@@ -89,7 +89,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
       if (operationSign == JavaTokenType.EQ) {
-        return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set(" + toBoxed("$val$", from, context)+")", (PsiAssignmentExpression)parent);
+        boolean rightInfected = ((PsiAssignmentExpression)parent).getLExpression() == context;
+        String replacement = rightInfected ? "$qualifier$ = $val$.get()" : "$qualifier$.set(" + toBoxed("$val$", from, context) + ")";
+        return new TypeConversionDescriptor("$qualifier$ = $val$", replacement, (PsiAssignmentExpression)parent);
       }
     }
 

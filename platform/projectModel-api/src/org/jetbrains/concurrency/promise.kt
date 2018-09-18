@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
-import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -117,19 +117,48 @@ inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable
 })
 
 /**
- * Merge results into one list.
+ * Merge results into one list. Results are ordered as in the promises list.
+ *
+ * `T` here is a not nullable type, if you use this method from Java, take care that all promises are not resolved to `null`.
+ *
+ * If `ignoreErrors = false`, list of the same size is returned.
+ * If `ignoreErrors = true`, list of different size is returned if some promise failed with error.
  */
 @JvmOverloads
-fun <T> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
+fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
   if (isEmpty()) {
     return resolvedPromise(emptyList())
   }
 
-  val results: MutableList<T> = if (size == 1) SmartList<T>() else ArrayList(size)
-  for (promise in this) {
-    promise.onSuccess { results.add(it) }
+  val result = AsyncPromise<List<T>>()
+  val latch = AtomicInteger(size)
+  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableSmartList())
+
+  fun arrive() {
+    if (latch.decrementAndGet() == 0) {
+      if (ignoreErrors) {
+        list.removeIf { it == null }
+      }
+      @Suppress("UNCHECKED_CAST")
+      result.setResult(list as List<T>)
+    }
   }
-  return all(results, ignoreErrors)
+
+  for ((i, promise) in this.withIndex()) {
+    promise.onSuccess {
+      list.set(i, it)
+      arrive()
+    }
+    promise.onError {
+      if (ignoreErrors) {
+        arrive()
+      }
+      else {
+        result.setError(it)
+      }
+    }
+  }
+  return result
 }
 
 @JvmOverloads

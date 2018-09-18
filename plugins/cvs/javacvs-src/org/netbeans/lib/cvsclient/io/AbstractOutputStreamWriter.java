@@ -41,13 +41,15 @@ public abstract class AbstractOutputStreamWriter extends Writer {
 
 	// Implemented ============================================================
 
-	public final void write(int chr) throws IOException {
+	@Override
+        public final void write(int chr) throws IOException {
 		ensureOpen();
 
 		writeChar((char)chr, outputStream);
 	}
 
-	public final void write(char[] buffer, int offset, int length) throws IOException {
+	@Override
+        public final void write(char[] buffer, int offset, int length) throws IOException {
 		if (offset < 0
 		        || length < 0
 		        || offset + length > buffer.length) {
@@ -62,12 +64,14 @@ public abstract class AbstractOutputStreamWriter extends Writer {
 		}
 	}
 
-	public final void flush() throws IOException {
+	@Override
+        public final void flush() throws IOException {
 		ensureOpen();
 		outputStream.flush();
 	}
 
-	public final void close() throws IOException {
+	@Override
+        public final void close() throws IOException {
 		ensureOpen();
 		flush();
 		outputStream.close();

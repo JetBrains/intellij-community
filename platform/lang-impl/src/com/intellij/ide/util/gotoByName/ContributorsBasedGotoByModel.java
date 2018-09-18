@@ -75,7 +75,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   private volatile boolean myIdFilterForLibraries;
 
   @Override
-  public void processNames(final Processor<String> nameProcessor, final boolean checkBoxState) {
+  public void processNames(final Processor<? super String> nameProcessor, final boolean checkBoxState) {
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

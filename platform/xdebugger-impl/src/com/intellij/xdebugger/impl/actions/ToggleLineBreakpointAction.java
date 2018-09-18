@@ -39,6 +39,7 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
     super(true);
   }
 
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getToggleLineBreakpointHandler();

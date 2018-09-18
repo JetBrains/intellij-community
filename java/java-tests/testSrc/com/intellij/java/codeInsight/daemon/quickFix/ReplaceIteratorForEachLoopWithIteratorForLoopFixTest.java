@@ -16,17 +16,12 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 /**
  * @author Pavel.Dolgov
  */
 public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQuickFixParameterizedTestCase {
-
-  private boolean myFinalLocals;
-
   public void test() { doAllTests(); }
 
   @Override
@@ -34,22 +29,8 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQ
     super.setUp();
     if (getTestName(false).startsWith("Final")) {
       final JavaCodeStyleSettings codeStyleSettings =
-        CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-      myFinalLocals = codeStyleSettings.GENERATE_FINAL_LOCALS;
+        JavaCodeStyleSettings.getInstance(getProject());
       codeStyleSettings.GENERATE_FINAL_LOCALS = true;
-    }
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (getTestName(false).startsWith("Final")) {
-        final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
-        codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS = myFinalLocals;
-      }
-    }
-    finally {
-      super.tearDown();
     }
   }
 

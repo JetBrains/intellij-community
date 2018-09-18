@@ -74,7 +74,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         ProgressManager.checkCanceled();
         final PsiFile file = parameters.getPosition().getContainingFile();

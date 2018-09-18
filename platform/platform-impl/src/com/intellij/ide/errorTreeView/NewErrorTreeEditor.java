@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -126,6 +126,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
       myPanel = new JPanel(new BorderLayout());
     }
 
+    @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row) {
       myPanel.removeAll();
       myPanel.add(myLeft.getTreeCellRendererComponent(tree, value, false, expanded, leaf, row, true), BorderLayout.WEST);
@@ -170,6 +171,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
   private static class CellEditorDelegate extends AbstractCellEditor implements TreeCellEditor {
     private TreeCellEditor myCurrentCallback;
 
+    @Override
     public Component getTreeCellEditorComponent(JTree tree,
                                                 Object value,
                                                 boolean selected,

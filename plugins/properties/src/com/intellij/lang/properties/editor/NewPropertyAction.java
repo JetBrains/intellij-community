@@ -47,7 +47,7 @@ class NewPropertyAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) {
       return;

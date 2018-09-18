@@ -72,6 +72,8 @@ interface StatementFactory {
 
   fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
 
+  fun createPeekCall(elementsType: GenericType, lambda: Lambda): IntermediateStreamCall = createPeekCall(elementsType, lambda.toCode())
+
   fun createListVariable(elementType: GenericType, name: String): ListVariable
 
   fun not(expression: Expression): Expression

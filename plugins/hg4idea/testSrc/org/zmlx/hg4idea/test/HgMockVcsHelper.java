@@ -138,19 +138,19 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                                       @Nullable String prompt,
                                                       String singleFileTitle,
                                                       String singleFilePromptTemplate,
-                                                      VcsShowConfirmationOption confirmationOption) {
+                                                      @NotNull VcsShowConfirmationOption confirmationOption) {
     notifyListeners();
     return null;
   }
   
   @Nullable
   @Override
-  public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
                                                        String title,
                                                        @Nullable String prompt,
                                                        String singleFileTitle,
                                                        String singleFilePromptTemplate,
-                                                       VcsShowConfirmationOption confirmationOption) {
+                                                       @NotNull VcsShowConfirmationOption confirmationOption) {
     notifyListeners();
     return null;
   }

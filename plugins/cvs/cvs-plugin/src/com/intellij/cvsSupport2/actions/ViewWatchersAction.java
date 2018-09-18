@@ -37,15 +37,18 @@ import java.util.List;
 public class ViewWatchersAction extends AbstractActionFromEditGroup {
   private WatchersOperation myWatchersOperation;
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.getViewEditorsOperationName();
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     myWatchersOperation = new WatchersOperation(context.getSelectedFiles());
     return new CommandCvsHandler(CvsBundle.message("operation.name.veiw.watchers"), myWatchersOperation);
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context,
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,

@@ -126,7 +126,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
   }
 
-  public void testInheritorsInAnotherModuleWithNoDirectoDependency() throws IOException {
+  public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {
     myFixture.addFileToProject("A.java", "class A {}");
     myFixture.addFileToProject("mod1/B.java", "class B extends A {}");
     myFixture.addFileToProject("mod1/C.java", "class C extends B {}");

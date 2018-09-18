@@ -49,7 +49,7 @@
                      level="ERROR" implementationClass="org.intellij.plugins.relaxNG.inspections.RngDomInspection"/>
     <localInspection shortName="UnusedDefine" displayName="Unused Define" groupName="RELAX NG" enabledByDefault="false" level="WARNING"
                      implementationClass="org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection"/>
-
+    <applicationInitializedListener implementation="org.intellij.plugins.relaxNG.ApplicationLoader"/>
   </extensions>
 
   <project-components>
@@ -58,12 +58,6 @@
       <implementation-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl</implementation-class>
     </component>
   </project-components>
-
-  <application-components>
-    <component>
-      <implementation-class>org.intellij.plugins.relaxNG.ApplicationLoader</implementation-class>
-    </component>
-  </application-components>
 
   <actions>
     <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction"

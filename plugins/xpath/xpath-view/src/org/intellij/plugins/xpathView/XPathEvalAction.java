@@ -135,7 +135,7 @@ public class XPathEvalAction extends XPathAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
         final Project project = event.getProject();
         if (project == null) {
             // no active project

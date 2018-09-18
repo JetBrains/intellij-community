@@ -186,4 +186,6 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testLabelIndentRelative() { doTest() }
 
   void testLabelIndentRelativeReverse() { doTest() }
+
+  void testBlankLinesInCode() { doTest() }
 }

@@ -175,9 +175,13 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     Collection<JavaArrangementPropertyInfo> properties = info.getProperties();
     for (JavaArrangementPropertyInfo propertyInfo : properties) {
       JavaElementArrangementEntry getter = propertyInfo.getGetter();
-      JavaElementArrangementEntry setter = propertyInfo.getSetter();
-      if (getter != null && setter != null && setter.getDependencies() == null) {
-        setter.addDependency(getter);
+      List<JavaElementArrangementEntry> setters = propertyInfo.getSetters();
+      if (getter != null) {
+        JavaElementArrangementEntry previous = getter;
+        for (JavaElementArrangementEntry setter: setters) {
+          setter.addDependency(previous);
+          previous = setter;
+        }
       }
     }
   }
@@ -285,7 +289,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     return parseInfo.getEntries();
   }
 
-  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> fieldDependencyRoots,
+  public void setupFieldInitializationDependencies(@NotNull List<? extends ArrangementEntryDependencyInfo> fieldDependencyRoots,
                                                    @NotNull ArrangementSettings settings,
                                                    @NotNull JavaArrangementParseInfo parseInfo)
   {
@@ -419,7 +423,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     return MUTEXES;
   }
 
-  private static void and(@NotNull List<StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
+  private static void and(@NotNull List<? super StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
       if (conditions.length == 1) {
         matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
           conditions[0]

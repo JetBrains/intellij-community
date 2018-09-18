@@ -25,12 +25,14 @@ public class CvsRootDataBuilder implements CvsRootSettingsBuilder<CvsRootData>{
   }
 
 
+  @Override
   public CvsRootData createSettings(final CvsMethod method, final String cvsRootAsString) {
     final CvsRootData result = new CvsRootData(cvsRootAsString);
     result.METHOD = method;
     return result;
   }
 
+  @Override
   public String getPServerPassword(final String cvsRoot) {
     return PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(cvsRoot);
   }

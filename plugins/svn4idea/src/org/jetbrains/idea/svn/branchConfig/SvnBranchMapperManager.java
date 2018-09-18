@@ -31,10 +31,12 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     myStateHolder = new SvnBranchMapperHolder();
   }
 
+  @Override
   public SvnBranchMapperHolder getState() {
     return myStateHolder;
   }
 
+  @Override
   public void loadState(@NotNull final SvnBranchMapperHolder state) {
     myStateHolder = state;
   }

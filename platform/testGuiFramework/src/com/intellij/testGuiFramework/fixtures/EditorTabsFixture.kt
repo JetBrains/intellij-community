@@ -30,6 +30,7 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
 import com.intellij.ui.InplaceButton
@@ -37,6 +38,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.TabLabel
 import org.fest.swing.core.Robot
+import org.fest.swing.timing.Timeout
 import java.awt.Container
 import java.awt.Point
 import java.awt.Rectangle
@@ -72,7 +74,7 @@ class EditorTabsFixture(val robot: Robot, val ideFrameFixture: IdeFrameFixture) 
     robot.click(closeButton)
   }
 
-  fun waitTab(tabName: String, timeoutInSeconds: Int = 30): EditorTabsFixture {
+  fun waitTab(tabName: String, timeoutInSeconds: Timeout = Timeouts.seconds30): EditorTabsFixture {
     GuiTestUtilKt.waitUntil("editor tab with name '$tabName' has appeared", timeoutInSeconds) { hasTab(tabName) }
     return this
   }

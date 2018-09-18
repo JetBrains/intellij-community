@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,10 +22,10 @@ public class FormsParsing {
   }
 
   public static String readBoundClassName(File formFile) throws IOException {
-    final BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile));
-    try {
+    try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile))) {
       final Ref<String> result = new Ref<>(null);
       parse(in, new IXMLBuilderAdapter() {
+        @Override
         public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
           throws Exception {
           if (!FORM_TAG.equalsIgnoreCase(elemName)) {
@@ -47,6 +33,7 @@ public class FormsParsing {
           }
         }
 
+        @Override
         public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
           throws Exception {
           if (UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS.equals(key)) {
@@ -55,14 +42,12 @@ public class FormsParsing {
           }
         }
 
+        @Override
         public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
           stop();
         }
       });
       return result.get();
-    }
-    finally {
-      in.close();
     }
   }
 
@@ -109,14 +94,17 @@ public class FormsParsing {
   private static class EmptyValidator extends NonValidator {
     private IXMLEntityResolver myParameterEntityResolver;
 
+    @Override
     public void setParameterEntityResolver(IXMLEntityResolver resolver) {
       myParameterEntityResolver = resolver;
     }
 
+    @Override
     public IXMLEntityResolver getParameterEntityResolver() {
       return myParameterEntityResolver;
     }
 
+    @Override
     public void parseDTD(String publicID, IXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
       if (!external) {
         //super.parseDTD(publicID, reader, entityResolver, external);
@@ -139,33 +127,42 @@ public class FormsParsing {
       }
     }
 
+    @Override
     public void elementStarted(String name, String systemId, int lineNr) {
     }
 
+    @Override
     public void elementEnded(String name, String systemId, int lineNr) {
     }
 
+    @Override
     public void attributeAdded(String key, String value, String systemId, int lineNr) {
     }
 
+    @Override
     public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
     }
 
+    @Override
     public void PCDataAdded(String systemId, int lineNr)  {
     }
   }
 
   private static class EmptyEntityResolver implements IXMLEntityResolver {
+    @Override
     public void addInternalEntity(String name, String value) {
     }
 
+    @Override
     public void addExternalEntity(String name, String publicID, String systemID) {
     }
 
+    @Override
     public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
       return new StringReader("");
     }
 
+    @Override
     public boolean isExternalEntity(String name) {
       return false;
     }
@@ -194,30 +191,38 @@ public class FormsParsing {
 
   public static class IXMLBuilderAdapter implements IXMLBuilder {
 
+    @Override
     public void startBuilding(final String systemID, final int lineNr) throws Exception {
     }
 
+    @Override
     public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
 
     }
 
+    @Override
     public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
         throws Exception {
     }
 
+    @Override
     public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
         throws Exception {
     }
 
+    @Override
     public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
     }
 
+    @Override
     public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
     }
 
+    @Override
     public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
     }
 
+    @Override
     @Nullable
     public Object getResult() throws Exception {
       return null;

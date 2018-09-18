@@ -50,9 +50,6 @@ class JUnitServerImpl : JUnitServer {
   private lateinit var connection: Socket
   private var isStarted = false
 
-  private lateinit var objectInputStream: ObjectInputStream
-  private lateinit var objectOutputStream: ObjectOutputStream
-
   private val IDE_STARTUP_TIMEOUT = 180000
 
   private val port: Int
@@ -66,12 +63,10 @@ class JUnitServerImpl : JUnitServer {
     connection = serverSocket.accept()
     LOG.info("Server accepted client on port: ${connection.port}")
 
-    objectOutputStream = ObjectOutputStream(connection.getOutputStream())
-    serverSendThread = ServerSendThread(connection, objectOutputStream)
+    serverSendThread = ServerSendThread()
     serverSendThread.start()
 
-    objectInputStream = ObjectInputStream(connection.getInputStream())
-    serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
+    serverReceiveThread = ServerReceiveThread()
     serverReceiveThread.start()
     isStarted = true
   }
@@ -132,25 +127,12 @@ class JUnitServerImpl : JUnitServer {
   override fun getPort(): Int = port
 
   override fun stopServer() {
-    serverSendThread.objectOutputStream.close()
-    LOG.info("Object output stream closed")
     serverSendThread.interrupt()
     LOG.info("Server Send Thread joined")
-    serverReceiveThread.objectInputStream.close()
-    LOG.info("Object input stream closed")
     serverReceiveThread.interrupt()
     LOG.info("Server Receive Thread joined")
     connection.close()
     isStarted = false
-  }
-
-
-  private fun execOnParallelThread(body: () -> Unit) {
-    (object : Thread("JUnitServer: Exec On Parallel Thread") {
-      override fun run() {
-        body(); Thread.currentThread().join()
-      }
-    }).start()
   }
 
   private fun createCallbackServerHandler(handler: (TransportMessage) -> Unit, id: Long)
@@ -161,49 +143,58 @@ class JUnitServerImpl : JUnitServer {
     }
   }
 
-  inner class ServerSendThread(private val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
+  private inner class ServerSendThread: Thread(SEND_THREAD) {
 
     override fun run() {
       LOG.info("Server Send Thread started")
-      try {
-        while (connection.isConnected) {
-          val message = postingMessages.take()
-          LOG.info("Sending message: $message ")
-          objectOutputStream.writeObject(message)
+      ObjectOutputStream(connection.getOutputStream()).use { outputStream ->
+        try {
+          while (!connection.isClosed) {
+            val message = postingMessages.take()
+            LOG.info("Sending message: $message ")
+            outputStream.writeObject(message)
+          }
         }
-      }
-      catch (e: InterruptedException) {
-        Thread.currentThread().interrupt()
-      }
-      catch (e: Exception) {
-        if (e is InvalidClassException) LOG.error("Probably client is down:", e)
-        failHandler?.invoke(e)
-      }
-      finally {
-        objectOutputStream.close()
+        catch (e: Exception) {
+          when (e) {
+            is InterruptedException -> { /* ignore */ }
+            is InvalidClassException -> LOG.error("Probably client is down:", e)
+            else -> {
+              LOG.info(e)
+              failHandler?.invoke(e)
+            }
+          }
+        }
       }
     }
-
   }
 
-  inner class ServerReceiveThread(private val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
+  private inner class ServerReceiveThread: Thread(RECEIVE_THREAD) {
 
     override fun run() {
-      try {
-        LOG.info("Server Receive Thread started")
-        while (connection.isConnected) {
-          val obj = objectInputStream.readObject()
-          LOG.debug("Receiving message (DEBUG): $obj")
-          assert(obj is TransportMessage)
-          val message = obj as TransportMessage
-          if (message.type != MessageType.KEEP_ALIVE) LOG.info("Receiving message: $obj")
-          receivingMessages.put(message)
-          handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
+      LOG.info("Server Receive Thread started")
+      ObjectInputStream(connection.getInputStream()).use { inputStream ->
+        try {
+          while (!connection.isClosed) {
+            val obj = inputStream.readObject()
+            LOG.debug("Receiving message (DEBUG): $obj")
+            assert(obj is TransportMessage)
+            val message = obj as TransportMessage
+            if (message.type != MessageType.KEEP_ALIVE) LOG.info("Receiving message: $obj")
+            receivingMessages.put(message)
+            handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
+          }
         }
-      }
-      catch (e: Exception) {
-        if (e is InvalidClassException) LOG.error("Probably serialization error:", e)
-        failHandler?.invoke(e)
+        catch (e: Exception) {
+          when (e) {
+            is InterruptedException -> { /* ignore */ }
+            is InvalidClassException -> LOG.error("Probably serialization error:", e)
+            else -> {
+              LOG.info(e)
+              failHandler?.invoke(e)
+            }
+          }
+        }
       }
     }
   }

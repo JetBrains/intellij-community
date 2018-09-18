@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -103,15 +89,15 @@ public class HgHistoryUtil {
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<? extends VcsFullCommitDetails> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
-                                                             @NotNull List<String> hashParameters, boolean silent)
+  public static List<HgCommit> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
+                                       @NotNull List<String> hashParameters, boolean silent)
     throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
-    ArrayList<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    ArrayList<HgCommit> result = ContainerUtil.newArrayList();
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -155,10 +141,10 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static VcsFullCommitDetails createDetails(@NotNull Project project,
-                                                   @NotNull VirtualFile root,
-                                                   @NotNull VcsLogObjectsFactory factory,
-                                                   @NotNull HgFileRevision revision) {
+  public static HgCommit createDetails(@NotNull Project project,
+                                       @NotNull VirtualFile root,
+                                       @NotNull VcsLogObjectsFactory factory,
+                                       @NotNull HgFileRevision revision) {
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
     List<Hash> parentsHashes = new SmartList<>();
@@ -351,9 +337,9 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static List<? extends VcsShortCommitDetails> readMiniDetails(@NotNull final Project project,
-                                                                      @NotNull final VirtualFile root,
-                                                                      @NotNull List<String> hashes)
+  public static List<? extends VcsCommitMetadata> readCommitMetadata(@NotNull final Project project,
+                                                                     @NotNull final VirtualFile root,
+                                                                     @NotNull List<String> hashes)
     throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -372,15 +358,15 @@ public class HgHistoryUtil {
                                       HgCommandResult logResult =
                                         getLogResult(project, root, version, -1, strings, HgChangesetUtil.makeTemplate(templates));
 
-                                      return getCommitRecords(project, logResult, new HgBaseLogParser<VcsShortCommitDetails>() {
+                                      return getCommitRecords(project, logResult, new HgBaseLogParser<VcsCommitMetadata>() {
                                         @Override
-                                        protected VcsShortCommitDetails convertDetails(@NotNull String rev,
-                                                                                       @NotNull String changeset,
-                                                                                       @NotNull SmartList<HgRevisionNumber> parents,
-                                                                                       @NotNull Date revisionDate,
-                                                                                       @NotNull String author,
-                                                                                       @NotNull String email,
-                                                                                       @NotNull List<String> attributes) {
+                                        protected VcsCommitMetadata convertDetails(@NotNull String rev,
+                                                                                   @NotNull String changeset,
+                                                                                   @NotNull SmartList<HgRevisionNumber> parents,
+                                                                                   @NotNull Date revisionDate,
+                                                                                   @NotNull String author,
+                                                                                   @NotNull String email,
+                                                                                   @NotNull List<String> attributes) {
                                           String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
                                           String subject = extractSubject(message);
                                           List<Hash> parentsHash = new SmartList<>();
@@ -388,8 +374,8 @@ public class HgHistoryUtil {
                                             parentsHash.add(factory.createHash(parent.getChangeset()));
                                           }
                                           return factory
-                                            .createShortDetails(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
-                                                                subject, author, email, author, email, revisionDate.getTime());
+                                            .createCommitMetadata(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
+                                                                  subject, author, email, message, author, email, revisionDate.getTime());
                                         }
                                       });
                                     });
@@ -524,6 +510,7 @@ public class HgHistoryUtil {
       myOutput.append(line);
     }
 
+    @Override
     public void finish() throws VcsException {
       super.finish();
       if (myOutput.length() != 0) {

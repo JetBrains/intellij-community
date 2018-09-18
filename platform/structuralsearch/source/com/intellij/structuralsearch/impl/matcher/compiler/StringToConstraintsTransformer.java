@@ -30,170 +30,171 @@ public class StringToConstraintsTransformer {
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static void transformCriteria(String criteria, MatchOptions options) {
-      final StringBuilder pattern = new StringBuilder();
-      int anonymousTypedVarsCount = 0;
-      boolean targetFound = false;
+    final StringBuilder pattern = new StringBuilder();
+    int anonymousTypedVarsCount = 0;
+    boolean targetFound = false;
 
-      final int length = criteria.length();
-      for(int index = 0; index < length; ++index) {
-        char ch = criteria.charAt(index);
+    final MatchVariableConstraint context = new MatchVariableConstraint();
+    context.setName(Configuration.CONTEXT_VAR_NAME);
+    options.addVariableConstraint(context);
 
-        if (index == 0 && ch == '[') {
-          final MatchVariableConstraint constraint = new MatchVariableConstraint();
-          constraint.setName(Configuration.CONTEXT_VAR_NAME);
-          index = handleTypedVarCondition(0, criteria, constraint);
-          options.addVariableConstraint(constraint);
-          if (index == length) break;
-          ch = criteria.charAt(index);
-        }
-        if (ch == '\\' && index + 1 < length) {
-          ch = criteria.charAt(++index);
-        }
-        else if (ch=='\'') {
-          final int newIndex = handleCharacterLiteral(criteria, index, pattern);
-          if (newIndex != index) {
-            index = newIndex;
-            continue;
-          }
+    final int length = criteria.length();
+    for(int index = 0; index < length; ++index) {
+      char ch = criteria.charAt(index);
 
-          // typed variable; eat the name of typed var
-          int endIndex = ++index;
-          while (endIndex < length && Character.isJavaIdentifierPart(criteria.charAt(endIndex))) endIndex++;
-          if (endIndex == index) throw new MalformedPatternException(SSRBundle.message("error.expected.character"));
-
-          boolean target = true;
-          final String typedVar;
-          if (criteria.charAt(index)=='_')  {
-            target = false;
-
-            if(endIndex == index + 1) {
-              // anonymous var, make it unique for the case of constraints
-              anonymousTypedVarsCount++;
-              typedVar = "_" + anonymousTypedVarsCount;
-            } else {
-              typedVar = criteria.substring(index + 1, endIndex);
-            }
-          }
-          else {
-            typedVar = criteria.substring(index, endIndex);
-          }
-
-          pattern.append("$").append(typedVar).append("$");
-          index = endIndex;
-          MatchVariableConstraint constraint = options.getVariableConstraint(typedVar);
-          boolean constraintCreated = false;
-
-          if (constraint == null) {
-            constraint = new MatchVariableConstraint();
-            constraint.setName( typedVar );
-            constraintCreated = true;
-          }
-
-          // Check the number of occurrences for typed variable
-          final int savedIndex = index;
-          int minOccurs = 1;
-          int maxOccurs = 1;
-          boolean greedy = true;
-          if (index < length) {
-            ch = criteria.charAt(index);
-            if (ch == '+') {
-              maxOccurs = Integer.MAX_VALUE;
-              ++index;
-            } else if (ch == '?') {
-              minOccurs = 0;
-              ++index;
-            } else if (ch == '*') {
-              minOccurs = 0;
-              maxOccurs = Integer.MAX_VALUE;
-              ++index;
-            } else if (ch == '{') {
-              ++index;
-              minOccurs = -1;
-              maxOccurs = -1;
-              while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
-                if (minOccurs < 0) minOccurs = 0;
-                minOccurs = (minOccurs * 10) + (ch - '0');
-                if (minOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
-                ++index;
-              }
-
-              if (ch==',') {
-                ++index;
-
-                while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
-                  if (maxOccurs < 0) maxOccurs = 0;
-                  maxOccurs = (maxOccurs * 10) + (ch - '0');
-                  if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
-                  ++index;
-                }
-              } else {
-                maxOccurs = -2;
-              }
-
-              if (ch != '}') {
-                if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.digit"));
-                if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
-                else throw new MalformedPatternException(SSRBundle.message("error.expected.brace2"));
-              }
-              if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.empty.quantifier"));
-              else if (minOccurs == -1) minOccurs = 0;
-              else if (maxOccurs == -1) maxOccurs = Integer.MAX_VALUE;
-              else if (maxOccurs == -2) maxOccurs = minOccurs;
-              ++index;
-            }
-
-            if (index < length) {
-              ch = criteria.charAt(index);
-              if (ch=='?') {
-                greedy = false;
-                ++index;
-              }
-            }
-          }
-
-          if (constraintCreated) {
-            constraint.setMinCount(minOccurs);
-            constraint.setMaxCount(maxOccurs);
-            constraint.setGreedy(greedy);
-            constraint.setPartOfSearchResults(target);
-            if (targetFound && target) {
-              throw new MalformedPatternException(SSRBundle.message("error.only.one.target.allowed"));
-            }
-            targetFound |= target;
-          }
-          else if (savedIndex != index) {
-            throw new MalformedPatternException(SSRBundle.message("error.condition.only.on.first.variable.reference"));
-          }
-
-          if (index < length && criteria.charAt(index) == ':') {
-            ++index;
-            if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", ":"));
-            ch = criteria.charAt(index);
-            if (ch == ':') {
-              // double colon instead of condition
-              pattern.append(ch);
-            }
-            else {
-              if (!constraintCreated)
-                throw new MalformedPatternException(SSRBundle.message("error.condition.only.on.first.variable.reference"));
-              index = handleTypedVarCondition(index, criteria, constraint);
-            }
-          }
-
-          if (constraintCreated) {
-            options.addVariableConstraint(constraint);
-          }
-
-          if (index == length) break;
-          // rewind to process white space or unrelated symbol
-          index--;
+      if (index == 0 && ch == '[') {
+        index = handleTypedVarCondition(0, criteria, options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME));
+        if (index == length) break;
+        ch = criteria.charAt(index);
+      }
+      if (ch == '\\' && index + 1 < length) {
+        ch = criteria.charAt(++index);
+      }
+      else if (ch=='\'') {
+        final int newIndex = handleCharacterLiteral(criteria, index, pattern);
+        if (newIndex != index) {
+          index = newIndex;
           continue;
         }
 
-        pattern.append(ch);
+        // typed variable; eat the name of typed var
+        int endIndex = ++index;
+        while (endIndex < length && Character.isJavaIdentifierPart(criteria.charAt(endIndex))) endIndex++;
+        if (endIndex == index) throw new MalformedPatternException(SSRBundle.message("error.expected.character"));
+
+        boolean target = true;
+        final String typedVar;
+        if (criteria.charAt(index)=='_')  {
+          target = false;
+
+          if(endIndex == index + 1) {
+            // anonymous var, make it unique for the case of constraints
+            anonymousTypedVarsCount++;
+            typedVar = "_" + anonymousTypedVarsCount;
+          } else {
+            typedVar = criteria.substring(index + 1, endIndex);
+          }
+        }
+        else {
+          typedVar = criteria.substring(index, endIndex);
+        }
+
+        pattern.append("$").append(typedVar).append("$");
+        index = endIndex;
+        MatchVariableConstraint constraint = options.getVariableConstraint(typedVar);
+        boolean constraintCreated = false;
+
+        if (constraint == null) {
+          constraint = new MatchVariableConstraint();
+          constraint.setName( typedVar );
+          constraintCreated = true;
+        }
+
+        // Check the number of occurrences for typed variable
+        final int savedIndex = index;
+        int minOccurs = 1;
+        int maxOccurs = 1;
+        boolean greedy = true;
+        if (index < length) {
+          ch = criteria.charAt(index);
+          if (ch == '+') {
+            maxOccurs = Integer.MAX_VALUE;
+            ++index;
+          } else if (ch == '?') {
+            minOccurs = 0;
+            ++index;
+          } else if (ch == '*') {
+            minOccurs = 0;
+            maxOccurs = Integer.MAX_VALUE;
+            ++index;
+          } else if (ch == '{') {
+            ++index;
+            minOccurs = -1;
+            maxOccurs = -1;
+            while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
+              if (minOccurs < 0) minOccurs = 0;
+              minOccurs = (minOccurs * 10) + (ch - '0');
+              if (minOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
+              ++index;
+            }
+
+            if (ch==',') {
+              ++index;
+
+              while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
+                if (maxOccurs < 0) maxOccurs = 0;
+                maxOccurs = (maxOccurs * 10) + (ch - '0');
+                if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
+                ++index;
+              }
+            } else {
+              maxOccurs = -2;
+            }
+
+            if (ch != '}') {
+              if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.digit"));
+              if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
+              else throw new MalformedPatternException(SSRBundle.message("error.expected.brace2"));
+            }
+            if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.empty.quantifier"));
+            else if (minOccurs == -1) minOccurs = 0;
+            else if (maxOccurs == -1) maxOccurs = Integer.MAX_VALUE;
+            else if (maxOccurs == -2) maxOccurs = minOccurs;
+            ++index;
+          }
+
+          if (index < length) {
+            ch = criteria.charAt(index);
+            if (ch=='?') {
+              greedy = false;
+              ++index;
+            }
+          }
+        }
+
+        if (constraintCreated) {
+          constraint.setMinCount(minOccurs);
+          constraint.setMaxCount(maxOccurs);
+          constraint.setGreedy(greedy);
+          constraint.setPartOfSearchResults(target);
+          if (targetFound && target) {
+            throw new MalformedPatternException(SSRBundle.message("error.only.one.target.allowed"));
+          }
+          targetFound |= target;
+        }
+        else if (savedIndex != index) {
+          throw new MalformedPatternException(SSRBundle.message("error.condition.only.on.first.variable.reference"));
+        }
+
+        if (index < length && criteria.charAt(index) == ':') {
+          ++index;
+          if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", ":"));
+          ch = criteria.charAt(index);
+          if (ch == ':') {
+            // double colon instead of condition
+            pattern.append(ch);
+          }
+          else {
+            if (!constraintCreated)
+              throw new MalformedPatternException(SSRBundle.message("error.condition.only.on.first.variable.reference"));
+            index = handleTypedVarCondition(index, criteria, constraint);
+          }
+        }
+
+        if (constraintCreated) {
+          options.addVariableConstraint(constraint);
+        }
+
+        if (index == length) break;
+        // rewind to process white space or unrelated symbol
+        index--;
+        continue;
       }
 
-      options.setSearchPattern(pattern.toString());
+      pattern.append(ch);
+    }
+
+    options.setSearchPattern(pattern.toString());
   }
 
   public static int handleCharacterLiteral(String criteria, int index, StringBuilder pattern) {

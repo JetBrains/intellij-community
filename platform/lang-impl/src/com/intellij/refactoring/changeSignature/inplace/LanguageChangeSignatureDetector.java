@@ -42,7 +42,7 @@ public interface LanguageChangeSignatureDetector<C extends ChangeInfo> {
     return signatureRange.shiftRight(-signatureRange.getStartOffset()).substring(initialChangeInfo.getMethod().getText());
   }
 
-  default String getMethodSignaturePreview(C info, final List<TextRange> deleteRanges, final List<TextRange> newRanges) {
+  default String getMethodSignaturePreview(C info, final List<? super TextRange> deleteRanges, final List<? super TextRange> newRanges) {
     return extractSignature(info);
   }
 

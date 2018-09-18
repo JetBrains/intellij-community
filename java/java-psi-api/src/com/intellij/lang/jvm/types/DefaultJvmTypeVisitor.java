@@ -5,18 +5,22 @@ import org.jetbrains.annotations.NotNull;
 
 public interface DefaultJvmTypeVisitor<T> extends JvmTypeVisitor<T> {
 
+  @Override
   default T visitReferenceType(@NotNull JvmReferenceType type) {
     return visitType(type);
   }
 
+  @Override
   default T visitPrimitiveType(@NotNull JvmPrimitiveType type) {
     return visitType(type);
   }
 
+  @Override
   default T visitArrayType(@NotNull JvmArrayType type) {
     return visitType(type);
   }
 
+  @Override
   default T visitWildcardType(@NotNull JvmWildcardType type) {
     return visitType(type);
   }

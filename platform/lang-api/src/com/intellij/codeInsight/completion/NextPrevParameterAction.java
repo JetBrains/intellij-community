@@ -25,7 +25,6 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,10 +44,10 @@ public abstract class NextPrevParameterAction extends CodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return hasSutablePolicy(editor, file);
+    return hasSuitablePolicy(editor, file);
   }
 
-  public static boolean hasSutablePolicy(Editor editor, PsiFile file) {
+  public static boolean hasSuitablePolicy(Editor editor, PsiFile file) {
     return findSuitableTraversalPolicy(editor, file) != null;
   }
 

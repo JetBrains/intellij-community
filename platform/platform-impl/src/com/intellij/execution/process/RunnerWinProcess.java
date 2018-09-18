@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 16) */
+@Deprecated
 @SuppressWarnings({"unused", "deprecation"})
 public class RunnerWinProcess extends ProcessWrapper {
 

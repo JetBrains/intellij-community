@@ -299,7 +299,7 @@ public class YAMLUtil {
     PsiElement currentElement = element;
     while (currentElement != null) {
       final IElementType type = currentElement.getNode().getElementType();
-      if (type == YAMLTokenTypes.EOL) {
+      if (YAMLElementTypes.EOL_ELEMENTS.contains(type)) {
         return offset - currentElement.getTextOffset() - 1;
       }
 

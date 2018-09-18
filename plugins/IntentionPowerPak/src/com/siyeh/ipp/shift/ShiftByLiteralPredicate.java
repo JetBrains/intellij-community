@@ -17,10 +17,12 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ShiftByLiteralPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       return isBinaryShiftByLiteral((PsiBinaryExpression)element);
@@ -49,7 +51,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate {
     if (!ShiftUtils.isIntegral(lhsType)) {
       return false;
     }
-    final PsiExpression rhs = expression.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
     if (rhs == null) {
       return false;
     }
@@ -68,7 +70,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate {
     if (!ShiftUtils.isIntegral(lhsType)) {
       return false;
     }
-    final PsiExpression rhs = expression.getROperand();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     return ShiftUtils.isIntLiteral(rhs);
   }
 }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ToggleToolbarLayoutAction extends ToggleAction {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     if (getRunnerUi(e) == null) {
       e.getPresentation().setEnabled(false);
     }

@@ -9,7 +9,7 @@ class Zoo2 {
 
     new Runnable() {
       int hc = foo.hashCode();
-      int hc2 = bar.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>();
+      int hc2 = bar.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
 
       public void run() {
       }

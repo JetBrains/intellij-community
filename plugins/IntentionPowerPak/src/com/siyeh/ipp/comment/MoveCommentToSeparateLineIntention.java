@@ -22,7 +22,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -30,11 +33,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveCommentToSeparateLineIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new CommentOnLineWithSourcePredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiComment comment = (PsiComment)element;
     final PsiWhiteSpace whitespace;

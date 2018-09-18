@@ -15,6 +15,7 @@ import unittest
 from tests_pydevd_python import debugger_unittest
 from tests_pydevd_python.debugger_unittest import get_free_port
 
+
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
 IS_CPYTHON = platform.python_implementation() == 'CPython'

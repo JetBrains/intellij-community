@@ -52,6 +52,7 @@ public class MarkerType {
   /**
    * @deprecated use {@link #MarkerType(String, Function, LineMarkerNavigator)} instead
    */
+  @Deprecated
   public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     this("Unknown", tooltip, navigator);
   }
@@ -358,7 +359,7 @@ public class MarkerType {
     private final PsiClass myClass;
 
     private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper(renderer.getComparator()));
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper((Comparator)renderer.getComparator()));
       myClass = aClass;
     }
 

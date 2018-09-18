@@ -46,11 +46,13 @@ import java.util.List;
 public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase {
   public boolean myIgnoreVisibleSpaces;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return PropertiesBundle.message("trail.spaces.property.inspection.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "TrailingSpacesInProperty";
@@ -77,6 +79,7 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
      return new SingleCheckboxOptionsPanel(PropertiesBundle.message("trailing.spaces.in.property.inspection.ignore.visible.spaces"), this, "myIgnoreVisibleSpaces");
   }
 
+  @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     final List<IProperty> properties = ((PropertiesFile)file).getProperties();
@@ -119,11 +122,13 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
       myIgnoreVisibleSpaces = ignoreVisibleSpaces;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return "Remove trailing spaces";
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element == null ? null : element.getParent();

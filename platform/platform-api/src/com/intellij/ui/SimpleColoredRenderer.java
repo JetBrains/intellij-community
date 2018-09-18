@@ -27,6 +27,7 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
     myCellState.collectState(table, isSelected, hasFocus, row, column);
   }
 
+  @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     super.append(fragment, modifyAttributes(attributes), isMainText);
   }
@@ -52,6 +53,7 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
     return true;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     if (shouldPaintBackground()) {
       g.setColor(getBackground());

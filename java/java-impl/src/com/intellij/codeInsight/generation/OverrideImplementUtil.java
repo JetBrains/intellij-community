@@ -265,7 +265,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass,
-                                                                    Collection<CandidateInfo> candidates,
+                                                                    Collection<? extends CandidateInfo> candidates,
                                                                     boolean toCopyJavaDoc,
                                                                     boolean insertOverrideWherePossible) throws IncorrectOperationException {
     List<PsiMethod> result = new ArrayList<>();
@@ -617,7 +617,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     overrideOrImplementMethodsInRightPlace(editor1, aClass, members, copyJavadoc, insert);
   }
 
-  public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass, Collection<CandidateInfo> candidatesToImplement,
+  public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass, Collection<? extends CandidateInfo> candidatesToImplement,
                                                                     boolean copyJavadoc) throws IncorrectOperationException {
     boolean insert =
       JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;

@@ -46,34 +46,42 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
     myTargetDirectory = targetDirectory;
   }
 
+  @Override
   public PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
+  @Override
   public PsiDirectory getTargetIfExists(PsiDirectory source) {
     return myTargetDirectory;
   }
 
+  @Override
   public PsiDirectory getTargetIfExists(PsiFile source) {
     return myTargetDirectory;
   }
 
+  @Override
   public PsiDirectory getTargetDirectory(PsiDirectory source) {
     return myTargetDirectory;
   }
 
+  @Override
   public String verify(PsiFile source) {
     return null;
   }
 
+  @Override
   public String verify(PsiDirectory source) {
     return null;
   }
 
+  @Override
   public String verify(PsiPackage source) {
     return null;
   }
 
+  @Override
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
                                      MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
@@ -91,6 +99,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
     return true;
   }
 
+  @Override
   public PsiDirectory getTargetDirectory(PsiFile source) {
     return myTargetDirectory;
   }

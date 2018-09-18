@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class AntDomPropertyValueConverter extends WrappingConverter{
 
+  @Override
   @NotNull public List<Converter> getConverters(@NotNull GenericDomValue domElement) {
     final String raw = domElement.getRawText();
     if (raw != null) {
@@ -39,6 +40,7 @@ public class AntDomPropertyValueConverter extends WrappingConverter{
     return Collections.emptyList();
   }
 
+  @Override
   public Converter getConverter(@NotNull GenericDomValue domElement) {
     final List<Converter> converterList = getConverters(domElement);
     return converterList.isEmpty()? null : converterList.get(0);

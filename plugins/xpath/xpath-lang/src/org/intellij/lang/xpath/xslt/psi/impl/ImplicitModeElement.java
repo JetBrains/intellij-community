@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
@@ -58,10 +59,12 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return XpathIcons.Template;
     }
 
+    @Override
     public String getName() {
         return getModeRange().substring(myAttribute.getValue());
     }
 
+    @Override
     public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         // name is calculated dynamically from attached attribute. actual renaming is done by each reference
         return this;
@@ -72,10 +75,12 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return "Mode: " + getName();
     }
 
+  @Override
   public PsiElement copy() {
         return this;
     }
 
+    @Override
     @SuppressWarnings({"ConstantConditions"})
     public String getText() {
         return getName();
@@ -107,6 +112,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return myAttribute.isWritable();
     }
 
+    @Override
     public boolean isValid() {
         return myAttribute.isValid();
     }
@@ -128,16 +134,19 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return this;
     }
 
+    @Override
     @Nullable
     public Icon getIcon(boolean open) {
         return getIcon(0);
     }
 
+    @Override
     @Nullable
     public String getLocationString() {
         return null;
     }
 
+    @Override
     @Nullable
     public String getPresentableText() {
         final QName qName = getQName();
@@ -152,6 +161,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
             final XmlTag tag = myAttribute.getParent();
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(tag.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
+                @Override
                 @SuppressWarnings({"StringEquality", "AutoBoxing", "AutoUnboxing"})
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
@@ -177,6 +187,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     }
 
 
+    @Override
     public boolean canNavigate() {
         return isValid() && myAttribute.getValueElement() != null;
     }

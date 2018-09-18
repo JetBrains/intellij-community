@@ -104,7 +104,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       registerStatementError(statement, field, shouldAddSpinWait);
     }
 
-    private boolean containsCall(@Nullable PsiElement element, Predicate<PsiMethodCallExpression> predicate) {
+    private boolean containsCall(@Nullable PsiElement element, Predicate<? super PsiMethodCallExpression> predicate) {
       if(element == null) return false;
       final boolean[] result = new boolean[1];
       element.accept(new JavaRecursiveElementWalkingVisitor() {

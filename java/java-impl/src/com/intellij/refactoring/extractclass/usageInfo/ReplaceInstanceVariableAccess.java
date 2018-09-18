@@ -35,6 +35,7 @@ public class ReplaceInstanceVariableAccess extends FixableUsageInfo {
         fieldName = name;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         final PsiElement qualifier = expression.getQualifier();
         final String callString = delegateName + '.' + (getterName != null ? getterName + "()" : fieldName);

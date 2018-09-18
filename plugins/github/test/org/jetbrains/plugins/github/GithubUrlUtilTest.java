@@ -95,23 +95,6 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> removePort(in));
   }
 
-  public void testGetApiUrlWithoutProtocol() {
-    TestCase<String> tests = new TestCase<>();
-
-    tests.add("github.com", "api.github.com");
-    tests.add("https://github.com/", "api.github.com");
-    tests.add("api.github.com/", "api.github.com");
-
-    tests.add("http://my.site.com/", "my.site.com/api/v3");
-    tests.add("http://api.site.com/", "api.site.com/api/v3");
-    tests.add("http://url.github.com/", "url.github.com/api/v3");
-
-    tests.add("HTTP://GITHUB.com", "api.github.com");
-    tests.add("HttP://GitHub.com/", "api.github.com");
-
-    runTestCase(tests, in -> getApiUrlWithoutProtocol(in));
-  }
-
   public void testGetUserAndRepositoryFromRemoteUrl() {
     TestCase<GithubFullPath> tests = new TestCase<>();
 
@@ -195,7 +178,6 @@ public class GithubUrlUtilTest extends TestCase {
 
     tests.add("github.com", "https://api.github.com");
     tests.add("https://github.com/", "https://api.github.com");
-    tests.add("api.github.com/", "https://api.github.com");
 
     tests.add("https://my.site.com/", "https://my.site.com/api/v3");
     tests.add("https://api.site.com/", "https://api.site.com/api/v3");
@@ -211,6 +193,9 @@ public class GithubUrlUtilTest extends TestCase {
 
     tests.add("HTTP://GITHUB.com", "http://api.github.com");
     tests.add("HttP://GitHub.com/", "http://api.github.com");
+
+    tests.add("https://ghe.com/suffix", "https://ghe.com/suffix/api/v3");
+    tests.add("https://ghe.com/suFFix", "https://ghe.com/suFFix/api/v3");
 
     runTestCase(tests, in -> getApiUrl(in));
   }

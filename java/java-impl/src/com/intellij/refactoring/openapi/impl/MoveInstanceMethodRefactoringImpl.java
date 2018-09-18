@@ -32,14 +32,17 @@ public class MoveInstanceMethodRefactoringImpl extends RefactoringImpl<MoveInsta
     super(new MoveInstanceMethodProcessor(project, method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method, targetVariable)));
   }
 
+  @Override
   public PsiMethod getMethod() {
     return myProcessor.getMethod();
   }
 
+  @Override
   public PsiVariable getTargetVariable() {
     return myProcessor.getTargetVariable();
   }
 
+  @Override
   public PsiClass getTargetClass() {
     return myProcessor.getTargetClass();
   }

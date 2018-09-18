@@ -100,8 +100,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   }
 
   void getInjectedLanguage(final PsiElement place,
-                           final Ref<Boolean> unparsableRef,
-                           final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+                           final Ref<? super Boolean> unparsableRef,
+                           final PairProcessor<? super Language, ? super List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
 

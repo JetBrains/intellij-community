@@ -175,20 +175,6 @@ public class JarRepositoryManager {
     return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, true);
   }
 
-  
-  /**
-   * Warning! Suitable to be used from non-AWT thread only. When called from UI thread, may lead to a deadlock
-   * Use loadDependenciesModal() or loadDependenciesAsync() instead
-   */
-  @Deprecated
-  public static Collection<OrderRoot> loadDependencies(@NotNull Project project,
-                                                       @NotNull RepositoryLibraryProperties libraryProps,
-                                                       boolean loadSources,
-                                                       boolean loadJavadoc,
-                                                       @Nullable String copyTo,
-                                                       @Nullable Collection<RemoteRepositoryDescription> repositories) {
-    return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, false);
-  }
 
   private static Collection<OrderRoot> loadDependenciesImpl(@NotNull Project project,
                                                             @NotNull RepositoryLibraryProperties libraryProps,
@@ -246,7 +232,7 @@ public class JarRepositoryManager {
       kinds, repos, copyTo
     );
   }
-  
+
   public static Promise<List<OrderRoot>> loadDependenciesAsync(@NotNull Project project,
                                                                JpsMavenRepositoryLibraryDescriptor desc,
                                                                final Set<ArtifactKind> artifactKinds,
@@ -313,6 +299,7 @@ public class JarRepositoryManager {
     }
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
         try {
@@ -350,6 +337,7 @@ public class JarRepositoryManager {
   public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());
         try {
@@ -378,9 +366,9 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
+  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
     final Ref<T> result = Ref.create(null);
-    new Task.Modal(project, title, true) { 
+    new Task.Modal(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -395,7 +383,7 @@ public class JarRepositoryManager {
     return result.get();
   }
 
-  private static <T> Promise<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
+  private static <T> Promise<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
     final ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     JobExecutor.INSTANCE.submit(() -> {
@@ -432,9 +420,9 @@ public class JarRepositoryManager {
 
   private static abstract class AetherJob<T> implements Function<ProgressIndicator, T> {
     @NotNull
-    private final Collection<RemoteRepositoryDescription> myRepositories;
+    private final Collection<? extends RemoteRepositoryDescription> myRepositories;
 
-    public AetherJob(@NotNull Collection<RemoteRepositoryDescription> repositories) {
+    public AetherJob(@NotNull Collection<? extends RemoteRepositoryDescription> repositories) {
       myRepositories = repositories;
     }
 
@@ -485,7 +473,7 @@ public class JarRepositoryManager {
       resolved -> resolved.isEmpty() ? Collections.<OrderRoot>emptyList() : WriteAction.computeAndWait(() -> createRoots(resolved, copyTo)));
   }
 
-  private static List<OrderRoot> createRoots(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
+  private static List<OrderRoot> createRoots(@NotNull Collection<? extends Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {

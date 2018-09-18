@@ -74,7 +74,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     StartupManager.getInstance(project).registerPreStartupActivity(
       () -> project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
-        public void rootsChanged(final ModuleRootEvent event) {
+        public void rootsChanged(@NotNull final ModuleRootEvent event) {
           for (FilePropertyPusher pusher : myPushers) {
             pusher.afterRootsChanged(project);
           }
@@ -172,7 +172,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     };
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         DumbService.getInstance(myProject).cancelTask(task);
       }
     });
@@ -211,7 +211,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   }
 
   @Override
-  public void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<VirtualFile> acceptFileCondition) {
+  public void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<? super VirtualFile> acceptFileCondition) {
     if (fileOrDir.isDirectory()) {
       for (VirtualFile child : fileOrDir.getChildren()) {
         if (!child.isDirectory() && acceptFileCondition.value(child)) {

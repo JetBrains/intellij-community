@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.util.PersistentUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class VcsLogCachesInvalidator extends CachesInvalidator {
   private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);
@@ -47,5 +48,10 @@ public class VcsLogCachesInvalidator extends CachesInvalidator {
         FileUtil.createIfDoesntExist(PersistentUtil.getCorruptionMarkerFile());
       }
     }
+  }
+
+  @NotNull
+  public static VcsLogCachesInvalidator getInstance() {
+    return EP_NAME.findExtension(VcsLogCachesInvalidator.class);
   }
 }

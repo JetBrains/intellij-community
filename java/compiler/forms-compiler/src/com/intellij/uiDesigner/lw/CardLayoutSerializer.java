@@ -19,7 +19,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import java.awt.CardLayout;
+import java.awt.*;
 
 /**
  * @author yole
@@ -30,6 +30,7 @@ public class CardLayoutSerializer extends LayoutSerializer {
   private CardLayoutSerializer() {
   }
 
+  @Override
   void readLayout(Element element, LwContainer container) {
     final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, 0);
     final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, 0);
@@ -39,6 +40,7 @@ public class CardLayoutSerializer extends LayoutSerializer {
     container.putClientProperty(UIFormXmlConstants.LAYOUT_CARD, defaultCard);
   }
 
+  @Override
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
     final Element cardChild = LwXmlReader.getRequiredChild(constraintsElement, UIFormXmlConstants.ELEMENT_CARD);
     final String name = LwXmlReader.getRequiredString(cardChild, UIFormXmlConstants.ATTRIBUTE_NAME);

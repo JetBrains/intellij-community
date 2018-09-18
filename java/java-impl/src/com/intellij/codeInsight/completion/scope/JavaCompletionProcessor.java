@@ -44,11 +44,11 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   private boolean myQualified;
   private PsiType myQualifierType;
   private PsiClass myQualifierClass;
-  private final Condition<String> myMatcher;
+  private final Condition<? super String> myMatcher;
   private final Options myOptions;
   private final boolean myAllowStaticWithInstanceQualifier;
 
-  public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
+  public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<? super String> nameCondition) {
     myOptions = options;
     myElement = element;
     myMatcher = nameCondition;

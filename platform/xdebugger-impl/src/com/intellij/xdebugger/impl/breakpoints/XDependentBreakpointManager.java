@@ -22,10 +22,11 @@ public class XDependentBreakpointManager {
   private final XBreakpointManagerImpl myBreakpointManager;
   private final EventDispatcher<XDependentBreakpointListener> myDispatcher;
 
-  public XDependentBreakpointManager(final XBreakpointManagerImpl breakpointManager) {
+  public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager) {
     myBreakpointManager = breakpointManager;
     myDispatcher = EventDispatcher.create(XDependentBreakpointListener.class);
-    myBreakpointManager.addBreakpointListener(new XBreakpointListener<XBreakpoint<?>>() {
+    breakpointManager.getProject().getMessageBus().connect().subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+      @Override
       public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
         XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);
         if (info != null) {
@@ -128,7 +129,7 @@ public class XDependentBreakpointManager {
     }
   }
 
-  private void addDependency(final XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
+  private void addDependency(@NotNull XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
     XDependentBreakpointInfo info = new XDependentBreakpointInfo(master, slave, leaveEnabled);
     mySlave2Info.put(slave, info);
     myMaster2Info.put(master, info);

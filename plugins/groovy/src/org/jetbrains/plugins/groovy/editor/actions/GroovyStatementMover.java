@@ -118,7 +118,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
       element = PsiTreeUtil.nextVisibleLeaf(element);
     }
 
-    return (GroovyPsiElement)PsiTreeUtil.findFirstParent(element, element11 -> isMoveable(element11));
+    return (GroovyPsiElement)PsiTreeUtil.findFirstParent(element, element11 -> isMovable(element11));
   }
 
   private List<LineRange> allRanges(final GroovyPsiElement scope, final boolean stmtLevel, final boolean topLevel) {
@@ -226,7 +226,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
     }
   }
 
-  private static boolean isMoveable(PsiElement element) {
+  private static boolean isMovable(PsiElement element) {
     return isStatement(element) || isMemberDeclaration(element);
   }
 

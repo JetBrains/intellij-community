@@ -73,6 +73,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
     _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events"), true));
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JCheckBox toCheck = null;
         if (!myWatchEntryCheckBox.isSelected() && !myWatchExitCheckBox.isSelected()) {

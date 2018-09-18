@@ -17,15 +17,16 @@ package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public class DvcsBranchUtil {
-
-
   @Nullable
   public static <T extends DvcsBranchInfo> T find(@Nullable final Collection<T> branches,
                                                   @Nullable Repository repository,
@@ -43,5 +44,15 @@ public class DvcsBranchUtil {
   @NotNull
   public static String getPathFor(@Nullable Repository repository) {
     return repository == null ? "" : repository.getRoot().getPath();
+  }
+
+  @NotNull
+  public static List<Change> swapRevisions(@NotNull List<Change> changes) {
+    return ContainerUtil.map(changes, change -> {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision == null || afterRevision == null) return new Change(afterRevision, beforeRevision);
+      return new Change(afterRevision, beforeRevision, change.getFileStatus());
+    });
   }
 }

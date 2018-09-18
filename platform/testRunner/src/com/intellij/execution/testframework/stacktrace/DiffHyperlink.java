@@ -55,7 +55,7 @@ public class DiffHyperlink implements Printable {
                        boolean printOneLine) {
     this(expected, actual, filePath, null, printOneLine);
   }
-  
+
   public DiffHyperlink(final String expected,
                        final String actual,
                        final String expectedFilePath,
@@ -91,11 +91,12 @@ public class DiffHyperlink implements Printable {
   public String getFilePath() {
     return myFilePath;
   }
-  
+
   public String getActualFilePath() {
     return myActualFilePath;
   }
 
+  @Override
   public void printOn(final Printer printer) {
     if (!hasMoreThanOneLine(myActual.trim()) && !hasMoreThanOneLine(myExpected.trim()) && myPrintOneLine) {
       printer.print(NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);

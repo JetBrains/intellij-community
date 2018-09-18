@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
@@ -39,28 +40,30 @@ public class DarculaInstaller {
     performImpl(true);
   }
 
-  private static void performImpl(boolean dark) {
+  private static void performImpl(final boolean dark) {
     JBColor.setDark(dark);
     IconLoader.setUseDarkIcons(dark);
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    EditorColorsScheme current = colorsManager.getGlobalScheme();
-    if (dark != ColorUtil.isDark(current.getDefaultBackground())) {
-      String targetScheme = dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
-      PropertiesComponent properties = PropertiesComponent.getInstance();
-      String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
-      String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
-      String themeName = properties.getValue(savedEditorThemeKey);
-      if (themeName != null && colorsManager.getScheme(themeName) != null) {
-        targetScheme = themeName;
-      }
-      properties.setValue(toSavedEditorThemeKey, current.getName(), dark ? EditorColorsScheme.DEFAULT_SCHEME_NAME : DarculaLaf.NAME);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+      EditorColorsScheme current = colorsManager.getGlobalScheme();
+      if (dark != ColorUtil.isDark(current.getDefaultBackground())) {
+        String targetScheme = dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
+        PropertiesComponent properties = PropertiesComponent.getInstance();
+        String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
+        String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
+        String themeName = properties.getValue(savedEditorThemeKey);
+        if (themeName != null && colorsManager.getScheme(themeName) != null) {
+          targetScheme = themeName;
+        }
+        properties.setValue(toSavedEditorThemeKey, current.getName(), dark ? EditorColorsScheme.DEFAULT_SCHEME_NAME : DarculaLaf.NAME);
 
-      EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
-      if (scheme != null) {
-        colorsManager.setGlobalScheme(scheme);
+        EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
+        if (scheme != null) {
+          colorsManager.setGlobalScheme(scheme);
+        }
       }
-    }
-    update();
+      update();
+    });
   }
 
   protected static void update() {

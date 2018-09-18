@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -40,7 +41,7 @@ import java.util.zip.ZipException;
  * </ul>
  * </p>
  */
-public class JBZipFile {
+public class JBZipFile implements Closeable {
   static final int SHORT = 2;
   static final int WORD = 4;
 
@@ -155,6 +156,7 @@ public class JBZipFile {
    *
    * @throws IOException if an error occurs closing the archive.
    */
+  @Override
   public void close() throws IOException {
     if (myOutputStream != null) {
       if (entries.isEmpty()) {

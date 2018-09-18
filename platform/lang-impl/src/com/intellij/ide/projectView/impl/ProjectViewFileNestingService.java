@@ -31,13 +31,13 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   private static final ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.projectViewNestingRulesProvider");
 
-  public static final Comparator<NestingRule> RULE_COMPARATOR =
+  static final Comparator<NestingRule> RULE_COMPARATOR =
     Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());
 
-  public static final NestingRule[] DEFAULT_NESTING_RULES = loadDefaultNestingRules();
+  static final NestingRule[] DEFAULT_NESTING_RULES = loadDefaultNestingRules();
 
   private MyState myState = new MyState();
-  private long myModCount = 0;
+  private long myModCount;
 
   @NotNull
   public static ProjectViewFileNestingService getInstance() {
@@ -48,13 +48,10 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   private static NestingRule[] loadDefaultNestingRules() {
     final List<NestingRule> result = new SortedList<>(RULE_COMPARATOR);
 
-    final ProjectViewNestingRulesProvider.Consumer consumer = new ProjectViewNestingRulesProvider.Consumer() {
-      @Override
-      public void addNestingRule(@NotNull final String parentFileSuffix, @NotNull final String childFileSuffix) {
-        LOG.assertTrue(!parentFileSuffix.isEmpty() && !childFileSuffix.isEmpty(), "file suffix must not be empty");
-        LOG.assertTrue(!parentFileSuffix.equals(childFileSuffix), "parent and child suffixes must be different: " + parentFileSuffix);
-        result.add(new NestingRule(parentFileSuffix, childFileSuffix));
-      }
+    final ProjectViewNestingRulesProvider.Consumer consumer = (parentFileSuffix, childFileSuffix) -> {
+      LOG.assertTrue(!parentFileSuffix.isEmpty() && !childFileSuffix.isEmpty(), "file suffix must not be empty");
+      LOG.assertTrue(!parentFileSuffix.equals(childFileSuffix), "parent and child suffixes must be different: " + parentFileSuffix);
+      result.add(new NestingRule(parentFileSuffix, childFileSuffix));
     };
 
     for (ProjectViewNestingRulesProvider provider : EP_NAME.getExtensions()) {
@@ -84,7 +81,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
     return myState.myRules;
   }
 
-  public void setRules(@NotNull final List<NestingRule> rules) {
+  public void setRules(@NotNull final List<? extends NestingRule> rules) {
     myState.myRules.clear();
     myState.myRules.addAll(rules);
     myModCount++;

@@ -32,6 +32,7 @@ public class FieldElement extends AbstractElement implements Element {
     private boolean isModifierVolatile;
     private String accessor;
 
+  @Override
   public String getAccessor() {
         return accessor;
     }

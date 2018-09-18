@@ -16,10 +16,11 @@
 package com.intellij.pom.event;
 
 import com.intellij.pom.PomModelAspect;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 public interface PomModelListener extends EventListener {
-  void modelChanged(PomModelEvent event);
-  boolean isAspectChangeInteresting(PomModelAspect aspect);
+  void modelChanged(@NotNull PomModelEvent event);
+  boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect);
 }

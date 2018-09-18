@@ -36,7 +36,7 @@ public final class ShowModulesAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     ProjectView view = getProjectView();
-    if (view != null) view.setShowModules(flag, myId);
+    if (view != null) view.setShowModules(myId, flag);
   }
 
   @Override

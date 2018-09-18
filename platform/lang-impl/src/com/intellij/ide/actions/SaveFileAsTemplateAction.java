@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -38,7 +39,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SaveFileAsTemplateAction extends AnAction{
   @Override
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
     Project project = assertNotNull(e.getData(CommonDataKeys.PROJECT));
     String fileText = assertNotNull(e.getData(PlatformDataKeys.FILE_TEXT));
     VirtualFile file = assertNotNull(e.getData(CommonDataKeys.VIRTUAL_FILE));
@@ -66,7 +67,7 @@ public class SaveFileAsTemplateAction extends AnAction{
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.getData(PlatformDataKeys.FILE_TEXT) != null);
   }
 }

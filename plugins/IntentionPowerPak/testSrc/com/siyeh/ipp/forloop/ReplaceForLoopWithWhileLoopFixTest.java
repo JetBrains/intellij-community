@@ -29,6 +29,7 @@ public class ReplaceForLoopWithWhileLoopFixTest extends IPPTestCase {
   public void testDoubleLabelNoBraces() { doTest(); }
   public void testUpdatingMuch() { doTest(); }
   public void testContinuing() { doTest(); }
+  public void testConflictingNames() { doTest(); }
   public void testNoInit() { doTest(); }
 
   @Override

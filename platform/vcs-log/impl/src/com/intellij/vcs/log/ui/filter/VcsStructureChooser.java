@@ -40,8 +40,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -195,6 +195,7 @@ public class VcsStructureChooser extends DialogWrapper {
     }.installOn(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath[] paths = myTree.getSelectionPaths();

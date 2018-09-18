@@ -41,6 +41,7 @@ import java.util.*;
 
 public class XsltCodeInsightUtil {
     public static final PsiElementFilter XSLT_PARAM_FILTER = new PsiElementFilter() {
+        @Override
         public boolean isAccepted(PsiElement element) {
             return element instanceof XmlTag && XsltSupport.isParam((XmlTag)element);
         }
@@ -75,6 +76,7 @@ public class XsltCodeInsightUtil {
     public static PsiElement findFirstRealTagChild(@NotNull XmlTag xmlTag) {
         final PsiElement[] child = new PsiElement[1];
         xmlTag.processElements(new PsiElementProcessor() {
+            @Override
             public boolean execute(@NotNull PsiElement element) {
                 if (element instanceof XmlToken) {
                     if (((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
@@ -150,6 +152,7 @@ public class XsltCodeInsightUtil {
     public static XmlTag findLastWithParam(XmlTag templateTag) {
         final XmlTag[] lastParam = new XmlTag[1];
         templateTag.processElements(new PsiElementProcessor() {
+            @Override
             public boolean execute(@NotNull PsiElement element) {
                 if (element instanceof XmlTag) {
                     if ("with-param".equals(((XmlTag)element).getLocalName())) {
@@ -172,6 +175,7 @@ public class XsltCodeInsightUtil {
 
       // collect all other possible unresolved references with the same name in the current template
       usageBlock.accept(new PsiRecursiveElementVisitor() {
+        @Override
         public void visitElement(PsiElement element) {
           if (element instanceof XPathVariableReference) {
             visitXPathVariableReference(((XPathVariableReference)element));

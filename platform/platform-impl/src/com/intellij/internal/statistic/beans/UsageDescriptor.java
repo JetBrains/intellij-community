@@ -15,19 +15,32 @@
  */
 package com.intellij.internal.statistic.beans;
 
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class UsageDescriptor implements Comparable<UsageDescriptor> {
   private final String myKey;
   private final int myValue;
-
-  public UsageDescriptor(@NotNull String key, int value) {
-    myKey = ConvertUsagesUtil.ensureProperKey(key);
-    myValue = value;
-  }
+  @Nullable
+  private final FUSUsageContext myContext;
 
   public UsageDescriptor(@NotNull String key) {
     this(key, 1);
+  }
+
+  public UsageDescriptor(@NotNull String key, int value) {
+    this(key, value, (FUSUsageContext)null);
+  }
+
+  public UsageDescriptor(@NotNull String key, int value, @NotNull String... contextData) {
+    this(key, value, contextData.length > 0 ? FUSUsageContext.create(contextData) : null);
+  }
+
+  public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
+    myKey = ConvertUsagesUtil.ensureProperKey(key);
+    myValue = value;
+    myContext = context;
   }
 
   public String getKey() {
@@ -36,6 +49,11 @@ public final class UsageDescriptor implements Comparable<UsageDescriptor> {
 
   public int getValue() {
     return myValue;
+  }
+
+  @Nullable
+  public FUSUsageContext getContext() {
+    return myContext;
   }
 
   public int compareTo(UsageDescriptor ud) {

@@ -28,16 +28,19 @@ public class RemoveAnnotationFix implements LocalQuickFix {
     myTool = tool;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Remove Annotation";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return myTool.getGroupDisplayName();
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     descriptor.getPsiElement().delete();
   }

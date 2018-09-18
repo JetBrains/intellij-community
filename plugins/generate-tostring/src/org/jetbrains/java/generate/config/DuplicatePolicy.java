@@ -34,10 +34,12 @@ public class DuplicatePolicy implements ConflictResolutionPolicy {
     return instance;
   }
 
+  @Override
   public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
     newMethodStrategy = strategy;
   }
 
+  @Override
   public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) {
     return newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
   }

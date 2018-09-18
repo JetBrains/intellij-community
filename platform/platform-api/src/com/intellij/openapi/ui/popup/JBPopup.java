@@ -173,8 +173,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   boolean isCancelKeyEnabled();
 
-  void addListener(JBPopupListener listener);
-  void removeListener(JBPopupListener listener);
+  void addListener(@NotNull JBPopupListener listener);
+  void removeListener(@NotNull JBPopupListener listener);
 
   boolean isDisposed();
 

@@ -73,14 +73,10 @@ public class HashSerializeTest {
   @NotNull
   private static List<HashImpl> readFromFile(@NotNull File file) throws IOException {
     List<HashImpl> result = ContainerUtil.newArrayList();
-    DataInputStream in = new DataInputStream(new FileInputStream(file));
-    try {
+    try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
       while (in.available() > 0) {
         result.add((HashImpl)HashImpl.read(in));
       }
-    }
-    finally {
-      in.close();
     }
     return result;
   }

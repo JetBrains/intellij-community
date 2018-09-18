@@ -37,6 +37,7 @@ public class InlineDelegatingCall extends FixableUsageInfo {
     this.delegatingName = delegatingName;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final StringBuffer replacementText = new StringBuffer();
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();

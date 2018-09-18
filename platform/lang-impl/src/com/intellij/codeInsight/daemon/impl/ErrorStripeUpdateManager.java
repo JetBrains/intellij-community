@@ -75,6 +75,12 @@ public class ErrorStripeUpdateManager {
 
   @Nullable
   protected TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+    for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
+      TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
+      if (renderer != null) {
+        return renderer;
+      }
+    }
     return new TrafficLightRenderer(myProject, editor.getDocument(), file);
   }
 }

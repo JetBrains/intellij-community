@@ -5,6 +5,7 @@
 
 package org.jetbrains.jps.javac;
 
+@javax.annotation.Generated(value="protoc", comments="annotations:JavacRemoteProto.java.pb.meta")
 public final class JavacRemoteProto {
   private JavacRemoteProto() {}
   public static void registerAllExtensions(

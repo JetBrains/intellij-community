@@ -63,7 +63,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myLanguage = language;
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
 
-    assert rearranger instanceof ArrangementStandardSettingsAware;
+    if (!(rearranger instanceof ArrangementStandardSettingsAware)) {
+      throw new IllegalArgumentException("Incorrect rearranger for " + language.getID() + " language: " + rearranger);
+    }
     mySettingsAware = (ArrangementStandardSettingsAware)rearranger;
 
     final ArrangementColorsProvider colorsProvider;

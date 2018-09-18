@@ -351,7 +351,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModelCommitted;
   }
 
-  public List<Module> deleteModules(final Collection<Module> modules) {
+  public List<Module> deleteModules(final Collection<? extends Module> modules) {
     List<Module> deleted = new ArrayList<>();
     List<ModuleEditor> moduleEditors = new ArrayList<>();
     for (Module module : modules) {
@@ -446,7 +446,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private boolean doRemoveModules(@NotNull List<ModuleEditor> selectedEditors) {
+  private boolean doRemoveModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
     if (selectedEditors.isEmpty()) return true;
 
     String question;

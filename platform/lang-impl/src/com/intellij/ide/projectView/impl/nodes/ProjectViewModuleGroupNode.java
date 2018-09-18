@@ -40,6 +40,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     super(project, value, viewSettings);
   }
 
+  @NotNull
   @Override
   protected AbstractTreeNode createModuleNode(Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -53,6 +54,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     return new ProjectViewModuleNode(getProject(), module, getSettings());
   }
 
+  @NotNull
   @Override
   protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());

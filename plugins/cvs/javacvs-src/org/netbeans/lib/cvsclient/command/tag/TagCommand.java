@@ -14,13 +14,14 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.tag;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.DualListener;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
@@ -32,7 +33,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -71,7 +71,8 @@ public final class TagCommand extends AbstractCommand {
 	 *               services to this command, including the ability to actually
 	 *               process all the requests.
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -110,7 +111,8 @@ public final class TagCommand extends AbstractCommand {
 	 * This method returns how the tag command would looklike when typed on the
 	 * command line.
 	 */
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("tag ");
 		cvsCommandLine.append(getCvsArguments());
 		if (getTag() != null) {
@@ -126,7 +128,8 @@ public final class TagCommand extends AbstractCommand {
 	 * After calling this method, the command should have no switches defined
 	 * and should behave defaultly.
 	 */
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 		setCheckThatUnmodified(false);

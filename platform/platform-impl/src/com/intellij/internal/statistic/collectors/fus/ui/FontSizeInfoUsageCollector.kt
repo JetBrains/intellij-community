@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.CollectUsagesException
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -53,5 +54,9 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
 
   override fun getGroupId(): String {
     return "statistics.ui.fonts"
+  }
+
+  override fun getContext(): FUSUsageContext? {
+    return FUSUsageContext.OS_CONTEXT
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -50,21 +52,17 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     PsiElement scope = myParameter.getDeclarationScope();
     if (scope instanceof PsiMethod && field.hasModifierProperty(PsiModifier.FINAL)) {
-      if (((PsiMethod)scope).isConstructor()) {
-        PsiCodeBlock body = ((PsiMethod)scope).getBody();
-        LOG.assertTrue(body != null);
-        PsiStatement[] statements = body.getStatements();
-        if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
-          PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-          if (expression instanceof PsiMethodCallExpression && 
-              PsiKeyword.THIS.equals(((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName())) {
-            return false;
-          }
-        }
+      PsiMethod method = (PsiMethod)scope;
+      if (!method.isConstructor()) return false;
+      if (!JavaHighlightUtil.getChainedConstructors(method).isEmpty()) return false;
+      PsiCodeBlock body = method.getBody();
+      LOG.assertTrue(body != null);
+      try {
+        ControlFlow flow =
+          ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, flow)) return false;
       }
-      else {
-        return false;
-      }
+      catch (AnalysisCanceledException ignored) { }
     }
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 

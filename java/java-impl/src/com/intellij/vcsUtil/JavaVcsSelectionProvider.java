@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class JavaVcsSelectionProvider implements VcsSelectionProvider {
+  @Override
   @Nullable
   public VcsSelection getSelection(final VcsContext context) {
     final Editor editor = context.getEditor();

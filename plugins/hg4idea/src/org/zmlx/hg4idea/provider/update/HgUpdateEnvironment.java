@@ -42,14 +42,16 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     updateConfiguration = ServiceManager.getService(project, HgUpdateConfigurationSettings.class);
   }
 
+  @Override
   public void fillGroups(UpdatedFiles updatedFiles) {
   }
 
+  @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots,
     UpdatedFiles updatedFiles, ProgressIndicator indicator,
     @NotNull Ref<SequentialUpdatesContext> context) {
-    
+
     List<VcsException> exceptions = new LinkedList<>();
 
     boolean[] result = {true};
@@ -75,14 +77,16 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     return new UpdateSessionAdapter(exceptions, !result[0]);
   }
 
+  @Override
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {
     return new UpdateConfigurable(updateConfiguration);
   }
 
+  @Override
   public boolean validateOptions(Collection<FilePath> roots) {
     return true;
   }
-  
+
   public static class UpdateConfigurable implements Configurable {
     private final HgUpdateConfigurationSettings updateConfiguration;
     protected HgUpdateDialog updateDialog;
@@ -91,6 +95,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       this.updateConfiguration = updateConfiguration;
     }
 
+    @Override
     @Nls
     public String getDisplayName() {
       return "Update";
@@ -101,23 +106,28 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       return "reference.VersionControl.Mercurial.UpdateProject";
     }
 
+    @Override
     public JComponent createComponent() {
       updateDialog = new HgUpdateDialog();
       return updateDialog.getContentPanel();
     }
 
+    @Override
     public boolean isModified() {
       return true;
     }
 
+    @Override
     public void apply() {
       updateDialog.applyTo(updateConfiguration);
     }
 
+    @Override
     public void reset() {
       updateDialog.updateFrom(updateConfiguration);
     }
 
+    @Override
     public void disposeUIResources() {
       updateDialog = null;
     }

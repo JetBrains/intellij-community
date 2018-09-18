@@ -31,19 +31,23 @@ import org.jetbrains.annotations.Nullable;
 public class TestNGEntryPoint extends EntryPoint {
    public boolean ADD_TESTNG_TO_ENTRIES = true;
 
+  @Override
   public boolean isSelected() {
     return ADD_TESTNG_TO_ENTRIES;
   }
 
+  @Override
   public void setSelected(boolean selected) {
     ADD_TESTNG_TO_ENTRIES = selected;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "TestNG test cases";
   }
 
+  @Override
   public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
     return isEntryPoint(psiElement);
   }
@@ -57,16 +61,19 @@ public class TestNGEntryPoint extends EntryPoint {
     return false;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (!ADD_TESTNG_TO_ENTRIES) {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
   }
 
+  @Override
   @Nullable
   public String[] getIgnoreAnnotations() {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;

@@ -4,6 +4,7 @@ package com.intellij.platform;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +43,7 @@ import java.util.EnumSet;
 /**
  * @author max
  */
-public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
@@ -89,12 +90,20 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
+  @Override
   @Nullable
-  public Project doOpenProject(@NotNull VirtualFile file, @Nullable Project projectToClose, int line, @NotNull EnumSet<Option> options) {
-    return doOpenProject(file, projectToClose, line, null, options);
+  public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
+    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+    if (tempProject) {
+      options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
+      options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+    }
+
+    return doOpenProject(file, null, line, null, options);
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
+  @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
                                       boolean forceOpenInNewFrame,
@@ -156,8 +165,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
+      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK && !isReopen) {
+        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, false, "Open Project");
         if (!dialog.showAndGet()) {
           return null;
         }
@@ -280,7 +289,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     StartupManager.getInstance(project).registerPostStartupActivity(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
         if (!project.isDisposed() && file.isValid()) {
-          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : new OpenFileDescriptor(project, file)).navigate(true);
+          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
         }
       }, ModalityState.NON_MODAL));
   }

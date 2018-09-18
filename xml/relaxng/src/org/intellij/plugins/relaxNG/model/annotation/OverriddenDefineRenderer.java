@@ -55,7 +55,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   public AnAction getClickAction() {
     return new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final PsiElement element = myDefine.getPsiElement();
         if (element == null || !element.isValid()) return;
 

@@ -106,7 +106,6 @@ private fun collect(componentManager: ComponentManager,
                     substitutorToStore: MutableMap<TrackingPathMacroSubstitutor, IComponentStore>) {
   val store = componentManager.stateStore
   val substitutor = store.storageManager.macroSubstitutor ?: return
-
   val macros = substitutor.getUnknownMacros(null)
   if (macros.isEmpty()) {
     return

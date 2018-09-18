@@ -34,11 +34,11 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -326,6 +326,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       this.param = param;
     }
 
+    @Override
     public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
       final PsiExpression lhs = assignment.getLExpression();

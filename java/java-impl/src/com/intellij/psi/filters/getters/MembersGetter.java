@@ -83,7 +83,7 @@ public abstract class MembersGetter {
     return true;
   }
 
-  public void processMembers(final Consumer<LookupElement> results, @Nullable final PsiClass where,
+  public void processMembers(final Consumer<? super LookupElement> results, @Nullable final PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
     if (where == null || isPrimitiveClass(where)) return;
 
@@ -126,7 +126,7 @@ public abstract class MembersGetter {
   }
 
   private void doProcessMembers(boolean acceptMethods,
-                                Consumer<LookupElement> results,
+                                Consumer<? super LookupElement> results,
                                 boolean isExpectedTypeMember, Collection<? extends PsiElement> declarations) {
     for (final PsiElement result : declarations) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {

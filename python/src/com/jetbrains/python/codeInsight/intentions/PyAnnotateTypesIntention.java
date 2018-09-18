@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.Lists;
@@ -45,19 +31,18 @@ import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3Annota
  * @author traff
  */
 public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
-  
+
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.add.type.hints.for.function.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    if (elementAt == null) return false;
-
-    final PyFunction function = findSuitableFunction(elementAt);
+    final PyFunction function = findSuitableFunction(editor, file);
     if (function != null) {
       setText(PyBundle.message("INTN.add.type.hints.for.function", function.getName()));
       return true;
@@ -65,9 +50,12 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  public PyFunction findSuitableFunction(@NotNull PsiElement elementAt) {
-    return TypeIntention.findSuitableFunction(elementAt, input -> true);
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    final PyFunction function = findSuitableFunction(editor, file);
+    if (function != null) {
+      annotateTypes(editor, function);
+    }
   }
 
   @Override
@@ -75,15 +63,9 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    if (elementAt != null) {
-      final PyFunction function = findSuitableFunction(elementAt);
-      if (function != null) {
-        annotateTypes(editor, function);
-      }
-    }
+  @Nullable
+  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+    return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 
   public static void annotateTypes(Editor editor, PyFunction function) {
@@ -156,7 +138,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
       while (element != null && !element.getText().contains(replacementTextBuilder.toString())) {
         element = element.getParent();
       }
-      
+
       if (element != null) {
         final TemplateBuilder builder =
           TemplateBuilderFactory.getInstance().createTemplateBuilder(element);

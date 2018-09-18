@@ -36,6 +36,7 @@ class MostlyUShortIntList implements IntIntFunction {
     return myMap;
   }
 
+  @Override
   public int fun(int index) {
     return get(index);
   }

@@ -37,7 +37,7 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
   }
 
   @Override
-  public boolean canBePerformed(DataContext context) {
+  public boolean canBePerformed(@NotNull DataContext context) {
     return true;
   }
 

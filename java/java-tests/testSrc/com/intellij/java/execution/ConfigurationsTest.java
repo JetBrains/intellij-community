@@ -519,7 +519,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
           task.startSearch();
         }
         else {
-          CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
+          CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()), null);
           try {
             List<CompilerMessage> messages = tester.make();
             assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)

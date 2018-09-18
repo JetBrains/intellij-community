@@ -12,7 +12,7 @@ class MethodRef {
   }
 
   public static void useGuavaListsTransform_method_ref(List<@foo.Nullable String> list) {
-    System.out.println(transform(list, s -> s.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>()));
-    System.out.println(transform(list, <warning descr="Method reference invocation 'String::length' may produce 'java.lang.NullPointerException'">String::length</warning>));
+    System.out.println(transform(list, s -> s.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>()));
+    System.out.println(transform(list, <warning descr="Method reference invocation 'String::length' may produce 'NullPointerException'">String::length</warning>));
   }
 }

@@ -89,7 +89,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
   }
 
-  private void onFacetRemoved(final Facet facet, final boolean before) {
+  private void onFacetRemoved(@NotNull Facet facet, final boolean before) {
     final FacetTypeId typeId = facet.getTypeId();
     Map<Facet, Boolean> facets = myFacetsByType.get(typeId);
     boolean lastFacet;
@@ -134,7 +134,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     return myAllFacetsListener.getMulticaster();
   }
 
-  private void onFacetAdded(final Facet facet) {
+  private void onFacetAdded(@NotNull Facet facet) {
     boolean firstFacet = myFacetsByType.isEmpty();
     final FacetTypeId typeId = facet.getTypeId();
     Map<Facet, Boolean> facets = myFacetsByType.get(typeId);
@@ -160,7 +160,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     }
   }
 
-  private void onFacetChanged(final Facet facet) {
+  private void onFacetChanged(@NotNull Facet facet) {
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(facet.getTypeId());
     if (dispatcher != null) {
       //noinspection unchecked

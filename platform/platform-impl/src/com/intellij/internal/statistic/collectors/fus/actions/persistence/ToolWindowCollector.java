@@ -28,20 +28,20 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
   }
 
   public void recordActivation(String toolWindowId) {
-    record(toolWindowId + " by Activation");
+    record(toolWindowId, "Activation");
   }
 
   //todo[kb] provide a proper way to track activations by clicks
   public void recordClick(String toolWindowId) {
-    record(toolWindowId + " by Click");
+    record(toolWindowId, "Click");
   }
 
-  private void record(String toolWindowId) {
+  private void record(@Nullable String toolWindowId, @NotNull String source) {
     if (toolWindowId == null) return;
     State state = getState();
     if (state == null) return;
 
-    String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId);
+    final String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId + "_by_" + source);
     FeatureUsageLogger.INSTANCE.log("toolwindow", key);
     final Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;

@@ -16,11 +16,9 @@
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
@@ -34,6 +32,7 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
                                                                                                                              psiClass -> psiClass.getQualifiedName(), ", ") : null;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiElement referenceExpression = getElement();
     if (referenceExpression != null) {

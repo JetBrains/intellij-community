@@ -134,7 +134,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       final PsiElement original = parameters.getOriginalPosition();
       if (original != null) {
@@ -200,7 +200,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
   private static class StringFormatCompletionProvider extends CompletionProvider<CompletionParameters> {
     @Override
     protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                  final ProcessingContext context,
+                                  @NotNull final ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       final PsiElement original = parameters.getOriginalPosition();
       if (original != null) {

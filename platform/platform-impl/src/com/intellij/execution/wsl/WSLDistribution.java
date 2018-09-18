@@ -98,7 +98,7 @@ public class WSLDistribution {
    * @param args                   linux args, eg {@code gem env}
    */
   public ProcessOutput executeOnWsl(int timeout,
-                                    @Nullable Consumer<ProcessHandler> processHandlerConsumer,
+                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
                                     @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
@@ -112,7 +112,7 @@ public class WSLDistribution {
     return executeOnWsl(timeout, null, args);
   }
 
-  public ProcessOutput executeOnWsl(@Nullable Consumer<ProcessHandler> processHandlerConsumer, @NotNull String... args)
+  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, @NotNull String... args)
     throws ExecutionException {
     return executeOnWsl(-1, processHandlerConsumer, args);
   }
@@ -131,7 +131,7 @@ public class WSLDistribution {
   public ProcessOutput copyFromWsl(@NotNull String wslPath,
                                    @NotNull String windowsPath,
                                    @Nullable List<String> additionalOptions,
-                                   @Nullable Consumer<ProcessHandler> handlerConsumer
+                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer
   )
     throws ExecutionException {
     //noinspection ResultOfMethodCallIgnored
@@ -217,12 +217,8 @@ public class WSLDistribution {
             true
           );
           if (password != null) {
-            PrintWriter pw = new PrintWriter(input);
-            try {
+            try (PrintWriter pw = new PrintWriter(input)) {
               pw.println(password);
-            }
-            finally {
-              pw.close();
             }
           }
           else {

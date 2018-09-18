@@ -24,7 +24,6 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +51,12 @@ public class GenerateDependencyUtil {
       ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, dependency -> new MavenDomProjectModelMember(dependency));
     MemberChooser<MavenDomProjectModelMember> chooser =
       new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
+        @Override
         protected ShowContainersAction getShowContainersAction() {
           return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), MavenIcons.MavenProject);
         }
 
+        @Override
         protected String getAllContainersNodeName() {
           return MavenDomBundle.message("all.dependencies");
         }
@@ -102,6 +103,7 @@ public class GenerateDependencyUtil {
       }
     }
 
+    @Override
     public MemberChooserObject getParentNodeDelegate() {
       MavenDomDependency dependency = getDependency();
 

@@ -70,7 +70,7 @@ public class GitMerger {
       handler.addParameters("-F", messageFile.getAbsolutePath());
     }
     handler.endOptions();
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
 }

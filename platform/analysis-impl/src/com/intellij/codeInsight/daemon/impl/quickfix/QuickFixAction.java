@@ -51,7 +51,7 @@ public final class QuickFixAction {
 
   public static void registerQuickFixActions(@Nullable HighlightInfo info,
                                              @Nullable TextRange fixRange,
-                                             @NotNull Iterable<IntentionAction> actions) {
+                                             @NotNull Iterable<? extends IntentionAction> actions) {
     for (IntentionAction action : actions) {
       registerQuickFixAction(info, fixRange, action);
     }

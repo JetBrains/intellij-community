@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -65,6 +67,24 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
   @Override
   public int getParameterNumber(GrParameter parameter) {
     return getParameterIndex(parameter);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getLParen() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getRParen() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public TextRange getParametersRange() {
+    throw new IllegalStateException();
   }
 
   @Override

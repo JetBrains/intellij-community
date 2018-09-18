@@ -41,7 +41,7 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final OrderEntry entry = myPanel.getSelectedEntry();
     if (!(entry instanceof LibraryOrderEntry)) return;
     LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;

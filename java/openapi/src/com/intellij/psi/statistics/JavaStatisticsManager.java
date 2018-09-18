@@ -107,9 +107,9 @@ public abstract class JavaStatisticsManager {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append("method#");
       buffer.append(method.getName());
-      for (PsiParameter parm : method.getParameterList().getParameters()) {
+      for (PsiParameter param : method.getParameterList().getParameters()) {
         buffer.append("#");
-        buffer.append(parm.getType().getPresentableText());
+        buffer.append(param.getType().getPresentableText());
       }
       return buffer.toString();
     }

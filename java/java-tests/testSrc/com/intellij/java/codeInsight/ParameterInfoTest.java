@@ -421,4 +421,10 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "-\n" +
                       "<html><b>@Nullable Object o</b></html>");
   }
+
+  public void testParameterInfoIsAvailableAtMethodName() {
+    configureJava("class C { void m() { System.ex<caret>it(0); } }");
+    showParameterInfo();
+    checkHintContents("<html>int i</html>");
+  }
 }

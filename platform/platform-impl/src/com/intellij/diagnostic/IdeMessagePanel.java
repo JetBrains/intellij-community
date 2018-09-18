@@ -90,6 +90,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   /** @deprecated use {@link #openErrorsDialog(LogMessage)} (to be removed in IDEA 2019) */
+  @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   public void openFatals(@Nullable LogMessage message) {
     openErrorsDialog(message);
@@ -187,12 +188,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     return frame instanceof Window && ((Window)frame).isActive();
   }
 
-  private static final String ERROR_TITLE = DiagnosticBundle.message("error.new.notification.title");
-  private static final String ERROR_LINK = DiagnosticBundle.message("error.new.notification.link");
-
   private void showErrorNotification(@NotNull Project project) {
-    Notification notification = new Notification("", AllIcons.Ide.FatalError, ERROR_TITLE, null, null, NotificationType.ERROR, null);
-    notification.addAction(new NotificationAction(ERROR_LINK) {
+    String title = DiagnosticBundle.message("error.new.notification.title");
+    String linkText = DiagnosticBundle.message("error.new.notification.link");
+    Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, null, NotificationType.ERROR, null);
+    notification.addAction(new NotificationAction(linkText) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         notification.expire();

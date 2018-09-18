@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.graph.utils;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
@@ -61,14 +62,14 @@ public class DfsUtil {
         visitor.enterNode(currentNode, getPreviousNode(stack), down);
       }
 
-      for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
+      for (int nextNode: graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
         if (!visited.get(nextNode)) {
           stack.push(new Pair<>(nextNode, down));
           continue outer;
         }
       }
 
-      for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
+      for (int nextNode: graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
         if (!visited.get(nextNode)) {
           stack.push(new Pair<>(nextNode, !down));
           continue outer;
@@ -102,5 +103,30 @@ public class DfsUtil {
       }
     }
     stack.clear();
+  }
+
+  public static boolean isAncestor(@NotNull LiteLinearGraph graph, int lowerNode, int upperNode) {
+    BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
+
+    Ref<Boolean> result = Ref.create(false);
+    walk(lowerNode, currentNode -> {
+      visited.set(currentNode, true);
+
+      if (currentNode == upperNode) {
+        result.set(true);
+        return NextNode.EXIT;
+      }
+      if (currentNode > upperNode) {
+        for (int nextNode: graph.getNodes(currentNode, LiteLinearGraph.NodeFilter.UP)) {
+          if (!visited.get(nextNode)) {
+            return nextNode;
+          }
+        }
+      }
+
+      return NextNode.NODE_NOT_FOUND;
+    });
+
+    return result.get();
   }
 }

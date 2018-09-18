@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -83,8 +84,14 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           LanguageLevel level = PsiUtil.getLanguageLevel(expression);
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
-            final PsiType substitution = toType == null ? resolveResult.getSubstitutor().substitute(typeParameter)
-                                                        : helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
+            final PsiType substitution;
+            if (toType == null) {
+              substitution = resolveResult.getSubstitutor().substitute(typeParameter);
+              if (!PsiTypesUtil.isDenotableType(substitution, element)) return null;
+            }
+            else {
+              substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
+            }
             if (substitution == null || PsiType.NULL.equals(substitution)) return null;
             mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
           }

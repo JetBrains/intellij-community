@@ -378,7 +378,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (QuickActionProvider.KEY.is(dataId) || RunnerContentUi.KEY.is(dataId)) {
       return myContentUI;
     }

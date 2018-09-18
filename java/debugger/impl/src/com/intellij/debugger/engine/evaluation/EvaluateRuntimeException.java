@@ -23,6 +23,7 @@ public class EvaluateRuntimeException extends RuntimeException {
     super(e);
   }
 
+  @Override
   public synchronized EvaluateException getCause() {
     return (EvaluateException)super.getCause();
   }

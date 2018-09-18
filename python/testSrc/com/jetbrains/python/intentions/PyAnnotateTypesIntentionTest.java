@@ -46,6 +46,11 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
     doNegativeTest(PyBundle.message("INTN.add.type.hints.for.function.family"));
   }
 
+  // PY-30825
+  public void testMethodAfterConstructorCall() {
+    doIntentionTest(PyBundle.message("INTN.add.type.hints.for.function", "method"));
+  }
+
   private void doTest() {
     doTest(PyBundle.message("INTN.add.type.hints.for.function.family"), LanguageLevel.PYTHON34);
   }

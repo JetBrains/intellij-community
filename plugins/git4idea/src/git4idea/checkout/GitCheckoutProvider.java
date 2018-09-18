@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -22,11 +8,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.commands.Git;
@@ -38,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Checkout provider for the Git
@@ -50,10 +39,12 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
     myGit = git;
   }
 
+  @Override
   public String getVcsName() {
     return "_Git";
   }
 
+  @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener, @Nullable String predefinedRepositoryUrl) {
     BasicAction.saveAll();
     GitCloneDialog dialog = new GitCloneDialog(project, predefinedRepositoryUrl);
@@ -114,7 +105,11 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
     if (result.success()) {
       return true;
     }
-    VcsNotifier.getInstance(project).notifyError("Clone failed", result.getErrorOutputAsHtmlString());
+    String description = result.getErrorOutput().stream().
+      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")).
+      map (msg -> GitUtil.cleanupErrorPrefixes(msg)).
+      collect(Collectors.joining("<br/>"));
+    VcsNotifier.getInstance(project).notifyError("Clone failed", description);
     return false;
   }
 

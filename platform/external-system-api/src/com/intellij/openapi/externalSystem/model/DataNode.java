@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to
@@ -116,6 +117,21 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   }
 
   /**
+   * Allows to replace or modify data. If function returns null, data is left unchanged
+   * @param visitor visitor. Must accept argument of type T and return value of type T
+   */
+  public void visitData(@Nullable Function visitor) {
+    if (visitor == null) {
+      return;
+    }
+    final T newData = (T) visitor.apply(getData());
+    if (newData != null) {
+      myData = newData;
+      myRawData = null;
+    }
+  }
+
+  /**
    * Allows to retrieve data stored for the given key at the current node or any of its parents.
    *
    * @param key  target data's key
@@ -194,12 +210,8 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   public void checkIsSerializable() throws IOException {
     if (myRawData != null) return;
-    ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance());
-    try {
+    try (ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance())) {
       oOut.writeObject(myData);
-    }
-    finally {
-      oOut.close();
     }
   }
 

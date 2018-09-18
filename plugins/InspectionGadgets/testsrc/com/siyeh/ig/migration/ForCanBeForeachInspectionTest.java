@@ -13,12 +13,7 @@ public class ForCanBeForeachInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    ForCanBeForeachInspection inspection = new ForCanBeForeachInspection();
-
-    // Android Studio: Changed default to false, but this test is for indexed-checks=true.
-    inspection.REPORT_INDEXED_LOOP = true;
-
-    return inspection;
+    return new ForCanBeForeachInspection();
   }
 
   @Override

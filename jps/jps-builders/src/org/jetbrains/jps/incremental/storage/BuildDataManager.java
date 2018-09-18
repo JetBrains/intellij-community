@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,7 +99,7 @@ public class BuildDataManager implements StorageOwner {
       };
     }
   };
-  
+
   private final LazyValueFactory<BuildTarget<?>,BuildTargetStorages> TARGET_STORAGES_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, BuildTargetStorages>() {
     @Override
     public AtomicNotNullLazyValue<BuildTargetStorages> create(final BuildTarget<?> target) {
@@ -189,6 +175,7 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
+  @Override
   public void clean() throws IOException {
     try {
       myTargetStoragesOwner.clean();
@@ -216,7 +203,7 @@ public class BuildDataManager implements StorageOwner {
             else {
               FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
             }
-            
+
           }
         }
       }
@@ -225,6 +212,7 @@ public class BuildDataManager implements StorageOwner {
     saveVersion();
   }
 
+  @Override
   public void flush(boolean memoryCachesOnly) {
     myTargetStoragesOwner.flush(memoryCachesOnly);
     for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping : mySourceToOutputs.values()) {
@@ -240,6 +228,7 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
+  @Override
   public void close() throws IOException {
     try {
       myTargetsState.save();
@@ -332,7 +321,7 @@ public class BuildDataManager implements StorageOwner {
       throw e.getCause();
     }
   }
-  
+
   private File getSourceToOutputMapRoot(BuildTarget<?> target) {
     return new File(myDataPaths.getTargetDataRoot(target), SRC_TO_OUTPUT_STORAGE);
   }
@@ -383,16 +372,10 @@ public class BuildDataManager implements StorageOwner {
     if (cached != null) {
       return cached;
     }
-    try {
-      final DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile));
-      try {
-        final boolean diff = is.readInt() != VERSION;
-        myVersionDiffers = diff;
-        return diff;
-      }
-      finally {
-        is.close();
-      }
+    try (DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile))) {
+      final boolean diff = is.readInt() != VERSION;
+      myVersionDiffers = diff;
+      return diff;
     }
     catch (FileNotFoundException ignored) {
       return false; // treat it as a new dir
@@ -421,7 +404,7 @@ public class BuildDataManager implements StorageOwner {
       }
     }
   }
-  
+
   private final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
     private final SourceToOutputMapping myDelegate;
     private final int myBuildTargetId;
@@ -431,6 +414,7 @@ public class BuildDataManager implements StorageOwner {
       myBuildTargetId = buildTargetId;
     }
 
+    @Override
     public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
       try {
         myDelegate.setOutputs(srcPath, outputs);
@@ -440,6 +424,7 @@ public class BuildDataManager implements StorageOwner {
       }
     }
 
+    @Override
     public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
       try {
         myDelegate.setOutput(srcPath, outputPath);
@@ -449,6 +434,7 @@ public class BuildDataManager implements StorageOwner {
       }
     }
 
+    @Override
     public void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
       try {
         myDelegate.appendOutput(srcPath, outputPath);
@@ -458,25 +444,30 @@ public class BuildDataManager implements StorageOwner {
       }
     }
 
+    @Override
     public void remove(@NotNull String srcPath) throws IOException {
       myDelegate.remove(srcPath);
     }
 
+    @Override
     public void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
       myDelegate.removeOutput(sourcePath, outputPath);
     }
 
-    @NotNull 
+    @Override
+    @NotNull
     public Collection<String> getSources() throws IOException {
       return myDelegate.getSources();
     }
 
-    @Nullable 
+    @Override
+    @Nullable
     public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
       return myDelegate.getOutputs(srcPath);
     }
 
-    @NotNull 
+    @Override
+    @NotNull
     public Iterator<String> getSourcesIterator() throws IOException {
       return myDelegate.getSourcesIterator();
     }

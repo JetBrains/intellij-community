@@ -14,7 +14,7 @@ For information on how to use `typeshed`, read below.  Information for
 contributors can be found in [CONTRIBUTING.md](CONTRIBUTING.md).  **Please read
 it before submitting pull requests.**
 
-Typeshed supports Python versions 2.7 and 3.3 and up.
+Typeshed supports Python versions 2.7 and 3.4 and up.
 
 ## Using
 

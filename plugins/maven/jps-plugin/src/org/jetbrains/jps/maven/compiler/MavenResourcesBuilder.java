@@ -128,6 +128,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     context.processMessage(new ProgressMessage(""));
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return BUILDER_NAME;

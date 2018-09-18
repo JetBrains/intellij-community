@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Eugene Zhuravlev
@@ -31,7 +32,8 @@ class CompilerPropertiesAction extends AnAction {
     super(CompilerBundle.message("action.compiler.properties.text"), null, AllIcons.General.Settings);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, CompilerConfigurable.class);

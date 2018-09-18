@@ -33,12 +33,10 @@ import java.io.File;
  */
 public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
   static final JpsElementChildRole<JpsGroovySettings> ROLE = JpsElementChildRoleBase.create("Groovy Compiler Configuration");
-  public static final String DEFAULT_HEAP_SIZE = "400";
   public static final boolean DEFAULT_INVOKE_DYNAMIC = false;
   public static final boolean DEFAULT_TRANSFORMS_OK = false;
 
   public String configScript = "";
-  public String heapSize = DEFAULT_HEAP_SIZE;
   public boolean invokeDynamic = DEFAULT_INVOKE_DYNAMIC;
 
   @Tag("excludes") public Element excludes = new Element("aaa");
@@ -50,7 +48,6 @@ public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
   }
 
   private JpsGroovySettings(JpsGroovySettings original) {
-    heapSize = original.heapSize;
     invokeDynamic = original.invokeDynamic;
     configScript = original.configScript;
   }

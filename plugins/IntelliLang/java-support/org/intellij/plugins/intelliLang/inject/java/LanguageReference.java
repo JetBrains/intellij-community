@@ -40,15 +40,18 @@ public final class LanguageReference extends StringLiteralReference {
     super(value);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     return InjectedLanguage.findLanguageById(getValue()) != null ? myValue : null;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     List<Injectable> list = InjectLanguageAction.getAllInjectables();

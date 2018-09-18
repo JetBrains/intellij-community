@@ -24,6 +24,7 @@ class FileNameFunction extends BasicFileInfoFunction {
         super("file-name", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 
+    @Override
     protected String extractInfo(PsiFile psiFile) {
         return psiFile.getName();
     }

@@ -83,11 +83,11 @@ class DataTable implements Disposable, Forceable {
     final long result = Math.max(myFile.length(), HEADER_SIZE);
 
     // Fill them in so we won't give out wrong address from allocateSpace() next time if they still not finished writing to allocated page
-    long newLenght = result + len;
-    writeBytes(newLenght - 1, new byte[]{0});
-    long actualLenght = myFile.length();
-    if (actualLenght != newLenght) {
-      LOG.error("Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLenght + ", actual: " + actualLenght);
+    long newLength = result + len;
+    writeBytes(newLength - 1, new byte[]{0});
+    long actualLength = myFile.length();
+    if (actualLength != newLength) {
+      LOG.error("Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLength + ", actual: " + actualLength);
     }
     return result;
   }

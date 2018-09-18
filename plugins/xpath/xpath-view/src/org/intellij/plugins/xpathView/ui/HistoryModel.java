@@ -15,10 +15,9 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import org.intellij.plugins.xpathView.HistoryElement;
-
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
+import org.intellij.plugins.xpathView.HistoryElement;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,14 +38,17 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
         this.length = history.length;
     }
 
+    @Override
     public HistoryElement getElementAt(int i) {
         return history[(length - 1) - i];
     }
 
+    @Override
     public int getSize() {
         return length;
     }
 
+    @Override
     @Nullable
     public HistoryElement getSelectedItem() {
         if (selectedItem != null) {
@@ -61,10 +63,12 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
         return selectedItem;
     }
 
+    @Override
     public void setSelectedIndex(int index) {
         setSelectedItem(getElementAt(index));
     }
 
+    @Override
     public int getSelectedIndex() {
         final int i = indexOf(this.selectedItem);
         return history.length - 1 - i;
@@ -74,6 +78,7 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
         return Arrays.asList(history).indexOf(selectedItem);
     }
 
+    @Override
     public void setSelectedItem(Object object) {
         if (object instanceof String) {
             for (HistoryElement element : history) {
@@ -92,6 +97,7 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
         }
     }
 
+    @Override
     public String getItemString(int i) {
         return i > history.length ? getElementAt(i).expression : selectedItem.expression;
     }

@@ -65,14 +65,17 @@ public class JiraRestTask extends JiraTask {
   public Comment[] getComments() {
     return ContainerUtil.map2Array(myJiraIssue.getComments(), Comment.class, (Function<JiraComment, Comment>)comment -> new Comment() {
 
+      @Override
       public String getText() {
         return comment.getBody();
       }
 
+      @Override
       public String getAuthor() {
         return comment.getAuthor().getDisplayName();
       }
 
+      @Override
       public Date getDate() {
         return comment.getCreated();
       }

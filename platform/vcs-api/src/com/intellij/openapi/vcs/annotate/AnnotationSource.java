@@ -20,16 +20,20 @@ import com.intellij.openapi.editor.colors.EditorColors;
 
 public enum AnnotationSource {
   LOCAL() {
+    @Override
     public ColorKey getColor() {
       return EditorColors.ANNOTATIONS_COLOR;
     }
+    @Override
     public boolean showMerged() {
       return false;
     }},
   MERGE() {
+    @Override
     public ColorKey getColor() {
       return EditorColors.ANNOTATIONS_COLOR;
     }
+    @Override
     public boolean showMerged() {
       return true;
     }};

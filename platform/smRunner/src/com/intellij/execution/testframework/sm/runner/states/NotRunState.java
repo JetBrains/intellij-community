@@ -33,27 +33,33 @@ public class NotRunState extends AbstractState {
     return INSTANCE;
   }
 
+  @Override
   public boolean isInProgress() {
     return false;
   }
 
   //TODO[romeo] if hasn't run is it defect or not?   May be move it to settings
+  @Override
   public boolean isDefect() {
     return false;
   }
 
+  @Override
   public boolean wasLaunched() {
     return false;
   }
 
+  @Override
   public boolean isFinal() {
     return false;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.NOT_RUN_INDEX;
   }

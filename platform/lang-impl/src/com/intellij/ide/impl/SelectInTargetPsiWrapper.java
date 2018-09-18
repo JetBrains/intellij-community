@@ -99,6 +99,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   /**
    * @deprecated unused, implement canSelectInner(context) instead
    */
+  @Deprecated
   protected boolean canWorkWithCustomObjects() {
     return false;
   }

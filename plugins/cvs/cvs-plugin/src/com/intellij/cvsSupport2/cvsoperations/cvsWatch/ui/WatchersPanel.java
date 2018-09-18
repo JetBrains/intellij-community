@@ -36,30 +36,36 @@ public class WatchersPanel extends JPanel{
   private final TableView<WatcherInfo> myTable = new TableView<>(myModel);
 
   private final static ColumnInfo<WatcherInfo, String> USER = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.user.column.name")){
+    @Override
     public String valueOf(WatcherInfo object) {
       return object.getUser();
     }
 
+    @Override
     public Comparator<WatcherInfo> getComparator() {
       return Comparator.comparing(WatcherInfo::getUser);
     }
   };
 
   private final static ColumnInfo<WatcherInfo, String> ACTIONS = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.actions.column.name")){
+    @Override
     public String valueOf(WatcherInfo object) {
       return object.getActions();
     }
 
+    @Override
     public Comparator<WatcherInfo> getComparator() {
       return Comparator.comparing(WatcherInfo::getActions);
     }
   };
 
   private final static ColumnInfo<WatcherInfo, String> FILE = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.file.column.name")){
+    @Override
     public String valueOf(WatcherInfo object) {
       return object.getFile();
     }
 
+    @Override
     public Comparator<WatcherInfo> getComparator() {
       return Comparator.comparing(WatcherInfo::getFile);
     }

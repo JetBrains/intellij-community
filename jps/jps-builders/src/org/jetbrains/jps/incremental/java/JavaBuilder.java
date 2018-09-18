@@ -590,10 +590,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    // compiler version is 9+ here, so:
-    //  - java 5 and older are not supported for sure
-    //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
-    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > 5;
+    // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
+    return Math.abs(compilerSdkVersion - chunkLanguageLevel) > 3;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {

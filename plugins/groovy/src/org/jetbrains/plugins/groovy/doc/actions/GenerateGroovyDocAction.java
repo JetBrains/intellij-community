@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.tools.ant.types.Path;
 import org.codehaus.groovy.ant.Groovydoc;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.doc.GenerateGroovyDocDialog;
 import org.jetbrains.plugins.groovy.doc.GroovyDocBundle;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
@@ -38,7 +39,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
   @NonNls private static final String INDEX_HTML = "index.html";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
@@ -61,7 +62,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     final Presentation presentation = event.getPresentation();
     Module module = LangDataKeys.MODULE.getData(event.getDataContext());

@@ -24,8 +24,8 @@ import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +51,7 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
     myCurrentVersionString = myEditorComponent.getProperties().getVersionString();
   }
 
+  @Override
   protected void edit() {
     final ModalityState current = ModalityState.current();
     myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {

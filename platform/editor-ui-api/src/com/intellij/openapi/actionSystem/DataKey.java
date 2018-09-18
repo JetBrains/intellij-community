@@ -25,13 +25,7 @@ public class DataKey<T> {
   @NotNull
   public static <T> DataKey<T> create(@NotNull @NonNls String name) {
     //noinspection unchecked
-    DataKey<T> key = ourDataKeyIndex.get(name);
-    if (key != null) {
-      return key;
-    }
-    key = new DataKey<>(name);
-    ourDataKeyIndex.put(name, key);
-    return key;
+    return ourDataKeyIndex.computeIfAbsent(name, DataKey::new);
   }
 
   @NotNull

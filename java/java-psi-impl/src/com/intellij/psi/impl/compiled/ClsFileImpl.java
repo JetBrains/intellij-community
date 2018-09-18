@@ -310,7 +310,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   public PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       try {
-        @SuppressWarnings("deprecation") PsiElement navigationElement =
+        PsiElement navigationElement =
           navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :
           navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;
@@ -409,6 +409,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiFile:" + getName();
@@ -591,7 +592,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    public FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
+    FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
       super(file, content);
     }
 

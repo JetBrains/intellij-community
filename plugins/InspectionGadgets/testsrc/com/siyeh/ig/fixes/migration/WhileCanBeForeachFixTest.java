@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.fixes.migration;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.WhileCanBeForeachInspection;
@@ -31,6 +33,13 @@ public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testCast() { doTest(); }
   public void testNakedNext() { doTest(); }
   public void testUnboundWildcard() { doTest(); }
+  public void testVarWithoutValidInitializer() { doTest(); }
+  public void testVarWithValidInitializer() { doTest(); }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
+    builder.setLanguageLevel(LanguageLevel.HIGHEST);
+  }
 
   @Override
   protected String getRelativePath() {

@@ -15,10 +15,12 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.CustomReferenceConverter;
 import com.intellij.util.xml.GenericDomValue;
@@ -40,16 +42,19 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
     return context.getPsiManager().findFile(f);
   }
 
+  @Override
   public String toString(@Nullable PsiFile file, ConvertContext context) {
     if (file == null) return null;
     return file.getVirtualFile().getPath();
   }
 
+  @Override
   @NotNull
   public Collection<PsiFile> getVariants(ConvertContext context) {
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     return MavenPathReferenceConverter.createReferences(genericDomValue, element,

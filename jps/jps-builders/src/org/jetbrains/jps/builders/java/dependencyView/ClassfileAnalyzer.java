@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -263,6 +249,7 @@ class ClassfileAnalyzer {
         }
       }
 
+      @Override
       public void visitUse(String service) {
         myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(service)));
       }
@@ -311,6 +298,7 @@ class ClassfileAnalyzer {
     };
 
     private final SignatureVisitor mySignatureWithGenericBoundUsageCrawler = new BaseSignatureVisitor() {
+      @Override
       public void visitClassType(String name) {
         final int className = myContext.get(name);
         myUsages.add(UsageRepr.createClassUsage(myContext, className));
@@ -499,6 +487,7 @@ class ClassfileAnalyzer {
             @Nullable
             private List myAcc;
 
+            @Override
             public void visit(String name, Object value) {
               collectValue(value);
             }
@@ -624,8 +613,8 @@ class ClassfileAnalyzer {
         public void visitInvokeDynamicInsn(String methodName, String desc, Handle bsm, Object... bsmArgs) {
           final Type returnType = Type.getReturnType(desc);
           addClassUsage(TypeRepr.getType(myContext, returnType));
-          
-          // common args processing 
+
+          // common args processing
           for (Object arg : bsmArgs) {
             if (arg instanceof Type) {
               final Type type = (Type)arg;
@@ -643,17 +632,17 @@ class ClassfileAnalyzer {
               processMethodHandle((Handle)arg);
             }
           }
-          
+
           if (LAMBDA_FACTORY_CLASS.equals(bsm.getOwner())) {
             // This invokeDynamic implements a lambda or method reference usage.
-            // Need to register method usage for the corresponding SAM-type.  
+            // Need to register method usage for the corresponding SAM-type.
             // First three arguments to the bootstrap methods are provided automatically by VM.
             // Arguments in args array are expected to be as following:
             // [0]: Type: Signature and return type of method to be implemented by the function object.
             // [1]: Handle: implementation method handle
             // [2]: Type: The signature and return type that should be enforced dynamically at invocation time. May be the same as samMethodType, or may be a specialization of it
             // [...]: optional additional arguments
-            
+
             if (returnType.getSort() == Type.OBJECT && bsmArgs.length >= 3) {
               if (bsmArgs[0] instanceof Type) {
                 final Type samMethodType = (Type)bsmArgs[0];
@@ -742,7 +731,7 @@ class ClassfileAnalyzer {
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
       if (myContext.get(name) == myName) {
-        // set outer class name only if we are parsing the real inner class and 
+        // set outer class name only if we are parsing the real inner class and
         // not the reference to inner class inside some top-level class
         myAccess |= access; // information about some access flags for the inner class is missing from the mask passed to 'visit' method
         if (outerName != null) {

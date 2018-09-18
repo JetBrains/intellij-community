@@ -51,6 +51,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
+@Deprecated
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
   private static final boolean is4OorBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;

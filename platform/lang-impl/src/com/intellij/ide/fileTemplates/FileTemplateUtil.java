@@ -71,12 +71,12 @@ public class FileTemplateUtil {
     return ArrayUtil.toStringArray(unsetAttributes);
   }
 
-  private static void collectAttributes(Set<String> referenced,
-                                        Set<String> defined,
+  private static void collectAttributes(Set<? super String> referenced,
+                                        Set<? super String> defined,
                                         Node apacheNode,
                                         final Set<String> propertiesNames,
                                         final boolean includeDummies,
-                                        Set<String> visitedIncludes,
+                                        Set<? super String> visitedIncludes,
                                         Project project) throws ParseException {
     int childCount = apacheNode.jjtGetNumChildren();
     for (int i = 0; i < childCount; i++) {
@@ -187,7 +187,7 @@ public class FileTemplateUtil {
   }
 
   public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators,
-                                     @Nullable Consumer<VelocityException> exceptionHandler) throws IOException {
+                                     @Nullable Consumer<? super VelocityException> exceptionHandler) throws IOException {
     VelocityContext context = createVelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()) {
@@ -198,7 +198,7 @@ public class FileTemplateUtil {
   }
 
   private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators,
-                                      @Nullable Consumer<VelocityException> exceptionHandler) throws IOException {
+                                      @Nullable Consumer<? super VelocityException> exceptionHandler) throws IOException {
     final StringWriter stringWriter = new StringWriter();
     try {
       Project project = null;

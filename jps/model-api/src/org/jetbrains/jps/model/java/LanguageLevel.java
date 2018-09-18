@@ -28,6 +28,7 @@ public enum LanguageLevel {
   }
 
   /** @deprecated use {@link JpsJavaSdkType#complianceOption} (to be removed in IDEA 2019) */
+  @Deprecated
   public String getComplianceOption() {
     return JpsJavaSdkType.complianceOption(toJavaVersion());
   }

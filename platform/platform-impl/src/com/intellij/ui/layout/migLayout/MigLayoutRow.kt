@@ -252,7 +252,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {
-    if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.Gear) {
+    if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.GearPlain) {
       componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 
       if (lastComponentConstraintsWithSplit == null) {

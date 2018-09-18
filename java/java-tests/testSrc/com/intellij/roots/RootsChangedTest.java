@@ -24,6 +24,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -325,12 +326,12 @@ public class RootsChangedTest extends ModuleTestCase {
     private int afterCount;
 
     @Override
-    public void beforeRootsChange(ModuleRootEvent event) {
+    public void beforeRootsChange(@NotNull ModuleRootEvent event) {
       beforeCount++;
     }
 
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       afterCount++;
     }
 

@@ -26,7 +26,7 @@ import org.jetbrains.jetCheck.IntDistribution;
 
 public class DeleteRange extends ActionOnFile {
 
-  public DeleteRange(PsiFile file) {
+  public DeleteRange(@NotNull PsiFile file) {
     super(file);
   }
 

@@ -136,7 +136,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     }
 
     @Override
-    public void fileDownloaded(final VirtualFile localFile) {
+    public void fileDownloaded(@NotNull final VirtualFile localFile) {
       fireFileDownloaded(myFile);
     }
   }

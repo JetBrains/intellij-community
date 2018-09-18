@@ -37,9 +37,9 @@ import java.util.List;
  */
 public class NewRunConfigurationPopup {
   @NotNull
-  public static ListPopup createAddPopup(@NotNull final List<ConfigurationType> typesToShow,
+  public static ListPopup createAddPopup(@NotNull final List<? extends ConfigurationType> typesToShow,
                                          @NotNull final String defaultText,
-                                         @NotNull final Consumer<ConfigurationFactory> creator,
+                                         @NotNull final Consumer<? super ConfigurationFactory> creator,
                                          @Nullable final ConfigurationType selectedConfigurationType,
                                          @NotNull final Runnable finalStep, boolean showTitle) {
 

@@ -430,6 +430,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
+  @Override
+  public int viewToModel(JTextComponent tc, Point pt, Position.Bias[] biasReturn) {
+    return getVisibleEditorRect().contains(pt) ? super.viewToModel(tc, pt, biasReturn) : -1;
+  }
+
   /**
    * Notifies a repaint manager to repaint the current text component later.
    *

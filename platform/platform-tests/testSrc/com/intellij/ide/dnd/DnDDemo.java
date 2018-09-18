@@ -21,10 +21,7 @@ import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.Image;
-import java.awt.Point;
+import java.awt.*;
 
 public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
   public static void main(String[] args) {
@@ -37,23 +34,28 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     panel.add(source, BorderLayout.WEST);
     final DnDManager dndManager = new DnDManagerImpl(null);
     dndManager.registerSource(new DnDSource() {
+      @Override
       public boolean canStartDragging(DnDAction action, Point dragOrigin) {
         return true;
       }
 
+      @Override
       public DnDDragStartBean startDragging(DnDAction action, Point point) {
         return new DnDDragStartBean(source.getLastSelectedPathComponent().toString());
       }
 
 
+      @Override
       @Nullable
       public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
         return null;
       }
 
+      @Override
       public void dragDropEnd() {
       }
 
+      @Override
       public void dropActionChanged(final int gestureModifiers) {
       }
     }, source);
@@ -67,26 +69,32 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     final JLabel delegate2Label = new JLabel("Delegate 2");
     delegates.add(delegate2Label);
     final DnDTarget delegee1 = new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible(true, "Delegee 1");
         aEvent.setHighlighting(delegate1Label, H_ARROWS | RECTANGLE);
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         System.out.println("Delegee 1 accepted drop");
       }
 
+      @Override
       public void cleanUpOnLeave() {
       }
 
+      @Override
       public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     };
 
     final DnDTarget delegee2 = new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible("Delegee 2", new DropActionHandler() {
+          @Override
           public void performDrop(DnDEvent aEvent) {
             System.out.println("Delegee 2 accepted drop");
           }
@@ -95,18 +103,22 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
 
       }
 
+      @Override
       public void cleanUpOnLeave() {
       }
 
+      @Override
       public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     };
 
     dndManager.registerTarget(new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         if (aEvent.getCurrentOverComponent() == delegate1Label) {
           return aEvent.delegateUpdateTo(delegee1);
@@ -118,16 +130,19 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         if (aEvent.getCurrentOverComponent() == delegate1Label) {
           aEvent.delegateDropTo(delegee1);
         }
       }
 
+      @Override
       public void cleanUpOnLeave() {
       }
 
 
+      @Override
       public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, delegates);
@@ -138,18 +153,22 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
     final JPanel xy = new JPanel();
     dndManager.registerTarget(new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible(true, "Drop to " + asXyString(aEvent));
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         System.out.println("Droppped to " + asXyString(aEvent));
       }
 
+      @Override
       public void cleanUpOnLeave() {
       }
 
+      @Override
       public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, xy);

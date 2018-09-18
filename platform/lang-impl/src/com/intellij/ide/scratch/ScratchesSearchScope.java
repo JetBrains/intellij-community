@@ -25,7 +25,7 @@ public class ScratchesSearchScope extends GlobalSearchScope {
 
   private final ScratchFileService myService;
 
-  public ScratchesSearchScope(@NotNull Project project, @NotNull ScratchFileService service) {
+  private ScratchesSearchScope(@NotNull Project project, @NotNull ScratchFileService service) {
     super(project);
     myService = service;
   }
@@ -45,11 +45,6 @@ public class ScratchesSearchScope extends GlobalSearchScope {
   @Override
   public boolean isSearchOutsideRootModel() {
     return true;
-  }
-
-  @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
   }
 
   @Override

@@ -27,6 +27,7 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl>{
     myField = field;
   }
 
+  @Override
   protected FieldDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new FieldDescriptorImpl(project, null, myField);
   }
@@ -43,6 +44,7 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl>{
     return myField.hashCode();
   }
 
+  @Override
   public DisplayKey<FieldDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myField);
   }

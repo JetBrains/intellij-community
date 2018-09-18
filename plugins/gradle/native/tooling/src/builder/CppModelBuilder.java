@@ -5,6 +5,7 @@ import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
 import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
@@ -18,6 +19,8 @@ import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
+import org.gradle.nativeplatform.internal.CompilerOutputFileNamingScheme;
+import org.gradle.nativeplatform.internal.CompilerOutputFileNamingSchemeFactory;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
 import org.gradle.nativeplatform.toolchain.*;
 import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.FilePatternSetImpl;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary.TargetType;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppFileSettings;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkerDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
@@ -68,7 +72,8 @@ public class CppModelBuilder implements ModelBuilderService {
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
-    if (!IS_41_OR_BETTER) {
+    // uncomment when 'org.gradle.tooling.model.cpp.CppComponent' will be used for the import
+    if (!IS_41_OR_BETTER /*|| IS_410_OR_BETTER*/) {
       return null;
     }
     PluginContainer pluginContainer = project.getPlugins();
@@ -94,7 +99,11 @@ public class CppModelBuilder implements ModelBuilderService {
           List<String> compilerArgs = new ArrayList<String>();
           Set<File> compileIncludePath = new LinkedHashSet<File>(cppBinary.getCompileIncludePath().getFiles());
 
-          Set<File> sources = cppBinary.getCppSource().getFiles();
+          Map<File, CppFileSettings> sources = new HashMap<File, CppFileSettings>();
+          for (File file : cppBinary.getCppSource().getFiles()) {
+            sources.put(file, new CppFileSettingsImpl());
+          }
+
           String baseName = cppBinary.getBaseName().getOrElse("");
           String variantName = StringUtils.removeStart(cppBinary.getName(), "main");
           String compileTaskName = null;
@@ -114,6 +123,8 @@ public class CppModelBuilder implements ModelBuilderService {
             else {
               systemIncludes.addAll(cppCompile.getIncludes().getFiles());
             }
+
+            appendFileSettings(sources, project, cppBinary, cppCompile);
           }
 
           File executableFile = null;
@@ -154,6 +165,29 @@ public class CppModelBuilder implements ModelBuilderService {
     }
 
     return cppProject;
+  }
+
+  private static void appendFileSettings(Map<File, CppFileSettings> sources,
+                                         Project project,
+                                         CppBinary cppBinary,
+                                         CppCompile cppCompile) {
+
+    if (cppCompile.getObjectFileDir().isPresent()) {
+      File objectFileDir = cppCompile.getObjectFileDir().get().getAsFile();
+      Iterator<CompilerOutputFileNamingSchemeFactory> it =
+        ((DefaultProject)project).getServices().getAll(CompilerOutputFileNamingSchemeFactory.class).iterator();
+      if (it.hasNext()) {
+        CompilerOutputFileNamingSchemeFactory outputFileNamingSchemeFactory = it.next();
+        String objectFileExtension = cppBinary.getTargetPlatform().getOperatingSystem().isWindows() ? ".obj" : ".o";
+        CompilerOutputFileNamingScheme outputFileNamingScheme = outputFileNamingSchemeFactory.create();
+        outputFileNamingScheme.withOutputBaseFolder(objectFileDir).withObjectFileNameSuffix(objectFileExtension);
+
+        for (Map.Entry<File, CppFileSettings> fileSettingsEntry : sources.entrySet()) {
+          File objectFile = outputFileNamingScheme.map(fileSettingsEntry.getKey());
+          ((CppFileSettingsImpl)fileSettingsEntry.getValue()).setObjectFile(objectFile);
+        }
+      }
+    }
   }
 
   @NotNull
@@ -227,11 +261,11 @@ public class CppModelBuilder implements ModelBuilderService {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
         ToolSearchResult toolSearchResult;
         if (IS_410_OR_BETTER) {
-          Method locateToolMethod = toolProvider.getClass().getDeclaredMethod("locateTool", ToolType.class);
-          toolSearchResult = (ToolSearchResult)locateToolMethod.invoke(toolProvider, ToolType.CPP_COMPILER);
+          toolSearchResult = toolProvider.locateTool(ToolType.CPP_COMPILER);
         }
         else {
-          toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
+          Method isToolAvailableMethod = toolProvider.getClass().getDeclaredMethod("isToolAvailable", ToolType.class);
+          toolSearchResult = (ToolSearchResult)isToolAvailableMethod.invoke(toolProvider, ToolType.CPP_COMPILER);
         }
         if (toolSearchResult.isAvailable()) {
           if (toolSearchResult instanceof CommandLineToolSearchResult) {

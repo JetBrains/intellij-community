@@ -43,7 +43,7 @@ import java.util.*;
 public class TestStubHierarchyAction extends InheritanceAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.TestStubHierarchyAction");
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(new TestHierarchy(project)::run),

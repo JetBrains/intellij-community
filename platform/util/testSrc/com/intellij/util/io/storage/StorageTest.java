@@ -69,18 +69,17 @@ public class StorageTest extends StorageTestBase {
         out = new DataOutputStream(myStorage.appendStream(r));
       }
     }
-    
+
     out.close();
 
 
-    DataInputStream in = new DataInputStream(myStorage.readStream(r));
-    for (int i = 0; i < 10000; i++) {
-      assertEquals(i, in.readInt());
+    try (DataInputStream in = new DataInputStream(myStorage.readStream(r))) {
+      for (int i = 0; i < 10000; i++) {
+        assertEquals(i, in.readInt());
+      }
     }
-
-    in.close();
   }
-  
+
   public void testAppender2() throws Exception {
     int r = myStorage.createNewRecord();
     appendNBytes(r, 64);
@@ -88,6 +87,7 @@ public class StorageTest extends StorageTestBase {
     appendNBytes(r, 512);
   }
 
+  @Override
   protected void appendNBytes(final int r, final int len) throws IOException {
     DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
     for (int i = 0; i < len; i++) {

@@ -28,7 +28,6 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -111,7 +110,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       @Override
       public CachedValueProvider.Result<XmlElementDescriptor> compute(RngElementDescriptor p) {
         final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
-        return CachedValueProvider.Result.create(descriptor, p.getDependences(), childTag);
+        return CachedValueProvider.Result.create(descriptor, p.getDependencies(), childTag);
       }
     });
     return value == NULL ? null : value;
@@ -124,7 +123,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
         @Override
         public CachedValueProvider.Result<XmlAttributeDescriptor[]> compute(RngElementDescriptor p) {
           final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
-          return CachedValueProvider.Result.create(value, p.getDependences(), context);
+          return CachedValueProvider.Result.create(value, p.getDependencies(), context);
         }
       });
     } else {
@@ -358,11 +357,12 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object[] getDependencies() {
     if (myDeclaration != null) {
-      return ArrayUtil.append(myNsDescriptor.getDependences(), myDeclaration.getElement());
-    } else {
-      return myNsDescriptor.getDependences();
+      return ArrayUtil.append(myNsDescriptor.getDependencies(), myDeclaration.getElement());
+    }
+    else {
+      return myNsDescriptor.getDependencies();
     }
   }
 

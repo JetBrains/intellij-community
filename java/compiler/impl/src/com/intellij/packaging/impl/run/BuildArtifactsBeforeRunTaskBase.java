@@ -78,7 +78,7 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
     return Collections.unmodifiableList(myArtifactPointers);
   }
 
-  public void setArtifactPointers(List<ArtifactPointer> artifactPointers) {
+  public void setArtifactPointers(List<? extends ArtifactPointer> artifactPointers) {
     myArtifactPointers = new ArrayList<>(artifactPointers);
   }
 

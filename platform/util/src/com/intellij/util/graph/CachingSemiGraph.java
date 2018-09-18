@@ -17,6 +17,7 @@ package com.intellij.util.graph;
 
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -44,11 +45,13 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
     }
   }
 
+  @NotNull
   @Override
   public Collection<Node> getNodes() {
     return myNodes;
   }
 
+  @NotNull
   @Override
   public Iterator<Node> getIn(Node n) {
     final List<Node> inNodes = myIn.get(n);
@@ -57,15 +60,4 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
            : ContainerUtil.<Node>emptyIterator();
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #cache(InboundSemiGraph)} (to be removed in IDEA 2018) */
-  public static <T> CachingSemiGraph<T> create(GraphGenerator.SemiGraph<T> original) {
-    return new CachingSemiGraph<T>((InboundSemiGraph<T>)original);
-  }
-
-  /** @deprecated use {@link #cache(InboundSemiGraph)} (to be removed in IDEA 2018) */
-  public CachingSemiGraph(GraphGenerator.SemiGraph<Node> original) {
-    this((InboundSemiGraph<Node>)original);
-  }
-  //</editor-fold>
 }

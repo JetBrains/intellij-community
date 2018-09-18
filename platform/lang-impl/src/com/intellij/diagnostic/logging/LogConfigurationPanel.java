@@ -125,13 +125,13 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myFilesTable.getSelectedRowCount() >= 1 &&
                  !myLog2Predefined.containsKey(myFilesTable.getSelectedObject());
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myFilesTable.getSelectedRowCount() >= 1 &&
                  !myLog2Predefined.containsKey(myFilesTable.getSelectedObject()) &&
                  myFilesTable.getSelectedObject() != null;

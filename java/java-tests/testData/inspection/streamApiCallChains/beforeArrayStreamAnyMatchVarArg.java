@@ -1,4 +1,4 @@
-// "Replace with Arrays.asList().contains()" "true"
+// "Replace with List.contains()" "true"
 
 import java.util.stream.Stream;
 

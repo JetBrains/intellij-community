@@ -20,6 +20,7 @@ import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.Transformation;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -84,25 +85,11 @@ public final class CompressedDictionary implements Dictionary {
     return new TreeSet<>(COMPARATOR);
   }
 
-  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  public List<String> getWords(char first, int minLength, int maxLength) {
-    List<String> result = new ArrayList<>();
-    getWords(first, minLength, maxLength, result);
-    return result;
-  }
-
-  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  public List<String> getWords(char first) {
-    List<String> result = new ArrayList<>();
-    getWords(first, 0, Integer.MAX_VALUE, result);
-    return result;
-  }
-
-  public void getWords(char first, int minLength, int maxLength, @NotNull Collection<String> result) {
+  public void getWords(char first, int minLength, int maxLength, @NotNull Collection<? super String> result) {
     getWords(first, minLength, maxLength, result::add);
   }
 
-  public void getWords(char first, int minLength, int maxLength, @NotNull Consumer<String> consumer) {
+  public void getWords(char first, int minLength, int maxLength, @NotNull Consumer<? super String> consumer) {
     int index = alphabet.getIndex(first, false);
     if (index == -1) return;
 
@@ -225,21 +212,6 @@ public final class CompressedDictionary implements Dictionary {
 
   public static int binarySearchNew(@NotNull byte[] goal, int fromIndex, int toIndex, @NotNull byte[] data) {
     int unitLength = goal.length;
-    int low = fromIndex;
-    int high = toIndex - 1;
-    while (low <= high) {
-      int mid = low + high >>> 1;
-      int check = compareArrays(data, mid * unitLength, unitLength, goal);
-      if (check == -1) {
-        low = mid + 1;
-      }
-      else if (check == 1) {
-        high = mid - 1;
-      }
-      else {
-        return mid;
-      }
-    }
-    return -(low + 1);  // key not found.
+    return ObjectUtils.binarySearch(fromIndex, toIndex, mid -> compareArrays(data, mid * unitLength, unitLength, goal));
   }
 }

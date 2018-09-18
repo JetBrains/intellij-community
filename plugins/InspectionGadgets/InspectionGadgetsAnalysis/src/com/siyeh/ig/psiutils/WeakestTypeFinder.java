@@ -105,10 +105,10 @@ public class WeakestTypeFinder {
       }
       hasUsages = true;
       PsiElement referenceElement = reference.getElement();
-      PsiElement referenceParent = referenceElement.getParent();
+      PsiElement referenceParent = PsiUtil.skipParenthesizedExprUp(referenceElement.getParent());
       if (referenceParent instanceof PsiMethodCallExpression) {
         referenceElement = referenceParent;
-        referenceParent = referenceElement.getParent();
+        referenceParent = PsiUtil.skipParenthesizedExprUp(referenceElement.getParent());
       }
       final PsiElement referenceGrandParent = referenceParent.getParent();
       if (reference instanceof PsiMethodReferenceExpression) {

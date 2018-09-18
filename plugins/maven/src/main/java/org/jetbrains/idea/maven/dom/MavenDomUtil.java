@@ -389,8 +389,13 @@ public class MavenDomUtil {
     return DomService.getInstance().getFileElements(MavenDomProjectModel.class, p, GlobalSearchScope.projectScope(p));
   }
 
+  @NotNull
   public static MavenId describe(PsiFile psiFile) {
     MavenDomProjectModel model = getMavenDomModel(psiFile, MavenDomProjectModel.class);
+
+    if (model == null) {
+      return new MavenId(null, null, null);
+    }
 
     String groupId = model.getGroupId().getStringValue();
     String artifactId = model.getArtifactId().getStringValue();

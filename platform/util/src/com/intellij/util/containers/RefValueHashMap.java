@@ -52,7 +52,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
     myMap = new THashMap<K, MyReference<K,V>>(strategy);
   }
 
-  protected abstract MyReference<K,V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<V> queue);
+  protected abstract MyReference<K,V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<? super V> queue);
 
   private void processQueue() {
     while (true) {

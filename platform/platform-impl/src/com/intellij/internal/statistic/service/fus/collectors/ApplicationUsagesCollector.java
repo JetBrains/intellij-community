@@ -2,17 +2,19 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// see ProjectUsagesCollector class
+/**
+ * @see ProjectUsagesCollector
+ */
 public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector {
   private static final ExtensionPointName<ApplicationUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.applicationUsagesCollector");
@@ -30,4 +32,7 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
 
   @NotNull
   public abstract Set<UsageDescriptor> getUsages();
+
+  @Nullable
+  public FUSUsageContext getContext() {return null;}
 }

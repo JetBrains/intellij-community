@@ -126,7 +126,7 @@ public abstract class CloudModuleBuilderSourceContribution<
       }
     };
 
-    final WizardContext context = new WizardContext(project);
+    final WizardContext context = new WizardContext(project, null);
 
     final StepSequence stepSequence = mode.getSteps(context, DefaultModulesProvider.createForProject(context.getProject()));
     if (stepSequence == null) {

@@ -41,8 +41,11 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction imp
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)new CommentTracker().replaceAndRestoreComments(expressionStatement, "switch (" + valueToSwitch + ") {}");
     CodeStyleManager.getInstance(project).reformat(switchStatement);
 
-    PsiJavaToken lBrace = switchStatement.getBody().getLBrace();
-    editor.getCaretModel().moveToOffset(lBrace.getTextOffset() + lBrace.getTextLength());
+    PsiCodeBlock body = switchStatement.getBody();
+    PsiJavaToken lBrace = body == null ? null : body.getLBrace();
+    if (lBrace != null) {
+      editor.getCaretModel().moveToOffset(lBrace.getTextRange().getEndOffset());
+    }
   }
 
   @Override

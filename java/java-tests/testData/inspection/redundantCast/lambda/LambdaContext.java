@@ -4,7 +4,7 @@ class Test {
   }
   {
     ((I)s -> s.endsWith(".java")).getClass();
-    I i = (<warning descr="Casting 's -> s.endsWith(\".java\")' to 'I' is redundant">I</warning>)s -> s.endsWith(".java");
+    I i = (<warning descr="Casting 's -> {...}' to 'I' is redundant">I</warning>)s -> s.endsWith(".java");
 
   }
 }

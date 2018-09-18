@@ -228,8 +228,10 @@ public class OptionalUtil {
   @NotNull
   private static String getMapTypeArgument(PsiExpression expression, PsiType type, PsiExpression falseExpression) {
     if (!(type instanceof PsiClassType)) return "";
-    PsiExpression copy =
-      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), expression);
+    String text = expression.getText();
+    // PsiEmptyExpressionImpl might be passed here
+    if (text.isEmpty()) return "";
+    PsiExpression copy = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
     PsiType exprType = copy.getType();
     if (exprType != null &&
         !exprType.equals(PsiType.NULL) &&

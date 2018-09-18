@@ -131,6 +131,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
       }
     });
     myPickerFrame.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
           case KeyEvent.VK_ESCAPE:

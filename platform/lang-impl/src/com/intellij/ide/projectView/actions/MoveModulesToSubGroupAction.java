@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +36,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null);
     String description = IdeBundle.message("action.description.create.new.module.group");
@@ -43,7 +44,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     final List<String> newGroup;

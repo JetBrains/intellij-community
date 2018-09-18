@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
@@ -26,10 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -314,7 +297,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   "<b>" + rootPath + "</b><br>" +
                   "You probably want to <b>continue rebase</b> instead of committing. <br/>" +
                   "Committing during rebase may lead to the commit loss. <br/>" +
-                  readMore("http://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
+                  readMore("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
       } else {
         title = "Commit in Detached HEAD";
         message = messageCommonStart + " is in the <b>detached HEAD</b> state: <br/>" +
@@ -378,10 +361,13 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private Collection<VirtualFile> getSelectedRoots() {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      GitVcs git = GitVcs.getInstance(myProject);
       Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
-        VirtualFile root = vcsManager.getVcsRootFor(path);
-        if (root != null) {
+        VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
+        VirtualFile root = vcsRoot.getPath();
+        AbstractVcs vcs = vcsRoot.getVcs();
+        if (git.equals(vcs) && root != null) {
           result.add(root);
         }
       }

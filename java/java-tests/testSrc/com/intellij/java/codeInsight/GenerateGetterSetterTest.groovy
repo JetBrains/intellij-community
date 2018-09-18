@@ -21,7 +21,6 @@ import com.intellij.codeInsight.generation.GenerateSetterHandler
 import com.intellij.codeInsight.generation.SetterTemplatesManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
@@ -127,9 +126,7 @@ class X<T extends String> {
   }
 
   void "test strip field prefix"() {
-    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings.getCustomSettings(JavaCodeStyleSettings.class)
-    String oldPrefix = settings.FIELD_NAME_PREFIX
-    try {
+    def settings = JavaCodeStyleSettings.getInstance(getProject())
       settings.FIELD_NAME_PREFIX = "my"
       myFixture.configureByText 'a.java', '''
   class Foo {
@@ -148,10 +145,6 @@ class X<T extends String> {
       }
   }
   '''
-    }
-    finally {
-      settings.FIELD_NAME_PREFIX = oldPrefix
-    }
   }
 
   void "test qualified this"() {

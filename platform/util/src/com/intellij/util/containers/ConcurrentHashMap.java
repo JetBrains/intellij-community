@@ -16,29 +16,15 @@
 
 package com.intellij.util.containers;
 
-import java.util.Map;
+import com.intellij.util.DeprecatedMethodException;
 
 /**
- * @deprecated Use {@link ContainerUtil#newConcurrentMap()} instead.
+ * @deprecated Use {@link ContainerUtil#newConcurrentMap()} or {@link java.util.concurrent.ConcurrentHashMap} instead.
  * TODO to remove in IDEA 2018.1
  */
+@Deprecated
 public final class ConcurrentHashMap<K, V> extends java.util.concurrent.ConcurrentHashMap<K, V> {
   public ConcurrentHashMap() {
-  }
-
-  public ConcurrentHashMap(int initialCapacity) {
-    super(initialCapacity);
-  }
-
-  public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
-    super(m);
-  }
-
-  public ConcurrentHashMap(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-  }
-
-  public ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    super(initialCapacity, loadFactor, concurrencyLevel);
+    DeprecatedMethodException.report("Use java.util.concurrent.ConcurrentHashMap instead");
   }
 }

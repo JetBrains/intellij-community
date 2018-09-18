@@ -50,6 +50,8 @@ class JavaLangInvokeHandleSignatureTest : LightCodeInsightFixtureTestCase() {
 
   fun testSetter() = doTest()
 
+  fun testSpecial() = doTest()
+
   private fun doTest() {
     myFixture.testHighlighting(getTestName(false) + ".java")
   }

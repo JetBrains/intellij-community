@@ -21,13 +21,13 @@ import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionH
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,8 +49,9 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
       if (containingFile == null) return;
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return;
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, superElement.getTextOffset());
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      Navigatable descriptor =
+        PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, superElement.getTextOffset());
+      descriptor.navigate(true);
     }
     else if (superElements[0] instanceof PsiMethod) {
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature((PsiMethod[])superElements);

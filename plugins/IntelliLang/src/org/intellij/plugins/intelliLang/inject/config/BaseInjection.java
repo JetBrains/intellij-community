@@ -102,11 +102,13 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return mySupportId;
   }
 
+  @Override
   @NotNull
   public String getInjectedLanguageId() {
     return myInjectedLanguageId;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return myDisplayName;
@@ -120,6 +122,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myInjectedLanguageId = injectedLanguageId;
   }
 
+  @Override
   @NotNull
   public String getPrefix() {
     return myPrefix;
@@ -129,6 +132,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myPrefix = prefix;
   }
 
+  @Override
   @NotNull
   public String getSuffix() {
     return mySuffix;
@@ -138,6 +142,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     mySuffix = suffix;
   }
 
+  @Override
   @NotNull
   public List<TextRange> getInjectedArea(final PsiElement element) {
     final TextRange textRange = ElementManipulators.getValueTextRange(element);
@@ -160,7 +165,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
     return false;
   }
-  
+
+  @Override
   public boolean acceptsPsiElement(final PsiElement element) {
     ProgressManager.checkCanceled();
     for (InjectionPlace place : myPlaces) {
@@ -238,6 +244,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return this;
   }
 
+  @Override
   public void loadState(@NotNull Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
     myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
@@ -270,6 +277,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   protected void readExternalImpl(Element e) {}
 
+  @Override
   public final Element getState() {
     final Element e = new Element("injection");
     e.setAttribute("language", myInjectedLanguageId);

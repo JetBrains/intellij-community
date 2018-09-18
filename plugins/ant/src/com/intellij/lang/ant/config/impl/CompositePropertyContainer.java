@@ -30,14 +30,17 @@ public class CompositePropertyContainer extends AbstractProperty.AbstractPropert
     myContainers = containers;
   }
 
+  @Override
   public Object getValueOf(AbstractProperty property) {
     return property.get(containerOf(property));
   }
 
+  @Override
   public void setValueOf(AbstractProperty property, Object value) {
     property.set(containerOf(property), value);
   }
 
+  @Override
   public boolean hasProperty(AbstractProperty property) {
     return Arrays.stream(myContainers).anyMatch(container -> container.hasProperty(property));
   }

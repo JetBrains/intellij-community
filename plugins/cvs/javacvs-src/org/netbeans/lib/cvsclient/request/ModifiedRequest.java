@@ -14,9 +14,9 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.request;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.file.FileDetails;
 import org.netbeans.lib.cvsclient.file.FileObject;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Sends the server a copy of a locally modified file.
@@ -44,6 +44,7 @@ public final class ModifiedRequest extends AbstractFileStateRequest {
          * Get the request String that will be passed to the server
          * @return the request String
          */
+        @Override
         public String getRequestString() {
                 @NonNls final StringBuffer request = new StringBuffer();
                 request.append("Modified ");
@@ -66,6 +67,7 @@ public final class ModifiedRequest extends AbstractFileStateRequest {
          * @return the file details object, if one should be transmitted, or null
          * if no file object is to be transmitted.
          */
+        @Override
         public FileDetails getFileForTransmission() {
                 return fileDetails;
         }

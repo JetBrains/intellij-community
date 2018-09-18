@@ -31,7 +31,7 @@ public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final MavenProjectsNavigator navigator = getNavigator(e);
     if (navigator != null) {
       setSelected(navigator, state);

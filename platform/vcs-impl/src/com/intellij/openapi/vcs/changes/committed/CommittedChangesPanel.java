@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -137,7 +123,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   public void setProvider(final CommittedChangesProvider provider) {
     if (myProvider != provider) {
       myProvider = provider;
-      mySettings = provider.createDefaultSettings(); 
+      mySettings = provider.createDefaultSettings();
     }
   }
 
@@ -156,7 +142,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myInLoad = true;
     myBrowser.setLoading(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading changes", true) {
-      
+
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final AsynchConsumer<List<CommittedChangeList>> appender = new AsynchConsumer<List<CommittedChangeList>>() {
@@ -264,6 +251,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       }
     }
 
+    @Override
     public boolean filter(@NotNull final CommittedChangeList cl) {
       return changeListMatches(cl, myParts);
     }
@@ -309,6 +297,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER)) {
       sink.put(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER, myIfNotCachedReloader);
@@ -320,6 +309,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     //}
   }
 
+  @Override
   public void dispose() {
     for (Runnable runnable : myShouldBeCalledOnDispose) {
       runnable.run();
@@ -347,26 +337,34 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       return new CommittedChangesFilterKey("text", CommittedChangesFilterPriority.TEXT);
     }
 
+    @Override
     public void filter() {
       for (ChangeListener changeListener : myList) {
         changeListener.stateChanged(new ChangeEvent(this));
       }
     }
+    @Override
     public JComponent getFilterUI() {
       return null;
     }
+    @Override
     public void setFilterBase(List<CommittedChangeList> changeLists) {
     }
+    @Override
     public void addChangeListener(ChangeListener listener) {
       myList.add(listener);
     }
+    @Override
     public void removeChangeListener(ChangeListener listener) {
       myList.remove(listener);
     }
+    @Override
     public void resetFilterBase() {
     }
+    @Override
     public void appendFilterBase(List<CommittedChangeList> changeLists) {
     }
+    @Override
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
       final FilterHelper filterHelper;
@@ -395,12 +393,15 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
                                         final Project project, final VirtualFile root) {
     final LinkedList<CommittedChangeList> resultList = new LinkedList<>();
     myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
+      @Override
       public void onBeforeStartReport() {
       }
+      @Override
       public boolean report(CommittedChangeList list) {
         resultList.add(list);
         return false;
       }
+      @Override
       public void onAfterEndReport() {
         if (! resultList.isEmpty()) {
           notification.execute(project, root, resultList);

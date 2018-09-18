@@ -79,7 +79,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return true;
   }
 
-  private boolean processAbbreviations(final String pattern, Processor<MatchedValue> consumer, DataContext context) {
+  private boolean processAbbreviations(final String pattern, Processor<? super MatchedValue> consumer, DataContext context) {
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
       .filterMap(myActionManager::getAction)
@@ -96,7 +96,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processTopHits(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -116,7 +116,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processOptions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     Map<String, String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
@@ -175,7 +175,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, JBIterable.from(options), consumer);
   }
 
-  private boolean processActions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processActions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
     JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
     MinusculeMatcher matcher = buildMatcher(pattern);
@@ -198,7 +198,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private boolean processIntentions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processIntentions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     MinusculeMatcher matcher = buildMatcher(pattern);
     Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
@@ -218,7 +218,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
   
-  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
+  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {
       Collections.sort(matched);

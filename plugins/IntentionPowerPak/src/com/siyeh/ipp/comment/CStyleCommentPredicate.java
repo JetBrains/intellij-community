@@ -26,6 +26,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class CStyleCommentPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiComment)) {
       return false;

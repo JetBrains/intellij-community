@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -22,6 +23,7 @@ public class YAMLPsiElementImpl extends ASTWrapperPsiElement implements YAMLPsiE
     return "YAML element";
   }
 
+  @Override
   public List<YAMLPsiElement> getYAMLElements() {
     final ArrayList<YAMLPsiElement> result = new ArrayList<>();
     for (ASTNode node : getNode().getChildren(null)) {

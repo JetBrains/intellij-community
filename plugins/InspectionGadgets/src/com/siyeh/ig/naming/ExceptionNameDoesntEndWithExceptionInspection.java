@@ -15,14 +15,78 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ExceptionNameDoesntEndWithExceptionInspection
-  extends ExceptionNameDoesntEndWithExceptionInspectionBase {
+  extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "ExceptionClassNameDoesntEndWithException";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "exception.name.doesnt.end.with.exception.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "exception.name.doesnt.end.with.exception.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExceptionNameDoesntEndWithExceptionVisitor();
+  }
+
+  private static class ExceptionNameDoesntEndWithExceptionVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down into inner classes
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      final String className = aClass.getName();
+      if (className == null) {
+        return;
+      }
+      @NonNls final String exception = "Exception";
+      if (className.endsWith(exception)) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_EXCEPTION)) {
+        return;
+      }
+      registerClassError(aClass);
+    }
   }
 }

@@ -56,6 +56,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return s;
   }
 
+  @Override
   public PsiMember fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     final PsiClass psiClass = getTargetClass(context);
@@ -80,16 +81,19 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
 
+  @Override
   public String toString(final PsiMember t, final ConvertContext context) {
     return t == null? null : getPropertyName(t.getName(), context);
   }
 
+  @Override
   public String getErrorMessage(final String s, final ConvertContext context) {
     final DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypeName(parent), s);
   }
 
+  @Override
   @NotNull
   public Collection<? extends PsiMember> getVariants(final ConvertContext context) {
     final PsiClass psiClass = getTargetClass(context);
@@ -117,6 +121,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return !psiField.hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Override
   public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
     final String targetName = ((GenericValue)context.getInvocationElement()).getStringValue();
     if (!PsiNameHelper.getInstance(context.getProject()).isIdentifier(targetName)) return super.getQuickFixes(context);
@@ -129,10 +134,12 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return fix instanceof LocalQuickFix? new LocalQuickFix[] {(LocalQuickFix)fix} : super.getQuickFixes(context);
   }
 
+  @Override
   public void handleElementRename(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final String newElementName) {
     super.handleElementRename(genericValue, context, getPropertyName(newElementName, context));
   }
 
+  @Override
   public void bindReference(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final PsiElement newTarget) {
     if (newTarget instanceof PsiMember) {
       final String elementName = ((PsiMember)newTarget).getName();

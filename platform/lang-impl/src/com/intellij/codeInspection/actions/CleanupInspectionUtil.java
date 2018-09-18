@@ -17,13 +17,13 @@ public interface CleanupInspectionUtil {
 
   AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                             @NotNull String presentationText,
-                                            @NotNull List<ProblemDescriptor> descriptions,
+                                            @NotNull List<? extends ProblemDescriptor> descriptions,
                                             @Nullable Class quickfixClass,
                                             boolean startInWriteAction);
 
   default AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                     @NotNull String presentationText,
-                                                    @NotNull List<ProblemDescriptor> descriptions,
+                                                    @NotNull List<? extends ProblemDescriptor> descriptions,
                                                     @Nullable Class quickfixClass,
                                                     boolean startInWriteAction,
                                                     boolean markGlobal) {
@@ -32,14 +32,14 @@ public interface CleanupInspectionUtil {
 
   default AbstractPerformFixesTask applyFixes(@NotNull Project project,
                                               @NotNull String presentationText,
-                                              @NotNull List<ProblemDescriptor> descriptions,
+                                              @NotNull List<? extends ProblemDescriptor> descriptions,
                                               @Nullable Class quickfixClass,
                                               boolean startInWriteAction) {
     sortDescriptions(descriptions);
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);
   }
 
-  default void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
+  default void sortDescriptions(@NotNull List<? extends ProblemDescriptor> descriptions) {
     Collections.sort(descriptions, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
   }
 }

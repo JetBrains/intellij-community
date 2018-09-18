@@ -202,7 +202,7 @@ public class PyCharmEduInitialConfigurator {
 
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(final Project project) {
+      public void projectOpened(@NotNull final Project project) {
         if (FileChooserUtil.getLastOpenedFile(project) == null) {
           FileChooserUtil.setLastOpenedFile(project, VfsUtil.getUserHomeDir());
         }

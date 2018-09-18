@@ -30,7 +30,7 @@ public abstract class ReadActionProcessor<T> implements Processor<T> {
   public abstract boolean processInReadAction(T t);
 
   @NotNull
-  public static <T> Processor<T> wrapInReadAction(@NotNull final Processor<T> processor) {
+  public static <T> Processor<T> wrapInReadAction(@NotNull final Processor<? super T> processor) {
     return t -> ReadAction.compute(() -> processor.process(t));
   }
 }

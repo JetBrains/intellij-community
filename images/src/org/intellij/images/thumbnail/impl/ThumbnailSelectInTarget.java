@@ -17,8 +17,8 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -51,6 +51,7 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
     return getToolWindowId();
   }
 
+  @Override
   public String getToolWindowId() {
     return ThumbnailView.TOOLWINDOW_ID;
   }
@@ -60,6 +61,7 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
     return null;
   }
 
+  @Override
   public float getWeight() {
     return 10;
   }

@@ -61,7 +61,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       return element instanceof PsiMethod && super.isReferenceTo(element);
     }
 

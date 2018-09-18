@@ -219,7 +219,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   public static class DoHighlightRunnable implements Runnable {
-    private final List<PsiReference> myRefs;
+    private final List<? extends PsiReference> myRefs;
     @NotNull 
     private final Project myProject;
     private final PsiElement myTarget;
@@ -227,7 +227,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     private final PsiFile myFile;
     private final boolean myClearHighlights;
 
-    public DoHighlightRunnable(@NotNull List<PsiReference> refs, @NotNull Project project, @NotNull PsiElement target, @NotNull Editor editor,
+    public DoHighlightRunnable(@NotNull List<? extends PsiReference> refs, @NotNull Project project, @NotNull PsiElement target, @NotNull Editor editor,
                                @NotNull PsiFile file, boolean clearHighlights) {
       myRefs = refs;
       myProject = project;
@@ -244,7 +244,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  public static void highlightOtherOccurrences(final List<PsiElement> otherOccurrences, Editor editor, boolean clearHighlights) {
+  public static void highlightOtherOccurrences(final List<? extends PsiElement> otherOccurrences, Editor editor, boolean clearHighlights) {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
@@ -254,7 +254,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   public static void highlightReferences(@NotNull Project project,
                                          @NotNull PsiElement element,
-                                         @NotNull List<PsiReference> refs,
+                                         @NotNull List<? extends PsiReference> refs,
                                          @NotNull Editor editor,
                                          PsiFile file,
                                          boolean clearHighlights) {
@@ -375,7 +375,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void clearHighlights(@NotNull Editor editor,
                                       @NotNull HighlightManager highlightManager,
-                                      @NotNull List<TextRange> rangesToHighlight,
+                                      @NotNull List<? extends TextRange> rangesToHighlight,
                                       @NotNull TextAttributes attributes) {
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
@@ -405,22 +405,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private static void doHighlightRefs(@NotNull HighlightManager highlightManager, @NotNull Editor editor, @NotNull List<PsiReference> refs,
+  private static void doHighlightRefs(@NotNull HighlightManager highlightManager, @NotNull Editor editor, @NotNull List<? extends PsiReference> refs,
                                       @NotNull TextAttributes attributes, boolean clearHighlights) {
     List<TextRange> textRanges = new ArrayList<>(refs.size());
     for (PsiReference ref : refs) {
       collectRangesToHighlight(ref, textRanges);
     }
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
-  }
-
-  /**
-   * @deprecated Use {@link #collectRangesToHighlight}
-   */
-  @NotNull
-  @Deprecated
-  public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {
-    return collectRangesToHighlight(ref, new ArrayList<>());
   }
 
   @NotNull

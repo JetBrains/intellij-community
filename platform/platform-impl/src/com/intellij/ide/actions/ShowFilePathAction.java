@@ -153,7 +153,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static VirtualFile getFile(AnActionEvent e) {
+  private static VirtualFile getFile(@NotNull AnActionEvent e) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
   }
@@ -166,7 +166,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     });
   }
 
-  private static void show(@NotNull VirtualFile file, @NotNull Consumer<ListPopup> action) {
+  private static void show(@NotNull VirtualFile file, @NotNull Consumer<? super ListPopup> action) {
     if (!isSupported()) return;
 
     List<VirtualFile> files = new ArrayList<>();
@@ -199,7 +199,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     return url;
   }
 
-  private static ListPopup createPopup(List<VirtualFile> files, List<Icon> icons) {
+  private static ListPopup createPopup(List<? extends VirtualFile> files, List<Icon> icons) {
     BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override

@@ -12,6 +12,7 @@ import javax.swing.*;
 public class CustomizationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private CustomizableActionsPanel myPanel;
 
+  @Override
   public JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new CustomizableActionsPanel();
@@ -19,6 +20,7 @@ public class CustomizationConfigurable implements SearchableConfigurable, Config
     return myPanel.getPanel();
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.customizations");
   }
@@ -28,18 +30,22 @@ public class CustomizationConfigurable implements SearchableConfigurable, Config
     return "preferences.customizations";
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public boolean isModified() {
     return myPanel.isModified();
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

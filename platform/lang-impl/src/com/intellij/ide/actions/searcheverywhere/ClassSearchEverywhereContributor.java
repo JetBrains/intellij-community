@@ -74,6 +74,16 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   }
 
   @Override
+  public int getElementPriority(Object element, String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 5;
+  }
+
+  @Override
+  public boolean isDumbModeSupported() {
+    return false;
+  }
+
+  @Override
   protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
     String path = pathToAnonymousClass(searchText);
     if (path != null) {

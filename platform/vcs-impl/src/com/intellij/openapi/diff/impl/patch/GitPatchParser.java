@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NonNls;
@@ -155,8 +156,8 @@ public class GitPatchParser {
                       @Nullable Couple<String> indexes, @NotNull FileStatus status, int newFileMode) {
       myBeforeName = beforeAfterName.first;
       myAfterName = beforeAfterName.second;
-      myBeforeIndex = indexes != null ? indexes.first : null;
-      myAfterIndex = indexes != null ? indexes.second : null;
+      myBeforeIndex = Pair.getFirst(indexes);
+      myAfterIndex = Pair.getSecond(indexes);
       myNewFileMode = newFileMode;
       myFileStatus = status;
     }

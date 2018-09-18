@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BaseRepositoryType<T extends BaseRepository> extends TaskRepositoryType<T> {
 
+  @Override
   @NotNull
   public TaskRepositoryEditor createEditor(final T repository, Project project, final Consumer<T> changeListener) {
     return new BaseRepositoryEditor<>(project, repository, changeListener);

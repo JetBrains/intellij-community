@@ -59,7 +59,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
     actionPerformed(view, key);

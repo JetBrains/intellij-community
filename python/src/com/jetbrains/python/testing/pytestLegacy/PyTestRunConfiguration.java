@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytestLegacy;
 
 import com.google.common.collect.Lists;
@@ -54,10 +52,12 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
     super(project, factory);
   }
 
+  @Override
   protected SettingsEditor<PyTestRunConfiguration> createConfigurationEditor() {
     return new PyTestConfigurationEditor(getProject(), this);
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     return new PyTestCommandLineState(this, env);
   }
@@ -112,18 +112,22 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
     return "";
   }
 
+  @Override
   public boolean useParam() {
     return useParam;
   }
 
+  @Override
   public void useParam(boolean useParam) {
     this.useParam = useParam;
   }
 
+  @Override
   public boolean useKeyword() {
     return useKeyword;
   }
 
+  @Override
   public void useKeyword(boolean useKeyword) {
     this.useKeyword = useKeyword;
   }

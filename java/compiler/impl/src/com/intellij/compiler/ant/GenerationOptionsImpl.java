@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.ant;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -27,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Chunk;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +21,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -131,10 +119,12 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return myGenerateIdeaHomeProperty;
   }
 
+  @Override
   public String getBuildFileName() {
     return getOutputFileName() + ".xml";
   }
 
+  @Override
   public String getPropertiesFileName() {
     return getOutputFileName() + ".properties";
   }
@@ -166,19 +156,19 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return myMacroReplacementMap.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public String getPropertyRefForUrl(String url) {
     return myOutputUrlToPropertyRefMap.get(url);
   }
 
+  @NotNull
   private static ReplacePathToMacroMap createReplacementMap() {
-    final PathMacros pathMacros = PathMacros.getInstance();
-    final Set<String> macroNames = pathMacros.getUserMacroNames();
-    final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    for (final String macroName : macroNames) {
-      map.put(GenerationUtils.normalizePath(pathMacros.getValue(macroName)),
-              BuildProperties.propertyRef(BuildProperties.getPathMacroProperty(macroName)));
+    Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
+    ReplacePathToMacroMap map = new ReplacePathToMacroMap();
+    for (String macroName : pathMacros.keySet()) {
+      map.put(FileUtilRt.toSystemIndependentName(pathMacros.get(macroName)), BuildProperties.propertyRef(BuildProperties.getPathMacroProperty(macroName)));
     }
-    map.put(GenerationUtils.normalizePath(PathManager.getHomePath()), BuildProperties.propertyRef(BuildProperties.PROPERTY_IDEA_HOME));
+    map.put(FileUtilRt.toSystemIndependentName(PathManager.getHomePath()), BuildProperties.propertyRef(BuildProperties.PROPERTY_IDEA_HOME));
     return map;
   }
 
@@ -230,22 +220,29 @@ public class GenerationOptionsImpl extends GenerationOptions {
     }
 
     final Graph<ModuleChunk> moduleChunkGraph = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleChunk>() {
+      @Override
+      @NotNull
       public Collection<ModuleChunk> getNodes() {
         return map.values();
       }
 
+      @NotNull
+      @Override
       public Iterator<ModuleChunk> getIn(ModuleChunk n) {
         final Chunk<Module> chunk = reverseMap.get(n);
         final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);
         return new Iterator<ModuleChunk>() {
+          @Override
           public boolean hasNext() {
             return in.hasNext();
           }
 
+          @Override
           public ModuleChunk next() {
             return map.get(in.next());
           }
 
+          @Override
           public void remove() {
             throw new IncorrectOperationException("Method is not supported");
           }
@@ -276,6 +273,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   /**
    * {@inheritDoc}
    */
+  @Override
   public ChunkCustomCompilerExtension[] getCustomCompilers() {
     ChunkCustomCompilerExtension[] sorted = myCustomCompilers.toArray(new ChunkCustomCompilerExtension[0]);
     Arrays.sort(sorted, ChunkCustomCompilerExtension.COMPARATOR);
@@ -297,6 +295,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   private static class ChunksComparator implements Comparator<ModuleChunk> {
     final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<>();
 
+    @Override
     public int compare(final ModuleChunk o1, final ModuleChunk o2) {
       final int level1 = getChunkLevel(o1);
       final int level2 = getChunkLevel(o2);

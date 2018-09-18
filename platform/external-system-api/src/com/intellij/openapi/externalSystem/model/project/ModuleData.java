@@ -1,6 +1,5 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -85,22 +84,9 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     return myExternalConfigPath;
   }
 
-  /**
-   * @deprecated the result of the method can be incorrect for modules with duplicated names, consider to use getModuleFileDirectoryPath instead
-   */
-  @NotNull
-  public String getModuleFilePath() {
-    return ExternalSystemApiUtil
-      .toCanonicalPath(myModuleFileDirectoryPath + "/" + getInternalName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-  }
-
   @NotNull
   public String getModuleFileDirectoryPath() {
     return myModuleFileDirectoryPath;
-  }
-
-  public void setModuleFileDirectoryPath(@NotNull String path) {
-    myModuleFileDirectoryPath = path;
   }
 
   /**

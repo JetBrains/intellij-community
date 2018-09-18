@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -204,20 +205,8 @@ class EditorCoordinateMapper {
     int end = myDocument.getTextLength();
     if (visualLine <= 0) return start;
     if (visualLine >= myView.getEditor().getVisibleLineCount()) return end;
-    int current = 0;
-    while (start <= end) {
-      current = (start + end) / 2;
-      int line = offsetToVisualLine(current, false);
-      if (line < visualLine) {
-        start = current + 1;
-      }
-      else if (line > visualLine) {
-        end = current - 1;
-      }
-      else {
-        break;
-      }
-    }
+    int current = ObjectUtils.binarySearch(0, myDocument.getTextLength(), mid -> Integer.compare(offsetToVisualLine(mid, false), visualLine));
+    if (current < 0) current = -current-1;
     return visualLineStartOffset(current, true);
   }
 

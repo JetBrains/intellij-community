@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 
 public class FieldAccessor<FIELD_TYPE> {
   private volatile FIELD_TYPE myValueCache;
@@ -38,6 +38,6 @@ public class FieldAccessor<FIELD_TYPE> {
   }
 
   private static Object getFieldValue(Class c, String fieldName, Object o) {
-    return ReflectionUtil.getField(c, o, null, fieldName);
+    return ReflectionUtilRt.getField(c, o, null, fieldName);
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Proxy;
 
@@ -45,7 +46,7 @@ public class InlineModuleDependencyAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     OrderEntry selectedEntry = myClasspathPanel.getSelectedEntry();
     if (!(selectedEntry instanceof ModuleOrderEntry)) return;
 
@@ -105,7 +106,7 @@ public class InlineModuleDependencyAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isEnabled());
   }
 

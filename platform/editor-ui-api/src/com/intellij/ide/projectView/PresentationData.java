@@ -81,6 +81,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   /**
    * @deprecated Use {@link #PresentationData(String, String, Icon, TextAttributesKey)} instead.
    */
+  @Deprecated
   public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
                           @Nullable TextAttributesKey attributesKey) {
     this(presentableText, locationString, closedIcon, attributesKey);
@@ -148,6 +149,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
    *             in a non-tree view.
    */
+  @Deprecated
   public void setClosedIcon(Icon closedIcon) {
     setIcon(closedIcon);
   }
@@ -171,6 +173,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *             Sets both the open and closed icons of the node to the specified icon.
    */
 
+  @Deprecated
   public void setIcons(Icon icon) {
     setIcon(icon);
   }

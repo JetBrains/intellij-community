@@ -45,6 +45,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return ourNodeComparator;
   }
 
+  @Override
   @NotNull
   public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
@@ -59,6 +60,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
   }
 
+  @Override
   @NotNull
   public DebuggerTreeNodeImpl createMessageNode(String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
@@ -116,6 +118,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return null;
   }
 
+  @Override
   public void dispose() {
     myHistories.clear();
     super.dispose();

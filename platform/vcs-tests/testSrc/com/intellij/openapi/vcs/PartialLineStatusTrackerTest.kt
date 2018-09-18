@@ -12,8 +12,8 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
     }
   }
 
@@ -21,19 +21,19 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
+      range().assertChangeList(DEFAULT)
 
       createChangeList_SetDefault("Test")
       "12".insertBefore("X_Y_Z")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       "3456".replace("X_Y_Z")
 
-      range(0).assertChangeList("Default Changelist")
+      range(0).assertChangeList(DEFAULT)
       range(1).assertChangeList("Test")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
     }
   }
 
@@ -41,19 +41,19 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       createChangeList_SetDefault("Test")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       "56".insertAfter("b")
 
-      range(0).assertChangeList("Default Changelist")
+      range(0).assertChangeList(DEFAULT)
       range(1).assertChangeList("Test")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       "2345".insertAfter("c")
 
@@ -66,19 +66,19 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       createChangeList_SetDefault("Test")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       "56".insertAfter("b")
 
-      range(0).assertChangeList("Default Changelist")
+      range(0).assertChangeList(DEFAULT)
       range(1).assertChangeList("Test")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       "2345_".delete()
 
@@ -91,8 +91,8 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       createChangelist("Test")
       range().moveTo("Test")
@@ -106,19 +106,19 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       createChangeList_SetDefault("Test")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       "56".insertAfter("b")
 
-      range(0).assertChangeList("Default Changelist")
+      range(0).assertChangeList(DEFAULT)
       range(1).assertChangeList("Test")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       range(0).moveTo("Test")
 
@@ -126,11 +126,11 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       range(1).assertChangeList("Test")
       assertAffectedChangeLists("Test")
 
-      range(1).moveTo("Default Changelist")
+      range(1).moveTo(DEFAULT)
 
       range(0).assertChangeList("Test")
-      range(1).assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      range(1).assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT, "Test")
     }
   }
 
@@ -138,21 +138,21 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       createChangeList_SetDefault("Test")
 
-      range().assertChangeList("Default Changelist")
-      assertAffectedChangeLists("Default Changelist")
+      range().assertChangeList(DEFAULT)
+      assertAffectedChangeLists(DEFAULT)
 
       "56".insertAfter("b")
 
-      range(0).assertChangeList("Default Changelist")
+      range(0).assertChangeList(DEFAULT)
       range(1).assertChangeList("Test")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
-      removeChangeList("Default Changelist")
+      removeChangeList(DEFAULT)
 
       range(0).assertChangeList("Test")
       range(1).assertChangeList("Test")
@@ -204,7 +204,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       val helper = handlePartialCommit(Side.LEFT, "Test")
       helper.applyChanges()
@@ -212,7 +212,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertHelperContentIs("A_B_C_E_F_G_N_H_", helper)
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_E_F_G_N_H_")
-      assertAffectedChangeLists("Default Changelist")
+      assertAffectedChangeLists(DEFAULT)
     }
   }
 
@@ -227,9 +227,9 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
-      val helper = handlePartialCommit(Side.LEFT, "Default Changelist")
+      val helper = handlePartialCommit(Side.LEFT, DEFAULT)
       helper.applyChanges()
 
       assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
@@ -250,7 +250,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       val helper = handlePartialCommit(Side.RIGHT, "Test")
       helper.applyChanges()
@@ -258,7 +258,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
       assertTextContentIs("A_B1_C_D_E_F_M_G_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangeLists("Default Changelist")
+      assertAffectedChangeLists(DEFAULT)
     }
   }
 
@@ -273,13 +273,13 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       tracker.doFrozen(Runnable {
         runCommandVerify {
           "B1_".replace("X_Y_Z_")
 
-          val helper = handlePartialCommit(Side.LEFT, "Default Changelist")
+          val helper = handlePartialCommit(Side.LEFT, DEFAULT)
           helper.applyChanges()
 
           assertHelperContentIs("A_X_Y_Z_C_D_E_F_M_G_H_", helper)
@@ -302,13 +302,13 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangeLists("Default Changelist", "Test")
+      assertAffectedChangeLists(DEFAULT, "Test")
 
       tracker.doFrozen(Runnable {
         runCommandVerify {
           "B1_".replace("X_Y_Z_")
 
-          val helper = handlePartialCommit(Side.LEFT, "Default Changelist")
+          val helper = handlePartialCommit(Side.LEFT, DEFAULT)
 
           "N".replace("N2")
           "M".replace("M2")
@@ -343,7 +343,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       "C".replace("C2")
       assertRanges(Range(1, 3, 1, 4))
-      assertAffectedChangeLists("Default Changelist")
+      assertAffectedChangeLists(DEFAULT)
 
       undo()
 
@@ -355,7 +355,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       redo()
 
       assertRanges(Range(1, 3, 1, 4))
-      assertAffectedChangeLists("Default Changelist")
+      assertAffectedChangeLists(DEFAULT)
 
       undo()
 
@@ -380,7 +380,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       "C".replace("C2")
       assertRanges(Range(1, 3, 1, 4))
-      assertAffectedChangeLists("Default Changelist")
+      assertAffectedChangeLists(DEFAULT)
 
       range(0).moveTo("Test 1")
       assertAffectedChangeLists("Test 1")
@@ -418,9 +418,9 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       "C".replace("C2")
       assertRanges(Range(1, 3, 1, 4))
-      assertAffectedChangeLists("Default Changelist")
+      assertAffectedChangeLists(DEFAULT)
 
-      tracker.virtualFile.moveChanges("Default Changelist", "Test 1")
+      tracker.virtualFile.moveChanges(DEFAULT, "Test 1")
       assertAffectedChangeLists("Test 1")
 
       undo()

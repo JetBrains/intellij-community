@@ -83,8 +83,8 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
 
   private ContinuationOption createContinuationOption(
     @NotNull String labelText,
-    Function<CommonCodeStyleSettings.IndentOptions,Integer> getter,
-    BiConsumer<CommonCodeStyleSettings.IndentOptions,Integer> setter,
+    Function<? super CommonCodeStyleSettings.IndentOptions, Integer> getter,
+    BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> setter,
     int defaultValue
   ) {
     ContinuationOption option = new ContinuationOption(labelText, getter, setter, defaultValue);

@@ -46,6 +46,7 @@ public class FindFormPanel extends JPanel implements InputForm {
         myScopePanel = new ScopePanel(myProject);
     }
 
+    @Override
     public JComponent getComponent() {
         return this;
     }
@@ -54,14 +55,17 @@ public class FindFormPanel extends JPanel implements InputForm {
         return myScopePanel.getSearchScope();
     }
 
+    @Override
     public JLabel getIcon() {
         return myInputPanel.getIcon();
     }
 
+    @Override
     public JButton getEditContextButton() {
         return myInputPanel.getEditContextButton();
     }
 
+    @Override
     public JPanel getEditorPanel() {
         return myInputPanel.getEditorPanel();
     }
@@ -86,6 +90,7 @@ public class FindFormPanel extends JPanel implements InputForm {
         return myOptionsPanel;
     }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myScopePanel);
   }

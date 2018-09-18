@@ -19,7 +19,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 public class RunAnythingRunConfigurationProvider extends com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationProvider {
   @NotNull
   @Override
-  public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext) {
+  public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return Arrays.asList(getWrappers(dataContext));
   }
 

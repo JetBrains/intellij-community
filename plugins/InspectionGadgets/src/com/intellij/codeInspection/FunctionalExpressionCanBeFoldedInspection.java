@@ -37,14 +37,15 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
       }
 
       private void doCheckCall(PsiFunctionalExpression expression,
-                               Supplier<PsiElement> resolver,
+                               Supplier<? extends PsiElement> resolver,
                                PsiExpression qualifierExpression,
                                PsiElement referenceNameElement,
                                final String errorMessage) {
         if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {
-            final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+            //don't get ground type as check is required over expected type instead
+            final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, true);
             final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
             if (interfaceMethod != null) {
               final PsiElement resolve = resolver.get();

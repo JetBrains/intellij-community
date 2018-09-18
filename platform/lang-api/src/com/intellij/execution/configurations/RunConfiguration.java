@@ -156,10 +156,10 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   @NotNull
-  default List<BeforeRunTask> getBeforeRunTasks() {
+  default List<BeforeRunTask<?>> getBeforeRunTasks() {
     return Collections.emptyList();
   }
 
-  default void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+  default void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
   }
 }

@@ -97,7 +97,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static void appendProblems(InspectionManager manager, boolean isOnTheFly, List<ProblemDescriptor> result, PsiElement element) {
+  private static void appendProblems(InspectionManager manager, boolean isOnTheFly, List<? super ProblemDescriptor> result, PsiElement element) {
     if (element != null){
       final ProblemDescriptor[] descriptors = checkElement(element, manager, isOnTheFly);
       if (descriptors != null) {
@@ -292,7 +292,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
     @NotNull
     private static List<PropertiesFile> filterNotInLibrary(@NotNull Project project,
-                                                           @NotNull List<PropertiesFile> propertiesFiles) {
+                                                           @NotNull List<? extends PropertiesFile> propertiesFiles) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
       final List<PropertiesFile> result = new ArrayList<>(propertiesFiles.size());

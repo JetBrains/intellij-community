@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+@ReviseWhenPortedToJDK("9")
 public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private final int myStart;
   private final int myEnd;

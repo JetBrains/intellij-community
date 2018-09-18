@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
@@ -92,6 +92,7 @@ public class GitLineHandler extends GitTextHandler {
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
+  @Override
   protected void processTerminated(final int exitCode) {}
 
   public void addLineListener(GitLineHandlerListener listener) {
@@ -99,6 +100,7 @@ public class GitLineHandler extends GitTextHandler {
     myLineListeners.addListener(listener);
   }
 
+  @Override
   protected void onTextAvailable(String text, Key outputType) {
     notifyLine(text, outputType);
   }
@@ -131,7 +133,7 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @Override
-  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override

@@ -40,15 +40,15 @@ import java.util.List;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
-  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
+  private final List<? extends ModuleSourceRootEditHandler<?>> myEditHandlers;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<ModuleSourceRootEditHandler<?>> editHandlers) {
+  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<? extends ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
     myEditHandlers = editHandlers;
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     final ContentEntryEditor editor = myTreeEditor.getContentEntryEditor();

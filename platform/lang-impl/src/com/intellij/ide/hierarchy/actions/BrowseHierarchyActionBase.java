@@ -38,7 +38,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
     if (project == null) return;
@@ -91,7 +91,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     if (!myExtension.hasAnyExtensions()) {
       e.getPresentation().setVisible(false);
     }

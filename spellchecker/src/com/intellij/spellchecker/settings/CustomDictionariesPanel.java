@@ -74,7 +74,7 @@ public class CustomDictionariesPanel extends JPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !ContainerUtil.exists(myCustomDictionariesTableView.getSelectedObjects(), defaultDictionaries::contains);
         }
       })
@@ -189,6 +189,7 @@ public class CustomDictionariesPanel extends JPanel {
       return new TableCellRenderer() {
         final SimpleColoredComponent myLabel = new SimpleColoredComponent();
 
+        @Override
         public Component getTableCellRendererComponent(final JTable table,
                                                        final Object value,
                                                        final boolean isSelected,

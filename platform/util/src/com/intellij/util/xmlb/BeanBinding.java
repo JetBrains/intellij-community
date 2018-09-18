@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.beans.Introspector;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BeanBinding extends NotNullDeserializeBinding {
   private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
@@ -153,7 +153,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return weights;
   }
 
-  public void sortBindings(@NotNull final TObjectFloatHashMap<String> weights) {
+  public void sortBindings(@NotNull final TObjectFloatHashMap<? super String> weights) {
     Arrays.sort(myBindings, new Comparator<Binding>() {
       @Override
       public int compare(@NotNull Binding o1, @NotNull Binding o2) {
@@ -170,7 +170,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     deserializeInto(result, element, null);
   }
 
-  public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
+  public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<? super String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
       if (StringUtil.isEmpty(attribute.getNamespaceURI())) {
@@ -269,7 +269,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     List<MutableAccessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;
@@ -306,23 +306,38 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
+    if (accessors.isEmpty() && !isAssertBindings(aClass)) {
+      LOG.warn("no accessors for " + aClass);
+    }
+
     ourAccessorCache.put(aClass, accessors);
 
     return accessors;
+  }
+
+  private static boolean isAssertBindings(@NotNull Class<?> aClass) {
+    do {
+      Property property = aClass.getAnnotation(Property.class);
+      if (property != null && !property.assertIfNoBindings()) {
+        return true;
+      }
+    }
+    while ((aClass = aClass.getSuperclass()) != null);
+    return false;
   }
 
   private static class NameAndIsSetter {
     final String name;
     final boolean isSetter;
 
-    public NameAndIsSetter(String name, boolean isSetter) {
+    private NameAndIsSetter(String name, boolean isSetter) {
       this.name = name;
       this.isSetter = isSetter;
     }
   }
 
   @NotNull
-  private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
+  private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
     final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
@@ -392,7 +407,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
            object.getAnnotation(AbstractCollection.class) != null;
   }
 
-  private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
+  private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
     Class<?> currentClass = aClass;
     do {
       for (Field field : currentClass.getDeclaredFields()) {
@@ -458,24 +473,29 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
-    Binding binding = serializer.getBinding(accessor);
-    if (binding instanceof JDOMElementBinding) {
-      return binding;
-    }
-
     Attribute attribute = accessor.getAnnotation(Attribute.class);
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);
     }
 
-    Tag tag = accessor.getAnnotation(Tag.class);
-    if (tag != null) {
-      return new TagBinding(accessor, tag);
-    }
-
     Text text = accessor.getAnnotation(Text.class);
     if (text != null) {
       return new TextBinding(accessor);
+    }
+
+    OptionTag optionTag = accessor.getAnnotation(OptionTag.class);
+    if (optionTag != null && optionTag.converter() != Converter.class) {
+      return new OptionTagBinding(accessor, optionTag);
+    }
+
+    Binding binding = serializer.getBinding(accessor);
+    if (binding instanceof JDOMElementBinding) {
+      return binding;
+    }
+
+    Tag tag = accessor.getAnnotation(Tag.class);
+    if (tag != null) {
+      return new TagBinding(accessor, tag);
     }
 
     if (binding instanceof CompactCollectionBinding) {
@@ -504,8 +524,6 @@ public class BeanBinding extends NotNullDeserializeBinding {
     if (xCollection != null && (!xCollection.propertyElementName().isEmpty() || xCollection.style() == XCollection.Style.v2)) {
       return new TagBinding(accessor, xCollection.propertyElementName());
     }
-
-    OptionTag optionTag = accessor.getAnnotation(OptionTag.class);
 
     if (optionTag == null) {
       XMap xMap = accessor.getAnnotation(XMap.class);

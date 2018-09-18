@@ -306,7 +306,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (myRunState) {
         addSceneBuilder();
       }

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -41,7 +42,7 @@ public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
   }
 
   @Override
-  public void updateImpl(PresentationData data) {
+  public void updateImpl(@NotNull PresentationData data) {
     PsiField field = Objects.requireNonNull(getValue());
     String name;
     try {

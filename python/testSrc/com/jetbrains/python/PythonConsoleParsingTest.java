@@ -23,6 +23,7 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -105,7 +106,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   }
 
   @Override
-  protected PsiFile createFile(String name, String text) {
+  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     LightVirtualFile originalFile = new LightVirtualFile(name, myLanguage, text);
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
     virtualFile.setOriginalFile(originalFile);

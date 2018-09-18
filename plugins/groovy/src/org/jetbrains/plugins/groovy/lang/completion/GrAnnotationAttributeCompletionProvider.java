@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 public class GrAnnotationAttributeCompletionProvider extends CompletionProvider<CompletionParameters>{
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();

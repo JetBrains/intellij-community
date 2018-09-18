@@ -236,7 +236,6 @@ public class bd {
          try {
             b.update(var0.getBytes(j));
          } catch (UnsupportedEncodingException var4) {
-            ;
          }
 
          byte[] var2 = b.digest();
@@ -260,7 +259,6 @@ public class bd {
       try {
          var2 = (var0 + a).getBytes(j);
       } catch (UnsupportedEncodingException var9) {
-         ;
       }
 
       b.update(var2);

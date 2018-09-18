@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
@@ -185,7 +187,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return myToolWindow;
     }
@@ -279,13 +281,35 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
-    // Add listeners
-    registerKeyboardAction(new ActionListener() {
+    AncestorListener ancestorListener = new AncestorListener() {
+
+      private final static String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
+
       @Override
-      public void actionPerformed(final ActionEvent e) {
-        ToolWindowManager.getInstance(myProject).activateEditorComponent();
+      public void ancestorAdded(AncestorEvent event) {
+        registerEscapeAction();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+      @Override
+      public void ancestorMoved(AncestorEvent event) {}
+
+      private void registerEscapeAction() {
+
+        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(
+          KeyEvent.VK_ESCAPE, 0),FOCUS_EDITOR_ACTION_KEY);
+        getActionMap().put(FOCUS_EDITOR_ACTION_KEY, new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+          }
+        });
+      }
+
+      @Override
+      public void ancestorRemoved(AncestorEvent event) {}
+    };
+    addAncestorListener(ancestorListener);
+    Disposer.register(myProject, () -> removeAncestorListener(ancestorListener));
   }
 
   public void setTitleActions(AnAction[] actions) {
@@ -446,7 +470,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabledAndVisible(getHelpId(e.getDataContext()) != null);
       }
@@ -586,12 +610,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return !myInfo.isAutoHide();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       fireAutoHideChanged(!myInfo.isAutoHide());
     }
 
@@ -608,12 +632,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isDocked();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myInfo.isDocked()) {
         fireTypeChanged(ToolWindowType.SLIDING);
       }
@@ -629,12 +653,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isFloating();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myInfo.isFloating()) {
         fireTypeChanged(myInfo.getInternalType());
       }
@@ -650,12 +674,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isWindowed();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myInfo.isWindowed()) {
         fireTypeChanged(myInfo.getInternalType());
       }
@@ -671,12 +695,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isSplit();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       fireSideStatusChanged(flag);
     }
   }
@@ -694,7 +718,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       removeStripeButton();
     }
   }
@@ -735,12 +759,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myInfo.getContentUiType() == ToolWindowContentUiType.COMBO;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       fireContentUiTypeChanges(state ? ToolWindowContentUiType.COMBO : ToolWindowContentUiType.TABBED);
     }
   }

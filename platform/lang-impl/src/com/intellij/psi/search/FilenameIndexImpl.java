@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.Map;
 
 public class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @NonNls static final ID<String, Void> NAME = FilenameIndex.NAME;
@@ -37,13 +36,7 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return new DataIndexer<String, Void, FileContent>() {
-      @NotNull
-      @Override
-      public Map<String, Void> map(@NotNull FileContent inputData) {
-        return Collections.singletonMap(inputData.getFileName(), null);
-      }
-    };
+    return inputData -> Collections.singletonMap(inputData.getFileName(), null);
   }
 
   @NotNull

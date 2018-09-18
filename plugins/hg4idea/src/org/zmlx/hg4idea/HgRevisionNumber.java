@@ -127,6 +127,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return isWorkingVersion;
   }
 
+  @Override
   public String asString() {
     if (revision.isEmpty()) {
       return changeset;
@@ -139,6 +140,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return parents;
   }
 
+  @Override
   public int compareTo(VcsRevisionNumber o) {
     // boundary cases
     if (this == o) {

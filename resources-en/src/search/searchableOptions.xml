@@ -22872,7 +22872,6 @@
     <option name="appenginejpaconfig" hit="AppEngineJpaConfig" />
     <option name="appengineweb" hit="AppEngineWeb" />
     <option name="application" hit="Application" />
-    <option name="applicationcomponent" hit="ApplicationComponent" />
     <option name="arquillian" hit="Arquillian Deployment Method" />
     <option name="deployment" hit="Arquillian Deployment Method" />
     <option name="method" hit="Arquillian Deployment Method" />
@@ -25480,13 +25479,6 @@
     <option name="subversion" path="General" hit="Subversion configuration directory:" />
     <option name="tlsv1" path="Network" hit="TLSv1" />
     <option name="update" path="SSH Settings" hit="Update" />
-    <option name="administrative" path="General" hit="Update administrative information only in changed subtrees" />
-    <option name="changed" path="General" hit="Update administrative information only in changed subtrees" />
-    <option name="in" path="General" hit="Update administrative information only in changed subtrees" />
-    <option name="information" path="General" hit="Update administrative information only in changed subtrees" />
-    <option name="only" path="General" hit="Update administrative information only in changed subtrees" />
-    <option name="subtrees" path="General" hit="Update administrative information only in changed subtrees" />
-    <option name="update" path="General" hit="Update administrative information only in changed subtrees" />
     <option name="as" path="Network" hit="Use IDEA general proxy settings as default for Subversion" />
     <option name="default" path="Network" hit="Use IDEA general proxy settings as default for Subversion" />
     <option name="for" path="Network" hit="Use IDEA general proxy settings as default for Subversion" />

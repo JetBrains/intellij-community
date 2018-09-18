@@ -17,7 +17,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -92,7 +92,7 @@ public class TestDataNavigationElementFactory {
 
       filePathsToCreate.forEach(path -> {
         VirtualFile file = TestDataUtil.createFileByName(project, path);
-        new OpenFileDescriptor(project, file).navigate(true);
+        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
       });
     }
 
@@ -120,7 +120,7 @@ public class TestDataNavigationElementFactory {
 
     @Override
     public void performAction(@NotNull Project project) {
-      new OpenFileDescriptor(project, myGroup).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, myGroup, -1).navigate(true);
     }
 
     @Nullable

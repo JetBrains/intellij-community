@@ -18,6 +18,7 @@ import javax.swing.*;
 
 public class Json5StandardComplianceInspection extends JsonStandardComplianceInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return JsonBundle.message("inspection.compliance5.name");
@@ -65,6 +66,7 @@ public class Json5StandardComplianceInspection extends JsonStandardComplianceIns
       return true;
     }
 
+    @Override
     protected boolean isValidPropertyName(@NotNull PsiElement literal) {
       if (literal instanceof JsonLiteral) {
         String textWithoutHostEscaping = JsonPsiUtil.getElementTextWithoutHostEscaping(literal);

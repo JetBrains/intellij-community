@@ -84,11 +84,6 @@ public class WinProcessManager {
     return false;
   }
 
-  /** @deprecated to be removed in IDEA 2018 */
-  public static int getProcessPid(Process process) {
-    return getProcessId(process);
-  }
-
   private static boolean isAlive(Process process) {
     try {
       process.exitValue();

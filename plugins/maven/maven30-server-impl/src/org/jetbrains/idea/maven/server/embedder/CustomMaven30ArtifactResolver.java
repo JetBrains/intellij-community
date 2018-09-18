@@ -85,7 +85,8 @@ public class CustomMaven30ArtifactResolver
     {
       executor = new Executor()
       {
-        public void execute( Runnable command )
+        @Override
+        public void execute(Runnable command )
         {
           command.run();
         }
@@ -133,13 +134,15 @@ public class CustomMaven30ArtifactResolver
     }
   }
 
-  public void resolve( Artifact artifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository, TransferListener resolutionListener )
+  @Override
+  public void resolve(Artifact artifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository, TransferListener resolutionListener )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     resolve( artifact, remoteRepositories, getSession( localRepository ) );
   }
 
-  public void resolveAlways( Artifact artifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository )
+  @Override
+  public void resolveAlways(Artifact artifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     resolve( artifact, remoteRepositories, getSession( localRepository ) );
@@ -242,45 +245,51 @@ public class CustomMaven30ArtifactResolver
     }
   }
 
-  public ArtifactResolutionResult resolveTransitively( Set<Artifact> artifacts, Artifact originatingArtifact, ArtifactRepository localRepository, List<ArtifactRepository> remoteRepositories,
-                                                       ArtifactMetadataSource source, ArtifactFilter filter )
+  @Override
+  public ArtifactResolutionResult resolveTransitively(Set<Artifact> artifacts, Artifact originatingArtifact, ArtifactRepository localRepository, List<ArtifactRepository> remoteRepositories,
+                                                      ArtifactMetadataSource source, ArtifactFilter filter )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     return resolveTransitively( artifacts, originatingArtifact, Collections.EMPTY_MAP, localRepository, remoteRepositories, source, filter );
 
   }
 
-  public ArtifactResolutionResult resolveTransitively( Set<Artifact> artifacts, Artifact originatingArtifact, Map managedVersions, ArtifactRepository localRepository,
-                                                       List<ArtifactRepository> remoteRepositories, ArtifactMetadataSource source )
+  @Override
+  public ArtifactResolutionResult resolveTransitively(Set<Artifact> artifacts, Artifact originatingArtifact, Map managedVersions, ArtifactRepository localRepository,
+                                                      List<ArtifactRepository> remoteRepositories, ArtifactMetadataSource source )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     return resolveTransitively( artifacts, originatingArtifact, managedVersions, localRepository, remoteRepositories, source, null );
   }
 
-  public ArtifactResolutionResult resolveTransitively( Set<Artifact> artifacts, Artifact originatingArtifact, Map managedVersions, ArtifactRepository localRepository,
-                                                       List<ArtifactRepository> remoteRepositories, ArtifactMetadataSource source, ArtifactFilter filter )
+  @Override
+  public ArtifactResolutionResult resolveTransitively(Set<Artifact> artifacts, Artifact originatingArtifact, Map managedVersions, ArtifactRepository localRepository,
+                                                      List<ArtifactRepository> remoteRepositories, ArtifactMetadataSource source, ArtifactFilter filter )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     return resolveTransitively( artifacts, originatingArtifact, managedVersions, localRepository, remoteRepositories, source, filter, null );
   }
 
-  public ArtifactResolutionResult resolveTransitively( Set<Artifact> artifacts, Artifact originatingArtifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository,
-                                                       ArtifactMetadataSource source )
+  @Override
+  public ArtifactResolutionResult resolveTransitively(Set<Artifact> artifacts, Artifact originatingArtifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository,
+                                                      ArtifactMetadataSource source )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     return resolveTransitively( artifacts, originatingArtifact, localRepository, remoteRepositories, source, null );
   }
 
-  public ArtifactResolutionResult resolveTransitively( Set<Artifact> artifacts, Artifact originatingArtifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository,
-                                                       ArtifactMetadataSource source, List<ResolutionListener> listeners )
+  @Override
+  public ArtifactResolutionResult resolveTransitively(Set<Artifact> artifacts, Artifact originatingArtifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository,
+                                                      ArtifactMetadataSource source, List<ResolutionListener> listeners )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     return resolveTransitively( artifacts, originatingArtifact, Collections.EMPTY_MAP, localRepository,
                                 remoteRepositories, source, null, listeners );
   }
 
-  public ArtifactResolutionResult resolveTransitively( Set<Artifact> artifacts, Artifact originatingArtifact, Map managedVersions, ArtifactRepository localRepository,
-                                                       List<ArtifactRepository> remoteRepositories, ArtifactMetadataSource source, ArtifactFilter filter, List<ResolutionListener> listeners )
+  @Override
+  public ArtifactResolutionResult resolveTransitively(Set<Artifact> artifacts, Artifact originatingArtifact, Map managedVersions, ArtifactRepository localRepository,
+                                                      List<ArtifactRepository> remoteRepositories, ArtifactMetadataSource source, ArtifactFilter filter, List<ResolutionListener> listeners )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     return resolveTransitively( artifacts, originatingArtifact, managedVersions, localRepository, remoteRepositories, source, filter, listeners, null );
@@ -325,7 +334,8 @@ public class CustomMaven30ArtifactResolver
   //
   // ------------------------------------------------------------------------
 
-  public ArtifactResolutionResult resolve( ArtifactResolutionRequest request )
+  @Override
+  public ArtifactResolutionResult resolve(ArtifactResolutionRequest request )
   {
     Artifact rootArtifact = request.getArtifact();
     Set<Artifact> artifacts = request.getArtifactDependencies();
@@ -512,7 +522,8 @@ public class CustomMaven30ArtifactResolver
     return result;
   }
 
-  public void resolve( Artifact artifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository )
+  @Override
+  public void resolve(Artifact artifact, List<ArtifactRepository> remoteRepositories, ArtifactRepository localRepository )
     throws ArtifactResolutionException, ArtifactNotFoundException
   {
     resolve( artifact, remoteRepositories, localRepository, null );
@@ -559,7 +570,8 @@ public class CustomMaven30ArtifactResolver
 
     final static AtomicInteger threadNumber = new AtomicInteger( 1 );
 
-    public Thread newThread( Runnable r )
+    @Override
+    public Thread newThread(Runnable r )
     {
       Thread newThread = new Thread( group, r, "resolver-" + threadNumber.getAndIncrement() );
       newThread.setDaemon( true );
@@ -594,6 +606,7 @@ public class CustomMaven30ArtifactResolver
       this.result = result;
     }
 
+    @Override
     public void run()
     {
       try

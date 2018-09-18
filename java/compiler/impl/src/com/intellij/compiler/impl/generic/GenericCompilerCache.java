@@ -87,7 +87,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     return myPersistentMap.get(getKeyAndTargetData(key, targetId));
   }
 
-  public void processSources(final int targetId, final Processor<Key> processor) throws IOException {
+  public void processSources(final int targetId, final Processor<? super Key> processor) throws IOException {
     myPersistentMap.processKeysWithExistingMapping(data -> targetId == data.myTarget ? processor.process(data.myKey) : true);
   }
 

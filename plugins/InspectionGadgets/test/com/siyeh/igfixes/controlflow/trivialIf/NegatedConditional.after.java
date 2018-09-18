@@ -8,6 +8,7 @@ class NegatedConditional {
 
     final NegatedConditional that = (NegatedConditional)object;
 
+      //comment
       return text != null ? text.equals(that.text) : that.text == null;
   }
 

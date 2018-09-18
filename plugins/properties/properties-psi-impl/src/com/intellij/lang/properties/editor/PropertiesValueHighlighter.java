@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PropertiesValueHighlighter extends PropertiesHighlighter {
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new PropertiesValueHighlightingLexer();

@@ -71,6 +71,7 @@ public abstract class SelectLocationStep extends WizardStep {
   private MergingUpdateQueue myUiUpdater;
 
   private final TreeSelectionListener myTreeSelectionListener = new TreeSelectionListener() {
+        @Override
         public void valueChanged(TreeSelectionEvent e) {
           updatePathFromTree(myFileSystemTree.getSelectedFile(), false);
           getWizard().updateStep();
@@ -88,6 +89,7 @@ public abstract class SelectLocationStep extends WizardStep {
     myPathTextField = new FileTextFieldImpl.Vfs(
       FileChooserFactoryImpl.getMacroMap(), myFileSystemTree,
       new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree)) {
+      @Override
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }
@@ -98,6 +100,7 @@ public abstract class SelectLocationStep extends WizardStep {
     myTextFieldAction = new TextFieldAction();
   }
 
+  @Override
   protected void init() {
     final DefaultActionGroup fileSystemActionGroup = createFileSystemActionGroup();
     myFileSystemToolBar = ActionManager.getInstance().createActionToolbar("CvsSelectLocation", fileSystemActionGroup, true);
@@ -106,6 +109,7 @@ public abstract class SelectLocationStep extends WizardStep {
     tree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
     tree.setCellRenderer(new NodeRenderer());
     tree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         final ActionPopupMenu popupMenu =
           ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP, fileSystemActionGroup);
@@ -114,14 +118,17 @@ public abstract class SelectLocationStep extends WizardStep {
     });
     tree.addSelectionPath(tree.getPathForRow(0));
     new FileDrop(tree, new FileDrop.Target() {
+      @Override
       public FileChooserDescriptor getDescriptor() {
         return myChooserDescriptor;
       }
 
+      @Override
       public boolean isHiddenShown() {
         return myFileSystemTree.areHiddensShown();
       }
 
+      @Override
       public void dropFiles(final List<VirtualFile> files) {
         if (files.size() > 0) {
           selectInTree(files.toArray(VirtualFile.EMPTY_ARRAY));
@@ -131,6 +138,7 @@ public abstract class SelectLocationStep extends WizardStep {
     super.init();
   }
 
+  @Override
   protected JComponent createComponent() {
     final JPanel panel = new MyPanel();
     final JPanel toolbarPanel = new JPanel(new GridBagLayout());
@@ -156,12 +164,14 @@ public abstract class SelectLocationStep extends WizardStep {
     return panel;
   }
 
+  @Override
   protected void dispose() {
     mySelectedFile = myFileSystemTree.getSelectedFile();   // remember the file - it will be requested after dispose
     myFileSystemTree.getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
     Disposer.dispose(myFileSystemTree);
   }
 
+  @Override
   public boolean nextIsEnabled() {
     final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
     return selectedFiles.length == 1 && selectedFiles[0].isDirectory();
@@ -189,6 +199,7 @@ public abstract class SelectLocationStep extends WizardStep {
     return CvsVfsUtil.getFileFor(myFileSystemTree.getSelectedFile());
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myFileSystemTree.getTree();
   }
@@ -199,12 +210,14 @@ public abstract class SelectLocationStep extends WizardStep {
     if (text == null) return;
 
     myUiUpdater.queue(new Update("treeFromPath.1") {
+      @Override
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
           if (toFind == null || !toFind.exists()) return;
 
           myUiUpdater.queue(new Update("treeFromPath.2") {
+            @Override
             public void run() {
               selectInTree(toFind.getFile(), text);
             }
@@ -279,6 +292,7 @@ public abstract class SelectLocationStep extends WizardStep {
       super(new BorderLayout());
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (key == FileSystemTree.DATA_KEY) {
         sink.put(FileSystemTree.DATA_KEY, myFileSystemTree);
@@ -293,12 +307,14 @@ public abstract class SelectLocationStep extends WizardStep {
       update();
     }
 
+    @Override
     protected void onSetActive(final boolean active) {
       final String tooltip = KeymapUtil.createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"),
                                                           ActionManager.getInstance().getAction("FileChooser.TogglePathShowing"));
       setToolTipText(tooltip);
     }
 
+    @Override
     protected String getStatusBarText() {
       return ActionsBundle.message("action.FileChooser.TogglePathShowing.text");
     }
@@ -308,6 +324,7 @@ public abstract class SelectLocationStep extends WizardStep {
       setText(myShowPath ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
     }
 
+    @Override
     public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
       toggleShowTextField();
     }

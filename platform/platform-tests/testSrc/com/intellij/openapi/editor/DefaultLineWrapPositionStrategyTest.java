@@ -25,6 +25,7 @@ import org.junit.Test;
 public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositionStrategyTest {
   private LineWrapPositionStrategy myStrategy;
 
+  @Override
   @Before
   public void setUp() {
     super.setUp();
@@ -54,7 +55,7 @@ public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositio
 
   @Test
   public void longStringWithoutWrapPositionIsNotWrapped() {
-    String document = 
+    String document =
       "-----------------<EDGE>---------------------------------------------------------";
     doTest(myStrategy, document);
   }

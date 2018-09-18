@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -61,6 +47,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     myValidator.run();
   }
 
+  @Override
   public void onError(final String text, final JComponent component, final boolean forbidSave) {
     myTabbedPane.setSelectedComponent(component);
     String errorPrefix = myTabbedPane.getTitleAt(myTabbedPane.indexOfComponent(component)) + ": ";
@@ -69,6 +56,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     setInvalid(errorPrefix + text, myTabbedPane);
   }
 
+  @Override
   public void onSuccess() {
     if (isVisible()) {
       setOKActionEnabled(true);
@@ -76,6 +64,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     }
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return true;
   }
@@ -92,6 +81,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     return true;
   }
 
+  @Override
   public void doCancelAction() {
     myValidator.stop();
     super.doCancelAction();
@@ -107,6 +97,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     return true;
   }
 
+  @Override
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
       if (!applyImpl()) {
@@ -117,6 +108,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     }
   }
 
+  @Override
   public void execute(final String url) {
     Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.text"),
                              SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.title"));
@@ -154,10 +146,12 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     setErrorText(text, component);
   }
 
+  @Override
   public boolean enabled() {
     return valid;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myTabbedPane = new JBTabbedPane();
     myTabbedPane.add(myUserTab.createComponent(), SvnBundle.message("dialog.edit.http.proxies.settings.tab.edit.user.file.title"));

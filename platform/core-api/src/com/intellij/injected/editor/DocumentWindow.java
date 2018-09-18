@@ -29,6 +29,9 @@ public interface DocumentWindow extends Document {
   @NotNull
   Document getDelegate();
 
+  /**
+   * @deprecated use {@link #injectedToHost(int)} instead
+   */
   @Deprecated
   default int hostToInjectedUnescaped(int hostOffset) {
     return injectedToHost(hostOffset);
@@ -40,14 +43,6 @@ public interface DocumentWindow extends Document {
   TextRange injectedToHost(@NotNull TextRange injectedOffset);
 
   int hostToInjected(int hostOffset);
-
-  /**
-   * Use com.intellij.lang.injection.InjectedLanguageManager#intersectWithAllEditableFragments(com.intellij.psi.PsiFile, com.intellij.openapi.util.TextRange)
-   * since editable fragments may well spread over several injection hosts
-   */
-  @Deprecated
-  @Nullable
-  TextRange intersectWithEditable(@NotNull TextRange range);
 
   @Nullable
   TextRange getHostRange(int hostOffset);

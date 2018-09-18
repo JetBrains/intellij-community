@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface ColorPickerListener {
-  @Deprecated
-  ColorPickerListener[] EMPTY_ARRAY = new ColorPickerListener[0];
 
   /**
    * Color was changed by user

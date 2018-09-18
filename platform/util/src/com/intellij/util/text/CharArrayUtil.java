@@ -101,14 +101,6 @@ public class CharArrayUtil {
     }
   }
 
-  /**
-   * @deprecated use {@link #fromSequence(CharSequence)}
-   */
-  @NotNull
-  public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
-    return fromSequence(seq);
-  }
-
   @Nullable
   public static char[] fromSequenceWithoutCopying(@Nullable CharSequence seq) {
     if (seq instanceof CharSequenceBackedByArray) {

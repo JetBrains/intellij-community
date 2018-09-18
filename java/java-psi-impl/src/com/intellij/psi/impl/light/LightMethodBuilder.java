@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod, OriginInfoAwareElement {
   private final String myName;
-  private Computable<PsiType> myReturnType;
+  private Computable<? extends PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private final PsiParameterList myParameterList;
   private final PsiTypeParameterList myTypeParameterList;
@@ -179,7 +179,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     return myReturnType == null ? null : myReturnType.compute();
   }
 
-  public LightMethodBuilder setMethodReturnType(Computable<PsiType> returnType) {
+  public LightMethodBuilder setMethodReturnType(Computable<? extends PsiType> returnType) {
     myReturnType = returnType;
     return this;
   }

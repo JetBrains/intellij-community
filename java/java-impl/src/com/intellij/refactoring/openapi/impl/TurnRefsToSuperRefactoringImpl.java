@@ -29,14 +29,17 @@ public class TurnRefsToSuperRefactoringImpl extends RefactoringImpl<TurnRefsToSu
     super(new TurnRefsToSuperProcessor(project, aClass, aSuper, replaceInstanceOf));
   }
 
+  @Override
   public PsiClass getSuper() {
     return myProcessor.getSuper();
   }
 
+  @Override
   public PsiClass getTarget() {
     return myProcessor.getTarget();
   }
 
+  @Override
   public boolean isReplaceInstanceOf() {
     return myProcessor.isReplaceInstanceOf();
   }

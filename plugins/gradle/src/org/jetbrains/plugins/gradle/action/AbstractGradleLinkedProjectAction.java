@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 public abstract class AbstractGradleLinkedProjectAction extends AnAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Pair<Project, String> pair = deriveProjects(e.getDataContext());
     final boolean visible = pair != null;
     e.getPresentation().setVisible(visible);
@@ -47,7 +47,7 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;

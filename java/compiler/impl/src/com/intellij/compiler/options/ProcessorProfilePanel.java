@@ -38,8 +38,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -91,6 +91,7 @@ public class ProcessorProfilePanel extends JPanel {
     }
 
     myProcessorPathField = new TextFieldWithBrowseButton(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
         final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myProcessorPathField, myProject, null);
@@ -275,6 +276,7 @@ public class ProcessorProfilePanel extends JPanel {
   private static class OptionsTableModel extends AbstractTableModel implements EditableModel {
     private final java.util.List<KeyValuePair> myRows = new ArrayList<>();
 
+    @Override
     public String getColumnName(int column) {
       switch (column) {
         case 0: return "Option Name";
@@ -283,22 +285,27 @@ public class ProcessorProfilePanel extends JPanel {
       return super.getColumnName(column);
     }
 
+    @Override
     public Class<?> getColumnClass(int columnIndex) {
       return String.class;
     }
 
+    @Override
     public int getRowCount() {
       return myRows.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 0 || columnIndex == 1;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case 0: return myRows.get(rowIndex).key;
@@ -307,6 +314,7 @@ public class ProcessorProfilePanel extends JPanel {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (aValue != null) {
         switch (columnIndex) {
@@ -320,6 +328,7 @@ public class ProcessorProfilePanel extends JPanel {
       }
     }
 
+    @Override
     public void removeRow(int idx) {
       myRows.remove(idx);
       fireTableRowsDeleted(idx, idx);
@@ -334,6 +343,7 @@ public class ProcessorProfilePanel extends JPanel {
       return false;
     }
 
+    @Override
     public void addRow() {
       myRows.add(new KeyValuePair());
       final int index = myRows.size() - 1;
@@ -386,6 +396,7 @@ public class ProcessorProfilePanel extends JPanel {
   private static class ProcessorTableModel extends AbstractTableModel implements EditableModel {
     private final List<String> myRows = new ArrayList<>();
 
+    @Override
     public String getColumnName(int column) {
       switch (column) {
         case 0: return "Processor FQ Name";
@@ -393,22 +404,27 @@ public class ProcessorProfilePanel extends JPanel {
       return super.getColumnName(column);
     }
 
+    @Override
     public Class<?> getColumnClass(int columnIndex) {
       return String.class;
     }
 
+    @Override
     public int getRowCount() {
       return myRows.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 1;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 0;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case 0: return myRows.get(rowIndex);
@@ -416,6 +432,7 @@ public class ProcessorProfilePanel extends JPanel {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (aValue != null) {
         switch (columnIndex) {
@@ -426,6 +443,7 @@ public class ProcessorProfilePanel extends JPanel {
       }
     }
 
+    @Override
     public void removeRow(int idx) {
       myRows.remove(idx);
       fireTableRowsDeleted(idx, idx);
@@ -440,6 +458,7 @@ public class ProcessorProfilePanel extends JPanel {
       return false;
     }
 
+    @Override
     public void addRow() {
       myRows.add("");
       final int index = myRows.size() - 1;

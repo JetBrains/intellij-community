@@ -36,6 +36,7 @@ public class RawText implements Cloneable, Serializable {
     this.rawText = rawText;
   }
 
+  @Override
   public Object clone() {
     try {
       return super.clone();

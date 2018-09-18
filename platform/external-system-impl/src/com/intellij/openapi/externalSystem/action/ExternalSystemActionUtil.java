@@ -21,7 +21,6 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.module.Module;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -35,8 +34,8 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -64,7 +63,7 @@ public class ExternalSystemActionUtil {
     return module != null ? module : LangDataKeys.MODULE_CONTEXT.getData(context);
   }
 
-  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<? extends E> all, Collection<E> selected, Comparator<? super E> comparator) {
     List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<>(comparator);
@@ -83,6 +82,7 @@ public class ExternalSystemActionUtil {
 
     final TreeCellRenderer baseRenderer = tree.getCellRenderer();
     tree.setCellRenderer(new TreeCellRenderer() {
+      @Override
       public Component getTreeCellRendererComponent(final JTree tree,
                                                     final Object value,
                                                     final boolean selected,
@@ -116,6 +116,7 @@ public class ExternalSystemActionUtil {
     });
 
     tree.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         int row = tree.getRowForLocation(e.getX(), e.getY());
         if (row >= 0) {
@@ -134,6 +135,7 @@ public class ExternalSystemActionUtil {
     });
 
     tree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath[] treePaths = tree.getSelectionPaths();

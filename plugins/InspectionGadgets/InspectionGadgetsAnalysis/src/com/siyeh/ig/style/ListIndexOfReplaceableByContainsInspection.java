@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -47,7 +48,7 @@ public class ListIndexOfReplaceableByContainsInspection
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
-    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final String text;
     CommentTracker tracker = new CommentTracker();
     if (lhs instanceof PsiMethodCallExpression) {
@@ -58,7 +59,7 @@ public class ListIndexOfReplaceableByContainsInspection
     }
     else {
       final PsiMethodCallExpression callExpression =
-        (PsiMethodCallExpression)expression.getROperand();
+        (PsiMethodCallExpression)PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       assert callExpression != null;
       text = createContainsExpressionText(callExpression, true,
                                           expression.getOperationTokenType(), tracker);
@@ -80,8 +81,8 @@ public class ListIndexOfReplaceableByContainsInspection
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression expression =
         (PsiBinaryExpression)descriptor.getPsiElement();
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiExpression rhs = expression.getROperand();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       CommentTracker tracker = new CommentTracker();
       final String newExpressionText;
       if (lhs instanceof PsiMethodCallExpression) {
@@ -148,14 +149,10 @@ public class ListIndexOfReplaceableByContainsInspection
     public void visitBinaryExpression(
       PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
-      if (!ComparisonUtils.isComparison(expression)) {
-        return;
-      }
-      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+      if (rhs == null || lhs == null) return;
+      if (!ComparisonUtils.isComparison(expression)) return;
       if (lhs instanceof PsiMethodCallExpression) {
         if (canBeReplacedByContains(lhs, rhs, false,
                                     expression.getOperationTokenType())) {

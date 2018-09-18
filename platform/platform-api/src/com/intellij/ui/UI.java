@@ -9,6 +9,7 @@ import java.awt.*;
  * @author max
  * @deprecated will be removed in 2018.2
  */
+@Deprecated
 public class UI {
    private UI() {
   }

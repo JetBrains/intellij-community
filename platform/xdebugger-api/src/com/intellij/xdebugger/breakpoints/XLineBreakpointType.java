@@ -29,7 +29,7 @@ import java.util.List;
  * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
  * <p><p>
- * In order to support actual setting breakpoints in a debugging process create a {@link XBreakpointHandler} implementation and return it  
+ * In order to support actual setting breakpoints in a debugging process create a {@link XBreakpointHandler} implementation and return it
  * from {@link com.intellij.xdebugger.XDebugProcess#getBreakpointHandlers()} method
  *
  * @author nik
@@ -84,6 +84,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   // Preserved for API compatibility
+  @Override
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
     return super.getAdditionalPopupMenuActions(breakpoint, currentSession);
   }

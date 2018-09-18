@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -33,7 +34,7 @@ public class XmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   protected void initTabs(CodeStyleSettings settings) {
     addIndentOptionsTab(settings);
     addTab(new CodeStyleXmlPanel(settings));
-    addTab(new XmlArrangementPanel(settings));
+    addTab(new XmlArrangementPanel(settings, XMLLanguage.INSTANCE, XmlFileType.INSTANCE));
 
     for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
       if (provider.getLanguage() == XMLLanguage.INSTANCE && !provider.hasSettingsPage()) {

@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -36,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.testng.Assert;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,53 +32,30 @@ public class CreateClassFixTest extends UsefulTestCase {
   @org.junit.runners.Parameterized.Parameter(0) public String myTestName;
   @org.junit.runners.Parameterized.Parameter(1) public boolean myCreateClass;
 
+  @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    final Ref<Exception> ex = new Ref<>();
-    Runnable runnable = new Runnable() {
-      public void run() {
-        try {
-          CreateClassFixTest.super.setUp();
-          final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder =
-            JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
-          myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-          myFixture.setTestDataPath(DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH);
 
-          testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
-            .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
-          myFixture.setUp();
-          myFixture.enableInspections(new RegistrationProblemsInspection());
-        }
-        catch (Exception e) {
-          ex.set(e);
-        }
-      }
-    };
-    invokeTestRunnable(runnable);
-    final Exception exception = ex.get();
-    if (exception != null) {
-      throw exception;
-    }
+    JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
+    myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
+    myFixture.setTestDataPath(DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH);
+
+    testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class).addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
+    myFixture.setUp();
+    myFixture.enableInspections(new RegistrationProblemsInspection());
   }
 
+  @Override
   @After
   public void tearDown() throws Exception {
-    final Ref<Exception> ex = new Ref<>();
-    invokeTestRunnable(() -> {
-      try {
-        myFixture.tearDown();
-        myFixture = null;
-        super.tearDown();
-      }
-      catch (Exception e) {
-        ex.set(e);
-      }
-    });
-    final Exception exception = ex.get();
-    if (exception != null) {
-      throw exception;
+    try {
+      myFixture.tearDown();
+      myFixture = null;
+    }
+    finally {
+      super.tearDown();
     }
   }
 
@@ -112,8 +73,8 @@ public class CreateClassFixTest extends UsefulTestCase {
 
 
   @Test
-  public void runSingle() throws Throwable {
-    invokeTestRunnable(() -> {
+  public void runSingle() {
+    EdtTestUtil.runInEdtAndWait(() -> {
       IntentionAction resultAction = null;
       final String createAction = QuickFixBundle.message(myCreateClass ? "create.class.text" : "create.interface.text", myTestName);
       final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + myTestName + ".xml");
@@ -123,10 +84,10 @@ public class CreateClassFixTest extends UsefulTestCase {
           break;
         }
       }
-      Assert.assertNotNull(resultAction);
+      org.junit.Assert.assertNotNull(resultAction);
       myFixture.launchAction(resultAction);
       final Project project = myFixture.getProject();
-      Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(myTestName, GlobalSearchScope.allScope(project)));
+      org.junit.Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(myTestName, GlobalSearchScope.allScope(project)));
     });
   }
 }

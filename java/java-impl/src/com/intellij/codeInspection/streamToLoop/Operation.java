@@ -49,7 +49,7 @@ abstract class Operation {
     return null;
   }
 
-  public void registerReusedElements(Consumer<PsiElement> consumer) {}
+  public void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
 
@@ -113,7 +113,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -259,7 +259,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myRecords.forEach(or -> or.myOperation.registerReusedElements(consumer));
       if(myCondition != null) {
         consumer.accept(myCondition);
@@ -349,7 +349,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
@@ -377,7 +377,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myLimit);
     }
 

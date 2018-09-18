@@ -252,7 +252,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void onAuthFailure(@NotNull String url) {
-      if (myData != null) myDelegate.forgetPassword(url, myData);
+      if (myData != null) myDelegate.forgetPassword(myProject, url, myData);
     }
   }
 

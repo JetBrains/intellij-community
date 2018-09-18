@@ -147,7 +147,10 @@ class VisiblePackBuilderTest {
           throw UnsupportedOperationException()
         }
 
-        override fun loadCommitsData(hashes: MutableList<Int>, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
+        override fun loadCommitsData(hashes: MutableList<Int>,
+                                     consumer: Consumer<MutableList<VcsFullCommitDetails>>,
+                                     errorConsumer: Consumer<Throwable>,
+                                     indicator: ProgressIndicator?) {
         }
 
         override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {

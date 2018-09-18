@@ -80,6 +80,7 @@ public class MavenProjectsProcessor {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     scheduleTask(new MavenProjectsProcessorTask() {
+      @Override
       public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
         throws MavenProcessCanceledException {
         semaphore.up();
@@ -100,6 +101,7 @@ public class MavenProjectsProcessor {
 
   private void startProcessing(final MavenProjectsProcessorTask task) {
     MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
+      @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
         indicator.addCancelCondition(condition);

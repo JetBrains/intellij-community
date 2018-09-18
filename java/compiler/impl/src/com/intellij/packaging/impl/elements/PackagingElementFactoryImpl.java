@@ -127,6 +127,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact));
   }
 
+  @Override
   @NotNull
   public DirectoryPackagingElement createDirectory(@NotNull @NonNls String directoryName) {
     return new DirectoryPackagingElement(directoryName);
@@ -181,6 +182,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return parent.addOrFindChild(last);
   }
 
+  @Override
   @NotNull
   public PackagingElement<?> createModuleOutput(@NotNull String moduleName, @NotNull Project project) {
     final ModulePointer pointer = ModulePointerManager.getInstance(project).create(moduleName);
@@ -242,6 +244,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return new LibraryPackagingElement(level, libraryName, moduleName);
   }
 
+  @Override
   @NotNull
   public CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName) {
     return new ArchivePackagingElement(archiveFileName);
@@ -350,12 +353,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
       return false;
     }
 
+    @Override
     @NotNull
     public List<? extends ArtifactRootElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
       throw new UnsupportedOperationException("'create' not implemented in " + getClass().getName());
     }
 
+    @Override
     @NotNull
     public ArtifactRootElement<?> createEmpty(@NotNull Project project) {
       return new ArtifactRootElementImpl();

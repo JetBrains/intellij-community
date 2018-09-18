@@ -22,7 +22,8 @@ import java.beans.PropertyChangeSupport;
 
 @State(
   name = "GeneralSettings",
-  storages = @Storage("ide.general.xml")
+  storages = @Storage("ide.general.xml"),
+  reportStatistic = true
 )
 public class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final int OPEN_PROJECT_ASK = -1;
@@ -35,14 +36,14 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
 
   public static final String SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled";
-  private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDEN = getSupportScreenReadersOverriden();
+  private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden();
 
   static final UINumericRange SAVE_FILES_AFTER_IDLE_SEC = new UINumericRange(15, 1, 300);
 
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
   private boolean myReopenLastProject = true;
-  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDEN, Boolean.FALSE);
+  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.FALSE);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
@@ -76,28 +77,8 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     return myBrowserPath;
   }
 
-  /**
-   * Use RecentProjectsManagerBase
-   */
-  @Deprecated
-  public String getLastProjectCreationLocation() {
-    return null;
-  }
-
-  /**
-   * Use RecentProjectsManagerBase
-   */
-  @Deprecated
-  public void setLastProjectCreationLocation(String lastProjectLocation) {
-  }
-
   public void setBrowserPath(String browserPath) {
     myBrowserPath = browserPath;
-  }
-
-  @Deprecated
-  public boolean showTipsOnStartup() {
-    return isShowTipsOnStartup();
   }
 
   public boolean isShowTipsOnStartup() {
@@ -126,7 +107,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   @Nullable
-  private static Boolean getSupportScreenReadersOverriden() {
+  private static Boolean getSupportScreenReadersOverridden() {
     String prop = System.getProperty(SUPPORT_SCREEN_READERS);
     if (prop != null) {
       return Boolean.parseBoolean(prop);
@@ -134,8 +115,8 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     return null;
   }
 
-  public static boolean isSupportScreenReadersOverriden() {
-    return SUPPORT_SCREEN_READERS_OVERRIDEN != null;
+  public static boolean isSupportScreenReadersOverridden() {
+    return SUPPORT_SCREEN_READERS_OVERRIDDEN != null;
   }
 
   public boolean isSupportScreenReaders() {

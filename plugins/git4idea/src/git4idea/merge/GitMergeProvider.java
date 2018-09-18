@@ -11,8 +11,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -120,7 +120,7 @@ public class GitMergeProvider implements MergeProvider2 {
         GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
         GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
-          mergeData.ORIGINAL = original.getContent();
+          mergeData.ORIGINAL = original.loadContent();
         }
         catch (Exception ex) {
           /// unable to load original revision, use the current instead
@@ -229,7 +229,7 @@ public class GitMergeProvider implements MergeProvider2 {
       h.endOptions();
     }
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
@@ -417,7 +417,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException {
     try {
-      return revision.getContent();
+      return revision.loadContent();
     } catch (VcsException e) {
       String m = e.getMessage().trim();
       if (m.startsWith("fatal: ambiguous argument ")

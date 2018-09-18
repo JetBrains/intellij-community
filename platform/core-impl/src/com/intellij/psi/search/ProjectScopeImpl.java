@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -36,16 +35,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileWindow) return true;
-
-    if (myFileIndex.isInLibraryClasses(file) && !myFileIndex.isInSourceContent(file)) return false;
-
-    return myFileIndex.isInContent(file);
-  }
-
-  @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
+    return myFileIndex.isInProjectScope(file);
   }
 
   @Override
@@ -69,6 +59,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     return getDisplayName();
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return myFileIndex.getUnloadedModuleDescriptions();

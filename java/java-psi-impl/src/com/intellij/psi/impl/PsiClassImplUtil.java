@@ -471,7 +471,7 @@ public class PsiClassImplUtil {
   private static boolean processCachedMembersByName(@NotNull final PsiClass aClass,
                                                     @NotNull PsiScopeProcessor processor,
                                                     @NotNull ResolveState state,
-                                                    @Nullable Set<PsiClass> visited,
+                                                    @Nullable Set<? super PsiClass> visited,
                                                     PsiElement last,
                                                     @NotNull final PsiElement place,
                                                     final boolean isRaw,
@@ -735,7 +735,7 @@ public class PsiClassImplUtil {
                                    @NotNull PsiElementFactory factory,
                                    @NotNull LanguageLevel languageLevel,
                                    GlobalSearchScope resolveScope,
-                                   PairProcessor<PsiClass, PsiSubstitutor> processor) {
+                                   PairProcessor<? super PsiClass, ? super PsiSubstitutor> processor) {
     boolean resolved = false;
     for (PsiClassType.ClassResolveResult superTypeResolveResult : getScopeCorrectedSuperTypes(aClass, resolveScope)) {
       PsiClass superClass = superTypeResolveResult.getElement();
@@ -1237,7 +1237,7 @@ public class PsiClassImplUtil {
     return true;
   }
 
-  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<String> visited) {
+  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<? super String> visited) {
     if (type1 instanceof PsiArrayType) {
       if (type2 instanceof PsiArrayType) {
         final PsiType componentType1 = ((PsiArrayType)type1).getComponentType();

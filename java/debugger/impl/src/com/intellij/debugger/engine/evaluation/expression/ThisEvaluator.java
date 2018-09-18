@@ -42,6 +42,7 @@ public class ThisEvaluator implements Evaluator {
     myIterations = iterations;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value objRef = context.computeThisObject();
     if(myIterations > 0) {

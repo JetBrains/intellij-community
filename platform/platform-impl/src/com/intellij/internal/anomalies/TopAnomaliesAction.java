@@ -55,7 +55,7 @@ public class TopAnomaliesAction extends ActionGroup {
     TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Top " + LIMIT + " Component Parents");
     }
 
@@ -66,7 +66,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
@@ -103,7 +103,7 @@ public class TopAnomaliesAction extends ActionGroup {
     TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Top " + LIMIT + " ClientProperties");
     }
 
@@ -114,7 +114,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
@@ -163,7 +163,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (ResettableAction action : CHILDREN) {
         action.reset();
       }
@@ -173,7 +173,7 @@ public class TopAnomaliesAction extends ActionGroup {
   private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText("Top " + LIMIT);
   }
 

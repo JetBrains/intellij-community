@@ -26,11 +26,13 @@ public interface ScalaCompileOptions extends Serializable {
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   boolean isUseCompileDaemon();
 
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   String getDaemonServer();
 
   boolean isFailOnError();
@@ -58,11 +60,13 @@ public interface ScalaCompileOptions extends Serializable {
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   boolean isFork();
 
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   boolean isUseAnt();
 
   ScalaForkOptions getForkOptions();

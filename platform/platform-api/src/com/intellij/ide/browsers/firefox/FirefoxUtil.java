@@ -70,7 +70,7 @@ public class FirefoxUtil {
   }
 
   @Nullable
-  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<FirefoxProfile> profiles) {
+  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<? extends FirefoxProfile> profiles) {
     for (FirefoxProfile profile : profiles) {
       if (profile.getName().equals(name)) {
         return profile;
@@ -80,7 +80,7 @@ public class FirefoxUtil {
   }
 
   @Nullable
-  public static FirefoxProfile getDefaultProfile(List<FirefoxProfile> profiles) {
+  public static FirefoxProfile getDefaultProfile(List<? extends FirefoxProfile> profiles) {
     if (profiles.isEmpty()) {
       return null;
     }

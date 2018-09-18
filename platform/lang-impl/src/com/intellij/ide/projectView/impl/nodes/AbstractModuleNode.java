@@ -41,7 +41,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     Module module = getValue();
     if (module == null || module.isDisposed()) {
       setValue(null);

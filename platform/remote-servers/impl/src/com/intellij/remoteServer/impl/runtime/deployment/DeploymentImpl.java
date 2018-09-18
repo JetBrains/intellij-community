@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     myState = new DeploymentState(status, statusText, runtime);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
@@ -45,12 +47,14 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     return myState.getStatus();
   }
 
+  @Override
   @NotNull
   public String getStatusText() {
     String statusText = myState.getStatusText();
     return statusText != null ? statusText : myState.getStatus().getPresentableText();
   }
 
+  @Override
   public DeploymentRuntime getRuntime() {
     return myState.getRuntime();
   }

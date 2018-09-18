@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Arrays;
 
 public class Trinity<A, B, C> {
@@ -36,7 +38,7 @@ public class Trinity<A, B, C> {
     return second;
   }
 
-  public C getThird() {
+  public final C getThird() {
     return third;
   }
 
@@ -44,6 +46,17 @@ public class Trinity<A, B, C> {
     return new Trinity<A,B,C>(first, second,third);
   }
 
+  public static <T> T getFirst(@Nullable Trinity<T, ?, ?> pair) {
+    return pair != null ? pair.first : null;
+  }
+  public static <T> T getSecond(@Nullable Trinity<?, T, ?> pair) {
+    return pair != null ? pair.second : null;
+  }
+  public static <T> T getThird(@Nullable Trinity<?, ?, T> pair) {
+    return pair != null ? pair.third : null;
+  }
+
+  @Override
   public final boolean equals(Object o){
     return o instanceof Trinity
            && Comparing.equal(first, ((Trinity)o).first)
@@ -51,6 +64,7 @@ public class Trinity<A, B, C> {
            && Comparing.equal(third, ((Trinity)o).third);
   }
 
+  @Override
   public final int hashCode(){
     int hashCode = 0;
     if (first != null){
@@ -69,6 +83,7 @@ public class Trinity<A, B, C> {
     return o instanceof Object[] ? Arrays.hashCode((Object[])o) : o.hashCode();
   }
 
+  @Override
   public String toString() {
     return "<" + first + "," + second + ","+third+">";
   }

@@ -87,17 +87,19 @@ public class TargetResolver extends PropertyProviderFinder {
     result.setVariants(resolver.getDiscoveredTargets());
     return result;
   }
-  
+
   public interface TargetSink {
     void duplicateTargetDetected(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String targetEffectiveName);
   }
-  
+
   public static void validateDuplicateTargets(AntDomProject project, final TargetSink sink) {
     final TargetResolver resolver = new TargetResolver(Collections.emptyList(), null) {
+      @Override
       protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
         sink.duplicateTargetDetected(existingTarget, duplicatingTarget, taregetEffectiveName);
       }
 
+      @Override
       protected void stageCompleted(Stage completedStage, Stage startingStage) {
         if (Stage.RESOLVE_MAP_BUILDING_STAGE.equals(completedStage)) {
           stop();
@@ -107,6 +109,7 @@ public class TargetResolver extends PropertyProviderFinder {
     resolver.execute(project, null);
   }
 
+  @Override
   protected void targetDefined(AntDomTarget target, String targetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
     if (myContextTarget != null && myDeclaredTargetRefs.size() > 0 && target.equals(myContextTarget)) {
       for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
@@ -121,6 +124,7 @@ public class TargetResolver extends PropertyProviderFinder {
     }
   }
 
+  @Override
   protected void stageCompleted(Stage completedStage, Stage startingStage) {
     if (completedStage == Stage.RESOLVE_MAP_BUILDING_STAGE) {
       if (myDeclaredTargetRefs.size() > 0) {

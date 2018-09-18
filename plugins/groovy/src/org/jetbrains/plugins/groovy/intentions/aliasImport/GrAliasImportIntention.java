@@ -142,7 +142,7 @@ public class GrAliasImportIntention extends Intention {
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, built, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         final GrImportStatement importStatement = ReadAction
           .compute(() -> PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true));
 

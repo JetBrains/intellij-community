@@ -42,7 +42,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                result.addElement(LookupElementBuilder.create("__metaclass__ = "));
              }
@@ -56,7 +56,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                result.addElement(LookupElementBuilder.create("metaclass="));
              }

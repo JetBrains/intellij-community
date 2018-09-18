@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -45,7 +46,7 @@ public class RestoreViewAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Presentation p = e.getPresentation();
     p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
     p.setDescription(ActionsBundle.message("action.Runner.RestoreView.description"));
@@ -57,7 +58,7 @@ public class RestoreViewAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myRestoreAction.restoreInGrid();
   }
 

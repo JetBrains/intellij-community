@@ -71,7 +71,7 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
 
   private class MyClickAction extends AnAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doClickAction(e, mySet, "Go to overridden define");
     }
   }

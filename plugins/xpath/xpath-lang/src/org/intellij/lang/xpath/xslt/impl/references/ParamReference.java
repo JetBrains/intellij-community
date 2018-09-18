@@ -16,13 +16,12 @@
 
 package org.intellij.lang.xpath.xslt.impl.references;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.xml.XmlAttribute;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 
 class ParamReference extends AttributeReference implements PsiPolyVariantReference {
@@ -36,6 +35,7 @@ class ParamReference extends AttributeReference implements PsiPolyVariantReferen
         return results.length == 1 ? results[0].getElement() : null;
     }
 
+    @Override
     @NotNull
     public final ResolveResult[] multiResolve(final boolean incompleteCode) {
       return PsiElementResolveResult.createResults(ResolveUtil.collect(myMatcher));

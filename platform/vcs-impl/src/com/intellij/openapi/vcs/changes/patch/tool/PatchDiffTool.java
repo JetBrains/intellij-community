@@ -140,7 +140,7 @@ public class PatchDiffTool implements FrameDiffTool {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
       if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) return myPrevNextDifferenceIterable;
       if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) return myEditor;

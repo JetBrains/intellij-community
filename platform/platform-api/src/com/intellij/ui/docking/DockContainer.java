@@ -75,12 +75,12 @@ public interface DockContainer extends Disposable, Activatable {
   }
 
   interface Listener {
-    void contentAdded(Object key);
+    void contentAdded(@NotNull Object key);
     void contentRemoved(Object key);
     
     class Adapter implements Listener {
       @Override
-      public void contentAdded(Object key) {
+      public void contentAdded(@NotNull Object key) {
       }
 
       @Override

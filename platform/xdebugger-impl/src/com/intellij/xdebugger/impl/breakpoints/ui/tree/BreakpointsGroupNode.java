@@ -33,6 +33,7 @@ public class BreakpointsGroupNode<G extends XBreakpointGroup> extends CheckedTre
     return myGroup;
   }
 
+  @Override
   public int getLevel() {
     return myLevel;
   }

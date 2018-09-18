@@ -58,8 +58,9 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     return new PsiAnnotationImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiAnnotationStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PsiAnnotationStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     String text = LightTreeUtil.toFilteredString(tree, node, null);
     return new PsiAnnotationStubImpl(parentStub, text);
   }

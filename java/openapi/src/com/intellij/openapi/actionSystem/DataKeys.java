@@ -16,18 +16,9 @@
 
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 
-@SuppressWarnings({"deprecation"})
 public final class DataKeys extends LangDataKeys {
   private DataKeys() {
   }
-
-  @Deprecated
-  public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
-  @Deprecated
-  public static final DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
-
 }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.configuration;
 
 import com.intellij.ide.DataManager;
@@ -83,6 +84,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     };
   }
 
+  @Override
   public void apply() {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     ipnbSettings.setHasFx(myMarkdownCheckBox.isSelected());
@@ -108,6 +110,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public void reset() {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     final boolean hasFx = ipnbSettings.hasFx();
@@ -121,6 +124,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     final boolean hasFx = ipnbSettings.hasFx();

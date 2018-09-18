@@ -23,9 +23,11 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     myProject = project;
   }
 
+  @Override
   public void onSuiteChosen(CoverageSuitesBundle newSuite) {
   }
 
+  @Override
   public void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {

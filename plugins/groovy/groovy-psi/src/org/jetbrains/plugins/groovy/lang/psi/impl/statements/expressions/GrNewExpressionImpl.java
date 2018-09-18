@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,13 +40,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Inf
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyFakeReference>() {
-    @NotNull
-    @Override
-    public GroovyResolveResult[] resolve(@NotNull MyFakeReference reference, boolean incompleteCode) {
-      return reference.getElement().resolveImpl(incompleteCode);
-    }
-  };
+  private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER =
+    (reference, incompleteCode) -> reference.getElement().resolveImpl(incompleteCode);
 
   private final MyFakeReference myFakeReference = new MyFakeReference();
 
@@ -253,7 +247,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       throw new UnsupportedOperationException("unsupported!");
     }
 
@@ -263,14 +257,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       return getManager().areElementsEquivalent(element, resolve());
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

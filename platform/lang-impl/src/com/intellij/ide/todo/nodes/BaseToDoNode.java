@@ -36,6 +36,10 @@ public abstract class BaseToDoNode<Value> extends AbstractTreeNode<Value> {
   public boolean contains(VirtualFile file) {
     return false;
   }
+  
+  public boolean contains(Object element) {
+    return false;
+  }
 
   protected TodoTreeStructure getTreeStructure() {
     return myBuilder.getTodoTreeStructure();

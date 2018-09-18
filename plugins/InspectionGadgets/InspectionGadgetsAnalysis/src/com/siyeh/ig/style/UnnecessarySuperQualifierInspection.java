@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class UnnecessarySuperQualifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
-  public boolean ignoreClarification = false;
+  public boolean ignoreClarification;
 
   @Override
   @Nls
@@ -88,7 +88,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
   private static class UnnecessarySuperQualifierVisitor extends BaseInspectionVisitor {
     private final boolean myIgnoreClarification;
 
-    public UnnecessarySuperQualifierVisitor(boolean ignoreClarification) {
+    UnnecessarySuperQualifierVisitor(boolean ignoreClarification) {
       myIgnoreClarification = ignoreClarification;
     }
 
@@ -175,7 +175,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
         return false;
       }
       final PsiClass aClass = PsiTreeUtil.getParentOfType(methodCallExpression, PsiClass.class);
-      if (MethodUtils.isOverriddenInHierarchy(superMethod, aClass)) {
+      if (aClass != null && MethodUtils.isOverriddenInHierarchy(superMethod, aClass)) {
         return false;
       }
       // check that super.m() and m() resolve to the same method
@@ -187,7 +187,8 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
       }
       qualifier.delete(); //remove super
       final JavaResolveResult resolveResult = copy.resolveMethodGenerics();
-      return resolveResult.isValidResult() && superMethod == resolveResult.getElement();
+      PsiElement element = resolveResult.getElement();
+      return resolveResult.isValidResult() && superMethod.getManager().areElementsEquivalent(superMethod, element);
     }
   }
 }

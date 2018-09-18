@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -167,11 +166,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public XmlElement getNameElement(DomElement element) {
-    return myStaticGenericInfo.getNameElement(element);
-  }
-
-  @Override
   public GenericDomValue getNameDomElement(DomElement element) {
     return myStaticGenericInfo.getNameDomElement(element);
   }
@@ -265,7 +259,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
+  public boolean processAttributeChildrenDescriptions(final Processor<? super AttributeChildDescriptionImpl> processor) {
     final Set<AttributeChildDescriptionImpl> visited = new THashSet<>();
     if (!myStaticGenericInfo.processAttributeChildrenDescriptions(attributeChildDescription -> {
       visited.add(attributeChildDescription);

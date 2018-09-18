@@ -50,17 +50,20 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
   }
 
 
+  @Override
   @NotNull
   public PsiElement getElement() {
     return myAttribute.getValueElement();
   }
 
+  @Override
   @NotNull
   public TextRange getRangeInElement() {
     final XmlAttributeValue value = myAttribute.getValueElement();
     return value != null ? TextRange.from(1, value.getTextLength() - 2) : TextRange.from(0, 0);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final String value = myAttribute.getValue();
@@ -87,31 +90,37 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
     return null;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myAttribute.getValue();
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     myAttribute.setValue(newElementName);
     final XmlAttributeValue value = myAttribute.getValueElement();
     assert value != null;
     return value;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element == resolve();
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return myResourceManager.getResourceUrls(null, false);
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }

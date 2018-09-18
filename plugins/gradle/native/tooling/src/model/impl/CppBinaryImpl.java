@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppFileSettings;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkerDetails;
 
 import java.io.File;
@@ -14,19 +15,22 @@ import java.util.*;
 public class CppBinaryImpl implements CppBinary {
   private final String myBaseName;
   private final String myVariantName;
-  private final Set<File> mySources;
+  private final Map<File, CppFileSettings> mySources;
   private final CompilerDetails myCompilerDetails;
   private final LinkerDetails myLinkerDetails;
   private final TargetType myTargetType;
 
   public CppBinaryImpl(String baseName, String variantName,
-                       Collection<File> sources,
+                       Map<File, CppFileSettings> sources,
                        CompilerDetails compilerDetails,
                        LinkerDetails linkerDetails,
                        TargetType targetType) {
     myBaseName = baseName;
     myVariantName = variantName;
-    mySources = new LinkedHashSet<File>(sources);
+    mySources = new LinkedHashMap<File, CppFileSettings>();
+    for (Map.Entry<File, CppFileSettings> fileSettingsEntry : sources.entrySet()) {
+      mySources.put(fileSettingsEntry.getKey(), new CppFileSettingsImpl(fileSettingsEntry.getValue()));
+    }
     myCompilerDetails = compilerDetails;
     myLinkerDetails = linkerDetails;
     myTargetType = targetType;
@@ -48,8 +52,8 @@ public class CppBinaryImpl implements CppBinary {
   }
 
   @Override
-  public Set<File> getSources() {
-    return Collections.unmodifiableSet(mySources);
+  public Map<File, CppFileSettings> getSources() {
+    return Collections.unmodifiableMap(mySources);
   }
 
   @Override

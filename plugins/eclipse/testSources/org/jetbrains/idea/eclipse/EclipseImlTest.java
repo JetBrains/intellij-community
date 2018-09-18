@@ -34,7 +34,6 @@ import java.nio.file.Paths;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -79,12 +78,17 @@ public class EclipseImlTest extends IdeaTestCase {
     String junit3Path = ContainerUtil.getFirstItem(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"));
     String junit4Path = ContainerUtil.find(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"),
                                            jarPath -> PathUtil.getFileName(jarPath).startsWith("junit"));
-    PathMacros.getInstance().setMacro(junit3PathMacro, junit3Path);
-    PathMacros.getInstance().setMacro(junit4PathMacro, junit4Path);
-    PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
-    PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
-    PathMacros.getInstance().removeMacro(junit3PathMacro);
-    PathMacros.getInstance().removeMacro(junit4PathMacro);
+    PathMacros pathMacros = PathMacros.getInstance();
+    pathMacros.setMacro(junit3PathMacro, junit3Path);
+    pathMacros.setMacro(junit4PathMacro, junit4Path);
+    try {
+      PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
+      PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
+    }
+    finally {
+      pathMacros.removeMacro(junit3PathMacro);
+      pathMacros.removeMacro(junit4PathMacro);
+    }
 
     assertThat(actualImlElement).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
   }

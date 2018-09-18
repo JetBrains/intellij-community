@@ -16,4 +16,4 @@ Groovy script
     PsiElement(:)(':')
     PsiElement(new line)('\n            ')
     Literal
-      PsiElement(Gstring)('"Bugoga!"')
+      PsiElement(double quoted string)('"Bugoga!"')

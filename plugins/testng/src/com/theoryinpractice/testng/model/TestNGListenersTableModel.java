@@ -25,10 +25,12 @@ public class TestNGListenersTableModel extends AbstractListModel
 
   private final List<String> listenerList = new ArrayList<>();
 
+  @Override
   public int getSize() {
     return listenerList.size();
   }
 
+  @Override
   public Object getElementAt(int i) {
     return listenerList.get(i);
   }

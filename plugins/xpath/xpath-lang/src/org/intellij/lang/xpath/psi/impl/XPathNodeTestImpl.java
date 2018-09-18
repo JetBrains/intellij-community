@@ -29,6 +29,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         super(node);
     }
 
+    @Override
     @NotNull
     public XPathStep getStep() {
         final XPathStep step = PsiTreeUtil.getParentOfType(this, XPathStep.class);
@@ -36,10 +37,12 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         return step;
     }
 
+    @Override
     public boolean isNameTest() {
         return getNode().findChildByType(XPathTokenTypes.NCNAME) != null || getNode().findChildByType(XPathTokenTypes.STAR) != null;
     }
 
+    @Override
     @Nullable
     public PrefixedName getQName() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathTokenTypes.NCNAME));
@@ -62,6 +65,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         return null;
     }
 
+    @Override
     public int getTextOffset() {
         final PrefixedNameImpl qName = ((PrefixedNameImpl)getQName());
         if (qName != null) {
@@ -71,6 +75,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         }
     }
 
+    @Override
     @NotNull
     public PrincipalType getPrincipalType() {
         final XPathStep step = getStep();
@@ -88,6 +93,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         }
     }
 
+    @Override
     @Nullable
     public PsiReference getReference() {
         final ASTNode name = getNode().findChildByType(XPathTokenTypes.NCNAME);
@@ -97,6 +103,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         return null;
     }
 
+    @Override
     @NotNull
     public PsiReference[] getReferences() {
         final PrefixedName prefixedName = getQName();
@@ -111,6 +118,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
             super(element, nameNode);
         }
 
+        @Override
         @NotNull
         public Object[] getVariants() {
             // handled in XPathCompletionData
@@ -118,6 +126,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         }
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathNodeTest(this);
   }

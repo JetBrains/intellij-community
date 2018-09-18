@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -107,7 +108,7 @@ public class JavadocEditor extends ModuleElementsEditor {
         }
       }).addExtraAction(new DumbAwareActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
           final MyTableModel tableModel = (MyTableModel)myTable.getModel();
           boolean changes = false;

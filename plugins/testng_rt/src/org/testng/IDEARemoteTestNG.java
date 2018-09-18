@@ -40,6 +40,7 @@ public class IDEARemoteTestNG extends TestNG {
     }
   }
 
+   @Override
    public void run() {
     try {
       initializeSuitesAndJarFile();

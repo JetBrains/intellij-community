@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,6 +119,7 @@ public class Mappings {
     myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
     final CollectionFactory<File> fileCollectionFactory = new CollectionFactory<File>() {
+      @Override
       public Collection<File> create() {
         return new THashSet<>(FileUtil.FILE_HASHING_STRATEGY); // todo: do we really need set and not a list here?
       }
@@ -239,7 +226,7 @@ public class Mappings {
       for (Pair<ClassFileRepr, File> pair : deleted) {
         final int deletedClassName = pair.first.name;
         final Collection<File> sources = myClassToSourceFile.get(deletedClassName);
-        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved 
+        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved
           myChangedClasses.remove(deletedClassName);
         }
       }
@@ -762,6 +749,7 @@ public class Mappings {
         myFilter = filter;
       }
 
+      @Override
       public boolean checkResidence(int residence) {
         final Collection<File> fNames = myClassToSourceFile.get(residence);
         if (fNames == null || fNames.isEmpty()) {
@@ -940,7 +928,7 @@ public class Mappings {
 
   public interface DependentFilesFilter {
     boolean accept(File file);
-    
+
     boolean belongsToCurrentTargetChunk(File file);
   }
 
@@ -1708,9 +1696,9 @@ public class Mappings {
         final FieldRepr field = f.first;
 
         debug("Field: ", field.name);
-        
+
         // only if the field was a compile-time constant
-        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) { 
+        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) {
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) != 0;
           final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) != 0;
@@ -1955,7 +1943,7 @@ public class Mappings {
               state.myAffectedUsages.add(changedClass.createUsage());
             }
           }
-          
+
           if (changedClass.isAnnotation()) {
             debug("Class is annotation, performing annotation-specific analysis");
 
@@ -2052,9 +2040,9 @@ public class Mappings {
       assert myDelta.myChangedFiles != null;
 
       myDelta.myChangedFiles.add(fileName);
-      
+
       debug("Processing removed classes:");
-      
+
       for (final ClassRepr c : removed) {
         myDelta.addDeletedClass(c, fileName);
         if (!myEasyMode) {
@@ -2280,7 +2268,7 @@ public class Mappings {
                 }
               }
             }
-            
+
             final DiffState state = new DiffState(
               Difference.make(pastClasses, compiledFile.myFileClasses),
               Difference.make(pastModules, compiledFile.myFileModules)
@@ -2295,10 +2283,10 @@ public class Mappings {
                 return false;
               }
             }
-  
+
             processRemovedClases(state, fileName);
             processAddedClasses(state, fileName);
-  
+
             if (!myEasyMode) {
               calculateAffectedFiles(state);
             }
@@ -2348,7 +2336,7 @@ public class Mappings {
         finally {
           if (myFilesToCompile != null) {
             assert myDelta.myChangedFiles != null;
-            // if some class is associated with several sources, 
+            // if some class is associated with several sources,
             // some of them may not have been compiled in this round, so such files should be considered unchanged
             myDelta.myChangedFiles.retainAll(myFilesToCompile);
           }
@@ -2368,7 +2356,7 @@ public class Mappings {
         // because necessary 'require' directives may be missing from the newly added module-info file
         myFuture.affectModule(moduleRepr, myAffectedFiles);
       }
-      
+
       for (ModuleRepr removedModule : modulesDiff.removed()) {
         myDelta.addDeletedClass(removedModule, fileName); // need this for integrate
         myPresent.affectDependentModules(state, removedModule.name, null, true);
@@ -2386,6 +2374,7 @@ public class Mappings {
         if (d.versionChanged()) {
           final int version = moduleRepr.getVersion();
           myPresent.affectDependentModules(state, moduleRepr.name, new UsageConstraint() {
+            @Override
             public boolean checkResidence(int dep) {
               final ModuleRepr depModule = myPresent.moduleReprByName(dep);
               if (depModule != null) {
@@ -2646,7 +2635,7 @@ public class Mappings {
             mySourceFileToClasses.replace(fileName, classes);
             return true;
           });
-          
+
           // some classes may be associated with multiple sources.
           // In case some of these sources was not compiled, but the class was changed, we need to update
           // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
@@ -2693,6 +2682,7 @@ public class Mappings {
           myClassToSourceFile.replaceAll(delta.myClassToSourceFile);
           mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
           delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassFileRepr>>() {
+            @Override
             public boolean execute(File src, Collection<ClassFileRepr> classes) {
               for (ClassFileRepr repr : classes) {
                 if (repr instanceof ClassRepr) {
@@ -2756,6 +2746,7 @@ public class Mappings {
   public Callbacks.Backend getCallback() {
     return new Callbacks.Backend() {
 
+      @Override
       public void associate(String classFileName, Collection<String> sources, ClassReader cr) {
         synchronized (myLock) {
           final int classFileNameS = myContext.get(classFileName);
@@ -2786,6 +2777,7 @@ public class Mappings {
         }
       }
 
+      @Override
       public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
         associate(classFileName, Collections.singleton(sourceFileName), cr);
       }

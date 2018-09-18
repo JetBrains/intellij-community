@@ -80,9 +80,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
           URL url = new URL(descriptionDirectory.toExternalForm() + "/" +
                             prefix + "." + extension + (i == 0 ? "" : Integer.toString(i)) +
                             suffix);
-          try {
-            InputStream inputStream = url.openStream();
-            inputStream.close();
+          try (InputStream inputStream = url.openStream()) {
             urls.add(new ResourceTextDescriptor(url));
           }
           catch (IOException ioe) {

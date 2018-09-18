@@ -71,7 +71,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return findCompiledElement(module, scope -> JavaFileManager.getInstance(myProject).findModules(module.getName(), scope));
   }
 
-  private <T extends PsiElement> T findCompiledElement(T original, Function<GlobalSearchScope, Collection<T>> candidateFinder) {
+  private <T extends PsiElement> T findCompiledElement(T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
     PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) {
       @SuppressWarnings("unchecked") T t = (T)cls;

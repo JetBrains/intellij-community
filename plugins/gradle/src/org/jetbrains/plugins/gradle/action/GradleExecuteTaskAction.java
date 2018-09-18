@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.action;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -43,6 +30,7 @@ import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.ParsedCommandLine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
 import org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService;
 import org.jetbrains.plugins.gradle.service.task.GradleRunTaskDialog;
@@ -59,13 +47,14 @@ import java.util.Map;
 public class GradleExecuteTaskAction extends ExternalSystemAction {
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     if (!super.isVisible(e)) return false;
     final ExternalProjectsView projectsView = ExternalSystemDataKeys.VIEW.getData(e.getDataContext());
     return projectsView == null || GradleConstants.SYSTEM_ID.equals(getSystemId(e));
   }
 
-  protected boolean isEnabled(AnActionEvent e) {
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return true;
   }
 
@@ -111,9 +100,16 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
     historyService.addCommand(fullCommandLine, workDirectory);
 
+    runGradle(project, null, workDirectory, fullCommandLine);
+  }
+
+  public static void runGradle(@NotNull Project project,
+                               @Nullable Executor executor,
+                               @NotNull String workDirectory,
+                               @NotNull String fullCommandLine) {
     final ExternalTaskExecutionInfo taskExecutionInfo;
     try {
-      taskExecutionInfo = buildTaskInfo(workDirectory, fullCommandLine);
+      taskExecutionInfo = buildTaskInfo(workDirectory, fullCommandLine, executor);
     }
     catch (CommandLineArgumentException ex) {
       final NotificationData notificationData = new NotificationData(
@@ -143,7 +139,9 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     }
   }
 
-  private static ExternalTaskExecutionInfo buildTaskInfo(@NotNull String projectPath, @NotNull String fullCommandLine)
+  private static ExternalTaskExecutionInfo buildTaskInfo(@NotNull String projectPath,
+                                                         @NotNull String fullCommandLine,
+                                                         @Nullable Executor executor)
     throws CommandLineArgumentException {
     CommandLineParser gradleCmdParser = new CommandLineParser();
 
@@ -176,7 +174,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     settings.setScriptParameters(scriptParameters);
     settings.setVmOptions(vmOptions);
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
-    return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
+    return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
   }
 
   private static String obtainAppropriateWorkingDirectory(AnActionEvent e) {

@@ -21,6 +21,7 @@ package git4idea;
  *
  * @author Kirill Likhodedov
  */
+@Deprecated
 public class GitExecutionException extends RuntimeException {
   
   public GitExecutionException(String message, Throwable cause) {

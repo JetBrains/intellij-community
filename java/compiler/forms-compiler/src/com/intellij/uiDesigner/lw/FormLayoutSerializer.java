@@ -16,16 +16,16 @@
 
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.CellConstraints;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.RowSpec;
+import org.jdom.Element;
 
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author yole
@@ -43,6 +43,7 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
     CellConstraints.TOP, CellConstraints.CENTER, CellConstraints.BOTTOM, CellConstraints.FILL
   };
 
+  @Override
   void readLayout(Element element, LwContainer container) {
     FormLayout layout = new FormLayout();
     final List rowSpecs = element.getChildren(UIFormXmlConstants.ELEMENT_ROWSPEC, element.getNamespace());
@@ -85,6 +86,7 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
     return groups;
   }
 
+  @Override
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
     super.readChildConstraints(constraintsElement, component);
     CellConstraints cc = new CellConstraints();

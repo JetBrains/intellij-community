@@ -53,7 +53,7 @@
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
 
-    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+    <postStartupActivity implementation="com.intellij.completion.NotificationManager"/>
 
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>

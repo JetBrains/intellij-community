@@ -2,11 +2,18 @@
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
+import java.io.IOException
 
-private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: "git").also {
-  val gitVersion = listOf("git", "--version").execute(File(System.getProperty("user.dir")), true)
-  if (gitVersion.isBlank()) throw IllegalStateException("Git is not found")
-  log(gitVersion)
+private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
+  val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
+  try {
+    val gitVersion = listOf(it, "--version").execute(File(System.getProperty("user.dir")), true)
+    if (gitVersion.isBlank()) throw IllegalStateException(noGitFound)
+    log(gitVersion)
+  }
+  catch (e: IOException) {
+    throw IllegalStateException(noGitFound, e)
+  }
 }
 
 /**
@@ -26,6 +33,7 @@ private fun listGitTree(
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
+  listOf(GIT, "pull", "--rebase").execute(repo)
   return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .execute(repo).trim().lineSequence()
     .filter { it.isNotBlank() }.map { line ->
@@ -91,13 +99,67 @@ internal fun findGitRepoRoot(path: String, silent: Boolean = false): File = File
 
 internal fun addChangesToGit(files: List<String>, repo: File) {
   // OS has argument length limit
-  files.split(1000).forEach {
-    (listOf(GIT, "add") + it).execute(repo, true)
+  splitAndTry(1000, files, repo)
+}
+
+private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
+  log("Executing git add for ${repo.absolutePath} in batches with $factor elements each")
+  files.split(factor).forEach {
+    try {
+      (listOf(GIT, "add") + it).execute(repo, true)
+    }
+    catch (e: Exception) {
+      val finerFactor: Int = factor / 2
+      if (finerFactor < 1) throw e
+      log("Git add command failed with ${e.message}")
+      splitAndTry(finerFactor, files, repo)
+    }
   }
 }
 
-internal fun latestChangeTime(file: String, repo: File) =
-  listOf(GIT, "log", "--max-count", "1", "--format=%cd", "--date=raw", "--", file)
-    .execute(repo, true)
-    .splitWithSpace()
-    .let { if (it.isEmpty()) -1 else it[0].toLong() }
+/**
+ * see [https://stackoverflow.com/questions/8475448/find-merge-commit-which-include-a-specific-commit]
+ *
+ * @return latest commit (or merge) time
+ */
+internal fun latestChangeTime(file: String, repo: File): Long {
+  // latest commit for file
+  val commit = commitInfo(repo, "--", file)
+  if (commit.timestamp <= 0) return -1
+  // list commits that are both descendants of commit hash and ancestors of HEAD
+  val ancestryPathList = listOf(GIT, "rev-list", "${commit.hash}..HEAD", "--ancestry-path")
+    .execute(repo, true).lineSequence().filter { it.isNotBlank() }
+  // follow only the first parent commit upon seeing a merge commit
+  val firstParentList = listOf(GIT, "rev-list", "${commit.hash}..HEAD", "--first-parent")
+    .execute(repo, true).lineSequence().filter { it.isNotBlank() }.toSet()
+  // latest merge commit
+  val mergeCommit = ancestryPathList
+    // last common commit is the latest merge
+    .lastOrNull { firstParentList.contains(it) }
+    ?.let { commitInfo(repo, it) }
+    // should be merge
+    ?.takeIf { it.isMerge }
+  return Math.max(commit.timestamp, mergeCommit?.timestamp ?: -1)
+}
+
+private fun commitInfo(repo: File, vararg args: String): CommitInfo {
+  val output = listOf(GIT, "log", "--max-count", "1", "--format=%H/%cd/%P", "--date=raw", *args)
+    .execute(repo, true).splitNotBlank("/")
+  // <hash>/<timestamp> <timezone>/<parent hashes>
+  return if (output.size != 3) {
+    CommitInfo()
+  }
+  else {
+    CommitInfo(
+      hash = output[0],
+      timestamp = output[1].splitWithSpace()[0].toLong(),
+      isMerge = output[2].splitWithSpace().size > 1
+    )
+  }
+}
+
+private class CommitInfo(
+  val hash: String = "",
+  val timestamp: Long = -1,
+  val isMerge: Boolean = false
+)

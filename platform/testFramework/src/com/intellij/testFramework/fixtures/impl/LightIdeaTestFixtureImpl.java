@@ -3,10 +3,8 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -23,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("TestOnlyProblems")
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
-  private CodeStyleSettings myOldCodeStyleSettings;
-  private CodeInsightSettings myOldCodeInsightSettings;
   private SdkLeakTracker myOldSdks;
+  private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
   public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -39,9 +36,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-    myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
-    myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-    myOldCodeInsightSettings = CodeInsightSettings.getInstance().clone();
+    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
 
     application.setDataProvider(new TestDataProvider(getProject()));
     myOldSdks = new SdkLeakTracker();
@@ -51,26 +46,21 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   public void tearDown() {
     Project project = getProject();
     CodeStyle.dropTemporarySettings(project);
-    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
-    myOldCodeStyleSettings = null;
-    CodeInsightSettings oldCodeInsightSettings = myOldCodeInsightSettings;
-    myOldCodeInsightSettings = null;
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> {
-        if (oldCodeStyleSettings != null) {
-          // Android Studio: modified by Change I6efe813d / commit f5dba73
-          UsefulTestCase.checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
-        }
-        if (oldCodeInsightSettings != null) {
-          // Android Studio: added by Change I6efe813d / commit f5dba73
-          UsefulTestCase.checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance());
+        if (myCodeStyleSettingsTracker != null) {
+          myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
-      .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
+      .append(() -> {
+        if (project != null) {
+          LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
+        }
+      })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> {
         SdkLeakTracker oldSdks = myOldSdks;

@@ -44,7 +44,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   @Override
-  protected PsiFile createFile(String name, String text) {
+  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     PsiFile file = super.createFile(name, text);
     file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, myLanguageLevel);
     return file;

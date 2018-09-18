@@ -260,8 +260,8 @@ fun OutMessage.writeBoolean(name: String, value: Boolean) {
   writer.name(name).value(value)
 }
 
-fun OutMessage.writeDouble(name: String, value: Double, defaultValue: Double) {
-  if (value != defaultValue) {
+fun OutMessage.writeDouble(name: String, value: Double?, defaultValue: Double?) {
+  if (value != null && value != defaultValue) {
     writeDouble(name, value)
   }
 }

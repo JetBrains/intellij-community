@@ -21,7 +21,6 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import java.util.HashMap;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,8 @@ public abstract class SourceScope {
   public abstract Project getProject();
   public abstract GlobalSearchScope getLibrariesScope();
 
-  public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {
+  @NotNull
+  private static Map<Module, Collection<Module>> buildAllDependencies(@NotNull Project project) {
     Graph<Module> graph = ModuleManager.getInstance(project).moduleGraph();
     Map<Module, Collection<Module>> result = new HashMap<>();
     for (final Module module : graph.getNodes()) {
@@ -45,7 +45,7 @@ public abstract class SourceScope {
     return result;
   }
 
-  private static void buildDependenciesForModule(final Module module, final Graph<Module> graph, Map<Module, Collection<Module>> map) {
+  private static void buildDependenciesForModule(@NotNull Module module, final Graph<Module> graph, Map<Module, Collection<Module>> map) {
     final Set<Module> deps = new HashSet<>();
     map.put(module, deps);
 
@@ -65,10 +65,11 @@ public abstract class SourceScope {
   private abstract static class ModuleSourceScope extends SourceScope {
     private final Project myProject;
 
-    protected ModuleSourceScope(final Project project) {
+    ModuleSourceScope(final Project project) {
       myProject = project;
     }
 
+    @Override
     public Project getProject() {
       return myProject;
     }
@@ -77,18 +78,22 @@ public abstract class SourceScope {
 
   public static SourceScope wholeProject(final Project project) {
     return new SourceScope() {
+      @Override
       public GlobalSearchScope getGlobalSearchScope() {
         return GlobalSearchScope.allScope(project);
       }
 
+      @Override
       public Project getProject() {
         return project;
       }
 
+      @Override
       public Module[] getModulesToCompile() {
         return ModuleManager.getInstance(project).getModules();
       }
 
+      @Override
       public GlobalSearchScope getLibrariesScope() {
         return getGlobalSearchScope();
       }
@@ -98,22 +103,17 @@ public abstract class SourceScope {
   public static SourceScope modulesWithDependencies(final Module[] modules) {
     if (modules == null || modules.length == 0) return null;
     return new ModuleSourceScope(modules[0].getProject()) {
+      @Override
       public GlobalSearchScope getGlobalSearchScope() {
-        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-          public GlobalSearchScope evaluate(final Module module) {
-            return GlobalSearchScope.moduleWithDependenciesScope(module);
-          }
-        });
+        return evaluateScopesAndUnite(modules, module -> module.getModuleRuntimeScope(true));
       }
 
+      @Override
       public GlobalSearchScope getLibrariesScope() {
-        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-          public GlobalSearchScope evaluate(final Module module) {
-            return new ModuleWithDependenciesAndLibsDependencies(module);
-          }
-        });
+        return evaluateScopesAndUnite(modules, module -> new ModuleWithDependenciesAndLibsDependencies(module));
       }
 
+      @Override
       public Module[] getModulesToCompile() {
         return modules;
       }
@@ -136,22 +136,17 @@ public abstract class SourceScope {
   public static SourceScope modules(final Module[] modules) {
     if (modules == null || modules.length == 0) return null;
     return new ModuleSourceScope(modules[0].getProject()) {
+      @Override
       public GlobalSearchScope getGlobalSearchScope() {
-        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-          public GlobalSearchScope evaluate(final Module module) {
-            return GlobalSearchScope.moduleScope(module);
-          }
-        });
+        return evaluateScopesAndUnite(modules, module -> GlobalSearchScope.moduleScope(module));
       }
 
+      @Override
       public GlobalSearchScope getLibrariesScope() {
-        return evaluateScopesAndUnite(modules, new ScopeForModuleEvaluator() {
-          public GlobalSearchScope evaluate(final Module module) {
-            return GlobalSearchScope.moduleWithLibrariesScope(module);
-          }
-        });
+        return evaluateScopesAndUnite(modules, module -> GlobalSearchScope.moduleWithLibrariesScope(module));
       }
 
+      @Override
       public Module[] getModulesToCompile() {
         return modules;
       }
@@ -164,21 +159,22 @@ public abstract class SourceScope {
     private final GlobalSearchScope myMainScope;
     private final List<GlobalSearchScope> myScopes = new ArrayList<>();
 
-    public ModuleWithDependenciesAndLibsDependencies(final Module module) {
+    ModuleWithDependenciesAndLibsDependencies(final Module module) {
       super(module.getProject());
       myMainScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
       final Map<Module, Collection<Module>> map = buildAllDependencies(module.getProject());
-      if (map == null) return;
       final Collection<Module> modules = map.get(module);
       for (final Module dependency : modules) {
         myScopes.add(GlobalSearchScope.moduleWithLibrariesScope(dependency));
       }
     }
 
+    @Override
     public boolean contains(@NotNull final VirtualFile file) {
       return findScopeFor(file) != null;
     }
 
+    @Override
     public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
       final GlobalSearchScope scope = findScopeFor(file1);
       assert scope != null;
@@ -196,6 +192,7 @@ public abstract class SourceScope {
       return true;
     }
 
+    @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return myMainScope.getUnloadedModulesBelongingToScope();

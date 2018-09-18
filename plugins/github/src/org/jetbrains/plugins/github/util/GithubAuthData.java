@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Aleksey Pivovarov
  */
+@Deprecated
 public class GithubAuthData {
   public enum AuthType {BASIC, TOKEN, ANONYMOUS}
 

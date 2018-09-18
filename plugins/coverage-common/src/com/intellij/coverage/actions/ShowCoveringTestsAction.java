@@ -40,6 +40,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,7 +62,8 @@ public class ShowCoveringTestsAction extends AnAction {
     myLineData = lineData;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext context = e.getDataContext();
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
@@ -152,7 +154,7 @@ public class ShowCoveringTestsAction extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE) {

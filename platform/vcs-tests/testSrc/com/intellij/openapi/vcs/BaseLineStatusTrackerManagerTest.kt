@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,6 +34,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
@@ -102,5 +104,9 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   protected fun Range.assertChangeList(listName: String) {
     val localRange = this as PartialLocalLineStatusTracker.LocalRange
     assertEquals(listName, localRange.changelistId.asListIdToName())
+  }
+
+  protected fun PartialLocalLineStatusTracker.assertExcludedState(expected: ExclusionState, listName: String) {
+    assertEquals(expected, getExcludedFromCommitState(listName.asListNameToId()))
   }
 }

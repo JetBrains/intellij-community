@@ -18,12 +18,11 @@ package org.fest.swing.core
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
-import org.fest.swing.edt.GuiTask
+import org.fest.swing.edt.GuiQuery
 import org.fest.swing.hierarchy.ExistingHierarchy
 import org.fest.swing.keystroke.KeyStrokeMap
 import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
-import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Point
@@ -107,11 +106,14 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
     if (attempts == 0) return
     waitFor { c.isShowing }
-    val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
-    moveMouse(p.x, p.y)
-    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
+
+    val componentLocation: Point = requireNotNull(performOnEdt { AWT.translate(c, x, y) })
+    moveMouse(componentLocation.x, componentLocation.y)
+
+    val componentLocationAfterMove: Point = requireNotNull(performOnEdt { AWT.translate(c, x, y) })
     val mouseLocation = MouseInfo.getPointerInfo().location
-    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
+    if (mouseLocation.x != componentLocationAfterMove.x || mouseLocation.y != componentLocationAfterMove.y)
+      moveMouseWithAttempts(c, x, y, attempts - 1)
   }
 
   private fun myInnerClick(button: MouseButton, times: Int, point: Point, component: Component?) {
@@ -204,16 +206,10 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     waitForIdle()
   }
 
-  private fun performOnEdt(body: () -> Unit) {
-    if (!EdtInvocationManager.getInstance().isEventDispatchThread)
-      GuiActionRunner.execute(object : GuiTask() {
-        override fun executeInEDT() {
-          body.invoke()
-        }
-      })
-    else
-      body.invoke()
-  }
+  private fun <T> performOnEdt(body: () -> T): T? =
+    GuiActionRunner.execute(object : GuiQuery<T>() {
+      override fun executeInEDT() = body.invoke()
+    })
 
   private fun awareClick(body: () -> Unit) {
     myAwareClick = true

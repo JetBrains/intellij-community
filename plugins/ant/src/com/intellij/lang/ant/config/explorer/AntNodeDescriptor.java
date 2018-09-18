@@ -30,6 +30,7 @@ abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanc
 
   public abstract boolean isAutoExpand();
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     component.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
@@ -39,6 +40,7 @@ abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanc
     renderer.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return toString();

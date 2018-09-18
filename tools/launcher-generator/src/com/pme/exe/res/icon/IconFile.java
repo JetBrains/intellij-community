@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.pme.exe.res.LevelEntry;
 import java.io.*;
 
 /**
+ * @author Sergey Zhulin
  * Date: Apr 27, 2006
  * Time: 12:52:09 PM
  */

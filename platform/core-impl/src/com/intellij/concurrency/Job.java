@@ -28,9 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public interface Job<T> {
-  // the lower the priority the more important the task is
-  @Deprecated
-  int DEFAULT_PRIORITY = 100;
 
   String getTitle();
 

@@ -46,17 +46,6 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
   }
 
 
-  @Deprecated
-  public boolean updateDescription(boolean modified) {
-    EditorColorsScheme scheme = myOptions.getSelectedScheme();
-
-    if (modified && ColorAndFontOptions.isReadOnly(scheme)) {
-      return false;
-    }
-
-    return true;
-  }
-
   public void resetSchemesCombo(final Object source) {
     if (this != source) {
       setListLoaded(false);

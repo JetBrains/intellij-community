@@ -370,10 +370,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return null;
     }
 
-    @Override
-    public char getCheckBoxMnemonic() {
-      return 0;
-    }
 
     @Override
     public String getNotInMessage() {

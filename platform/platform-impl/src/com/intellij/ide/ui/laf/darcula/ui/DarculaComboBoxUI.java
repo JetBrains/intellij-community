@@ -105,6 +105,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     };
   }
 
+  @Override
   protected JButton createArrowButton() {
     Color bg = comboBox.getBackground();
     Color fg = comboBox.getForeground();
@@ -134,7 +135,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           innerShape.lineTo(lw, r.height - bw - lw);
           innerShape.closePath();
 
-          g2.setColor(getArrowButtonBackgroundColor(comboBox.isEnabled()));
+          g2.setColor(getArrowButtonBackgroundColor(comboBox.isEnabled(), comboBox.isEditable()));
           g2.fill(innerShape);
 
           // Paint vertical line
@@ -163,7 +164,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @SuppressWarnings("unused")
   @Deprecated
   protected Color getArrowButtonFillColor(Color defaultColor) {
-    return getArrowButtonBackgroundColor(comboBox.isEnabled());
+    return getArrowButtonBackgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
 
   @NotNull
@@ -238,6 +239,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return DarculaUIUtil.isTableCellEditor(c);
   }
 
+  @Override
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
     @SuppressWarnings("unchecked") Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
@@ -349,7 +351,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         float arc = COMPONENT_ARC.getFloat();
 
         Object op = comboBox.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (comboBox.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, arc, true, hasFocus, Outline.valueOf(op.toString()));
         } else {
           if (hasFocus) {
@@ -405,6 +407,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected Dimension getSizeWithButton(Dimension size, Dimension editorSize) {
     Insets i = getInsets();
     Dimension abSize = arrowButton.getPreferredSize();
+    if (abSize == null) {
+      abSize = JBUI.emptySize();
+    }
 
     if (isCompact(comboBox) && size != null) {
       JBInsets.removeFrom(size, padding); // don't count paddings in compact mode
@@ -535,6 +540,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
     JBInsets.removeFrom(rect, padding);

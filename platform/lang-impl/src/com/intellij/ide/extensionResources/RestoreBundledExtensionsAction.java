@@ -20,20 +20,21 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public class RestoreBundledExtensionsAction extends DumbAwareAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     boolean isDirectory = file != null && file.isDirectory();
     e.getPresentation().setEnabledAndVisible(isDirectory && ExtensionsRootType.getInstance().getPath(file) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ExtensionsRootType extensionsRootType = ExtensionsRootType.getInstance();
 
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());

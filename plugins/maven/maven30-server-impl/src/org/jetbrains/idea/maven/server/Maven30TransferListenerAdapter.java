@@ -15,8 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.sonatype.aether.transfer.TransferCancelledException;
 import org.sonatype.aether.transfer.TransferEvent;
 import org.sonatype.aether.transfer.TransferListener;
@@ -38,7 +37,7 @@ public class Maven30TransferListenerAdapter implements TransferListener {
 
   private void checkCanceled() {
     try {
-      if (myIndicator.isCanceled()) throw new ProcessCanceledException();
+      if (myIndicator.isCanceled()) throw new MavenProcessCanceledRuntimeException();
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
@@ -79,9 +78,9 @@ public class Maven30TransferListenerAdapter implements TransferListener {
 
     String sizeInfo;
     if (totalLength <= 0) {
-      sizeInfo = StringUtil.formatFileSize(event.getTransferredBytes()) + " / ?";
+      sizeInfo = StringUtilRt.formatFileSize(event.getTransferredBytes()) + " / ?";
     } else {
-      sizeInfo = StringUtil.formatFileSize(event.getTransferredBytes()) + " / " + StringUtil.formatFileSize(totalLength);
+      sizeInfo = StringUtilRt.formatFileSize(event.getTransferredBytes()) + " / " + StringUtilRt.formatFileSize(totalLength);
     }
 
     try {
@@ -113,7 +112,7 @@ public class Maven30TransferListenerAdapter implements TransferListener {
   @Override
   public void transferSucceeded(TransferEvent event) {
     try {
-      myIndicator.setText2("Finished (" + StringUtil.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
+      myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
     }
     catch (RemoteException e) {

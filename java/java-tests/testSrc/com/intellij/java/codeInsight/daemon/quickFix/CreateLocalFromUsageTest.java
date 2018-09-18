@@ -15,7 +15,6 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
@@ -23,28 +22,16 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
  * @author ven
  */
 public class CreateLocalFromUsageTest extends LightQuickFixParameterizedTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS =
-      getTestName(true).contains("final");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS = false;
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createLocalFromUsage";
   }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = getTestName(true).contains("final");
+  }
+
+  public void test() { doAllTests(); }
 }

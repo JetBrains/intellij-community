@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 class SwitchPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;

@@ -254,7 +254,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     }
 
     @Override
-    protected void updateImpl(PresentationData data) {
+    protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
       PsiDirectory psiDirectory = getValue();
       assert psiDirectory != null;
@@ -276,7 +276,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     }
 
     @Override
-    public void update(PresentationData presentation) {
+    public void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setPresentableText(myModuleShortName);
       presentation.addText(myModuleShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

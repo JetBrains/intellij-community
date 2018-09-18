@@ -68,18 +68,6 @@ public abstract class DiffWindowBase {
   protected abstract DiffRequestProcessor createProcessor();
 
   //
-  // Delegate
-  //
-
-  protected void setWindowTitle(@NotNull String title) {
-    myWrapper.setTitle(title);
-  }
-
-  protected void onAfterNavigate() {
-    DiffUtil.closeWindow(myWrapper.getWindow(), true, true);
-  }
-
-  //
   // Getters
   //
 

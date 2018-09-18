@@ -91,7 +91,7 @@ public class BasicJarHandler extends ZipHandlerBase {
     LOG.trace(msg);
   }
   
-  public static void closeOpenedZipReferences() {
+  static void closeOpenedZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
       ourOpenFileLimitGuard.keySet().forEach(BasicJarHandler::dispose);
     }
@@ -184,6 +184,7 @@ public class BasicJarHandler extends ZipHandlerBase {
       return myFileSystem.isMakeCopyOfJar(file) ? 2000 : 5 * 60 * 1000;
     }
 
+    @NotNull
     @Override
     public ZipFile get() {
       assert myLock.isLocked();

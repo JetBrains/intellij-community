@@ -177,6 +177,12 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return myInfo.getBranchTrackInfos();
   }
 
+  @Nullable
+  @Override
+  public GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
+    return myInfo.getBranchTrackInfosMap().get(localBranchName);
+  }
+
   @Override
   public boolean isRebaseInProgress() {
     return getState() == State.REBASING;

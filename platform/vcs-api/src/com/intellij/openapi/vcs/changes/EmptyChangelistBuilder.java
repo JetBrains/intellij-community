@@ -28,12 +28,15 @@ import javax.swing.*;
  * @author yole
  */
 public class EmptyChangelistBuilder implements ChangelistBuilder {
+  @Override
   public void processChange(final Change change, VcsKey vcsKey) {
   }
 
+  @Override
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
   }
 
+  @Override
   public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
   }
 
@@ -41,33 +44,43 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public void removeRegisteredChangeFor(FilePath path) {
   }
 
+  @Override
   public void processUnversionedFile(final VirtualFile file) {
   }
 
+  @Override
   public void processLocallyDeletedFile(final FilePath file) {
   }
 
+  @Override
   public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
   }
 
+  @Override
   public void processModifiedWithoutCheckout(final VirtualFile file) {
   }
 
+  @Override
   public void processIgnoredFile(final VirtualFile file) {
   }
 
+  @Override
   public void processLockedFolder(final VirtualFile file) {
   }
 
+  @Override
   public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
   }
 
+  @Override
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
   }
 
+  @Override
   public void processRootSwitch(VirtualFile file, String branch) {
   }
 
+  @Override
   public boolean reportChangesOutsideProject() {
     return false;
   }

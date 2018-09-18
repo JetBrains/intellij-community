@@ -17,7 +17,7 @@ public class GradleSyncOutputParser implements BuildOutputParser {
   private static final String WARNING_PREFIX = "[sync warning]";
 
   @Override
-  public boolean parse(String line, BuildOutputInstantReader reader, Consumer<MessageEvent> messageConsumer) {
+  public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super MessageEvent> messageConsumer) {
     MessageEvent.Kind kind = MessageEvent.Kind.ERROR;
     String prefix = ERROR_PREFIX;
     int prefixIndex = line.indexOf(ERROR_PREFIX);

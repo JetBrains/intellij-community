@@ -48,7 +48,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     final Artifact artifact = myArtifactEditor.getArtifact();
     if (!myArtifact.equals(artifact)) {
       myArtifact = artifact;

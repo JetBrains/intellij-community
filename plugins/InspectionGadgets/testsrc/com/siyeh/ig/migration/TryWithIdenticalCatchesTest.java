@@ -17,12 +17,21 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase {
+  private static final String PATH = "com/siyeh/igtest/errorhandling/try_identical_catches/";
+  private static final String HINT = "Collapse 'catch' blocks";
+
   public void testTryIdenticalCatches() {
     doTest();
   }
@@ -32,23 +41,67 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testMethodQualifier() {
-    highlightTest();
+    highlightTest(false);
+  }
+
+  public void testIdenticalCatchUnrelatedExceptions() {
+    doTest();
+  }
+
+  public void testIdenticalCatchThreeOutOfFour() {
+    doTest(true, false);
+  }
+
+  public void testIdenticalCatchWithComments() {
+    doTest();
+  }
+
+  public void testIdenticalCatchWithEmptyComments() {
+    doTest();
+  }
+
+  public void testIdenticalCatchWithDifferentComments() {
+    doTest(false, true);
+  }
+
+  public void testIdenticalCatchDifferentCommentStyle() {
+    doTest();
   }
 
   public void doTest() {
-    highlightTest();
-    String name = getTestName(false);
-    IntentionAction intention = myFixture.findSingleIntention("Collapse 'catch' blocks");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".after.java");
+    doTest(false, false);
   }
 
-  private void highlightTest() {
+  public void doTest(boolean processAll, boolean checkInfos) {
+    highlightTest(checkInfos);
+    String name = getTestName(false);
+    if (processAll) {
+      PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiTryStatement.class);
+      assertNotNull("tryStatement", tryStatement);
+      PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+      List<IntentionAction> intentions = new ArrayList<>();
+      for (PsiCatchSection section : catchSections) {
+        getEditor().getCaretModel().moveToOffset(section.getTextOffset());
+        intentions.addAll(myFixture.filterAvailableIntentions(HINT));
+      }
+      assertFalse("intentions.isEmpty", intentions.isEmpty());
+      for (IntentionAction intention : intentions) {
+        myFixture.launchAction(intention);
+      }
+    }
+    else {
+      IntentionAction intention = myFixture.findSingleIntention(HINT);
+      assertNotNull(intention);
+      myFixture.launchAction(intention);
+    }
+    myFixture.checkResultByFile(PATH + name + ".after.java");
+  }
+
+  private void highlightTest(boolean checkInfos) {
     String name = getTestName(false);
     myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
-    myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".java");
-    myFixture.checkHighlighting(true, false, false);
+    myFixture.configureByFile(PATH + name + ".java");
+    myFixture.checkHighlighting(true, checkInfos, false);
   }
 
   @Override

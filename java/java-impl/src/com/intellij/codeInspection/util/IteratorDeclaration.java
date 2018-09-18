@@ -102,7 +102,7 @@ public class IteratorDeclaration {
     PsiElement element = declaration.getDeclaredElements()[0];
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable variable = (PsiLocalVariable)element;
-    PsiExpression initializer = variable.getInitializer();
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (!(initializer instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
     if (!call.getArgumentList().isEmpty()) return null;

@@ -75,6 +75,7 @@ public interface PropertiesFile {
    * @deprecated
    * @see #addProperty(String, String)
    */
+  @Deprecated
   @NotNull PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 
   /**

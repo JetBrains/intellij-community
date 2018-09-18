@@ -65,7 +65,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     presentation.setEnabled(false);
@@ -92,7 +92,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);

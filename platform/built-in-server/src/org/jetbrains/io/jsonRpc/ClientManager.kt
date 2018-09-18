@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc
 
 import com.intellij.openapi.Disposable
@@ -30,7 +31,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
   }
 
-  val clientCount: Int
+  private val clientCount: Int
     get() = synchronized (clients) { clients.size }
 
   fun hasClients(): Boolean = clientCount > 0
@@ -72,7 +73,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
 
     try {
-      channel.attr(CLIENT).remove()
+      channel.attr(CLIENT).set(null)
 
       if (closeChannel) {
         channel.close()

@@ -34,7 +34,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
   private static final int BORDER_SIZE = 2;
 
-  @NotNull private final String myName;
+  @NotNull protected final String myName;
   @NotNull private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
 

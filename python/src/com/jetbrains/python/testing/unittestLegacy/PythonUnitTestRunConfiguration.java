@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.unittestLegacy;
 
 import com.intellij.execution.ExecutionException;
@@ -82,22 +80,27 @@ public class PythonUnitTestRunConfiguration extends
     return myIsPureUnittest;
   }
 
+  @Override
   public void setPureUnittest(boolean isPureUnittest) {
     myIsPureUnittest = isPureUnittest;
   }
 
+  @Override
   public String getParams() {
     return myParams;
   }
 
+  @Override
   public void setParams(String pattern) {
     myParams = pattern;
   }
 
+  @Override
   public boolean useParam() {
     return useParam;
   }
 
+  @Override
   public void useParam(boolean useParam) {
     this.useParam = useParam;
   }

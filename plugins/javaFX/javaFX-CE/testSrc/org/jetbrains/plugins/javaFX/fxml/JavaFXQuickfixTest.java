@@ -159,15 +159,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
                                            final String inputName,
                                            final String defaultVisibility,
                                            final String extension) {
-    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
-    String savedVisibility = settings.VISIBILITY;
-    try {
-      settings.VISIBILITY = defaultVisibility;
-      doTest(actionName, inputName, getTestName(false), extension);
-    }
-    finally {
-      settings.VISIBILITY = savedVisibility;
-    }
+    JavaCodeStyleSettings.getInstance(getProject()).VISIBILITY = defaultVisibility;
+    doTest(actionName, inputName, getTestName(false), extension);
   }
 
   private void doTest(final String actionName, final String extension) {

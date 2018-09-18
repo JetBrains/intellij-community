@@ -51,7 +51,7 @@ public class VfsTestUtil {
   @NotNull
   private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, String text, boolean dir) {
     try {
-      return WriteAction.compute(() -> {
+      return WriteAction.computeAndWait(() -> {
         VirtualFile parent = root;
         for (String name : StringUtil.tokenize(PathUtil.getParentPath(relativePath), "/")) {
           VirtualFile child = parent.findChild(name);

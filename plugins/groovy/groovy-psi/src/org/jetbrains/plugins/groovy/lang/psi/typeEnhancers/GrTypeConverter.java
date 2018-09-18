@@ -69,7 +69,6 @@ public abstract class GrTypeConverter {
     return false;
   }
 
-  @SuppressWarnings("deprecation")
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
     switch (position) {
       case EXPLICIT_CAST:
@@ -77,6 +76,7 @@ public abstract class GrTypeConverter {
       case ASSIGNMENT:
         return true;
       case METHOD_PARAMETER:
+        //noinspection deprecation
         return isAllowedInMethodCall();
       case RETURN_VALUE:
         return true;
@@ -102,12 +102,12 @@ public abstract class GrTypeConverter {
    * @param context    context
    * @return {@link ConversionResult conversion result }
    */
-  @SuppressWarnings("deprecation")
   @Nullable
   public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
+    //noinspection deprecation
     final Boolean result = isConvertible(targetType, actualType, context);
     return result == null ? null
                           : result ? ConversionResult.OK

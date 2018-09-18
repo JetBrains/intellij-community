@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -70,7 +71,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @NotNull
   protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<ConfigurationFromContext> configurations) {
+                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
     if (configurations.size() <= 1) {
       return Collections.emptyList();
     }
@@ -80,7 +81,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       final String actionName = childActionName(fromContext);
       final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           perform(fromContext, context);
         }
       };
@@ -111,7 +112,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
-  public boolean canBePerformed(DataContext dataContext) {
+  public boolean canBePerformed(@NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && DumbService.isDumb(project)) {
       return false;
@@ -127,8 +128,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
@@ -182,7 +184,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected abstract void perform(ConfigurationContext context);
 
   @Override
-  public void update(final AnActionEvent event){
+  public void update(@NotNull final AnActionEvent event){
     final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
     final Presentation presentation = event.getPresentation();
     final RunnerAndConfigurationSettings existing = context.findExisting();

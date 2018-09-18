@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,14 +22,15 @@ import java.util.Collections;
 public class ApplyPatchFromClipboardAction extends DumbAwareAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     String text = ClipboardUtil.getTextInClipboard();
     // allow to apply from clipboard even if we do not detect it as a patch, because during applying we parse content more precisely
     e.getPresentation().setEnabled(project != null && text != null && ChangeListManager.getInstance(project).isFreezed() == null);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
     FileDocumentManager.getInstance().saveAllDocuments();

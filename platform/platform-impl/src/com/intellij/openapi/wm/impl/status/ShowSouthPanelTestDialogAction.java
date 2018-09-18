@@ -31,7 +31,7 @@ import java.awt.event.ActionEvent;
 
 public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     new MyDialogWrapper(e.getProject()).show();
   }
 
@@ -103,12 +103,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
 
     private void refreshSouthPanel() {
       mySouthPanel.setContent(super.createSouthPanel());
-    }
-
-    @Nullable
-    @Override
-    protected String getHelpId() {
-      return "help.id";
     }
 
     @NotNull

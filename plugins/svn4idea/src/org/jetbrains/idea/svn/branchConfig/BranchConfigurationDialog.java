@@ -150,6 +150,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       .createPanel();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myTopPanel;

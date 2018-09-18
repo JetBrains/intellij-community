@@ -23,6 +23,7 @@ class ReplaceOperatorAssignmentWithPostfixExpressionPredicate implements PsiElem
 
   private static final Integer ONE = Integer.valueOf(1);
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAssignmentExpression)) {
       return false;

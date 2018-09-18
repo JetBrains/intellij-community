@@ -60,14 +60,17 @@ public class EclipseCompilerConfigurable implements Configurable {
     myOptionsOverride = new CompilerModuleOptionsComponent(myProject);
   }
 
+  @Override
   public String getDisplayName() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified = false;
 
@@ -82,6 +85,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     return isModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myCompilerSettings.DEPRECATION =  myCbDeprecation.isSelected();
     myCompilerSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
@@ -93,6 +97,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
   }
 
+  @Override
   public void reset() {
     myCbDeprecation.setSelected(myCompilerSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myCompilerSettings.DEBUGGING_INFO);

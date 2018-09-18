@@ -284,7 +284,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   }
 
   @TestOnly
-  public boolean processKeys(@NotNull Processor<Key> processor) throws StorageException {
+  public boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map

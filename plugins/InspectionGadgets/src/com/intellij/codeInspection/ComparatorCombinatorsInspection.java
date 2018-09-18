@@ -296,7 +296,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   @Nullable
   private static String generateSimpleCombinator(PsiLambdaExpression lambda,
                                                  PsiParameter leftVar, PsiParameter rightVar) {
-    PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+    PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
     PsiExpression left;
     String methodName = null;
     if (body instanceof PsiMethodCallExpression) {

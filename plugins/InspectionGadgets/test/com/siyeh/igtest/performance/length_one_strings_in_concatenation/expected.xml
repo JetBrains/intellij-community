@@ -55,4 +55,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
     <description>&lt;code&gt;&quot;b&quot;&lt;/code&gt; can be replaced with 'b' #loc</description>
   </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;p&quot;&lt;/code&gt; can be replaced with 'p' #loc</description>
+  </problem>
 </problems>

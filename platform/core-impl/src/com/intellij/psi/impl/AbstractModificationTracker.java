@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Roman.Chernyatchik
  * @deprecated use {@link PsiTreeChangePreprocessorBase} instead
  */
+@Deprecated
 public abstract class AbstractModificationTracker implements PsiTreeChangePreprocessor {
   private final PsiManagerImpl myPsiManager;
   private PsiModificationTrackerImpl myModificationTracker;

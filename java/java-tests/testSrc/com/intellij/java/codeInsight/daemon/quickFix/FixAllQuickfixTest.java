@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -40,6 +41,7 @@ public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new GlobalInspectionToolWrapper(new VisibilityInspection()));
+    enableInspectionTool(new UnusedDeclarationInspection(true));
   }
 
   public void test() { doAllTests(); }

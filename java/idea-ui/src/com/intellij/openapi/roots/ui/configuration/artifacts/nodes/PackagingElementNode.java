@@ -95,7 +95,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     final Collection<ArtifactProblemDescription> problems = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblems(this);
     if (problems == null || problems.isEmpty()) {
       super.update(presentation);

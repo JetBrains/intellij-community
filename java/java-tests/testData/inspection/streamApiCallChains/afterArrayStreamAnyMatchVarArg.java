@@ -1,10 +1,10 @@
-// "Replace with Arrays.asList().contains()" "true"
+// "Replace with List.contains()" "true"
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class Main {
   public boolean find(String key) {
-    return Arrays.asList("foo", "bar", "baz").contains(key);
+    return List.of("foo", "bar", "baz").contains(key);
   }
 }

@@ -117,7 +117,7 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     scheduleScan();
   }
 

@@ -25,6 +25,9 @@ import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl");
 
@@ -49,23 +52,27 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     }
 
     private PackageSet parseUnion() throws ParsingException {
-      PackageSet result = parseIntersection();
+      List<PackageSet> sets = new ArrayList<>();
+      PackageSet set = parseIntersection();
+      sets.add(set);
       while (true) {
         if (myLexer.getTokenType() != ScopeTokenTypes.OROR) break;
         myLexer.advance();
-        result = new UnionPackageSet(result, parseIntersection());
+        sets.add(parseIntersection());
       }
-      return result;
+      return UnionPackageSet.create(sets.toArray(new PackageSet[0]));
     }
 
     private PackageSet parseIntersection() throws ParsingException {
-      PackageSet result = parseTerm();
+      PackageSet set = parseTerm();
+      List<PackageSet> sets = new ArrayList<>();
+      sets.add(set);
       while (true) {
         if (myLexer.getTokenType() != ScopeTokenTypes.ANDAND) break;
         myLexer.advance();
-        result = new IntersectionPackageSet(result, parseTerm());
+        sets.add(parseTerm());
       }
-      return result;
+      return IntersectionPackageSet.create(sets.toArray(new PackageSet[0]));
     }
 
     private PackageSet parseTerm() throws ParsingException {

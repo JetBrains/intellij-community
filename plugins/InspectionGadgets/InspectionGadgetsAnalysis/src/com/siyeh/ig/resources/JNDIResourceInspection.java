@@ -38,6 +38,7 @@ public class JNDIResourceInspection extends ResourceInspection {
     return InspectionGadgetsBundle.message("jndi.resource.opened.not.closed.display.name");
   }
 
+  @Override
   protected boolean isResourceCreation(PsiExpression expression) {
     if (expression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;

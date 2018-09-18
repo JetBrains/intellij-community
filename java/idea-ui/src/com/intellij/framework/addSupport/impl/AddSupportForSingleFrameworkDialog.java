@@ -85,6 +85,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     return new AddSupportForSingleFrameworkDialog(module, provider.getFrameworkType(), provider, container, modifiableModelsProvider);
   }
 
+  @Override
   protected void doOKAction() {
     if (addSupport()) {
       super.doOKAction();
@@ -137,6 +138,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     return "reference.frameworks.support.dialog";//todo[nik]
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myComponent.getMainPanel();
   }

@@ -45,23 +45,28 @@ public class AddWithParamFix extends AbstractFix {
         myName = parameter.getName();
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Add Argument for '" + myName + "'";
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myTag.isValid();
     }
 
+    @Override
     public boolean startInWriteAction() {
         return false;
     }
 
+    @Override
     protected boolean requiresEditor() {
         return true;
     }
 
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
         SmartPsiElementPointer<XmlTag> result = WriteAction.compute(() -> {
             final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);

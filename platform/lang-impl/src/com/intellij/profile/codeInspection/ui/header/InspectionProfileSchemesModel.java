@@ -119,7 +119,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     panel.resetSchemes(allProfiles);
   }
 
-  void apply(InspectionProfileModifiableModel selected, Consumer<InspectionProfileImpl> applyRootProfileAction) {
+  void apply(InspectionProfileModifiableModel selected, Consumer<? super InspectionProfileImpl> applyRootProfileAction) {
     for (InspectionProfileImpl profile : myDeletedProfiles) {
       profile.getProfileManager().deleteProfile(profile);
     }

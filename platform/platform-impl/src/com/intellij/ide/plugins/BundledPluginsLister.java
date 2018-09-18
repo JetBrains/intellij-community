@@ -55,30 +55,26 @@ public class BundledPluginsLister extends ApplicationStarterEx {
       else {
         out = System.out;
       }
-      JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET));
 
-      try {
+      try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET))) {
         IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
 
         List<String> modules = Arrays.stream(plugins)
-          .filter(IdeaPluginDescriptorImpl.class::isInstance)
-          .filter(plugin -> ((IdeaPluginDescriptorImpl)plugin).getModules() != null)
-          .flatMap(plugin -> ((IdeaPluginDescriptorImpl)plugin).getModules().stream())
-          .sorted()
-          .collect(Collectors.toList());
+                                     .filter(IdeaPluginDescriptorImpl.class::isInstance)
+                                     .filter(plugin -> ((IdeaPluginDescriptorImpl)plugin).getModules() != null)
+                                     .flatMap(plugin -> ((IdeaPluginDescriptorImpl)plugin).getModules().stream())
+                                     .sorted()
+                                     .collect(Collectors.toList());
 
         List<String> pluginIds = Arrays.stream(plugins)
-          .map(plugin -> plugin.getPluginId().getIdString())
-          .sorted()
-          .collect(Collectors.toList());
+                                       .map(plugin -> plugin.getPluginId().getIdString())
+                                       .sorted()
+                                       .collect(Collectors.toList());
 
         writer.beginObject();
         writeList(writer, "modules", modules);
         writeList(writer, "plugins", pluginIds);
         writer.endObject();
-      }
-      finally {
-        writer.close();
       }
     }
     catch (IOException e) {

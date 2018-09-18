@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
@@ -382,12 +368,11 @@ public class LightToolWindow extends JPanel {
   private class GearAction extends AnAction {
     GearAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.General.Gear);
-      presentation.setHoveredIcon(AllIcons.General.GearHover);
+      presentation.setIcon(AllIcons.General.GearPlain);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int x = 0;
       int y = 0;
       InputEvent inputEvent = e.getInputEvent();
@@ -423,7 +408,7 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       updateContent(false, true);
     }
   }
@@ -434,12 +419,12 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return !myManager.getToolWindow().isAutoHide();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       window.setAutoHide(!window.isAutoHide());
       myManager.setEditorMode(null);
@@ -452,7 +437,7 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       ToolWindowType type = window.getType();
       if (type == ToolWindowType.DOCKED) {
@@ -486,12 +471,12 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myManager.getToolWindow().getType() == myType;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       ToolWindowType type = window.getType();
       if (type == myType) {
@@ -510,12 +495,12 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myManager.getToolWindow().isSplitMode();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myManager.getToolWindow().setSplitMode(state, null);
       myManager.setEditorMode(null);
     }
@@ -553,13 +538,13 @@ public class LightToolWindow extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(size.width, TabsUtil.getTabsHeight());
+      return new Dimension(size.width, TabsUtil.getTabsHeight(size.height));
     }
 
     @Override
     public Dimension getMinimumSize() {
       Dimension size = super.getMinimumSize();
-      return new Dimension(size.width, TabsUtil.getTabsHeight());
+      return new Dimension(size.width, TabsUtil.getTabsHeight(size.height));
     }
   }
 }

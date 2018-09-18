@@ -65,7 +65,7 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     indicator.checkCanceled();
     List<FineMergeLineFragment> result = new ArrayList<>(lineFragments.size());
     for (MergeLineFragment fragment : lineFragments) {
-      MergeConflictType conflictType = DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, comparisonPolicy);
+      MergeConflictType conflictType = DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
 
       MergeInnerDifferences innerDifferences;
       if (highlightPolicy.isFineFragments()) {

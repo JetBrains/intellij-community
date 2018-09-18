@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
+  @Override
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
     if (queryParameters instanceof PyClass) {
       final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters, true);

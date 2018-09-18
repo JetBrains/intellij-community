@@ -427,6 +427,7 @@ public class RemoteDebuggerClient implements Debugger {
       }
     }
 
+    @Override
     protected StyleFrame createImpl(RemoteDebugger.Frame frame) {
       return create(frame);
     }
@@ -441,6 +442,7 @@ public class RemoteDebuggerClient implements Debugger {
       super(frame);
     }
 
+    @Override
     public SourceFrame createImpl(RemoteDebugger.Frame frame) {
       return create(frame);
     }

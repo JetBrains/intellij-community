@@ -7,8 +7,8 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
@@ -17,8 +17,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Modifier;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -232,6 +232,7 @@ public class AsmCodeGenerator {
       myExplicitSetupCall = explicitSetupCall;
     }
 
+    @Override
     public void visit(final int version,
                       final int access,
                       final String name,
@@ -251,6 +252,7 @@ public class AsmCodeGenerator {
       return myClassName;
     }
 
+    @Override
     public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
 
       if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME) ||
@@ -274,12 +276,14 @@ public class AsmCodeGenerator {
       return methodVisitor != null? new FailSafeMethodVisitor(ASM_API_VERSION, methodVisitor) : null;
     }
 
+    @Override
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       myFieldDescMap.put(name, desc);
       myFieldAccessMap.put(name, new Integer(access));
       return super.visitField(access, name, desc, signature, value);
     }
 
+    @Override
     public void visitEnd() {
       final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(myRootContainer) > 0 &&
                                                  !myIgnoreCustomCreation;
@@ -904,6 +908,7 @@ public class AsmCodeGenerator {
       mySuperName = superName;
     }
 
+    @Override
     public void visitFieldInsn(final int opcode, final String owner, final String name, final String desc) {
       if (opcode == Opcodes.GETFIELD && !mySetupCalled && !callsSelfConstructor && Utils.isBoundField(myRootContainer, name)) {
         callSetupUI();
@@ -911,6 +916,7 @@ public class AsmCodeGenerator {
       super.visitFieldInsn(opcode, owner, name, desc);
     }
 
+    @Override
     public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc, boolean itf) {
       if (opcode == Opcodes.INVOKESPECIAL && name.equals(CONSTRUCTOR_NAME)) {
         if (owner.equals(myClassName)) {
@@ -929,6 +935,7 @@ public class AsmCodeGenerator {
       super.visitMethodInsn(opcode, owner, name, desc, itf);
     }
 
+    @Override
     public void visitJumpInsn(final int opcode, final Label label) {
       if (mySuperCalled) {
         callSetupUI();
@@ -944,6 +951,7 @@ public class AsmCodeGenerator {
       }
     }
 
+    @Override
     public void visitInsn(final int opcode) {
       if (opcode == Opcodes.RETURN && !mySetupCalled && !callsSelfConstructor) {
         callSetupUI();
@@ -959,6 +967,7 @@ public class AsmCodeGenerator {
       super(ASM_API_VERSION, new ClassVisitor(ASM_API_VERSION) {});
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if (name.equals(CONSTRUCTOR_NAME)) {
         return new FirstPassConstructorVisitor();
@@ -975,6 +984,7 @@ public class AsmCodeGenerator {
         super(ASM_API_VERSION, new MethodVisitor(ASM_API_VERSION){});
       }
 
+      @Override
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (name.equals(SETUP_METHOD_NAME)) {
           myExplicitSetupCall = true;

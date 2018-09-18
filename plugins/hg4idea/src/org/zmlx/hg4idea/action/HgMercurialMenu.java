@@ -20,6 +20,7 @@ import org.zmlx.hg4idea.HgVcs;
 
 public class HgMercurialMenu extends StandardVcsGroup {
 
+  @Override
   public AbstractVcs getVcs(Project project) {
     return ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
   }

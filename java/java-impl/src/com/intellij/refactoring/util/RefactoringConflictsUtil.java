@@ -251,6 +251,7 @@ public class RefactoringConflictsUtil {
             !reported.contains(resolved) &&
             !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
             !(resolved instanceof LightElement) &&
+            resolved.isPhysical() &&
             !haveElementInScope(resolved)) {
           if (resolved instanceof PsiMethod) {
             for (PsiMethod superMethod : ((PsiMethod)resolved).findDeepestSuperMethods()) {

@@ -44,6 +44,7 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
         return PlatformIcons.VARIABLE_ICON;
     }
 
+    @Override
     @NotNull
     public XPathType getType() {
         final XPathType declaredType = XsltCodeInsightUtil.getDeclaredType(getTag());
@@ -66,6 +67,7 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
         return value != null ? value.getType() : XPathType.UNKNOWN;
     }
 
+    @Override
     @Nullable
     public XPathExpression getValue() {
         return XsltCodeInsightUtil.getXPathExpression(this, "select");
@@ -92,11 +94,13 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
         return "XPathVariable(XSLT): " + getTag().getValue();
     }
 
+    @Override
     public boolean isVoid() {
         final String name = getName();
         return name != null && "type:void".equals(QNameUtil.createQName(name, getTag()).getNamespaceURI());
     }
 
+  @Override
   public void accept(@NotNull XPathElementVisitor visitor) {
     visitor.visitXPathVariable(this);
   }

@@ -30,6 +30,7 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
     super(set, range, index, text);
   }
 
+  @Override
   @Nullable
   public String getText() {
     final AntDomFileReferenceSet refSet = getFileReferenceSet();
@@ -38,11 +39,13 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
     return text.endsWith("/")? text.substring(0, text.length() - "/".length()) : text;
   }
 
+  @Override
   @NotNull
   public AntDomFileReferenceSet getFileReferenceSet() {
     return (AntDomFileReferenceSet)super.getFileReferenceSet();
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("file.doesnt.exist", getCanonicalRepresentationText());
@@ -54,10 +57,12 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
     return AntStringResolver.computeString(getFileReferenceSet().getAttributeValue(), value);
   }
 
+  @Override
   public boolean shouldBeSkippedByAnnotator() {
     return mySkipByAnnotator;
   }
 
+  @Override
   public void setShouldBeSkippedByAnnotator(boolean value) {
     mySkipByAnnotator = value;
   }

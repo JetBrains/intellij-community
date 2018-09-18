@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.schemaFile;
 
 import com.jetbrains.jsonSchema.*;
+import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTest;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionTest;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTest;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReadTest;
@@ -40,6 +41,7 @@ public class JsonSchemaTestSuite extends TestCase {
     suite.addTestSuite(JsonSchemaReadTest.class);
     suite.addTestSuite(JsonSchemaFileResolveTest.class);
     suite.addTestSuite(JsonSchemaPerformanceTest.class);
+    suite.addTestSuite(JsonSchemaQuickFixTest.class);
     return suite;
   }
 }

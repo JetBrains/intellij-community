@@ -17,9 +17,9 @@ package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
@@ -51,12 +51,12 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myFile.getFileInfo().getState() == RemoteFileState.DOWNLOADED);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Collection<VirtualFile> files = findLocalFiles(myProject, Urls.newFromVirtualFile(myFile), myFile.getName());
     if (files.isEmpty()) {
       Messages.showErrorDialog(myProject, "Cannot find local file for '" + myFile.getUrl() + "'", CommonBundle.getErrorTitle());
@@ -82,7 +82,6 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
        .setTitle("Select Target File")
        .setMovable(true)
        .setItemsChosenCallback((selectedValues) -> {
-         //noinspection deprecation
          for (VirtualFile value : selectedValues) {
            navigateToFile(myProject, value);
          }
@@ -102,6 +101,6 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
   }
 
   private static void navigateToFile(Project project, @NotNull VirtualFile file) {
-    new OpenFileDescriptor(project, file).navigate(true);
+    PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
   }
 }

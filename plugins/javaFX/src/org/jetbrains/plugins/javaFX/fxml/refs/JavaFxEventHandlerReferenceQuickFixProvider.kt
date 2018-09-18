@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiSubstitutor
@@ -35,7 +34,7 @@ class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixP
 class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodRequest {
 
   private val myProject = element.project
-  private val myVisibility = getVisibility(myProject)
+  private val myVisibility = getVisibility(element)
   private val myPointer = element.createSmartPointer(myProject)
 
   override fun isValid(): Boolean = myPointer.element.let {
@@ -70,8 +69,8 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
   override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(myProject, PsiSubstitutor.EMPTY)
 }
 
-private fun getVisibility(project: Project): JvmModifier {
-  val visibility = JavaCodeStyleSettings.getInstance(project).VISIBILITY
+private fun getVisibility(element: XmlAttributeValue): JvmModifier {
+  val visibility = JavaCodeStyleSettings.getInstance(element.containingFile).VISIBILITY
   if (VisibilityUtil.ESCALATE_VISIBILITY == visibility) return JvmModifier.PRIVATE
   if (visibility == PsiModifier.PACKAGE_LOCAL) return JvmModifier.PACKAGE_LOCAL
   return JvmModifier.valueOf(visibility.toUpperCase())

@@ -5,6 +5,7 @@ package org.jetbrains.idea.maven.aether;
  */
 public interface ProgressConsumer {
   ProgressConsumer DEAF = new ProgressConsumer() {
+    @Override
     public void consume(String message) {
     }
   };

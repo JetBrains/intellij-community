@@ -38,7 +38,7 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   private static int ourLastSelectedTabIndex = 0;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     perform(null, "", e);
   }
 
@@ -104,7 +104,7 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
     e.getPresentation().setEnabledAndVisible(DebuggerUtilsEx.isInJavaSession(e));
   }

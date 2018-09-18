@@ -41,11 +41,13 @@ public class GetJPDADialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel _panel1 = new JPanel(new BorderLayout());
 

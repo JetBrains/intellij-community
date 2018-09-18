@@ -15,7 +15,6 @@ import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,7 +66,6 @@ public class TraceStreamAction extends AnAction {
         presentation.setEnabled(chainExists);
         final int elementHash = System.identityHashCode(element);
         if (chainExists && myLastVisitedPsiElementHash != elementHash) {
-          UsageTrigger.trigger("debugger.streams." + languageId.toLowerCase(Locale.US) + ".activated");
           myLastVisitedPsiElementHash = elementHash;
         }
       }
@@ -125,7 +122,6 @@ public class TraceStreamAction extends AnAction {
 
   private static void runTrace(@NotNull StreamChain chain, @NotNull SupportedLibrary library, @NotNull XDebugSession session) {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
-    UsageTrigger.trigger("debugger.streams." + library.languageId.toLowerCase(Locale.US) + ".used");
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
     final TraceExpressionBuilder expressionBuilder = library.createExpressionBuilder(project);

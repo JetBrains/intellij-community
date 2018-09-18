@@ -37,6 +37,7 @@ public class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
     return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (element instanceof PsiAnonymousClass && element.getParent() instanceof PsiNewExpression) {

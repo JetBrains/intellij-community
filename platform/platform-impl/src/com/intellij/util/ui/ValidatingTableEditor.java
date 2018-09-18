@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -144,6 +130,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       super(" ");
     }
 
+    @Override
     public String valueOf(Item item) {
       return null;
     }
@@ -153,6 +140,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       return WARNING_ICON.getIconWidth() + 2;
     }
 
+    @Override
     public int getRowHeight() {
       return WARNING_ICON.getIconHeight();
     }
@@ -171,6 +159,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private void createUIComponents() {
     myTable = new ChangesTrackingTableView<Item>() {
+      @Override
       protected void onCellValueChanged(int row, int column, Object value) {
         final Item original = getItems().get(row);
         Item override = cloneOf(original);
@@ -202,7 +191,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
     myRemoveButton = new AnActionButton(ApplicationBundle.message("button.remove"), IconUtil.getRemoveIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         removeSelected();
       }
     };
@@ -218,6 +207,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myTablePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateButtons();
       }
@@ -225,12 +215,14 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
     myTable.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
     myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         removeSelected();
       }
     });
 
     myFixLink.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && myFixRunnable != null) {
           myFixRunnable.run();

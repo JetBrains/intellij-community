@@ -5,6 +5,8 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.macro.*;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -13,8 +15,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +28,7 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +43,7 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    parameters.getProgramParametersList().addParametersString(expandPath(configuration.getProgramParameters(), module, project));
+    parameters.getProgramParametersList().addParametersString(expandMacros(expandPath(configuration.getProgramParameters(), module, project)));
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
@@ -49,6 +55,30 @@ public class ProgramParametersConfigurator {
 
     parameters.setEnv(envs);
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
+  }
+
+  public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
+    if (Registry.is("allow.macros.for.run.configurations")) {
+      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Insert Macros", ()
+        -> MacrosDialog.show(expandableTextField, macro -> !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro))));
+    }
+  }
+
+  public static String expandMacros(@Nullable String path) {
+    if (path != null && Registry.is("allow.macros.for.run.configurations")) {
+        Collection<Macro> macros = MacroManager.getInstance().getMacros();
+        for (Macro macro: macros) {
+          String value = StringUtil.notNullize(
+            macro instanceof PromptingMacro || macro instanceof EditorMacro
+            ? null :
+            macro.preview(), "");
+          if (StringUtil.containsWhitespaces(value)) {
+            value = "\"" + value + "\"";
+          }
+          path = path.replace("$" + macro.getName() + "$", value);
+        }
+    }
+    return path;
   }
 
   @Nullable

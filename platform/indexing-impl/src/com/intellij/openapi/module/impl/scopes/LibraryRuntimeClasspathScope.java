@@ -68,9 +68,9 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   private void buildEntries(@NotNull final Module module,
-                            @NotNull final Set<Module> processedModules,
-                            @NotNull final Set<Library> processedLibraries,
-                            @NotNull final Set<Sdk> processedSdk,
+                            @NotNull final Set<? super Module> processedModules,
+                            @NotNull final Set<? super Library> processedLibraries,
+                            @NotNull final Set<? super Sdk> processedSdk,
                             @NotNull Condition<OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
@@ -168,7 +168,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return true;
   }
 
-  private static void addAll(ObjectIntHashMap<VirtualFile> entries, VirtualFile[] files) {
+  private static void addAll(ObjectIntHashMap<? super VirtualFile> entries, VirtualFile[] files) {
     for (VirtualFile file : files) {
       if (!entries.contains(file)) {
         entries.put(file, entries.size());

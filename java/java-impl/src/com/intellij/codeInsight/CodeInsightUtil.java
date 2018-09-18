@@ -250,7 +250,7 @@ public class CodeInsightUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addExpressionOccurrences(PsiExpression expr, List<PsiExpression> array, PsiElement scope) {
+  private static void addExpressionOccurrences(PsiExpression expr, List<? super PsiExpression> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
@@ -271,7 +271,7 @@ public class CodeInsightUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addReferenceExpressions(List<PsiExpression> array, PsiElement scope, PsiElement referee) {
+  private static void addReferenceExpressions(List<? super PsiExpression> array, PsiElement scope, PsiElement referee) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiReferenceExpression) {
@@ -347,7 +347,7 @@ public class CodeInsightUtil {
   }
 
   @NotNull
-  private static Set<PsiClass> processImportedInheritors(PsiElement context, PsiClass baseClass, Processor<PsiClass> inheritorsProcessor) {
+  private static Set<PsiClass> processImportedInheritors(PsiElement context, PsiClass baseClass, Processor<? super PsiClass> inheritorsProcessor) {
     Set<PsiClass> visited = new HashSet<>();
 
     context.getContainingFile().getOriginalFile().processDeclarations(new PsiScopeProcessor() {
@@ -362,7 +362,7 @@ public class CodeInsightUtil {
     return visited;
   }
 
-  private static void addContextTypeArguments(PsiElement context, PsiClassType baseType, Processor<PsiClass> inheritorsProcessor) {
+  private static void addContextTypeArguments(PsiElement context, PsiClassType baseType, Processor<? super PsiClass> inheritorsProcessor) {
     Set<String> usedNames = ContainerUtil.newHashSet();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiElement each = context;
@@ -424,7 +424,7 @@ public class CodeInsightUtil {
   @NotNull
   public static List<PsiType> getExpectedTypeArgs(PsiElement context,
                                                   PsiTypeParameterListOwner paramOwner,
-                                                  Iterable<PsiTypeParameter> typeParams, PsiClassType expectedType) {
+                                                  Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
     if (paramOwner instanceof PsiClass) {
       return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }

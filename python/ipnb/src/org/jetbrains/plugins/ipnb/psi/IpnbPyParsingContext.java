@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.psi;
 
 import com.intellij.lang.PsiBuilder;
@@ -52,6 +53,7 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
       return IpnbPyTokenTypes.IPNB_REFERENCE;
     }
 
+    @Override
     public boolean parsePrimaryExpression(boolean isTargetExpression) {
       final IElementType firstToken = myBuilder.getTokenType();
       if (firstToken == PyTokenTypes.IDENTIFIER) {
@@ -97,6 +99,7 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
       super(context);
     }
 
+    @Override
     protected IElementType getFunctionType() {
       return IpnbPyTokenTypes.IPNB_FUNCTION;
     }

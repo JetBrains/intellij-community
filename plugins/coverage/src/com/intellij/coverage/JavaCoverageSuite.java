@@ -15,8 +15,11 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -125,6 +128,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
 
@@ -149,6 +153,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return filters.isEmpty() ? null : ArrayUtil.toStringArray(filters);
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     if (mySuiteToMerge != null) {
@@ -170,6 +175,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     }
   }
 
+  @Override
   @Nullable
   public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
     final ProjectData data = getCoverageData();
@@ -199,6 +205,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return map;
   }
 
+  @Override
   @NotNull
   public CoverageEngine getCoverageEngine() {
     return myCoverageEngine;
@@ -287,7 +294,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
             final DumbService dumbService = DumbService.getInstance(project);
             dumbService.setAlternativeResolveEnabled(true);
             try {
-              return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+              GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
+              RunConfigurationBase configuration = getConfiguration();
+              if (configuration instanceof ModuleBasedConfiguration) {
+                Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+                if (module != null) {
+                  searchScope = GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
+                }
+              }
+              return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), searchScope);
             }
             finally {
               dumbService.setAlternativeResolveEnabled(false);

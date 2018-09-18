@@ -32,22 +32,27 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
       .anyMatch((field) -> field.isStatic() && (extension == null || !extension.filterStaticVariable(refType, field, field.isSynthetic())));
   }
 
+  @Override
   public ReferenceType getType() {
     return myType;
   }
 
+  @Override
   public String getName() {
     //noinspection HardCodedStringLiteral
     return "static";
   }
 
+  @Override
   public boolean isExpandable() {
     return myHasStaticFields;
   }
 
+  @Override
   public void setContext(EvaluationContextImpl context) {
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();

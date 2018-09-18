@@ -61,7 +61,7 @@ public class StringEnumeratorTest extends TestCase {
     stringsAded.add("IntelliJ IDEA");
     // clear strings and nodes cache
     for (int i = 0; i < 20000; ++i) {
-      final String v = Integer.toString(i) + "Just another string";
+      final String v = i + "Just another string";
       stringsAded.add(v);
       final int idx = myEnumerator.enumerate(v);
       assertEquals(v, myEnumerator.valueOf(idx));

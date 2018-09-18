@@ -147,7 +147,14 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         String value = resolvePluginProperties(plugin, argLine.getTextTrim(), domModel);
         value = resolveVmProperties(javaParameters.getVMParametersList(), value);
         if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
-          javaParameters.getVMParametersList().addParametersString(value);
+          if (value.contains("@{argLine}")) {
+            String parametersString = javaParameters.getVMParametersList().getParametersString();
+            javaParameters.getVMParametersList().clearAll();
+            javaParameters.getVMParametersList().addParametersString(StringUtil.replace(value, "@{argLine}", parametersString));
+          }
+          else {
+            javaParameters.getVMParametersList().addParametersString(value);
+          }
         }
       }
     }

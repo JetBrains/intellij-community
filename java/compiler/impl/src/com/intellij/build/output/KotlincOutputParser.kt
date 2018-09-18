@@ -23,7 +23,7 @@ class KotlincOutputParser : BuildOutputParser {
     private val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
   }
 
-  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<MessageEvent>): Boolean {
+  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in MessageEvent>): Boolean {
     val colonIndex1 = line.colon()
 
     val severity = if (colonIndex1 >= 0) line.substringBeforeAndTrim(colonIndex1) else return false
@@ -37,7 +37,8 @@ class KotlincOutputParser : BuildOutputParser {
 
       val fileExtension = file.extension.toLowerCase()
       if (!file.isFile || (fileExtension != "kt" && fileExtension != "java")) {
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), line), consumer)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), line),
+                          consumer)
       }
 
       val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
@@ -130,7 +131,7 @@ class KotlincOutputParser : BuildOutputParser {
            && messageText.contains(KAPT_ERROR_WHILE_ANNOTATION_PROCESSING_MARKER_TEXT)
   }
 
-  private fun addMessage(message: MessageEvent, consumer: Consumer<MessageEvent>): Boolean {
+  private fun addMessage(message: MessageEvent, consumer: Consumer<in MessageEvent>): Boolean {
     // Ignore KaptError.ERROR_RAISED message from kapt. We already processed all errors from annotation processing
     if (isKaptErrorWhileAnnotationProcessing(message)) return true
     consumer.accept(message)

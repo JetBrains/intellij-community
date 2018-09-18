@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * A default implementation of the {@link UpdateSession} interface. This implementation can
- * be used if no post-update processing is required. 
+ * be used if no post-update processing is required.
  */
 public class UpdateSessionAdapter implements UpdateSession{
   private final List<VcsException> myExceptions;
@@ -33,14 +33,17 @@ public class UpdateSessionAdapter implements UpdateSession{
     myIsCanceled = isCanceled;
   }
 
+  @Override
   @NotNull
   public List<VcsException> getExceptions() {
     return myExceptions;
   }
 
+  @Override
   public void onRefreshFilesCompleted() {
   }
 
+  @Override
   public boolean isCanceled() {
     return myIsCanceled;
   }

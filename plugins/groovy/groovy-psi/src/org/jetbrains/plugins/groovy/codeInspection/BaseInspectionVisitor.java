@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
@@ -44,12 +43,6 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
 
   protected void registerStatementError(GrStatement statement, Object... args) {
     final PsiElement statementToken = statement.getFirstChild();
-    registerError(statementToken, args);
-  }
-
-  @Deprecated
-  protected void registerClassError(GrTypeDefinition aClass, Object... args) {
-    final PsiElement statementToken = aClass.getNameIdentifierGroovy();
     registerError(statementToken, args);
   }
 

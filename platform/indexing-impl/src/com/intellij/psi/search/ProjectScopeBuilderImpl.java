@@ -54,6 +54,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         return false;
       }
 
+      @NotNull
       @Override
       public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
         return Collections.emptySet();

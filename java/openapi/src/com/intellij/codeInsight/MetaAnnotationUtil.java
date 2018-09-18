@@ -137,7 +137,7 @@ public class MetaAnnotationUtil {
     });
   }
 
-  private static void collectClassWithChildren(PsiClass psiClass, Set<PsiClass> classes, GlobalSearchScope scope) {
+  private static void collectClassWithChildren(PsiClass psiClass, Set<? super PsiClass> classes, GlobalSearchScope scope) {
     classes.add(psiClass);
 
     for (PsiClass aClass : getChildren(psiClass, scope)) {
@@ -172,7 +172,7 @@ public class MetaAnnotationUtil {
 
   private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
                                                     @NotNull Collection<String> annotations,
-                                                    Set<PsiMember> visited) {
+                                                    Set<? super PsiMember> visited) {
     if (isMetaAnnotated(listOwner, annotations)) return true;
     if (listOwner instanceof PsiClass) {
       for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
@@ -197,7 +197,7 @@ public class MetaAnnotationUtil {
   }
 
   @Nullable
-  private static PsiAnnotation findMetaAnnotation(PsiClass aClass, String annotation, Set<PsiClass> visited) {
+  private static PsiAnnotation findMetaAnnotation(PsiClass aClass, String annotation, Set<? super PsiClass> visited) {
     PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(aClass, annotation);
     if (directAnnotation != null) {
       return directAnnotation;

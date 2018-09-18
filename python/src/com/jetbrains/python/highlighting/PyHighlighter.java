@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.highlighting;
 
 import com.intellij.lexer.LayeredLexer;
@@ -41,6 +27,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   private final Map<IElementType, TextAttributesKey> keys;
   private final LanguageLevel myLanguageLevel;
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     LayeredLexer ret = new LayeredLexer(createHighlightingLexer(myLanguageLevel));
@@ -117,7 +104,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
-  
+
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
    * @param languageLevel
@@ -159,6 +146,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(keys.get(tokenType));

@@ -55,7 +55,7 @@ public class BraceMatchingUtil {
     EditorHighlighter editorHighlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
     HighlighterIterator iterator = editorHighlighter.createIterator(offset);
     boolean matched = matchBrace(document.getCharsSequence(), file.getFileType(), iterator, forward);
-    assert matched;
+    if (!matched) throw new AssertionError();
     return iterator.getStart();
   }
 

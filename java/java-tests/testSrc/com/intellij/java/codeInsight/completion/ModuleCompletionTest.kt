@@ -76,6 +76,14 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
   }
 
+  fun testTypeParameter() {
+    addFile("module-info.java", "module M { }")
+    addTestFile("whatever/test.txt", "-")
+    myFixture.configureByText("test.java", "package whatever;\nclass Foo<TParam> { TPar<caret> p; }")
+    myFixture.completeBasic()
+    myFixture.checkResult("package whatever;\nclass Foo<TParam> { TParam<caret> p; }")
+  }
+
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)

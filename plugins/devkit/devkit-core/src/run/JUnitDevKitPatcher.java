@@ -30,6 +30,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -50,18 +51,17 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
   private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
 
   @Override
-  public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
+  public void patchJavaParameters(@NotNull Project project, @Nullable Module module, JavaParameters javaParameters) {
     Sdk jdk = javaParameters.getJdk();
     if (jdk == null) return;
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (module != null &&
-        PsiUtil.isIdeaProject(module.getProject()) &&
+    if (PsiUtil.isIdeaProject(project) &&
         !vm.hasProperty(SYSTEM_CL_PROPERTY) &&
         !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
       String qualifiedName = UrlClassLoader.class.getName();
-      if (findLoader(module, qualifiedName) != null) {
+      if (findLoader(project, module, qualifiedName) != null) {
         vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
     }
@@ -114,13 +114,12 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
   }
 
-  private static PsiClass findLoader(Module module, String qualifiedName) {
-    Project project = module.getProject();
+  private static PsiClass findLoader(Project project, Module module, String qualifiedName) {
     DumbService dumbService = DumbService.getInstance(project);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     dumbService.setAlternativeResolveEnabled(true);
     try {
-      return ReadAction.compute(() -> facade.findClass(qualifiedName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)));
+      return ReadAction.compute(() -> facade.findClass(qualifiedName, module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project)));
     }
     finally {
       dumbService.setAlternativeResolveEnabled(false);

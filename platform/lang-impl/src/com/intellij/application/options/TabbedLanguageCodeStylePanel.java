@@ -59,9 +59,6 @@ import java.util.Set;
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
-  @SuppressWarnings("unused")
-  private static final Logger LOG = Logger.getInstance(TabbedLanguageCodeStylePanel.class);
-
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;

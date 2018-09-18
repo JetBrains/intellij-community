@@ -15,39 +15,52 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.Contract;
+
 public class BitUtil {
+  @Contract(pure = true)
   public static boolean isSet(byte value, byte mask) {
     assertOneBitMask(mask);
     return (value & mask) == mask;
   }
+  @Contract(pure = true)
   public static boolean isSet(int value, int mask) {
     assertOneBitMask(mask);
     return (value & mask) == mask;
   }
+  @Contract(pure = true)
   public static boolean isSet(long flags, long mask) {
     assertOneBitMask(mask);
     return (flags & mask) == mask;
   }
 
+  @Contract(pure = true)
   public static byte set(byte value, byte mask, boolean setBit) {
     assertOneBitMask(mask);
     return (byte)(setBit ? value | mask : value & ~mask);
   }
+
+  @Contract(pure = true)
   public static int set(int value, int mask, boolean setBit) {
     assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
   }
+
+  @Contract(pure = true)
   public static long set(long value, long mask, boolean setBit) {
     assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
   }
 
+  @Contract(pure = true)
   public static byte clear(byte value, byte mask) {
     return set(value, mask, false);
   }
+  @Contract(pure = true)
   public static int clear(int value, int mask) {
     return set(value, mask, false);
   }
+  @Contract(pure = true)
   public static long clear(long value, long mask) {
     return set(value, mask, false);
   }

@@ -27,6 +27,7 @@ import com.intellij.ide.projectView.impl.nodes.StructureViewModuleNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ModuleStructurePane extends ProjectViewPane {
   private final Module myModule;
@@ -36,6 +37,7 @@ public class ModuleStructurePane extends ProjectViewPane {
     myModule = module;
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){

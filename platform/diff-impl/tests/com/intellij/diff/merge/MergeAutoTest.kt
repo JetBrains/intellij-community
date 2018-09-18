@@ -16,27 +16,40 @@
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffTestCase
+import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 
 class MergeAutoTest : MergeTestBase() {
   companion object {
+    private val RUNS = 10
     private val MODIFICATION_CYCLE_COUNT = 5
     private val MODIFICATION_CYCLE_SIZE = 3
+    private val MAX_TEXT_LENGTH = 300
   }
 
-  fun testUndo() {
-    doUndoTest(System.currentTimeMillis(), 10, 300)
+  fun `test undo - default policy`() {
+    doUndoTest(System.currentTimeMillis(), RUNS, MAX_TEXT_LENGTH, IgnorePolicy.DEFAULT)
   }
 
-  private fun doUndoTest(seed: Long, runs: Int, maxLength: Int) {
+  fun `test undo - trim whitespaces`() {
+    doUndoTest(System.currentTimeMillis(), RUNS, MAX_TEXT_LENGTH, IgnorePolicy.TRIM_WHITESPACES)
+  }
+
+  fun `test undo - ignore whitespaces`() {
+    doUndoTest(System.currentTimeMillis(), RUNS, MAX_TEXT_LENGTH, IgnorePolicy.IGNORE_WHITESPACES)
+  }
+
+  private fun doUndoTest(seed: Long, runs: Int, maxLength: Int, policy: IgnorePolicy) {
     doTest(seed, runs, maxLength) { text1, text2, text3, debugData ->
-      testN(text1, text2, text3) {
+      debugData.put("IgnorePolicy", policy)
+
+      test(text1, text2, text3, -1, policy) {
         if (changes.isEmpty()) {
           assertEquals(text1, text2)
           assertEquals(text1, text3)
           assertEquals(text2, text3)
-          return@testN
+          return@test
         }
 
         for (m in 1..MODIFICATION_CYCLE_COUNT) {

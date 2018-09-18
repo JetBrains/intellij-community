@@ -35,6 +35,11 @@ public abstract class GitPushSource implements PushSource {
   @NotNull
   public abstract GitLocalBranch getBranch();
 
+  @Override
+  public String toString() {
+    return getPresentation();
+  }
+
   private static class OnBranch extends GitPushSource {
     @NotNull private final GitLocalBranch myBranch;
 

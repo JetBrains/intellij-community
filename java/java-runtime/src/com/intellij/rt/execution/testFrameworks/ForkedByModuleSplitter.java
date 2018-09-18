@@ -23,6 +23,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipOutputStream;
 
+/** @noinspection CallToPrintStackTrace*/
 public abstract class ForkedByModuleSplitter {
   protected final ForkedDebuggerHelper myForkedDebuggerHelper = new ForkedDebuggerHelper();
   protected final String myWorkingDirsPath;
@@ -107,39 +108,25 @@ public abstract class ForkedByModuleSplitter {
 
   private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream, final boolean[] stopped) {
     return new Runnable() {
-      char[] buf = new char[8192];
-
       public void run() {
-        final InputStreamReader inputReader;
         try {
-          inputReader = new InputStreamReader(inputStream, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e) {
-          return;
-        }
+          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+          try {
+            while (true) {
+              if (stopped[0]) break;
 
-        try {
-          while (true) {
-            if (stopped[0]) break;
-
-            int n;
-            try {
-              while (inputReader.ready() && (n = inputReader.read(buf)) > 0) {
-                outputStream.print(new String(buf, 0, n));
-              }
-            }
-            catch (IOException e) {
-              e.printStackTrace();
+              String line = inputReader.readLine();
+              if (line == null) break;
+              outputStream.print(line);
             }
           }
-        }
-        finally {
-          try {
+          finally {
             inputReader.close();
           }
-          catch (IOException e) {
-            e.printStackTrace();
-          }
+        }
+        catch (UnsupportedEncodingException ignored) { }
+        catch (IOException e) {
+          e.printStackTrace();
         }
       }
     };

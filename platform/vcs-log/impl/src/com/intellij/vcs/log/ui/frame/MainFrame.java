@@ -235,7 +235,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return ArrayUtil.toObjectArray(myChangesBrowser.getDirectChanges(), Change.class);
     }
@@ -287,9 +287,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.dispose();
   }
 
-  private class MyCommitSelectionListenerForDiff extends CommitSelectionListener {
+  private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
     protected MyCommitSelectionListenerForDiff() {
-      super(myLogData, MainFrame.this.myGraphTable);
+      super(MainFrame.this.myGraphTable, myLogData.getCommitDetailsGetter());
     }
 
     @Override

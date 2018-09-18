@@ -40,7 +40,6 @@ public interface OverrideImplementsAnnotationsHandler {
 
   @Deprecated
   @NotNull
-  @SuppressWarnings("unused")
   default String[] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }

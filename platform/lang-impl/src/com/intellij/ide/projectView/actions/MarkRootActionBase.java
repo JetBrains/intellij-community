@@ -51,7 +51,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Module module = getModule(e, files);
     if (module == null) {
@@ -100,7 +100,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     RootsSelection selection = getSelection(e);
     doUpdate(e, selection.myModule, selection);
   }
@@ -113,7 +113,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
 
   protected abstract boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module);
 
-  protected static RootsSelection getSelection(AnActionEvent e) {
+  protected static RootsSelection getSelection(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     Module module = getModule(e, files);
     if (module == null) return RootsSelection.EMPTY;

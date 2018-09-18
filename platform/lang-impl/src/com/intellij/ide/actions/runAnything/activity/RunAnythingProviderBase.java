@@ -19,20 +19,24 @@ import java.util.Collection;
  */
 public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<V> {
   @NotNull
-  public Collection<V> getValues(@NotNull DataContext dataContext) {
+  @Override
+  public Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
+  @Override
   @Nullable
   public V findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return getValues(dataContext).stream().filter(value -> StringUtil.equals(pattern, getCommand(value))).findFirst().orElse(null);
+    return getValues(dataContext, pattern).stream().filter(value -> StringUtil.equals(pattern, getCommand(value))).findFirst().orElse(null);
   }
 
+  @Override
   @Nullable
   public Icon getIcon(@NotNull V value) {
     return null;
   }
 
+  @Override
   @Nullable
   public String getAdText() {
     return null;
@@ -55,6 +59,7 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
     return new RunAnythingHelpItem(placeholder, commandPrefix, getHelpDescription(), getHelpIcon());
   }
 
+  @Override
   @Nullable
   public String getCompletionGroupTitle() {
     return null;

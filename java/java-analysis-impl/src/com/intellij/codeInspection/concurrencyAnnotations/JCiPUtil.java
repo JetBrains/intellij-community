@@ -90,14 +90,15 @@ public class JCiPUtil {
   @Nullable
   static String getGuardValue(PsiAnnotation annotation) {
     final PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
-    if (psiAnnotationMemberValue != null) {
-      final String value = psiAnnotationMemberValue.getText();
-      final String trim = value.substring(1, value.length() - 1).trim();
-      if (trim.equals("itself")) {
+    if (psiAnnotationMemberValue instanceof PsiLiteralExpression) {
+      final Object value = ((PsiLiteralExpression)psiAnnotationMemberValue).getValue();
+      if ("itself".equals(value)) {
         final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
         if (member != null) return member.getName();
       }
-      return trim;
+      if (value instanceof String) {
+        return (String)value;
+      }
     }
     return null;
   }

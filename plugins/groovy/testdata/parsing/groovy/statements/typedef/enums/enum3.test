@@ -131,10 +131,9 @@ Groovy script
                     PsiElement(identifier)('Integer')
                 PsiWhiteSpace(' ')
                 PsiElement(identifier)('getInteger')
-                PsiElement(()('(')
                 Parameter list
-                  <empty list>
-                PsiElement())(')')
+                  PsiElement(()('(')
+                  PsiElement())(')')
                 Throw clause
                   <empty list>
                 PsiWhiteSpace(' ')

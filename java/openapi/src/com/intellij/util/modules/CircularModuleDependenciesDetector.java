@@ -34,11 +34,13 @@ public class CircularModuleDependenciesDetector {
   @NotNull
   private static <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<T>() {
+      @NotNull
       @Override
       public Collection<T> getNodes() {
         return models.values();
       }
 
+      @NotNull
       @Override
       public Iterator<T> getIn(final ModuleRootModel model) {
         final List<T> dependencies = new ArrayList<>();

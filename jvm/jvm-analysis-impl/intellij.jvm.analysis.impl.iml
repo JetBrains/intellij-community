@@ -9,5 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>

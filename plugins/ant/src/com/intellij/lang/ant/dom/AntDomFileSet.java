@@ -42,6 +42,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
+  @Override
   @NotNull protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
     assert pattern != null;
     final File singleFile = getCanonicalFile(getFile().getStringValue());

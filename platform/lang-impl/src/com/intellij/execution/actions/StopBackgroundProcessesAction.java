@@ -47,12 +47,12 @@ import java.util.List;
 
 public class StopBackgroundProcessesAction extends DumbAwareAction implements AnAction.TransparentUpdate{
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(!getCancellableProcesses(e.getProject()).isEmpty());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     List<StopAction.HandlerItem> handlerItems = getItemsList(getCancellableProcesses(project));

@@ -36,10 +36,12 @@ public class ProjectCompileScope extends FileIndexCompileScope {
     myProject = project;
   }
 
+  @Override
   protected FileIndex[] getFileIndices() {
     return new FileIndex[] {ProjectRootManager.getInstance(myProject).getFileIndex()};
   }
 
+  @Override
   public boolean belongs(String url) {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file != null) {
@@ -62,6 +64,7 @@ public class ProjectCompileScope extends FileIndexCompileScope {
     //return !FileUtil.startsWith(url, myTempDirUrl);
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
     return ModuleManager.getInstance(myProject).getModules();

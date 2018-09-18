@@ -212,7 +212,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   @NotNull
   private List<ArrangementSectionRule> deserializeSectionRules(@NotNull Element rulesElement,
-                                                               @Nullable Set<StdArrangementRuleAliasToken> tokens) {
+                                                               @Nullable Set<? extends StdArrangementRuleAliasToken> tokens) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (Object o : rulesElement.getChildren(SECTION_ELEMENT_NAME)) {
       final Element sectionElement = (Element)o;
@@ -227,7 +227,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   }
 
   @NotNull
-  private List<StdArrangementMatchRule> deserializeRules(@NotNull Element element, @Nullable final Set<StdArrangementRuleAliasToken> aliases) {
+  private List<StdArrangementMatchRule> deserializeRules(@NotNull Element element, @Nullable final Set<? extends StdArrangementRuleAliasToken> aliases) {
     if (aliases != null && myMixin instanceof MutableMixin) {
       ((MutableMixin)myMixin).setMyRuleAliases(aliases);
     }
@@ -312,13 +312,13 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   public static class MutableMixin implements Mixin {
     private final Mixin myDelegate;
-    private Set<StdArrangementRuleAliasToken> myRuleAliases;
+    private Set<? extends StdArrangementRuleAliasToken> myRuleAliases;
 
     public MutableMixin(Mixin delegate) {
       myDelegate = delegate;
     }
 
-    public void setMyRuleAliases(Set<StdArrangementRuleAliasToken> aliases) {
+    public void setMyRuleAliases(Set<? extends StdArrangementRuleAliasToken> aliases) {
       myRuleAliases = aliases;
     }
 

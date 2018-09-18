@@ -68,6 +68,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     return myImplicitModeElement.getModeRange();
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final PsiFile containingFile = myAttribute.getContainingFile();
@@ -87,6 +88,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return myIsDeclaration;
   }
@@ -103,6 +105,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     }
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiFile containingFile = myAttribute.getContainingFile();
@@ -171,10 +174,12 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
       super(XsltCodeInsightUtil.getDocument(element), mode);
     }
 
+    @Override
     protected PsiElement transform(XmlTag element) {
       return new ImplicitModeElement(element.getAttribute("mode", null));
     }
 
+    @Override
     public boolean matches(XmlTag element) {
       final String s = element.getAttributeValue("mode");
       return myMode != null &&
@@ -187,11 +192,13 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
       return new MyModeMatcher(document, myMode);
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
       return new MyModeMatcher(myDocument, myMode != null ? QNameUtil.createAnyLocalName(myMode.getNamespaceURI()) : null);
     }
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     final QName qName = myImplicitModeElement.getQName();

@@ -40,7 +40,6 @@ public class PoppedIcon implements Icon {
   public void paintIcon(Component c, Graphics g, int x, int y) {
     Rectangle rect = new Rectangle(getIconWidth() + 2*x, getIconHeight() + 2*x);
     IdeaActionButtonLook.paintBackground(g, rect, ActionButtonComponent.POPPED);
-    IdeaActionButtonLook.paintBorder(g, rect, ActionButtonComponent.POPPED);
     myIcon.paintIcon(c, g, x + (getIconWidth() - myIcon.getIconWidth())/2, y + (getIconHeight() - myIcon.getIconHeight())/2);
   }
 

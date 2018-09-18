@@ -2801,6 +2801,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  }" +
                      "}";
     assertEquals(2, findMatchesCount(source3, "t$.'_t"));
+
+    String source4 = "import java.util.*;" +
+                     "class Four {{" +
+                     "  System.out.println(Calendar.YEAR);" +
+                     "}}";
+    assertEquals(1, findMatchesCount(source4, "System.out.println(Calendar.YEAR)"));
+    assertEquals(1, findMatchesCount(source4, "System.out.println(java.util.Calendar.YEAR)"));
+    assertEquals(1, findMatchesCount(source4, "System.out.println(YEAR)"));
   }
 
   public void testSearchTypes() {
@@ -3091,5 +3099,29 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                                         "  }"));
     assertEquals("should find defaults", 3, findMatchesCount(in, "default:"));
     assertEquals("should find cases", 8, findMatchesCount(in, "case '_a :"));
+  }
+
+  public void testRepeatedVars() {
+    String in = "class SomePageObject {\n" +
+                    "  @FindBy(name = \"first-name\")\n" +
+                    "  private WebElement name;\n" +
+                    "\n" +
+                    "  @FindBy(name = \"first-name\")\n" +
+                    "  private WebElement firstName;\n" +
+                    "}" +
+                    "class SomePageObject2 {\n" +
+                    "  @FindBy(name = \"last-name\")\n" +
+                    "  private WebElement name;\n" +
+                    "\n" +
+                    "  @FindBy(name = \"first-name\")\n" +
+                    "  private WebElement firstName;\n" +
+                    "}";
+
+    assertEquals("find repeated annotation value", 1, findMatchesCount(in, "class '_Class {\n" +
+                                                                           "  @FindBy(name='_value)\n" +
+                                                                           "  '_FieldType '_field = '_init?;\n" +
+                                                                           "  @FindBy(name='_value)\n" +
+                                                                           "  '_FieldType2 'field2 = '_init2?;\n" +
+                                                                           "}"));
   }
 }

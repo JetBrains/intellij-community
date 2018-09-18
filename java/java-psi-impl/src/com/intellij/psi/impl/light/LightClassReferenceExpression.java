@@ -47,7 +47,7 @@ public class LightClassReferenceExpression extends LightClassReference implement
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getManager().areElementsEquivalent(resolve(), element);
   }
 

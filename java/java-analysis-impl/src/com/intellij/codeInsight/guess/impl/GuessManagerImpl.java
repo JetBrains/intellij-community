@@ -185,7 +185,7 @@ public class GuessManagerImpl extends GuessManager {
     return lastScope;
   }
 
-  private void addExprTypesByDerivedClasses(LinkedHashSet<PsiType> set, PsiExpression expr) {
+  private void addExprTypesByDerivedClasses(LinkedHashSet<? super PsiType> set, PsiExpression expr) {
     PsiType type = expr.getType();
     if (!(type instanceof PsiClassType)) return;
     PsiClass refClass = PsiUtil.resolveClassInType(type);
@@ -203,7 +203,7 @@ public class GuessManagerImpl extends GuessManager {
     }
   }
 
-  private void addExprTypesWhenContainerElement(LinkedHashSet<PsiType> set, PsiExpression expr) {
+  private void addExprTypesWhenContainerElement(LinkedHashSet<? super PsiType> set, PsiExpression expr) {
     if (expr instanceof PsiMethodCallExpression){
       PsiMethodCallExpression callExpr = (PsiMethodCallExpression)expr;
       PsiReferenceExpression methodExpr = callExpr.getMethodExpression();
@@ -228,10 +228,10 @@ public class GuessManagerImpl extends GuessManager {
   private static final int CHECK_UP = 0x02;
   private static final int CHECK_DOWN = 0x04;
 
-  private void addTypesByVariable(HashSet<PsiType> typesSet,
+  private void addTypesByVariable(HashSet<? super PsiType> typesSet,
                                   PsiVariable var,
                                   PsiFile scopeFile,
-                                  HashSet<PsiVariable> checkedVariables,
+                                  HashSet<? super PsiVariable> checkedVariables,
                                   int flags,
                                   TextRange rangeToIgnore) {
     if (!checkedVariables.add(var)) return;
@@ -459,7 +459,8 @@ public class GuessManagerImpl extends GuessManager {
 
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
+      PsiExpression operand = expression.getOperand();
+      if (operand != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
       }
       super.visitTypeCastExpression(expression);
@@ -563,11 +564,11 @@ public class GuessManagerImpl extends GuessManager {
 
     @Override
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myForPlace == instruction.getPlace()) {
+      if (myForPlace == instruction.getExpression()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
       DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
-      if (myForPlace == instruction.getPlace()) {
+      if (myForPlace == instruction.getExpression()) {
         addConstraints(states);
       }
       return states;
@@ -576,7 +577,7 @@ public class GuessManagerImpl extends GuessManager {
     private void addConstraints(DfaInstructionState[] states) {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraint.EMPTY) return;
+        if (myConstraint == TypeConstraint.empty()) return;
         TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
         if (constraint == null) {
           constraint = myInitial;
@@ -584,7 +585,7 @@ public class GuessManagerImpl extends GuessManager {
         if (constraint != null) {
           myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
           if (myConstraint == null) {
-            myConstraint = TypeConstraint.EMPTY;
+            myConstraint = TypeConstraint.empty();
             return;
           }
         }

@@ -68,4 +68,12 @@ public class ConfigurationException extends Exception {
   public void setOriginator(Configurable originator) {
     myOriginator = originator;
   }
+
+  /**
+   * @return whether this error should be shown when index isn't complete. Override and return false for errors that
+   * might be caused by inability to find some PSI due to index absence.
+   */
+  public boolean shouldShowInDumbMode() {
+    return true;
+  }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -281,7 +282,7 @@ public class Mock {
     }
 
     @Override
-    public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+    public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
       return null;
     }
 
@@ -376,13 +377,7 @@ public class Mock {
       return new FileEditor[0];
     }
 
-    @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    }
 
-    @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    }
 
     @Override
     public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {

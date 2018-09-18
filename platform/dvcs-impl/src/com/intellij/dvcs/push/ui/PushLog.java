@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -53,8 +39,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
@@ -83,10 +69,12 @@ public class PushLog extends JPanel implements DataProvider {
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, root) {
 
+      @Override
       protected boolean shouldShowBusyIconIfNeeded() {
         return true;
       }
 
+      @Override
       public boolean isPathEditable(TreePath path) {
         return isEditable() && path.getLastPathComponent() instanceof DefaultMutableTreeNode;
       }
@@ -288,12 +276,12 @@ public class PushLog extends JPanel implements DataProvider {
 
   private class MyShowCommitInfoAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myBalloon.showCommitDetails();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedCommitNodes().size() == 1);
     }
   }
@@ -417,7 +405,7 @@ public class PushLog extends JPanel implements DataProvider {
   // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
   @Nullable
   @Override
-  public Object getData(String id) {
+  public Object getData(@NotNull String id) {
     if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
       return ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class);
@@ -668,6 +656,7 @@ public class PushLog extends JPanel implements DataProvider {
       return treeNode instanceof EditableTreeNode && ((EditableTreeNode)treeNode).isEditableNow();
     }
 
+    @Override
     public Object getCellEditorValue() {
       return myValue;
     }

@@ -1,6 +1,6 @@
-import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.components.BaseComponent
 
-class RegisteredApplicationComponent : ApplicationComponent {
+class RegisteredApplicationComponent : BaseComponent {
 
-  class InnerStaticClassApplicationContext : ApplicationComponent
+  class InnerStaticClassApplicationContext : BaseComponent
 }

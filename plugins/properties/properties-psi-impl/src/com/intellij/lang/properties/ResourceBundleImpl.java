@@ -44,6 +44,7 @@ public class ResourceBundleImpl extends ResourceBundle {
     return ResourceBundleManager.getInstance(getProject()).getBaseName(Objects.requireNonNull(myDefaultPropertiesFile.getElement()));
   }
 
+  @Override
   @NotNull
   public VirtualFile getBaseDirectory() {
     return getDefaultPropertiesFile().getParent().getVirtualFile();

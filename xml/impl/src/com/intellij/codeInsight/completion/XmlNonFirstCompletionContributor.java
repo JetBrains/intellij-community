@@ -41,7 +41,7 @@ public class XmlNonFirstCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         PsiElement position = parameters.getPosition();
         if (position.getNode().getElementType() != XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) return;

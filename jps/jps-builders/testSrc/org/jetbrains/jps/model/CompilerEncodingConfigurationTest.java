@@ -54,6 +54,7 @@ public class CompilerEncodingConfigurationTest extends JpsEncodingConfigurationS
     FileUtil.delete(myDataStorageRoot);
   }
 
+  @Override
   public void test() {
     loadProject("/jps/jps-builders/testData/compilerEncoding/compilerEncoding.ipr");
     JpsEncodingProjectConfiguration projectConfig = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(myProject);

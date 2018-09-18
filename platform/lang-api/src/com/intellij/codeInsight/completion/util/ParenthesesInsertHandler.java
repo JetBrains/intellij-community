@@ -91,7 +91,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
   protected abstract boolean placeCaretInsideParentheses(final InsertionContext context, final T item);
 
   @Override
-  public void handleInsert(final InsertionContext context, final T item) {
+  public void handleInsert(@NotNull final InsertionContext context, @NotNull final T item) {
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
     context.commitDocument();

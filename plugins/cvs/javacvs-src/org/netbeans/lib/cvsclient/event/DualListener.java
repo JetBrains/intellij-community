@@ -25,12 +25,14 @@ public class DualListener
 
 	// Implemented ============================================================
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
         parser1.registerListeners(listenerRegistry);
 		parser2.registerListeners(listenerRegistry);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
         parser2.unregisterListeners(listenerRegistry);
         parser1.unregisterListeners(listenerRegistry);
 	}

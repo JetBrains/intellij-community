@@ -141,7 +141,7 @@ public class TestResultsXmlFormatter {
         if (comment != null) {
           rootAttrs.put("comment", comment);
         }
-        final String rootLocation = ((TestProxyRoot)myTestRoot).getRootLocation();
+        final String rootLocation = myTestRoot.getLocationUrl();
         if (rootLocation != null) {
           rootAttrs.put("location", rootLocation);
         }

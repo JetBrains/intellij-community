@@ -27,6 +27,7 @@ public class DeleteMethod extends FixableUsageInfo {
         this.method = method;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         method.delete();
     }

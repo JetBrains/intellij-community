@@ -4,10 +4,12 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -32,4 +34,10 @@ public class LaFUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() { return "statistics.ui.look.and.feel"; }
+
+  @Nullable
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
+  }
 }

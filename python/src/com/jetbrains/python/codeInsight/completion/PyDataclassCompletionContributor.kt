@@ -30,7 +30,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
 
   private object PostInitProvider : CompletionProvider<CompletionParameters>() {
 
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val cls = parameters.getPyClass() ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
 
@@ -68,7 +68,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
 
   private object AttrsValidatorParameterProvider : CompletionProvider<CompletionParameters>() {
 
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val cls = parameters.getPyClass() ?: return
 
       val parameterList = PsiTreeUtil.getParentOfType(parameters.position, PyParameterList::class.java) ?: return

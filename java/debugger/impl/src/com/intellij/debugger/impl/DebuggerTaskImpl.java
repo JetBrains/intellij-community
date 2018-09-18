@@ -20,7 +20,8 @@ package com.intellij.debugger.impl;
  */
 public abstract class DebuggerTaskImpl implements DebuggerTask {
   private int myHolds = 0;
-  
+
+  @Override
   public synchronized final void release() {
     if (myHolds > 0) {
       if (--myHolds == 0) {
@@ -29,10 +30,12 @@ public abstract class DebuggerTaskImpl implements DebuggerTask {
     }
   }
 
+  @Override
   public synchronized final void hold() {
     myHolds++;
   }
 
+  @Override
   public synchronized final void waitFor() {
     while (myHolds > 0) {
       try {

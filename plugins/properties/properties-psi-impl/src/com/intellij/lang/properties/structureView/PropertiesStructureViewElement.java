@@ -49,22 +49,27 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
     myProperty = element;
   }
 
+  @Override
   public IProperty getValue() {
     return myProperty;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     myProperty.navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return myProperty.canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myProperty.canNavigateToSource();
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement[] getChildren() {
     return EMPTY_ARRAY;
@@ -82,6 +87,7 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
     return new IProperty[] {getValue()};
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return new ColoredItemPresentation() {
@@ -91,16 +97,19 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
         return (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY :null;
       }
 
+      @Override
       public String getPresentableText() {
         return myPresentableName == null
                ? myProperty.getUnescapedKey()
                : (myPresentableName.isEmpty() ? ResourceBundlePropertyStructureViewElement.PROPERTY_GROUP_KEY_TEXT : myPresentableName);
       }
 
+      @Override
       public String getLocationString() {
         return null;
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return myProperty.getIcon(0);
       }

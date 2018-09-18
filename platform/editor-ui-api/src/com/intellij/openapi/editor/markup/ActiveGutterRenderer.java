@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
@@ -39,11 +40,22 @@ public interface ActiveGutterRenderer extends LineMarkerRenderer {
 
   /**
    * Processes a mouse released event on the marker.
+   * <p>
+   * Implementations must extend one of {@link #canDoAction} methods, otherwise the action will never be called.
    *
    * @param editor the editor to which the marker belongs.
    * @param e      the mouse event instance.
    */
-  void doAction(Editor editor, MouseEvent e);
+  void doAction(@NotNull Editor editor, @NotNull MouseEvent e);
 
-  boolean canDoAction(final MouseEvent e);
+  /**
+   * @return true if {@link #doAction(Editor, MouseEvent)} should be called
+   */
+  default boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+    return canDoAction(e);
+  }
+
+  default boolean canDoAction(@NotNull MouseEvent e) {
+    return false;
+  }
 }

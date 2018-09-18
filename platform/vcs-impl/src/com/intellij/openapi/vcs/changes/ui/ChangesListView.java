@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDAware;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
@@ -18,6 +17,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -51,10 +51,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
-  private TreeExpander myTreeExpander;
-
-  public ChangesListView(@NotNull Project project) {
-    super(project, false, true);
+  public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
+    super(project, showCheckboxes, true);
     setDragEnabled(true);
   }
 
@@ -123,7 +121,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }
@@ -144,7 +142,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
-      return file != null && !file.isDirectory() ? new OpenFileDescriptor(myProject, file, 0) : null;
+      return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
+                                                                       .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
@@ -176,13 +175,10 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       return getSelectedModifiedWithoutEditing().findAny().isPresent();
     }
     if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-      return haveSelectedChanges();
+      return !UtilKt.isEmpty(getSelectedChanges());
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId) && myTreeExpander != null) {
-      return myTreeExpander;
     }
     return super.getData(dataId);
   }
@@ -310,12 +306,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     ).distinct();
   }
 
-  // TODO: Does not correspond to getSelectedChanges() - for instance, hijacked changes are not tracked here
-  private boolean haveSelectedChanges() {
-    return getSelectionNodesStream().anyMatch(
-      node -> node instanceof ChangesBrowserChangeNode || node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0);
-  }
-
   @NotNull
   private Stream<Change> getLeadSelection() {
     return getSelectionNodesStream()
@@ -417,9 +407,5 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     public boolean test(Change change) {
       return seen.add(change);
     }
-  }
-
-  public void setTreeExpander(TreeExpander expander) {
-    myTreeExpander = expander;
   }
 }

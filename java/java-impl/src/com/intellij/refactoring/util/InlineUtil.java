@@ -27,6 +27,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -208,7 +209,7 @@ public class InlineUtil {
   }
 
   public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
-    PsiExpressionList argumentList = (PsiExpressionList)arrayCreation.getParent();
+    PsiExpressionList argumentList = (PsiExpressionList)PsiUtil.skipParenthesizedExprUp(arrayCreation.getParent());
     if (argumentList == null) return;
     PsiExpression[] args = argumentList.getExpressions();
     PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
@@ -437,6 +438,28 @@ public class InlineUtil {
     for (PsiElement child : children) {
       solveVariableNameConflicts(child, placeToInsert, renameScope);
     }
+  }
+
+  public static boolean isChainingConstructor(PsiMethod constructor) {
+    return getChainedConstructor(constructor) != null;
+  }
+
+  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
+    PsiCodeBlock body = constructor.getBody();
+    if (body != null) {
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
+            if ("this".equals(methodExpr.getReferenceName())) {
+              PsiElement resolved = methodExpr.resolve();
+              return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor() ? (PsiMethod)resolved : null; //delegated via "this" call
+            }
+        }
+      }
+    }
+    return null;
   }
 
   public enum TailCallType {

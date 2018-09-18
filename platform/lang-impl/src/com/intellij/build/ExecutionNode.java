@@ -45,7 +45,7 @@ public class ExecutionNode extends CachingSimpleNode {
   private static final Icon NODE_ICON_OK = AllIcons.Process.State.GreenOK;
   private static final Icon NODE_ICON_ERROR = AllIcons.General.Error;
   private static final Icon NODE_ICON_WARNING = AllIcons.General.Warning;
-  private static final Icon NODE_ICON_INFO =  AllIcons.General.Information;
+  private static final Icon NODE_ICON_INFO = AllIcons.General.Information;
   private static final Icon NODE_ICON_SKIPPED = AllIcons.Process.State.YellowStr;
   private static final Icon NODE_ICON_STATISTICS = AllIcons.General.Mdot_empty;
   private static final Icon NODE_ICON_SIMPLE = AllIcons.General.Mdot_empty;
@@ -80,20 +80,24 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
-    if (myTitle != null) {
+    if (StringUtil.isNotEmpty(myTitle)) {
       presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     String hint = getCurrentHint();
-    if (myTitle != null || hint != null) {
+    boolean isNotEmptyName = StringUtil.isNotEmpty(myName);
+    if (isNotEmptyName && myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    if (hint != null) {
-      presentation.addText("  " + hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    if (StringUtil.isNotEmpty(hint)) {
+      if (isNotEmptyName) {
+        hint = " " + hint;
+      }
+      presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     if (myTooltip != null) {
       presentation.setTooltip(myTooltip);
@@ -253,7 +257,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
     if (myResult instanceof FailureResult) {
       List<Navigatable> result = new SmartList<>();
-      for (Failure failure : ((FailureResult)myResult).getFailures()) {
+      for (Failure failure: ((FailureResult)myResult).getFailures()) {
         ContainerUtil.addIfNotNull(result, failure.getNavigatable());
       }
       return result;
@@ -261,7 +265,7 @@ public class ExecutionNode extends CachingSimpleNode {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<Icon> iconProvider) {
+  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<Icon>() {
       @Nullable
       @Override
@@ -288,7 +292,7 @@ public class ExecutionNode extends CachingSimpleNode {
       if (hint == null) {
         hint = "";
       }
-      hint += (getParent() == null ? isRunning() ? "   " : "   with " : " (");
+      hint += (getParent() == null ? isRunning() ? "  " : "  with " : " (");
       if (errors > 0) {
         hint += (errors + " " + StringUtil.pluralize("error", errors));
         if (warnings > 0) {

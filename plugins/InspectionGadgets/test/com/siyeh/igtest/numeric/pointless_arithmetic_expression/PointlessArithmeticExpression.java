@@ -23,6 +23,7 @@ public class PointlessArithmeticExpression
         k = j * ONE_CONSTANT;
         System.out.println(k);
         k = <warning descr="'j / 1' can be replaced with 'j'">j / 1</warning>;
+        k = 0/0; // don't warn on division by zero
         System.out.println(k);
         String string = "foo" + 0;
 

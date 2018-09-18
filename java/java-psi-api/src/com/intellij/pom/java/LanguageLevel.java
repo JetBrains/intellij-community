@@ -49,11 +49,6 @@ public enum LanguageLevel {
     return myPreview;
   }
 
-  /** @deprecated use {@link JavaSdkVersion#getDescription()} (to be removed in IDEA 2019) */
-  public String getName() {
-    return this == JDK_X ? "Java X" :  "Java " + JavaSdkVersion.fromLanguageLevel(this).getDescription();
-  }
-
   @NotNull
   @Nls
   public String getPresentableText() {
@@ -73,7 +68,8 @@ public enum LanguageLevel {
     return myVersion;
   }
 
-  /** @deprecated use {@code org.jetbrains.jps.model.java.JpsJavaSdkType.complianceOption()} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption()} (to be removed in IDEA 2019) */
+  @Deprecated
   public String getCompilerComplianceDefaultOption() {
     return myVersion.feature <= 8 ? "1." + myVersion.feature : String.valueOf(myVersion.feature);
   }

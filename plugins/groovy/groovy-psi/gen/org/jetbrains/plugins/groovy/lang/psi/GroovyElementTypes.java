@@ -237,8 +237,10 @@ public interface GroovyElementTypes {
   IElementType SLASHY_CONTENT = new GroovyElementType("regex content");
   IElementType SLASHY_END = new GroovyElementType("regex end");
   IElementType SL_COMMENT = new GroovyElementType("line comment");
-  IElementType STR_DQ = new GroovyElementType("Gstring");
-  IElementType STR_SQ = new GroovyElementType("string");
+  IElementType STRING_DQ = new GroovyElementType("double quoted string");
+  IElementType STRING_SQ = new GroovyElementType("single quoted string");
+  IElementType STRING_TDQ = new GroovyElementType("triple double quoted string");
+  IElementType STRING_TSQ = new GroovyElementType("triple single quoted string");
   IElementType T_ARROW = new GroovyElementType("->");
   IElementType T_ASSIGN = new GroovyElementType("=");
   IElementType T_AT = new GroovyElementType("@");

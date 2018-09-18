@@ -51,7 +51,8 @@ public final class DirectoryPruner
 
 	// Implemented ============================================================
 
-	public void processingDirectory(DirectoryObject directoryObject) {
+	@Override
+        public void processingDirectory(DirectoryObject directoryObject) {
 		if (directoryObject.isRoot()) {
 			return;
 		}
@@ -63,11 +64,13 @@ public final class DirectoryPruner
 		directoriesToScan.add(directoryObject);
 	}
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addDirectoryListener(this);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.removeDirectoryListener(this);
 	}
 

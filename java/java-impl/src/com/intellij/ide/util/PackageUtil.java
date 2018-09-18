@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -80,23 +80,12 @@ public class PackageUtil {
   /**
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
                                                              String packageName,
                                                              PsiDirectory baseDir,
                                                              boolean askUserToCreate) throws IncorrectOperationException {
-    return findOrCreateDirectoryForPackage(project, packageName, baseDir, askUserToCreate, false);
-  }
-
-  /**
-   * @deprecated
-   */
-  @Nullable
-  public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
-                                                             String packageName,
-                                                             PsiDirectory baseDir,
-                                                             boolean askUserToCreate, boolean filterSourceDirsForTestBaseDir) throws IncorrectOperationException {
-
     PsiDirectory psiDirectory = null;
 
     if (!"".equals(packageName)) {
@@ -109,9 +98,6 @@ public class PackageUtil {
           postfixToShow = File.separatorChar + postfixToShow;
         }
         PsiDirectory[] directories = rootPackage.getDirectories();
-        if (filterSourceDirsForTestBaseDir) {
-          directories = filterSourceDirectories(baseDir, project, directories);
-        }
         psiDirectory = DirectoryChooserUtil.selectDirectory(project, directories, baseDir, postfixToShow);
         if (psiDirectory == null) return null;
       }
@@ -156,6 +142,7 @@ public class PackageUtil {
     final IncorrectOperationException[] exception = new IncorrectOperationException[1];
 
     CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+      @Override
       public PsiDirectory compute() {
         try {
           return oldDirectory.createSubdirectory(name);

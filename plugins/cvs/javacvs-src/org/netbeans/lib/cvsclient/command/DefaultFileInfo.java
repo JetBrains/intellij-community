@@ -40,7 +40,8 @@ public final class DefaultFileInfo
 
 	// Implemented ============================================================
 
-	public FileObject getFileObject() {
+	@Override
+        public FileObject getFileObject() {
         return fileObject;
 	}
 

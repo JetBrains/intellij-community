@@ -38,8 +38,7 @@ public class SystemInfoRt {
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated outdated (to be removed in IDEA 2018) */
-  public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
-  //</editor-fold>
+  private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
+  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
+  public static final boolean is64Bit = !is32Bit;
 }

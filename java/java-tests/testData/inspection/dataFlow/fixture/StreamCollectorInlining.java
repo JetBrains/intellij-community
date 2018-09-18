@@ -52,4 +52,14 @@ public class StreamCollectorInlining {
       Collectors.toMap(this::convert, <warning descr="Function may return null, but it's not allowed here">this::convert</warning>,
                 (a, b) -> b, () -> <warning descr="Function may return null, but it's not allowed here">null</warning>));
   }
+
+  void testListLocality(List<String> list) {
+    List<String> result = list.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    if(result.isEmpty()) return;
+    foo();
+    if(<warning descr="Condition 'result.isEmpty()' is always 'false'">result.isEmpty()</warning>) return;
+    foo();
+  }
+
+  native void foo();
 }

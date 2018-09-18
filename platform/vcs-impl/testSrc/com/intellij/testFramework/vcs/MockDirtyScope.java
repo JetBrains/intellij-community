@@ -127,7 +127,7 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean belongsTo(FilePath path, Consumer<AbstractVcs> vcsConsumer) {
+  public boolean belongsTo(FilePath path, Consumer<? super AbstractVcs> vcsConsumer) {
     throw new UnsupportedOperationException();
   }
 }

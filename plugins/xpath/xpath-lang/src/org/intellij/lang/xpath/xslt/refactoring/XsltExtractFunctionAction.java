@@ -43,10 +43,12 @@ import java.util.Set;
 
 public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOptions> {
 
+  @Override
   public String getRefactoringName() {
     return "Extract Function";
   }
 
+  @Override
   protected String getCommandName() {
     return "Extract XSLT Function";
   }
@@ -58,6 +60,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
     return super.actionPerformedImpl(file, editor, context, offset);
   }
 
+  @Override
   protected boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, RefactoringOptions dlg) {
     final XmlAttribute attribute = PsiTreeUtil.getContextOfType(expression, XmlAttribute.class, true);
     assert attribute != null;
@@ -135,6 +138,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
     return type.getName();
   }
 
+  @Override
   protected RefactoringOptions getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions) {
     final String name = Messages.showInputDialog(expression.getProject(), "Function Name: ", getRefactoringName(), Messages.getQuestionIcon());
     final boolean[] b = new boolean[]{false};

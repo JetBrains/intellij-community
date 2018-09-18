@@ -74,6 +74,7 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
       myDescription = description;
     }
 
+    @Override
     public void run(final JComponent place) {
       AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(myDescription, myContext.getLibrariesContainer(),
                                                                           myContext.getModule(), myContext.getModifiableRootModel(), null);

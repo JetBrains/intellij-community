@@ -28,7 +28,8 @@ public final class ValidResponsesRequest extends AbstractRequest {
 	 * Get the request String that will be passed to the server
 	 * @return the request String
 	 */
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Valid-responses E M MT Updated Checked-in ok error "
 		        + "Clear-static-directory Valid-requests Merged Removed "
 		        + "Copy-file Mod-time Mode Kopt Template Set-static-directory "

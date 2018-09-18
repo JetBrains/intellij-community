@@ -127,10 +127,12 @@ public abstract class ProgressStripeIcon implements Icon {
       super(component, shift);
     }
 
+    @Override
     public int getChunkWidth() {
       return 2 * JBUI.scale(GRADIENT);
     }
 
+    @Override
     public void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
       Color dark;
       Color light;

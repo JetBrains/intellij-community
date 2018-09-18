@@ -36,6 +36,7 @@ import java.lang.reflect.Type;
 public interface DomElement extends AnnotatedElement, UserDataHolder {
   DomElement[] EMPTY_ARRAY = new DomElement[0];
 
+  @Nullable
   XmlTag getXmlTag();
 
   /**

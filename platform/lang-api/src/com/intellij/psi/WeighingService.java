@@ -45,7 +45,7 @@ public class WeighingService {
   }
 
   @NotNull
-  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<T> element, @Nullable final Loc location) {
+  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<? extends T> element, @Nullable final Loc location) {
     final List<Weigher> weighers = getWeighers(key);
     return new WeighingComparable<>(element, location, ContainerUtil.toArray(weighers, new Weigher[weighers.size()]));
   }

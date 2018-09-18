@@ -26,10 +26,12 @@ public abstract class CvsTagDialog extends DialogWrapper implements TagNameField
     super(true);
   }
 
+  @Override
   public void enableOkAction(){
     setOKActionEnabled(true);
   }
 
+  @Override
   public void disableOkAction(String errorMessage){
     setOKActionEnabled(false);
   }

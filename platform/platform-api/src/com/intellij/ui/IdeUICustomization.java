@@ -35,6 +35,12 @@ public class IdeUICustomization {
   }
 
   /**
+   * Returns the title of the Project view Select In target.
+   */
+  public String getProjectViewSelectInTitle() {
+    return getProjectViewTitle() + " View";
+  }
+  /**
    * Returns the title of the "Non-Project Files" scope.
    */
   public String getNonProjectFilesScopeTitle() {

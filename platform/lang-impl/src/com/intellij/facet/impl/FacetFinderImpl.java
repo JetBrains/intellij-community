@@ -127,17 +127,17 @@ public class FacetFinderImpl extends FacetFinder {
     }
 
     @Override
-    public void facetAdded(final F facet) {
+    public void facetAdded(@NotNull final F facet) {
       incModificationCount();
     }
 
     @Override
-    public void facetRemoved(final F facet) {
+    public void facetRemoved(@NotNull final F facet) {
       incModificationCount();
     }
 
     @Override
-    public void facetConfigurationChanged(final F facet) {
+    public void facetConfigurationChanged(@NotNull final F facet) {
       incModificationCount();
     }
 
@@ -147,7 +147,7 @@ public class FacetFinderImpl extends FacetFinder {
     }
 
     @Override
-    public void beforeFacetRemoved(F facet) {
+    public void beforeFacetRemoved(@NotNull F facet) {
 
     }
 

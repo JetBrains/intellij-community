@@ -144,7 +144,6 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
   }
 
-  @SuppressWarnings("unused")
   public void _testJavadocMethodParams() {
     // Inspired by IDEA-42167
     // Disabled because the contents of the {@code tag} is not necessarily Java code and
@@ -695,5 +694,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
     getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
     doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
+  }
+
+  public void testOneLineEnumSpacing() {
+    getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
+    doTextTest("enum E {E1, E2}",
+               "enum E { E1, E2 }");
   }
 }

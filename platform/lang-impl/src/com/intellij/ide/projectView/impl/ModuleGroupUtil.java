@@ -29,8 +29,8 @@ public class ModuleGroupUtil {
   public static <T> T buildModuleGroupPath(final ModuleGroup group,
                                            T parentNode,
                                            final Map<ModuleGroup, T> map,
-                                           final Consumer<ParentChildRelation<T>> insertNode,
-                                           final Function<ModuleGroup, T> createNewNode) {
+                                           final Consumer<? super ParentChildRelation<T>> insertNode,
+                                           final Function<? super ModuleGroup, ? extends T> createNewNode) {
     final List<String> groupPath = group.getGroupPathList();
     for (int i = 0; i < groupPath.size(); i++) {
       final ModuleGroup moduleGroup = new ModuleGroup(groupPath.subList(0, i+1));
@@ -47,9 +47,9 @@ public class ModuleGroupUtil {
 
   public static <T> T updateModuleGroupPath(final ModuleGroup group,
                                             T parentNode,
-                                            final Function<ModuleGroup, T> needToCreateNode,
-                                            final Consumer<ParentChildRelation<T>> insertNode,
-                                            final Function<ModuleGroup, T> createNewNode) {
+                                            final Function<? super ModuleGroup, ? extends T> needToCreateNode,
+                                            final Consumer<? super ParentChildRelation<T>> insertNode,
+                                            final Function<? super ModuleGroup, ? extends T> createNewNode) {
     final List<String> groupPath = group.getGroupPathList();
     for (int i = 0; i < groupPath.size(); i++) {
       final ModuleGroup moduleGroup = new ModuleGroup(groupPath.subList(0, i+1));
@@ -67,7 +67,7 @@ public class ModuleGroupUtil {
     private final T myParent;
     private final T myChild;
 
-    public ParentChildRelation(final T parent, final T child) {
+    ParentChildRelation(final T parent, final T child) {
       myParent = parent;
       myChild = child;
     }

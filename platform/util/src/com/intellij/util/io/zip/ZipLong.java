@@ -114,7 +114,7 @@ public final class ZipLong implements Cloneable {
    *
    * @param bytes  the array of bytes
    * @param offset the offset to start
-   * @return the correspondanding Java long value
+   * @return the corresponding Java long value
    */
   public static long getValue(byte[] bytes, int offset) {
     long value = (bytes[offset + BYTE_3] << BYTE_3_SHIFT) & BYTE_3_MASK;
@@ -128,7 +128,7 @@ public final class ZipLong implements Cloneable {
    * Helper method to get the value as a Java long from a four-byte array
    *
    * @param bytes the array of bytes
-   * @return the correspondanding Java long value
+   * @return the corresponding Java long value
    */
   public static long getValue(byte[] bytes) {
     return getValue(bytes, 0);

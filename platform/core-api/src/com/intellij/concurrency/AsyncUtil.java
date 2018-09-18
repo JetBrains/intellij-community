@@ -50,7 +50,7 @@ public class AsyncUtil {
   private static AsyncFuture<Boolean> createConst(final boolean result) {
     return new AsyncFuture<Boolean>() {
       @Override
-      public void addConsumer(@NotNull Executor executor, @NotNull ResultConsumer<Boolean> consumer) {
+      public void addConsumer(@NotNull Executor executor, @NotNull ResultConsumer<? super Boolean> consumer) {
         consumer.onSuccess(result);
       }
 

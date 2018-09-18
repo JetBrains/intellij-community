@@ -24,12 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class StandardVcsGroup extends DefaultActionGroup implements DumbAware {
   public abstract AbstractVcs getVcs(Project project);
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
     Project project = e.getData(CommonDataKeys.PROJECT);

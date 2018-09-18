@@ -25,7 +25,7 @@ import java.io.File;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class SPFileUtil {
 
-  public static void processFilesRecursively(final String rootPath, final Consumer<String> consumer){
+  public static void processFilesRecursively(final String rootPath, final Consumer<? super String> consumer){
     final File rootFile = new File(rootPath);
     if (rootFile.exists() && rootFile.isDirectory()){
       FileUtil.processFilesRecursively(rootFile, file -> {

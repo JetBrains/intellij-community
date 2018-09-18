@@ -15,12 +15,11 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 
 public class NamedTemplateMatcher extends TemplateMatcher {
     protected final String myName;
@@ -30,6 +29,7 @@ public class NamedTemplateMatcher extends TemplateMatcher {
         myName = name;
     }
 
+    @Override
     protected boolean matches (XmlTag element) {
         if (XsltSupport.isTemplate(element, true)) {
             final XmlAttribute attribute = element.getAttribute("name", null);
@@ -40,10 +40,12 @@ public class NamedTemplateMatcher extends TemplateMatcher {
         return false;
     }
 
+    @Override
     protected ResolveUtil.Matcher changeDocument(XmlDocument document) {
         return new NamedTemplateMatcher(document, myName);
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
         return new NamedTemplateMatcher(myDocument, null);
     }

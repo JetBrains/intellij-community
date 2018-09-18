@@ -19,6 +19,7 @@ public class HgCommitAndPushExecutor implements CommitExecutor {
     myCheckinEnvironment = checkinEnvironment;
   }
 
+  @Override
   @Nls
   public String getActionText() {
     return "Commit and &Push...";
@@ -35,6 +36,7 @@ public class HgCommitAndPushExecutor implements CommitExecutor {
     return ID;
   }
 
+  @Override
   @NotNull
   public CommitSession createCommitSession() {
     myCheckinEnvironment.setNextCommitIsPushed();

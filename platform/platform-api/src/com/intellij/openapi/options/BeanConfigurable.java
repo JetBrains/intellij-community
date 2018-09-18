@@ -165,6 +165,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
   /**
    * @deprecated use {@link #checkBox(String, Getter, Setter)} instead
    */
+  @Deprecated
   protected void checkBox(@NonNls String fieldName, String title) {
     myFields.add(new CheckboxField(fieldName, title));
   }
@@ -196,7 +197,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
    * After the apply, the value from the component is queried via {@code componentGetter} and written back to model via {@code beanSetter}.
    * E.g. text from the edit box is queried and saved back to model bean.
    */
-  protected <V> void component(@NotNull JComponent component, @NotNull Getter<V> beanGetter, @NotNull Setter<V> beanSetter, @NotNull Getter<V> componentGetter, @NotNull Setter<V> componentSetter) {
+  protected <V> void component(@NotNull JComponent component, @NotNull Getter<? extends V> beanGetter, @NotNull Setter<? super V> beanSetter, @NotNull Getter<? extends V> componentGetter, @NotNull Setter<? super V> componentSetter) {
     BeanField<JComponent> field = new BeanField<JComponent>("") {
       @NotNull
       @Override

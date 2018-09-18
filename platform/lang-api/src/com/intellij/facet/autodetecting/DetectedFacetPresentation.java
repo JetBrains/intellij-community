@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author nik
  */
+@Deprecated
 public abstract class DetectedFacetPresentation {
 
   @Nullable
@@ -45,6 +46,7 @@ public abstract class DetectedFacetPresentation {
    * @deprecated override {@link DetectedFacetPresentation#getAutodetectionPopupText(com.intellij.openapi.module.Module, com.intellij.facet.FacetType, String, com.intellij.openapi.vfs.VirtualFile[])}
    * instead
    */
+  @Deprecated
   @Nullable
   public String getAutodetectionPopupText(@NotNull Facet facet, @NotNull VirtualFile[] files) {
     return null;

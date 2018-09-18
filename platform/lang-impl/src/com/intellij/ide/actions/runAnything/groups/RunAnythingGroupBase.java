@@ -11,7 +11,7 @@ import java.util.Collection;
 
 public abstract class RunAnythingGroupBase extends RunAnythingGroup {
   @NotNull
-  public abstract Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext);
+  public abstract Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern);
 
   @Override
   public SearchResult getItems(@NotNull DataContext dataContext,
@@ -21,7 +21,7 @@ public abstract class RunAnythingGroupBase extends RunAnythingGroup {
                                @NotNull Runnable cancellationChecker) {
     cancellationChecker.run();
     SearchResult result = new SearchResult();
-    for (RunAnythingItem runConfigurationItem : getGroupItems(dataContext)) {
+    for (RunAnythingItem runConfigurationItem : getGroupItems(dataContext, pattern)) {
       if (addToList(model, result, pattern, runConfigurationItem.getCommand(), isInsertionMode, runConfigurationItem)) break;
       cancellationChecker.run();
     }

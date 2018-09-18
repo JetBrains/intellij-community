@@ -35,7 +35,7 @@ final class AddToWatchesAction extends XDebuggerActionBase {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     if (XDebuggerTreeActionBase.getSelectedNode(event.getDataContext()) != null) {
       TREE_ACTION.update(event);
     }
@@ -45,7 +45,7 @@ final class AddToWatchesAction extends XDebuggerActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     if (XDebuggerTreeActionBase.getSelectedNode(event.getDataContext()) != null) {
       TREE_ACTION.actionPerformed(event);
     }

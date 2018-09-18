@@ -42,6 +42,10 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     if (!Boolean.TRUE.equals(module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY))) {
       String targetLevel = mavenProject.getTargetLevel();
+      if (targetLevel == null) {
+        targetLevel = mavenProject.getReleaseLevel();
+      }
+
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
       configuration.setBytecodeTargetLevel(module, ObjectUtils.notNull(targetLevel, "1.5"));
     }

@@ -25,7 +25,7 @@ import com.intellij.util.xml.DomElement;
  */
 public class MockDomInspection<T extends DomElement> extends BasicDomElementsInspection<T>{
 
-  public MockDomInspection(final Class<T> domClass) {
+  public MockDomInspection(final Class<? extends T> domClass) {
     super(domClass);
   }
 

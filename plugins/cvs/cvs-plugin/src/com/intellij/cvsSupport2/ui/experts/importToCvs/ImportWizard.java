@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.ui.experts.importToCvs;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsoperations.cvsImport.ImportDetails;
@@ -23,7 +24,6 @@ import com.intellij.cvsSupport2.ui.experts.SelectCVSConfigurationStep;
 import com.intellij.cvsSupport2.ui.experts.SelectCvsElementStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeSelectionModel;
@@ -86,6 +86,7 @@ public class ImportWizard extends CvsWizard {
                              mySelectImportLocationStep.getIgnoreFileFilter());
   }
 
+  @Override
   protected String getHelpID() {
     return "cvs.import";
   }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.maven.embedder;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 
 class FieldAccessor<FIELD_TYPE> {
   private volatile FIELD_TYPE myWagonManagerCache;
@@ -31,7 +31,7 @@ class FieldAccessor<FIELD_TYPE> {
 
   public FIELD_TYPE getField() {
     if (myWagonManagerCache == null) {
-      Object value = ReflectionUtil.getField(myHostClass, myHost, null, myFieldName);
+      Object value = ReflectionUtilRt.getField(myHostClass, myHost, null, myFieldName);
       //noinspection unchecked
       myWagonManagerCache = (FIELD_TYPE)value;
     }

@@ -37,6 +37,7 @@ public interface SettingsStep {
   /**
    * @deprecated use {@link #getModuleNameLocationSettings()} instead
    */
+  @Deprecated
   @Nullable
   JTextField getModuleNameField();
 

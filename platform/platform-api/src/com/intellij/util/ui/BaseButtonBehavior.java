@@ -103,7 +103,7 @@ public abstract class BaseButtonBehavior {
   protected void repaintComponent() {
     repaint(myComponent);
   }
-  
+
   protected void repaint(Component c) {
     c.repaint();
   }
@@ -112,6 +112,7 @@ public abstract class BaseButtonBehavior {
 
     private boolean myWasPressedOnFocusTransfer;
 
+    @Override
     public void mouseEntered(MouseEvent e) {
       myMouseDeadzone.enter(e);
 
@@ -119,6 +120,7 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
       myMouseDeadzone.clear();
 
@@ -126,6 +128,7 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
       Component owner = IdeFocusManager.getInstance(null).getFocusOwner();
       myWasPressedOnFocusTransfer = owner == null;
@@ -142,6 +145,7 @@ public abstract class BaseButtonBehavior {
     }
 
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       try {
         if (passIfNeeded(e, !myWasPressedOnFocusTransfer)) return;

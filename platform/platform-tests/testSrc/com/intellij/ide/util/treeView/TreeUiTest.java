@@ -238,6 +238,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final Ref<Boolean> wasUiNull = new Ref<>(true);
 
     final Ref<Runnable> addReadyCallbacks = new Ref<>(new Runnable() {
+      @Override
       public void run() {
         getBuilder().getReady(this).doWhenDone(new NamedRunnable("on done") {
           @Override
@@ -397,7 +398,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     assertFalse(getBuilder().getUi().isCancelProcessed());
   }
-  
+
 
   public void testExpandAll() throws Exception {
     buildStructure(myRoot);
@@ -957,7 +958,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "        -level7\n" +
                "         -level8\n" +
                "          -level9\n" +
-               "           -level10\n" + 
+               "           -level10\n" +
                "            +level11\n");
   }
 

@@ -66,7 +66,8 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return 0;
   }
 
-  public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
+  @NotNull
+  public static List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
     List<TextRange> result = new ArrayList<>();
 
     if (range == null) {
@@ -88,7 +89,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   }
 
   @Nullable
-  private static TextRange getExpandedRange(CharSequence text, TextRange range, boolean isSymmetric) {
+  private static TextRange getExpandedRange(@NotNull CharSequence text, @NotNull TextRange range, boolean isSymmetric) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int index1 = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
@@ -128,7 +129,8 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return null;
   }
 
-  public static List<TextRange> expandToWholeLinesWithBlanks(CharSequence text, TextRange range) {
+  @NotNull
+  public static List<TextRange> expandToWholeLinesWithBlanks(@NotNull CharSequence text, @NotNull TextRange range) {
     List<TextRange> result = ContainerUtil.newArrayList();
     result.addAll(expandToWholeLine(text, range, true));
 
@@ -158,7 +160,8 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return result;
   }
 
-  public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {
+  @NotNull
+  public static List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range) {
     return expandToWholeLine(text, range, true);
   }
 }

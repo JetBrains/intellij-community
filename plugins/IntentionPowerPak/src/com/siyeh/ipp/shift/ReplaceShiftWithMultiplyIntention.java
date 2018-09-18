@@ -17,6 +17,7 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -69,7 +70,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceShiftWithMultiplyOrDivide(element);
     }
@@ -82,7 +83,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     final PsiAssignmentExpression exp =
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = exp.getLExpression();
-    final PsiExpression rhs = exp.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(exp.getRExpression());
     final IElementType tokenType = exp.getOperationTokenType();
     final String assignString;
     if (tokenType.equals(JavaTokenType.LTLTEQ)) {
@@ -100,7 +101,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
   private static void replaceShiftWithMultiplyOrDivide(PsiElement element) {
     final PsiBinaryExpression exp = (PsiBinaryExpression)element;
     final PsiExpression lhs = exp.getLOperand();
-    final PsiExpression rhs = exp.getROperand();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(exp.getROperand());
     final IElementType tokenType = exp.getOperationTokenType();
     final String operatorString;
     if (tokenType.equals(JavaTokenType.LTLT)) {

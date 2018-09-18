@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
 
 class AddAssociationAction extends AnAction {
   private final FileAssociationsManager myManager;
@@ -33,7 +34,8 @@ class AddAssociationAction extends AnAction {
         myManager = manager;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
         final PsiFile psiFile = AssociationsGroup.getPsiFile(e);
         if (psiFile == null) return;
 
@@ -47,6 +49,7 @@ class AddAssociationAction extends AnAction {
         assert virtualFile != null;
 
         final FileChooserDescriptor descriptor = new AnyXMLDescriptor(true) {
+            @Override
             public boolean isFileSelectable(VirtualFile file) {
                 return super.isFileSelectable(file) && !file.equals(virtualFile);
             }

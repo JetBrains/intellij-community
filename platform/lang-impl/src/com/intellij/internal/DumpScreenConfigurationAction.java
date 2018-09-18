@@ -36,7 +36,7 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(DumpScreenConfigurationAction.class);
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     new ScreenDialog(event).show();
   }
 

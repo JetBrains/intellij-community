@@ -40,8 +40,8 @@ import java.util.function.Predicate;
 
 public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   static class Wrapper extends ArgumentFixerActionFactory {
-    final Predicate<PsiType> myInTypeFilter;
-    final Predicate<PsiType> myOutTypeFilter;
+    final Predicate<? super PsiType> myInTypeFilter;
+    final Predicate<? super PsiType> myOutTypeFilter;
     final String myTemplate;
 
     /**
@@ -51,7 +51,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
      *                      It's allowed to check imprecisely (return true even if output type is not acceptable) as more
      *                      expensive type check will be performed automatically.
      */
-    Wrapper(String template, Predicate<PsiType> inTypeFilter, Predicate<PsiType> outTypeFilter) {
+    Wrapper(String template, Predicate<? super PsiType> inTypeFilter, Predicate<? super PsiType> outTypeFilter) {
       myInTypeFilter = inTypeFilter;
       myOutTypeFilter = outTypeFilter;
       myTemplate = template;

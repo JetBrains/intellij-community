@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class VcsGeneralConfigurationPanel {
 
@@ -58,11 +58,14 @@ public class VcsGeneralConfigurationPanel {
   private JPanel myAddConfirmationPanel;
   private JComboBox myOnPatchCreation;
   private JCheckBox myReloadContext;
+  private JLabel myOnPatchCreationLabel;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
     myProject = project;
+    myOnPatchCreationLabel.setText(VcsBundle.message("combobox.show.patch.in.explorer.after.creation",
+                                                     ShowFilePathAction.getFileManagerName()));
 
     myOnFileAddingGroup = new JRadioButton[]{
       myShowDialogOnAddingFile,

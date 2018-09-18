@@ -563,7 +563,14 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     public PsiElement makeFinalReplacement() {
       LOG.assertTrue(myStreamExpression != null);
       if (myFinisher == null || myStreamExpression instanceof PsiStatement) {
-        myCommentTracker.delete(myStreamExpression);
+        PsiElement toDelete = myStreamExpression;
+        if (toDelete instanceof PsiExpression && toDelete.getParent() instanceof PsiExpressionStatement) {
+          toDelete = toDelete.getParent();
+          while (toDelete instanceof PsiExpressionStatement && toDelete.getParent() instanceof PsiLabeledStatement) {
+            toDelete = toDelete.getParent();
+          }
+        }
+        myCommentTracker.delete(toDelete);
         return null;
       }
       else {

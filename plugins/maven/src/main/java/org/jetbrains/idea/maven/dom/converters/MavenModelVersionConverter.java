@@ -27,6 +27,7 @@ public class MavenModelVersionConverter extends MavenConstantListConverter {
   private static final String VERSION = "4.0.0";
   private static final List<String> VALUES = Collections.singletonList(VERSION);
 
+  @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }

@@ -49,19 +49,11 @@ public class SelectWordUtil {
   private SelectWordUtil() {
   }
 
-  /**
-   * @see ExtendWordSelectionHandler#EP_NAME
-   */
-  @Deprecated
-  public static void registerSelectioner(ExtendWordSelectionHandler selectioner) {
-    SELECTIONERS = ArrayUtil.append(SELECTIONERS, selectioner);
-  }
-
   static ExtendWordSelectionHandler[] getExtendWordSelectionHandlers() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
       for (ExtendWordSelectionHandler handler : Extensions.getExtensions(ExtendWordSelectionHandler.EP_NAME)) {
-        registerSelectioner(handler);        
+        SELECTIONERS = ArrayUtil.append(SELECTIONERS, handler);
       }
     }
     return SELECTIONERS;
@@ -188,7 +180,7 @@ public class SelectWordUtil {
                                    @NotNull CharSequence text,
                                    int cursorOffset,
                                    @NotNull Editor editor,
-                                   @NotNull Processor<TextRange> consumer) {
+                                   @NotNull Processor<? super TextRange> consumer) {
     if (element == null) return;
 
     PsiFile file = element.getContainingFile();
@@ -221,7 +213,7 @@ public class SelectWordUtil {
   }
 
   private static void processInFile(@NotNull final PsiElement element,
-                                    @NotNull Processor<TextRange> consumer,
+                                    @NotNull Processor<? super TextRange> consumer,
                                     @NotNull CharSequence text,
                                     final int cursorOffset,
                                     @NotNull Editor editor) {
@@ -235,7 +227,7 @@ public class SelectWordUtil {
   }
 
   private static boolean processElement(@NotNull PsiElement element,
-                                        @NotNull Processor<TextRange> processor,
+                                        @NotNull Processor<? super TextRange> processor,
                                         @NotNull CharSequence text,
                                         int cursorOffset,
                                         @NotNull Editor editor) {

@@ -44,6 +44,7 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
 
     protected abstract boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, Settings settings);
 
+    @Override
     public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (context != null) {
             if (XsltSupport.isPatternAttribute(context)) {
@@ -56,9 +57,10 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         return super.getErrorMessage(editor, file, context);
     }
 
+    @Override
     protected boolean actionPerformedImpl(PsiFile file, Editor editor, XmlAttribute context, int offset) {
         if (!(file instanceof XPathFile)) return false;
-        
+
         // pattern attribute may not reference variables
         if (XsltSupport.isPatternAttribute(context)) return false;
 
@@ -101,7 +103,7 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
 
     private void extractFromExpression(Editor e, final XPathExpression expression) {
         final Editor editor = (e instanceof EditorWindow) ? ((EditorWindow)e).getDelegate() : e;
-        
+
         final HighlightManager highlightManager = HighlightManager.getInstance(expression.getProject());
 
         final Set<XPathExpression> matchingExpressions = RefactoringUtil.collectMatchingExpressions(expression);

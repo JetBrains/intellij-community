@@ -23,8 +23,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
+
+import java.util.HashSet;
 
 public class InputValidator implements IntroduceVariableBase.Validator {
   private final Project myProject;
@@ -33,6 +34,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
   private final ExpressionOccurrenceManager myOccurenceManager;
   private final IntroduceVariableBase myIntroduceVariableBase;
 
+  @Override
   public boolean isOK(IntroduceVariableSettings settings) {
     String name = settings.getEnteredName();
     final PsiElement anchor;
@@ -47,6 +49,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final HashSet<PsiVariable> reportedVariables = new HashSet<>();
     JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor visitor = new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+      @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (!reportedVariables.contains(collidingVariable)) {
           reportedVariables.add(collidingVariable);

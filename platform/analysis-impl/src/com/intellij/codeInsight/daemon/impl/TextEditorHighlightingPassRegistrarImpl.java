@@ -61,22 +61,6 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   }
 
   @Override
-  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
-    Anchor anc = Anchor.FIRST;
-    switch (anchor) {
-      case FIRST : anc = Anchor.FIRST;
-        break;
-      case LAST : anc = Anchor.LAST;
-        break;
-      case BEFORE : anc = Anchor.BEFORE;
-        break;
-      case AFTER : anc = Anchor.AFTER;
-        break;
-    }
-    registerTextEditorHighlightingPass(factory, anc, anchorPass, true, true);
-  }
-
-  @Override
   public synchronized int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
                                                              @Nullable int[] runAfterCompletionOf,
                                                              @Nullable int[] runAfterOfStartingOf,

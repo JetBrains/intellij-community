@@ -30,6 +30,8 @@ public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
   }
 
   public void testPolyadic() { doTest(); }
+  public void testPolyadic2() { doTest(); }
+  public void testPolyadic3() { doTest(); }
   public void testCommutative() { doTest(); }
   public void testWrapping() { doTest(); }
   public void testNotCommutative() { assertQuickfixNotAvailable(); }

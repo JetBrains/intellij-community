@@ -26,9 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsCom
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -169,13 +167,6 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   @Override
   public Icon getIcon(boolean open) {
     return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return "preferences.jdkGlobalLibs";  //todo
   }
 
   public void updateComponent() {

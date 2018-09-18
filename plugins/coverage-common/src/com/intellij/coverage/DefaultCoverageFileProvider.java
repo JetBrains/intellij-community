@@ -37,10 +37,12 @@ public final class DefaultCoverageFileProvider implements CoverageFileProvider{
     mySourceProvider = sourceProvider;
   }
 
+  @Override
   public String getCoverageDataFilePath() {
     return myFile.getPath();
   }
 
+  @Override
   public boolean ensureFileExists() {
     return myFile.exists();
   }
@@ -49,6 +51,7 @@ public final class DefaultCoverageFileProvider implements CoverageFileProvider{
     return mySourceProvider;
   }
 
+  @Override
   public boolean isValid() {
     return ensureFileExists();
   }

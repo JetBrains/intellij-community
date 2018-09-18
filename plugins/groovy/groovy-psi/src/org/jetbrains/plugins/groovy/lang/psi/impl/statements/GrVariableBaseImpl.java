@@ -85,12 +85,13 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
     PsiElement next = PsiUtil.getNextNonSpace(this);
     ASTNode parentNode = parent.getNode();
     assert parentNode != null;
-    super.delete();
     if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
-      prev.delete();
-    } else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
-      next.delete();
+      parent.deleteChildRange(prev, getPrevSibling());
     }
+    else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+      parent.deleteChildRange(getNextSibling(), next);
+    }
+    super.delete();
     if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getVariables().length == 0) {
       parent.delete();
     }

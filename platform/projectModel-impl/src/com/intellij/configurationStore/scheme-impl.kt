@@ -65,7 +65,7 @@ abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val 
 
   abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>,
                             name: String,
-                            attributeProvider: Function<String, String?>,
+                            attributeProvider: Function<in String, String?>,
                             isBundled: Boolean = false): MUTABLE_SCHEME
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 

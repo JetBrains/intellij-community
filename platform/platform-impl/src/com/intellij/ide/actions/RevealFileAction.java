@@ -32,7 +32,7 @@ public class RevealFileAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VirtualFile file = ShowFilePathAction.findLocalFile(CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()));
     Presentation presentation = e.getPresentation();
     presentation.setText(getActionName());
@@ -45,7 +45,7 @@ public class RevealFileAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile file = ShowFilePathAction.findLocalFile(CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()));
     if (file != null) {
       ShowFilePathAction.openFile(new File(file.getPresentableUrl()));

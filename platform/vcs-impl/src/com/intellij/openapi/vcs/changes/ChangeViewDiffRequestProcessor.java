@@ -143,6 +143,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public void clear() {
     myCurrentChange = null;
     updateRequest();
+    dropCaches();
   }
 
   @Override

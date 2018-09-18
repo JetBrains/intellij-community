@@ -9,7 +9,6 @@ class X {
       //comment7
       //comment8
       if ("case1".equals(value)) {//comment2
-
       } else if ("case2".equals(value)) {
       } else {
       }

@@ -225,6 +225,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       myPropertyReference = propertyReference;
     }
 
+    @Override
     protected void doAction() {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();

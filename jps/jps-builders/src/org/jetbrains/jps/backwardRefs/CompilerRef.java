@@ -54,6 +54,7 @@ public interface CompilerRef extends RW.Savable {
       myParameterCount = parameterCount;
     }
 
+    @Override
     public int getName() {
       return myName;
     }

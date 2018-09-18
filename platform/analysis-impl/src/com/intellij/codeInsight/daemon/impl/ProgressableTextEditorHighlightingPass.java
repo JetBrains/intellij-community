@@ -41,9 +41,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private final String myPresentableName;
   protected final PsiFile myFile;
   @Nullable private final Editor myEditor;
-  @NotNull protected final TextRange myRestrictRange;
-  @NotNull protected final HighlightInfoProcessor myHighlightInfoProcessor;
-  protected HighlightingSession myHighlightingSession;
+  @NotNull final TextRange myRestrictRange;
+  @NotNull final HighlightInfoProcessor myHighlightInfoProcessor;
+  HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
                                                    @Nullable final Document document,
@@ -73,11 +73,12 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   @Override
   public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
     if (!(progress instanceof DaemonProgressIndicator)) {
-      throw new IncorrectOperationException("Highlighting must be run under DaemonProgressIndicator, but got: "+progress);
+      throw new IncorrectOperationException("Highlighting must be run under DaemonProgressIndicator, but got: " + progress);
     }
     myFinished = false;
     if (myFile != null) {
-      myHighlightingSession = HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, (DaemonProgressIndicator)progress, getColorsScheme());
+      myHighlightingSession =
+        HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, (DaemonProgressIndicator)progress, getColorsScheme());
     }
     try {
       collectInformationWithProgress(progress);

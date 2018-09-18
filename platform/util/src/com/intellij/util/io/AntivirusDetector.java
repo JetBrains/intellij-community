@@ -22,7 +22,7 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.NotNull;
 
 public class AntivirusDetector {
-  private static final int THRESHOULD = 500;
+  private static final int THRESHOLD = 500;
   private boolean myEnabled = false;
   private Runnable myCallback;
   private static final AntivirusDetector ourInstance = new AntivirusDetector();
@@ -52,7 +52,7 @@ public class AntivirusDetector {
     r.run();
     long delta = System.currentTimeMillis() - now;
 
-    if (delta > THRESHOULD) {
+    if (delta > THRESHOLD) {
       disable();
       myCallback.run();
     }

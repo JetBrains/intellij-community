@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project;
 public abstract class JavaCodeStyleSettingsFacade {
   public abstract int getNamesCountToUseImportOnDemand();
 
+  public abstract boolean isToImportInDemand(String qualifiedName);
+  
   public abstract boolean useFQClassNames();
 
   public abstract boolean isJavaDocLeadingAsterisksEnabled();

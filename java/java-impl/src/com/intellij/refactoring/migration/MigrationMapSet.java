@@ -172,17 +172,8 @@ public class MigrationMapSet {
     File targetFile = new File(dir, fileName);
     if (targetFile.isFile()) return;
 
-    try {
-      FileOutputStream outputStream = new FileOutputStream(targetFile);
-      InputStream inputStream = url.openStream();
-
-      try {
-        FileUtil.copy(inputStream, outputStream);
-      }
-      finally {
-        outputStream.close();
-        inputStream.close();
-      }
+    try (FileOutputStream outputStream = new FileOutputStream(targetFile); InputStream inputStream = url.openStream()) {
+      FileUtil.copy(inputStream, outputStream);
     }
     catch (Exception e) {
       LOG.error(e);

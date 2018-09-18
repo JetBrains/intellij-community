@@ -32,7 +32,7 @@ import java.util.List;
 
 public class RunBuildAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && checkOrPerform(e.getDataContext(), false);
   }
 

@@ -24,11 +24,13 @@ class YAMLStructureViewDocument extends PsiTreeElementBase<YAMLDocument> {
     return YAMLStructureViewFactory.createChildrenViewTreeElements(document.getTopLevelValue(), "<doc>");
   }
 
+  @Override
   @NotNull
   public String getPresentableText() {
     return YAMLBundle.message("YAMLStructureViewDocument.element.name");
   }
 
+  @Override
   @NotNull
   public Icon getIcon(boolean open) {
     return PlatformIcons.XML_TAG_ICON;

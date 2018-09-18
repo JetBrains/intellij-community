@@ -34,20 +34,24 @@ class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
         this.method = method;
     }
 
+    @Override
     @NotNull
     public PsiElement[] getElements(){
         return new PsiElement[]{method};
     }
 
+    @Override
     public String getProcessedElementsHeader(){
         return RefactorJBundle.message("method.whose.return.are.to.wrapped");
     }
 
+    @Override
     public String getCodeReferencesText(int usagesCount, int filesCount){
         return RefactorJBundle.message("references.to.be.modified.usage.view",
                 MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, RefactorJBundle.message("reference")));
     }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
         return null;
     }

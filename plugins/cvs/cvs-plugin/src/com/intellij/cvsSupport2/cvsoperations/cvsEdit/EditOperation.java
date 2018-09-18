@@ -95,6 +95,7 @@ public class EditOperation extends CvsOperationOnFiles {
     myIsReservedEdit = isReservedEdit;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final EditCommand result = new EditCommand();
     result.setTemporaryWatch(Watch.TALL);
@@ -123,6 +124,7 @@ public class EditOperation extends CvsOperationOnFiles {
     if (!myEditFileInfos.isEmpty()) throw vcsException;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     final EditedFileInfo editedFileInfo = EditedFileInfo.createOn(message);
@@ -130,6 +132,7 @@ public class EditOperation extends CvsOperationOnFiles {
       myEditFileInfos.add(editedFileInfo);
   }
 
+  @Override
   protected String getOperationName() {
     return "edit";
   }

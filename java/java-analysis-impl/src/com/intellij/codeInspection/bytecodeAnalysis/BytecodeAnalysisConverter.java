@@ -38,6 +38,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 public class BytecodeAnalysisConverter {
 
   private static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+    @NotNull
     @Override
     public MessageDigest create() {
       try {
@@ -48,7 +49,7 @@ public class BytecodeAnalysisConverter {
     }
 
     @Override
-    protected void init(MessageDigest value) {
+    protected void init(@NotNull MessageDigest value) {
       value.reset();
     }
   };

@@ -59,6 +59,7 @@ public class CompilerExcludes extends Generator {
   }
 
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }

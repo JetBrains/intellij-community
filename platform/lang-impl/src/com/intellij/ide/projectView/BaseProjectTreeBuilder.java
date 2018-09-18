@@ -136,7 +136,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private Promise<Object> _select(final Object element,
                                  final VirtualFile file,
                                  final boolean requestFocus,
-                                 final Condition<AbstractTreeNode> nonStopCondition) {
+                                 final Condition<? super AbstractTreeNode> nonStopCondition) {
     AbstractTreeUpdater updater = getUpdater();
     if (updater == null) {
       return Promises.rejectedPromise();
@@ -154,7 +154,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private void _select(final Object element,
                        final VirtualFile file,
                        final boolean requestFocus,
-                       final Condition<AbstractTreeNode> nonStopCondition,
+                       final Condition<? super AbstractTreeNode> nonStopCondition,
                        final AsyncPromise<Object> result,
                        @NotNull final ProgressIndicator indicator,
                        @Nullable final Ref<Object> virtualSelectTarget,
@@ -302,12 +302,12 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return async;
   }
 
-  private void expandChild(@NotNull final List<AbstractTreeNode> kids,
+  private void expandChild(@NotNull final List<? extends AbstractTreeNode> kids,
                            int i,
                            @NotNull final Condition<AbstractTreeNode> nonStopCondition,
                            final VirtualFile file,
                            final Object element,
-                           @NotNull final AsyncResult<AbstractTreeNode> async,
+                           @NotNull final AsyncResult<? super AbstractTreeNode> async,
                            @NotNull final ProgressIndicator indicator,
                            final Ref<Object> virtualSelectTarget) {
     while (i < kids.size()) {

@@ -25,6 +25,7 @@ import javax.swing.*;
 public class JsonSchemaComplianceInspection extends LocalInspectionTool {
   public boolean myCaseInsensitiveEnum = false;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return JsonBundle.message("json.schema.inspection.compliance.name");

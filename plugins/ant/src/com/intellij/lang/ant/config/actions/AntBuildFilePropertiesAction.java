@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
 import icons.AntIcons;
+import org.jetbrains.annotations.NotNull;
 
 public final class AntBuildFilePropertiesAction extends AnAction {
   private final AntExplorer myAntExplorer;
@@ -34,11 +35,13 @@ public final class AntBuildFilePropertiesAction extends AnAction {
     registerCustomShortcutSet(CommonShortcuts.ALT_ENTER, myAntExplorer);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myAntExplorer.setBuildFileProperties();
   }
 
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(myAntExplorer.isBuildFileSelected());
   }

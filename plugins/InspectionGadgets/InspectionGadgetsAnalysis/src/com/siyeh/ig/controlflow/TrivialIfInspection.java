@@ -243,19 +243,23 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (condition == null) {
       return;
     }
-    final String conditionText = BoolUtils.getNegatedExpressionText(condition);
+    CommentTracker commentTracker = new CommentTracker();
+    final String conditionText = BoolUtils.getNegatedExpressionText(condition, commentTracker);
     final PsiReturnStatement nextStatement = ControlFlowUtils.getNextReturnStatement(statement);
     if (nextStatement == null) {
       return;
     }
-    final PsiElement nextSibling = statement.getNextSibling();
+    PsiElement nextSibling = statement.getNextSibling();
     if (nextSibling != nextStatement && nextStatement.getParent() == statement.getParent()) {
-      statement.getParent().deleteChildRange(nextSibling, nextStatement.getPrevSibling());
+      while (nextSibling != nextStatement && nextSibling != null) {
+        commentTracker.delete(nextSibling);
+        nextSibling = nextSibling.getNextSibling();
+      }
     }
     @NonNls final String newStatement = "return " + conditionText + ';';
-    PsiReplacementUtil.replaceStatement(statement, newStatement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement, commentTracker);
     if (!ControlFlowUtils.isReachable(nextStatement)) {
-      nextStatement.delete();
+      new CommentTracker().deleteAndRestoreComments(nextStatement);
     }
   }
 

@@ -68,7 +68,10 @@ public abstract class WizardInputField<T extends JComponent> {
   }
 
   public void addToSettings(SettingsStep settingsStep) {
-    settingsStep.addSettingsField(getLabel(), getComponent());
+    T component = getComponent();
+    if (component != null) {
+      settingsStep.addSettingsField(getLabel(), component);
+    }
   }
 
   public boolean acceptFile(File file) {

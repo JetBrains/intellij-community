@@ -31,11 +31,13 @@ public class IconActionComponent extends ScalableIconComponent {
   public IconActionComponent(Icon icon, Icon rolloverIcon, String tooltipText, final Runnable action) {
     super(icon, rolloverIcon);
     this.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseEntered(MouseEvent e) {
         setSelected(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
+      @Override
       public void mouseExited(MouseEvent e) {
         setSelected(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

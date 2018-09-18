@@ -23,8 +23,9 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
+import org.jetbrains.annotations.NotNull;
 
-public class TypeCastInstruction extends Instruction {
+public class TypeCastInstruction extends Instruction implements ExpressionPushingInstruction {
   private final PsiTypeCastExpression myCastExpression;
   private final PsiExpression myCasted;
   private final PsiType myCastTo;
@@ -33,10 +34,6 @@ public class TypeCastInstruction extends Instruction {
     myCastExpression = castExpression;
     myCasted = casted;
     myCastTo = castTo;
-  }
-
-  public PsiTypeCastExpression getCastExpression() {
-    return myCastExpression;
   }
 
   public PsiExpression getCasted() {
@@ -55,5 +52,11 @@ public class TypeCastInstruction extends Instruction {
   @Override
   public String toString() {
     return "CAST_TO "+myCastTo.getCanonicalText();
+  }
+
+  @NotNull
+  @Override
+  public PsiTypeCastExpression getExpression() {
+    return myCastExpression;
   }
 }

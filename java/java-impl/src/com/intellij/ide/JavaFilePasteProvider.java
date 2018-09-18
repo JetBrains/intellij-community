@@ -1,29 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -40,6 +25,7 @@ import java.awt.datatransfer.DataFlavor;
  * @author yole
  */
 public class JavaFilePasteProvider implements PasteProvider {
+  @Override
   public void performPaste(@NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -74,7 +60,7 @@ public class JavaFilePasteProvider implements PasteProvider {
       if (file instanceof PsiJavaFile) {
         updatePackageStatement((PsiJavaFile)file, targetDir);
       }
-      new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), -1).navigate(true);
     });
   }
 
@@ -106,10 +92,12 @@ public class JavaFilePasteProvider implements PasteProvider {
     }
   }
 
+  @Override
   public boolean isPastePossible(@NotNull final DataContext dataContext) {
     return true;
   }
 
+  @Override
   public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -124,7 +112,7 @@ public class JavaFilePasteProvider implements PasteProvider {
   private static PsiJavaFile createJavaFileFromClipboardContent(final Project project) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     if (text == null) return null;
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, 
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE,
                                                                              StringUtil.convertLineSeparators(text));
     return psiFile instanceof PsiJavaFile ? (PsiJavaFile)psiFile : null;
   }

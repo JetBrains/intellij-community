@@ -159,7 +159,7 @@ public class HighlightControlFlowUtil {
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
                                                                    @NotNull PsiField field,
                                                                    final boolean fieldStatic,
-                                                                   @NotNull Condition<PsiField> condition) {
+                                                                   @NotNull Condition<? super PsiField> condition) {
     PsiField[] fields = aClass.getFields();
     for (PsiField psiField : fields) {
       if (psiField != field

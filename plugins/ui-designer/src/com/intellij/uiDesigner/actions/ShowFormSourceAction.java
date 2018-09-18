@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class ShowFormSourceAction extends AbstractGuiEditorAction {
   @Override
-  protected void actionPerformed(GuiEditor editor, List<RadComponent> selection, AnActionEvent e) {
+  protected void actionPerformed(GuiEditor editor, List<? extends RadComponent> selection, AnActionEvent e) {
     editor.showFormSource();
   }
 }

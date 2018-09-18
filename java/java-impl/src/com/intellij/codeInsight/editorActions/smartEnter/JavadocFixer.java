@@ -98,7 +98,7 @@ public class JavadocFixer {
   }
   
   @Nullable
-  private static JavadocHelper.JavadocParameterInfo findNext(@NotNull Collection<JavadocHelper.JavadocParameterInfo> data,
+  private static JavadocHelper.JavadocParameterInfo findNext(@NotNull Collection<? extends JavadocHelper.JavadocParameterInfo> data,
                                                              @NotNull JavadocHelper.JavadocParameterInfo anchor)
   {
     boolean returnNow = false;

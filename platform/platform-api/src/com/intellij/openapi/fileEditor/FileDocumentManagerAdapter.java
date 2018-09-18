@@ -4,5 +4,6 @@ package com.intellij.openapi.fileEditor;
 /**
  * @deprecated Use {@link FileDocumentManagerListener} directly.
  */
+@Deprecated
 public abstract class FileDocumentManagerAdapter implements FileDocumentManagerListener {
 }

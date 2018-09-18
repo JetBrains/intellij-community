@@ -29,19 +29,19 @@ public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleA
   private ExternalProjectsViewImpl myView;
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     return getView() != null;
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     final ExternalProjectsViewImpl view = getView();
     return view != null && isSelected(view);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ExternalProjectsViewImpl view = getView();
     if (view != null){
       setSelected(view, state);

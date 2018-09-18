@@ -30,6 +30,7 @@ public abstract class AbstractListCellRenderer extends DefaultListCellRenderer {
     return null;
   }
 
+  @Override
   public Component getListCellRendererComponent(
       JList list,
       Object value,

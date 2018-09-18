@@ -55,6 +55,7 @@ public abstract class AbstractProjectImportErrorHandler {
   /**
    * @deprecated use {@link GradleExecutionErrorHandler#getRootCauseAndLocation(Throwable)}
    */
+  @Deprecated
   @NotNull
   public Pair<Throwable, String> getRootCauseAndLocation(@NotNull Throwable error) {
     return GradleExecutionErrorHandler.getRootCauseAndLocation(error);
@@ -63,6 +64,7 @@ public abstract class AbstractProjectImportErrorHandler {
   /**
    * @deprecated use {@link GradleExecutionErrorHandler#getLocationFrom(Throwable)}
    */
+  @Deprecated
   @Nullable
   public String getLocationFrom(@NotNull Throwable error) {
     return GradleExecutionErrorHandler.getLocationFrom(error);

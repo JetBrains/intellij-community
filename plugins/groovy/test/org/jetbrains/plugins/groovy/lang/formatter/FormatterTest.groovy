@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
@@ -56,6 +55,8 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testDoc2() throws Throwable { doTest() }
 
   void testDoc3() throws Throwable { doTest() }
+
+  void testInlineTag() { doTest() }
 
   void testDockter() throws Throwable { doTest() }
 

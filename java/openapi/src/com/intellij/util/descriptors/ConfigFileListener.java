@@ -16,6 +16,8 @@
 
 package com.intellij.util.descriptors;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -23,10 +25,10 @@ import java.util.EventListener;
  */
 public interface ConfigFileListener extends EventListener {
 
-  void configFileAdded(ConfigFile configFile);
+  void configFileAdded(@NotNull ConfigFile configFile);
 
-  void configFileRemoved(ConfigFile configFile);
+  void configFileRemoved(@NotNull ConfigFile configFile);
 
-  void configFileChanged(ConfigFile descriptor);
+  void configFileChanged(@NotNull ConfigFile descriptor);
 
 }

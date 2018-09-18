@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -40,7 +41,7 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
           val file = schemeDir.resolve("profiles_settings.xml")
           if (file.fileSystem == FileSystems.getDefault()) {
             // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-            writeFile(file, StateStorage.SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = false)
+            writeFile(file, fakeSaveSession, null, createDataWriterForElement(wrapper), LineSeparator.LF, prependXmlProlog = false)
           }
           else {
             file.outputStream().use {
@@ -156,7 +157,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   // .idea component configuration files uses XML prolog due to historical reasons
   if (file.fileSystem == FileSystems.getDefault()) {
     // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-    writeFile(file, StateStorage.SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = true)
+    writeFile(file, fakeSaveSession, null, createDataWriterForElement(wrapper), LineSeparator.LF, prependXmlProlog = true)
   }
   else {
     file.outputStream().use {
@@ -164,5 +165,10 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
       it.write(LineSeparator.LF.separatorBytes)
       wrapper.write(it)
     }
+  }
+}
+
+private val fakeSaveSession = object : StateStorage.SaveSession {
+  override fun save() {
   }
 }

@@ -26,7 +26,7 @@ import java.util.List;
 public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap> {
   @NotNull
   @Override
-  public DefinitionMap join(@NotNull List<DefinitionMap> ins) {
+  public DefinitionMap join(@NotNull List<? extends DefinitionMap> ins) {
     if (ins.isEmpty()) return new DefinitionMap();
 
     DefinitionMap result = new DefinitionMap();

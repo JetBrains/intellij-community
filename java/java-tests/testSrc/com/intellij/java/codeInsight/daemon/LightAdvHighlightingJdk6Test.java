@@ -107,4 +107,8 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testPrivateClassReferencedInAnnotationOnSibling() {
     doTest(false, false);
   }
+  
+  public void testInnerClassImportShouldNotLeadToClassUsage() {
+    enableInspectionTool(new UnusedDeclarationInspection(true));
+    doTest(true, false); }
 }

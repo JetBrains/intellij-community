@@ -38,12 +38,12 @@ public interface ModelMerger {
 
   abstract class InvocationStrategy<T> {
     public abstract boolean accepts(Method method);
-    public abstract Object invokeMethod(JavaMethod method, final T proxy, final Object[] args, List<T> implementations) throws IllegalAccessException,
-                                                                                                        InvocationTargetException;
+    public abstract Object invokeMethod(JavaMethod method, final T proxy, final Object[] args, List<? extends T> implementations) throws IllegalAccessException,
+                                                                                                                                         InvocationTargetException;
   }
 
   abstract class MergingStrategy<T> {
     @Nullable
-    public abstract T mergeChildren(Class<T> type, List<T> implementations);
+    public abstract T mergeChildren(Class<T> type, List<? extends T> implementations);
   }
 }

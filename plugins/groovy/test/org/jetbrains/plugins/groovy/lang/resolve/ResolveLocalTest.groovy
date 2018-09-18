@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -20,6 +21,7 @@ class ResolveLocalTest implements ResolveTest {
   public final FixtureRule myFixtureRule = new FixtureRule(GroovyProjectDescriptors.GROOVY_3_0, '')
   public final @Rule TestRule myRules = RuleChain.outerRule(myFixtureRule).around(new EdtRule())
 
+  @NotNull
   @Override
   CodeInsightTestFixture getFixture() { myFixtureRule.fixture }
 

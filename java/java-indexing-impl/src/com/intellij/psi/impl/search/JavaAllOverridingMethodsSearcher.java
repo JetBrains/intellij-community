@@ -3,7 +3,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -28,16 +27,17 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
   public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<? super Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
-    final List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverridden));
+    List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverridden));
+    if (potentials.isEmpty()) return true;
 
     final SearchScope scope = p.getScope();
+    JavaPsiFacade psiFacade = ReadAction.compute(()->JavaPsiFacade.getInstance(psiClass.getProject()));
 
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
-      Project project = psiClass.getProject();
       for (PsiMethod superMethod : potentials) {
         ProgressManager.checkCanceled();
         if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-            !JavaPsiFacade.getInstance(project).arePackagesTheSame(psiClass, inheritor)) continue;
+            !psiFacade.arePackagesTheSame(psiClass, inheritor)) continue;
 
         PsiMethod inInheritor = JavaOverridingMethodsSearcher.findOverridingMethod(inheritor, superMethod, psiClass);
         if (inInheritor != null && !consumer.process(Pair.create(superMethod, inInheritor))) return false;

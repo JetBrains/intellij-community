@@ -62,6 +62,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     myCvsHistoryProvider = cvsHistoryProvider;
   }
 
+  @Override
   public FileAnnotation annotate(VirtualFile virtualFile) throws VcsException {
     final File file = new File(virtualFile.getPath());
     final File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
@@ -78,6 +79,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, virtualFile, revision, myProject);
   }
 
+  @Override
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
     final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent());
     return annotate(file, revision.getRevisionNumber().asString(), settings);
@@ -180,23 +182,28 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       myDate = date;
     }
 
+    @Override
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myNumber;
     }
 
+    @Override
     public String getBranchName() {
       return null;
     }
 
+    @Override
     public Date getRevisionDate() {
       return myDate;
     }
 
+    @Override
     public String getAuthor() {
       return myAuthor;
     }
 
+    @Override
     public String getCommitMessage() {
       return null;
     }
@@ -207,10 +214,12 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       return null;
     }
 
+    @Override
     public byte[] loadContent() throws IOException, VcsException {
       return getContent();
     }
 
+    @Override
     public byte[] getContent() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }

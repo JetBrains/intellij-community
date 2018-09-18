@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 
 /**
  * @author max
@@ -60,11 +62,18 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
         final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
         if (refMethod.isExternalOverride() && !isNative) return null;
         if (RefUtil.isImplicitRead(psiMethod)) return null;
+        if (canIgnoreReturnValue(psiMethod)) return null;
         return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative)};
       }
     }
 
     return null;
+  }
+
+  static boolean canIgnoreReturnValue(PsiMethod psiMethod) {
+    return AnnotationUtil.isAnnotated(psiMethod, 
+                                      Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue"), 
+                                      AnnotationUtil.CHECK_HIERARCHY);
   }
 
   @Override

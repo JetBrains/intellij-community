@@ -36,10 +36,12 @@ public abstract class ComponentTreeWatcher {
   }
 
   private final ContainerListener myContainerListener = new ContainerListener() {
+    @Override
     public void componentAdded(ContainerEvent e) {
       register(e.getChild());
     }
 
+    @Override
     public void componentRemoved(ContainerEvent e) {
       unregister(e.getChild());
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 
@@ -33,7 +34,18 @@ public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   }
 
   protected String replace(String in, String what, String by, boolean sourceIsFile) {
-    final MatchOptions matchOptions = this.options.getMatchOptions();
+    return replace(in, what, by, sourceIsFile, false);
+  }
+
+  protected String replace(String in, String what, String by, boolean sourceIsFile, boolean createPhysicalFile) {
+    if (in == null && (sourceIsFile || createPhysicalFile)) {
+      throw new IllegalArgumentException("can't create file when 'in' argument is null");
+    }
+    final MatchOptions matchOptions = options.getMatchOptions();
+    if (createPhysicalFile) {
+      configureFromFileText("Source." + matchOptions.getFileType().getDefaultExtension(), in);
+      matchOptions.setScope(new LocalSearchScope(getFile()));
+    }
     matchOptions.fillSearchCriteria(what);
     final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions);
     assertNull(message, message);

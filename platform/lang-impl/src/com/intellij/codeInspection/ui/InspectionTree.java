@@ -203,7 +203,7 @@ public class InspectionTree extends Tree {
     return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
-  private static void addElementsInNode(InspectionTreeNode node, Set<RefEntity> out) {
+  private static void addElementsInNode(InspectionTreeNode node, Set<? super RefEntity> out) {
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
       final RefEntity element = ((RefElementNode)node).getElement();
@@ -232,7 +232,7 @@ public class InspectionTree extends Tree {
 
   @NotNull
   public List<CommonProblemDescriptor[]> getSelectedDescriptorPacks(boolean sortedByPosition,
-                                                                    @Nullable Set<VirtualFile> readOnlyFilesSink,
+                                                                    @Nullable Set<? super VirtualFile> readOnlyFilesSink,
                                                                     boolean allowResolved) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return Collections.emptyList();
@@ -371,6 +371,9 @@ public class InspectionTree extends Tree {
   }
 
   public void removeSelectedProblems() {
+    if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
+      return;
+    }
     synchronized (getContext().getView().getTreeStructureUpdateLock()) {
       TreePath[] selected = getSelectionPaths();
       if (selected == null) return;

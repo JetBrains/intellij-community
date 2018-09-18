@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,6 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-/**
- * plugin.dtd:component interface.
- */
 public interface Component extends DomElement {
 
   @NotNull
@@ -60,6 +57,7 @@ public interface Component extends DomElement {
      * @deprecated project components aren't loaded in the default project by default so there is not need to use this tag;
      * add 'loadForDefaultProject' if your really need to have your component in the default project.
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @NotNull
     @SubTag(value = "skipForDefaultProject", indicator = true)
     @Deprecated

@@ -2,10 +2,13 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -14,6 +17,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
@@ -153,6 +157,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       } else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
+        if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
         steps.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(propertyName));
       } else if (breakCondition(current)) {
         break;
@@ -182,18 +187,20 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public String getDefaultObjectValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  " : "";
+  public String getDefaultObjectValue() {
+    return "";
   }
-
-  @Nullable public String defaultObjectValueDescription() { return "start object"; }
 
   @Override
-  public String getDefaultArrayValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  - " : "- ";
+  @Nullable public String defaultObjectValueDescription() { return "{...}"; }
+
+  @Override
+  public String getDefaultArrayValue() {
+    return "- ";
   }
 
-  @Nullable public String defaultArrayValueDescription() { return "start array"; }
+  @Override
+  @Nullable public String defaultArrayValueDescription() { return "[...]"; }
 
   @Override
   public boolean invokeEnterBeforeObjectAndArray() {
@@ -207,5 +214,57 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
     // remove tags
     int spaceIndex = text.indexOf(' ');
     return spaceIndex > 0 ? text.substring(spaceIndex + 1) : text;
+  }
+
+  @Override
+  public QuickFixAdapter getQuickFixAdapter(Project project) {
+    return new QuickFixAdapter() {
+      private final YAMLElementGenerator myGenerator = YAMLElementGenerator.getInstance(project);
+
+      @Nullable
+      @Override
+      public PsiElement getPropertyValue(PsiElement property) {
+        assert property instanceof YAMLKeyValue;
+        return ((YAMLKeyValue)property).getValue();
+      }
+
+      @Nullable
+      @Override
+      public String getPropertyName(PsiElement property) {
+        assert property instanceof YAMLKeyValue;
+        return ((YAMLKeyValue)property).getName();
+      }
+
+      @NotNull
+      @Override
+      public PsiElement createProperty(@NotNull String name, @NotNull String value) {
+        return myGenerator.createYamlKeyValue(name, StringUtil.unquoteString(value));
+      }
+
+      @Override
+      public boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement) {
+        if (newElement instanceof YAMLKeyValue) {
+          newElement.getParent().addAfter(myGenerator.createEol(), newElement);
+        }
+        return false;
+      }
+
+      @Override
+      public void removeIfComma(PsiElement forward) {
+        if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == YAMLTokenTypes.EOL) {
+          PsiElement nextSibling;
+          while ((nextSibling = forward.getNextSibling()) instanceof LeafPsiElement
+                 && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT){
+            nextSibling.delete();
+          }
+          forward.delete();
+        }
+      }
+
+      @Override
+      public boolean fixWhitespaceBefore() {
+        return false;
+      }
+    };
   }
 }

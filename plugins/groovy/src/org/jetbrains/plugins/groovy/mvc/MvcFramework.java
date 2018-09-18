@@ -329,7 +329,7 @@ public abstract class MvcFramework {
     }
 
     final ConfigurationFactory factory = configurationType.getConfigurationFactories()[0];
-    final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name,
+    final RunnerAndConfigurationSettings runSettings = runManager.createConfiguration(name,
                                                                                                                                  factory);
     final MvcRunConfiguration configuration = (MvcRunConfiguration)runSettings.getConfiguration();
     configuration.setModule(module);

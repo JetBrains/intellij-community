@@ -39,6 +39,7 @@ public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
     this.expression = PsiTreeUtil.getParentOfType(element, PsiUnaryExpression.class);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiJavaToken sign = expression.getOperationSign();
     final String operator = sign.getText();

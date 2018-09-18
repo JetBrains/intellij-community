@@ -11,6 +11,7 @@ public class ErrorCommand extends AbstractCommand {
     super(text, line);
   }
 
+  @Override
   public Promise<Object> _execute(PlaybackContext context) {
     dumpError(context, getText());
     return Promises.rejectedPromise();

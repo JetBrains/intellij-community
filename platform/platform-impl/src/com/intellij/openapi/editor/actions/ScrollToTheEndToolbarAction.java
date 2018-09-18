@@ -42,13 +42,13 @@ public class ScrollToTheEndToolbarAction extends ToggleAction implements DumbAwa
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Document document = myEditor.getDocument();
     return document.getLineCount() == 0 || document.getLineNumber(myEditor.getCaretModel().getOffset()) == document.getLineCount() - 1;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       EditorUtil.scrollToTheEnd(myEditor);
     } else {

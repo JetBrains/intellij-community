@@ -276,7 +276,7 @@ public class MavenResumeAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (myResumeFromModuleName != null && myResumeModuleId != null) {
       e.getPresentation().setEnabled(true);
       e.getPresentation().setText("Resume build from \"" + myResumeFromModuleName + "\"");
@@ -284,7 +284,7 @@ public class MavenResumeAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = myEnvironment.getProject();
     try {
       MavenRunConfiguration runConfiguration = ((MavenRunConfiguration)myEnvironment.getRunProfile()).clone();

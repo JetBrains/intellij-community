@@ -211,7 +211,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
       InstanceFilter[] instanceFilters = getInstanceFilters();
       for (InstanceFilter instanceFilter : instanceFilters) {
-        buf.append(Long.toString(instanceFilter.getId())).append(" ");
+        buf.append(instanceFilter.getId()).append(" ");
       }
     }
     return buf.toString();

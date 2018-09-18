@@ -40,7 +40,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +76,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     setOptions(options);
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return myCommandName;
@@ -113,11 +113,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     myCommandName = commandName.toString();
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MoveMemberViewDescriptor(PsiUtilCore.toPsiElementArray(myMembersToMove));
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> usagesList = new ArrayList<>();
@@ -160,6 +162,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  @Override
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
       PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
@@ -280,6 +283,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, myNewVisibility);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final UsageInfo[] usages = refUsages.get();

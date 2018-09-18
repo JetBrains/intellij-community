@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class TabContentLayout extends ContentLayout {
 
@@ -33,6 +33,7 @@ class TabContentLayout extends ContentLayout {
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
 
   private final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
+    @Override
     @Nullable
     protected Rectangle getIconRec() {
       return myLastLayout.moreRect;
@@ -43,6 +44,7 @@ class TabContentLayout extends ContentLayout {
     super(ui);
 
     new BaseButtonBehavior(myUi) {
+      @Override
       protected void execute(final MouseEvent e) {
         if (!myUi.isCurrent(TabContentLayout.this)) return;
 
@@ -347,6 +349,7 @@ class TabContentLayout extends ContentLayout {
     return new RelativeRectangle(label.getParent(), label.getBounds());
   }
 
+  @Override
   public Component getComponentFor(Content content) {
     return myContent2Tabs.get(content);
   }

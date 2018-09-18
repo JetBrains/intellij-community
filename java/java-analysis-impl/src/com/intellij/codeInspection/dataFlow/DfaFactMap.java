@@ -79,9 +79,9 @@ public final class DfaFactMap {
    */
   public boolean isSuperStateOf(DfaFactMap subMap) {
     // absent fact is not always a superstate of present fact
-    // e.g. absent CAN_BE_NULL means that nullability is unknown,
-    // but CAN_BE_NULL=false means that value is definitely nullable and we should warn about nullability violation if any
-    // so the (CAN_BE_NULL=false) state cannot be superseded by (CAN_BE_NULL=null) state
+    // e.g. absent NULLABILITY means that nullability is unknown,
+    // but NULLABILITY=NULLABLE means that value is definitely nullable and we should warn about nullability violation if any
+    // so the (NULLABILITY=NULLABLE) state cannot be superseded by (NULLABILITY=null) state
     for (DfaFactType<?> key : DfaFactType.getTypes()) {
       @SuppressWarnings("unchecked")
       DfaFactType<Object> type = (DfaFactType<Object>)key;
@@ -173,7 +173,7 @@ public final class DfaFactMap {
   }
 
   @SuppressWarnings("unchecked")
-  public <R> StreamEx<R> facts(FactMapper<R> mapper) {
+  public <R> StreamEx<R> facts(FactMapper<? extends R> mapper) {
     return StreamEx.of(myMap.getKeys()).map(f -> {
       DfaFactType<Object> key = (DfaFactType<Object>)f;
       Object value = myMap.get(f);

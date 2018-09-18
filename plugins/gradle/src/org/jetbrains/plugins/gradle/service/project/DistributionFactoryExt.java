@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -101,10 +87,12 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.locationDisplayName = locationDisplayName;
     }
 
+    @Override
     public String getDisplayName() {
       return displayName;
     }
 
+    @Override
     public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory,
                                                        InternalBuildProgressListener progressListener,
                                                        File userHomeDir,
@@ -139,10 +127,12 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.clock = clock;
     }
 
+    @Override
     public String getDisplayName() {
       return "Gradle distribution '" + wrapperConfiguration.getDistribution() + "'";
     }
 
+    @Override
     public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory,
                                                        final InternalBuildProgressListener progressListener,
                                                        final File userHomeDir,

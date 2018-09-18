@@ -37,6 +37,7 @@ public class DisableGC implements Evaluator {
     return delegate;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     final Object result = myDelegate.evaluate(context);
     if (result instanceof ObjectReference) {
@@ -49,6 +50,7 @@ public class DisableGC implements Evaluator {
     return myDelegate;
   }
 
+  @Override
   public Modifier getModifier() {
     return myDelegate.getModifier();
   }

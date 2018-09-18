@@ -44,7 +44,6 @@ public class LibrarySourceRootDetectorUtil {
    * This method takes a candidates for the project root, then scans the candidates and
    * if multiple candidates or non root source directories are found within some
    * directories, it shows a dialog that allows selecting or deselecting them.
-   * @param parent a parent parent or project
    * @param rootCandidates a candidates for roots
    * @return a array of source folders or empty array if non was selected or dialog was canceled.
    */

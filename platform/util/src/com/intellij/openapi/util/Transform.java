@@ -6,6 +6,7 @@ package com.intellij.openapi.util;
 /**
  * @deprecated use {@link java.util.function.Function} instead
  */
+@Deprecated
 public interface Transform <S, T> {
   @Deprecated
   T transform(S s);

@@ -43,8 +43,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BreakpointsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
@@ -278,7 +278,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     new AnAction("BreakpointDialog.GoToSource") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
         close(OK_EXIT_CODE);
       }
@@ -286,7 +286,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
         close(OK_EXIT_CODE);
       }
@@ -315,7 +315,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }).
       setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
             if (item.allowedToRemove()) {
               return true;
@@ -428,7 +428,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       saveCurrentItem();
       XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
       if (breakpoint != null) {
@@ -472,10 +472,10 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String groupName = myGroup;
       if (myNewGroup) {
-        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.NewFolder);
+        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.Folder);
         if (groupName == null) {
           return;
         }
@@ -499,7 +499,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       getBreakpointManager().setDefaultGroup(myName);
       myTreeController.rebuildTree(myBreakpointItems);
     }
@@ -514,7 +514,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String description = Messages.showInputDialog("", "Edit Description", null, myBreakpoint.getUserDescription(), null);
       if (description == null) {
         return;

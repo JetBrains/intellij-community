@@ -41,7 +41,7 @@ public abstract class ActionButtonPresentation {
     }
   };
 
-  public ActionButtonPresentation(final String name) {
+  private ActionButtonPresentation(final String name) {
     myName = name;
   }
 

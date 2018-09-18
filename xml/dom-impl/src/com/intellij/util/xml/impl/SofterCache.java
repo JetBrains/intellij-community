@@ -25,14 +25,14 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class SofterCache<T,V> {
-  private final NotNullFunction<T,V> myValueProvider;
+  private final NotNullFunction<? super T, ? extends V> myValueProvider;
   private SofterReference<ConcurrentMap<T, V>> myCache;
 
-  public SofterCache(NotNullFunction<T, V> valueProvider) {
+  public SofterCache(NotNullFunction<? super T, ? extends V> valueProvider) {
     myValueProvider = valueProvider;
   }
 
-  public static <T, V> SofterCache<T, V> create(NotNullFunction<T, V> valueProvider) {
+  public static <T, V> SofterCache<T, V> create(NotNullFunction<? super T, ? extends V> valueProvider) {
     return new SofterCache<>(valueProvider);
   }
 

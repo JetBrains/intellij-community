@@ -16,10 +16,18 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.psi.PsiPrefixExpression;
 
-public class NotInstruction extends Instruction {
+public class NotInstruction extends Instruction implements ExpressionPushingInstruction {
+  private final PsiPrefixExpression myAnchor;
+
+  public NotInstruction(PsiPrefixExpression anchor) {
+    myAnchor = anchor;
+  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
@@ -28,5 +36,10 @@ public class NotInstruction extends Instruction {
 
   public String toString() {
     return "NOT";
+  }
+
+  @Override
+  public PsiPrefixExpression getExpression() {
+    return myAnchor;
   }
 }

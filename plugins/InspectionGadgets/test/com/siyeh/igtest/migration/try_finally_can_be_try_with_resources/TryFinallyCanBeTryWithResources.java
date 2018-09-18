@@ -85,3 +85,20 @@ class Java9 {
     }
   }
 }
+
+class FinallyContainsTry {
+  void test() throws FileNotFoundException {
+    PrintStream printStream = null;
+    try {
+      printStream = new PrintStream("");
+    printStream.print(true);
+    } finally {
+      if (printStream != null) {
+        try {
+          printStream.close();
+          System.out.println("USEFUL");
+        } catch (Exception e) {}
+      }
+    }
+  }
+}

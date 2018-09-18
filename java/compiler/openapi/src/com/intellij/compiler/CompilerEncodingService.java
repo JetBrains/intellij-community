@@ -34,7 +34,7 @@ public abstract class CompilerEncodingService {
   }
 
   @Nullable
-  public static Charset getPreferredModuleEncoding(Chunk<Module> chunk) {
+  public static Charset getPreferredModuleEncoding(Chunk<? extends Module> chunk) {
     CompilerEncodingService service = null;
     for (Module module : chunk.getNodes()) {
       if (service == null) {

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MarkObjectAction extends XDebuggerActionBase {
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Project project = event.getData(CommonDataKeys.PROJECT);
     boolean enabled = false;
     Presentation presentation = event.getPresentation();

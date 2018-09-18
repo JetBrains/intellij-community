@@ -15,12 +15,18 @@
  */
 package com.intellij.ui.content;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ContentManagerAdapter implements ContentManagerListener {
-  public void contentAdded(ContentManagerEvent event) {}
+  @Override
+  public void contentAdded(@NotNull ContentManagerEvent event) {}
 
-  public void contentRemoved(ContentManagerEvent event) {}
+  @Override
+  public void contentRemoved(@NotNull ContentManagerEvent event) {}
 
-  public void contentRemoveQuery(ContentManagerEvent event) {}
+  @Override
+  public void contentRemoveQuery(@NotNull ContentManagerEvent event) {}
 
-  public void selectionChanged(ContentManagerEvent event) {}
+  @Override
+  public void selectionChanged(@NotNull ContentManagerEvent event) {}
 }

@@ -25,6 +25,7 @@ import java.io.File;
  * @author max
  */
 public class JarContainer extends ZipContainer {
+  @Override
   protected Zip createTask() {
     String version = Main.getAntVersion();
     Jar task;

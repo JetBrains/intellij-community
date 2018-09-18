@@ -6,10 +6,9 @@ import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.Side
-import com.intellij.diff.util.TextDiffType
-import com.intellij.diff.util.ThreeSide
+import com.intellij.diff.tools.util.base.IgnorePolicy
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
+import com.intellij.diff.util.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -39,6 +38,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   }
 
   fun test(left: String, base: String, right: String, changesCount: Int, f: TestBuilder.() -> Unit) {
+    test(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
+  }
+
+  fun test(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
     val contentFactory = DiffContentFactoryImpl()
     val leftContent: DocumentContent = contentFactory.create(parseSource(left))
     val baseContent: DocumentContent = contentFactory.create(parseSource(base))
@@ -48,6 +51,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
     val context = MockMergeContext(project)
     val request = MockMergeRequest(leftContent, baseContent, rightContent, outputContent)
+
+    val settings = TextDiffSettings()
+    settings.ignorePolicy = policy
+    context.putUserData(TextDiffSettings.KEY, settings)
 
     val viewer = TextMergeTool.INSTANCE.createComponent(context, request) as TextMergeViewer
     try {
@@ -203,6 +210,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     // Undo
     //
 
+    fun assertCantUndo() {
+      assertFalse(undoManager.isUndoAvailable(textEditor))
+    }
+
     fun undo(count: Int = 1) {
       if (count == -1) {
         while (undoManager.isUndoAvailable(textEditor)) {
@@ -289,6 +300,14 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.assertRange(start: Int, end: Int) {
       val change = change(this)
       assertEquals(Pair(start, end), Pair(change.startLine, change.endLine))
+    }
+
+    fun Int.assertRange(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int) {
+      val change = change(this)
+      assertEquals(MergeRange(start1, end1, start2, end2, start3, end3),
+                   MergeRange(change.getStartLine(ThreeSide.LEFT), change.getEndLine(ThreeSide.LEFT),
+                              change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE),
+                              change.getStartLine(ThreeSide.RIGHT), change.getEndLine(ThreeSide.RIGHT)))
     }
 
     fun Int.assertContent(expected: String, start: Int, end: Int) {

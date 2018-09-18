@@ -11,4 +11,7 @@
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/../vendor/google3/blaze/build.xml" />
   </component>
+  <component name="GantSettings">
+    <option name="SDK_HOME" value="$PROJECT_DIR$/build/lib/gant" />
+  </component>
 </project>

@@ -113,7 +113,7 @@ public class ConversionContextImpl implements ConversionContext {
     return files;
   }
 
-  private static void addFilesRecursively(File file, Set<File> files) {
+  private static void addFilesRecursively(File file, Set<? super File> files) {
     if (file.isDirectory()) {
       final File[] children = file.listFiles();
       if (children != null) {
@@ -409,7 +409,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myWorkspaceFile;
   }
 
-  public void saveFiles(Collection<File> files, List<ConversionRunner> usedRunners) throws IOException {
+  public void saveFiles(Collection<? extends File> files, List<? extends ConversionRunner> usedRunners) throws IOException {
     Set<String> performedConversions = new HashSet<>();
     for (ConversionRunner runner : usedRunners) {
       final ConverterProvider provider = runner.getProvider();

@@ -33,6 +33,7 @@ public class IconPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourObjectType = Type.getType(Object.class);
   private static final Type ourClassType = Type.getType(Class.class);
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     IconDescriptor descriptor = (IconDescriptor) value;
     generator.newInstance(ourImageIconType);

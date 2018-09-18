@@ -195,6 +195,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return "Closable block";
   }
 
+  @NotNull
   @Override
   public GrParameter[] getParameters() {
     if (hasParametersSection()) {

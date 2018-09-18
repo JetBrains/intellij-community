@@ -1092,3 +1092,14 @@ class T76 {
     other.a = null;
   }
 }
+class RefThroughThis {
+  private int k;
+
+  public RefThroughThis() {
+    RefThroughThis.this.k = 0;
+  }
+  
+  void m() {
+    System.out.println(k);
+  }
+}

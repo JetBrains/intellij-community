@@ -38,12 +38,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSettings;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Deprecated
 class GithubConnectionBuilder {
   @NotNull private final GithubAuthData myAuth;
   @NotNull private final String myApiURL;

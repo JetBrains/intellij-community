@@ -69,7 +69,7 @@ class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
   }
 
   @Nullable
-  public PsiReturnStatement replaceReturnStatements(final List<PsiReturnStatement> currentStatements) throws IncorrectOperationException {
+  public PsiReturnStatement replaceReturnStatements(final List<? extends PsiReturnStatement> currentStatements) throws IncorrectOperationException {
     PsiReturnStatement latestReplaced = null;
 
     for (PsiReturnStatement returnStatement : currentStatements) {

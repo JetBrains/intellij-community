@@ -300,33 +300,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     if (ourPersistence.areChildrenLoaded(this)) {
-      return Arrays.asList(getChildren()); // may load vfs from other projects
+      return Arrays.asList(getChildren());
     }
-
-    loadPersistedChildren();
-
-    return getCachedChildren();
-  }
-
-  @NotNull
-  @Override
-  public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
-    if (!ourPersistence.wereChildrenAccessed(this)) {
-      return Collections.emptyList();
-    }
-
-    if (!ourPersistence.areChildrenLoaded(this)) {
-      loadPersistedChildren();
-    }
-    return getCachedChildren();
-  }
-
-  protected void loadPersistedChildren() {
+    
     final String[] names = ourPersistence.listPersisted(this);
     final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
     for (String name : names) {
       findChild(name, false, false, delegate);
     }
+    
+    return getCachedChildren();
   }
 
   @Override
@@ -469,7 +452,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // optimisation: works faster than added.forEach(this::addChild)
-  public void createAndAddChildren(@NotNull List<FSRecords.NameId> added) {
+  public void createAndAddChildren(@NotNull List<? extends FSRecords.NameId> added) {
     if (added.size()<=1) {
       for (FSRecords.NameId pair : added) {
         VirtualFileSystemEntry file = createChild(pair.name.toString(), pair.id, getFileSystem());
@@ -551,7 +534,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // faster than forEach(this::removeChild)
-  public void removeChildren(@NotNull TIntHashSet idsToRemove, @NotNull List<CharSequence> namesToRemove) {
+  public void removeChildren(@NotNull TIntHashSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
     boolean caseSensitive = getFileSystem().isCaseSensitive();
     synchronized (myData) {
       // remove from array by merging two sorted lists
@@ -577,7 +560,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // check if all these names are not existing, remove invalid events from the list
-  public void validateChildrenToCreate(@NotNull List<VFileCreateEvent> childrenToCreate) {
+  public void validateChildrenToCreate(@NotNull List<? extends VFileCreateEvent> childrenToCreate) {
     if (childrenToCreate.size() <= 1) {
       for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
         VFileCreateEvent event = childrenToCreate.get(i);
@@ -616,7 +599,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
+  private void validateAgainst(@NotNull List<? extends VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
     for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
       VFileCreateEvent event = childrenToCreate.get(i);
       String childName = event.getChildName();
@@ -645,20 +628,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  @SuppressWarnings("Duplicates")
   private int findIndex(@NotNull int[] ids, @NotNull CharSequence name, boolean caseSensitive) {
-    int low = 0;
-    int high = ids.length - 1;
-
-    while (low <= high) {
-      int mid = low + high >>> 1;
-      int cmp = compareNames(name, mySegment.vfsData.getNameByFileId(ids[mid]), caseSensitive);
-      if (cmp > 0) low = mid + 1;
-      else if (cmp < 0) high = mid - 1;
-      else return mid;
-    }
-
-    return -(low + 1);
+    return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(mySegment.vfsData.getNameByFileId(ids[mid]), name, caseSensitive));
   }
 
   private static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean caseSensitive) {

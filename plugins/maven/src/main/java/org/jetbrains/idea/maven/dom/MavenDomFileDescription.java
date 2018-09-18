@@ -27,6 +27,7 @@ public abstract class MavenDomFileDescription<T> extends DomFileDescription<T> {
     super(rootElementClass, rootTagName);
   }
 
+  @Override
   public boolean isMyFile(@NotNull XmlFile file, final Module module) {
     return MavenDomUtil.isMavenFile(file) && super.isMyFile(file, module);
   }

@@ -45,7 +45,7 @@ public class CopyClassTest extends CodeInsightTestCase {
   }
 
   public void testLibraryClass() throws Exception {  // IDEADEV-28791
-    JavaCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
     doTest("java.util.ArrayList", "Bar");
   }

@@ -20,7 +20,7 @@ package com.intellij.psi;
  * referencing a Java class or package.
  *
  * @author ven
- * @see PsiElementFactory#createReferenceCodeFragment(String, PsiElement, boolean, boolean)
+ * @see JavaCodeFragmentFactory#createReferenceCodeFragment(String, PsiElement, boolean, boolean)
  */
 public interface PsiJavaCodeReferenceCodeFragment extends JavaCodeFragment {
   /**

@@ -170,7 +170,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myRequestCache.remove(myProducer);
       updateRequest(true);
     }

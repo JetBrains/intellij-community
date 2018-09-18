@@ -45,7 +45,7 @@ public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T
   }
   
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
     presentation.setTooltip(myDescription);

@@ -224,7 +224,7 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
         return values.get(dataId);
     }
   }

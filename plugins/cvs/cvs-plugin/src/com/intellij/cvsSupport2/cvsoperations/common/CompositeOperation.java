@@ -45,6 +45,7 @@ public class CompositeOperation extends CvsOperation {
     }
   }
 
+  @Override
   public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
     for (final CvsOperation cvsOperation : getSubOperations()) {
       myCurrentOperation = cvsOperation;
@@ -52,6 +53,7 @@ public class CompositeOperation extends CvsOperation {
     }
   }
 
+  @Override
   public void executeFinishActions() {
     super.executeFinishActions();
     for (final CvsOperation cvsOperation : getSubOperations()) {
@@ -59,6 +61,7 @@ public class CompositeOperation extends CvsOperation {
     }
   }
 
+  @Override
   public String getLastProcessedCvsRoot() {
     if (myCurrentOperation == null) return null;
     return myCurrentOperation.getLastProcessedCvsRoot();
@@ -70,6 +73,7 @@ public class CompositeOperation extends CvsOperation {
 
   protected List<CvsOperation> getSubOperations() { return mySubOperations; }
 
+  @Override
   public boolean runInReadThread() {
     for(CvsOperation op: mySubOperations) {
       if (op.runInReadThread()) return true;

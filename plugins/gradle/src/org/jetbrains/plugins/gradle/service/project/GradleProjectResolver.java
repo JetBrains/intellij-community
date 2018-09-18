@@ -267,10 +267,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     ProjectImportAction.AllModels allModels;
 
     final long startTime = System.currentTimeMillis();
-    final CancellationTokenSource cancellationTokenSource = resolverCtx.getCancellationTokenSource();
     try {
-      myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
-      buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
+      buildActionExecutor.withCancellationToken(resolverCtx.getCancellationTokenSource().token());
       allModels = buildActionExecutor.run();
       if (allModels == null) {
         throw new IllegalStateException("Unable to get project model for the project: " + resolverCtx.getProjectPath());
@@ -296,7 +294,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       final long timeInMs = (System.currentTimeMillis() - startTime);
-      myCancellationMap.remove(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
@@ -875,12 +872,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @Override
     public DataNode<ProjectData> fun(ProjectConnection connection) {
       try {
+        myCancellationMap.putValue(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
         myResolverContext.setConnection(connection);
         return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
       }
       catch (RuntimeException e) {
         LOG.info("Gradle project resolve error", e);
         throw myProjectResolverChain.getUserFriendlyError(e, myResolverContext.getProjectPath(), null);
+      }
+      finally {
+        myCancellationMap.remove(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
       }
     }
   }

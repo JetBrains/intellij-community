@@ -134,8 +134,11 @@ public class IJSwingUtilities extends JBSwingUtilities {
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
 
-    if (c instanceof RootPaneContainer && ((RootPaneContainer)c).getRootPane() != null) { // Android Studio b/112725215
-      UIUtil.decorateWindowHeader(((RootPaneContainer)c).getRootPane());
+    if (c instanceof RootPaneContainer) {
+      JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
+      if (rootPane != null) {
+        UIUtil.decorateWindowHeader(rootPane);
+      }
     }
 
     for (Component component : UIUtil.uiTraverser(c).postOrderDfsTraversal()) {

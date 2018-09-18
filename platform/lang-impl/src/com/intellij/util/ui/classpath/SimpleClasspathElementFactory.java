@@ -71,7 +71,7 @@ public class SimpleClasspathElementFactory {
     return list;
   }
 
-  public static List<VirtualFile> convertToFiles(Collection<SimpleClasspathElement> cpeList)
+  public static List<VirtualFile> convertToFiles(Collection<? extends SimpleClasspathElement> cpeList)
   {
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
     List<VirtualFile> files = new ArrayList<>();

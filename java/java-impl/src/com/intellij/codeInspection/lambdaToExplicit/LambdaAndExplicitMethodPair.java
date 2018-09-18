@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ class LambdaAndExplicitMethodPair {
     myParameterIndex = index;
     myExplicitParameterType = explicitParameterType;
     myCanUseReturnValue = canUseReturnValue;
-    myDefaultLambdaParameters = defaultLambdaParameters;
+    myDefaultLambdaParameters = defaultLambdaParameters.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : defaultLambdaParameters;
   }
 
   boolean isLambdaCall(PsiMethodCallExpression lambdaCall, PsiLambdaExpression lambda) {

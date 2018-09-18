@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,26 +59,5 @@ public class LowLevelSearchUtilTest extends TestCase {
         assertEquals(startOffset+","+endOffset, 1, found.size());
       }
     }).assertTiming();
-  }
-
-  public void testMergeSortedArrays() {
-    TIntArrayList x1 = new TIntArrayList(new int[]{0, 2, 4, 6});
-    TIntArrayList y1 = new TIntArrayList(new int[]{0, 2, 4, 6});
-    TIntArrayList x2 = new TIntArrayList(new int[]{1, 2, 2});
-    TIntArrayList y2 = new TIntArrayList(new int[]{1, 2, 3});
-    IndexPatternSearcher.mergeSortedArrays(x1, y1, x2, y2);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 2, 4, 6}), x1);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 3, 4, 6}), y1);
-    x2 = new TIntArrayList(new int[]{1, 2, 2});
-    y2 = new TIntArrayList(new int[]{1, 2, 3});
-    IndexPatternSearcher.mergeSortedArrays(x1, y1, x2, y2);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 2, 4, 6}), x1);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 3, 4, 6}), y1);
-
-    x2 = new TIntArrayList(new int[]{-1, -1, -2});
-    y2 = new TIntArrayList(new int[]{-1, -2, -3});
-    IndexPatternSearcher.mergeSortedArrays(x1, y1, x2, y2);
-    assertEquals(new TIntArrayList(new int[]{-1, -1, -2, 0, 1, 2, 2, 4, 6}), x1);
-    assertEquals(new TIntArrayList(new int[]{-1, -2, -3, 0, 1, 2, 3, 4, 6}), y1);
   }
 }

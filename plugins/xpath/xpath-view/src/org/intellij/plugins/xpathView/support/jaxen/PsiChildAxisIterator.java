@@ -26,12 +26,14 @@ class PsiChildAxisIterator extends NodeIterator {
         super((PsiElement)contextNode);
     }
 
+    @Override
     protected PsiElement getFirstNode(PsiElement contextNode) {
         PsiElement n = contextNode.getFirstChild();
         n = skipToXmlElement(n);
         return n;
     }
 
+    @Override
     protected PsiElement getNextNode(PsiElement contextNode) {
         PsiElement n = contextNode.getNextSibling();
         n = skipToXmlElement(n);

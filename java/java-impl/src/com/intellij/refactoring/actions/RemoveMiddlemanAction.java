@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoveMiddlemanAction extends BaseRefactoringAction{
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext context) {
     return new RemoveMiddlemanHandler();
   }
@@ -36,10 +37,12 @@ public class RemoveMiddlemanAction extends BaseRefactoringAction{
     return element instanceof PsiField;
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiField.class, false) != null;
   }

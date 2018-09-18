@@ -5,11 +5,14 @@ import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
@@ -26,10 +29,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Rustam Vishnyakov
  */
 public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-
-  public static final String ABSOLUTE = "Absolute";
-  public static final String RELATIVE = "Indent statements after label";
-  public static final String RELATIVE_REVERSED = "Indent labels";
 
   @NotNull
   @Override
@@ -297,66 +296,69 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor() {
-      private JTextField myLabelIndent;
       private JLabel myLabelIndentLabel;
+      private IntegerField myLabelIndent;
 
-      private JComboBox myLabelIndentStyle;
       private JBLabel myStyleLabel;
+      private JComboBox<LabelIndentStyle> myLabelIndentStyle;
 
       @Override
       protected void addComponents() {
         super.addComponents();
 
-        myLabelIndent = new JTextField(4);
-        add(myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent")), myLabelIndent);
+        myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent"));
+        myLabelIndent = new IntegerField("label indent size", 0, Integer.MAX_VALUE);
+        add(myLabelIndentLabel, myLabelIndent);
 
         myStyleLabel = new JBLabel("Label indent style:");
-
-        myLabelIndentStyle = new JComboBox(new Object[] {ABSOLUTE, RELATIVE, RELATIVE_REVERSED});
+        myLabelIndentStyle = new ComboBox<>(new EnumComboBoxModel<>(LabelIndentStyle.class));
         add(myStyleLabel, myLabelIndentStyle);
       }
 
       @Override
       public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
-        boolean isModified = super.isModified(settings, options);
-
-        isModified |= isFieldModified(myLabelIndent, options.LABEL_INDENT_SIZE);
-        isModified |= isLabelStyleModified(options.LABEL_INDENT_ABSOLUTE, settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS);
-        return isModified;
+        return super.isModified(settings, options) ||
+               myLabelIndent.getValue() != options.LABEL_INDENT_SIZE ||
+               isLabelStyleModified(
+                 options.LABEL_INDENT_ABSOLUTE,
+                 settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS
+               );
       }
 
       private boolean isLabelStyleModified(boolean absolute, boolean relative) {
+        Object selectedStyle = myLabelIndentStyle.getSelectedItem();
         if (absolute) {
-          return !ABSOLUTE.equals(myLabelIndentStyle.getSelectedItem());
+          return selectedStyle != LabelIndentStyle.ABSOLUTE;
         }
         else if (relative) {
-          return !RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
+          return selectedStyle != LabelIndentStyle.RELATIVE;
         }
         else {
-          return !RELATIVE_REVERSED.equals(myLabelIndentStyle.getSelectedItem());
+          return selectedStyle != LabelIndentStyle.RELATIVE_REVERSED;
         }
       }
 
       @Override
       public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         super.apply(settings, options);
-        options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, Integer.MIN_VALUE, options.LABEL_INDENT_SIZE);
-        options.LABEL_INDENT_ABSOLUTE = ABSOLUTE.equals(myLabelIndentStyle.getSelectedItem());
-        settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS = RELATIVE.equals(myLabelIndentStyle.getSelectedItem());
+        options.LABEL_INDENT_SIZE = myLabelIndent.getValue();
+        LabelIndentStyle labelIndentStyle = (LabelIndentStyle)myLabelIndentStyle.getSelectedItem();
+        options.LABEL_INDENT_ABSOLUTE = labelIndentStyle == LabelIndentStyle.ABSOLUTE;
+        settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS = labelIndentStyle == LabelIndentStyle.RELATIVE;
       }
 
       @Override
       public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
         super.reset(settings, options);
-        myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
+        myLabelIndent.setValue(options.LABEL_INDENT_SIZE);
         if (options.LABEL_INDENT_ABSOLUTE) {
-          myLabelIndentStyle.setSelectedItem(ABSOLUTE);
+          myLabelIndentStyle.setSelectedItem(LabelIndentStyle.ABSOLUTE);
         }
-        else if(settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS) {
-          myLabelIndentStyle.setSelectedItem(RELATIVE);
+        else if (settings.getCustomSettings(GroovyCodeStyleSettings.class).INDENT_LABEL_BLOCKS) {
+          myLabelIndentStyle.setSelectedItem(LabelIndentStyle.RELATIVE);
         }
         else {
-          myLabelIndentStyle.setSelectedItem(RELATIVE_REVERSED);
+          myLabelIndentStyle.setSelectedItem(LabelIndentStyle.RELATIVE_REVERSED);
         }
       }
 
@@ -369,5 +371,22 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         myLabelIndentStyle.setEnabled(enabled);
       }
     };
+  }
+
+  private enum LabelIndentStyle {
+    ABSOLUTE("Absolute"),
+    RELATIVE("Indent statements after label"),
+    RELATIVE_REVERSED("Indent labels");
+
+    private final String description;
+
+    LabelIndentStyle(String description) {
+      this.description = description;
+    }
+
+    @Override
+    public String toString() {
+      return description;
+    }
   }
 }

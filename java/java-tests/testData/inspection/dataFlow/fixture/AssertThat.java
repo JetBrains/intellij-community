@@ -56,6 +56,6 @@ class Contracts {
   private void testNotArraySize() {
     String[] things = retrieveThings();
     assertThat(things, not(is(arrayWithSize(2))));
-    assertThat(<warning descr="Array access 'things[0]' may produce 'java.lang.NullPointerException'">things[0]</warning>, is(equalTo("...")));
+    assertThat(<warning descr="Array access 'things[0]' may produce 'NullPointerException'">things[0]</warning>, is(equalTo("...")));
   }
 }

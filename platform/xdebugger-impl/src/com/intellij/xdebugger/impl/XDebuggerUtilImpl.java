@@ -613,6 +613,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression());
   }
 
+  @Override
   public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     if (activeExecutionStack != null) {

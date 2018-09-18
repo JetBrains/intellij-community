@@ -54,20 +54,24 @@ public abstract class FocusTrackerSupport<S> {
       addListener(holders, Side.RIGHT);
     }
 
+    @Override
     @NotNull
     public Side getCurrentSide() {
       return myCurrentSide;
     }
 
+    @Override
     public void setCurrentSide(@NotNull Side side) {
       myCurrentSide = side;
     }
 
+    @Override
     public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
       Side side = DiffUtil.getUserData(request, context, DiffUserDataKeys.PREFERRED_FOCUS_SIDE);
       if (side != null) setCurrentSide(side);
     }
 
+    @Override
     public void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
       context.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
     }
@@ -101,20 +105,24 @@ public abstract class FocusTrackerSupport<S> {
       addListener(holders, ThreeSide.RIGHT);
     }
 
+    @Override
     @NotNull
     public ThreeSide getCurrentSide() {
       return myCurrentSide;
     }
 
+    @Override
     public void setCurrentSide(@NotNull ThreeSide side) {
       myCurrentSide = side;
     }
 
+    @Override
     public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
       ThreeSide side = DiffUtil.getUserData(request, context, DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE);
       if (side != null) setCurrentSide(side);
     }
 
+    @Override
     public void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
       context.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE, myCurrentSide);
     }

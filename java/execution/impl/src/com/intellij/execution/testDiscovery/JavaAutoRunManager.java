@@ -62,7 +62,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
           private boolean myFoundFilesToMake = false;
 
           @Override
-          public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+          public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
             if (!myFoundFilesToMake) return;
             if (errors == 0) {
               restartAllAutoTests(0);
@@ -72,12 +72,12 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
           }
 
           @Override
-          public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+          public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
             compilationFinished(false, errors, warnings, compileContext);
           }
 
           @Override
-          public void fileGenerated(String outputRoot, String relativePath) {
+          public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
             myFoundFilesToMake = true;
           }
         });

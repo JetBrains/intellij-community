@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ForceEarlyReturnAction extends DebuggerAction {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
@@ -164,6 +165,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
 

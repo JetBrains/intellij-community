@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.PluginFieldNameConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
-/**
- * @author yole
- */
 public interface With extends DomElement {
+
   @NotNull
   @Stubbed
   @Attribute("attribute")

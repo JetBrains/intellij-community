@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.coverage;
 
@@ -89,7 +75,7 @@ public class SrcFileAnnotator implements Disposable {
   private SoftReference<TIntIntHashMap> myOldToNewLines;
   private SoftReference<byte[]> myOldContent;
   private final static Object LOCK = new Object();
-  
+
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   public SrcFileAnnotator(final PsiFile file, final Editor editor) {
@@ -99,7 +85,7 @@ public class SrcFileAnnotator implements Disposable {
     myDocument = myEditor.getDocument();
   }
 
-  
+
   public void hideCoverageData() {
     Editor editor = myEditor;
     PsiFile file = myFile;
@@ -207,6 +193,7 @@ public class SrcFileAnnotator implements Disposable {
       if (myOldContent == null) {
         final LocalHistory localHistory = LocalHistory.getInstance();
         byte[] byteContent = localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
+          @Override
           public boolean isSuitable(long revisionTimestamp) {
             return revisionTimestamp < date;
           }
@@ -214,7 +201,7 @@ public class SrcFileAnnotator implements Disposable {
 
         if (byteContent == null && virtualFile.getTimeStamp() > date) {
           byteContent = loadFromVersionControl(date, virtualFile);
-        } 
+        }
         myOldContent = new SoftReference<>(byteContent);
       }
       oldContent = myOldContent.get();
@@ -373,10 +360,10 @@ public class SrcFileAnnotator implements Disposable {
                 }
                 if (engine.isGeneratedCode(myProject, qualifiedName, lineData)) continue;
                 executableLines.put(line, (LineData)lineData);
-  
+
                 classLines.put(line, postProcessedLines);
                 classNames.put(line, qualifiedName);
-  
+
                 ApplicationManager.getApplication().invokeLater(() -> {
                   if (lineNumberInCurrent >= document.getLineCount()) return;
                   if (editorBean.isDisposed()) return;
@@ -419,7 +406,7 @@ public class SrcFileAnnotator implements Disposable {
 
     final DocumentListener documentListener = new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent e) {
+      public void documentChanged(@NotNull final DocumentEvent e) {
         myNewToOldLines = null;
         myOldToNewLines = null;
         List<RangeHighlighter> rangeHighlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
@@ -630,6 +617,7 @@ public class SrcFileAnnotator implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     hideCoverageData();
     myEditor = null;

@@ -12,6 +12,6 @@ class Test {
   }
 
   static void test(Object context[], Object method, Object compilationResult) {
-    Object[] debugContext = context != null ? context :<caret> new Object[]{getProviders().getCodeCache(), method, compilationResult};
+    Object[] debugContext = (context != null) ? context :<caret> new Object[]{getProviders().getCodeCache(), method, compilationResult};
   }
 }

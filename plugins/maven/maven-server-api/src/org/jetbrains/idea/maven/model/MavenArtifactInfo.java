@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 
 import java.io.Serializable;
 
@@ -93,7 +93,7 @@ public class MavenArtifactInfo implements Serializable {
     MavenId.append(builder, myGroupId);
     MavenId.append(builder, myArtifactId);
     MavenId.append(builder, myPackaging);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+    if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
     MavenId.append(builder, myVersion);
     MavenId.append(builder, myRepositoryId);
 

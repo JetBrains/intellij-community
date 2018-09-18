@@ -24,7 +24,7 @@ class Doo {
     if (getMethod() == null && !pureSomething()) {
       return;
     } else {
-      System.out.println(getMethod().<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+      System.out.println(getMethod().<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 

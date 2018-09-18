@@ -10,6 +10,7 @@ import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.util.JreVersionDetector;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -49,7 +50,9 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromSourceRootsDependencies(myModule.getComponent(), getMainClassField()));
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
+    ProgramParametersConfigurator.addMacroSupport(myCommonProgramParameters.getProgramParametersComponent().getComponent().getEditorField());
     myModule.getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
@@ -63,6 +66,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
                                                 myShortenClasspathModeCombo, myIncludeProvidedDeps);
   }
 
+  @Override
   public void applyEditorTo(@NotNull final ApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
@@ -78,6 +82,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     updateShowSwingInspector(configuration);
   }
 
+  @Override
   public void resetEditorFrom(@NotNull final ApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
@@ -111,6 +116,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     return myCommonProgramParameters;
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     return myWholePanel;

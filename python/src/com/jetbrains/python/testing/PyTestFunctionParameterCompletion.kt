@@ -38,7 +38,7 @@ class PyTestParameterCompletionContributor : CompletionContributor() {
 }
 
 private object PyTestFunctionArgumentCompletion : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val pyFunction = PsiTreeUtil.getParentOfType(parameters.position, PyParameterList::class.java)?.containingFunction ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(pyFunction) ?: return
     val typeEvalContext = TypeEvalContext.codeCompletion(pyFunction.project, pyFunction.containingFile)

@@ -99,6 +99,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
     return myIcon;
   }
 
+  @Override
   @NotNull
   public Icon getIcon(LibraryVersionProperties properties) {
     return myIcon;

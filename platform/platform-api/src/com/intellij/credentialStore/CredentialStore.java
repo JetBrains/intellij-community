@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see https://github.com/JetBrains/intellij-community/blob/master/platform/credential-store/readme.md
+ * <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/credential-store/readme.md">See documentation</a>
  */
 public interface CredentialStore {
   @Nullable

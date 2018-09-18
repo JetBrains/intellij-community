@@ -29,8 +29,8 @@ import org.jetbrains.idea.maven.model.MavenProfileKind;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -44,6 +44,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     super(context);
   }
 
+  @Override
   public boolean isStepVisible() {
     if (!super.isStepVisible()) {
       return false;
@@ -55,6 +56,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     return false;
   }
 
+  @Override
   protected MavenProjectBuilder getBuilder() {
     return (MavenProjectBuilder)super.getBuilder();
   }
@@ -64,10 +66,12 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     profileChooser = new MultiStateElementsChooser<>(true, myMarkStateDescriptor);
   }
 
+  @Override
   public JComponent getComponent() {
     return panel;
   }
 
+  @Override
   public void updateStep() {
     List<String> allProfiles = getBuilder().getProfiles();
     List<String> activatedProfiles = getBuilder().getActivatedProfiles();
@@ -83,6 +87,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     profileChooser.markElements(disabledProfiles, MavenProfileKind.NONE);
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     Collection<String> activatedProfiles = myMarkStateDescriptor.getActivatedProfiles();
     MavenExplicitProfiles newSelectedProfiles = MavenExplicitProfiles.NONE.clone();
@@ -105,9 +110,11 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     return getBuilder().setSelectedProfiles(newSelectedProfiles);
   }
 
+  @Override
   public void updateDataModel() {
   }
 
+  @Override
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.import.maven.page2";
@@ -191,6 +198,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
       setBorder(null);
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (isSelected) {
         setForeground(table.getSelectionForeground());

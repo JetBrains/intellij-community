@@ -22,6 +22,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -70,7 +71,7 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
 
   @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
       return myList.getSelectedValue();
     }

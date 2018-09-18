@@ -47,7 +47,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
   public void convert(@NotNull final String rawDataDirectoryPath,
                       @Nullable final String outputPath,
                       @NotNull final Map<String, Tools> tools,
-                      @NotNull final List<File> inspectionsResults) throws ConversionException {
+                      @NotNull final List<? extends File> inspectionsResults) throws ConversionException {
 
     final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
 

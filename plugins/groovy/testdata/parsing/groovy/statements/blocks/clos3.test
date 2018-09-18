@@ -39,14 +39,6 @@ Groovy script
         Literal
           PsiElement(Integer)('3')
         PsiElement(})('}')
-    PsiErrorElement:Gstring end expected
-      <empty list>
-  PsiElement(new line)('\n ')
-  Call expression
-    Reference expression
-      PsiElement(identifier)('ved')
-    Command arguments
-      Compound Gstring
-        PsiElement(Gstring begin)('"""')
-        PsiErrorElement:Gstring end expected
-          <empty list>
+    GrStringContentImpl(STRING_CONTENT)
+      PsiElement(Gstring content)('\n ved')
+    PsiElement(Gstring end)('"""')

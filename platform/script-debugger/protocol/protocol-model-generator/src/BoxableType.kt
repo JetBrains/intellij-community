@@ -14,7 +14,7 @@ interface BoxableType {
     val ANY_STRING: StandaloneType = StandaloneType(NamePath("String"), "writeString", "null")
     val INT: StandaloneType = StandaloneType(NamePath("Int"), "writeInt", "-1")
     val LONG: StandaloneType = StandaloneType(NamePath("Long"), "writeLong", "-1")
-    val NUMBER: StandaloneType = StandaloneType(NamePath("Double"), "writeDouble", "Double.NaN")
+    val NUMBER: StandaloneType = StandaloneType(NamePath("Double"), "writeDouble", "null")
     val BOOLEAN: StandaloneType = StandaloneType(NamePath("Boolean"), "writeBoolean", "false")
     val MAP: StandaloneType = StandaloneType(NamePath("Map<String, String>"), "writeMap", "null")
   }

@@ -10,17 +10,17 @@ class MapUpdateInlining {
   }
 
   void testValue(Map<String, @NotNull String> map) {
-    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     System.out.println(map.computeIfAbsent("foo", k -> "bar").trim());
   }
 
   void testNullable(Map<String, @Nullable String> map) {
-    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     System.out.println(map.computeIfAbsent("foo", k -> "bar").trim());
   }
 
   void testPresent(Map<String, @Nullable String> map, String key) {
-    System.out.println(map.computeIfPresent(key, (k, v) -> v+"xyz").<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(map.computeIfPresent(key, (k, v) -> v+"xyz").<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     String res1 = map.computeIfPresent("foo", (k, v) -> <warning descr="Condition 'v == null' is always 'false'">v == null</warning> ? "oops" : k);
     String res = map.computeIfPresent(key, (k, v) -> k.isEmpty() ? "foo" : "bar");
     if(<warning descr="Condition 'res != null && res.equals(\"x\")' is always 'false'">res != null && <warning descr="Condition 'res.equals(\"x\")' is always 'false' when reached">res.equals("x")</warning></warning>) {
@@ -59,6 +59,10 @@ class MapUpdateInlining {
     if(<warning descr="Condition 'map.merge(key, val, String::concat) == null' is always 'false'">map.merge(key, <warning descr="Argument 'val' might be null">val</warning>, String::concat) == null</warning>) {
       System.out.println("impossible");
     }
+  }
+
+  void testBoxing(Map<String, Integer> map, String key) {
+    map.merge(key, 1, (i1, i2) -> i1+1);
   }
 
   // IDEA-196415

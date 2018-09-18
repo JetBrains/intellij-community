@@ -411,6 +411,7 @@ public abstract class PluginManagerMain implements Disposable {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
+  @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
                                         List<PluginId> allPlugins,
                                         Runnable onSuccess,
@@ -625,7 +626,7 @@ public abstract class PluginManagerMain implements Disposable {
     return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
   }
 
-  private static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
+  public static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
     if (StringUtil.isEmpty(description)) return false;
     if (filter.length() <= 2) return false; 
     Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
@@ -828,13 +829,13 @@ public abstract class PluginManagerMain implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       loadAvailablePlugins();
       myFilter.setFilter("");
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myBusy);
     }
   }

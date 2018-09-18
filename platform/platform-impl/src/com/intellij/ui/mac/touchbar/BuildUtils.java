@@ -30,8 +30,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
@@ -485,9 +485,12 @@ class BuildUtils {
           continue;
         }
 
-        //if (actionGroup.isPopup()) System.out.println(String.format("add child with isPopup=true: i=%d, childId='%s', group='%s', group id='%s'", i, childId, group.toString(), groupId));
         try {
-          _traverse((ActionGroup)child, visitor);
+          if (childGroup.isPopup()) {
+            // System.out.println(String.format("add child with isPopup=true: i=%d, group='%s', group id='%s'", i, group.toString(), groupId));
+            visitor.visitLeaf(child);
+          } else
+            _traverse((ActionGroup)child, visitor);
         } finally {
           visitor.leaveNode(childGroup);
         }
@@ -509,7 +512,7 @@ class BuildUtils {
           }
         }
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (action == null) {
             fromButton.doClick();
             return;
@@ -518,7 +521,7 @@ class BuildUtils {
           action.actionPerformed(new ActionEvent(fromButton, ActionEvent.ACTION_PERFORMED, null));
         }
         @Override
-        public void update(AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(action == null ? fromButton.isEnabled() : action.isEnabled());
           if (!useTextFromAction)
             e.getPresentation().setText(DialogWrapper.extractMnemonic(fromButton.getText()).second);

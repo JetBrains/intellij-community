@@ -42,6 +42,7 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
     myConstructor = null;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     if (myConstructor != null) {
@@ -51,6 +52,7 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
     }
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     if (myConstructor != null) {
       return RefactoringBundle.message("replace.constructor.with.factory.method");

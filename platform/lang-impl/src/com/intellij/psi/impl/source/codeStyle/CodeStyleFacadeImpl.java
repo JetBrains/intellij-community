@@ -93,11 +93,6 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public boolean isSmartTabs(final FileType fileType) {
-    return CodeStyle.getProjectOrDefaultSettings(myProject).isSmartTabs(fileType);
-  }
-
-  @Override
   public boolean useTabCharacter(final FileType fileType) {
     return CodeStyle.getProjectOrDefaultSettings(myProject).useTabCharacter(fileType);
   }

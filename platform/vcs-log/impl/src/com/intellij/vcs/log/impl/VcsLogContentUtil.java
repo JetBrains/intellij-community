@@ -65,6 +65,13 @@ public class VcsLogContentUtil {
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
                                                                           @NotNull Condition<U> condition) {
+    return findAndSelect(project, clazz, condition) != null;
+  }
+
+  @Nullable
+  public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
+                                                             @NotNull Class<U> clazz,
+                                                             @NotNull Condition<U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
     ContentManager manager = toolWindow.getContentManager();
@@ -76,10 +83,12 @@ public class VcsLogContentUtil {
       }
       return false;
     });
-    if (component == null) return false;
+    if (component == null) return null;
 
     if (!toolWindow.isVisible()) toolWindow.activate(null);
-    return ContentUtilEx.selectContent(manager, component, true);
+    if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+    //noinspection unchecked
+    return (U)getLogUi(component);
   }
 
   public static boolean selectLogUi(@NotNull Project project, @NotNull VcsLogUi ui) {
@@ -121,9 +130,9 @@ public class VcsLogContentUtil {
     }
   }
 
-  public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                             @NotNull String tabGroupName, @NotNull String shortName,
-                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
+  public static <U extends AbstractVcsLogUi> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
+                                                          @NotNull String tabGroupName, @NotNull String shortName,
+                                                          @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, true);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
@@ -131,6 +140,7 @@ public class VcsLogContentUtil {
                                    new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
     if (focus) toolWindow.activate(null);
     logManager.scheduleInitialization();
+    return logUi;
   }
 
   public static boolean closeLogTab(@NotNull ContentManager manager, @NotNull String tabId) {

@@ -12,10 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.sun.javafx.application.PlatformImpl;
-import com.sun.javafx.webkit.Accessor;
-import com.sun.webkit.WebPage;
-import com.sun.webkit.graphics.WCSize;
+import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -67,6 +64,7 @@ public class IpnbJfxUtils {
   private static final String ourPrefix = ourStyle + ourBody;
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
+  private static final int renderingDelay = 10;
 
 
   private static void runFX(@NotNull Runnable r) {
@@ -82,7 +80,7 @@ public class IpnbJfxUtils {
         parent.dispatchEvent(parentEvent);
       }
     };
-    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.runLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> Platform.runLater(() -> {
       final WebView webView = new WebView();
       webView.setContextMenuEnabled(false);
       webView.setOnDragDetected(event -> {
@@ -244,41 +242,20 @@ public class IpnbJfxUtils {
     if (document != null) {
       final Element mydiv = document.getElementById("mydiv");
       if (mydiv != null) {
-        final WebPage webPage = Accessor.getPageFor(engine);
-        final WCSize wcsize = webPage.getContentSize(webPage.getMainFrame());
-        final int height = wcsize.getIntHeight();
-        int width = wcsize.getIntWidth();
+        try {
+          Thread.sleep(renderingDelay);
+        }
+        catch (InterruptedException ignored) {
+        }
+        final Object heightObject = engine.executeScript("document.height");
+        final int height = heightObject instanceof Integer ? (int)heightObject : 0;
+        final Object widthObject = engine.executeScript("document.width");
+        int width = widthObject instanceof Integer ? (int)widthObject : 0;
         if (width < javafxPanel.getWidth()) width = javafxPanel.getWidth();
         if (height <= 0 || width <= 0) return;
-        int count = 0;
-        if (source.contains("```")) {
-          count += 1;
-        }
-        boolean inMath = false;
+        int count = countNewLinesInMath(source);
 
-        if (source.contains("\\frac")) {
-          count += 1;
-        }
-        if (source.contains("\\limits")) {
-          count += 2;
-        }
-        while (source.contains("$$")) {
-          if (inMath) {
-            final String substring = source.substring(0, source.indexOf("$$") + 2);
-            count += StringUtil.countNewLines(substring);
-            for (int i = 0, len = substring.length(); i < len; ++i) {
-              if (substring.charAt(i) == '\\' && i + 1 < substring.length() && substring.charAt(i + 1) == '\\') {
-                count++;
-                i += 1;
-              }
-            }
-          }
-          inMath = !inMath;
-          source = source.substring(source.indexOf("$$") + 2);
-        }
-
-        final Dimension size = new Dimension(
-          width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+        final Dimension size = new Dimension(width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
 
         ApplicationManager.getApplication().invokeLater(()->{
           javafxPanel.setPreferredSize(size);
@@ -289,6 +266,36 @@ public class IpnbJfxUtils {
     }
   }
 
+  private static int countNewLinesInMath(String source) {
+    int count = 0;
+    if (source.contains("```")) {
+      count += 1;
+    }
+    boolean inMath = false;
+
+    if (source.contains("\\frac")) {
+      count += 1;
+    }
+    if (source.contains("\\limits")) {
+      count += 2;
+    }
+    while (source.contains("$$")) {
+      if (inMath) {
+        final String substring = source.substring(0, source.indexOf("$$") + 2);
+        count += StringUtil.countNewLines(substring);
+        for (int i = 0, len = substring.length(); i < len; ++i) {
+          if (substring.charAt(i) == '\\' && i + 1 < substring.length() && substring.charAt(i + 1) == '\\') {
+            count++;
+            i += 1;
+          }
+        }
+      }
+      inMath = !inMath;
+      source = source.substring(source.indexOf("$$") + 2);
+    }
+    return count;
+  }
+
   private static void updateLaf(boolean isDarcula, WebEngine engine, JFXPanel jfxPanel) {
     if (isDarcula) {
       updateLafDarcula(engine, jfxPanel);
@@ -296,7 +303,7 @@ public class IpnbJfxUtils {
   }
 
   private static void updateLafDarcula(WebEngine engine, JFXPanel jfxPanel) {
-    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.runLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> Platform.runLater(() -> {
       ourStyleUrl = IpnbFileType.class.getResource("/style/javaFXBrowserDarcula.css");
       engine.setUserStyleSheetLocation(ourStyleUrl.toExternalForm());
       jfxPanel.getScene().getStylesheets().add(ourStyleUrl.toExternalForm());

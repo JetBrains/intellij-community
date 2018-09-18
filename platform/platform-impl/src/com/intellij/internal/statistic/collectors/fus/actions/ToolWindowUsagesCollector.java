@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.actions;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,6 +17,7 @@ import java.util.Set;
  */
 public class ToolWindowUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     ToolWindowCollector.State state = ToolWindowCollector.getInstance().getState();
@@ -23,9 +25,15 @@ public class ToolWindowUsagesCollector extends ApplicationUsagesCollector implem
     return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(UsageDescriptorKeyValidator.ensureProperKey(e.getKey()), e.getValue()));
   }
 
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.toolwindows.performed";
+  }
+
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
   }
 }
 

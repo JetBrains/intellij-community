@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -56,10 +56,12 @@ public class ModuleRequiresRepr extends Proto {
 
   public static DataExternalizer<ModuleRequiresRepr> externalizer(DependencyContext context) {
     return new DataExternalizer<ModuleRequiresRepr>() {
+      @Override
       public void save(@NotNull DataOutput out, ModuleRequiresRepr value) throws IOException {
         value.save(out);
       }
 
+      @Override
       public ModuleRequiresRepr read(@NotNull DataInput in) throws IOException {
         return new ModuleRequiresRepr(context, in);
       }
@@ -76,18 +78,22 @@ public class ModuleRequiresRepr extends Proto {
 
     public abstract boolean becameNonTransitive();
   }
-  
+
+  @Override
   public Diff difference(Proto past) {
     final ModuleRequiresRepr pastRequirement = (ModuleRequiresRepr)past;
     return new Diff(super.difference(past)) {
+      @Override
       public boolean versionChanged() {
         return pastRequirement.myVersion != myVersion;
       }
 
+      @Override
       public boolean no() {
         return super.no() && !versionChanged();
       }
 
+      @Override
       public boolean becameNonTransitive() {
         return pastRequirement.isTransitive() && !ModuleRequiresRepr.this.isTransitive();
       }

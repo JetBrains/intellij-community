@@ -40,7 +40,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -81,7 +80,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                                      final PsiMethod method,
                                      final PsiVariable targetVariable,
                                      final String newVisibility,
-                                     boolean openInEditor, 
+                                     boolean openInEditor,
                                      final Map<PsiClass, String> oldClassParameterNames) {
     super(project);
     myMethod = method;
@@ -96,11 +95,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     myNewVisibility = newVisibility;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetVariable, myTargetClass);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -168,6 +169,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return true;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final PsiManager manager = myMethod.getManager();
@@ -238,6 +240,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     myTargetClass = (PsiClass) elements[2];
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.instance.method.command");
@@ -247,6 +250,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return myTargetClass;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     PsiMethod patternMethod = createMethodToAdd();
     final List<PsiReference> docRefs = new ArrayList<>();

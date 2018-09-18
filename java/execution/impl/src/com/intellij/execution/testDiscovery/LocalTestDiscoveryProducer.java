@@ -4,15 +4,19 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   @NotNull
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull String classFQName,
-                                                     @NotNull String methodName,
+                                                     @Nullable String methodName,
                                                      byte frameworkId) {
-    return TestDiscoveryIndex.getInstance(project).getTestsByMethodName(classFQName, methodName, frameworkId);
+    TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
+    return methodName == null ?
+           instance.getTestsByClassName(classFQName, frameworkId) :
+           instance.getTestsByMethodName(classFQName, methodName, frameworkId);
   }
 
   @Override

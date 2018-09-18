@@ -23,10 +23,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 class AllFilesInProject extends FileSetToBeUpdated {
   public AllFilesInProject() { }
 
+  @Override
   public void refreshFilesAsync(Runnable postRunnable) {
     VirtualFileManager.getInstance().asyncRefresh(postRunnable);
   }
 
+  @Override
   public void refreshFilesSync() {
     VirtualFileManager.getInstance().syncRefresh();
   }

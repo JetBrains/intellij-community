@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom.refactorings.extract;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,6 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
@@ -69,11 +67,13 @@ public class SelectMavenProjectDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected void init() {
     super.init();
 
@@ -101,11 +101,13 @@ public class SelectMavenProjectDialog extends DialogWrapper {
     return myExtractExclusions.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), myMavenDomProjectModels,
                           model -> Pair.create(MavenDomUtil.getProjectName(model), model));
 
     myReplaceAllListener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateControls();
       }
@@ -133,6 +135,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
     setOKActionEnabled(getSelectedProject() != null);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myMavenProjectsComboBox;
   }

@@ -12,5 +12,6 @@ public class JUnitTagValidationTest extends LightCodeInsightFixtureTestCase {
     PsiElementFactory factory = myFixture.getJavaFacade().getElementFactory();
     factory.createExpressionFromText("1+2", null);
     factory.createExpressionFromText("!1+2", null);
+    factory.createExpressionFromText("!1+ 2", null);
   }
 }

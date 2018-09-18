@@ -372,7 +372,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
           ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
                                  ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
                                  ContextHelpLabel.create(myHTDescription);
-          componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
+          JBUI.Borders.emptyLeft(7).wrap(lbl);
           componentPanel.add(lbl);
         }
         else if (!myCommentBelow) {

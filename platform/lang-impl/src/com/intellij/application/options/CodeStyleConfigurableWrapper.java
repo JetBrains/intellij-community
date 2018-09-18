@@ -6,7 +6,6 @@ import com.intellij.application.options.codeStyle.CodeStyleSettingsPanelFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -109,10 +108,6 @@ public class CodeStyleConfigurableWrapper
     if (myPanel != null) {
       myPanel.disposeUIResources();
     }
-  }
-
-  public boolean isPanelModified(CodeStyleScheme scheme) {
-    return myPanel != null && myPanel.isModified(scheme);
   }
 
   public boolean isPanelModified() {

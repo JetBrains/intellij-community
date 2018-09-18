@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
@@ -54,7 +54,7 @@ enum class RunConfigurationLevel {
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var isSingleton: Boolean = false,
+                                                                   private var isSingleton: Boolean = true,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
   companion object {
     @JvmStatic
@@ -182,12 +182,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
     wasSingletonSpecifiedExplicitly = false
     if (isTemplate) {
-      isSingleton = factory.isConfigurationSingletonByDefault
+      isSingleton = factory.singletonPolicy.isSingleton
     }
     else {
       val singletonStr = element.getAttributeValue(SINGLETON)
       if (singletonStr.isNullOrEmpty()) {
-        isSingleton = factory.isConfigurationSingletonByDefault
+        isSingleton = factory.singletonPolicy.isSingleton
       }
       else {
         wasSingletonSpecifiedExplicitly = true
@@ -244,11 +244,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         if (!isNewSerializationAllowed) {
           element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "false")
         }
-        element.setAttribute(NAME_ATTR, configuration.name)
+
+        configuration.name.nullize()?.let {
+          element.setAttribute(NAME_ATTR, it)
+        }
       }
 
+      val factory = factory
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      if (factory.type !is SimpleConfigurationType) {
+        element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      }
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }
@@ -259,7 +265,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.isConfigurationSingletonByDefault) {
+      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.singletonPolicy.isSingleton) {
         element.setAttribute(SINGLETON, isSingleton.toString())
       }
       if (isTemporary) {
@@ -294,7 +300,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       val replacePathMap = (macroManager as? ProjectPathMacroManager)?.replacePathMap
       if (replacePathMap != null) {
         replacePathMap.addReplacement(projectParentPath, '$' + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$/..", true)
-        BasePathMacroManager.collapsePaths(element, true, replacePathMap)
+        PathMacroManager.collapsePaths(element, true, replacePathMap)
         return
       }
     }

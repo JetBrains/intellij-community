@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 
 class AssertEqualsWithLiteralPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;

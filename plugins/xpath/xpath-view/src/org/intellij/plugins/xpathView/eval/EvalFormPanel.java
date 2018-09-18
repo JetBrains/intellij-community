@@ -33,18 +33,22 @@ public class EvalFormPanel extends JPanel implements InputForm {
         myRoot = this;
     }
 
+    @Override
     public JComponent getComponent() {
         return this;
     }
 
+    @Override
     public JLabel getIcon() {
         return myInputPanel.getIcon();
     }
 
+    @Override
     public JButton getEditContextButton() {
         return myInputPanel.getEditContextButton();
     }
 
+    @Override
     public JPanel getEditorPanel() {
         return myInputPanel.getEditorPanel();
     }
@@ -61,5 +65,6 @@ public class EvalFormPanel extends JPanel implements InputForm {
         return myUsageViewCheckbox;
     }
 
+    @Override
     public void dispose() {}
 }

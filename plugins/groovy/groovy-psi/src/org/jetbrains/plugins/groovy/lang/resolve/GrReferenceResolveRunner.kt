@@ -159,7 +159,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
   val qualifier = qualifier
 
   if (qualifier == null) {
-    val localVariable = resolveToLocalVariable(name).singleOrNull()
+    val localVariable = resolveToLocalVariable(name)
     if (localVariable != null) {
       return localVariable
     }
@@ -167,7 +167,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
 
   if (parent !is GrMethodCall) {
     if (qualifier == null || qualifier.isThisExpression()) {
-      val field = resolveToField(name).singleOrNull()
+      val field = resolveToField(name)
       if (field != null && checkCurrentClass(field.element, this)) {
         return field
       }
@@ -193,7 +193,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
  * @receiver call site
  * @return empty collection or a collection with 1 local variable result
  */
-private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementResolveResult<GrVariable>> {
+private fun PsiElement.resolveToLocalVariable(name: String): ElementResolveResult<GrVariable>? {
   return treeWalkUpAndGet(LocalVariableProcessor(name))
 }
 
@@ -204,7 +204,7 @@ private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementR
  * @receiver call site
  * @return empty collection or a collection with 1 code field result
  */
-private fun PsiElement.resolveToField(name: String): Collection<ElementResolveResult<GrField>> {
+private fun PsiElement.resolveToField(name: String): ElementResolveResult<GrField>? {
   return treeWalkUpAndGet(CodeFieldProcessor(name, this))
 }
 

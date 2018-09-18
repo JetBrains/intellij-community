@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaNameSuggestionProvider implements NameSuggestionProvider {
+  @Override
   @Nullable
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return null;
@@ -157,7 +157,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     final PsiExpression expression = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiCallExpression.class, false, PsiLambdaExpression.class, PsiClass.class);
     if (expression != null) {
       return new SuggestedNameInfo.Delegate(codeStyleManager.suggestVariableName(variableKind, null, expression, var.getType()).names, nameInfo);
-      
+
     }
     return nameInfo;
   }

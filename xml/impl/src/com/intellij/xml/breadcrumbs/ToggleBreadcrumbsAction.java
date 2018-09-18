@@ -51,7 +51,7 @@ class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return isSelected(findEditor(event));
   }
 
@@ -69,7 +69,7 @@ class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent event, boolean selected) {
     if (setSelected(selected, findEditor(event))) {
       UISettings.getInstance().fireUISettingsChanged();
     }

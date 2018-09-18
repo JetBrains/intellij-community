@@ -23,6 +23,7 @@ import java.awt.*;
 
 public class RightAlignedLabelUI extends BasicLabelUI {
 
+  @Override
   protected String layoutCL(
     JLabel label,
     FontMetrics fontMetrics,
@@ -302,12 +303,14 @@ public class RightAlignedLabelUI extends BasicLabelUI {
     return rettext;
   }
 
+  @Override
   protected void paintEnabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getForeground());
     BasicGraphicsUtils.drawString(g, s, accChar, textX, textY);
   }
 
+  @Override
   protected void paintDisabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getBackground());

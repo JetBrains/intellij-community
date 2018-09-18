@@ -49,7 +49,10 @@ class MethodChainHintsPass(
 
   private fun isFirstCall(call: PsiMethodCallExpression): Boolean {
     val document = myEditor.document
-    val callLine = document.getLineNumber(call.argumentList.textOffset)
+
+    val textOffset = call.argumentList.textOffset
+    if (document.textLength - 1 < textOffset) return false
+    val callLine = document.getLineNumber(textOffset)
 
     val callForQualifier = ExpressionUtils.getCallForQualifier(call)
     if (callForQualifier == null ||

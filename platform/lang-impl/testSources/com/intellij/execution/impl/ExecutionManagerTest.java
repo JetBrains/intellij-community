@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionManager;
@@ -60,7 +46,6 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(
       RunManagerImpl.getInstanceImpl(project), rc, false
     );
-    settings.setSingleton(true);
 
     ExecutionEnvironment env1 = createEnv(project, settings);
     executionManager.restartRunProfile(env1);
@@ -77,7 +62,7 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
     // It will be terminated on the second request: executionManager.restartRunProfile(env3)
 
     ProcessHandler processHandler2 = getProcessHandler(executionManager);
-    assertTrue(processHandler1 == processHandler2);
+    assertSame(processHandler1, processHandler2);
     assertTrue(processHandler1.isProcessTerminating());
 
     ExecutionEnvironment env3 = createEnv(project, settings);
@@ -85,7 +70,7 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     FakeProcessHandler processHandler3 = getProcessHandler(executionManager);
-    assertTrue(processHandler1 != processHandler3);
+    assertNotSame(processHandler1, processHandler3);
 
     assertTrue(!processHandler3.isProcessTerminating() && !processHandler3.isProcessTerminated());
     processHandler3.killProcess();

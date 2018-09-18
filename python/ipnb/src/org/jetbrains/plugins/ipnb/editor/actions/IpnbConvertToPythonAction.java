@@ -60,7 +60,7 @@ public class IpnbConvertToPythonAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (myFileEditor != null) {
       e.getPresentation().setEnabledAndVisible(true);
       return;

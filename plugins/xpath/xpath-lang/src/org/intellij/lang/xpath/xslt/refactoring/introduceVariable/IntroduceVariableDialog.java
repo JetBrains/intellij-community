@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt.refactoring.introduceVariable;
 
 import com.intellij.lang.LanguageNamesValidation;
-
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceDialog;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceForm;
@@ -34,14 +33,17 @@ public class IntroduceVariableDialog extends BaseIntroduceDialog implements Intr
         init(expression, numberOfExpressions, TITLE);
     }
 
+    @Override
     protected JComponent createCenterPanel() {
         return myContentPane;
     }
 
+    @Override
     public boolean isReplaceAll() {
         return myForm.isReplaceAll();
     }
 
+    @Override
     protected BaseIntroduceForm getForm() {
         return myForm;
     }

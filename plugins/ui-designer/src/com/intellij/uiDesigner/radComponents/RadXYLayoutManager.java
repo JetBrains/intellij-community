@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.AbstractLayout;
@@ -27,14 +14,11 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.Point;
+import java.awt.*;
 
 /**
  * @author yole
@@ -42,14 +26,17 @@ import java.awt.Point;
 public class RadXYLayoutManager extends RadLayoutManager {
   public static RadXYLayoutManager INSTANCE = new RadXYLayoutManager();
 
+  @Override
   public @NonNls String getName() {
     return UIFormXmlConstants.LAYOUT_XY;
   }
 
+  @Override
   public LayoutManager createLayout() {
     return new XYLayoutManagerImpl();
   }
 
+  @Override
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
     final AbstractLayout layout = (AbstractLayout)radContainer.getLayout();
     // It has sense to save hpap and vgap even for XY layout. The reason is
@@ -69,6 +56,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
   }
 
+  @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     // Constraints of XY layout
     writer.startElement("xy");
@@ -87,6 +75,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     return new MyDropLocation(container, location != null ? location : new Point(5, 5));
   }
 
+  @Override
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     container.getDelegee().add(component.getDelegee(), component.getConstraints());
   }
@@ -100,10 +89,12 @@ public class RadXYLayoutManager extends RadLayoutManager {
       myLocation = location;
     }
 
+    @Override
     public RadContainer getContainer() {
       return myContainer;
     }
 
+    @Override
     public boolean canDrop(ComponentDragObject dragObject) {
       if (myLocation == null || dragObject.getComponentCount() != 1) {
         return false;
@@ -117,9 +108,11 @@ public class RadXYLayoutManager extends RadLayoutManager {
       return true;
     }
 
+    @Override
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     }
 
+    @Override
     public void processDrop(GuiEditor editor,
                             RadComponent[] components,
                             GridConstraints[] constraintsToAdjust,
@@ -151,6 +144,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
       }
     }
 
+    @Override
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;

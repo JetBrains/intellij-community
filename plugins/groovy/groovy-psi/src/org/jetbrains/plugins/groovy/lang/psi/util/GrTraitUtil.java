@@ -119,7 +119,7 @@ public class GrTraitUtil {
     });
   }
 
-  private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<PsiMethod> result) {
+  private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<? super PsiMethod> result) {
     for (PsiMethod method : trait.getMethods()) {
       if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, 0)) {
         result.add(method);
@@ -211,7 +211,7 @@ public class GrTraitUtil {
     });
   }
 
-  private static void doCollectCompiledTraitFields(ClsClassImpl trait, Collection<GrField> result) {
+  private static void doCollectCompiledTraitFields(ClsClassImpl trait, Collection<? super GrField> result) {
     VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
     if (traitFile == null) return;
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);

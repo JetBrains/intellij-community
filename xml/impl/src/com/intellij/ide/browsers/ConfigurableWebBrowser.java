@@ -162,7 +162,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   @Override
-  public void addOpenUrlParameter(@NotNull List<String> command, @NotNull String url) {
+  public void addOpenUrlParameter(@NotNull List<? super String> command, @NotNull String url) {
     if (WebBrowserManager.isEdge(this) && !command.isEmpty()) {
       command.set(command.size() - 1, command.get(command.size() - 1) + ":" + url);
     }

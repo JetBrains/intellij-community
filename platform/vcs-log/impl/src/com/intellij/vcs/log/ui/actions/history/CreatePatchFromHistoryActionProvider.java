@@ -24,8 +24,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.history.FileHistoryUi;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -69,6 +69,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
     e.getPresentation().setEnabled(!selectedCommits.isEmpty() && commitMessage != null);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
 

@@ -2,17 +2,16 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -41,9 +40,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.externalSystem.model.ProjectKeys.*;
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
@@ -151,6 +152,13 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myAlarm.addRequest(new MySaveTask(myProject, myExternalRootProjects.values()), 0);
   }
 
+  @TestOnly
+  public synchronized void saveAndWait() throws Exception {
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
+    save();
+    myAlarm.waitForAllExecuted(1, TimeUnit.SECONDS);
+  }
+
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
     restoreInclusionSettings(externalProjectInfo.getExternalProjectStructure());
 
@@ -247,7 +255,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   synchronized void remove(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, new File(externalProjectPath)));
-    if(removed != null) {
+    if (removed != null) {
       changed.set(true);
     }
   }
@@ -264,7 +272,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
       AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(myProject);
       final Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = settings.getAvailableProjects();
-      final Map<String, Collection<ExternalTaskPojo>> availableTasks = settings.getAvailableTasks();
 
       for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : availableProjects.entrySet()) {
         final ExternalProjectPojo projectPojo = entry.getKey();
@@ -272,7 +279,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
         final Pair<ProjectSystemId, File> key = Pair.create(systemId, new File(externalProjectPath));
         InternalExternalProjectInfo externalProjectInfo = myExternalRootProjects.get(key);
         if (externalProjectInfo == null) {
-          final DataNode<ProjectData> dataNode = convert(systemId, projectPojo, entry.getValue(), availableTasks);
+          final DataNode<ProjectData> dataNode = convert(systemId, projectPojo, entry.getValue());
           externalProjectInfo = new InternalExternalProjectInfo(systemId, externalProjectPath, dataNode);
           myExternalRootProjects.put(key, externalProjectInfo);
           ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(externalProjectPath);
@@ -296,8 +303,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static DataNode<ProjectData> convert(@NotNull ProjectSystemId systemId,
                                                @NotNull ExternalProjectPojo rootProject,
-                                               @NotNull Collection<ExternalProjectPojo> childProjects,
-                                               @NotNull Map<String, Collection<ExternalTaskPojo>> availableTasks) {
+                                               @NotNull Collection<ExternalProjectPojo> childProjects) {
     ProjectData projectData = new ProjectData(systemId, rootProject.getName(), rootProject.getPath(), rootProject.getPath());
     DataNode<ProjectData> projectDataNode = new DataNode<>(PROJECT, projectData, null);
 
@@ -306,17 +312,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       ModuleData moduleData = new ModuleData(childProject.getName(), systemId,
                                              ModuleTypeId.JAVA_MODULE, childProject.getName(),
                                              moduleConfigPath, moduleConfigPath);
-      final DataNode<ModuleData> moduleDataNode = projectDataNode.createChild(MODULE, moduleData);
-
-      final Collection<ExternalTaskPojo> moduleTasks = availableTasks.get(moduleConfigPath);
-      if (moduleTasks != null) {
-        for (ExternalTaskPojo moduleTask : moduleTasks) {
-          TaskData taskData = new TaskData(systemId, moduleTask.getName(), moduleConfigPath, moduleTask.getDescription());
-          moduleDataNode.createChild(TASK, taskData);
-        }
-      }
+      projectDataNode.createChild(MODULE, moduleData);
     }
-
     return projectDataNode;
   }
 

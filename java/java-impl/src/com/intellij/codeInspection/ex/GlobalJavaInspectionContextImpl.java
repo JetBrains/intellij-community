@@ -8,10 +8,10 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalJavaInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,7 +91,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return manager.getExtension(RefJavaManager.MANAGER).getEntryPointsManager();
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static boolean isInspectionsEnabled(final boolean online, @NotNull Project project) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (online) {
@@ -160,11 +160,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
-    List<T> requests = requestMap.get(refElement.getPointer());
-    if (requests == null) {
-      requests = new ArrayList<>();
-      requestMap.put(refElement.getPointer(), requests);
-    }
+    List<T> requests = requestMap.computeIfAbsent(refElement.getPointer(), __ -> new ArrayList<>());
     requests.add(processor);
   }
 
@@ -193,11 +189,6 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         //e.g. xml files were not included in the graph, so usages there should be processed as external
         boolean inGraph = processedReferences ? refManager.isInGraph(file) : file.getFileType() == StdFileTypes.JAVA;
         return !inGraph;
-      }
-
-      @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return 0;
       }
 
       @Override
@@ -297,7 +288,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
   }
 
-  private String getClassPresentableName(final PsiClass psiClass) {
+  private static String getClassPresentableName(@NotNull PsiClass psiClass) {
     return ReadAction.compute(() -> {
       final String qualifiedName = psiClass.getQualifiedName();
       return qualifiedName != null ? qualifiedName : psiClass.getName();
@@ -310,18 +301,15 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   private static <Member extends PsiMember, P extends Processor<Member>> PsiElementProcessorAdapter<Member> createMembersProcessor(final List<P> processors,
                                                                                                                                    final AnalysisScope scope) {
-    return new PsiElementProcessorAdapter<>(new PsiElementProcessor<Member>() {
-      @Override
-      public boolean execute(@NotNull Member member) {
-        if (scope.contains(member)) return true;
-        final List<P> processorsArrayed = new ArrayList<>(processors);
-        for (P processor : processorsArrayed) {
-          if (!processor.process(member)) {
-            processors.remove(processor);
-          }
+    return new PsiElementProcessorAdapter<>(member -> {
+      if (scope.contains(member)) return true;
+      final List<P> processorsArrayed = new ArrayList<>(processors);
+      for (P processor : processorsArrayed) {
+        if (!processor.process(member)) {
+          processors.remove(processor);
         }
-        return !processors.isEmpty();
       }
+      return !processors.isEmpty();
     });
   }
 
@@ -364,26 +352,23 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   private static PsiReferenceProcessor createReferenceProcessor(@NotNull final List<UsagesProcessor> processors,
                                                                 final GlobalInspectionContext context) {
-    return new PsiReferenceProcessor() {
-      @Override
-      public boolean execute(PsiReference reference) {
-        AnalysisScope scope = context.getRefManager().getScope();
-        if (scope != null && scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA ||
-            PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
-          return true;
-        }
+    return reference -> {
+      AnalysisScope scope = context.getRefManager().getScope();
+      if (scope != null && scope.contains(reference.getElement()) && reference.getElement().getLanguage() == JavaLanguage.INSTANCE ||
+          PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
+        return true;
+      }
 
-        synchronized (processors) {
-          UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[0]);
-          for (UsagesProcessor processor : processorsArrayed) {
-            if (!processor.process(reference)) {
-              processors.remove(processor);
-            }
+      synchronized (processors) {
+        UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[0]);
+        for (UsagesProcessor processor : processorsArrayed) {
+          if (!processor.process(reference)) {
+            processors.remove(processor);
           }
         }
-
-        return !processors.isEmpty();
       }
+
+      return !processors.isEmpty();
     };
   }
 
@@ -395,7 +380,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     // UnusedDeclarationInspection should run first
     for (int i = 0; i < globalTools.size(); i++) {
       InspectionToolWrapper toolWrapper = globalTools.get(i).getTool();
-      if (UnusedDeclarationInspection.SHORT_NAME.equals(toolWrapper.getShortName())) {
+      if (UnusedDeclarationInspectionBase.SHORT_NAME.equals(toolWrapper.getShortName())) {
         Collections.swap(globalTools, i, 0);
         break;
       }

@@ -28,7 +28,7 @@ import java.util.List;
 public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
     @Override
-    public void handleInsert(InsertionContext context, PsiTypeLookupItem item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       if (item.getObject() instanceof PsiClass) {
         addImportForItem(context, (PsiClass)item.getObject());
       }
@@ -98,7 +98,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     myImportFixer.handleInsert(context, this);
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());

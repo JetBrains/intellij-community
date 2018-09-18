@@ -148,7 +148,7 @@ public class GenericPatchApplier {
       for (Map.Entry<TextRange, MyAppliedData> entry : myTransformations.entrySet()) {
         final TextRange key = entry.getKey();
         final MyAppliedData value = entry.getValue();
-        LOG.info(String.valueOf(cnt) +
+        LOG.info(cnt +
                  " lines " +
                  key.getStartOffset() +
                  ":" +

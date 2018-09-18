@@ -45,6 +45,7 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
     myElement = expression;
   }
 
+  @Override
   public Priority getPriority() {
     return Priority.HIGH;
   }

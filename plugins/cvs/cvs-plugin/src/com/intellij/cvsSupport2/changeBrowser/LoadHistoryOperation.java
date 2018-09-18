@@ -82,6 +82,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     myRevisions = revisions;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final RlogCommand command = new RlogCommand();
     command.setModuleName(myModule);
@@ -106,11 +107,13 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     ourDoNotSupportingSOptionServers.add(myEnvironment.getCvsRootAsString());
   }
 
+  @Override
   @NonNls
   protected String getOperationName() {
     return "rlog";
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (!(info instanceof LogInformation)) {
@@ -124,10 +127,12 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     myConsumer.consume(wrapper);
   }
 
+  @Override
   public boolean runInReadThread() {
     return false;
   }
 
+  @Override
   protected boolean runInExclusiveLock() {
     return false;
   }

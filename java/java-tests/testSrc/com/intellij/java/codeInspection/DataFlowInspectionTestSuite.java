@@ -66,6 +66,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(UnwrapIfStatementFixTest.class);
     suite.addTestSuite(StreamFilterNotNullFixTest.class);
     suite.addTestSuite(RedundantInstanceofFixTest.class);
+    suite.addTestSuite(ReplaceComputeWithComputeIfPresentFixTest.class);
     return suite;
   }
 }

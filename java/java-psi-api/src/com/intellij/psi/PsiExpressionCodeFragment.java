@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a fragment of Java code the contents of which is an expression.
  *
- * @see PsiElementFactory#createExpressionCodeFragment(String, PsiElement, PsiType, boolean)
+ * @see JavaCodeFragmentFactory#createExpressionCodeFragment(String, PsiElement, PsiType, boolean)
  */
 public interface PsiExpressionCodeFragment extends JavaCodeFragment {
   /**

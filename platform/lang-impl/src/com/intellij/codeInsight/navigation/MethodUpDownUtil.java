@@ -46,7 +46,7 @@ public class MethodUpDownUtil {
     return offsets.toNativeArray();
   }
 
-  private static void addNavigationElements(Collection<PsiElement> array, PsiFile element) {
+  private static void addNavigationElements(Collection<? super PsiElement> array, PsiFile element) {
     StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(element);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
@@ -60,7 +60,7 @@ public class MethodUpDownUtil {
     }
   }
 
-  private static void addStructureViewElements(final TreeElement parent, final Collection<PsiElement> array, @NotNull PsiFile file) {
+  private static void addStructureViewElements(final TreeElement parent, final Collection<? super PsiElement> array, @NotNull PsiFile file) {
     for(TreeElement treeElement: parent.getChildren()) {
       Object value = ((StructureViewTreeElement)treeElement).getValue();
       if (value instanceof PsiElement) {

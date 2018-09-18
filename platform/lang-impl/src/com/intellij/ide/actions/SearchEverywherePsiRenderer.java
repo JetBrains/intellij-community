@@ -21,21 +21,24 @@ import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.FilePathSplittingPolicy;
+import com.intellij.util.ObjectUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -82,23 +85,6 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
 
   @Override
   protected String getContainerText(PsiElement element, String name) {
-    if (element instanceof PsiFileSystemItem) {
-      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-      VirtualFile parent = file == null ? null : file.getParent();
-      if (parent == null) {
-        if (file != null) { // use fallback from Switcher
-          String presentableUrl = file.getPresentableUrl();
-          return FileUtil.getLocationRelativeToUserHome(presentableUrl);
-        }
-        return null;
-      }
-      String relativePath = GotoFileCellRenderer.getRelativePath(parent, element.getProject());
-      if (relativePath == null) return "( " + File.separator + " )";
-      int width = myList.getWidth();
-      if (width == 0) width += 800;
-      String path = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getOptimalTextForComponent(name, new File(relativePath), this, width - myRightComponentWidth - 16 - 10);
-      return "(" + path + ")";
-    }
     return getSymbolContainerText(name, element);
   }
 
@@ -109,18 +95,42 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     if (text == null) return null;
 
     if (text.startsWith("(") && text.endsWith(")")) {
-      text = text.substring(1, text.length()-1);
+      text = text.substring(1, text.length() - 1);
     }
+    if (text.contains("/") || text.contains(File.separator)) {
+      Project project = element.getProject();
+      String projectPath = project.getBasePath();
+      File file = new File(text);
+      if (file.exists()) {
+        File root = projectPath == null ? null : new File(FileUtil.toSystemDependentName(projectPath));
+        if (root != null && FileUtil.isAncestor(root, file, true)) {
+          text = ObjectUtils.notNull(FileUtil.getRelativePath(root, file), text);
+        }
+        else {
+          VirtualFile vFile = VfsUtil.findFileByIoFile(file, false);
+          VirtualFile vRoot = vFile == null ? null : GotoFileCellRenderer.getAnyRoot(vFile, project);
+          root = vRoot == null ? null : VfsUtilCore.virtualToIoFile(vRoot);
+          text = root != null ? ObjectUtils.notNull(FileUtil.getRelativePath(root.getParentFile(), file), text) :
+                 FileUtil.getLocationRelativeToUserHome(text);
+        }
+      }
+    }
+
     boolean in = text.startsWith("in ");
     if (in) text = text.substring(3);
-    final FontMetrics fm = myList.getFontMetrics(myList.getFont());
-    final int maxWidth = myList.getWidth() - fm.stringWidth(name) - 16 - myRightComponentWidth - 20;
+    FontMetrics fm = myList.getFontMetrics(myList.getFont());
+    int maxWidth = myList.getWidth() - fm.stringWidth(name) - 16 - myRightComponentWidth - 20;
     String left = in ? "(in " : "(";
     String right = ")";
+    String adjustedText = left + text + right;
 
-    if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
-    String separator = text.contains(File.separator) ? File.separator : ".";
-    final LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
+    int fullWidth = fm.stringWidth(adjustedText);
+    if (fullWidth < maxWidth) return adjustedText;
+    String separator = text.contains("/") ? "/" :
+                       SystemInfo.isWindows && text.contains("\\") ? "\\" :
+                       text.contains(".") ? "." :
+                       text.contains("-") ? "-" : " ";
+    LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
     int index;
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
@@ -130,8 +140,8 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
         return left + StringUtil.join(parts, separator) + right;
       }
     }
-    //todo
-    return left + "..." + right;
+    int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + right.length() + 3);
+    return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 
 

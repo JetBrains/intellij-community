@@ -11,10 +11,12 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -85,7 +87,7 @@ abstract class FunctionHelper {
    */
   void rename(String oldName, String newName, StreamToLoopReplacementContext context) {}
 
-  void registerReusedElements(Consumer<PsiElement> consumer) {}
+  void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   @Nullable
   String getParameterName(int index) {
@@ -132,10 +134,9 @@ abstract class FunctionHelper {
   @Contract("null, _, _ -> null")
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if(expression == null) return null;
-    PsiType type = expression instanceof PsiFunctionalExpression
-                   ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                   : expression.getType();
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if(!(type instanceof PsiClassType)) return null;
     PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (interfaceMethod == null || interfaceMethod.getParameterList().getParametersCount() != paramCount) return null;
@@ -346,7 +347,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myMethodRef);
     }
 
@@ -464,7 +465,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
@@ -503,7 +504,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myReference);
     }
   }
@@ -548,17 +549,20 @@ abstract class FunctionHelper {
       return myParameters[0];
     }
 
+    @Override
     PsiExpression getExpression() {
       // Usage logic presume that this method is called only if myBody is PsiExpression
       return (PsiExpression)myBody;
     }
 
+    @Override
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       LOG.assertTrue(argumentValues.length == myParameters.length);
       EntryStream.zip(myParameters, argumentValues).forKeyValue(
         (oldName, newName) -> myBody = replaceVarReference(myBody, oldName, newName, context));
     }
 
+    @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
       int idx = ArrayUtil.indexOf(myParameters, newName);
       if(idx >= 0) {
@@ -576,10 +580,11 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myBody);
     }
 
+    @Override
     String getParameterName(int index) {
       return myParameters[index];
     }
@@ -624,6 +629,7 @@ abstract class FunctionHelper {
                      .map(PsiElement::getText).joining();
     }
 
+    @Override
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       super.transform(context, argumentValues);
       List<PsiReturnStatement> returns = getReturns(myBody);

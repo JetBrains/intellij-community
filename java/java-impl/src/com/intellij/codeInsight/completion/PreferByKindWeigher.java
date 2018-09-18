@@ -327,7 +327,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
       } else if (Arrays.stream(myExpectedTypes).anyMatch(info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
-          PsiTreeUtil.getParentOfType(myPosition, PsiIfStatement.class, true, PsiStatement.class, PsiMember.class) == null) {
+                 !(myPosition.getParent() instanceof PsiIfStatement)) {
         return ThreeState.YES;
       }
     }

@@ -15,8 +15,8 @@
  */
 package com.intellij.patterns;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -24,11 +24,12 @@ import com.intellij.util.ProcessingContext;
 public class CharPattern extends ObjectPattern<Character, CharPattern> {
   protected CharPattern() {
     super(Character.class);
-    
+
   }
 
   public CharPattern javaIdentifierPart() {
     return with(new PatternCondition<Character>("javaIdentifierPart") {
+      @Override
       public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierPart(character.charValue());
       }
@@ -37,6 +38,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern javaIdentifierStart() {
     return with(new PatternCondition<Character>("javaIdentifierStart") {
+      @Override
       public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierStart(character.charValue());
       }
@@ -45,6 +47,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern whitespace() {
     return with(new PatternCondition<Character>("whitespace") {
+      @Override
       public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
         return Character.isWhitespace(character.charValue());
       }
@@ -53,6 +56,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern letterOrDigit() {
     return with(new PatternCondition<Character>("letterOrDigit") {
+      @Override
       public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
         return Character.isLetterOrDigit(character.charValue());
       }

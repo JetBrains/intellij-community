@@ -81,16 +81,19 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
     return new DefaultComboBoxModel(urls.toArray());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
 
+  @Override
   protected void resetImpl() {
     myLocalName.setText(myOrigInjection.getTagName());
     myNamespace.getEditor().setItem(myOrigInjection.getTagNamespace());
     myWithSubtags.setSelected(myOrigInjection.isApplyToSubTags());
   }
 
+  @Override
   protected void apply(AbstractTagInjection other) {
     other.setTagName(myLocalName.getText());
     other.setTagNamespace(getNamespace());

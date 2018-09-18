@@ -108,7 +108,7 @@ public class CompoundRuntimeException extends RuntimeException {
     });
   }
 
-  private String processAll(@NotNull Function<Throwable, String> exceptionProcessor, @NotNull Consumer<String> stringProcessor) {
+  private String processAll(@NotNull Function<? super Throwable, String> exceptionProcessor, @NotNull Consumer<? super String> stringProcessor) {
     if (myExceptions.size() == 1) {
       Throwable throwable = myExceptions.get(0);
       String s = exceptionProcessor.fun(throwable);

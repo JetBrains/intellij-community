@@ -31,9 +31,4 @@ public class ClassUtil {
 
     return superClassNames;
   }
-
-  @Deprecated // to be removed
-  public static String getClassKey(String fqName) {
-    return "Class: " + fqName;
-  }
 }

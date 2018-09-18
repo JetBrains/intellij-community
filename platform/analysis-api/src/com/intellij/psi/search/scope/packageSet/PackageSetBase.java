@@ -27,24 +27,16 @@ public abstract class PackageSetBase implements PackageSet {
    * @see PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)
    */
   @Deprecated
-  public abstract boolean contains(VirtualFile file, NamedScopesHolder holder);
+  public abstract boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder);
 
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return contains(file, holder);
   }
 
   @Override
-  public boolean contains(@NotNull PsiFile file, NamedScopesHolder holder) {
-    return contains(file.getVirtualFile(), file.getProject(), holder);
-  }
-
-  /**
-   * @see PackageSetBase#getPsiFile(com.intellij.openapi.vfs.VirtualFile, com.intellij.psi.search.scope.packageSet.NamedScopesHolder)
-   */
-  @Deprecated
-  @Nullable
-  public static PsiFile getPsiFile(VirtualFile file, NamedScopesHolder holder) {
-    return PsiManager.getInstance(holder.getProject()).findFile(file);
+  public boolean contains(@NotNull PsiFile file, @Nullable NamedScopesHolder holder) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile != null && contains(virtualFile, file.getProject(), holder);
   }
 
   @Nullable

@@ -89,10 +89,12 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     return dialog;
   }
 
+  @Override
   protected void showErrorMessage(final Project project, Editor editor, String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
   }
 
+  @Override
   protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();

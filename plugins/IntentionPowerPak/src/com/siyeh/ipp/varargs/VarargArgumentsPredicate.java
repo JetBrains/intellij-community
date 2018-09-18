@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,8 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     }
     final PsiCall call = (PsiCall)parent;
     final JavaResolveResult resolveResult = call.resolveMethodGenerics();
-    if (!resolveResult.isValidResult()) {
+    if (!resolveResult.isValidResult() || !(resolveResult instanceof MethodCandidateInfo) ||
+        ((MethodCandidateInfo)resolveResult).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
       return false;
     }
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
@@ -46,9 +47,6 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length < parameters.length) {
-      return false;
-    }
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiType lastParameterType = PsiTypesUtil.getParameterType(parameters, parameters.length - 1, true);
     final PsiType substitutedType = substitutor.substitute(lastParameterType);
@@ -60,21 +58,14 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
       }
     }
 
-    if (!JavaGenericsUtil.isReifiableType(substitutedType)) {
-      return false;
-    }
     if (arguments.length != parameters.length) {
       return true;
     }
     final PsiExpression lastExpression = arguments[arguments.length - 1];
-    final PsiExpression expression = PsiUtil.deparenthesizeExpression(lastExpression);
-    if (expression instanceof PsiLiteralExpression) {
-      final String text = expression.getText();
-      if ("null".equals(text)) {
-        // a single null argument is not wrapped in an array
-        // on a vararg method call, but just passed as a null value
-        return false;
-      }
+    if (ExpressionUtils.isNullLiteral(lastExpression)) {
+      // a single null argument is not wrapped in an array
+      // on a vararg method call, but just passed as a null value
+      return false;
     }
     final PsiType lastArgumentType = lastExpression.getType();
     if (!(lastArgumentType instanceof PsiArrayType)) {
@@ -82,6 +73,6 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     }
     final PsiArrayType arrayType = (PsiArrayType)lastArgumentType;
     final PsiType type = arrayType.getComponentType();
-    return !substitutedType.equals(type);
+    return !substitutedType.isAssignableFrom(type);
   }
 }

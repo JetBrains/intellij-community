@@ -15,7 +15,7 @@ class Test {
     }
     class Local {
       void s(@Nullable String s) {
-        final int i = s.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>();
+        final int i = s.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
       }
     }
   }

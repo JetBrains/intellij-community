@@ -543,11 +543,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessage(PsiElement context, String message, int type) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {
     addMessageWithFixes(context, message, type);
   }
@@ -621,10 +616,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return new XmlHighlightVisitor();
   }
 
-  @Override
-  public int order() {
-    return 1;
-  }
 
   public static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
     String unquotedValue = value.getValue();

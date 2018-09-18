@@ -3,7 +3,7 @@
   <problem>
     <file>A.java</file>
     <line>13</line>
-    <description>Casting prices.get(null) to BidAsk is redundant</description>
+    <description>Casting <code>prices.get(...)</code>code> to <code>BidAsk</code> is redundant</description>
   </problem>
 </problems>
 

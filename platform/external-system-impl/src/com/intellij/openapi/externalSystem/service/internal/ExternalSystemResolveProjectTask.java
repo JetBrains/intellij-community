@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.internal;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
@@ -67,6 +66,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     myArguments = arguments;
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   protected void doExecute() throws Exception {
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
@@ -123,6 +123,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     }
   }
 
+  @Override
   protected boolean doCancel() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();

@@ -9,7 +9,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,8 +76,10 @@ public class AsyncPopupImpl extends WizardPopup implements Runnable {
   protected JComponent createContent() {
     if (myPanel != null) return myPanel;
     myPanel = new JPanel(new BorderLayout());
-    myPanel.add(new AsyncProcessIcon("Async Popup Step"), BorderLayout.WEST);
-    myPanel.add(new JBLabel("Loading..."), BorderLayout.CENTER);
+    //myPanel.add(new AsyncProcessIcon("Async Popup Step"), BorderLayout.WEST);
+    JBLabel label = new JBLabel("Loading...");
+    label.setForeground(UIUtil.getLabelDisabledForeground());
+    myPanel.add(label, BorderLayout.CENTER);
     myPanel.setBorder(new EmptyBorder(UIUtil.getListCellPadding()));
     myPanel.setBackground(UIUtil.getListBackground());
     myPanel.registerKeyboardAction(new ActionListener() {

@@ -40,6 +40,7 @@ public class TagOperation extends CvsOperationOnFiles{
     myOverrideExisting = overrideExisting;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final TagCommand tagCommand = new TagCommand();
     addFilesToCommand(root, tagCommand);
@@ -49,6 +50,7 @@ public class TagOperation extends CvsOperationOnFiles{
     return tagCommand;
   }
 
+  @Override
   protected String getOperationName() {
     return "tag";
   }

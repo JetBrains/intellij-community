@@ -89,8 +89,8 @@ public class InsertionContext {
     return myOffsetMap;
   }
 
-  public OffsetKey trackOffset(int offset, boolean moveableToRight) {
-    final OffsetKey key = OffsetKey.create("tracked", moveableToRight);
+  public OffsetKey trackOffset(int offset, boolean movableToRight) {
+    final OffsetKey key = OffsetKey.create("tracked", movableToRight);
     getOffsetMap().addOffset(key, offset);
     return key;
   }

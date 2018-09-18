@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,11 +24,13 @@ public abstract class TwoSideChange<T extends TwoSideChange.SideChange> extends 
     myCommonHighlighterHolder = highlighterHolder;
   }
 
+  @Override
   @NotNull
   public ChangeHighlighterHolder getHighlighterHolder() {
     return myCommonHighlighterHolder;
   }
 
+  @Override
   @NotNull
   public DiffRangeMarker getRange() {
     return myBaseRangeMarker;
@@ -106,6 +94,7 @@ public abstract class TwoSideChange<T extends TwoSideChange.SideChange> extends 
     return myMergeList.getChanges(mergeSide).getDocument(MergeList.BRANCH_SIDE);
   }
 
+  @Override
   public void onRangeInvalidated() {
     conflictRemoved();
   }
@@ -134,6 +123,7 @@ public abstract class TwoSideChange<T extends TwoSideChange.SideChange> extends 
       myType = type;
     }
 
+    @Override
     @NotNull
     public ChangeType getType() {
       return myType;
@@ -154,6 +144,7 @@ public abstract class TwoSideChange<T extends TwoSideChange.SideChange> extends 
       myTwoSideChange.getHighlighterHolder().updateHighlighter(myTwoSideChange, myType);
     }
 
+    @Override
     public ChangeList getChangeList() {
       return myTwoSideChange.getMergeList().getChanges(myOriginalSide.getFragmentSide());
     }
@@ -173,21 +164,25 @@ public abstract class TwoSideChange<T extends TwoSideChange.SideChange> extends 
       return MergeList.BRANCH_SIDE == side;
     }
 
+    @Override
     protected void removeFromList() {
       myTwoSideChange.conflictRemoved();
       myTwoSideChange = null;
     }
 
+    @Override
     public boolean isValid() {
       return myTwoSideChange != null;
     }
 
+    @Override
     public void onRemovedFromList() {
       myOriginalSide.getRange().removeListener(this);
       myTwoSideChange = null;
       myOriginalSide = null;
     }
 
+    @Override
     public void onRangeInvalidated() {
       removeFromList();
     }

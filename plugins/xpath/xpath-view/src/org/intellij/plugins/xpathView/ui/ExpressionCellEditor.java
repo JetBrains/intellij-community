@@ -38,15 +38,18 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
         this.project = project;
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable ttable, Object value, boolean isSelected, int row, int col) {
         myExpression = (Expression)value;
 
         myDocument = PsiDocumentManager.getInstance(project).getDocument(myExpression.getFile());
         return new EditorTextField(myDocument, project, myExpression.getFileType()) {
+            @Override
             protected boolean shouldHaveBorder() {
                 return false;
             }
 
+            @Override
             public void addNotify() {
                 super.addNotify();
                 Runnable runnable = () -> {
@@ -62,6 +65,7 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
         };
     }
 
+    @Override
     public boolean isCellEditable(EventObject eventObject) {
         if (eventObject instanceof MouseEvent) {
             return ((MouseEvent)eventObject).getClickCount() >= 2;
@@ -69,10 +73,12 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
         return super.isCellEditable(eventObject);
     }
 
+    @Override
     public Expression getCellEditorValue() {
         return myExpression;
     }
 
+    @Override
     public boolean stopCellEditing() {
         super.stopCellEditing();
         PsiDocumentManager.getInstance(project).commitDocument(myDocument);

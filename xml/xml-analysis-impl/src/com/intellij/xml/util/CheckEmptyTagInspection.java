@@ -3,16 +3,20 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.*;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
 import gnu.trove.THashSet;
@@ -42,9 +46,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
         if (XmlExtension.shouldIgnoreSelfClosingTag(tag) || !isTagWithEmptyEndNotAllowed(tag)) {
           return;
         }
-        final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
 
-        if (child == null) {
+        if (XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode()) == null || !tagIsWellFormed(tag)) {
           return;
         }
 
@@ -91,6 +94,28 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   @NonNls
   public String getShortName() {
     return "CheckEmptyScriptTag";
+  }
+
+  public static boolean tagIsWellFormed(XmlTag tag) {
+      boolean ok = false;
+      final PsiElement[] children = tag.getChildren();
+      for (PsiElement child : children) {
+          if (child instanceof XmlToken) {
+              final IElementType tokenType = ((XmlToken) child).getTokenType();
+              if (tokenType.equals(XmlTokenType.XML_EMPTY_ELEMENT_END) &&
+                  "/>".equals(child.getText())) {
+                  ok = true;
+              }
+              else if (tokenType.equals(XmlTokenType.XML_END_TAG_START)) {
+                  ok = true;
+              }
+          }
+          else if (child instanceof OuterLanguageElement) {
+              return false;
+          }
+      }
+
+      return ok;
   }
 
   private static class MyLocalQuickFix implements LocalQuickFix {

@@ -53,7 +53,7 @@ public class MimeTypeDictionary {
     return result;
   }
 
-  private static void readMediaTypes(TreeSet<String> result, final String category) {
+  private static void readMediaTypes(TreeSet<? super String> result, final String category) {
     final InputStream stream = MimeTypeDictionary.class.getResourceAsStream("mimeTypes/" + category + ".csv");
     String csv = "";
     try {

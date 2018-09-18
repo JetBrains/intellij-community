@@ -31,7 +31,6 @@ import java.util.zip.CRC32;
 /**
  * @author Vladislav.Soroka
  */
-
 public class ConfigurationFileCrcFactory {
   private final Project myProject;
   private final VirtualFile myFile;
@@ -81,9 +80,9 @@ public class ConfigurationFileCrcFactory {
       if (!ignoredTokens.contains(tokenType) && !CacheUtil.isInComments(tokenType)) {
         String tokenText = lexer.getTokenText();
         if (!CharArrayUtil.containsOnlyWhiteSpaces(tokenText)) {
-        for (int i = 0, end = tokenText.length(); i < end; i++) {
-          crc32.update(tokenText.charAt(i));
-        }
+          for (int i = 0, end = tokenText.length(); i < end; i++) {
+            crc32.update(tokenText.charAt(i));
+          }
         }
       }
       lexer.advance();

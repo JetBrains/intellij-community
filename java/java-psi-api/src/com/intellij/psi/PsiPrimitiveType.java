@@ -235,6 +235,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
   /**
    * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
    */
+  @Deprecated
   public static Collection<String> getAllBoxedTypeNames() {
     return JvmPrimitiveTypeKind.getBoxedFqns();
   }

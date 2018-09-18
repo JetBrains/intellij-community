@@ -26,6 +26,7 @@ public class FieldHidesLocalUsageInfo extends UnresolvableCollisionUsageInfo {
     super(element, referencedElement);
   }
 
+  @Override
   public String getDescription() {
     String descr = RefactoringBundle.message("local.will.be.hidden.renamed",
                                              RefactoringUIUtil.getDescription(getElement(), true));

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -79,9 +80,9 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       return text;
     }
 
-    boolean startsWith = caseSensitive ? text.startsWith(path) : StringUtil.startsWithIgnoreCase(text, path);
-
-    if (!startsWith) return text;
+    if (!(caseSensitive ? text.startsWith(path) : StringUtilRt.startsWithIgnoreCase(text, path))) {
+      return text;
+    }
 
     //check that this is complete path (ends with "/" or "!/")
     // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
@@ -90,11 +91,17 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     if (!isWindowsRoot &&
         endOfOccurrence < text.length() &&
         text.charAt(endOfOccurrence) != '/' &&
-        !text.substring(endOfOccurrence).startsWith("!/")) {
+        !(text.charAt(endOfOccurrence) == '!' && text.substring(endOfOccurrence).startsWith("!/"))) {
       return text;
     }
 
-    return myMacroMap.get(path) + text.substring(endOfOccurrence);
+    String s = myMacroMap.get(path);
+    if (text.length() > endOfOccurrence) {
+      return s + text.substring(endOfOccurrence);
+    }
+    else {
+      return s;
+    }
   }
 
   @NotNull

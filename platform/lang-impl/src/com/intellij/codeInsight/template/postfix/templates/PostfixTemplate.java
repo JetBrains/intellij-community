@@ -35,6 +35,7 @@ public abstract class PostfixTemplate {
   /**
    * @deprecated use {@link #PostfixTemplate(String, String, String, PostfixTemplateProvider)}
    */
+  @Deprecated
   protected PostfixTemplate(@NotNull String name, @NotNull String example) {
     this(null, name, "." + name, example, null);
   }
@@ -49,6 +50,7 @@ public abstract class PostfixTemplate {
   /**
    * @deprecated use {@link #PostfixTemplate(String, String, String, String, PostfixTemplateProvider)}
    */
+  @Deprecated
   protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
     this(null, name, key, example, null);
   }

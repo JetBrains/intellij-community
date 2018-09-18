@@ -165,7 +165,7 @@ public class QuickFixPreviewPanelFactory {
         final ComboBoxAction fixComboBox = new ComboBoxAction() {
           {
             getTemplatePresentation().setText("Apply quick fixes" + (multipleDescriptors ? " to all the problems" : ""));
-            getTemplatePresentation().setIcon(AllIcons.Actions.CreateFromUsage);
+            getTemplatePresentation().setIcon(AllIcons.Actions.IntentionBulb);
             setSmallVariant(false);
           }
 

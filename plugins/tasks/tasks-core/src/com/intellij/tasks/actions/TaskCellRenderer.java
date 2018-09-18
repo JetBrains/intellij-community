@@ -30,6 +30,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer {
     myProject = project;
   }
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean sel, boolean focus) {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBackground(UIUtil.getListBackground(sel));

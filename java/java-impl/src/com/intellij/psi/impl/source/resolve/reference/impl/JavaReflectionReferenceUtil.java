@@ -729,11 +729,11 @@ public class JavaReflectionReferenceUtil {
       myArgumentTypes = argumentTypes;
     }
 
-    public String getText(boolean withReturnType, @NotNull Function<String, String> transformation) {
+    public String getText(boolean withReturnType, @NotNull Function<? super String, String> transformation) {
       return getText(withReturnType, true, transformation);
     }
 
-    public String getText(boolean withReturnType, boolean withParentheses, @NotNull Function<String, String> transformation) {
+    public String getText(boolean withReturnType, boolean withParentheses, @NotNull Function<? super String, String> transformation) {
       final StringJoiner joiner = new StringJoiner(", ", withParentheses ? "(" : "", withParentheses ? ")" : "");
       if (withReturnType) {
         joiner.add(transformation.apply(myReturnType));

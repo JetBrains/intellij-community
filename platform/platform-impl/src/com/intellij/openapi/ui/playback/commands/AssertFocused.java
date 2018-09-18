@@ -19,6 +19,7 @@ public class AssertFocused extends AbstractCommand {
     super(text, line);
   }
 
+  @Override
   protected Promise<Object> _execute(final PlaybackContext context) {
     String text = getText().substring(PREFIX.length()).trim();
     final Map<String, String> expected = new LinkedHashMap<>();

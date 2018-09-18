@@ -154,7 +154,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
       if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(condition))) {
         PsiStatement nakedSubListClear = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         assert nakedSubListClear != null;
-        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(nakedSubListClear));
+        ct.replaceAndRestoreComments(ifStatement, nakedSubListClear);
       }
     }
 

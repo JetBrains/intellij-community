@@ -43,7 +43,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
                                 final boolean addScheme) {
     group.add(new DumbAwareAction(SchemeManager.getDisplayName(scheme), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
-      public void actionPerformed(@Nullable AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
           EditorColorsManager.getInstance().addColorsScheme(scheme);
         }

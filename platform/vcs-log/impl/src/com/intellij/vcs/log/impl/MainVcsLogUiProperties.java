@@ -20,6 +20,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -33,15 +34,10 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
   VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>("TextFilter.Regex");
   VcsLogUiProperty<Boolean> SHOW_CHANGES_FROM_PARENTS = new VcsLogUiProperty<>("Changes.ShowChangesFromParents");
 
-  void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup);
-
-  void addRecentlyFilteredBranchGroup(@NotNull List<String> valuesInGroup);
+  void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values);
 
   @NotNull
-  List<List<String>> getRecentlyFilteredUserGroups();
-
-  @NotNull
-  List<List<String>> getRecentlyFilteredBranchGroups();
+  List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName);
 
   void saveFilterValues(@NotNull String filterName, @Nullable List<String> values);
 

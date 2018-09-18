@@ -36,7 +36,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
   protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull CompletionParameters params);
 
   @Override
-  protected void addCompletions(@NotNull CompletionParameters params, ProcessingContext context, @NotNull CompletionResultSet result) {
+  protected void addCompletions(@NotNull CompletionParameters params, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     final YamlMetaTypeProvider metaTypeProvider = getMetaTypeProvider(params);
     if (metaTypeProvider == null) {
       return;

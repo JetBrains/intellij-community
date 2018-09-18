@@ -19,6 +19,8 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -31,31 +33,30 @@ public class PythonHighlightingLexer extends PythonLexer {
     hasUnicodeImport = false;
   }
 
-  static public IElementType convertStringType(IElementType tokenType, String tokenText,
-                                        LanguageLevel languageLevel, boolean unicodeImport) {
+  @NotNull
+  public static IElementType convertStringType(@NotNull IElementType tokenType,
+                                               @NotNull String tokenText,
+                                               @NotNull LanguageLevel languageLevel,
+                                               boolean unicodeImport) {
+    final String prefix = PyStringLiteralUtil.getPrefix(tokenText);
+
     if (tokenType == PyTokenTypes.SINGLE_QUOTED_STRING) {
       if (languageLevel.isPy3K()) {
-        if (!tokenText.toLowerCase().startsWith("b")) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
+        if (!PyStringLiteralUtil.isBytesPrefix(prefix)) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
       }
-      else {
-        if ((unicodeImport && !tokenText.toLowerCase().startsWith("b"))
-            || tokenText.toLowerCase().startsWith("u")) return PyTokenTypes.SINGLE_QUOTED_UNICODE;
+      else if (unicodeImport && !PyStringLiteralUtil.isBytesPrefix(prefix) || PyStringLiteralUtil.isUnicodePrefix(prefix)) {
+        return PyTokenTypes.SINGLE_QUOTED_UNICODE;
       }
     }
     if (tokenType == PyTokenTypes.TRIPLE_QUOTED_STRING) {
       if (languageLevel.isPy3K()) {
-        if (!tokenText.toLowerCase().startsWith("b")) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
+        if (!PyStringLiteralUtil.isBytesPrefix(prefix)) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
       }
-      else {
-        if ((unicodeImport && !tokenText.toLowerCase().startsWith("b"))
-            || tokenText.toLowerCase().startsWith("u")) return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
+      else if (unicodeImport && !PyStringLiteralUtil.isBytesPrefix(prefix) || PyStringLiteralUtil.isUnicodePrefix(prefix)) {
+        return PyTokenTypes.TRIPLE_QUOTED_UNICODE;
       }
     }
     return tokenType;
-  }
-
-  public IElementType convertStringType(IElementType tokenType, String tokenText) {
-    return convertStringType(tokenType, tokenText, myLanguageLevel, hasUnicodeImport);
   }
 
   @Override
@@ -63,7 +64,7 @@ public class PythonHighlightingLexer extends PythonLexer {
     final IElementType tokenType = super.getTokenType();
 
     if (PyTokenTypes.STRING_NODES.contains(tokenType)) {
-      return convertStringType(tokenType, getTokenText());
+      return convertStringType(tokenType, getTokenText(), myLanguageLevel, hasUnicodeImport);
     }
 
     if (tokenType == PyTokenTypes.IDENTIFIER) {

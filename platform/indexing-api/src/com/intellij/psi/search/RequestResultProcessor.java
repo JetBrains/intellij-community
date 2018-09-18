@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * An occurrence processor for Find Usages functionality. A typical scenario involves invoking
  * {@link ReferencesSearch.SearchParameters#getOptimizer()} and passing this processor together with search string and some other parameters to
- * {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, String, RequestResultProcessor)}.
+ * {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, PsiElement, RequestResultProcessor)}.
  *
  * @author peter
  */
@@ -55,11 +55,9 @@ public abstract class RequestResultProcessor {
   /**
    * A variant of {@link RequestResultProcessor} that processes all text occurrences at once, e.g. for performance purposes.
    */
-  @SuppressWarnings("unused")
-  public static abstract class BulkResultProcessor extends RequestResultProcessor {
+  public abstract static class BulkResultProcessor extends RequestResultProcessor {
 
     public BulkResultProcessor() {
-      super();
     }
 
     public BulkResultProcessor(@NotNull Object... equality) {

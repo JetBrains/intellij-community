@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.psi.*;
@@ -8,8 +9,9 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 
 public class ElementToArrayConversionRule extends TypeConversionRule{
+  @Override
   public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
-                                                 final TypeMigrationLabeler labeler) {
+                                                     final TypeMigrationLabeler labeler) {
     if (member == null && to instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)to).getComponentType(), from)) {
       TypeConversionDescriptor wrapDescription =
         new TypeConversionDescriptor("$qualifier$", "new " + from.getCanonicalText() + "[]{$qualifier$}", context);

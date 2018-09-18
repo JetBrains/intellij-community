@@ -237,7 +237,8 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     }
 
     if (suggestJre) {
-      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      final Sdk internalJdk = ExternalSystemJdkUtil.getJdk(null, ExternalSystemJdkUtil.USE_INTERNAL_JAVA);
+      assert internalJdk != null;
       assert internalJdk.getHomePath() != null;
       result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
                  new JdkComboBoxItem(

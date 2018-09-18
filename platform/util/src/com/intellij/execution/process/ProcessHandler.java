@@ -30,7 +30,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    *
    * @deprecated
    */
-  public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
+  @Deprecated public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
   public static final Key<Boolean> TERMINATION_REQUESTED = Key.create("TERMINATION_REQUESTED");
 
   private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();

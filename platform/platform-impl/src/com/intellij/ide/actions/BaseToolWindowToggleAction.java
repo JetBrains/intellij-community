@@ -24,11 +24,12 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseToolWindowToggleAction extends ToggleAction implements DumbAware {
 
   @Override
-  public final boolean isSelected(AnActionEvent e) {
+  public final boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || project.isDisposed()) {
       return false;
@@ -44,7 +45,7 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
   protected abstract boolean isSelected(ToolWindow window);
 
   @Override
-  public final void setSelected(AnActionEvent e, boolean state) {
+  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project == null) {
       return;
@@ -63,7 +64,7 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
   protected abstract void setSelected(ToolWindow window, boolean state);
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();

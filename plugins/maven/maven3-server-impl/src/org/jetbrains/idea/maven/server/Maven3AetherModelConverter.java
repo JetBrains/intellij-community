@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
@@ -100,7 +100,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
         Artifact winnerArtifact = toArtifact(winnerNode.getDependency());
         relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
         nativeToConvertedMap.put(a, relatedArtifact);
-        if (!StringUtil.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
+        if (!Comparing.equal(each.getVersion().toString(), winnerNode.getVersion().toString())) {
           state = MavenArtifactState.CONFLICT;
         }
         else {

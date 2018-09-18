@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -219,7 +218,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
     @Override
     public PsiElement[] create(String newName) throws Exception {
-      UsageTrigger.trigger("CreateFile." + CreateFileAction.this.getClass().getSimpleName());
       return super.create(newName);
     }
 

@@ -55,23 +55,25 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   }
 
 
+  @Override
   public void dispose() {
     final AntConfiguration config = myConfig;
     if (config != null) {
       config.removeAntConfigurationListener(myAntBuildListener);
       myConfig = null;
     }
-    
+
     final ExpandedStateUpdater expansionListener = myExpansionListener;
     final JTree tree = getTree();
     if (expansionListener != null && tree != null) {
       tree.removeTreeExpansionListener(expansionListener);
       myExpansionListener = null;
     }
-    
+
     super.dispose();
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return ((AntNodeDescriptor)nodeDescriptor).isAutoExpand();
   }
@@ -81,24 +83,29 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     queueUpdate();
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return ProgressIndicatorUtils.forceWriteActionPriority(new ProgressIndicatorBase(true), this);
   }
 
   private final class ConfigurationListener implements AntConfigurationListener {
+    @Override
     public void configurationLoaded() {
       queueUpdate();
     }
 
+    @Override
     public void buildFileAdded(AntBuildFile buildFile) {
       queueUpdate();
     }
 
+    @Override
     public void buildFileChanged(AntBuildFile buildFile) {
       queueUpdateFrom(buildFile, false);
     }
 
+    @Override
     public void buildFileRemoved(AntBuildFile buildFile) {
       queueUpdate();
     }
@@ -128,10 +135,12 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   }
 
   private class ExpandedStateUpdater implements TreeExpansionListener {
+    @Override
     public void treeExpanded(TreeExpansionEvent event) {
       setExpandedState(event, true);
     }
 
+    @Override
     public void treeCollapsed(TreeExpansionEvent event) {
       setExpandedState(event, false);
     }

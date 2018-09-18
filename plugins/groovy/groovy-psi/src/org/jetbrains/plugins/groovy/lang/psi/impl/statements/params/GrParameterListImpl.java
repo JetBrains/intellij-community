@@ -1,20 +1,25 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -37,6 +42,30 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
 
   public String toString() {
     return "Parameter list";
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getLParen() {
+    return findChildByType(T_LPAREN);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getRParen() {
+    return findLastChildByType(T_RPAREN);
+  }
+
+  @NotNull
+  @Override
+  public TextRange getParametersRange() {
+    TextRange range = getTextRange();
+    PsiElement lParen = getLParen();
+    PsiElement rParen = getRParen();
+    return new TextRange(
+      lParen == null ? range.getStartOffset() : lParen.getTextRange().getEndOffset(),
+      rParen == null ? range.getEndOffset() : rParen.getTextRange().getStartOffset()
+    );
   }
 
   @Override
@@ -116,19 +145,18 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     GrParameter[] params = getParameters();
-
-    ASTNode result = super.addInternal(first, last, anchor, before);
+    ASTNode result = super.addInternal(first, last, anchor == null ? findChildByType(before ? T_RPAREN : T_LPAREN) : anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
-      if (before.booleanValue() && anchor != null) {
+      if (before && anchor != null) {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
       }
-      else if (before.booleanValue() && anchor == null) {
+      else if (before) {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
-      else if (!before.booleanValue() && anchor != null) {
+      else if (anchor != null) {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
-      else if (!before.booleanValue() && anchor == null) {
+      else {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getTreeNext());
       }
     }

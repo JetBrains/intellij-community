@@ -51,6 +51,7 @@ public class PlainArtifactType extends ArtifactType {
     return "/";
   }
 
+  @Override
   @NotNull
   public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
     return new ArtifactRootElementImpl();

@@ -63,6 +63,7 @@ public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCa
     return new ControlFlowStatementWithoutBracesInspection();
   }
 
+  @Override
   protected void doTest(String keyword) {
     super.doTest(getMessage(keyword));
   }

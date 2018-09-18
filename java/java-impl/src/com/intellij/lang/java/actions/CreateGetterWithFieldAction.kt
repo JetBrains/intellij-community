@@ -26,7 +26,7 @@ internal class CreateGetterWithFieldAction(target: PsiClass, request: CreateMeth
   }
 
   override fun getText(): String {
-    return message("create.read.only.property.from.usage.full.text", propertyInfo.first, getNameForClass(target, false))
+    return message("create.read.only.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
   }
 
   override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {

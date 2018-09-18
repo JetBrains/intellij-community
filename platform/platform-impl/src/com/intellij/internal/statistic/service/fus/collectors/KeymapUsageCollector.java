@@ -26,6 +26,10 @@ public class KeymapUsageCollector extends ProjectUsagesCollector {
     return keymapManager != null
       ?Collections.singleton(new UsageDescriptor(ensureProperKey(keymapManager.getActiveKeymap().getName()))) 
       : Collections.emptySet();
+  }
 
+  @Override
+  public FUSUsageContext getContext(@NotNull Project project) {
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

@@ -106,7 +106,7 @@ public class PsiSuperMethodImplUtil {
                                                                                         @Nullable String nameHint,
                                                                                         @NotNull PsiSubstitutor substitutor,
                                                                                         final boolean includePrivates,
-                                                                                        @NotNull final Set<PsiClass> visited,
+                                                                                        @NotNull final Set<? super PsiClass> visited,
                                                                                         boolean isInRawContext,
                                                                                         GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
@@ -391,7 +391,7 @@ public class PsiSuperMethodImplUtil {
   }
 
   // uses hierarchy signature tree if available, traverses class structure by itself otherwise
-  public static boolean processDirectSuperMethodsSmart(@NotNull PsiMethod method, @NotNull Processor<PsiMethod> superMethodProcessor) {
+  public static boolean processDirectSuperMethodsSmart(@NotNull PsiMethod method, @NotNull Processor<? super PsiMethod> superMethodProcessor) {
     //boolean old = PsiSuperMethodUtil.isSuperMethod(method, superMethod);
 
     PsiClass aClass = method.getContainingClass();

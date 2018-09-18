@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
@@ -97,10 +83,12 @@ public final class StringEditorDialog extends DialogWrapper{
     init(); /* run initialization proc */
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     if(myForm.myRbString.isSelected()){
       return myForm.myTfValue;
@@ -219,10 +207,12 @@ public final class StringEditorDialog extends DialogWrapper{
     } while(propFile.findPropertyByKey(newName) != null);
 
     InputValidator validator = new InputValidator() {
+      @Override
       public boolean checkInput(String inputString) {
         return inputString.length() > 0 && propFile.findPropertyByKey(inputString) == null;
       }
 
+      @Override
       public boolean canClose(String inputString) {
         return checkInput(inputString);
       }
@@ -297,6 +287,7 @@ public final class StringEditorDialog extends DialogWrapper{
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myForm.myPanel;
   }
@@ -317,6 +308,7 @@ public final class StringEditorDialog extends DialogWrapper{
     public MyForm() {
       myRbString.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();
             cardLayout.show(myCardHolder, CARD_STRING);
@@ -326,6 +318,7 @@ public final class StringEditorDialog extends DialogWrapper{
 
       myRbResourceBundle.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             if (!myDefaultBundleInitialized) {
               myDefaultBundleInitialized = true;
@@ -347,6 +340,7 @@ public final class StringEditorDialog extends DialogWrapper{
       // Enable keyboard pressing
       myTfBundleName.registerKeyboardAction(
         new AbstractAction() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             myTfBundleName.getButton().doClick();
           }
@@ -357,6 +351,7 @@ public final class StringEditorDialog extends DialogWrapper{
 
       myTfBundleName.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             Project project = myEditor.getProject();
             final String bundleNameText = myTfBundleName.getText().replace('/', '.');
@@ -365,6 +360,7 @@ public final class StringEditorDialog extends DialogWrapper{
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
+              @Override
               public boolean accept(PsiFile file) {
                 final VirtualFile virtualFile = file.getVirtualFile();
                 return virtualFile != null && moduleScope.contains(virtualFile);
@@ -387,6 +383,7 @@ public final class StringEditorDialog extends DialogWrapper{
       // Enable keyboard pressing
       myTfKey.registerKeyboardAction(
         new AbstractAction() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             myTfKey.getButton().doClick();
           }
@@ -397,6 +394,7 @@ public final class StringEditorDialog extends DialogWrapper{
 
       myTfKey.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             // 1. Check that bundle exist. Otherwise we cannot show key chooser
             final String bundleName = myTfBundleName.getText();

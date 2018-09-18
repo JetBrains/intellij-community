@@ -51,21 +51,25 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   private void configControls() {
     myUpdateButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doUpdateIndex();
       }
     });
 
     myIndicesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateButtonsState();
       }
     });
 
     myIndicesTable.addMouseMotionListener(new MouseMotionListener() {
+      @Override
       public void mouseDragged(MouseEvent e) {
       }
 
+      @Override
       public void mouseMoved(MouseEvent e) {
         int row = myIndicesTable.rowAtPoint(e.getPoint());
         if (row == -1) return;
@@ -115,6 +119,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     return model.getIndex(i);
   }
 
+  @Override
   public String getDisplayName() {
     return IndicesBundle.message("maven.repositories.title");
   }
@@ -124,18 +129,22 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     return "reference.settings.project.maven.repository.indices";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
   }
 
+  @Override
   public void reset() {
     myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
@@ -147,6 +156,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myUpdatingIcon.resume();
 
     myTimerListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myIndicesTable.repaint();
       }
@@ -155,6 +165,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myRepaintTimer.start();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myRepaintTimer == null) return; // has not yet been initialized and reset
 
@@ -177,6 +188,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
       myIndices = indices;
     }
 
+    @Override
     public int getColumnCount() {
       return COLUMNS.length;
     }
@@ -186,6 +198,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
       return COLUMNS[index];
     }
 
+    @Override
     public int getRowCount() {
       return myIndices.size();
     }
@@ -196,6 +209,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       MavenIndex i = getIndex(rowIndex);
       switch (columnIndex) {

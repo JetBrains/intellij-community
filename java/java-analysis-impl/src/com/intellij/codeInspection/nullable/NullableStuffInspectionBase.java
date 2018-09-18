@@ -689,7 +689,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkSupers(PsiMethod method,
                            ProblemsHolder holder,
                            Annotated annotated,
-                           List<PsiMethod> superMethods) {
+                           List<? extends PsiMethod> superMethods) {
     for (PsiMethod superMethod : superMethods) {
       if (isNullableOverridingNotNull(annotated, superMethod)) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, getNullityManager(method).getNullables(), true);
@@ -743,7 +743,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private void checkParameters(PsiMethod method,
                                ProblemsHolder holder,
-                               List<PsiMethod> superMethods,
+                               List<? extends PsiMethod> superMethods,
                                NullableNotNullManager nullableManager,
                                boolean isOnFly) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -796,7 +796,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @Nullable
   private PsiParameter findNotNullSuperForNonAnnotatedParameter(NullableNotNullManager nullableManager,
                                                                 PsiParameter parameter,
-                                                                List<PsiParameter> superParameters) {
+                                                                List<? extends PsiParameter> superParameters) {
     return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL && !nullableManager.hasNullability(parameter) 
            ? ContainerUtil.find(superParameters, 
                                 sp -> isNotNullNotInferred(sp, false, IGNORE_EXTERNAL_SUPER_NOTNULL) && !hasInheritableNotNull(sp)) 
@@ -804,7 +804,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  private PsiParameter findNullableSuperForNotNullParameter(PsiParameter parameter, List<PsiParameter> superParameters) {
+  private PsiParameter findNullableSuperForNotNullParameter(PsiParameter parameter, List<? extends PsiParameter> superParameters) {
     return REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE && isNotNullNotInferred(parameter, false, false) 
            ? ContainerUtil.find(superParameters, sp -> isNullableNotInferred(sp, false)) 
            : null;
@@ -812,7 +812,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,
                                                            PsiParameter parameter,
-                                                           List<PsiParameter> superParameters) {
+                                                           List<? extends PsiParameter> superParameters) {
     if (!REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) return false;
     NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
     return info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred() &&
@@ -962,8 +962,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
     if (annotation != null) {
       final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
-      if (referenceElement != null && referenceElement.resolve() != null) {
-        return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+      if (referenceElement != null) {
+        JavaResolveResult resolveResult = referenceElement.advancedResolve(false);
+        if (resolveResult.getElement() != null &&
+            resolveResult.isValidResult() &&
+            !nullableManager.getDefaultNotNull().equals(annotation.getQualifiedName())) {
+          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+        }
       }
     }
     return null;

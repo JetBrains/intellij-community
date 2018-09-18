@@ -52,7 +52,7 @@ public class JavadocHelper {
   private static final String PARAM_TEXT = "param";
   
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
-    = new Pair<>(null, Collections.<JavadocParameterInfo>emptyList());
+    = new Pair<>(null, Collections.emptyList());
   private static final JavadocHelper INSTANCE = new JavadocHelper();
   
   @NotNull
@@ -95,7 +95,7 @@ public class JavadocHelper {
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
-                                                           @NotNull Collection<JavadocParameterInfo> data,
+                                                           @NotNull Collection<? extends JavadocParameterInfo> data,
                                                            @NotNull JavadocHelper.JavadocParameterInfo anchor)
   {
     int descriptionStartColumn = -1;

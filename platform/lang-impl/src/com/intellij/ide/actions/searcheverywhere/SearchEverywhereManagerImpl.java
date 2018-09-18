@@ -125,11 +125,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       myBalloonFullSize = null;
     });
 
-    calcPositionAndShow(project, myBalloon);
     if (mySearchEverywhereUI.getViewType() == SearchEverywhereUI.ViewType.SHORT) {
       myBalloonFullSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
-      myBalloon.pack(false, true);
+      Dimension prefSize = mySearchEverywhereUI.getPreferredSize();
+      myBalloon.setSize(prefSize);
     }
+    calcPositionAndShow(project, myBalloon);
   }
 
   private void calcPositionAndShow(Project project, JBPopup balloon) {

@@ -169,7 +169,7 @@ public class LibraryEditingUtil {
   }
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
-                                                                    final ParameterizedRunnable<LibraryType> action) {
+                                                                    final ParameterizedRunnable<? super LibraryType> action) {
     return new BaseListPopupStep<LibraryType>(IdeBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
           @NotNull
           @Override

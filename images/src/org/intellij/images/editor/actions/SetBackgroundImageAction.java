@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author gregsh
@@ -29,7 +30,7 @@ import org.intellij.images.fileTypes.ImageFileTypeManager;
 public class SetBackgroundImageAction extends DumbAwareAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean image = file != null && ImageFileTypeManager.getInstance().isImage(file);
@@ -39,7 +40,7 @@ public class SetBackgroundImageAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);

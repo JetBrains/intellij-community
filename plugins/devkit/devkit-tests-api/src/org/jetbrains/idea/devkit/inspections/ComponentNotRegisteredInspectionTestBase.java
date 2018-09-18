@@ -17,7 +17,6 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
 
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
     myFixture.addClass("package com.intellij.openapi.components; public interface BaseComponent {}");
-    myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent extends BaseComponent {}");
 
     myFixture.enableInspections(new ComponentNotRegisteredInspection());
   }
@@ -95,10 +94,6 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
 
     myFixture.testHighlighting("UnregisteredApplicationComponent." + getSourceFileExtension(),
                                "UnregisteredApplicationComponentInterface." + getSourceFileExtension());
-    final IntentionAction registerAction = myFixture.findSingleIntention("Register Application Component");
-    myFixture.launchAction(registerAction);
-
-    myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredApplicationComponent-plugin_after.xml", true);
   }
 
 

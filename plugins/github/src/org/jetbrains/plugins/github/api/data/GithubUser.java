@@ -31,13 +31,15 @@ import org.jetbrains.io.mandatory.RestModel;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUser {
+  @NotNull public static final GithubUser UNKNOWN = createUnknownUser();
+
   @Mandatory private String login;
   private Long id;
   private String avatarUrl;
   private String gravatarId;
 
   private String url;
-  @Mandatory private String htmlUrl;
+  private String htmlUrl;
 
   private String type;
   private Boolean siteAdmin;
@@ -47,7 +49,7 @@ public class GithubUser {
     return login;
   }
 
-  @NotNull
+  @Nullable
   public String getHtmlUrl() {
     return htmlUrl;
   }
@@ -55,5 +57,13 @@ public class GithubUser {
   @Nullable
   public String getAvatarUrl() {
     return avatarUrl;
+  }
+
+
+  @NotNull
+  private static GithubUser createUnknownUser() {
+    GithubUser user = new GithubUser();
+    user.login = "ghost";
+    return user;
   }
 }

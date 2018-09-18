@@ -44,7 +44,7 @@ class LabelReferenceCompletion extends CompletionProvider<CompletionParameters> 
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
     if (ref instanceof PsiLabelReference) {

@@ -87,7 +87,7 @@ public class DefaultLogFilterModel extends LogFilterModel {
     return filters;
   }
 
-  private void addStandardFilters(ArrayList<LogFilter> filters, final LogConsolePreferences preferences) {
+  private void addStandardFilters(ArrayList<? super LogFilter> filters, final LogConsolePreferences preferences) {
     filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.all"), preferences) {
       @Override
       public void selectFilter() {

@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Two panel editor with three states: Editor, Preview and Editor with Preview.
+ * Based on SplitFileEditor by Valentin Fondaratov
+ *
  * @author Konstantin Bulenkov
  */
 public class TextEditorWithPreview extends UserDataHolderBase implements FileEditor {
@@ -417,12 +420,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myLayout == myActionLayout;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myLayout = myActionLayout;
         PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, Layout.SHOW_EDITOR_AND_PREVIEW.myName);

@@ -157,7 +157,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     });
   }
 
-  protected void checkName(@NotNull T member, @NotNull Consumer<String> errorRegister) {
+  protected void checkName(@NotNull T member, @NotNull Consumer<? super String> errorRegister) {
     for (NamingConvention<T> namingConvention : myNamingConventions.values()) {
       if (namingConvention.isApplicable(member)) {
         String shortName = namingConvention.getShortName();

@@ -1,0 +1,12 @@
+--- hello.w ---
+hello.world
+hello.www
+ahotherKey.hello.war
+--- hello ---
+hello
+ahotherKey.hello
+--- hello. ---
+hello.bugaga
+hello.world
+hello.www
+ahotherKey.hello.war

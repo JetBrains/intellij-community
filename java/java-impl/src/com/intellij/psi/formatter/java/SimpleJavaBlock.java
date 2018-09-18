@@ -113,7 +113,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
   }
 
-  private void processHeadCommentsAndWhiteSpaces(@NotNull List<Block> result) {
+  private void processHeadCommentsAndWhiteSpaces(@NotNull List<? super Block> result) {
     while (myCurrentChild != null) {
       if (StdTokenSets.COMMENT_BIT_SET.contains(myCurrentChild.getElementType()) || myCurrentChild.getElementType() == JavaDocElementType.DOC_COMMENT) {
         Block commentBlock = createJavaBlock(

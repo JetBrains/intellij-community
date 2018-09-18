@@ -40,7 +40,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
-    assertIcon("exception.png", myContent.getIcon());
+    assertIcon("lightning.svg", myContent.getIcon());
     assertEquals("NPE", myContent.getDisplayName());
   }
 
@@ -48,7 +48,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     File file = new File(getTestDataPath() + "threaddump.txt");
     String s = FileUtil.loadFile(file);
     showText(s);
-    assertIcon("threaddump.png", myContent.getIcon());
+    assertIcon("dump.svg", myContent.getIcon());
     assertEquals("<Threads>", myContent.getDisplayName());
   }
 

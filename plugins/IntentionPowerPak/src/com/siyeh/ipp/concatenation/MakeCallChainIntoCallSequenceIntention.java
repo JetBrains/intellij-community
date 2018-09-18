@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -58,7 +59,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     @NonNls final String firstStatement;
     final String variableDeclaration;
     final boolean showRenameTemplate;
-    final PsiElement parent = element.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiExpressionStatement) {
       targetText = root.getText();
       appendStatement = (PsiStatement)parent;
@@ -71,7 +72,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       appendStatement = (PsiStatement)grandParent;
       if (parent instanceof PsiAssignmentExpression && grandParent instanceof PsiExpressionStatement) {
         final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
-        final PsiExpression lhs = assignment.getLExpression();
+        final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
         if (!(lhs instanceof PsiReferenceExpression)) {
           return;
         }
@@ -83,22 +84,20 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
         final PsiVariable variable = (PsiVariable)target;
         final PsiType variableType = variable.getType();
         if (variableType.equals(rootType)) {
-          targetText = lhs.getText();
+          targetText = tracker.text(lhs);
           final PsiJavaToken token = assignment.getOperationSign();
           firstStatement = targetText + token.getText() + root.getText() + ';';
           showRenameTemplate = false;
+          variableDeclaration = null;
         }
         else {
           targetText = "x";
           showRenameTemplate = true;
-          if (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS) {
-            firstStatement = "final " + rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
-          }
-          else {
-            firstStatement = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
-          }
+          final String firstAssignment = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
+          firstStatement = (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "") +
+                           firstAssignment;
+          variableDeclaration = tracker.text(lhs) + '=';
         }
-        variableDeclaration = null;
       }
       else {
         final PsiDeclarationStatement declaration = (PsiDeclarationStatement)appendStatement;

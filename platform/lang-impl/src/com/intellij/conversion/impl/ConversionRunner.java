@@ -216,7 +216,7 @@ public class ConversionRunner {
     return myProvider;
   }
 
-  public static List<File> getReadOnlyFiles(final Collection<File> affectedFiles) {
+  public static List<File> getReadOnlyFiles(final Collection<? extends File> affectedFiles) {
     List<File> result = new ArrayList<>();
     for (File file : affectedFiles) {
       if (!file.canWrite()) {

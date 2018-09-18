@@ -72,6 +72,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     showLibraryStackFrames = value;
   }
 
+  @Override
   public boolean isShowValuesInline() {
     return showValuesInline;
   }

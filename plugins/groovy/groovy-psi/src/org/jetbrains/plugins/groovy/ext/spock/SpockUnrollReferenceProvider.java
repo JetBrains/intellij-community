@@ -121,7 +121,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       if (getElement().getFirstChild() != myLeafElement) { // Element already renamed.
         return getElement();
       }

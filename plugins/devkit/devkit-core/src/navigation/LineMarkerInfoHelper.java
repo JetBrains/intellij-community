@@ -67,14 +67,14 @@ class LineMarkerInfoHelper {
 
 
   @NotNull
-  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                 PsiElement element) {
+  static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                             PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension", EXTENSION_NAMER);
   }
 
   @NotNull
-  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                    PsiElement element) {
+  static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                                  PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", EXTENSION_POINT_NAMER);
   }
 
@@ -93,7 +93,7 @@ class LineMarkerInfoHelper {
 
   @NotNull
   private static NullableFunction<PointableCandidate, String> createNamer(String tooltipPatternPropertyName,
-                                                                          NotNullFunction<XmlTag, String> nameProvider) {
+                                                                          NotNullFunction<? super XmlTag, String> nameProvider) {
     return target -> {
       XmlTag tag = target.pointer.getElement();
       if (tag == null) {

@@ -36,10 +36,12 @@ public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
     super(project, replaceInstanceOf, targetDirectory, newClassName, aClass, memberInfos, javaDocPolicy);
   }
 
+  @Override
   protected PsiClass extractSuper(String superClassName) throws IncorrectOperationException {
     return ExtractInterfaceHandler.extractInterface(myClass.getContainingFile().getContainingDirectory(), myClass, superClassName, myMemberInfos, myJavaDocPolicy);
   }
 
+  @Override
   protected boolean isSuperInheritor(PsiClass aClass) {
     if (!aClass.isInterface()) {
       return myClass.isInheritor(aClass, true);
@@ -49,6 +51,7 @@ public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
     }
   }
 
+  @Override
   protected boolean isInSuper(PsiElement member) {
     if (member instanceof PsiField) {
       final PsiField field = ((PsiField)member);

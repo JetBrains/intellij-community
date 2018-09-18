@@ -47,7 +47,6 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   @Override
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
-    myPanel.setModel(myModel);
     return myPanel.getPanel();
   }
 

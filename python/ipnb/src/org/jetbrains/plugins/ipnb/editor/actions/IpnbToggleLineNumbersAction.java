@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 
 public class IpnbToggleLineNumbersAction extends AnAction {
@@ -15,7 +16,7 @@ public class IpnbToggleLineNumbersAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     toggleLineNumbers(myPanel);
   }
 

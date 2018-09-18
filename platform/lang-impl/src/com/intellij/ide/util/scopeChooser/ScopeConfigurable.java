@@ -16,6 +16,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,10 +70,12 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     return myScope.getName();
   }
 
+  @NotNull
   public NamedScopesHolder getHolder() {
     return getHolder(mySharedCheckbox.isSelected());
   }
 
+  @NotNull
   private NamedScopesHolder getHolder(boolean local) {
     return (NamedScopesHolder)(local
             ? DependencyValidationManager.getInstance(myProject)

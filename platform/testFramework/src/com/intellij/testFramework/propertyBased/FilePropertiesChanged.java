@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FilePropertiesChanged extends ActionOnFile {
 
-  public FilePropertiesChanged(PsiFile file) {
+  public FilePropertiesChanged(@NotNull PsiFile file) {
     super(file);
   }
 

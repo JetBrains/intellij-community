@@ -42,7 +42,7 @@ public class TopLevelNode extends AbstractTreeNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
   }
 
 }

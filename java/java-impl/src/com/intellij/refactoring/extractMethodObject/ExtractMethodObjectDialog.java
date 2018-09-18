@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,23 +14,24 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
 
-
 public class ExtractMethodObjectDialog extends DialogWrapper implements AbstractExtractDialog {
+  private static final String INDENT = "    ";
+
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -53,15 +40,13 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   private final boolean myCanBeStatic;
   private final PsiElement[] myElementsToExtract;
   private final boolean myMultipleExitPoints;
-
   private final InputVariables myVariableData;
   private final PsiClass myTargetClass;
   private final boolean myWasStatic;
 
-
   private JRadioButton myCreateInnerClassRb;
   private JRadioButton myCreateAnonymousClassWrapperRb;
-  private JTextArea mySignatureArea;
+  private MethodSignatureComponent mySignatureArea;
   private JCheckBox myCbMakeStatic;
   private JCheckBox myCbMakeVarargs;
   private JCheckBox myCbMakeVarargsAnonymous;
@@ -81,7 +66,6 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   private JCheckBox myFoldCb;
   private ButtonGroup myVisibilityGroup;
   private VariableData[] myInputVariables;
-
 
   public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
                                    PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
@@ -109,14 +93,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     setTitle(ExtractMethodObjectProcessor.REFACTORING_NAME);
 
     // Create UI components
-
-
     myCbMakeVarargs.setVisible(canBeVarargs);
     myCbMakeVarargsAnonymous.setVisible(canBeVarargs);
 
     // Initialize UI
-     init();
-
+    init();
   }
 
   @Override
@@ -137,12 +118,6 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
   public String getChosenMethodName() {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();
   }
@@ -158,8 +133,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD_OBJECT);
+  protected String getHelpId() {
+    return HelpID.EXTRACT_METHOD_OBJECT;
   }
 
   @Override
@@ -190,10 +165,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   private void updateVarargsEnabled() {
-    final boolean enabled = myInputVariables.length > 0 && myInputVariables[myInputVariables.length - 1].type instanceof PsiArrayType;
+    boolean enabled = myInputVariables.length > 0 && myInputVariables[myInputVariables.length - 1].type instanceof PsiArrayType;
     if (myCreateInnerClassRb.isSelected()) {
       myCbMakeVarargs.setEnabled(enabled);
-    } else {
+    }
+    else {
       myCbMakeVarargsAnonymous.setEnabled(enabled);
     }
   }
@@ -206,8 +182,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
                         (!myCreateInnerClassRb.isSelected() && helper.isIdentifier(myMethodName.getText())));
   }
 
-  @Override
   @NotNull
+  @Override
   public String getVisibility() {
     if (myPublicRadioButton.isSelected()) {
       return PsiModifier.PUBLIC;
@@ -221,18 +197,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return PsiModifier.PRIVATE;
   }
 
-
   @Override
   protected JComponent createCenterPanel() {
-    mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
 
-    final ActionListener enableDisableListener = new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        enable(myCreateInnerClassRb.isSelected());
-      }
-    };
+    ActionListener enableDisableListener = e -> enable(myCreateInnerClassRb.isSelected());
     myCreateInnerClassRb.addActionListener(enableDisableListener);
     myCreateAnonymousClassWrapperRb.addActionListener(enableDisableListener);
     myCreateAnonymousClassWrapperRb.setEnabled(!myMultipleExitPoints);
@@ -241,34 +210,28 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     myFoldCb.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldCb.isSelected());
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
-    myFoldCb.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-        myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
-        myParametersTableContainer.removeAll();
-        myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
-        myParametersTableContainer.revalidate();
-        updateSignature();
-        updateVarargsEnabled();
-      }
+    myFoldCb.addActionListener(e -> {
+      myVariableData.setFoldingAvailable(myFoldCb.isSelected());
+      myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
+      myParametersTableContainer.removeAll();
+      myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
+      myParametersTableContainer.revalidate();
+      updateSignature();
+      updateVarargsEnabled();
     });
     myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
 
-    final ActionListener updateSugnatureListener = new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        updateSignature();
-        IdeFocusManager.getInstance(myProject).requestFocus(myCreateInnerClassRb.isSelected() ? myInnerClassName :  myMethodName, false);
-      }
+    ActionListener updateSignatureListener = e -> {
+      updateSignature();
+      IdeFocusManager.getInstance(myProject).requestFocus(myCreateInnerClassRb.isSelected() ? myInnerClassName :  myMethodName, false);
     };
 
     if (myStaticFlag || myCanBeStatic) {
       myCbMakeStatic.setEnabled(!myStaticFlag);
       myCbMakeStatic.setSelected(myStaticFlag);
-
-      myCbMakeStatic.addActionListener(updateSugnatureListener);
-    } else {
+      myCbMakeStatic.addActionListener(updateSignatureListener);
+    }
+    else {
       myCbMakeStatic.setSelected(false);
       myCbMakeStatic.setEnabled(false);
     }
@@ -276,14 +239,14 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     updateVarargsEnabled();
 
     myCbMakeVarargs.setSelected(myWasStatic);
-    myCbMakeVarargs.addActionListener(updateSugnatureListener);
+    myCbMakeVarargs.addActionListener(updateSignatureListener);
 
     myCbMakeVarargsAnonymous.setSelected(myWasStatic);
-    myCbMakeVarargsAnonymous.addActionListener(updateSugnatureListener);
+    myCbMakeVarargsAnonymous.addActionListener(updateSignatureListener);
 
-    final DocumentListener nameListener = new DocumentListener() {
+    DocumentListener nameListener = new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         update();
       }
     };
@@ -292,12 +255,12 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
     myPrivateRadioButton.setSelected(true);
 
-    myCreateInnerClassRb.addActionListener(updateSugnatureListener);
-    myCreateAnonymousClassWrapperRb.addActionListener(updateSugnatureListener);
+    myCreateInnerClassRb.addActionListener(updateSignatureListener);
+    myCreateAnonymousClassWrapperRb.addActionListener(updateSignatureListener);
 
-    final Enumeration<AbstractButton> visibilities = myVisibilityGroup.getElements();
-    while(visibilities.hasMoreElements()) {
-      visibilities.nextElement().addActionListener(updateSugnatureListener);
+    Enumeration<AbstractButton> visibilities = myVisibilityGroup.getElements();
+    while (visibilities.hasMoreElements()) {
+      visibilities.nextElement().addActionListener(updateSignatureListener);
     }
 
     enable(true);
@@ -340,14 +303,13 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   protected void updateSignature() {
-    if (mySignatureArea == null) return;
-    @NonNls StringBuffer buffer = getSignature();
-    mySignatureArea.setText(buffer.toString());
+    if (mySignatureArea != null) {
+      mySignatureArea.setText(getSignature().toString());
+    }
   }
 
-  protected StringBuffer getSignature() {
-    final String INDENT = "    ";
-    @NonNls StringBuffer buffer = new StringBuffer();
+  private StringBuilder getSignature() {
+    StringBuilder buffer = new StringBuilder();
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     if (myCreateInnerClassRb.isSelected()) {
       buffer.append(visibilityString);
@@ -367,16 +329,17 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
       buffer.append(INDENT);
       buffer.append("public ");
       buffer.append(myInnerClassName.getText());
-      methodSignature(INDENT, buffer);
+      methodSignature(buffer);
       buffer.append("\n}");
-    } else {
+    }
+    else {
       buffer.append("new Object(){\n");
       buffer.append(INDENT);
       buffer.append("private ");
       buffer.append(PsiFormatUtil.formatType(myReturnType, 0, PsiSubstitutor.EMPTY));
       buffer.append(" ");
       buffer.append(myMethodName.getText());
-      methodSignature(INDENT, buffer);
+      methodSignature(buffer);
       buffer.append("\n}.");
       buffer.append(myMethodName.getText());
       buffer.append("(");
@@ -387,15 +350,13 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return buffer;
   }
 
-  private void methodSignature(final String INDENT, final StringBuffer buffer) {
+  private void methodSignature(StringBuilder buffer) {
     buffer.append("(");
     int count = 0;
     final String indent = "    ";
     for (int i = 0; i < myInputVariables.length; i++) {
       VariableData data = myInputVariables[i];
       if (data.passAsParameter) {
-        //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
-        //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
         PsiType type = data.type;
         if (i == myInputVariables.length - 1 && type instanceof PsiArrayType && ((myCreateInnerClassRb.isSelected() && myCbMakeVarargs.isSelected()) || (myCreateAnonymousClassWrapperRb.isSelected() && myCbMakeVarargsAnonymous.isSelected()))) {
           type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
@@ -428,5 +389,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   public boolean createInnerClass() {
     return myCreateInnerClassRb.isSelected();
+  }
+
+  private void createUIComponents() {
+    mySignatureArea = new MethodSignatureComponent("", myProject, JavaFileType.INSTANCE);
+    mySignatureArea.setPreferredSize(JBUI.size(500, 100));
+    mySignatureArea.setMinimumSize(JBUI.size(500, 100));
   }
 }

@@ -45,6 +45,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
 
     final String text = action.getTemplatePresentation().getText();
     JLabel result = new JLabel(text) {
+      @Override
       public void paint(Graphics g) {
         super.paint(g);
         final int y = g.getClipBounds().height - getFontMetrics(getFont()).getDescent() + 2;

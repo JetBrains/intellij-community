@@ -45,6 +45,7 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public String getPattern() {
       return myTarget;
     }
@@ -55,10 +56,12 @@ public abstract class StringMatcher<T> {
       super(java.util.regex.Pattern.compile(target));
     }
 
+    @Override
     public boolean matches(String what) {
       return myTarget.matcher(StringPattern.newBombedCharSequence(what)).matches();
     }
 
+    @Override
     public String getPattern() {
       return myTarget.pattern();
     }
@@ -69,6 +72,7 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public boolean matches(String what) {
       return myTarget.equals(what);
     }
@@ -79,10 +83,12 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public boolean matches(String what) {
       return what.startsWith(myTarget);
     }
 
+    @Override
     public String getPattern() {
       return super.getPattern() + ".*";
     }
@@ -93,10 +99,12 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public boolean matches(String what) {
       return what.endsWith(myTarget);
     }
 
+    @Override
     public String getPattern() {
       return ".*" + super.getPattern();
     }
@@ -107,10 +115,12 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public boolean matches(String what) {
       return what.contains(myTarget);
     }
 
+    @Override
     public String getPattern() {
       return ".*" + super.getPattern() + ".*";
     }
@@ -124,6 +134,7 @@ public abstract class StringMatcher<T> {
       myMatches = matches;
     }
 
+    @Override
     public boolean matches(String what) {
       return myMatches;
     }
@@ -134,10 +145,12 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public boolean matches(String what) {
       return myTarget.matches(what.toLowerCase());
     }
 
+    @Override
     public String getPattern() {
       return "(?i)" + myTarget.getPattern();
     }
@@ -150,10 +163,12 @@ public abstract class StringMatcher<T> {
       super(target);
     }
 
+    @Override
     public String getPattern() {
       return myTarget.getPattern();
     }
 
+    @Override
     public synchronized boolean matches(String what) {
       final Boolean o = myCache.get(what);
       if (o != null) {
@@ -178,6 +193,7 @@ public abstract class StringMatcher<T> {
       return matchers.size() > 3 ? new Cache(m) : m;
     }
 
+    @Override
     public boolean matches(String what) {
       for (StringMatcher matcher : myTarget) {
         if (matcher.matches(what)) {
@@ -187,6 +203,7 @@ public abstract class StringMatcher<T> {
       return false;
     }
 
+    @Override
     public String getPattern() {
       return myPattern;
     }

@@ -72,7 +72,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       final String encoding = remaining.next();
       myEncodingName = encoding;
       return super.handleOption(current, new Iterator<String>() {
-        private boolean encodingConsumed = false; 
+        private boolean encodingConsumed = false;
         @Override
         public boolean hasNext() {
           return !encodingConsumed || remaining.hasNext();
@@ -103,30 +103,37 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return super.inferBinaryName(location, unwrapFileObject(file));
   }
 
+  @Override
   public void setLocation(Location location, Iterable<? extends File> path) throws IOException{
     getStdManager().setLocation(location, path);
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromFiles(files));
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjects(files));
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromStrings(names));
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjects(names));
   }
 
+  @Override
   public Iterable<? extends File> getLocation(Location location) {
     return getStdManager().getLocation(location);
   }
 
+  @Override
   public boolean isSameFile(FileObject a, FileObject b) {
     if (a instanceof OutputFileObject || b instanceof OutputFileObject) {
       return a.equals(b);
@@ -173,7 +180,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     }
     return wrapped != null? wrapped : originalObjects;
   }
-  
+
   @Override
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
@@ -185,6 +192,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return mySourceTransformers.isEmpty()? fo : new TransformableJavaFileObject(fo, mySourceTransformers);
   }
 
+  @Override
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
     if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
       throw new IllegalArgumentException("Invalid kind " + kind);
@@ -192,6 +200,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return getFileForOutput(location, kind, externalizeFileName(className, kind), className, sibling);
   }
 
+  @Override
   public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
     final StringBuilder name = new StringBuilder();
     if (packageName.isEmpty()) {
@@ -244,7 +253,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     for (File f: path) {
       try {
         urls.add(f.toURI().toURL());
-      } 
+      }
       catch (MalformedURLException e) {
         throw new AssertionError(e);
       }

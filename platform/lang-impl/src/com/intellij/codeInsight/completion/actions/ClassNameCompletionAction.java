@@ -18,11 +18,12 @@ package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassNameCompletionAction extends BaseCodeCompletionAction{
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     invokeCompletion(e, CompletionType.BASIC, 2);
   }
 

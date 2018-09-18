@@ -28,8 +28,8 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public class UpdateData<Key, Value> {
-  protected final Map<Key, Value> myNewData;
-  protected final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
+  private final Map<Key, Value> myNewData;
+  private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
   private final ThrowableRunnable<IOException> myForwardIndexUpdate;
 
@@ -43,9 +43,9 @@ public class UpdateData<Key, Value> {
     myForwardIndexUpdate = forwardIndexUpdate;
   }
 
-  public boolean iterateKeys(KeyValueUpdateProcessor<Key, Value> addProcessor,
-                          KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                          RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+  boolean iterateKeys(@NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
+                      @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
+                      @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
     final InputDataDiffBuilder<Key, Value> currentData;
     try {
       currentData = getCurrentDataEvaluator().compute();
@@ -56,19 +56,22 @@ public class UpdateData<Key, Value> {
     return currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
   }
 
+  @NotNull
   protected ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> getCurrentDataEvaluator() {
     return myCurrentDataEvaluator;
   }
 
+  @NotNull
   protected Map<Key, Value> getNewData() {
     return myNewData;
   }
 
+  @NotNull
   public IndexId<Key, Value> getIndexId() {
     return myIndexId;
   }
 
-  public void updateForwardIndex() throws IOException {
+  void updateForwardIndex() throws IOException {
     if (myForwardIndexUpdate != null) {
       myForwardIndexUpdate.run();
     }

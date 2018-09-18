@@ -82,6 +82,6 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   @Override
   public String getDescription(@NotNull RepositoryLibraryProperties properties) {
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(properties);
-    return description.getDisplayName(properties.getVersion());
+    return "Maven: " + description.getDisplayName(properties.getVersion());
   }
 }

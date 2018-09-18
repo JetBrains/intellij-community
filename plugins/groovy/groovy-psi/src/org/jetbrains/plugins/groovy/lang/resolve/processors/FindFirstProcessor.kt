@@ -4,19 +4,18 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.GrSingleResultResolverProcessor
 
-abstract class FindFirstProcessor<T : GroovyResolveResult> : ProcessorWithCommonHints(), GrResolverProcessor<T> {
+abstract class FindFirstProcessor<out T : GroovyResolveResult> : ProcessorWithCommonHints(), GrSingleResultResolverProcessor<T> {
 
-  var result: T? = null
-    private set
+  private var myResult: T? = null
 
-  final override val results: List<T> get() = result?.let { listOf(it) } ?: emptyList()
+  override val result: T? get() = myResult
 
   final override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    if (result != null || shouldStop()) return false
-    result = result(element, state)
-    return !shouldStop() && result == null
+    if (myResult != null || shouldStop()) return false
+    myResult = result(element, state)
+    return !shouldStop() && myResult == null
   }
 
   protected abstract fun result(element: PsiElement, state: ResolveState): T?

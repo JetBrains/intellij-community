@@ -7,20 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 public class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
@@ -279,7 +272,6 @@ public class DateFormatUtil {
 
 
   //<editor-fold desc="Helpers.">
-
   @SuppressWarnings("Duplicates")
   private static String someTimeAgoMessage(final Period period, final int n) {
     switch (period) {
@@ -317,35 +309,32 @@ public class DateFormatUtil {
   }
 
   private static SyncDateFormat[] getDateTimeFormats() {
-    DateFormat[] formats = new DateFormat[4];
-
-    boolean loaded = false;
-    if (JnaLoader.isLoaded() || SystemInfo.isXWindow) {
-      try {
-        if (SystemInfo.isWin7OrNewer) {
-          loaded = getWindowsFormats(formats);
-        }
-        else if (SystemInfo.isMac) {
-          loaded = getMacFormats(formats);
-        }
-        else if (SystemInfo.isUnix) {
-          loaded = getUnixFormats(formats);
-        }
+    DateFormat[] formats = null;
+    try {
+      if (SystemInfo.isMac && JnaLoader.isLoaded()) {
+        formats = getMacFormats();
       }
-      catch (Throwable t) {
-        LOG.error(t);
+      else if (SystemInfo.isUnix) {
+        formats = getUnixFormats();
+      }
+      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded() ) {
+        formats = getWindowsFormats();
       }
     }
-
-    if (!loaded) {
-      formats[0] = DateFormat.getDateInstance(DateFormat.SHORT);
-      formats[1] = DateFormat.getTimeInstance(DateFormat.SHORT);
-      formats[2] = DateFormat.getTimeInstance(DateFormat.MEDIUM);
-      formats[3] = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+    catch (Throwable t) {
+      LOG.error(t);
+    }
+    if (formats == null) {
+      formats = new DateFormat[]{
+        DateFormat.getDateInstance(DateFormat.SHORT),
+        DateFormat.getTimeInstance(DateFormat.SHORT),
+        DateFormat.getTimeInstance(DateFormat.MEDIUM),
+        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+      };
     }
 
     if (LOG.isTraceEnabled()) {
-      LOG.trace("formats (loaded=" + loaded + " JNA=" + JnaLoader.isLoaded() + ")");
+      LOG.trace("formats (OS=" + SystemInfo.OS_NAME + " JNA=" + JnaLoader.isLoaded() + ")");
       for (DateFormat format: formats) {
         LOG.trace("'" + (format instanceof SimpleDateFormat ? ((SimpleDateFormat)format).toPattern() : format.toString()) + "'");
       }
@@ -358,40 +347,63 @@ public class DateFormatUtil {
     return synced;
   }
 
-  private static boolean getMacFormats(DateFormat[] formats) {
-    final int MacFormatterNoStyle = 0;
-    final int MacFormatterShortStyle = 1;
-    final int MacFormatterMediumStyle = 2;
-    final int MacFormatterBehavior_10_4 = 1040;
+  private interface CF extends Library {
+    long kCFDateFormatterNoStyle = 0;
+    long kCFDateFormatterShortStyle = 1;
+    long kCFDateFormatterMediumStyle = 2;
 
-    ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
+    class CFRange extends Structure implements Structure.ByValue {
+      @Override
+      protected List<String> getFieldOrder() {
+        return Arrays.asList("location", "length");
+      }
+
+      public long location;
+      public long length;
+
+      public CFRange(long location, long length) {
+        this.location = location;
+        this.length = length;
+      }
+    }
+
+    Pointer CFDateFormatterCreate(Pointer allocator, Pointer locale, long dateStyle, long timeStyle);
+    Pointer CFDateFormatterGetFormat(Pointer formatter);
+    long CFStringGetLength(Pointer str);
+    void CFStringGetCharacters(Pointer str, CFRange range, char[] buffer);
+    void CFRelease(Pointer p);
+  }
+
+  // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
+  private static DateFormat[] getMacFormats() {
+    CF cf = Native.loadLibrary("CoreFoundation", CF.class);
+    return new DateFormat[]{
+      getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
+      getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
+      getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle),  // medium time
+      getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle)  // short date/time
+    };
+  }
+
+  private static DateFormat getMacFormat(CF cf, long dateStyle, long timeStyle) {
+    Pointer formatter = cf.CFDateFormatterCreate(null, null, dateStyle, timeStyle);
+    if (formatter == null) throw new IllegalStateException("CFDateFormatterCreate: null");
     try {
-      ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
-      Foundation.invoke(dateFormatter, Foundation.createSelector("setFormatterBehavior:"), MacFormatterBehavior_10_4);
-
-      formats[0] = invokeFormatter(dateFormatter, MacFormatterNoStyle, MacFormatterShortStyle);  // short date
-      formats[1] = invokeFormatter(dateFormatter, MacFormatterShortStyle, MacFormatterNoStyle);  // short time
-      formats[2] = invokeFormatter(dateFormatter, MacFormatterMediumStyle, MacFormatterNoStyle);  // medium time
-      formats[3] = invokeFormatter(dateFormatter, MacFormatterShortStyle, MacFormatterShortStyle);  // short date/time
-
-      return true;
+      Pointer format = cf.CFDateFormatterGetFormat(formatter);
+      int length = (int)cf.CFStringGetLength(format);
+      char[] buffer = new char[length];
+      cf.CFStringGetCharacters(format, new CF.CFRange(0, length), buffer);
+      return formatFromString(new String(buffer));
     }
     finally {
-      Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
+      cf.CFRelease(formatter);
     }
   }
 
-  private static DateFormat invokeFormatter(ID dateFormatter, int timeStyle, int dateStyle) {
-    Foundation.invoke(dateFormatter, Foundation.createSelector("setTimeStyle:"), timeStyle);
-    Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
-    String format = Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
-    assert format != null;
-    return formatFromString(format);
-  }
-
-  private static boolean getUnixFormats(DateFormat[] formats) {
+  private static DateFormat[] getUnixFormats() {
     String localeStr = System.getenv("LC_TIME");
-    if (localeStr == null) return false;
+    if (LOG.isTraceEnabled()) LOG.trace("LC_TIME=" + localeStr);
+    if (localeStr == null) return null;
 
     localeStr = localeStr.trim();
     int p = localeStr.indexOf('.');
@@ -408,49 +420,47 @@ public class DateFormatUtil {
       locale = new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
     }
 
-    formats[0] = DateFormat.getDateInstance(DateFormat.SHORT, locale);
-    formats[1] = DateFormat.getTimeInstance(DateFormat.SHORT, locale);
-    formats[2] = DateFormat.getTimeInstance(DateFormat.MEDIUM, locale);
-    formats[3] = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
-
-    return true;
+    return new DateFormat[]{
+      DateFormat.getDateInstance(DateFormat.SHORT, locale),
+      DateFormat.getTimeInstance(DateFormat.SHORT, locale),
+      DateFormat.getTimeInstance(DateFormat.MEDIUM, locale),
+      DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale)
+    };
   }
 
   @SuppressWarnings("SpellCheckingInspection")
   private interface Kernel32 extends StdCallLibrary {
-    String LOCALE_NAME_USER_DEFAULT = null;
-
     int LOCALE_SSHORTDATE  = 0x0000001F;
     int LOCALE_SSHORTTIME  = 0x00000079;
     int LOCALE_STIMEFORMAT = 0x00001003;
 
-    int GetLocaleInfoEx(String localeName, int lcType, Pointer lcData, int dataSize);
+    int GetLocaleInfoEx(String localeName, int lcType, char[] lcData, int dataSize);
     int GetLastError();
   }
 
-  private static boolean getWindowsFormats(DateFormat[] formats) {
+  private static DateFormat[] getWindowsFormats() {
     Kernel32 kernel32 = Native.loadLibrary("Kernel32", Kernel32.class);
-    int dataSize = 128, rv;
-    Memory data = new Memory(dataSize);
+    int bufferSize = 128, rv;
+    char[] buffer = new char[bufferSize];
 
-    rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_SSHORTDATE, data, dataSize);
-    assert rv > 1 : kernel32.GetLastError();
-    String shortDate = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
+    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTDATE, buffer, bufferSize);
+    if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
+    String shortDate = fixWindowsFormat(new String(buffer, 0, rv - 1));
 
-    rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_SSHORTTIME, data, dataSize);
-    assert rv > 1 : kernel32.GetLastError();
-    String shortTime = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
+    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_SSHORTTIME, buffer, bufferSize);
+    if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
+    String shortTime = fixWindowsFormat(new String(buffer, 0, rv - 1));
 
-    rv = kernel32.GetLocaleInfoEx(Kernel32.LOCALE_NAME_USER_DEFAULT, Kernel32.LOCALE_STIMEFORMAT, data, dataSize);
-    assert rv > 1 : kernel32.GetLastError();
-    String mediumTime = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
+    rv = kernel32.GetLocaleInfoEx(null, Kernel32.LOCALE_STIMEFORMAT, buffer, bufferSize);
+    if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
+    String mediumTime = fixWindowsFormat(new String(buffer, 0, rv - 1));
 
-    formats[0] = formatFromString(shortDate);
-    formats[1] = formatFromString(shortTime);
-    formats[2] = formatFromString(mediumTime);
-    formats[3] = formatFromString(shortDate + " " + shortTime);
-
-    return true;
+    return new DateFormat[]{
+      formatFromString(shortDate),
+      formatFromString(shortTime),
+      formatFromString(mediumTime),
+      formatFromString(shortDate + " " + shortTime)
+    };
   }
 
   private static String fixWindowsFormat(String format) {

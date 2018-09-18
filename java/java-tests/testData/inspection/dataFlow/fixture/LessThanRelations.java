@@ -37,7 +37,7 @@ class LessThanRelations {
   void list(List<String> list, int index) {
     if(index >= list.size()) {
       System.out.println("Big index");
-    } else if(index > 0 && <warning descr="Condition '!list.isEmpty()' is always 'true' when reached">!<warning descr="Condition 'list.isEmpty()' is always 'false' when reached">list.isEmpty()</warning></warning>) {
+    } else if(index > 0 && <warning descr="Condition '!list.isEmpty()' is always 'true' when reached">!<warning descr="Result of 'list.isEmpty()' is always 'false'">list.isEmpty()</warning></warning>) {
       System.out.println("ok");
     }
   }

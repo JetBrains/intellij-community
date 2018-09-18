@@ -145,6 +145,7 @@ internal object JavaConverter {
     is PsiModifierList -> unwrapElements(element.parent)
     is PsiExpressionList -> unwrapElements(element.parent)
     is PsiPackageStatement -> unwrapElements(element.parent)
+    is PsiImportList -> unwrapElements(element.parent)
     else -> element
   }
 
@@ -164,6 +165,7 @@ internal object JavaConverter {
         is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
         is PsiExpression -> convertExpression(el, givenParent, requiredType)
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
+        is PsiImportStatementBase -> el<UImportStatement>(build(::JavaUImportStatement))
         is PsiIdentifier -> el<USimpleNameReferenceExpression> { JavaUSimpleNameReferenceExpression(el, el.text, givenParent) }
                             ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
         is PsiNameValuePair -> el<UNamedExpression>(build(::JavaUNamedExpression))

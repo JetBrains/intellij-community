@@ -184,7 +184,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.PpLibFolder);
     }
@@ -280,7 +280,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(getUiAware().getProjectIcon());
 
@@ -298,7 +298,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.PpLib);
 

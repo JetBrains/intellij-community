@@ -346,6 +346,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myContentManager;
   }
 
+  // to avoid ensureContentInitialized call - myContentManager can report canCloseContents without full initialization
+  public boolean canCloseContents() {
+    return myContentManager.canCloseContents();
+  }
+
   public ToolWindowContentUi getContentUI() {
     return myContentUI;
   }
@@ -382,8 +387,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
       if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) &&
-          Math.abs(icon.getIconHeight() - JBUI.scale(13f)) >= 1 ||
-          Math.abs(icon.getIconWidth() - JBUI.scale(13f)) >= 1)
+          (Math.abs(icon.getIconHeight() - JBUI.scale(13f)) >= 1 ||
+           Math.abs(icon.getIconWidth() - JBUI.scale(13f)) >= 1))
       {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
       }

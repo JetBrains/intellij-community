@@ -108,7 +108,7 @@ public abstract class PatternCondition<T> {
   }
 
   // this code eats CPU, for debug purposes ONLY
-  public boolean processParameters(final PairProcessor<String, Object> processor) {
+  public boolean processParameters(final PairProcessor<? super String, Object> processor) {
     for (Class aClass = getClass(); aClass != null; aClass = aClass.getSuperclass()) {
       for (final Field field : aClass.getDeclaredFields()) {
         if (!Modifier.isStatic(field.getModifiers()) &&

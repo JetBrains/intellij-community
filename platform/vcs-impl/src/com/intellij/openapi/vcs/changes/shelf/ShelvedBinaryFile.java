@@ -53,11 +53,13 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
     SHELVED_PATH = convertToSystemIndependent(SHELVED_PATH);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     convertPathsToSystemIndependent();
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }

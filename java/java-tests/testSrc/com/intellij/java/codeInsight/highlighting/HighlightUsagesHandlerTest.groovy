@@ -108,7 +108,7 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
   void testBreakInDoWhile() {
     configureFile()
     ctrlShiftF7()
-    assertRangeText 'break', 'while'
+    assertRangeText 'break', 'continue', 'while'
     checkUnselect()
   }
 

@@ -77,12 +77,6 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
 
   @Nullable
   @Override
-  public Object[] getParametersForDocumentation(PsiTypeParameter p, ParameterInfoContext context) {
-    return new Object[]{p};
-  }
-
-  @Nullable
-  @Override
   public GrTypeArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     final GrTypeArgumentList parameterList = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
 
@@ -120,12 +114,6 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
     context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index] : null);
-  }
-
-  @Nullable
-  @Override
-  public String getParameterCloseChars() {
-    return ",>";
   }
 
   @Override

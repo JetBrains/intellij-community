@@ -54,6 +54,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     createBranch();
     createChanges();
     initGitChecks();
+    myRepository.update();
   }
 
   @Override

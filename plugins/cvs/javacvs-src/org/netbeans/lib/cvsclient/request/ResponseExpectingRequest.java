@@ -12,8 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.request;
 
-import org.netbeans.lib.cvsclient.file.FileDetails;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.file.FileDetails;
 
 /**
  * @author  Thomas Singer
@@ -33,10 +33,12 @@ public abstract class ResponseExpectingRequest
 
         // Implemented ============================================================
 
+        @Override
         public final String getRequestString() {
                 return requestString;
         }
 
+        @Override
         public final FileDetails getFileForTransmission() {
                 return null;
         }

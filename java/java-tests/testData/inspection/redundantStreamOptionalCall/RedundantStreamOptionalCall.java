@@ -67,5 +67,9 @@ public class RedundantStreamOptionalCall {
     Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: stream content is sorted again after that">sorted()</warning>.sorted(Comparator.<String>naturalOrder().reversed());
     Stream.of("foo", "bar", "baz").sorted().sorted(Comparator.comparing(x -> x.charAt(0) == 'b'));
     Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: stream content is sorted again after that">sorted()</warning>.sorted(Comparator.comparing(x -> x.charAt(0) == 'b')).sorted(Comparator.reverseOrder());
+
+    Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: subsequent 'max' call doesn't depend on the sort order">sorted(String.CASE_INSENSITIVE_ORDER)</warning>.max(String.CASE_INSENSITIVE_ORDER.reversed());
+    Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: subsequent 'min' call doesn't depend on the sort order">sorted(String.CASE_INSENSITIVE_ORDER)</warning>.min(String.CASE_INSENSITIVE_ORDER);
+    Stream.of("foo", "bar", "baz").sorted(String.CASE_INSENSITIVE_ORDER).min(Comparator.naturalOrder());
   }
 }

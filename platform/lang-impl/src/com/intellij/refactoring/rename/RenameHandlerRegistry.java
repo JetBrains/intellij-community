@@ -124,14 +124,6 @@ public class RenameHandlerRegistry {
     return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
   }
 
-  /**
-   * @deprecated
-   * @see RenameHandler#EP_NAME
-   */
-  public void registerHandler(RenameHandler handler) {
-    myHandlers.add(handler);
-  }
-
   private static class HandlersChooser extends DialogWrapper {
     private final String[] myRenamers;
     private String mySelection;

@@ -24,6 +24,7 @@ public final class ThisData extends DescriptorData<ThisDescriptorImpl>{
 
   private static final Key THIS = new Key("THIS");
 
+  @Override
   protected ThisDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThisDescriptorImpl(project);
   }
@@ -38,6 +39,7 @@ public final class ThisData extends DescriptorData<ThisDescriptorImpl>{
     return THIS.hashCode();
   }
 
+  @Override
   public DisplayKey<ThisDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(THIS);
   }

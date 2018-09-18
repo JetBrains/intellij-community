@@ -166,7 +166,7 @@ class SmartPointerTracker {
     }
   }
 
-  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     boolean stillSorted = markerCache.updateMarkers(frozen, events);
     if (!stillSorted) {
       mySorted = false;
@@ -174,11 +174,11 @@ class SmartPointerTracker {
   }
 
   @Nullable
-  synchronized Segment getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument document, @NotNull List<DocumentEvent> events) {
+  synchronized Segment getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument document, @NotNull List<? extends DocumentEvent> events) {
     return markerCache.getUpdatedRange(info, document, events);
   }
   @Nullable
-  synchronized Segment getUpdatedRange(@NotNull PsiFile containingFile, @NotNull Segment segment, boolean isSegmentGreedy, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  synchronized Segment getUpdatedRange(@NotNull PsiFile containingFile, @NotNull Segment segment, boolean isSegmentGreedy, @NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events);
   }
 
@@ -211,7 +211,8 @@ class SmartPointerTracker {
       return;
     }
 
-    if (cachedElement.isValid()) {
+    boolean cachedValid = cachedElement.isValid();
+    if (cachedValid) {
       if (pointerRange == null) {
         // document change could be damaging, but if PSI survived after reparse, let's point to it
         ((SelfElementInfo)pointer.getElementInfo()).switchToAnchor(cachedElement);
@@ -225,6 +226,10 @@ class SmartPointerTracker {
     }
 
     E actual = pointer.doRestoreElement();
+    if (actual == null && cachedValid && ((SelfElementInfo)pointer.getElementInfo()).updateRangeToPsi(pointerRange, cachedElement)) {
+      return;
+    }
+
     if (actual != cachedElement) {
       pointer.cacheElement(actual);
     }

@@ -50,25 +50,25 @@ public interface TestResultsViewer extends Disposable {
   void showStatisticsForSelectedProxy();
 
   interface EventsListener extends TestProxyTreeSelectionListener {
-    void onTestingStarted(TestResultsViewer sender);
+    void onTestingStarted(@NotNull TestResultsViewer sender);
 
-    void onTestingFinished(TestResultsViewer sender);
+    void onTestingFinished(@NotNull TestResultsViewer sender);
 
-    void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test);
+    void onTestNodeAdded(@NotNull TestResultsViewer sender, @NotNull SMTestProxy test);
   }
 
   class SMEventsAdapter implements EventsListener {
 
     @Override
-    public void onTestingStarted(TestResultsViewer sender) {
+    public void onTestingStarted(@NotNull TestResultsViewer sender) {
     }
 
     @Override
-    public void onTestingFinished(TestResultsViewer sender) {
+    public void onTestingFinished(@NotNull TestResultsViewer sender) {
     }
 
     @Override
-    public void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test) {
+    public void onTestNodeAdded(@NotNull TestResultsViewer sender, @NotNull SMTestProxy test) {
     }
 
     @Override

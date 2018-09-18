@@ -47,6 +47,7 @@ class DebuggerConnector implements Runnable {
     myPort = port;
   }
 
+  @Override
   public void run() {
     final Debugger client = connect();
     if (client == null) {

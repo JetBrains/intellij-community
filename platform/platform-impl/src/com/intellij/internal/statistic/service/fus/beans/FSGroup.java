@@ -2,49 +2,56 @@
 package com.intellij.internal.statistic.service.fus.beans;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class FSGroup {
+public class FSGroup extends FSContextProvider {
 
   public String id;
-  public Map<String, Integer> metrics ;
+  public Set<FSMetric> metrics;
 
-  private FSGroup(String id, Set<UsageDescriptor> usages) {
-    this.id = id;
+  private FSGroup(CollectorGroupDescriptor groupDescriptor, Set<UsageDescriptor> usages) {
+    super(groupDescriptor.getContext());
+
+    this.id = groupDescriptor.getGroupID();
     for (UsageDescriptor usage : usages) {
-      getMetrics().put(UsageDescriptorKeyValidator.replaceForbiddenSymbols(usage.getKey()), usage.getValue());
+      getMetrics().add(FSMetric.create(usage));
     }
   }
 
   @NotNull
-  public Map<String, Integer> getMetrics() {
+  public Set<FSMetric> getMetrics() {
     if (metrics == null) {
-      metrics = ContainerUtil.newHashMap();
+      metrics = ContainerUtil.newLinkedHashSet();
     }
     return metrics;
   }
 
-  public static FSGroup create(@NotNull String groupId, @NotNull Set<UsageDescriptor> usages) {
-     return new FSGroup(groupId, usages);
+  public static FSGroup create(@NotNull CollectorGroupDescriptor groupId, @NotNull Set<UsageDescriptor> usages) {
+    return new FSGroup(groupId, usages);
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof FSGroup)) return false;
     FSGroup group = (FSGroup)o;
     return Objects.equals(id, group.id) &&
-           Objects.equals(metrics, group.metrics);
+           Objects.equals(metrics, group.metrics) &&
+           Objects.equals(context, group.context);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, metrics);
+    return Objects.hash(id, metrics, context);
   }
 }

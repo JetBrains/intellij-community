@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -26,7 +27,7 @@ import com.intellij.util.ArrayUtil;
 public class GenerateByPatternAction extends AnAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     PatternProvider[] extensions = Extensions.getExtensions(PatternProvider.EXTENSION_POINT_NAME);
     e.getPresentation().setVisible(true);
     for (PatternProvider extension : extensions) {
@@ -36,7 +37,7 @@ public class GenerateByPatternAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     PatternDescriptor[] patterns = new PatternDescriptor[0];
     PatternProvider[] extensions = Extensions.getExtensions(PatternProvider.EXTENSION_POINT_NAME);
     for (PatternProvider extension : extensions) {

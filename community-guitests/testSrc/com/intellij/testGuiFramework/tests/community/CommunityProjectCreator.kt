@@ -3,7 +3,9 @@ package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.util.Key.A
 import com.intellij.testGuiFramework.util.Key.V
 import com.intellij.testGuiFramework.util.Modifier.CONTROL
@@ -30,7 +32,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     with(guiTestCase) {
       welcomeFrame {
         actionLink("Create New Project").click()
-        GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
+        waitProgressDialogUntilGone(robot = robot(), progressTitle =  "Loading Templates", timeoutToAppear = Timeouts.seconds02)
         dialog("New Project") {
           jList("Java").clickItem("Java")
           button("Next").click()
@@ -53,7 +55,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
 
   private fun GuiTestCase.checkFileAlreadyExistsDialog() {
     try {
-      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, 10L)
+      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, Timeouts.seconds01)
       dialogFixture.button("Yes").click()
     } catch (cle: ComponentLookupException) { /*do nothing here */ }
   }
@@ -95,12 +97,12 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         projectView {
           path(project.name, "src", "com.company").rightClick()
         }
-        popup("New", "Java Class")
+        menu("New", "Java Class").click()
         dialog("Create New Class") {
           typeText(fileName)
           button("OK").click()
         }
-        editor(fileName + ".java") {
+        editor("$fileName.java") {
           shortcut(CONTROL + A, META + A)
           copyToClipboard(fileContent)
           shortcut(CONTROL + V, META + V)

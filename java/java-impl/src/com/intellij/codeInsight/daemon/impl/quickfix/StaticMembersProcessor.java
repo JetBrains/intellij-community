@@ -136,9 +136,9 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   }
 
   private void registerMember(PsiClass containingClass,
-                              Collection<T> members,
-                              List<T> list,
-                              List<T> applicableList) {
+                              Collection<? extends T> members,
+                              List<? super T> list,
+                              List<? super T> applicableList) {
     String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) {
       return;

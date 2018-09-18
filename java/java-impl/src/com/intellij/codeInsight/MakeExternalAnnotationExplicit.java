@@ -118,7 +118,9 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       return Arrays.stream(annotations).filter(anno -> {
         String qualifiedName = anno.getQualifiedName();
-        return qualifiedName != null && facade.findClass(qualifiedName, owner.getResolveScope()) != null;
+        return qualifiedName != null &&
+               facade.findClass(qualifiedName, owner.getResolveScope()) != null &&
+               !owner.hasAnnotation(qualifiedName);
       }).toArray(PsiAnnotation[]::new);
     }
   }

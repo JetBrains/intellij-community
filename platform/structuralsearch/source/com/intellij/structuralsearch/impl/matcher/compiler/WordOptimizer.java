@@ -62,7 +62,6 @@ public interface WordOptimizer {
    * method does not need to be overridden.
    * @param className  the name of the class to search for subclasses of
    * @param includeSelf  include the class itself in the search
-   * @param context
    */
   default List<String> getDescendantsOf(String className, boolean includeSelf, Project project) {
     return Collections.emptyList();

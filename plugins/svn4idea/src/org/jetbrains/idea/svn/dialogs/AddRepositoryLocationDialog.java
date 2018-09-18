@@ -51,6 +51,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     return myCombo;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JLabel selectText = new JLabel(message("repository.browser.add.location.prompt"));
     selectText.setUI(new MultiLineLabelUI());

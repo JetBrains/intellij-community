@@ -26,17 +26,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Eugene Zhuravlev              
+ * @author Eugene Zhuravlev
  */
 public class FilePathActionJavac extends JavacParserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.FilePathActionJavac");
   private final Matcher myJdk7FormatMatcher;
-  
+
   public FilePathActionJavac(final Matcher matcher) {
     super(matcher);
     myJdk7FormatMatcher = Pattern.compile("^\\w+\\[(.+)\\]$", Pattern.CASE_INSENSITIVE).matcher("");
   }
 
+  @Override
   protected void doExecute(final String line, String filePath, final OutputParser.Callback callback) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Process parsing message: " + filePath);

@@ -112,7 +112,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
           LOG.error(e);
         }
         lineAnchor.append("\">");
-        lineAnchor.append(Integer.toString(lineNumber));
+        lineAnchor.append(lineNumber);
         lineAnchor.append("</a>");
       }
     }
@@ -188,7 +188,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
 
   private static void prepareDuplicateValuesByFile(final Map<String, Set<PsiFile>> valueToFiles,
                                                    final InspectionManager manager,
-                                                   final List<ProblemDescriptor> problemDescriptors,
+                                                   final List<? super ProblemDescriptor> problemDescriptors,
                                                    final PsiFile psiFile,
                                                    final ProgressIndicator progress) {
     for (final String value : valueToFiles.keySet()) {
@@ -229,7 +229,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private void prepareDuplicateKeysByFile(final Map<String, Set<PsiFile>> keyToFiles,
                                           final InspectionManager manager,
                                           final Map<String, Set<String>> keyToValues,
-                                          final List<ProblemDescriptor> problemDescriptors,
+                                          final List<? super ProblemDescriptor> problemDescriptors,
                                           final PsiFile psiFile,
                                           final ProgressIndicator progress) {
     for (String key : keyToFiles.keySet()) {
@@ -269,7 +269,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
 
   private static void processDuplicateKeysWithDifferentValues(final Map<String, Set<String>> keyToDifferentValues,
                                                               final Map<String, Set<PsiFile>> keyToFiles,
-                                                              final List<ProblemDescriptor> problemDescriptors,
+                                                              final List<? super ProblemDescriptor> problemDescriptors,
                                                               final InspectionManager manager,
                                                               final PsiFile psiFile,
                                                               final ProgressIndicator progress) {
@@ -305,7 +305,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private static void findFilesWithText(String stringToFind,
                                         PsiSearchHelper searchHelper,
                                         GlobalSearchScope scope,
-                                        final Set<PsiFile> resultFiles) {
+                                        final Set<? super PsiFile> resultFiles) {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
     Collections.sort(words, (o1, o2) -> o2.length() - o1.length());

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Comparing;
@@ -12,7 +12,10 @@ import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
@@ -39,6 +42,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     return SvnBundle.message("action.name.revert");
   }
 
+  @Override
   public void rollbackChanges(@NotNull List<Change> changes,
                               @NotNull List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {
@@ -75,6 +79,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
+  @Override
   public void rollbackMissingFileDeletion(@NotNull List<FilePath> filePaths,
                                           @NotNull List<VcsException> exceptions,
                                           @NotNull RollbackProgressListener listener) {
@@ -96,7 +101,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       if (info.isFile()) {
         doRevert(file, false);
       }
-      else if (Info.SCHEDULE_ADD.equals(info.getSchedule()) || is17OrGreaterCopy(file, info)) {
+      else if (Info.SCHEDULE_ADD.equals(info.getSchedule()) ||
+               mySvnVcs.getWorkingCopyFormat(file).isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN)) {
         doRevert(file, true);
       }
       else {
@@ -111,12 +117,6 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   private void doRevert(@NotNull File path, boolean recursive) throws VcsException {
     mySvnVcs.getFactory(path).createRevertClient().revert(Collections.singletonList(path), Depth.allOrFiles(recursive), null);
-  }
-
-  private boolean is17OrGreaterCopy(@NotNull File file, @NotNull Info info) {
-    WorkingCopy copy = mySvnVcs.getRootsToWorkingCopies().getMatchingCopy(info.getURL());
-
-    return copy != null ? copy.is17Copy() : mySvnVcs.getWorkingCopyFormat(file).isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN);
   }
 
   public static boolean isMoveRenameReplace(@NotNull Change c) {

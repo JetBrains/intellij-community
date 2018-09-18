@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -61,6 +62,7 @@ class GitRewordOperation(private val repository: GitRepository,
       headAfterReword = repository.currentRevision
       rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
       notifySuccess()
+      ChangeListManagerImpl.getInstanceImpl(project).replaceCommitMessage(commit.fullMessage, newMessage)
     }
   }
 

@@ -83,7 +83,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     return JBPopupFactory.ActionSelectionAid.NUMBERING;
   }
 
-  protected String getPopupTitle(AnActionEvent e) {
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return e.getPresentation().getText();
   }
 

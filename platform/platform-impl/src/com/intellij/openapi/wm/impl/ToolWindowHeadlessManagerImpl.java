@@ -483,11 +483,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void addContent(@NotNull final Content content, final Object constraints) {
-      addContent(content);
-    }
-
-    @Override
     public void addSelectedContent(@NotNull final Content content) {
       addContent(content);
       setSelectedContent(content);

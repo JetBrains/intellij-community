@@ -30,6 +30,7 @@ public abstract class GroovyDocChameleonElementType extends ILazyParseableElemen
     super(debugName);
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return GroovyLanguage.INSTANCE;

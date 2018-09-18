@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
@@ -91,11 +90,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
   @Nullable
   private static XmlAttribute getInspectionShortNameAttribute(Module module, PsiClass inspectionClass) {
     Extension extension = InspectionDescriptionInfo.findExtension(module, inspectionClass);
-    if (extension == null) {
-      return null;
-    }
-    XmlTag tag = extension.getXmlTag();
-    return tag == null ? null : tag.getAttribute("shortName");
+    return extension == null ? null : extension.getXmlTag().getAttribute("shortName");
   }
 
   private static boolean isGetShortNameMethodOverridden(PsiClass inspectionClass) {

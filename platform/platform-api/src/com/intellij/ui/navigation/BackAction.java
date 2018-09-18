@@ -18,7 +18,7 @@ public class BackAction extends NavigationAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     getHistory(e).back();
   }
 }

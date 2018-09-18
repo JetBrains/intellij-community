@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.event;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -29,5 +31,5 @@ public interface VisibleAreaListener extends EventListener {
    *
    * @param e the event containing information about changes in the visible area of the editor.
    */
-  void visibleAreaChanged(VisibleAreaEvent e);
+  void visibleAreaChanged(@NotNull VisibleAreaEvent e);
 }

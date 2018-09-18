@@ -192,6 +192,7 @@ public class OnePixelDivider extends Divider {
     myGlassPane.addMousePreprocessor(myListener, myDisposable);
   }
 
+  @Override
   public void setOrientation(boolean vertical) {
     removeAll();
     myVertical = vertical;
@@ -241,6 +242,7 @@ public class OnePixelDivider extends Divider {
     }
   }
 
+  @Override
   public void setResizeEnabled(boolean resizeEnabled) {
     myResizeEnabled = resizeEnabled;
     if (!myResizeEnabled) {
@@ -253,6 +255,7 @@ public class OnePixelDivider extends Divider {
     }
   }
 
+  @Override
   public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
     mySwitchOrientationEnabled = switchOrientationEnabled;
   }

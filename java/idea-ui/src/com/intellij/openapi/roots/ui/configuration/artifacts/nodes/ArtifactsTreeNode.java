@@ -38,7 +38,7 @@ public abstract class ArtifactsTreeNode extends CachingSimpleNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     myPresentation.render(presentation, SimpleTextAttributes.REGULAR_ATTRIBUTES, SimpleTextAttributes.GRAY_ATTRIBUTES);
     presentation.setTooltip(myPresentation.getTooltipText());
   }

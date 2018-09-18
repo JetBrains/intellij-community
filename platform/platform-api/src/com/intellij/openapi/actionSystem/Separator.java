@@ -62,7 +62,7 @@ public final class Separator extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
     throw new UnsupportedOperationException();
   }
 }

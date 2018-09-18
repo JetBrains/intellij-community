@@ -34,10 +34,12 @@ public class FileProcessingCompilerStateCache {
 
   public FileProcessingCompilerStateCache(File storeDirectory, final ValidityStateFactory stateFactory) throws IOException {
     myCache = new StateCache<MyState>(new File(storeDirectory, "timestamps")) {
+      @Override
       public MyState read(DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stateFactory.createValidityState(stream));
       }
 
+      @Override
       public void write(MyState state, DataOutput out) throws IOException {
         out.writeLong(state.getTimestamp());
         final ValidityState extState = state.getExtState();

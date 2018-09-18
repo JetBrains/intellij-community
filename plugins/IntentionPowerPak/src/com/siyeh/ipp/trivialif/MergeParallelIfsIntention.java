@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -32,82 +33,63 @@ public class MergeParallelIfsIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement firstStatement = (PsiIfStatement)token.getParent();
-    final PsiIfStatement secondStatement =
-      (PsiIfStatement)PsiTreeUtil.skipWhitespacesForward(firstStatement);
-    final String statement =
-      mergeIfStatements(firstStatement, secondStatement);
-    PsiReplacementUtil.replaceStatement(firstStatement, statement);
+    final PsiIfStatement secondStatement = (PsiIfStatement)PsiTreeUtil.skipWhitespacesForward(firstStatement);
     assert secondStatement != null;
+    final CommentTracker tracker = new CommentTracker();
+    final String newStatementText = mergeIfStatements(firstStatement, secondStatement, tracker);
+    PsiReplacementUtil.replaceStatement(firstStatement, newStatementText, tracker);
     secondStatement.delete();
   }
 
   private static String mergeIfStatements(PsiIfStatement firstStatement,
-                                          PsiIfStatement secondStatement) {
+                                          PsiIfStatement secondStatement,
+                                          CommentTracker tracker) {
     final PsiExpression condition = firstStatement.getCondition();
-    final String conditionText;
-    if (condition == null) {
-      conditionText = "";
-    }
-    else {
-      conditionText = condition.getText();
-    }
+    final String conditionText = condition == null ? "" : tracker.text(condition);
     final PsiStatement firstThenBranch = firstStatement.getThenBranch();
     final PsiStatement secondThenBranch = secondStatement.getThenBranch();
-    @NonNls String statement = "if(" + conditionText + ')' +
-                               printStatementsInSequence(firstThenBranch,
-                                                         secondThenBranch);
+    @NonNls String statement = "if(" + conditionText + ')' + printStatementsInSequence(firstThenBranch, secondThenBranch, tracker);
     final PsiStatement firstElseBranch = firstStatement.getElseBranch();
     final PsiStatement secondElseBranch = secondStatement.getElseBranch();
     if (firstElseBranch != null || secondElseBranch != null) {
-      if (firstElseBranch instanceof PsiIfStatement
-          && secondElseBranch instanceof PsiIfStatement
-          && MergeParallelIfsPredicate.ifStatementsCanBeMerged(
-        (PsiIfStatement)firstElseBranch,
-        (PsiIfStatement)secondElseBranch)) {
-        statement += "else " +
-                     mergeIfStatements((PsiIfStatement)firstElseBranch,
-                                       (PsiIfStatement)secondElseBranch);
+      if (firstElseBranch instanceof PsiIfStatement && secondElseBranch instanceof PsiIfStatement
+          && MergeParallelIfsPredicate.ifStatementsCanBeMerged((PsiIfStatement)firstElseBranch, (PsiIfStatement)secondElseBranch)) {
+        statement += "else " + mergeIfStatements((PsiIfStatement)firstElseBranch, (PsiIfStatement)secondElseBranch, tracker);
       }
       else {
-        statement += "else" +
-                     printStatementsInSequence(firstElseBranch,
-                                               secondElseBranch);
+        statement += "else" + printStatementsInSequence(firstElseBranch, secondElseBranch, tracker);
       }
     }
     return statement;
   }
 
-  private static String printStatementsInSequence(PsiStatement statement1,
-                                                  PsiStatement statement2) {
+  private static String printStatementsInSequence(PsiStatement statement1, PsiStatement statement2, CommentTracker tracker) {
     if (statement1 == null) {
-      return ' ' + statement2.getText();
+      return ' ' + tracker.text(statement2);
     }
     if (statement2 == null) {
-      return ' ' + statement1.getText();
+      return ' ' + tracker.text(statement1);
     }
-    final StringBuilder out = new StringBuilder();
-    out.append('{');
-    printStatementStripped(statement1, out);
-    printStatementStripped(statement2, out);
+    final StringBuilder out = new StringBuilder("{");
+    printStatementStripped(statement1, tracker, out);
+    printStatementStripped(statement2, tracker, out);
     out.append('}');
     return out.toString();
   }
 
-  private static void printStatementStripped(PsiStatement statement,
-                                             StringBuilder out) {
+  private static void printStatementStripped(PsiStatement statement, CommentTracker tracker, StringBuilder out) {
     if (statement instanceof PsiBlockStatement) {
-      final PsiCodeBlock block =
-        ((PsiBlockStatement)statement).getCodeBlock();
+      final PsiCodeBlock block = ((PsiBlockStatement)statement).getCodeBlock();
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
-        out.append(children[i].getText());
+        out.append(tracker.text(children[i]));
       }
     }
     else {
-      out.append(statement.getText());
+      out.append(tracker.text(statement));
     }
   }
 }

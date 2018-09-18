@@ -45,7 +45,6 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final VcsConfiguration myConfiguration;
   private final VcsBaseContentProvider[] myAdditionalProviders;
-  private boolean myHaveEmptyContentRevisions;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
@@ -60,7 +59,6 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     myChangeListManager = changeListManager;
     myDirtyScopeManager = dirtyScopeManager;
     myConfiguration = configuration;
-    myHaveEmptyContentRevisions = true;
     myFileStatusManager.setFileStatusProvider(this);
     myAdditionalProviders = VcsBaseContentProvider.EP_NAME.getExtensions(project);
 
@@ -76,19 +74,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
       }
 
       @Override
-      public void changeListChanged(ChangeList list) {
-        fileStatusesChanged();
-      }
-
-      @Override
       public void changeListUpdateDone() {
-        if (myHaveEmptyContentRevisions) {
-          myHaveEmptyContentRevisions = false;
-          fileStatusesChanged();
-        }
-      }
-
-      @Override public void unchangedFileStatusChanged() {
         fileStatusesChanged();
       }
     });
@@ -202,7 +188,6 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     @Nullable
     @Override
     public String loadContent() {
-      String content;
       try {
         if (myContentRevision instanceof ByteBackedContentRevision) {
           byte[] revisionContent = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
@@ -210,24 +195,19 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
           if (revisionContent != null) {
             Charset charset = DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
-            content = CharsetToolkit.decodeString(revisionContent, charset);
+            return CharsetToolkit.decodeString(revisionContent, charset);
           }
           else {
-            content = null;
+            return null;
           }
         }
         else {
-          content = myContentRevision.getContent();
+          return myContentRevision.getContent();
         }
       }
       catch (VcsException ex) {
-        content = null;
-      }
-      if (content == null) {
-        myHaveEmptyContentRevisions = true;
         return null;
       }
-      return content;
     }
   }
 }

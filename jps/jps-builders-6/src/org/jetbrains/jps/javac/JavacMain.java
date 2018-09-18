@@ -161,6 +161,7 @@ public class JavacMain {
 
       //noinspection IOResourceOpenedButNotSafelyClosed
       final LineOutputWriter out = new LineOutputWriter() {
+        @Override
         protected void lineAvailable(String line) {
           if (usingJavac) {
             diagnosticConsumer.outputLineAvailable(line);
@@ -439,18 +440,22 @@ public class JavacMain {
       }
     }
 
+    @Override
     public boolean isCanceled() {
       return myCanceledStatus.isCanceled();
     }
 
+    @Override
     public StandardJavaFileManager getStandardFileManager() {
       return myStdManager;
     }
 
+    @Override
     public void reportMessage(final Diagnostic.Kind kind, String message) {
       myOutConsumer.report(new PlainMessageDiagnostic(kind, message));
     }
 
+    @Override
     public void consumeOutputFile(@NotNull final OutputFileObject cls) {
       try {
         myOutputFileSink.save(cls);

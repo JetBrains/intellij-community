@@ -22,6 +22,7 @@ public class FolderDataProvider extends AbstractVcsDataProvider {
     super(environment);
   }
 
+  @Override
   public AbstractVcsDataProvider getChildrenDataProvider() {
     return this;
   }

@@ -47,7 +47,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -80,7 +80,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 

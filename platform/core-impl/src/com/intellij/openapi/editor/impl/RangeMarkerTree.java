@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,13 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedInternalDocumentListener {
-  protected RangeMarkerTree(@NotNull Document document) {
+class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedInternalDocumentListener {
+  RangeMarkerTree(@NotNull Document document) {
     document.addDocumentListener(this);
+  }
+  RangeMarkerTree() {
   }
 
   @Override
-  public void moveTextHappened(int start, int end, int newBase) {
+  public void moveTextHappened(@NotNull Document document, int start, int end, int newBase) {
     reTarget(start, end, newBase);
   }
 
@@ -46,7 +34,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     updateMarkersOnChange(event);
   }
 
@@ -69,8 +57,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
     boolean stickyR1 = o1.isStickingToRight();
     boolean stickyR2 = o2.isStickingToRight();
-    if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1; 
-                                     
+    if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1;
+
     return 0;
   }
 
@@ -81,7 +69,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
   @NotNull
   @Override
-  public RMNode<T> addInterval(@NotNull T interval, int start, int end, 
+  public RMNode<T> addInterval(@NotNull T interval, int start, int end,
                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     ((RangeMarkerImpl)interval).setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
@@ -116,7 +104,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   @NotNull
   @Override
-  protected RMNode<T> createNewNode(@NotNull T key, int start, int end, 
+  protected RMNode<T> createNewNode(@NotNull T key, int start, int end,
                                     boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
   }
@@ -162,6 +150,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     boolean isStickingToRight() {
       return isFlagSet(STICK_TO_RIGHT_FLAG);
     }
+
+    void onRemoved() {}
 
     @Override
     public String toString() {
@@ -225,6 +215,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           }
           else {
             node.setValid(false);
+            ((RMNode)node).onRemoved();
           }
         }
       }
@@ -243,12 +234,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     // can change if two range become the one
     if (insertedNode != node) {
       // merge happened
-      for (Getter<T> key : node.intervals) {
-        T interval = key.get();
-        if (interval != null) {
-          insertedNode.addInterval(interval);
-        }
-      }
+      insertedNode.addIntervalsFrom(node);
     }
   }
 
@@ -342,6 +328,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
         if (marker.isValid()) {
           findOrInsertWithIntervals(node);
+        }
+        else {
+          node.setValid(false);
+          ((RMNode)node).onRemoved();
         }
       }
     }

@@ -20,13 +20,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class EditTaskAction extends BaseTaskAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     if (project != null) {
       LocalTaskImpl task = (LocalTaskImpl)TaskManager.getManager(project).getActiveTask();
@@ -35,7 +36,7 @@ public class EditTaskAction extends BaseTaskAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();
     Project project = getEventProject(event);

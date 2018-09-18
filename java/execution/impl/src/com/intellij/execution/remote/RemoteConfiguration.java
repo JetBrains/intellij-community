@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Jeka
@@ -24,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +46,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public String SHMEM_ADDRESS = "javadebug";
   public String HOST = "localhost";
   public String PORT = "5005";
+  public boolean AUTO_RESTART;
 
   public RemoteConfiguration(final Project project, ConfigurationFactory configurationFactory) {
     super(new JavaRunConfigurationModule(project, true), configurationFactory);
@@ -67,7 +65,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       debuggerSettings.setDebugPort(USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS);
       debuggerSettings.setTransport(USE_SOCKET_TRANSPORT ? DebuggerSettings.SOCKET_TRANSPORT : DebuggerSettings.SHMEM_TRANSPORT);
     }
-    return new RemoteStateState(getProject(), createRemoteConnection());
+    return new RemoteStateState(getProject(), createRemoteConnection(), AUTO_RESTART);
   }
 
   @Override

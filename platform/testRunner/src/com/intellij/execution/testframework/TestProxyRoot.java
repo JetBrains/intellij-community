@@ -22,7 +22,5 @@ public interface TestProxyRoot {
 
   String getComment();
 
-  String getRootLocation();
-  
   void setHandler(ProcessHandler handler);
 }

@@ -57,7 +57,7 @@ public abstract class StaticMemberProcessor {
     ContainerUtil.addIfNotNull(myStaticImportedClasses, psiClass);
   }
 
-  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
+  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
@@ -109,7 +109,7 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<PsiMember, PsiClass> consumer) {
+  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
     final ArrayList<PsiMember> result = ContainerUtil.newArrayList();
     for (final PsiClass psiClass : myStaticImportedClasses) {
       for (final PsiMethod method : psiClass.getAllMethods()) {

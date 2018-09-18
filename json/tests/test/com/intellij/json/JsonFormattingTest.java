@@ -92,6 +92,8 @@ public class JsonFormattingTest extends JsonTestCase {
 
   public void testReformatIncompleteJson2() { doTest();}
 
+  public void testIndentForElements() { doTest();}
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".json");
     WriteCommandAction.runWriteCommandAction(null, () -> {

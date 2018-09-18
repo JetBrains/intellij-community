@@ -37,7 +37,7 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Handler handler = getHandler(e);
     if (handler == null) return;
     boolean selected = !handler.isPinned;

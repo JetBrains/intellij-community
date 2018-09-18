@@ -31,6 +31,8 @@ object IdeProcessControlManager {
 
   fun getErrorStream(): InputStream = getIdeProcess().errorStream
 
+  fun getInputStream(): InputStream = getIdeProcess().inputStream
+
   /**
    * kills IDE java process if the pipeline for sockets has been crashed or IDE doesn't respond
    */

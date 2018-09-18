@@ -17,7 +17,7 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.CommonBundle;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.icons.AllIcons;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -35,20 +35,7 @@ class LoadingNode extends DefaultMutableTreeNode {
   private final String myText = CommonBundle.getLoadingTreeNodeText();
   private int myPeriod = 0;
 
-  private final Icon[] myIcons = new Icon[] {
-    AllIcons.Process.Step_1,
-    AllIcons.Process.Step_2,
-    AllIcons.Process.Step_3,
-    AllIcons.Process.Step_4,
-    AllIcons.Process.Step_5,
-    AllIcons.Process.Step_6,
-    AllIcons.Process.Step_7,
-    AllIcons.Process.Step_8,
-    AllIcons.Process.Step_9,
-    AllIcons.Process.Step_10,
-    AllIcons.Process.Step_11,
-    AllIcons.Process.Step_12
-  };
+  private final Icon[] myIcons = AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
   private volatile boolean stopped = false;
   private Runnable myPeriodRequest;
   private final DefaultTreeModel myModel;
@@ -57,6 +44,7 @@ class LoadingNode extends DefaultMutableTreeNode {
     myModel = model;
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return false;
   }
@@ -67,7 +55,7 @@ class LoadingNode extends DefaultMutableTreeNode {
 
   private void updatePeriod() {
     myPeriod++;
-    myPeriod %= 12;
+    myPeriod %= myIcons.length;
     if (stopped) {
       return;
     }
@@ -111,6 +99,7 @@ class LoadingNode extends DefaultMutableTreeNode {
 
   private void start(final Alarm alarm) {
     myPeriodRequest = new Runnable() {
+      @Override
       public void run() {
         if (getParent() != null) {
           updatePeriod();

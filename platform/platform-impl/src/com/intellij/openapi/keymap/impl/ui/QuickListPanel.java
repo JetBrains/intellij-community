@@ -81,7 +81,7 @@ class QuickListPanel {
                       })
                       .addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
                         @Override
-                        public void actionPerformed(@Nullable AnActionEvent e) {
+                        public void actionPerformed(@NotNull AnActionEvent e) {
                           actionsModel.add(QuickList.SEPARATOR_ID);
                         }
                       })
@@ -165,7 +165,7 @@ class QuickListPanel {
           }
         }
         if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)) {
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
         }
         setIcon(ActionsTree.getEvenIcon(icon));
       }

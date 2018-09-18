@@ -57,19 +57,23 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     myFacetsProvider = facetsProvider != null ? facetsProvider : DefaultFacetsProvider.INSTANCE;
   }
 
+  @Override
   public Library[] getLibraries() {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()).getLibraries();
   }
 
+  @Override
   @NotNull
   public String getFacetName() {
     return myFacet.getName();
   }
 
+  @Override
   public VirtualFile[] getLibraryFiles(final Library library, final OrderRootType rootType) {
     return library.getFiles(rootType);
   }
 
+  @Override
   @Nullable
   public Library findLibrary(@NotNull String name) {
     for (Library library : getLibraries()) {
@@ -80,7 +84,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return null;
   }
 
-  
+
   public UserDataHolder getSharedProjectData() {
     return mySharedProjectData;
   }
@@ -103,16 +107,19 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return t;
   }
 
+  @Override
   @NotNull
   public FacetsProvider getFacetsProvider() {
     return myFacetsProvider;
   }
 
+  @Override
   @NotNull
   public ModulesProvider getModulesProvider() {
     return myModulesProvider;
   }
 
+  @Override
   @NotNull
   public ModuleRootModel getRootModel() {
     return getModifiableRootModel();
@@ -120,11 +127,13 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
 
   public abstract LibrariesContainer getContainer();
 
+  @Override
   @NotNull
   public Facet getFacet() {
     return myFacet;
   }
 
+  @Override
   @Nullable
   public Facet getParentFacet() {
     return myFacet.getUnderlyingFacet();

@@ -70,7 +70,7 @@ public final class PsiElementRef<T extends PsiElement> {
     return new PsiElementRef<>(new PsiRefColleague.Real<>(element));
   }
 
-  public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<Parent, Child> creator) {
+  public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<? super Parent, ? extends Child> creator) {
     return new PsiElementRef<>(new PsiRefColleague.Imaginary<>(parent, creator));
   }
 
@@ -142,9 +142,9 @@ public final class PsiElementRef<T extends PsiElement> {
 
     class Imaginary<Child extends PsiElement, Parent extends PsiElement> implements PsiRefColleague<Child> {
       private final PsiElementRef<? extends Parent> myParent;
-      private final PsiRefElementCreator<Parent, Child> myCreator;
+      private final PsiRefElementCreator<? super Parent, ? extends Child> myCreator;
 
-      public Imaginary(PsiElementRef<? extends Parent> parent, PsiRefElementCreator<Parent, Child> creator) {
+      public Imaginary(PsiElementRef<? extends Parent> parent, PsiRefElementCreator<? super Parent, ? extends Child> creator) {
         myParent = parent;
         myCreator = creator;
       }

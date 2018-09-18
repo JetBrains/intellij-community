@@ -26,6 +26,7 @@ public class NamedScopeManager extends NamedScopesHolder {
     super(project);
   }
 
+  @NotNull
   public static NamedScopeManager getInstance(Project project) {
     return ServiceManager.getService(project, NamedScopeManager.class);
   }

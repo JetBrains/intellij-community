@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -62,13 +60,6 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (FileModificationService.getInstance().preparePsiElementForWrite(file)) {
-      WriteAction.run(() -> new CommentTracker().deleteAndRestoreComments(startElement));
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    new CommentTracker().deleteAndRestoreComments(startElement);
   }
 }

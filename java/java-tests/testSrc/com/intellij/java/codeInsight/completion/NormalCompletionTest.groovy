@@ -18,7 +18,6 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
@@ -34,7 +33,6 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -176,18 +174,13 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
-    try{
+    JavaCodeStyleSettings.getInstance(getProject()).PREFER_LONGER_NAMES = false
       configureByFile("PreferLongerNamesOption.java")
 
       assertEquals(3, myItems.length)
       assertEquals("ijk", myItems[0].getLookupString())
       assertEquals("efghIjk", myItems[1].getLookupString())
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
-    }
-    finally{
-      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
-    }
   }
 
   void testSCR7208() throws Exception {
@@ -1658,25 +1651,6 @@ class Bar {
 
   void testIndentingForSwitchCase() { doTest() }
 
-  void testIncrementalCopyReparse() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
-    
-    myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
-    def items = myFixture.completeBasic()
-    PsiClass c1 = items[0].object
-    assert !c1.physical
-    assert CompletionUtil.getOriginalElement(c1)
-    
-    getLookup().hide()
-    myFixture.type('x')
-    items = myFixture.completeBasic()
-    PsiClass c2 = items[0].object
-    assert !c2.physical
-    assert CompletionUtil.getOriginalElement(c2)
-
-    assert c1.is(c2)
-  }
-
   void testShowMostSpecificOverride() {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
@@ -1872,6 +1846,25 @@ class Bar {{
     myFixture.configureByText 'a.java', 'class Foo<T> { T t = new <caret> }'
     complete()
     assert myFixture.lookupElements.findAll { it.allLookupStrings.contains('T') }.size() < 2
+  }
+
+  void "test no duplication for inner class on second invocation"() {
+    myFixture.configureByText 'a.java', '''
+class Abc {
+    class FooBar {}
+    void foo() {
+        FooBar<caret>x
+    }
+}'''
+    myFixture.complete(CompletionType.BASIC, 2)
+    assert myFixture.lookupElements.size() == 1
+  }
+
+  void "test smart enter wraps type arguments"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { F<caret>List<String> }'
+    myFixture.completeBasic()
+    myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)
+    myFixture.checkResult 'class Foo<T> { Foo<List<String>><caret> }'
   }
 
 }

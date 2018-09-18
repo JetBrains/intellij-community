@@ -27,7 +27,7 @@ public interface NamingContext {
   String getValue(int val);
 
   /**
-   * @param a string representing any name in dependency graph (class name, methot name, field name, etc)
+   * @param s string representing any name in dependency graph (class name, methot name, field name, etc)
    * @return unique integer value corresponding to the specified name string
    */
   int get(String s);

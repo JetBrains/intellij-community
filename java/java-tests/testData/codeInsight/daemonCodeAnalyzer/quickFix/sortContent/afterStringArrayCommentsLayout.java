@@ -11,7 +11,7 @@ public class Main {
 
             "Martinez", "Miller", "Moore", "Robinson", "Rodriguez", "Smith", "Taylor",
             "Thomas", "Thompson", "Walker", "White", //B
-            "Williams", "Wilson", "Young"//Z
+            "Williams", "Wilson", "Young" //Z
 
     };
   }

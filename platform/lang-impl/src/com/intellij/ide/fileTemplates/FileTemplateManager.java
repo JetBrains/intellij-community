@@ -136,10 +136,6 @@ public abstract class FileTemplateManager{
   @NotNull
   public abstract String internalTemplateToSubject(@NotNull @NonNls String templateName);
 
-  @Deprecated
-  @NotNull
-  public abstract String localizeInternalTemplateName(@NotNull FileTemplate template);
-
   public abstract FileTemplate getPattern(@NotNull @NonNls String name);
 
   /**

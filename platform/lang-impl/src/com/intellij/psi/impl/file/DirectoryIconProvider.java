@@ -4,8 +4,6 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -16,10 +14,5 @@ import javax.swing.*;
 public class DirectoryIconProvider extends SourceRootIconProvider.DirectoryProvider {
   public static Icon getDirectoryIcon(VirtualFile vFile, Project project) {
     return SourceRootIconProvider.getDirectoryIcon(vFile, project);
-  }
-
-  @Nullable
-  public static Icon getIconIfExcluded(@NotNull Project project, @NotNull VirtualFile vFile) {
-    return SourceRootIconProvider.getIconIfExcluded(project, vFile);
   }
 }

@@ -71,10 +71,12 @@ public class UpdateOperation extends CvsOperationOnFiles {
     }
   }
 
+  @Override
   protected String getOperationName() {
     return "update";
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final UpdateCommand updateCommand = new UpdateCommand();
     addFilesToCommand(root, updateCommand);
@@ -95,12 +97,14 @@ public class UpdateOperation extends CvsOperationOnFiles {
     return updateCommand;
   }
 
+  @Override
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setDoNoChanges(myUpdateSettings.getDontMakeAnyChanges());
     options.setCheckedOutFilesReadOnly(myUpdateSettings.getMakeNewFilesReadOnly());
   }
 
+  @Override
   public int getFilesToProcessCount() {
     return CvsHandler.UNKNOWN_COUNT;
   }
@@ -120,9 +124,11 @@ public class UpdateOperation extends CvsOperationOnFiles {
     return vcs == myVcs;
   }
 
+  @Override
   protected IIgnoreFileFilter getIgnoreFileFilter() {
     final IIgnoreFileFilter ignoreFileFilterFromSuper = super.getIgnoreFileFilter();
     return new IIgnoreFileFilter() {
+      @Override
       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
         if (ignoreFileFilterFromSuper.shouldBeIgnored(abstractFileObject, cvsFileSystem)) {
           return true;
@@ -133,6 +139,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
     };
   }
 
+  @Override
   protected ReceivedFileProcessor createReceivedFileProcessor(UpdatedFilesManager mergedFilesCollector, PostCvsActivity postCvsActivity) {
     return new UpdateReceivedFileProcessor(mergedFilesCollector,
                                            postCvsActivity);

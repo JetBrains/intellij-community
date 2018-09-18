@@ -22,6 +22,8 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -148,9 +150,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   public void testNearParameterHint() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     int originalCaretPosition = myEditor.getCaretModel().getOffset();
-    EditorTestUtil.addInlay(myEditor, originalCaretPosition);
+    Inlay inlay = EditorTestUtil.addInlay(myEditor, originalCaretPosition);
+    VisualPosition inlayPosition = inlay.getVisualPosition();
     // make sure caret is to the right of inlay initially
-    myEditor.getCaretModel().moveToLogicalPosition(myEditor.getCaretModel().getLogicalPosition().leanForward(true));
+    myEditor.getCaretModel().moveToVisualPosition(new VisualPosition(inlayPosition.line, inlayPosition.column + 1));
 
     final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
@@ -158,7 +161,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     TemplateManagerImpl.setTemplateTesting(ourProject, getTestRootDisposable());
     new MemberInplaceRenameHandler().doRename(element, myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
     assertEquals(originalCaretPosition, myEditor.getCaretModel().getOffset());
-    assertTrue(myEditor.getCaretModel().getLogicalPosition().leansForward); // check caret is still to the right
+    assertTrue(inlay.isValid());
+    assertEquals(inlayPosition, inlay.getVisualPosition());
+    // check caret is still to the right
+    assertEquals(new VisualPosition(inlayPosition.line, inlayPosition.column + 1), myEditor.getCaretModel().getVisualPosition());
   }
 
   private void doTestInplaceRename(final String newName) {

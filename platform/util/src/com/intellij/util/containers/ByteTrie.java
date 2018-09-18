@@ -50,7 +50,7 @@ public class ByteTrie {
   /**
    * Returns unique hash code for a string.
    *
-   * @return negative - an error occured, 0 - no such string in trie, positive - actual hashcode
+   * @return negative - an error occurred, 0 - no such string in trie, positive - actual hashcode
    */
   public int getHashCode(String s) {
     return getHashCode(s.getBytes(CharsetToolkit.UTF8_CHARSET));

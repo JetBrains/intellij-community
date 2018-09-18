@@ -59,7 +59,7 @@ public class GenerateMembersUtil {
   private static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file,
                                                                           int offset,
                                                                           @NotNull List<T> memberPrototypes,
-                                                                          final Function<PsiElement, PsiClass> aClassFunction) throws IncorrectOperationException {
+                                                                          final Function<? super PsiElement, ? extends PsiClass> aClassFunction) throws IncorrectOperationException {
     if (memberPrototypes.isEmpty()) return memberPrototypes;
     final PsiElement leaf = file.findElementAt(offset);
     if (leaf == null) return Collections.emptyList();
@@ -446,7 +446,7 @@ public class GenerateMembersUtil {
                                        @NotNull PsiReferenceList targetThrowsList,
                                        @NotNull PsiSubstitutor substitutor,
                                        @NotNull PsiMethod sourceMethod,
-                                       List<PsiClassType> thrownTypes) {
+                                       List<? extends PsiClassType> thrownTypes) {
     for (PsiClassType thrownType : thrownTypes) {
       targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
     }

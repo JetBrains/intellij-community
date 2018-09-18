@@ -26,7 +26,7 @@ public class SuspiciousMethodCallUtil {
 
   private static void setupPatternMethods(PsiManager manager,
                                           GlobalSearchScope searchScope,
-                                          List<PatternMethod> patternMethods) {
+                                          List<? super PatternMethod> patternMethods) {
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiClass
       collectionClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, searchScope);
@@ -103,7 +103,7 @@ public class SuspiciousMethodCallUtil {
 
   private static void addMethod(final PsiMethod patternMethod,
                                 int typeParamIndex,
-                                List<PatternMethod> patternMethods,
+                                List<? super PatternMethod> patternMethods,
                                 int argIdx) {
     if (patternMethod != null) {
       patternMethods.add(new PatternMethod(patternMethod, typeParamIndex, argIdx));

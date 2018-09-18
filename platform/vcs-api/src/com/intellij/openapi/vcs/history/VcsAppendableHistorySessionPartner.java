@@ -21,7 +21,13 @@ public interface VcsAppendableHistorySessionPartner {
   void reportCreatedEmptySession(VcsAbstractHistorySession session);
   void acceptRevision(final VcsFileRevision revision);
   void reportException(final VcsException exception);
-  void finished();
-  void forceRefresh();
-  void beforeRefresh();
+
+  @Deprecated
+  default void finished() {}
+
+  @Deprecated
+  default void beforeRefresh() {}
+
+  @Deprecated
+  default void forceRefresh() {}
 }

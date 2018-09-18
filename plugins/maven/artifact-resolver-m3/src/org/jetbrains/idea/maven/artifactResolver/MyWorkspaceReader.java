@@ -47,15 +47,18 @@ public class MyWorkspaceReader implements WorkspaceReader {
     return o instanceof MyWorkspaceReader;
   }
 
+  @Override
   public WorkspaceRepository getRepository() {
     return myWorkspaceRepository;
   }
 
+  @Override
   public File findArtifact(Artifact artifact) {
     return MavenModuleMap.getInstance().findArtifact(
       artifact.getGroupId(), artifact.getArtifactId(), artifact.getExtension(), artifact.getClassifier(), artifact.getBaseVersion());
   }
 
+  @Override
   public List<String> findVersions(Artifact artifact) {
     return Collections.emptyList();
   }

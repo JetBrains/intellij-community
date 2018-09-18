@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
   public CloseProjectAction() {
@@ -34,7 +35,7 @@ public class CloseProjectAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
 
@@ -43,7 +44,7 @@ public class CloseProjectAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);

@@ -39,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
@@ -83,12 +82,6 @@ public class ConflictsDialog extends DialogWrapper{
     setOKButtonText(RefactoringBundle.message("continue.button"));
     setOKActionEnabled(alwaysShowOkButton || getDoRefactoringRunnable(null) != null);
     init();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
-    this(project, ArrayUtil.toStringArray(conflictDescriptions));
   }
 
   @Deprecated

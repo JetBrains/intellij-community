@@ -46,16 +46,16 @@ class SlowerTypeConversions implements Runnable {
       return this;
     }
   };
-  private final Set<LookupElement> myBase;
+  private final Set<? extends LookupElement> myBase;
   private final PsiElement myElement;
   private final PsiJavaCodeReferenceElement myReference;
   private final JavaSmartCompletionParameters myParameters;
-  private final Consumer<LookupElement> myResult;
+  private final Consumer<? super LookupElement> myResult;
 
-  SlowerTypeConversions(Set<LookupElement> base,
+  SlowerTypeConversions(Set<? extends LookupElement> base,
                         PsiElement element,
                         PsiJavaCodeReferenceElement reference,
-                        JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
+                        JavaSmartCompletionParameters parameters, Consumer<? super LookupElement> result) {
     myBase = base;
     myElement = element;
     myReference = reference;
@@ -83,7 +83,7 @@ class SlowerTypeConversions implements Runnable {
   }
 
   private static void addSecondCompletionVariants(PsiElement element, PsiReference reference, LookupElement baseItem,
-                                                  JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
+                                                  JavaSmartCompletionParameters parameters, Consumer<? super LookupElement> result) {
     final Object object = baseItem.getObject();
 
     try {

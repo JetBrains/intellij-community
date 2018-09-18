@@ -16,15 +16,17 @@ import org.jetbrains.annotations.Nullable;
 )
 public class JavaFxSettings implements PersistentStateComponent<JavaFxSettings> {
   public String myPathToSceneBuilder = null;
-  
+
   public static JavaFxSettings getInstance() {
     return ServiceManager.getService(JavaFxSettings.class);
   }
 
+  @Override
   public JavaFxSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull JavaFxSettings object) {
     XmlSerializerUtil.copyBean(object, this);
   }

@@ -45,6 +45,7 @@ public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
     myIterableEvaluator = DisableGC.create(iterableEvaluator);
   }
 
+  @Override
   public Modifier getModifier() {
     return myModifier;
   }

@@ -72,7 +72,7 @@ public class RefreshSessionImpl extends RefreshSession {
     return null;
   }
 
-  RefreshSessionImpl(@NotNull List<VFileEvent> events) {
+  RefreshSessionImpl(@NotNull List<? extends VFileEvent> events) {
     this(false, false, null, ModalityState.defaultModalityState());
     myEvents.addAll(events);
   }

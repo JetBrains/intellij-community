@@ -93,7 +93,7 @@ public abstract class CustomAnnotationChecker {
   private static void checkAnnotationValue(@NotNull PsiClass annotation,
                                            @NotNull PsiElement identifierToHighlight,
                                            @NotNull String name,
-                                           @NotNull Set<String> usedAttrs,
+                                           @NotNull Set<? super String> usedAttrs,
                                            @Nullable GrAnnotationMemberValue value,
                                            @NotNull AnnotationHolder holder) {
     if (usedAttrs.contains(name)) {

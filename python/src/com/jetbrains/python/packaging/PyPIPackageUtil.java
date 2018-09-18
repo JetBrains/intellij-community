@@ -24,7 +24,6 @@ import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,10 +69,18 @@ public class PyPIPackageUtil {
         LOG.debug("Searching for versions of package '" + key + "' in additional repositories");
         final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
         for (String repository : repositories) {
-          final List<String> versions = parsePackageVersionsFromArchives(composeSimpleUrl(key, repository), key);
-          if (!versions.isEmpty()) {
-            LOG.debug("Found versions " + versions + "of " + key + " at " + repository);
-            return Collections.unmodifiableList(versions);
+          try {
+            final String packageUrl = StringUtil.trimEnd(repository, "/") + "/" + key;
+            final List<String> versions = parsePackageVersionsFromArchives(packageUrl, key);
+            if (!versions.isEmpty()) {
+              LOG.debug("Found versions " + versions + "of " + key + " at " + repository);
+              return Collections.unmodifiableList(versions);
+            }
+          }
+          catch (HttpRequests.HttpStatusException e) {
+            if (e.getStatusCode() != 404) {
+              LOG.debug("Cannot access " + e.getUrl() + ": " + e.getMessage());
+            }
           }
         }
         return Collections.emptyList();
@@ -330,17 +337,6 @@ public class PyPIPackageUtil {
       return version;
     }
     return null;
-  }
-
-  @NotNull
-  private static String composeSimpleUrl(@NonNls @NotNull String packageName, @NotNull String rep) {
-    String suffix = "";
-    final String repository = StringUtil.trimEnd(rep, "/");
-    if (!repository.endsWith("+simple") && !repository.endsWith("/simple")) {
-      suffix = "/+simple";
-    }
-    suffix += "/" + packageName;
-    return repository + suffix;
   }
 
   public void updatePyPICache() throws IOException {

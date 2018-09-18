@@ -19,10 +19,10 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +42,7 @@ public class MetaTarget implements AntBuildTargetBase {
     myDescription = AntBundle.message("meta.target.build.sequence.name.display.name", displayName);
   }
 
+  @Override
   public Project getProject() {
     return myBuildFile.getProject();
   }
@@ -56,23 +57,28 @@ public class MetaTarget implements AntBuildTargetBase {
     return myTargets;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   @Nullable
   public String getDisplayName() {
     return getName();
   }
 
+  @Override
   public String getNotEmptyDescription() {
     return myDescription;
   }
 
+  @Override
   public boolean isDefault() {
     return false;
   }
 
+  @Override
   public String getActionId() {
     final String modelName = myBuildFile.getModel().getName();
     if (modelName == null || modelName.length() == 0) {
@@ -92,24 +98,29 @@ public class MetaTarget implements AntBuildTargetBase {
     }
   }
 
+  @Override
   public AntBuildModelBase getModel() {
     return myBuildFile.getModel();
   }
 
+  @Override
   @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor() {
+  public Navigatable getOpenFileDescriptor() {
     return null;
   }
 
+  @Override
   @Nullable
   public BuildTask findTask(final String taskName) {
     return null;
   }
 
+  @Override
   public void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener) {
     ExecutionHandler.runBuild(myBuildFile, myTargets, null, dataContext, additionalProperties, buildListener);
   }
 
+  @Override
   @Nullable
   public VirtualFile getContainingFile() {
     return myBuildFile.getVirtualFile();

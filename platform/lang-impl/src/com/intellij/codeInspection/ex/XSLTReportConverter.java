@@ -56,7 +56,7 @@ public class XSLTReportConverter implements InspectionsReportConverter {
   public void convert(@NotNull final String rawDataDirectoryPath,
                       @Nullable final String outputPath,
                       @NotNull final Map<String, Tools> tools,
-                      @NotNull final List<File> inspectionsResults) throws InspectionsReportConverter.ConversionException {
+                      @NotNull final List<? extends File> inspectionsResults) throws InspectionsReportConverter.ConversionException {
 
     if (outputPath == null) {
       throw new ConversionException("Output path isn't specified.");

@@ -53,7 +53,6 @@ public class SvnConfigurationState {
 
   public boolean MERGE_DRY_RUN;
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
-  public boolean UPDATE_LOCK_ON_DEMAND;
   public boolean IGNORE_SPACES_IN_MERGE;
   public boolean CHECK_NESTED_FOR_QUICK_MERGE;
   public boolean IGNORE_SPACES_IN_ANNOTATE = !PlatformUtils.isPyCharm();

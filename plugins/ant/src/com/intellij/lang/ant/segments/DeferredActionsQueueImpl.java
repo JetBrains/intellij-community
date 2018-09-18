@@ -24,6 +24,7 @@ public class DeferredActionsQueueImpl implements DeferredActionsQueue {
   private DispatchListener myListener = DispatchListener.DEAF;
   private int myCounter = 0;
 
+  @Override
   public void addLast(final Runnable runnable) {
     checkIsDispatchThread();
     myListener.onStarted();
@@ -42,6 +43,7 @@ public class DeferredActionsQueueImpl implements DeferredActionsQueue {
     }
   }
 
+  @Override
   public void setDispactchListener(final DispatchListener listener) {
     myListener = listener;
   }

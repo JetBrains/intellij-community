@@ -248,12 +248,6 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
       }
     }
 
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return EMPTY_ARRAY;
-    }
-
     @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return getElement();

@@ -16,11 +16,18 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 
 public class AddVariableInitializerTest extends LightQuickFixParameterizedTestCase {
 
   public void test() {
     doAllTests();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection(true));
   }
 
   @Override

@@ -66,7 +66,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final String COMMAND_TITLE = RefactoringBundle.message("generate.module.descriptors.command.title");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project) && isModularJdkAvailable());
   }
@@ -77,7 +77,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
     CompilerManager compilerManager = CompilerManager.getInstance(project);

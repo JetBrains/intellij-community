@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<info>
+  <entry
+      path="ReduceReturnOrYieldBreakTransformation.cs"
+      revision="91603"
+      kind="file">
+    <url>
+      http://svn.labs.intellij.net/resharper/trunk/ReSharper/src/Decompiler.Core/Src/Transformations/StatementStructure/ReduceReturnOrYieldBreakTransformation.cs
+    </url>
+    <repository>
+      <root>http://svn.labs.intellij.net/resharper</root>
+      <uuid>ed0594e5-7722-0410-9c76-949374689613</uuid>
+    </repository>
+    <wc-info>
+      <wcroot-abspath>C:/TestProjects/sortedProjects/Subversion/Resharper17short</wcroot-abspath>
+      <schedule>normal</schedule>
+      <depth>infinity</depth>
+      <text-updated>2012-01-20T11:25:32.625000Z</text-updated>
+      <checksum>7af8adacb93afaa48b2cfb76de605824c220983a</checksum>
+    </wc-info>
+    <commit
+        revision="87972">
+      <author>Slava.Trenogin</author>
+      <date>2011-10-06T21:27:41.539022Z</date>
+    </commit>
+  </entry>
+</info>

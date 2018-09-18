@@ -37,7 +37,7 @@ public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatche
     myModifiers.add(interestedModifier);
   }
   
-  public ByModifierArrangementEntryMatcher(@NotNull Collection<ArrangementAtomMatchCondition> interestedModifiers) {
+  public ByModifierArrangementEntryMatcher(@NotNull Collection<? extends ArrangementAtomMatchCondition> interestedModifiers) {
     myModifiers.addAll(interestedModifiers);
   }
 

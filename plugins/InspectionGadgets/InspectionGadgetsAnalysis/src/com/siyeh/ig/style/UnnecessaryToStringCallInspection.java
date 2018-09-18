@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.*;
@@ -79,7 +80,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
       if (!isRedundantToString(call)) return;
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
-      call.replace(qualifier);
+      new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }
 

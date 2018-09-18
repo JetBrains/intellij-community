@@ -71,4 +71,9 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
 
     return superClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
+
+  @Override
+  public String toString() {
+    return "Type Hierarchy for " + formatBaseElementText();
+  }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -43,7 +29,7 @@ public class PyForPartImpl extends PyStatementPartImpl implements PyForPart {
       checker = checker.getPrevSibling(); // step from the source node
       while (checker != null) {
         ASTNode ch_node = checker.getNode();
-        if (ch_node == null) return false; 
+        if (ch_node == null) return false;
         else {
           if (ch_node.getElementType() == eltType) {
             return true;
@@ -58,6 +44,7 @@ public class PyForPartImpl extends PyStatementPartImpl implements PyForPart {
     return false;
   }
 
+  @Override
   public PyExpression getTarget() {
     ASTNode n = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (followsNodeOfType(n, PyTokenTypes.FOR_KEYWORD)) {
@@ -66,6 +53,7 @@ public class PyForPartImpl extends PyStatementPartImpl implements PyForPart {
     else return null;
   }
 
+  @Override
   public PyExpression getSource() {
     List<PsiElement> exprs = findChildrenByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     // normally there are 2 exprs, the second is the source.

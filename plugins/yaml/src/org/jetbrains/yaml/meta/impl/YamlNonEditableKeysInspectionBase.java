@@ -7,17 +7,18 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 @ApiStatus.Experimental
 public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInspectionBase {
@@ -70,22 +71,26 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final ArrayList<YAMLKeyValue> keysToDelete = new ArrayList<>();
 
-        descriptor.getPsiElement().getContainingFile().accept(new PsiRecursiveElementVisitor() {
+        descriptor.getPsiElement().getContainingFile().accept(new YamlRecursivePsiElementVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
-            if (element instanceof YAMLKeyValue) {
-              final YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getKeyValueMetaType((YAMLKeyValue)element);
-              if (meta != null && !meta.getField().isEditable()) {
-                keysToDelete.add((YAMLKeyValue)element);
-                return;
+          public void visitKeyValue(@NotNull YAMLKeyValue keyValue) {
+            final YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getKeyValueMetaType(keyValue);
+            if (meta != null && !meta.getField().isEditable()) {
+              if (keyValue.getParentMapping() != null) {
+                keysToDelete.add(keyValue);
               }
+              else {
+                Logger.getInstance(YamlNonEditableKeysInspectionBase.class)
+                  .warn("Wanted to remove KV, but it does not have a parent mapping");
+              }
+              return;
             }
-            super.visitElement(element);
+            super.visitKeyValue(keyValue);
           }
         });
 
         for (YAMLKeyValue keyValue : keysToDelete) {
-          keyValue.getParentMapping().deleteKeyValue(keyValue);
+          Objects.requireNonNull(keyValue.getParentMapping()).deleteKeyValue(keyValue);
         }
       }
     }

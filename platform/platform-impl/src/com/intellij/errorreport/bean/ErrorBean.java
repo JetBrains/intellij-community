@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 /** @deprecated trivial and not particularly helpful, could be replaced with {@link java.util.Map} (to be removed in IDEA 2020) */
+@Deprecated
 @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
 public class ErrorBean {
   private final String stackTrace;

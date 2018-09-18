@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AnimatorTestAction extends AnAction {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> SwingUtilities.invokeLater(() -> TimeoutUtil.sleep(30)), 0, 123, TimeUnit.MILLISECONDS);
 
@@ -59,11 +60,7 @@ public class AnimatorTestAction extends AnAction {
             AllIcons.Process.Big.Step_5,
             AllIcons.Process.Big.Step_6,
             AllIcons.Process.Big.Step_7,
-            AllIcons.Process.Big.Step_8,
-            AllIcons.Process.Big.Step_9,
-            AllIcons.Process.Big.Step_10,
-            AllIcons.Process.Big.Step_11,
-            AllIcons.Process.Big.Step_12
+            AllIcons.Process.Big.Step_8
           };
           List<Icon> iconsList2 = new ArrayList<>();
           for (int i = 0; i < cycles; i++) {

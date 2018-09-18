@@ -34,14 +34,14 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
   private AddEditRemovePanel<NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
   @Nullable private final Project myProject;
-  private final List<NameLocationPair> myNewPairs;
+  private final List<? extends NameLocationPair> myNewPairs;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalResourceConfigurable(@Nullable Project project) {
     this(project, Collections.emptyList());
   }
 
-  public ExternalResourceConfigurable(@Nullable Project project, List<NameLocationPair> newResources) {
+  public ExternalResourceConfigurable(@Nullable Project project, List<? extends NameLocationPair> newResources) {
     myProject = project;
     myNewPairs = newResources;
   }

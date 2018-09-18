@@ -157,7 +157,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         return panel.getDataImpl(dataId, this, () -> JBIterable.from(getSelectedValuesList()));
       }
     }

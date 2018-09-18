@@ -44,6 +44,7 @@ public class SSBasedInspectionTest extends InspectionTestCase {
     doTest("ssBased/" + getTestName(true), myWrapper,"java 1.5");
   }
 
+  @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/";
   }

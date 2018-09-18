@@ -27,11 +27,13 @@ class YAMLStructureViewKeyValue extends DuplicatedPsiTreeElementBase<YAMLKeyValu
     return YAMLStructureViewFactory.createChildrenViewTreeElements(getVal(), getDetails());
   }
 
+  @Override
   @NotNull
   public String getPresentableText() {
     return getKeyValue().getKeyText();
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     if (getVal() instanceof YAMLScalar) {
@@ -45,6 +47,7 @@ class YAMLStructureViewKeyValue extends DuplicatedPsiTreeElementBase<YAMLKeyValu
     }
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     if (getVal() instanceof YAMLScalar) {

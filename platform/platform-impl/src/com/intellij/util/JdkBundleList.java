@@ -59,21 +59,25 @@ public class JdkBundleList {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link #addBundle(JdkBundle)} (to be removed in IDEA 2019) */
+  @Deprecated
   public void addBundle(@NotNull JdkBundle bundle, @SuppressWarnings("unused") boolean forceOldVersion) {
     addBundle(bundle);
   }
 
   /** @deprecated use {@link #getBundle(String)} (to be removed in IDEA 2019) */
+  @Deprecated
   public boolean contains(@NotNull String path) {
     return myBundles.keySet().contains(path);
   }
 
   /** @deprecated use {@link #getBundles()} (to be removed in IDEA 2019) */
+  @Deprecated
   public ArrayList<JdkBundle> toArrayList() {
     return new ArrayList<>(myBundles.values());
   }
 
   /** @deprecated use {@link #addBundlesFromLocation(String, JavaVersion, JavaVersion)} (to be removed in IDEA 2019) */
+  @Deprecated
   public void addBundlesFromLocation(@NotNull String location, @Nullable Version minVer, @Nullable Version maxVer) {
     addBundlesFromLocation(location, toJavaVersion(minVer), toJavaVersion(maxVer));
   }

@@ -15,11 +15,13 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanU
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getCountingUsage;
 
 public class VcsStatsUsagesCollector extends ProjectUsagesCollector {
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.vcs.metrics";
   }
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     return getDescriptors(project);

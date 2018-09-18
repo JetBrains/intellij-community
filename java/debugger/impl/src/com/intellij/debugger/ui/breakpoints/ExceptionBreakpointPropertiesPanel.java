@@ -74,6 +74,7 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
       DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications"), true));
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myNotifyCaughtCheckBox.isSelected() && !myNotifyUncaughtCheckBox.isSelected()) {
           Object source = e.getSource();

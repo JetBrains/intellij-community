@@ -25,6 +25,7 @@ import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.tree.AbstractDomElementNode;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ public class DomElementsToggleAction extends ToggleAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
 
     e.getPresentation().setIcon(myIcon);
@@ -66,7 +67,7 @@ public class DomElementsToggleAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return getHiders().get(myClass);
   }
 
@@ -75,7 +76,7 @@ public class DomElementsToggleAction extends ToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     getHiders().put(myClass, state);
     myTreeView.getBuilder().updateFromRoot();
   }

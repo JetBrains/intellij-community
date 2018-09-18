@@ -118,7 +118,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }

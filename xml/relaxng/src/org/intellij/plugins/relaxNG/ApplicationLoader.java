@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.javaee.ResourceRegistrar;
 import com.intellij.javaee.StandardResourceProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
@@ -40,13 +39,12 @@ import org.intellij.plugins.relaxNG.validation.ValidateAction;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineMetaData;
 
-public class ApplicationLoader implements ApplicationComponent {
-  private static final String RNG_EXT = "rng";
+public class ApplicationLoader implements ApplicationInitializedListener {
   private static final String VALIDATE_XML = "ValidateXml";
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
   @Override
-  public void initComponent() {
+  public void componentsInitialized() {
     registerMetaData();
 
     installValidateXmlAction();

@@ -64,6 +64,7 @@ public class SelectTagDialog extends DialogWrapper {
     myLists.add(list);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (list.getSelectedValue() != null)
           cancelOtherSelections(list);
@@ -129,6 +130,7 @@ public class SelectTagDialog extends DialogWrapper {
       list.getSelectionModel().addSelectionInterval(0, 0);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

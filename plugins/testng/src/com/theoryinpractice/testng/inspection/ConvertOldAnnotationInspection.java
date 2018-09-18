@@ -26,24 +26,28 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String DISPLAY_NAME = "Convert old @Configuration TestNG annotations";
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "ConvertOldAnnotations";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -59,6 +63,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
   private static class ConvertOldAnnotationsQuickfix implements LocalQuickFix {
     private static final Logger LOG = Logger.getInstance(ConvertOldAnnotationsQuickfix.class);
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return DISPLAY_NAME;
@@ -69,6 +74,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiAnnotation annotation = (PsiAnnotation)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(annotation)) return;

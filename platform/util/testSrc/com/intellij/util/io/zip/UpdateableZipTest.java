@@ -48,70 +48,65 @@ public class UpdateableZipTest extends TestCase {
   }
 
   public void testRead() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
-    try {
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
       assertEntryWithContentExists(jbZip, "/first", "first");
       assertEntryWithContentExists(jbZip, "/second", "second");
-    }
-    finally {
-      jbZip.close();
     }
   }
 
   public void testAppendEntry() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
 
-    assertEntryWithContentExists(jbZip, "/first", "first");
-    assertEntryWithContentExists(jbZip, "/second", "second");
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
 
-    JBZipEntry newEntry = jbZip.getOrCreateEntry("/third");
-    newEntry.setData("third".getBytes());
-    jbZip.close();
+      JBZipEntry newEntry = jbZip.getOrCreateEntry("/third");
+      newEntry.setData("third".getBytes());
+    }
 
-    ZipFile utilZip = new ZipFile(zipFile);
-    ZipEntry thirdEntry = utilZip.getEntry("/third");
-    assertNotNull(thirdEntry);
-    String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(thirdEntry)));
-    assertEquals("third", thirdText);
-    utilZip.close();
+    try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry thirdEntry = utilZip.getEntry("/third");
+      assertNotNull(thirdEntry);
+      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(thirdEntry)));
+      assertEquals("third", thirdText);
+    }
   }
 
   public void testReplaceEntryContent() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
 
-    assertEntryWithContentExists(jbZip, "/first", "first");
-    assertEntryWithContentExists(jbZip, "/second", "second");
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
 
-    JBZipEntry newEntry = jbZip.getOrCreateEntry("/second");
-    newEntry.setData("Content Replaced".getBytes());
-    jbZip.close();
+      JBZipEntry newEntry = jbZip.getOrCreateEntry("/second");
+      newEntry.setData("Content Replaced".getBytes());
+    }
 
-    ZipFile utilZip = new ZipFile(zipFile);
-    ZipEntry updatedEntry = utilZip.getEntry("/second");
-    assertNotNull(updatedEntry);
-    String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(updatedEntry)));
-    assertEquals("Content Replaced", thirdText);
-    utilZip.close();
+    try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry updatedEntry = utilZip.getEntry("/second");
+      assertNotNull(updatedEntry);
+      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(updatedEntry)));
+      assertEquals("Content Replaced", thirdText);
+    }
   }
 
   public void testRemoveEntry() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
 
-    assertEntryWithContentExists(jbZip, "/first", "first");
-    assertEntryWithContentExists(jbZip, "/second", "second");
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
 
-    jbZip.getEntry("/second").erase();
-    jbZip.close();
+      jbZip.getEntry("/second").erase();
+    }
 
-    ZipFile utilZip = new ZipFile(zipFile);
-    ZipEntry removedEntry = utilZip.getEntry("/second");
-    assertNull(removedEntry);
-    utilZip.close();
+    try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry removedEntry = utilZip.getEntry("/second");
+      assertNull(removedEntry);
+    }
   }
   
   public void testReadWrite1() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
-    try {
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
       assertEntryWithContentExists(jbZip, "/first", "first");
       assertEntryWithContentExists(jbZip, "/second", "second");
 
@@ -119,14 +114,10 @@ public class UpdateableZipTest extends TestCase {
 
       assertEntryWithContentExists(jbZip, "/third", "third");
     }
-    finally {
-      jbZip.close();
-    }
   }
 
   public void testReadWrite2() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
-    try {
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
       assertEntryWithContentExists(jbZip, "/first", "first");
       assertEntryWithContentExists(jbZip, "/second", "second");
 
@@ -134,14 +125,10 @@ public class UpdateableZipTest extends TestCase {
 
       assertEntryWithContentExists(jbZip, "/first", "first_new");
     }
-    finally {
-      jbZip.close();
-    }
   }
 
   public void testMissingSeeks() throws Exception {
-    JBZipFile jbZip = new JBZipFile(zipFile);
-    try {
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
       assertEntryWithContentExists(jbZip, "/first", "first");
       assertEntryWithContentExists(jbZip, "/second", "second");
 
@@ -156,9 +143,6 @@ public class UpdateableZipTest extends TestCase {
       assertEntryWithContentExists(jbZip, "/second", "second");
       assertEntryWithContentExists(jbZip, "/third", "third");
       assertEntryWithContentExists(jbZip, "/forth", "forth");
-    }
-    finally {
-      jbZip.close();
     }
   }
 
@@ -190,11 +174,11 @@ public class UpdateableZipTest extends TestCase {
 
   private File createTestUtilZip() throws Exception {
     File zipFile = FileUtil.createTempFile("test", ".zip");
-    ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+    try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))) {
 
-    appendEntry(zos, "/first", "first".getBytes());
-    appendEntry(zos, "/second", "second".getBytes());
-    zos.close();
+      appendEntry(zos, "/first", "first".getBytes());
+      appendEntry(zos, "/second", "second".getBytes());
+    }
     return zipFile;
   }
 

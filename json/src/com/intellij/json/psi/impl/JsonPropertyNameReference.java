@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +47,7 @@ public class JsonPropertyNameReference implements PsiReference {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return myProperty.setName(newElementName);
   }
 
@@ -58,7 +57,7 @@ public class JsonPropertyNameReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof JsonProperty)) {
       return false;
     }
@@ -66,12 +65,6 @@ public class JsonPropertyNameReference implements PsiReference {
     final JsonProperty otherProperty = (JsonProperty)element;
     final PsiElement selfResolve = resolve();
     return otherProperty.getName().equals(getCanonicalText()) && selfResolve != otherProperty;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

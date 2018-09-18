@@ -31,7 +31,7 @@ import java.util.Set;
 public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
   private final int myTransitiveBorder;
 
-  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
+  public AnalyzeDependenciesHandler(Project project, List<? extends AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
     super(project, scopes, excluded);
     myTransitiveBorder = transitiveBorder;
   }

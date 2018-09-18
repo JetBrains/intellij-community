@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,6 +38,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.usageView.UsageViewLongNameLocation;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,21 +95,22 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   public final Object[] getChildElements(final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
-      final Object[] cachedChildren = descriptor.getCachedChildren();
+      Object[] cachedChildren = descriptor.getCachedChildren();
       if (cachedChildren == null) {
         if (descriptor.isValid()) {
           try {
-            descriptor.setCachedChildren(AbstractTreeUi.calculateYieldingToWriteAction(() ->buildChildren(descriptor)));
+            cachedChildren = AbstractTreeUi.calculateYieldingToWriteAction(() -> buildChildren(descriptor));
           }
           catch (IndexNotReadyException e) {
             return ArrayUtil.EMPTY_OBJECT_ARRAY;
           }
         }
         else {
-          descriptor.setCachedChildren(ArrayUtil.EMPTY_OBJECT_ARRAY);
+          cachedChildren = ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
+        descriptor.setCachedChildren(cachedChildren);
       }
-      return descriptor.getCachedChildren();
+      return cachedChildren;
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
@@ -197,7 +201,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends NodeDescriptor {
-    public TextInfoNodeDescriptor(final NodeDescriptor parentDescriptor, final String text, final Project project) {
+    TextInfoNodeDescriptor(final NodeDescriptor parentDescriptor, final String text, final Project project) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.RED;
@@ -216,5 +220,15 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   public boolean isAlwaysShowPlus() {
     return false;
+  }
+
+  @NotNull
+  protected String formatBaseElementText() {
+    HierarchyNodeDescriptor descriptor = getBaseDescriptor();
+    if (descriptor == null) return toString();
+    PsiElement element = descriptor.getPsiElement();
+    if (element == null) return descriptor.toString();
+    return ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " " +
+           ElementDescriptionUtil.getElementDescription(element, UsageViewLongNameLocation.INSTANCE);
   }
 }

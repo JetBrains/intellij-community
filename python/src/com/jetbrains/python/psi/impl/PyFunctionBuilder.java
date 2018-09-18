@@ -89,7 +89,6 @@ public class PyFunctionBuilder {
 
   /**
    * Adds param and its type to doc
-   * @param format what docstyle to use to doc param type
    * @param name param name
    * @param type param type
    */

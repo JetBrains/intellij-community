@@ -2,7 +2,8 @@
 package com.jetbrains.jsonSchema.impl;
 
 public enum JsonErrorPriority {
-  HIGH_PRIORITY,
+  TYPE_MISMATCH,
   MEDIUM_PRIORITY,
+  MISSING_PROPS,
   LOW_PRIORITY
 }

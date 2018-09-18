@@ -82,7 +82,7 @@ public class ExtractableExpressionPart {
 
   @Nullable
   static ExtractableExpressionPart match(@NotNull PsiExpression expression,
-                                         @NotNull List<PsiElement> scope,
+                                         @NotNull List<? extends PsiElement> scope,
                                          @Nullable ComplexityHolder complexityHolder) {
     if (expression instanceof PsiReferenceExpression) {
       return matchVariable((PsiReferenceExpression)expression, scope);
@@ -120,7 +120,7 @@ public class ExtractableExpressionPart {
   }
 
   @Nullable
-  static ExtractableExpressionPart matchVariable(@NotNull PsiReferenceExpression expression, @Nullable List<PsiElement> scope) {
+  static ExtractableExpressionPart matchVariable(@NotNull PsiReferenceExpression expression, @Nullable List<? extends PsiElement> scope) {
     PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField && isModification(expression)) {
       return null;

@@ -205,6 +205,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
       String stream = terminal.generateIntermediate(ct) + terminal.generateTerminal(ct, myStrictMode);
       PsiElement toReplace = terminal.getElementToReplace();
       PsiElement result;
+      terminal.cleanUp(ct);
       if (toReplace != null) {
         result = ct.replaceAndRestoreComments(toReplace, stream);
       }
@@ -213,7 +214,6 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
         PsiExpression initializer = Objects.requireNonNull(variable.getInitializer());
         result = ct.replaceAndRestoreComments(initializer, stream);
       }
-      terminal.cleanUp();
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
   }

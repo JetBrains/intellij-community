@@ -36,6 +36,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> keys1;
   private static final Map<IElementType, TextAttributesKey> keys2;
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new PropertiesHighlightingLexer();
@@ -84,6 +85,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PROPERTIES_INVALID_STRING_ESCAPE);
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return SyntaxHighlighterBase.pack(keys1.get(tokenType), keys2.get(tokenType));

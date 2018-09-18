@@ -27,9 +27,11 @@ import java.util.List;
 public class JavaArrangementOverriddenMethodsInfo {
 
   @NotNull private final List<JavaElementArrangementEntry> myMethodEntries = new ArrayList<>();
-  @NotNull private final String myName;
+  // Name of base class, which contains overridden methods
+  // Used only for debug purposes
+  private final String myName;
 
-  public JavaArrangementOverriddenMethodsInfo(@NotNull String name) {
+  public JavaArrangementOverriddenMethodsInfo(String name) {
     myName = name;
   }
 

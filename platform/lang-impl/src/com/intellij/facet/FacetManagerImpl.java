@@ -500,13 +500,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     myModuleAdded = true;
   }
 
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
   private static class FacetManagerModel extends FacetModelBase {
     private Facet[] myAllFacets = Facet.EMPTY_ARRAY;
     private final Set<ProjectModelExternalSource> myExternalSources = new LinkedHashSet<>();

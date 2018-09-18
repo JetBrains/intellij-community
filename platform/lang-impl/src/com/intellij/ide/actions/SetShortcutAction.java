@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -21,7 +22,7 @@ public class SetShortcutAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     JBPopup seDialog = project == null ? null : project.getUserData(SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP);
     if (seDialog == null) {
@@ -46,7 +47,7 @@ public class SetShortcutAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
     Project project = e.getProject();

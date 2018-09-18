@@ -36,7 +36,7 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(Gstring)('"Guillaume"')
+        PsiElement(double quoted string)('"Guillaume"')
   PsiElement(new line)('\n')
   Variable definitions
     Modifiers
@@ -48,7 +48,7 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(Gstring)('"April, 1st"')
+        PsiElement(double quoted string)('"April, 1st"')
   PsiElement(new line)('\n\n')
   Variable definitions
     Modifiers
@@ -91,35 +91,35 @@ Groovy script
           PsiElement([)('[')
           PsiWhiteSpace('\n    ')
           Literal
-            PsiElement(string)(''Guillaume'')
+            PsiElement(single quoted string)(''Guillaume'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n    ')
           Literal
-            PsiElement(string)(''April, 1st'')
+            PsiElement(single quoted string)(''April, 1st'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n    ')
           Literal
-            PsiElement(string)(''$ dollar sign'')
+            PsiElement(single quoted string)(''$ dollar sign'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n    ')
           Literal
-            PsiElement(string)(''$ escaped dollar sign'')
+            PsiElement(single quoted string)(''$ escaped dollar sign'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n    ')
           Literal
-            PsiElement(string)(''\\ backslash'')
+            PsiElement(single quoted string)(''\\ backslash'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n    ')
           Literal
-            PsiElement(string)(''/ forward slash'')
+            PsiElement(single quoted string)(''/ forward slash'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n')
           Literal
-            PsiElement(string)(''$/ escaped forward slash'')
+            PsiElement(single quoted string)(''$/ escaped forward slash'')
           PsiElement(,)(',')
           PsiWhiteSpace('\n')
           Literal
-            PsiElement(string)(''/$ escaped dollar slashy string delimiter'')
+            PsiElement(single quoted string)(''/$ escaped dollar slashy string delimiter'')
           PsiWhiteSpace('\n\n')
           PsiElement(])(']')
         PsiElement(.)('.')

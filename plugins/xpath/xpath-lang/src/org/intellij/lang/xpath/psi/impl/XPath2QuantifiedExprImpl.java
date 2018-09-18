@@ -26,6 +26,7 @@ public class XPath2QuantifiedExprImpl extends XPath2ElementImpl implements XPath
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     return XPath2Type.BOOLEAN;
@@ -43,6 +44,7 @@ public class XPath2QuantifiedExprImpl extends XPath2ElementImpl implements XPath
     return node != null ? PsiTreeUtil.findChildOfType(node.getPsi(), XPathExpression.class) : null;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2QuantifiedExpr(this);
   }

@@ -35,10 +35,12 @@ public class ReplacePolicy implements ConflictResolutionPolicy {
         return instance;
     }
 
+    @Override
     public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
         DuplicatePolicy.getInstance().setNewMethodStrategy(strategy);
     }
 
+    @Override
     public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
       PsiMethod generatedMethod = DuplicatePolicy.getInstance().applyMethod(clazz, null, newMethod, editor);
       if (existingMethod != null) {

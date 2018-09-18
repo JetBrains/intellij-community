@@ -30,24 +30,28 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   @NonNls private static final String TESTNG_PREFIX = "testng.";
   private static final String DISPLAY_NAME = "Convert TestNG Javadoc to 1.5 annotations";
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "ConvertJavadoc";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -62,6 +66,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   private static class ConvertJavadocQuickfix implements LocalQuickFix {
     private static final Logger LOG = Logger.getInstance(ConvertJavadocQuickfix.class);
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return DISPLAY_NAME;
@@ -72,6 +77,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag tag = (PsiDocTag)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(tag)) return;

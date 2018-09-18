@@ -53,7 +53,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> classNames) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> classNames) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
@@ -167,6 +167,9 @@ public class TestsPattern extends TestPackage {
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(getConfiguration().getProject(), className, searchScope);
       if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
         throw new RuntimeConfigurationWarning("Class " + className + " not a test");
+      }
+      if (psiClass == null && !pattern.contains("*")) {
+        throw new RuntimeConfigurationWarning("Class " + className + " not found");
       }
     }
   }

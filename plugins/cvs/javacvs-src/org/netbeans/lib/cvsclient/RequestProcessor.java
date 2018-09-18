@@ -87,6 +87,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
   // Implemented ============================================================
 
+  @Override
   public boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException,
                                                                                                                   AuthenticationException {
     IConnectionStreams connectionStreams = openConnection();

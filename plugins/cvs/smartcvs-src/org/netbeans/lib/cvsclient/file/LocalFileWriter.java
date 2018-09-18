@@ -36,6 +36,7 @@ public final class LocalFileWriter implements ILocalFileWriter {
 
   // Implemented ============================================================
 
+  @Override
   public void writeTextFile(FileObject fileObject,
                             int length,
                             InputStream inputStream,
@@ -58,6 +59,7 @@ public final class LocalFileWriter implements ILocalFileWriter {
     fileReadOnlyHandler.setFileReadOnly(localFile, readOnly);
   }
 
+  @Override
   public void writeBinaryFile(FileObject fileObject,
                               int length,
                               InputStream inputStream,
@@ -75,12 +77,14 @@ public final class LocalFileWriter implements ILocalFileWriter {
     fileReadOnlyHandler.setFileReadOnly(localFile, readOnly);
   }
 
+  @Override
   public void removeLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler)
     throws IOException {
     final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
     deleteFile(file, fileReadOnlyHandler);
   }
 
+  @Override
   public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName) {
     final File originalFile = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
     final File targetFile = new File(originalFile.getParentFile(), newFileName);
@@ -98,10 +102,12 @@ public final class LocalFileWriter implements ILocalFileWriter {
    *
    * @param modifiedDate the date the file should be marked as modified
    */
+  @Override
   public void setNextFileDate(Date modifiedDate) {
     this.modifiedDate = modifiedDate;
   }
 
+  @Override
   public void setNextFileMode(String nextFileMode) {
     this.nextFileMode = nextFileMode;
   }

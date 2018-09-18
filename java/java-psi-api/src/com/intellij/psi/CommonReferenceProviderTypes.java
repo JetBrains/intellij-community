@@ -16,20 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
 
 /**
  * @author peter
  */
 public abstract class CommonReferenceProviderTypes {
-
-  /**
-   * @deprecated
-   * @see #getInstance()
-   */
-  public static CommonReferenceProviderTypes getInstance(final Project project) {
-    return getInstance();
-  }
 
   public static CommonReferenceProviderTypes getInstance() {
     return ServiceManager.getService(CommonReferenceProviderTypes.class);

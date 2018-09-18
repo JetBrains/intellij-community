@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -62,7 +63,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (element.getLanguage() != StdLanguages.JAVA) return false;
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {
+      if (method.isConstructor() && !InlineUtil.isChainingConstructor(method)) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) return false;
         return findClassInheritors(containingClass);

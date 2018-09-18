@@ -112,7 +112,7 @@ public class GenerationNode extends UserDataHolderBase {
     myChildren.add(child);
   }
 
-  public void addChildren(Collection<GenerationNode> children) {
+  public void addChildren(Collection<? extends GenerationNode> children) {
     for (GenerationNode child : children) {
       addChild(child);
     }
@@ -530,7 +530,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   @Nullable
-  private static XmlAttribute findImpliedAttribute(@NotNull List<XmlAttribute> attributes) {
+  private static XmlAttribute findImpliedAttribute(@NotNull List<? extends XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
       if (attribute.getValueElement() != null && isImpliedAttribute(attribute.getLocalName())) {
         return attribute;
@@ -540,7 +540,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   @Nullable
-  private static XmlAttribute findEmptyAttribute(@NotNull List<XmlAttribute> attributes) {
+  private static XmlAttribute findEmptyAttribute(@NotNull List<? extends XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
       final String attributeValue = attribute.getValue();
       if (isEmptyValue(attributeValue)) {

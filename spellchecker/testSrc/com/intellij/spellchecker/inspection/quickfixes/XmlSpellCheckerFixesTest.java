@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.inspection.quickfixes;
 
 public class XmlSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
+  @Override
   protected String getExtension() {
     return ".xml";
   }

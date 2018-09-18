@@ -13,10 +13,12 @@ public class XmlCompiledPattern extends CompiledPattern {
     setStrategy(XmlMatchingStrategy.getInstance());
   }
 
+  @Override
   public String[] getTypedVarPrefixes() {
     return new String[] {XML_TYPED_VAR_PREFIX};
   }
 
+  @Override
   public boolean isTypedVar(final String str) {
     return str.trim().startsWith(XML_TYPED_VAR_PREFIX);
   }

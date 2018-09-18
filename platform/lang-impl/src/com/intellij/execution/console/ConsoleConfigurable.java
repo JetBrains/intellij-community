@@ -26,16 +26,21 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +54,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private JTextField myCommandsHistoryLimitField;
   private JCheckBox myCbOverrideConsoleCycleBufferSize;
   private JTextField myConsoleCycleBufferSizeField;
-
+  private JLabel myConsoleBufferSizeWarningLabel;
 
   private MyAddDeleteListPanel myPositivePanel;
   private MyAddDeleteListPanel myNegativePanel;
@@ -62,8 +67,19 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       myCbUseSoftWrapsAtConsole = new JCheckBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"), false);
       myCommandsHistoryLimitField = new JTextField(3);
       myCbOverrideConsoleCycleBufferSize = new JCheckBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", String.valueOf(ConsoleBuffer.getLegacyCycleBufferSize() / 1024)), false);
-      myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected()));
+      myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> {
+        myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected());
+        myConsoleBufferSizeWarningLabel.setVisible(myCbOverrideConsoleCycleBufferSize.isSelected());
+      });
       myConsoleCycleBufferSizeField = new JTextField(3);
+      myConsoleBufferSizeWarningLabel = new JLabel();
+      myConsoleBufferSizeWarningLabel.setForeground(JBColor.red);
+      myConsoleCycleBufferSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+          updateWarningLabel();
+        }
+      });
 
       JPanel northPanel = new JPanel(new GridBagLayout());
       GridBag gridBag = new GridBag();
@@ -76,6 +92,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
         northPanel.add(new JLabel(" KB"), gridBag.next());
+        northPanel.add(Box.createHorizontalStrut(JBUI.scale(20)), gridBag.next());
+        northPanel.add(myConsoleBufferSizeWarningLabel, gridBag.next());
       }
       if (!editFoldingsOnly()) {
         JPanel wrapper = new JPanel(new BorderLayout());
@@ -94,6 +112,22 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       myNegativePanel.getEmptyText().setText("No exceptions");
     }
     return myMainComponent;
+  }
+
+  private void updateWarningLabel() {
+    try {
+      int value = Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim());
+      if (value <= 0) {
+        myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.unlimited"));
+        return;
+      }
+      if (value > FileUtilRt.LARGE_FOR_CONTENT_LOADING / 1024) {
+        myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.too.large"));
+        return;
+      }
+    }
+    catch (NumberFormatException ignored) {}
+    myConsoleBufferSizeWarningLabel.setText("");
   }
 
   protected boolean editFoldingsOnly() {
@@ -147,7 +181,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         uiSettingsChanged = true;
       }
       if (isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb())) {
-        uiSettings.setConsoleCycleBufferSizeKb(Math.max(0, Math.min(1024*100, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim()))));
+        uiSettings.setConsoleCycleBufferSizeKb(Math.max(0, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim())));
         uiSettingsChanged = true;
       }
     }

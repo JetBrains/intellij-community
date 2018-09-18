@@ -27,6 +27,7 @@ public final class LwIntroRectangleProperty extends LwIntrospectedProperty{
     super(name, "java.awt.Rectangle");
   }
 
+  @Override
   public Object read(final Element element) throws Exception{
     final int x = LwXmlReader.getRequiredInt(element, "x");
     final int y = LwXmlReader.getRequiredInt(element, "y");

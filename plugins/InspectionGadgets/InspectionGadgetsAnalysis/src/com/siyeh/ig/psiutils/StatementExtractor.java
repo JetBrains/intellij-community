@@ -49,7 +49,7 @@ public class StatementExtractor {
    * @return an array of non-physical statements which represent the same logic as passed expressions
    */
   @NotNull
-  public static PsiStatement[] generateStatements(List<PsiExpression> expressionsToKeep, PsiExpression root) {
+  public static PsiStatement[] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
     String statementsCode = generateStatementsText(expressionsToKeep, root);
     if(statementsCode.isEmpty()) return PsiStatement.EMPTY_ARRAY;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(root.getProject());
@@ -57,7 +57,7 @@ public class StatementExtractor {
     return codeBlock.getStatements();
   }
 
-  public static String generateStatementsText(List<PsiExpression> expressionsToKeep, PsiExpression root) {
+  public static String generateStatementsText(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
     Node result = StreamEx.ofReversed(expressionsToKeep).map(expression -> createNode(expression, root)).foldLeft(EMPTY, Node::prepend);
     return result.toString();
   }

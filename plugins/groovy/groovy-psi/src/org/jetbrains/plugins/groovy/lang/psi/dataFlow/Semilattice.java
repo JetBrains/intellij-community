@@ -25,7 +25,7 @@ import java.util.List;
 public interface Semilattice<E> {
 
   @NotNull
-  E join(@NotNull List<E> ins);
+  E join(@NotNull List<? extends E> ins);
 
   boolean eq(@NotNull E e1, @NotNull E e2);
 }

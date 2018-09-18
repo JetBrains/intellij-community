@@ -30,8 +30,8 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.Collections;
@@ -96,6 +96,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
     return myContainer.getChild(CONTENT_ROOTS_ROLE);
   }
 
+  @Override
   @NotNull
   public JpsUrlList getExcludeRootsList() {
     return myContainer.getChild(EXCLUDED_ROOTS_ROLE);
@@ -230,6 +231,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
     return myLibraryCollection;
   }
 
+  @Override
   @Nullable
   public JpsProject getProject() {
     JpsModel model = getModel();

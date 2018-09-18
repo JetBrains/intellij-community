@@ -200,7 +200,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       private void register(@NotNull PsiExpression iterable,
                             @NotNull BulkMethodInfo info,
                             @NotNull PsiReferenceExpression methodExpression) {
-        PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(methodExpression));
         if (qualifier instanceof PsiThisExpression) {
           PsiMethod method = PsiTreeUtil.getParentOfType(iterable, PsiMethod.class);
           // Likely we are inside of the bulk method implementation

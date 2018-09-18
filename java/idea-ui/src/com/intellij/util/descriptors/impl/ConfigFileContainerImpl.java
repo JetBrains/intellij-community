@@ -98,7 +98,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
     myDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void fireDescriptorChanged(final ConfigFile descriptor) {
+  void fireDescriptorChanged(@NotNull ConfigFile descriptor) {
     incModificationCount();
     myDispatcher.getMulticaster().configFileChanged(descriptor);
   }

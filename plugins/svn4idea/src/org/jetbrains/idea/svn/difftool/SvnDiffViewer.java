@@ -296,12 +296,12 @@ public class SvnDiffViewer implements DiffViewer {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return !mySettings.isHideProperties();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.setHideProperties(!state);
       updatePropertiesPanel();
     }

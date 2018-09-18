@@ -28,7 +28,6 @@ public class SimpleModificationTracker implements ModificationTracker {
   private static final AtomicLongFieldUpdater<SimpleModificationTracker> UPDATER =
     AtomicLongFieldUpdater.newUpdater(SimpleModificationTracker.class, "myCounter");
 
-  @SuppressWarnings("unused")
   private volatile long myCounter;
 
   @Override

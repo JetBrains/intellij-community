@@ -44,7 +44,7 @@ public class EvaluateException extends Exception {
       LOG.debug(msg);
     }
   }
-  
+
   @Nullable
   public ObjectReference getExceptionFromTargetVM() {
     return myTargetException;
@@ -54,6 +54,7 @@ public class EvaluateException extends Exception {
     myTargetException = targetException;
   }
 
+  @Override
   public String getMessage() {
     final String errorMessage = super.getMessage();
     if (errorMessage != null) {

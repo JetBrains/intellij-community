@@ -98,10 +98,12 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
   }
 
-  public static PsiFile getPsiFileAtOffset(final PsiFile file, final int offset) {
+  public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     PsiElement elt = getElementAtOffset(file, offset);
 
-    assert elt.isValid() : elt + "; file: "+file + "; isvalid: "+file.isValid();
+    if (!elt.isValid()) {
+      LOG.error(elt + "; file: " + file + "; isValid: " + file.isValid());
+    }
     return elt.getContainingFile();
   }
 
@@ -144,7 +146,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     while (true) {
       PsiElement parent = elt.getParent();
       TextRange range = elt.getTextRange();
-      assert range != null : "Range is null for " + elt + "; " + elt.getClass();
+      if (range == null) {
+        LOG.error("Range is null for " + elt + "; " + elt.getClass());
+        return file.getLanguage();
+      }
       if (range.contains(selectionRange) || parent == null || elt instanceof PsiFile) {
         return elt.getLanguage();
       }
@@ -198,7 +203,8 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     Project project = psiFile.getProject();
     if (virtualFile.isInLocalFileSystem() || virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) {
       // Try to find editor for the real file.
-      final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+      final FileEditor[] editors = fileEditorManager != null ? fileEditorManager.getEditors(virtualFile) : new FileEditor[0];
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           return ((TextEditor)editor).getEditor();

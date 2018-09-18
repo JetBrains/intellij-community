@@ -32,7 +32,7 @@ public abstract class TestCompilerReferenceServiceAction extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     final PsiElement element = getPsiElement(e.getDataContext());
     if (element != null) startActionFor(element);
   }
@@ -42,7 +42,7 @@ public abstract class TestCompilerReferenceServiceAction extends AnAction {
   protected abstract boolean canBeAppliedFor(@NotNull PsiElement element);
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     if (!CompilerReferenceService.isEnabled()) {
       e.getPresentation().setEnabled(false);
       return;

@@ -39,10 +39,12 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new MacIntelliJComboBoxUI();
   }
 
+  @Override
   protected void installDarculaDefaults() {
     comboBox.setOpaque(false);
   }
 
+  @Override
   protected void uninstallDarculaDefaults() {}
 
     @Override

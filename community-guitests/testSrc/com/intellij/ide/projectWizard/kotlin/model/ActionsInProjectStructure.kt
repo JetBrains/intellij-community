@@ -1,13 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.jTree
 import com.intellij.testGuiFramework.impl.selectWithKeyboard
 import com.intellij.testGuiFramework.util.logError
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.*
-
-const val localTimeout = 2L // default timeout is 2 minutes and it's too big for most of tasks here
 
 // Attention: it's supposed that Project Structure dialog is open both before the function
 // executed and after
@@ -15,7 +14,7 @@ fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStruct
   checkModule {
     with(guiTestCase) {
       try {
-        jTree(path[0], timeout = localTimeout).selectWithKeyboard(this, *path)
+        jTree(path[0], timeout = Timeouts.seconds05).selectWithKeyboard(this, *path)
         logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
         (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
       }

@@ -79,4 +79,8 @@ public class MavenServerUtil {
   private static boolean isMagicalProperty(String key) {
     return key.startsWith("=");
   }
+
+  public static void registerShutdownTask(Runnable task) {
+    Runtime.getRuntime().addShutdownHook(new Thread(task, "Maven-server-shutdown-hook"));
+  }
 }

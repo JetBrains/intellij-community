@@ -35,20 +35,24 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
     return myMigrationMap;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return null;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.in.code.to.elements.from.migration.map", myMigrationMap.getName(),
                                      UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

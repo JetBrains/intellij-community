@@ -132,7 +132,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       logSyntaxInfo(syntaxInfo);
 
       createResult(syntaxInfo, editor);
-      return ObjectUtils.notNull(myResult, Collections.<RawTextWithMarkup>emptyList());
+      return ObjectUtils.notNull(myResult, Collections.emptyList());
     }
     catch (Throwable t) {
       // catching the exception so that the rest of copy/paste functionality can still work fine

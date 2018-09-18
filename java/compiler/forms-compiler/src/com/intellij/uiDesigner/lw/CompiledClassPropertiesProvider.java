@@ -41,6 +41,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     myCache = new HashMap();
   }
 
+  @Override
   public HashMap getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
       return (HashMap)myCache.get(className);

@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
 public interface UsageGroupingRuleProvider {
   ExtensionPointName<UsageGroupingRuleProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageGroupingRuleProvider");
 
-  @NotNull UsageGroupingRule[] getActiveRules(@NotNull Project project);
+  @NotNull
+  UsageGroupingRule[] getActiveRules(@NotNull Project project);
 
   @NotNull
   default UsageGroupingRule[] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {

@@ -208,8 +208,8 @@ public class OrderEntryUtil {
   }
 
   public static <T extends OrderEntry> void processOrderEntries(@NotNull Module module,
-                                                                @NotNull Class<T> orderEntryClass,
-                                                                @NotNull Processor<T> processor) {
+                                                                @NotNull Class<? extends T> orderEntryClass,
+                                                                @NotNull Processor<? super T> processor) {
     OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntryClass.isInstance(orderEntry)) {

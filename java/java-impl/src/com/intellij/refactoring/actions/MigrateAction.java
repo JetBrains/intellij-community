@@ -21,14 +21,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.RefactoringManager;
+import org.jetbrains.annotations.NotNull;
 
 public class MigrateAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RefactoringManager.getInstance(project).getMigrateManager().showMigrationDialog();
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();
     presentation.setEnabled(project != null);

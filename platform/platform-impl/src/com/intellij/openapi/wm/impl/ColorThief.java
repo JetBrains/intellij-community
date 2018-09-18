@@ -748,29 +748,21 @@ public class ColorThief {
       }
     }
 
-    private static final Comparator<VBox> COMPARATOR_COUNT = new Comparator<VBox>() {
-      @Override
-      public int compare(VBox a, VBox b) {
-        return a.count(false) - b.count(false);
+    private static final Comparator<VBox> COMPARATOR_COUNT = (a, b) -> a.count(false) - b.count(false);
+
+    private static final Comparator<VBox> COMPARATOR_PRODUCT = (a, b) -> {
+      int aCount = a.count(false);
+      int bCount = b.count(false);
+      int aVolume = a.volume(false);
+      int bVolume = b.volume(false);
+
+      // If count is 0 for both (or the same), sort by volume
+      if (aCount == bCount) {
+        return aVolume - bVolume;
       }
-    };
 
-    private static final Comparator<VBox> COMPARATOR_PRODUCT = new Comparator<VBox>() {
-      @Override
-      public int compare(VBox a, VBox b) {
-        int aCount = a.count(false);
-        int bCount = b.count(false);
-        int aVolume = a.volume(false);
-        int bVolume = b.volume(false);
-
-        // If count is 0 for both (or the same), sort by volume
-        if (aCount == bCount) {
-          return aVolume - bVolume;
-        }
-
-        // Otherwise sort by products
-        return Long.compare((long) aCount * aVolume, (long) bCount * bVolume);
-      }
+      // Otherwise sort by products
+      return Long.compare((long) aCount * aVolume, (long) bCount * bVolume);
     };
 
   }

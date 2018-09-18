@@ -27,7 +27,7 @@ public class TogglePreserveCaseAction extends EditorHeaderToggleAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);

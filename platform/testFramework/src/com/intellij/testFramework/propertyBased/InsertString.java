@@ -22,7 +22,7 @@ import org.jetbrains.jetCheck.Generator;
 
 public class InsertString extends ActionOnFile {
 
-  public InsertString(PsiFile file) {
+  public InsertString(@NotNull PsiFile file) {
     super(file);
   }
 

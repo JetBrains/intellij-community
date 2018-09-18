@@ -41,7 +41,7 @@ import java.util.List;
 public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();

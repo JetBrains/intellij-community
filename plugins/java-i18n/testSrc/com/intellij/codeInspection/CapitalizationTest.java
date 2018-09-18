@@ -22,14 +22,14 @@ import org.jetbrains.annotations.Nls;
 public class CapitalizationTest extends TestCase {
 
   public void testCapitalization() {
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix SQL issues", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix I18n issues", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Fix C issues", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("@charset is invalid", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Add 'this' qualifier", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Add    'this'    qualifier", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Please select the configuration file (usually named IntelliLang.xml) to import.", Nls.Capitalization.Sentence));
-    assertFalse(TitleCapitalizationInspection.checkCapitalization("Foo Bar", Nls.Capitalization.Sentence));
-    assertTrue(TitleCapitalizationInspection.checkCapitalization("Foo", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Fix SQL issues", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Fix I18n issues", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Fix C issues", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("@charset is invalid", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Add 'this' qualifier", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Add    'this'    qualifier", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Please select the configuration file (usually named IntelliLang.xml) to import.", Nls.Capitalization.Sentence));
+    assertFalse(TitleCapitalizationInspection.isCapitalizationSatisfied("Foo Bar", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.isCapitalizationSatisfied("Foo", Nls.Capitalization.Sentence));
   }
 }

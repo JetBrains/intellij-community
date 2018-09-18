@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -24,6 +22,7 @@ public class YamlMetaClass extends YamlMetaType {
     super(typeName);
   }
 
+  @Override
   @Nullable
   public Field findFeatureByName(@NotNull String name) {
     if (getFeatures().isEmpty()) {
@@ -77,6 +76,7 @@ public class YamlMetaClass extends YamlMetaType {
     return child;
   }
 
+  @Override
   public void buildInsertionSuffixMarkup(@NotNull YamlInsertionMarkup markup,
                                          @NotNull Field.Relation relation,
                                          @NotNull ForcedCompletionPath.Iteration iteration) {

@@ -3,8 +3,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,28 +28,21 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
 
         PsiCodeBlock tryBlock = statement.getTryBlock();
         if (tryBlock == null) return;
-        PsiStatement[] statements = tryBlock.getStatements();
-        if(statements.length == 0) return;
-        PsiStatement last = statements[statements.length - 1];
+        PsiStatement last = ArrayUtil.getLastElement(tryBlock.getStatements());
         PsiExpressionStatement expressionStatement = tryCast(last, PsiExpressionStatement.class);
         if(expressionStatement == null) return;
         PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
         if (!CLOSE.test(call)) return;
-        PsiReferenceExpression reference = tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        PsiReferenceExpression reference = tryCast(PsiUtil.skipParenthesizedExprDown(qualifier), PsiReferenceExpression.class);
         if(reference == null) return;
         PsiVariable variable = tryCast(reference.resolve(), PsiVariable.class);
         if(variable == null) return;
-        boolean isReferenceToResourceVariable = StreamEx.of(resourceList.iterator())
-                            .anyMatch(element -> {
-                              if (element instanceof PsiResourceVariable && variable == element) {
-                                return true;
-                              }
-                              else {
-                                PsiReferenceExpression ref = tryCast(element, PsiReferenceExpression.class);
-                                if (ref == null) return false;
-                                return ref.resolve() == variable;
-                              }
-                            });
+        boolean isReferenceToResourceVariable = StreamEx.of(resourceList.iterator()).anyMatch(
+          element -> variable == element ||
+                     element instanceof PsiResourceExpression &&
+                     EquivalenceChecker.getCanonicalPsiEquivalence()
+                                       .expressionsAreEquivalent(reference, ((PsiResourceExpression)element).getExpression()));
         if(!isReferenceToResourceVariable) return;
         holder.registerProblem(last, InspectionsBundle.message("inspection.redundant.explicit.close"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteRedundantCloseFix());

@@ -43,7 +43,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
         if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return;
         if (expression.getType() == null) return;
         if (!PsiUtil.isConstantExpression(expression)) return;
-        final PsiElement parent = expression.getParent();
+        final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiExpression && PsiUtil.isConstantExpression((PsiExpression)parent)) return;
         try {
           final Object value = ExpressionUtils.computeConstantExpression(expression, true);

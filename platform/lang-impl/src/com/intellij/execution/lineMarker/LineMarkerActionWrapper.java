@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.lineMarker;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.ide.DataManager;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends ActionGroup {
+public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction {
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final PsiElement myElement;
@@ -49,13 +50,13 @@ public class LineMarkerActionWrapper extends ActionGroup {
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (myOrigin instanceof ActionGroup) {
-      return ((ActionGroup)myOrigin).getChildren(wrapEvent(e));
+      return ((ActionGroup)myOrigin).getChildren(e == null ? null : wrapEvent(e));
     }
     return AnAction.EMPTY_ARRAY;
   }
 
   @Override
-  public boolean canBePerformed(DataContext context) {
+  public boolean canBePerformed(@NotNull DataContext context) {
     return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).canBePerformed(wrapContext(context));
   }
 
@@ -80,15 +81,12 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myOrigin.update(wrapEvent(e));
   }
 
-  @Nullable
-  private AnActionEvent wrapEvent(@Nullable AnActionEvent e) {
-    if (e == null) {
-      return null;
-    }
+  @NotNull
+  private AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
     DataContext dataContext = wrapContext(e.getDataContext());
     return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
   }
@@ -104,8 +102,14 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myOrigin.actionPerformed(wrapEvent(e));
+  }
+
+  @NotNull
+  @Override
+  public Priority getPriority() {
+    return Priority.HIGH;
   }
 
   private class MyDataContext extends UserDataHolderBase implements DataContext {
@@ -117,7 +121,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
 
     @Nullable
     @Override
-    public synchronized Object getData(@NonNls String dataId) {
+    public synchronized Object getData(@NotNull @NonNls String dataId) {
       if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<>(myElement) : null;
       return myDelegate.getData(dataId);
     }

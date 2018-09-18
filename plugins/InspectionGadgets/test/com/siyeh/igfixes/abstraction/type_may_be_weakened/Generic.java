@@ -14,7 +14,8 @@ class A <T1, T2> extends B {}
 
 class Main {
   public static void main(String[] args) {
-    A<Integer, String> n<caret>onGeneric = new A<>();
+    A<Integer, //comment
+      String> n<caret>onGeneric = new A<>();
     nonGeneric.foo();
   }
 }

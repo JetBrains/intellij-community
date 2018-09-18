@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -42,16 +40,14 @@ public class CapturePoint implements Cloneable {
     CapturePoint that = (CapturePoint)o;
 
     if (myEnabled != that.myEnabled) return false;
-    if (myClassName != null ? !myClassName.equals(that.myClassName) : that.myClassName != null) return false;
-    if (myMethodName != null ? !myMethodName.equals(that.myMethodName) : that.myMethodName != null) return false;
-    if (myCaptureKeyExpression != null
-        ? !myCaptureKeyExpression.equals(that.myCaptureKeyExpression)
-        : that.myCaptureKeyExpression != null) {
+    if (!Objects.equals(myClassName, that.myClassName)) return false;
+    if (!Objects.equals(myMethodName, that.myMethodName)) return false;
+    if (!Objects.equals(myCaptureKeyExpression, that.myCaptureKeyExpression)) {
       return false;
     }
-    if (myInsertClassName != null ? !myInsertClassName.equals(that.myInsertClassName) : that.myInsertClassName != null) return false;
-    if (myInsertMethodName != null ? !myInsertMethodName.equals(that.myInsertMethodName) : that.myInsertMethodName != null) return false;
-    if (myInsertKeyExpression != null ? !myInsertKeyExpression.equals(that.myInsertKeyExpression) : that.myInsertKeyExpression != null) {
+    if (!Objects.equals(myInsertClassName, that.myInsertClassName)) return false;
+    if (!Objects.equals(myInsertMethodName, that.myInsertMethodName)) return false;
+    if (!Objects.equals(myInsertKeyExpression, that.myInsertKeyExpression)) {
       return false;
     }
 

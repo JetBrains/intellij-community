@@ -40,31 +40,17 @@ public class HTMLExportUtil {
       indicator.setText(InspectionsBundle.message("inspection.export.generating.html.for", fullPath.getAbsolutePath()));
     }
 
-    try {
-      FileWriter writer = null;
-      try {
-        final File dir = fullPath.getParentFile();
-        if (!dir.exists() && !dir.mkdirs()) {
-          showErrorMessage("Can't create dir", dir, project);
-          return;
-        }
-        if (!dir.canWrite() && !fullPath.canWrite()) {
-          showErrorMessage("Permission denied", fullPath, project);
-          return;
-        }
-        writer = new FileWriter(fullPath, false);
-        writer.write(buf.toString().toCharArray());
-      }
-      finally {
-        if (writer != null) {
-          try {
-            writer.close();
-          }
-          catch (IOException e) {
-            //Cannot do anything in case of exception
-          }
-        }
-      }
+    final File dir = fullPath.getParentFile();
+    if (!dir.exists() && !dir.mkdirs()) {
+      showErrorMessage("Can't create dir", dir, project);
+      return;
+    }
+    if (!dir.canWrite() && !fullPath.canWrite()) {
+      showErrorMessage("Permission denied", fullPath, project);
+      return;
+    }
+    try (FileWriter writer = new FileWriter(fullPath, false)) {
+      writer.write(buf.toString().toCharArray());
     }
     catch (IOException e) {
       showErrorMessage(String.valueOf(e.getCause()), fullPath, project);

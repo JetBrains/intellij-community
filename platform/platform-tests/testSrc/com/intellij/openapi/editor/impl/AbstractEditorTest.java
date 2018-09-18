@@ -170,7 +170,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     assertArrayEquals(positions, softWrapPositions.toArray());
   }
 
-  protected static void configureSoftWraps(int charCountToWrapAt) {
+  protected void configureSoftWraps(int charCountToWrapAt) {
     EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
   }
 

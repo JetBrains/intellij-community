@@ -58,6 +58,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     }
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
     Set<VirtualFile> allFiles = new THashSet<>();
@@ -70,6 +71,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return VfsUtil.toVirtualFileArray(allFiles);
   }
 
+  @Override
   public boolean belongs(String url) {
     for (CompileScope scope : myScopes) {
       if (scope.belongs(url)) {
@@ -79,6 +81,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return false;
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
     Set<Module> modules = new HashSet<>();
@@ -108,7 +111,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     }
     return super.getUserData(key);
   }
-  
+
   public Collection<CompileScope> getScopes() {
     return Collections.unmodifiableList(myScopes);
   }

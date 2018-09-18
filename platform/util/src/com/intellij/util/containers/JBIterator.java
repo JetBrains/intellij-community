@@ -56,12 +56,12 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public static <E> JBIterator<E> from(@NotNull final Iterator<E> it) {
+  public static <E> JBIterator<E> from(@NotNull final Iterator<? extends E> it) {
     return it instanceof JBIterator ? (JBIterator<E>)it : wrap(it);
   }
 
   @NotNull
-  static <E> JBIterator<E> wrap(@NotNull final Iterator<E> it) {
+  static <E> JBIterator<E> wrap(@NotNull final Iterator<? extends E> it) {
     return new JBIterator<E>() {
       @Override
       protected E nextImpl() {

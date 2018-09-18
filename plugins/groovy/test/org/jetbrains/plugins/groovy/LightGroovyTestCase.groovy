@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable
  */
 abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
 
+  @NotNull
   JavaCodeInsightTestFixture getFixture() {
     myFixture
   }

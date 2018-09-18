@@ -41,7 +41,7 @@ import java.io.File;
  */
 public class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();
   }
 

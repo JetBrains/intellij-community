@@ -97,7 +97,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   }
 
   @Override
-  public void onClosed(LightweightWindowEvent event) {
+  public void onClosed(@NotNull LightweightWindowEvent event) {
     super.onClosed(event);
     myOnClose.run();
     if (getCellEditorValue() == EDIT_SEVERITIES) {

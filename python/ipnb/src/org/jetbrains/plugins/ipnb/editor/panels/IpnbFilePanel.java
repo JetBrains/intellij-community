@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
@@ -95,7 +96,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     final Alarm alarm = new Alarm();
     myDocumentListener = new DocumentListener() {
-      public void documentChanged(final DocumentEvent e) {
+      @Override
+      public void documentChanged(@NotNull final DocumentEvent e) {
         if (mySynchronize) {
           alarm.cancelAllRequests();
           alarm.addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(IpnbFilePanel.this));
@@ -500,6 +502,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   private class MySynchronizeRequest implements Runnable {
 
+    @Override
     public void run() {
       final Project project = getProject();
       if (project.isDisposed()) {
@@ -728,7 +731,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     final IpnbEditablePanel selectedCellPanel = getSelectedCellPanel();
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       if (selectedCellPanel instanceof IpnbCodePanel) {  // Go to declaration

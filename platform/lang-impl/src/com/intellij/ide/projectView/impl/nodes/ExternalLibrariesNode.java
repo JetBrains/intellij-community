@@ -101,7 +101,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     return children;
   }
 
-  public static void addLibraryChildren(final LibraryOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrderEntry entry, final List<? super AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] files = entry.getRootFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {
@@ -121,7 +121,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.external.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }

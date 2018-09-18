@@ -68,8 +68,8 @@ public class GenerateToStringUtils {
     private static void collectAvailableFields(PsiClass clazz,
                                                boolean includeSuperClass,
                                                FilterPattern pattern,
-                                               List<PsiField> availableFields,
-                                               HashSet<PsiClass> visited) {
+                                               List<? super PsiField> availableFields,
+                                               HashSet<? super PsiClass> visited) {
 
         int sortElements = GenerateToStringContext.getConfig().getSortElements();
 
@@ -115,8 +115,8 @@ public class GenerateToStringUtils {
     }
 
     private static void collectAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern,
-                                                List<PsiMethod> availableMethods,
-                                                HashSet<PsiClass> visited) {
+                                                List<? super PsiMethod> availableMethods,
+                                                HashSet<? super PsiClass> visited) {
         int sortElements = GenerateToStringContext.getConfig().getSortElements();
         if (sortElements == 3) {
             PsiClass superClass = clazz.getSuperClass();

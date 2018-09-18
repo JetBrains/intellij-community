@@ -25,9 +25,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class SimplifyIfElseIntention extends Intention {
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
+      @Override
       public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiJavaToken)) {
           return false;
@@ -42,6 +44,7 @@ public class SimplifyIfElseIntention extends Intention {
     };
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     TrivialIfInspection.simplify((PsiIfStatement)element.getParent());
   }

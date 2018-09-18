@@ -180,6 +180,6 @@ public class GitConfigUtil {
     h.setSilent(true);
     h.addParameters(additionalParameters);
     h.addParameters(key, value);
-    Git.getInstance().runCommand(h).getOutputOrThrow(1);
+    Git.getInstance().runCommand(h).throwOnError(1);
   }
 }

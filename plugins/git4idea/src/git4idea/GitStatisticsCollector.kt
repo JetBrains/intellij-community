@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
+import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
 import git4idea.config.GitVersion
 import git4idea.repo.GitRemote
@@ -17,13 +18,14 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val repositoryManager = GitUtil.getRepositoryManager(project)
     val settings = GitVcsSettings.getInstance(project)
+    val appSettings = GitVcsApplicationSettings.getInstance()
     val repositories = repositoryManager.repositories
     val usages = hashSetOf<UsageDescriptor>()
 
     usages.add(UsageDescriptor("config.repo.sync." + settings.syncSetting.name, 1))
     usages.add(UsageDescriptor("config.update.type." + settings.updateType.name, 1))
     usages.add(UsageDescriptor("config.save.policy." + settings.updateChangesPolicy().name, 1))
-    usages.add(getBooleanUsage("config.ssh", settings.isIdeaSsh))
+    usages.add(getBooleanUsage("config.ssh", appSettings.isUseIdeaSsh))
 
     usages.add(getBooleanUsage("config.push.autoupdate", settings.autoUpdateIfPushRejected()))
     usages.add(getBooleanUsage("config.push.update.all.roots", settings.shouldUpdateAllRootsIfPushRejected()))

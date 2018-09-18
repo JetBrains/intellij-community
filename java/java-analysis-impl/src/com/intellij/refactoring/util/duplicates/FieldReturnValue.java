@@ -18,6 +18,8 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -29,6 +31,7 @@ public class FieldReturnValue implements ReturnValue {
     myField = psiField;
   }
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof FieldReturnValue)) return false;
     return myField == ((FieldReturnValue)other).myField;
@@ -38,7 +41,9 @@ public class FieldReturnValue implements ReturnValue {
     return myField;
   }
 
-  public PsiStatement createReplacement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  @Override
+  @Nullable
+  public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException {
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());

@@ -84,7 +84,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
 
   public static boolean editSettings(final Project project,
                                      final InspectionProfileImpl inspectionProfile,
-                                     final Consumer<ErrorsConfigurable> configurableAction) {
+                                     final Consumer<? super ErrorsConfigurable> configurableAction) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
     final ErrorsConfigurable errorsConfigurable = (ErrorsConfigurable) ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
     return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {

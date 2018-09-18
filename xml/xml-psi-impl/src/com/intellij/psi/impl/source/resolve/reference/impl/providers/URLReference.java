@@ -164,7 +164,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final TextRange textRangeInElement = getRangeInElement();
     final PsiElement elementToChange = myElement.findElementAt(textRangeInElement.getStartOffset());
     assert elementToChange != null;
@@ -190,14 +190,8 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myElement.getManager().areElementsEquivalent(resolve(),element);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
   }
 
   public boolean isSchemaLocation() { return false; }
@@ -213,7 +207,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return XmlErrorMessages.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized":"uri.is.not.registered");
   }
 
-  public static void processWsdlSchemas(final XmlTag rootTag, Processor<XmlTag> processor) {
+  public static void processWsdlSchemas(final XmlTag rootTag, Processor<? super XmlTag> processor) {
     if ("definitions".equals(rootTag.getLocalName())) {
       final String nsPrefix = rootTag.getNamespacePrefix();
       final String types = nsPrefix.isEmpty() ? "types" : nsPrefix  + ":types";

@@ -160,6 +160,7 @@ public abstract class BaseRepository extends TaskRepository {
     return myPreferredCloseTaskState;
   }
 
+  @Override
   @Nullable
   public String extractId(@NotNull String taskName) {
     Matcher matcher = PATTERN.matcher(taskName);

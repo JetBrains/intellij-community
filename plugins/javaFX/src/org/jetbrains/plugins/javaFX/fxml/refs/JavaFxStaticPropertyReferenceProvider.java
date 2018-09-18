@@ -4,7 +4,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +53,6 @@ public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider 
     @Override
     public PsiElement resolve() {
       return myPsiClass;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
 }

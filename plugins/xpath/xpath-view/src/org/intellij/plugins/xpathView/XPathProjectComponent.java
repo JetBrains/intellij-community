@@ -51,6 +51,7 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
 
 //    private Set<Namespace> namespaces = new HashSet();
 
+  @Override
   public void loadState(@NotNull Element state) {
     readHistory(state, HISTORY, history);
     readHistory(state, FIND_HISTORY, findHistory);
@@ -81,6 +82,7 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
         }
     }
 
+  @Override
   public Element getState() {
     Element element = new Element("xpathview");
     writeHistory(element, HISTORY, history);

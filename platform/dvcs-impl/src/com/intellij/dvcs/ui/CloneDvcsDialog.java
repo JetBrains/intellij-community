@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -42,7 +28,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -167,7 +152,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         Files.createDirectories(directoryPath);
       }
       else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
       }
       return null;
     }
@@ -175,7 +160,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
     }
     catch (Exception e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
     }
   }
 
@@ -218,13 +203,13 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
         myDirectoryField.trySetChildPath(defaultDirectoryName(myRepositoryUrlField.getText().trim()));
       }
     });
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
         myRepositoryTestValidationInfo = null;
       }
     });
@@ -311,14 +296,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Pair<List<String>, List<RepositoryListLoadingException>> loadingResult =
+        RepositoryListLoader.Result loadingResult =
           loader.getAvailableRepositoriesFromMultipleSources(indicator);
-        for (String repository: loadingResult.first) {
+        for (String repository: loadingResult.getUrls()) {
           if (myUniqueAvailableRepositories.add(repository)) {
             myNewRepositories.add(repository);
           }
         }
-        myErrors.addAll(loadingResult.second);
+        myErrors.addAll(loadingResult.getErrors());
       }
 
       @Override
@@ -338,7 +323,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString(), false));
+            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning());
           }
           startTrackingValidation();
         }
@@ -587,6 +572,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     return myLoginButtonComponent.getPanel();
   }
 
+  @Override
   @NotNull
   protected JComponent createCenterPanel() {
     JPanel panel = PanelFactory.grid()
@@ -628,7 +614,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       setText(myDefaultParentPath.toString());
       getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           myModifiedByUser = true;
         }
       });

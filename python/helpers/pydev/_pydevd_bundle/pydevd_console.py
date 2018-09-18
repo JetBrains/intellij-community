@@ -5,9 +5,10 @@ import traceback
 from code import InteractiveConsole
 
 from _pydev_bundle import _pydev_completer
-from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
 from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_override import overrides
+from _pydev_bundle.pydev_stdin import BaseStdIn
 from _pydevd_bundle import pydevd_save_locals
 from _pydevd_bundle.pydevd_io import IOBuf
 from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
@@ -74,12 +75,12 @@ class DebugConsoleStdIn(BaseStdIn):
 #=======================================================================================================================
 # DebugConsole
 #=======================================================================================================================
-class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
+class DebugConsole(InteractiveConsole, BaseCodeExecutor):
     """Wrapper around code.InteractiveConsole, in order to send
     errors and outputs to the debug console
     """
 
-    overrides(BaseInterpreterInterface.create_std_in)
+    overrides(BaseCodeExecutor.create_std_in)
     def create_std_in(self, *args, **kwargs):
         try:
             if not self.__buffer_output:
@@ -134,7 +135,7 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
             return more, [], []
 
 
-    overrides(BaseInterpreterInterface.do_add_exec)
+    overrides(BaseCodeExecutor.do_add_exec)
     def do_add_exec(self, line):
         return InteractiveConsole.push(self, line)
 

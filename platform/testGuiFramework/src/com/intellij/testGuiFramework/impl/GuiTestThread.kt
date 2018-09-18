@@ -49,7 +49,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
     client = JUnitClientImpl(host(), port(), createInitHandlers())
     client!!.addHandler(createCloseHandler())
 
-    val myListener = JUnitClientListener({ jUnitInfo -> client!!.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) })
+    val myListener = JUnitClientListener { jUnitInfo -> client!!.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) }
     core.addListener(myListener)
 
     try {

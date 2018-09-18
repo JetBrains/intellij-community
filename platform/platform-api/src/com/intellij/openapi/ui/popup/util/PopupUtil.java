@@ -48,8 +48,8 @@ public class PopupUtil {
     if (c == null) return null;
 
     final Window wnd = SwingUtilities.getWindowAncestor(c);
-    if (wnd instanceof JWindow) {
-      final JRootPane root = ((JWindow)wnd).getRootPane();
+    if (wnd instanceof RootPaneContainer) {
+      final JRootPane root = ((RootPaneContainer)wnd).getRootPane();
       final JBPopup popup = (JBPopup)root.getClientProperty(JBPopup.KEY);
       if (popup == null) return c;
 
@@ -59,7 +59,7 @@ public class PopupUtil {
       return getOwner(owner);
     }
     else {
-      return c;
+      return null;
     }
   }
 

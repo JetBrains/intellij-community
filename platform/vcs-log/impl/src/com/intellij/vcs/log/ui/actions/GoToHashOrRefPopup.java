@@ -101,7 +101,7 @@ public class GoToHashOrRefPopup {
       .setCancelOnClickOutside(true).setCancelOnWindowDeactivation(true).setCancelKeyEnabled(true).setRequestFocus(true).createPopup();
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (!event.isOk()) {
           if (myFuture != null) {
             myFuture.cancel(true);

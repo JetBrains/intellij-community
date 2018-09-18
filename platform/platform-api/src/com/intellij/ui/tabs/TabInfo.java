@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private String myPlace;
   private Object myObject;
   private JComponent mySideComponent;
-  private WeakReference<JComponent> myLastFocusOwner;
+  private Reference<JComponent> myLastFocusOwner;
 
 
   private ActionGroup myTabLabelActions;
@@ -106,7 +107,8 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myChangeSupport;
   }
 
-  public TabInfo setText(String text) {
+  @NotNull
+  public TabInfo setText(@NotNull String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
     TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
     TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
@@ -137,13 +139,14 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return this;
   }
 
-  public TabInfo append(String fragment, SimpleTextAttributes attributes) {
+  public TabInfo append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
     final String old = myText.toString();
     myText.append(fragment, attributes);
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
     return this;
   }
 
+  @NotNull
   public TabInfo setIcon(Icon icon) {
     Icon old = myIcon;
     if (!IconDeferrer.getInstance().equalIcons(old, icon)) {
@@ -231,7 +234,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public void setLastFocusOwner(final JComponent owner) {
-    myLastFocusOwner = new WeakReference<>(owner);
+    myLastFocusOwner = owner == null ? null : new WeakReference<>(owner);
   }
 
   public ActionGroup getTabLabelActions() {
@@ -242,7 +245,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myTabActionPlace;
   }
 
-  public TabInfo setTabLabelActions(final ActionGroup tabActions, String place) {
+  public TabInfo setTabLabelActions(final ActionGroup tabActions, @NotNull String place) {
     ActionGroup old = myTabLabelActions;
     myTabLabelActions = tabActions;
     myTabActionPlace = place;
@@ -280,6 +283,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     myBlinkCount = blinkCount;
   }
 
+  @Override
   public String toString() {
     return getText();
   }
@@ -351,6 +355,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     update();
   }
 
+  @NotNull
   public TabInfo setTooltipText(final String text) {
     String old = myTooltipText;
     if (!Comparing.equal(old, text)) {
@@ -364,6 +369,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myTooltipText;
   }
 
+  @NotNull
   public TabInfo setTabColor(Color color) {
     Color old = myTabColor;
     if (!Comparing.equal(color, old)) {
@@ -377,6 +383,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myTabColor;
   }
 
+  @NotNull
   public TabInfo setTestableUi(Queryable queryable) {
     myQueryable = queryable;
     return this;
@@ -389,6 +396,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     }
   }
 
+  @NotNull
   public TabInfo setDragOutDelegate(DragOutDelegate delegate) {
     myDragOutDelegate = delegate;
     return this;
@@ -412,10 +420,9 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public interface DragOutDelegate {
-
-    void dragOutStarted(MouseEvent mouseEvent, TabInfo info);
-    void processDragOut(MouseEvent event, TabInfo source);
-    void dragOutFinished(MouseEvent event, TabInfo source);
+    void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info);
+    void processDragOut(@NotNull MouseEvent event, @NotNull TabInfo source);
+    void dragOutFinished(@NotNull MouseEvent event, TabInfo source);
     void dragOutCancelled(TabInfo source);
   }
 

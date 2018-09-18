@@ -47,7 +47,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Artifact artifact = myArtifactEditor.getArtifact();
 
@@ -91,7 +91,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final List<PackagingSourceItem> items = mySourceItemsTree.getSelectedItems();
     ParentElementsInfo parentsInfo = findParentAndGrandParent(myArtifactEditor.getArtifact());
     if (parentsInfo == null) {

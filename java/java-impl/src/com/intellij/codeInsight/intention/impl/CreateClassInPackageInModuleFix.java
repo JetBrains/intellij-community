@@ -49,7 +49,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
   private final String myModuleName;
   private final String myPackageName;
 
-  public CreateClassInPackageInModuleFix(String moduleName, String packageName) {
+  private CreateClassInPackageInModuleFix(String moduleName, String packageName) {
     myModuleName = moduleName;
     myPackageName = packageName;
   }
@@ -129,7 +129,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
 
   @Nullable
   public static IntentionAction createFix(@NotNull Module module, @Nullable String packageName) {
-    return StringUtil.isNotEmpty(packageName) ? new CreateClassInPackageInModuleFix(module.getName(), packageName) : null;
+    return StringUtil.isEmpty(packageName) ? null : new CreateClassInPackageInModuleFix(module.getName(), packageName);
   }
 
   private class CreateClassInPackageDialog extends DialogWrapper {
@@ -138,7 +138,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
     @Nullable private final Project myProject;
 
-    protected CreateClassInPackageDialog(@Nullable Project project, @NotNull PsiDirectory[] rootDirs) {
+    CreateClassInPackageDialog(@Nullable Project project, @NotNull PsiDirectory[] rootDirs) {
       super(project);
       myProject = project;
       setTitle("Create Class in Package");

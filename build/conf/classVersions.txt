@@ -35,7 +35,6 @@
 
 1.6 => lib/util.jar
 1.6 => lib/rt/debugger-agent.jar
-1.6 => lib/rt/debugger-agent-storage.jar
 
 1.7 => lib/optimizedFileManager.jar
 

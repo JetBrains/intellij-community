@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 
@@ -281,6 +280,7 @@ public class ModuleChunkClasspath extends Path {
       myGenerator = generator;
     }
 
+    @Override
     public Generator toGenerator() {
       return myGenerator;
     }

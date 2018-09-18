@@ -168,7 +168,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return (element instanceof PsiMember || element instanceof PsiPackage) && super.isReferenceTo(element);
   }
 
@@ -190,7 +190,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
     final PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
     myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
@@ -277,7 +277,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
   }
 
-  /** @deprecated use {@code getSuperClasses()} instead */
+  /** @deprecated use {@link #getSuperClasses()} instead */
+  @Deprecated
   @Nullable
   public String[] getExtendClassNames() {
     List<String> result = getSuperClasses();

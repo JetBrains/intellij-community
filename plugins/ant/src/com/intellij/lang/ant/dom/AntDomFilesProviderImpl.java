@@ -41,6 +41,7 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
   public abstract GenericAttributeValue<String> getCaseSensitive();
 
 
+  @Override
   @NotNull
   public final List<File> getFiles(Set<AntFilesProvider> processed) {
     if (processed.contains(this)) {

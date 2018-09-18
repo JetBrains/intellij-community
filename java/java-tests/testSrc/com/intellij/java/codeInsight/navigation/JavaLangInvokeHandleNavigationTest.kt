@@ -77,6 +77,11 @@ class JavaLangInvokeHandleNavigationTest : LightCodeInsightFixtureTestCase() {
   fun testStaticSetter6() = doNegativeTest("pf1", STATIC_SETTER)
   fun testStaticSetter7() = doNegativeTest("m1", STATIC_SETTER)
 
+  fun testSpecial1() = doSpecialNegativeTest("pm1", "void.class, int.class", "Object")
+  fun testSpecial2() = doSpecialTest("pm1", "void.class, int.class")
+  fun testSpecial3() = doSpecialNegativeTest("m1", "void.class, int.class")
+  fun testSpecial4() = doSpecialTest("m1", "void.class, int.class", "Test")
+
   fun testOverloadedBothPublic() = doTestOverloaded(
     """public class Overloaded {
   public void foo(int n) {}
@@ -164,6 +169,32 @@ class Main {
     TestCase.assertEquals("Reference text", name, reference.canonicalText)
     val resolved = reference.resolve()
     TestCase.assertNull("Reference shouldn't resolve: " + reference.canonicalText, resolved)
+  }
+
+  private fun doSpecialTest(name: String, methodType: String, declaredIn: String = "Parent", calledIn: String = "Test") {
+    doTestImpl(name, specialClassText(name, methodType, declaredIn, calledIn))
+  }
+
+  private fun doSpecialNegativeTest(name: String, methodType: String, declaredIn: String = "Parent", calledIn: String = "Test") {
+    val reference = getReference(specialClassText(name, methodType, declaredIn, calledIn))
+    TestCase.assertEquals("Reference text", name, reference.canonicalText)
+    val resolved = reference.resolve()
+    TestCase.assertNull("Reference shouldn't resolve: " + reference.canonicalText, resolved)
+  }
+
+  private fun specialClassText(name: String, methodType: String, declaredIn: String, calledIn: String): String {
+    @Suppress("UnnecessaryVariable")
+    @Language("JAVA")
+    val text = """import foo.bar.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+class Main {
+ void foo() throws ReflectiveOperationException {
+   MethodHandles.Lookup lookup = MethodHandles.lookup();
+   lookup.findSpecial($declaredIn.class, "<caret>$name", MethodType.methodType($methodType), $calledIn.class);
+ }
+}"""
+    return text
   }
 
   private fun getReference(mainClassText: String): PsiReference {

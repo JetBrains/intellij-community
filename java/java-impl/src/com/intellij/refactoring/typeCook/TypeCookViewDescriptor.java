@@ -28,19 +28,23 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
     myElements = elements;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myElements;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("type.cook.elements.header");
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("declaration.s.to.be.generified", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

@@ -26,6 +26,7 @@ import java.util.List;
  * @author nik
  */
 class FilePathValidator implements InputValidator {
+  @Override
   public boolean checkInput(String inputString) {
     final List<String> fileNames = StringUtil.split(FileUtil.toSystemIndependentName(inputString), "/");
     if (fileNames.isEmpty()) {
@@ -39,6 +40,7 @@ class FilePathValidator implements InputValidator {
     return true;
   }
 
+  @Override
   public boolean canClose(String inputString) {
     return checkInput(inputString);
   }

@@ -143,7 +143,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return createReferences(psiElement, soft, false, true, null, additionalProviders);
   }
 
-  private static PsiReference[] mergeReferences(PsiElement element, List<PsiReference> references) {
+  private static PsiReference[] mergeReferences(PsiElement element, List<? extends PsiReference> references) {
     if (references.size() <= 1) {
       return references.toArray(PsiReference.EMPTY_ARRAY);
     }
@@ -183,7 +183,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-  private static List<PsiReference> doMerge(final PsiElement element, final List<PsiReference> references) {
+  private static List<PsiReference> doMerge(final PsiElement element, final List<? extends PsiReference> references) {
     List<PsiReference> resolvingRefs = new ArrayList<>();
     List<PsiReference> nonResolvingRefs = new ArrayList<>();
 
@@ -220,8 +220,8 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   private static void addToResult(final PsiElement element,
-                                  final List<PsiReference> result,
-                                  final List<PsiReference> list,
+                                  final List<? super PsiReference> result,
+                                  final List<? extends PsiReference> list,
                                   final TextRange range) {
     if (list.size() == 1) {
       result.add(list.get(0));
@@ -233,7 +233,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     }
   }
 
-  private static TextRange addIntersectingReferences(List<PsiReference> set, List<PsiReference> toAdd, TextRange range) {
+  private static TextRange addIntersectingReferences(List<PsiReference> set, List<? super PsiReference> toAdd, TextRange range) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getStartOffset();
     for (Iterator<PsiReference> iterator = set.iterator(); iterator.hasNext();) {
@@ -253,7 +253,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return range2.intersectsStrict(range1) || range2.intersects(range1) && (range1.isEmpty() || range2.isEmpty());
   }
 
-  private static TextRange getFirstIntersectingReferences(List<PsiReference> set, List<PsiReference> toAdd) {
+  private static TextRange getFirstIntersectingReferences(List<PsiReference> set, List<? super PsiReference> toAdd) {
     int startOffset = Integer.MAX_VALUE;
     int endOffset = -1;
     for (Iterator<PsiReference> it = set.iterator(); it.hasNext();) {

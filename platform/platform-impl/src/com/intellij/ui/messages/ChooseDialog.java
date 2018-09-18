@@ -82,7 +82,7 @@ public class ChooseDialog extends MessageDialog {
         final JTextField textField = (JTextField)myComboBox.getEditor().getEditorComponent();
         textField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          public void textChanged(DocumentEvent event) {
+          public void textChanged(@NotNull DocumentEvent event) {
             actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(textField.getText().trim()));
           }
         });

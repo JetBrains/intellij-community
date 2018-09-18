@@ -57,7 +57,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
   protected abstract boolean acceptModule(final Module module);
 
-  protected static void addNewNames(@NotNull final List<? extends DomElement> elements, final Set<String> existingNames) {
+  protected static void addNewNames(@NotNull final List<? extends DomElement> elements, final Set<? super String> existingNames) {
     for (DomElement name : elements) {
       existingNames.add(name.getGenericInfo().getElementName(name));
     }

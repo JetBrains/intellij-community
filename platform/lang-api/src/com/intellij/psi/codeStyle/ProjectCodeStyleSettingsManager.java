@@ -158,7 +158,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       BrowserUtil.open("https://confluence.jetbrains.com/display/IDEADEV/New+project+code+style+settings+format+in+2017.3");
     }
   }

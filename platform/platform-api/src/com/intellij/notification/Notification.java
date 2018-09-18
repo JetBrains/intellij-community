@@ -220,7 +220,7 @@ public class Notification {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, new DataContext() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         if (KEY.is(dataId)) {
           return notification;
         }
@@ -228,7 +228,7 @@ public class Notification {
       }
     });
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAware(action, event);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event, event.getDataContext());
     }
   }
 
@@ -236,7 +236,7 @@ public class Notification {
     DataManager.registerDataProvider(component, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return KEY.getName().equals(dataId) ? notification : null;
       }
     });
@@ -316,7 +316,7 @@ public class Notification {
     myBalloonRef = new WeakReference<>(balloon);
     balloon.addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (SoftReference.dereference(myBalloonRef) == balloon) {
           myBalloonRef = null;
         }
@@ -348,7 +348,7 @@ public class Notification {
 
   @NotNull
   private static String calculateId(@NotNull Object notification) {
-    return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
+    return System.currentTimeMillis() + "." + System.identityHashCode(notification);
   }
 
   public final void assertHasTitleOrContent() {

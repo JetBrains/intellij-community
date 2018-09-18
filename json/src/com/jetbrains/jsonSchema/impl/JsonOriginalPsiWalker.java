@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -165,5 +166,52 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   @Override
   public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
     return element instanceof JsonValue ? JsonJsonPropertyAdapter.createAdapterByType((JsonValue)element) : null;
+  }
+
+  @Override
+  public QuickFixAdapter getQuickFixAdapter(Project project) {
+    return new QuickFixAdapter() {
+      private final JsonElementGenerator myGenerator = new JsonElementGenerator(project);
+      @Nullable
+      @Override
+      public PsiElement getPropertyValue(PsiElement property) {
+        assert property instanceof JsonProperty;
+        return ((JsonProperty)property).getValue();
+      }
+
+      @NotNull
+      @Override
+      public String getPropertyName(PsiElement property) {
+        assert property instanceof JsonProperty;
+        return ((JsonProperty)property).getName();
+      }
+
+      @NotNull
+      @Override
+      public PsiElement createProperty(@NotNull String name, @NotNull String value) {
+        return myGenerator.createProperty(name, value);
+      }
+
+      @Override
+      public boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement) {
+        if (backward instanceof JsonProperty) {
+          self.addAfter(myGenerator.createComma(), backward);
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void removeIfComma(PsiElement forward) {
+        if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
+          forward.delete();
+        }
+      }
+
+      @Override
+      public boolean fixWhitespaceBefore() {
+        return true;
+      }
+    };
   }
 }

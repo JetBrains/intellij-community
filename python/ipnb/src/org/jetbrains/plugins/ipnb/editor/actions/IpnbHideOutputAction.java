@@ -14,7 +14,7 @@ public class IpnbHideOutputAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myParent.hideOutputPanel();
   }
 }

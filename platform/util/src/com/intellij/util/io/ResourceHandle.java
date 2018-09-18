@@ -15,8 +15,11 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Closeable;
 
 public abstract class ResourceHandle<T> implements Closeable {
+  @NotNull
   public abstract T get();
 }

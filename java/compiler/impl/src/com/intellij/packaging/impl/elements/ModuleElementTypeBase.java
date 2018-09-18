@@ -48,6 +48,7 @@ public abstract class ModuleElementTypeBase<E extends ModulePackagingElementBase
     return !getSuitableModules(context).isEmpty();
   }
 
+  @Override
   @NotNull
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                        @NotNull CompositePackagingElement<?> parent) {

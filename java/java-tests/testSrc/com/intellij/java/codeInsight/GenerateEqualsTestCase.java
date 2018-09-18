@@ -69,17 +69,15 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
                                   boolean insertOverride, 
                                   boolean useAccessors) {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject()).clone();
-    settings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS = true;
-    settings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION = insertOverride;
-    CodeStyle.doWithTemporarySettings(getProject(), settings, () -> {
-      PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());
-      if (element == null) return;
-      PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      if (aClass == null) return;
-      PsiField[] fields = aClass.getFields();
-      new GenerateEqualsHelper(getProject(), aClass, equals.fun(fields), hashCode.fun(fields), nonNull.fun(fields), false, useAccessors).invoke();
-      FileDocumentManager.getInstance().saveAllDocuments();
-    });
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
+    JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = insertOverride;
+    PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());
+    if (element == null) return;
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (aClass == null) return;
+    PsiField[] fields = aClass.getFields();
+    new GenerateEqualsHelper(getProject(), aClass, equals.fun(fields), hashCode.fun(fields), nonNull.fun(fields), false, useAccessors).invoke();
+    FileDocumentManager.getInstance().saveAllDocuments();
   }
 
   private static PsiField[] getIndexed(PsiField[] fields, int[] indices) {

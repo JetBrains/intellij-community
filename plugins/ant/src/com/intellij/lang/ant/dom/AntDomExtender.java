@@ -43,7 +43,7 @@ import java.util.*;
  */
 public class AntDomExtender extends DomExtender<AntDomElement>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomExtender");
-  
+
   private static final Key<Class> ELEMENT_IMPL_CLASS_KEY = Key.create("_element_impl_class_");
   private static final Key<Boolean> IS_TASK_CONTAINER = Key.create("_task_container_");
   private static final Map<String, Class<? extends AntDomElement>> TAG_MAPPING = new HashMap<>();
@@ -83,11 +83,12 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("input", AntDomInputTask.class);
   }
 
+  @Override
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = antDomElement.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)xmlElement;
-      final String tagName = xmlTag.getName(); 
+      final String tagName = xmlTag.getName();
 
       final AntDomProject antProject = antDomElement.getAntProject();
       if (antProject == null) {
@@ -156,9 +157,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           }
         }
       }
-      
+
       if (parentIntrospector != null) {
-        
+
         defineAttributes(xmlTag, registrar, genericInfo, parentIntrospector);
 
         if ("project".equals(tagName) || parentIntrospector.isContainer()) { // can contain any task or/and type definition
@@ -195,8 +196,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             final DomExtension extension = registerChild(registrar, genericInfo, nestedElementName);
             if (extension != null) {
               Class type = parentIntrospector.getNestedElementType(nestedElementName);
-              if (type != null && CommonClassNames.JAVA_LANG_OBJECT.equals(type.getName())) { 
-                type = null; // hack to support badly written tasks 
+              if (type != null && CommonClassNames.JAVA_LANG_OBJECT.equals(type.getName())) {
+                type = null; // hack to support badly written tasks
               }
               if (type == null) {
                 if (coreTypeDefs != null){
@@ -230,11 +231,11 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     final Iterator<String> introspectedAttributes = parentIntrospector.getAttributesIterator();
     while (introspectedAttributes.hasNext()) {
       final String attribName = introspectedAttributes.next();
-      if (genericInfo.getAttributeChildDescription(attribName) == null) { // if not defined yet 
+      if (genericInfo.getAttributeChildDescription(attribName) == null) { // if not defined yet
         final String _attribName = attribName.toLowerCase(Locale.US);
         final Pair<Type, Class> types = registeredAttribs.get(_attribName);
-        Type type = types != null? types.getFirst() : null;
-        Class converterClass = types != null ? types.getSecond() : null;
+        Type type = Pair.getFirst(types);
+        Class converterClass = Pair.getSecond(types);
         if (type == null) {
           type = String.class; // use String by default
           final Class attributeType = parentIntrospector.getAttributeType(attribName);
@@ -253,16 +254,16 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             }
           }
         }
-        
+
         LOG.assertTrue(type != null);
-        
+
         registerAttribute(registrar, attribName, type, converterClass);
         if (types == null) { // augment the map if this was a newly added attribute
           registeredAttribs.put(_attribName, Pair.create(type, converterClass));
         }
       }
     }
-    // handle attribute case problems: 
+    // handle attribute case problems:
     // additionaly register all attributes that exist in XML but differ from the registered ones only in case
     for (XmlAttribute xmlAttribute : xmlTag.getAttributes()) {
       final String existingAttribName = xmlAttribute.getName();
@@ -350,6 +351,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
   private static class AntCustomTagNameDescriptor extends CustomDomChildrenDescription.TagNameDescriptor {
 
+    @Override
     public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
       if (!(parent instanceof AntDomElement)) {
         return Collections.emptySet();
@@ -368,12 +370,14 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       return result;
     }
 
+    @Override
     @Nullable
     public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
       final XmlName xmlName = name.getXmlName();
       return doFindDeclaration(parent, xmlName);
     }
 
+    @Override
     @Nullable
     public PomTarget findDeclaration(@NotNull DomElement child) {
       XmlName name = new XmlName(child.getXmlElementName(), child.getXmlElementNamespace());
@@ -412,13 +416,13 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       return target;
     }
   }
-  
+
   private static abstract class AbstractIntrospector {
     @NotNull
     public Iterator<String> getAttributesIterator() {
       return Collections.<String>emptyList().iterator();
     }
-    
+
     @NotNull
     public Iterator<String> getNestedElementsIterator(){
       return Collections.<String>emptyList().iterator();
@@ -436,7 +440,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       return null;
     }
   }
-  
+
   private static class ClassIntrospectorAdapter extends AbstractIntrospector {
 
     private final AntIntrospector myIntrospector;
@@ -455,25 +459,30 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.emptyMap();
     }
 
-    @NotNull 
+    @Override
+    @NotNull
     public Iterator<String> getAttributesIterator() {
       return new EnumerationToIteratorAdapter<>(myIntrospector.getAttributes());
     }
 
+    @Override
     public Class getAttributeType(String attribName) {
       return myIntrospector.getAttributeType(attribName);
     }
 
+    @Override
     public boolean isContainer() {
       return myIntrospector.isContainer();
     }
 
-    @NotNull 
+    @Override
+    @NotNull
     public Iterator<String> getNestedElementsIterator() {
       initNestedElements();
       return myNestedElements.iterator();
     }
 
+    @Override
     public Class getNestedElementType(String attribName) {
       initNestedElements();
       return myNestedElementTypes.get(attribName);
@@ -491,7 +500,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         myNestedElements.add(elemName);
         myNestedElementTypes.put(elemName, myIntrospector.getElementType(elemName));
       }
-      
+
       final Set<String> extensionPointTypes = myIntrospector.getExtensionPointTypes();
       for (String extPoint : extensionPointTypes) {
         processEntries(extPoint, myCoreTaskDefs);
@@ -510,7 +519,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       }
     }
   }
-  
+
   private static class MacrodefIntrospectorAdapter extends AbstractIntrospector {
     private final AntDomMacroDef myMacrodef;
 
@@ -518,7 +527,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       myMacrodef = macrodef;
     }
 
-    @NotNull 
+    @Override
+    @NotNull
     public Iterator<String> getAttributesIterator() {
       final List<AntDomMacrodefAttribute> macrodefAttributes = myMacrodef.getMacroAttributes();
       if (macrodefAttributes.size() == 0) {
@@ -534,6 +544,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       return attribs.iterator();
     }
 
+    @Override
     public boolean isContainer() {
       return myMacrodef.getMacroElements().stream()
         .map(AntDomMacrodefElement::isImplicit)
@@ -550,15 +561,18 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       myElement = element;
     }
 
+    @Override
     public boolean isContainer() {
       return getContexts().stream().allMatch(AbstractIntrospector::isContainer);
     }
 
+    @Override
     @NotNull
     public Iterator<String> getNestedElementsIterator() {
       return getNestedElementsMap().keySet().iterator();
     }
 
+    @Override
     public Class getNestedElementType(String elementName) {
       return getNestedElementsMap().get(elementName);
     }
@@ -602,6 +616,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         final AntDomSequentialTask body = macroDef.getMacroBody();
         if (body != null) {
           body.accept(new AntDomRecursiveVisitor() {
+            @Override
             public void visitAntDomCustomElement(AntDomCustomElement custom) {
               if (myElement.equals(custom.getDeclaringElement())) {
                 final AntDomElement parent = custom.getParentOfType(AntDomElement.class, true);
@@ -629,8 +644,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     private ScriptdefIntrospectorAdapter(AntDomScriptDef scriptDef) {
       myScriptDef = scriptDef;
     }
-    
-    @NotNull 
+
+    @Override
+    @NotNull
     public Iterator<String> getAttributesIterator() {
       final List<AntDomScriptdefAttribute> macrodefAttributes = myScriptDef.getScriptdefAttributes();
       final List<String> attribs = new ArrayList<>(macrodefAttributes.size());
@@ -642,19 +658,21 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       }
       return attribs.iterator();
     }
-    
+
+    @Override
     public boolean isContainer() {
       return false;
     }
   }
-  
+
   private static class ContainerElementIntrospector extends AbstractIntrospector{
     public static final ContainerElementIntrospector INSTANCE = new ContainerElementIntrospector();
+    @Override
     public boolean isContainer() {
       return true;
     }
   }
-  
+
   private static class EnumerationToIteratorAdapter<T> implements Iterator<T> {
 
     private final Enumeration<T> myEnum;
@@ -663,17 +681,20 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       myEnum = enumeration;
     }
 
+    @Override
     public boolean hasNext() {
       return myEnum.hasMoreElements();
     }
 
+    @Override
     public T next() {
       return myEnum.nextElement();
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException("remove is not supported");
     }
   }
-  
+
 }

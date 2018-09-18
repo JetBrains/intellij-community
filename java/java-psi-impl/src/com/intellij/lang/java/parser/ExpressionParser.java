@@ -69,7 +69,7 @@ public class ExpressionParser {
     if (left == null) return null;
 
     final IElementType tokenType = getGtTokenType(builder);
-    if (ASSIGNMENT_OPS.contains(tokenType) && tokenType != null) {
+    if (tokenType != null && ASSIGNMENT_OPS.contains(tokenType)) {
       final PsiBuilder.Marker assignment = left.precede();
       advanceGtToken(builder, tokenType);
 
@@ -607,7 +607,7 @@ public class ExpressionParser {
   @NotNull
   public PsiBuilder.Marker parseArrayInitializer(@NotNull PsiBuilder builder,
                                                  @NotNull IElementType type,
-                                                 @NotNull Function<PsiBuilder, Boolean> elementParser,
+                                                 @NotNull Function<? super PsiBuilder, Boolean> elementParser,
                                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String missingElementKey) {
     final PsiBuilder.Marker arrayInit = builder.mark();
     builder.advanceLexer();

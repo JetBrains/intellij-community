@@ -5,7 +5,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,7 +13,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ImportUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -249,14 +247,6 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       CommentTracker ct = new CommentTracker();
       String replacement = "java.nio.charset." + myConstantName;
       PsiReferenceExpression ref = (PsiReferenceExpression)ct.replaceAndRestoreComments(expression, replacement);
-      PsiField field = ObjectUtils.tryCast(ref.resolve(), PsiField.class);
-      PsiExpression qualifier = ref.getQualifierExpression();
-      if (field != null && qualifier != null && ImportUtils.isStaticallyImported(field, ref)) {
-        PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-        if (field.equals(resolveHelper.resolveAccessibleReferencedVariable(StringUtil.getShortName(myConstantName), ref))) {
-          qualifier.delete();
-        }
-      }
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
       while (true) {
         PsiTryStatement tryStatement =

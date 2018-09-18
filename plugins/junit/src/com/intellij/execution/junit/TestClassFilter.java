@@ -58,6 +58,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
 
   public Project getProject() { return myProject; }
 
+  @Override
   public boolean isAccepted(final PsiClass aClass) {
     return ReadAction.compute(() -> {
       if (aClass.getQualifiedName() != null &&
@@ -73,12 +74,12 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
       return false;
     });
   }
-  
+
   private static boolean isTopMostTestClass(PsiClass psiClass) {
     if (psiClass.getQualifiedName() == null) return false;
-    
+
     if (!PsiClassUtil.isRunnableClass(psiClass, true, true)) return false;
-    
+
     if (AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, CHECK_HIERARCHY)) return true;
 
     if (JUnitUtil.isTestCaseInheritor(psiClass)) return true;
@@ -162,6 +163,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     };
   }
 
+  @Override
   public GlobalSearchScope getScope() { return myScope; }
   @Nullable
   public PsiClass getBase() { return myBase; }

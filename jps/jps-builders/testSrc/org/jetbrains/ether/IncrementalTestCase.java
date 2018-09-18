@@ -16,7 +16,6 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.builders.BuildResult;
@@ -25,6 +24,7 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -115,7 +115,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         if (file.getName().endsWith(newSuffix)) {
           File targetFile = getTargetFile(file, newSuffix);
           FileUtil.copyContent(file, targetFile);
-          timestamp[0] = Math.max(timestamp[0], FileSystemUtil.lastModified(targetFile));
+          timestamp[0] = Math.max(timestamp[0], FSOperations.lastModified(targetFile));
         }
       }
       catch (IOException e) {

@@ -47,7 +47,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (view == null) return;

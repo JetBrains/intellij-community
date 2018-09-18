@@ -3,10 +3,13 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.util.ui.JBUI;
 import org.jdesktop.swingx.util.OS;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.Set;
 
@@ -35,10 +38,20 @@ public class ScaleInfoUsageCollector extends ApplicationUsagesCollector {
     scale = scaleBase + scaleFract;
 
     String os = OS.isWindows() ? "Windows" : OS.isLinux() ? "Linux" : OS.isMacOSX() ? "Mac" : "UnknownOS";
+    if (!GraphicsEnvironment.isHeadless()) {
+      DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+      if (JdkEx.getDisplayModeEx().isDefault(dm)) os += "_ScaledMode";
+    }
     return Collections.singleton(new UsageDescriptor(os + "_" + scale, 1));
   }
 
   @NotNull
   @Override
   public String getGroupId() { return "statistics.ui.screen.scale"; }
+
+  @NotNull
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
+  }
 }

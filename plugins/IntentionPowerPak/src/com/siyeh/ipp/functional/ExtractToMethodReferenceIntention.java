@@ -3,7 +3,6 @@
  */
 package com.siyeh.ipp.functional;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
@@ -24,10 +23,12 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,7 +94,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
     if (lambdaExpression != null) {
       PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
 
-      PsiClass targetClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class);
+      PsiClass targetClass = ClassUtils.getContainingClass(lambdaExpression);
       if (targetClass == null) return;
       PsiElement[] elements = body.getStatements();
 
@@ -168,13 +169,27 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   private static void processMethodsDuplicates(PsiMethod method) {
+    Project project = method.getProject();
     final Runnable runnable = () -> {
       if (!method.isValid()) return;
-      MethodDuplicatesHandler
-        .invokeOnScope(method.getProject(), Collections.singleton(method), new AnalysisScope(method.getContainingFile()), true);
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        final List<Match> duplicates = MethodDuplicatesHandler.hasDuplicates(containingClass, method);
+        for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext(); ) {
+          Match match = iterator.next();
+          final PsiElement matchStart = match.getMatchStart();
+          if (PsiTreeUtil.isAncestor(method, matchStart, false)) {
+            iterator.remove();
+            break;
+          }
+        }
+        if (!duplicates.isEmpty()) {
+          MethodDuplicatesHandler.replaceDuplicate(project, Collections.singletonMap(method, duplicates), Collections.singleton(method));
+        }
+      }
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      MethodDuplicatesHandler.REFACTORING_NAME, true, method.getProject());
+                                                                      MethodDuplicatesHandler.REFACTORING_NAME, true, project);
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

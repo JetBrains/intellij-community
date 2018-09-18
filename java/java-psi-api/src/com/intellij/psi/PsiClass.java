@@ -333,7 +333,7 @@ public interface PsiClass
    *
    * @param baseClass     the base class to check the inheritance.
    *                      searched in the entire inheritance chain
-   * @param classToByPass class to bypass the inheratance check for
+   * @param classToByPass class to bypass the inheritance check for
    * @return true if the class is an inheritor, false otherwise
    */
   boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass);

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
+import com.intellij.dvcs.push.ui.PushUtils;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
     myDontShowAgainCheckbox.setSelected(GitVcsSettings.getInstance(myProject).shouldPreviewPushOnCommitAndPush());
 
     JPanel basePanel = super.createOptionsPanel();
-    if (myController.getProhibitedTarget() != null) {
+    if (PushUtils.getProhibitedTarget(this) != null) {
       return basePanel;
     }
 
@@ -52,7 +53,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   }
 
   public void showOrPush() {
-    boolean hasProtectedBranch = myController.getProhibitedTarget() != null;
+    boolean hasProtectedBranch = PushUtils.getProhibitedTarget(this) != null;
     GitVcsSettings vcsSettings = GitVcsSettings.getInstance(myProject);
     boolean showDialog = vcsSettings.shouldPreviewPushOnCommitAndPush();
     boolean showOnlyProtected = vcsSettings.isPreviewPushProtectedOnly();

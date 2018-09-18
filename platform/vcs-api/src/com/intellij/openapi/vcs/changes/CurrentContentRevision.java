@@ -39,6 +39,7 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     myFile = file;
   }
 
+  @Override
   @Nullable
   public String getContent() {
     final VirtualFile vFile = getVirtualFile();
@@ -72,11 +73,13 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     return vFile;
   }
 
+  @Override
   @NotNull
   public FilePath getFile() {
     return myFile;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;

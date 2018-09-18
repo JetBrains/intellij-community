@@ -32,6 +32,7 @@ import java.util.zip.ZipFile;
  * @since 12/07/2011
  */
 public class JarMemoryLoader {
+  /** Special entry to keep the number of reordered classes in jar. */
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
   private final Map<String, Resource> myResources = Collections.synchronizedMap(new HashMap<String, Resource>()); // todo do we need it ?

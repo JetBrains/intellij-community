@@ -130,11 +130,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @Override
-  public boolean isSuppressed(@NotNull RefEntity entity, @NotNull String id) {
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(id);
-  }
-
-  @Override
   public boolean shouldCheck(@NotNull RefEntity entity, @NotNull GlobalInspectionTool tool) {
     return !(entity instanceof RefElementImpl) || isToCheckMember((RefElementImpl)entity, tool);
   }
@@ -401,7 +396,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public static void cleanupElements(@NotNull final Project project,
                                      @Nullable final Runnable runnable,
-                                     final List<SmartPsiElementPointer<PsiElement>> elements) {
+                                     final List<? extends SmartPsiElementPointer<PsiElement>> elements) {
     Runnable cleanupRunnable = () -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {

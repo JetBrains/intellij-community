@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.CommonBundle;
@@ -49,7 +35,6 @@ import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +52,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.BindingProperty");
 
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+    @Override
     protected void customize(@NotNull final String value) {
       setText(value);
     }
@@ -79,19 +65,23 @@ public final class BindingProperty extends Property<RadComponent, String> {
     myEditor = new BindingEditor(project);
   }
 
+  @Override
   public PropertyEditor<String> getEditor(){
     return myEditor;
   }
 
+  @Override
   @NotNull
   public PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 
+  @Override
   public String getValue(final RadComponent component){
     return component.getBinding();
   }
 
+  @Override
   protected void setValueImpl(final RadComponent component, final String value) throws Exception {
     if (Comparing.strEqual(value, component.getBinding(), true)) {
       return;

@@ -167,7 +167,7 @@ public class ContentUtilEx extends ContentsUtil {
    * trying to find the first one which matches the given condition.
    */
   @Nullable
-  public static JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<JComponent> condition) {
+  public static JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContentImpl) {
         List<Pair<String, JComponent>> tabs = ((TabbedContentImpl)content).getTabs();
@@ -185,7 +185,7 @@ public class ContentUtilEx extends ContentsUtil {
   }
 
   @Nullable
-  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<JComponent> condition) {
+  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<? super JComponent> condition) {
     for (Pair<String, JComponent> tab : tabbedContent.getTabs()) {
       if (condition.value(tab.second)) {
         return tab.second;
@@ -199,7 +199,7 @@ public class ContentUtilEx extends ContentsUtil {
    *
    * @return true if content was found and closed
    */
-  public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull Condition<JComponent> condition) {
+  public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
         TabbedContent tabbedContent = (TabbedContent)content;

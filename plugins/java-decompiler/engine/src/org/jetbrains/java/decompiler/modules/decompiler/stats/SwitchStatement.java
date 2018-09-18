@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.SwitchInstruction;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
@@ -18,6 +15,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 
@@ -97,6 +95,7 @@ public class SwitchStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     SwitchHelper.simplify(this);
 
@@ -153,6 +152,7 @@ public class SwitchStatement extends Statement {
     return buf;
   }
 
+  @Override
   public void initExprents() {
     SwitchExprent swexpr = (SwitchExprent)first.getExprents().remove(first.getExprents().size() - 1);
     swexpr.setCaseValues(caseValues);
@@ -160,6 +160,7 @@ public class SwitchStatement extends Statement {
     headexprent.set(0, swexpr);
   }
 
+  @Override
   public List<Object> getSequentialObjects() {
 
     List<Object> lst = new ArrayList<>(stats);
@@ -168,12 +169,14 @@ public class SwitchStatement extends Statement {
     return lst;
   }
 
+  @Override
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
     if (headexprent.get(0) == oldexpr) {
       headexprent.set(0, newexpr);
     }
   }
 
+  @Override
   public void replaceStatement(Statement oldstat, Statement newstat) {
 
     for (int i = 0; i < caseStatements.size(); i++) {
@@ -185,10 +188,12 @@ public class SwitchStatement extends Statement {
     super.replaceStatement(oldstat, newstat);
   }
 
+  @Override
   public Statement getSimpleCopy() {
     return new SwitchStatement();
   }
 
+  @Override
   public void initSimpleCopy() {
     first = stats.get(0);
     default_edge = first.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);

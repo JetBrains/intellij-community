@@ -283,6 +283,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     return "inspection/offline";
   }
 
+  @NotNull
   @Override
   protected String getTestDirectoryName() {
     return "project";

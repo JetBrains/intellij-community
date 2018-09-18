@@ -79,6 +79,7 @@ public abstract class JvmSmartStepIntoHandler {
                             KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
 
         popup.addListSelectionListener(new ListSelectionListener() {
+          @Override
           public void valueChanged(ListSelectionEvent e) {
             popupStep.getScopeHighlighter().dropHighlight();
             if (!e.getValueIsAdjusting()) {

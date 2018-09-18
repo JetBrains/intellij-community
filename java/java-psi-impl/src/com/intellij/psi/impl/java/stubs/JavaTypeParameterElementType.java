@@ -57,8 +57,9 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
     return new PsiTypeParameterImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiTypeParameterStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiTypeParameterStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     final String name = RecordUtil.intern(tree.getCharTable(), id);
     return new PsiTypeParameterStubImpl(parentStub, name);

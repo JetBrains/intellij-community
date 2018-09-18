@@ -21,6 +21,7 @@ import java.io.IOException;
 
 public class CompilerIOUtil {
   private final static ThreadLocal<byte[]> myBuffer = new ThreadLocal<byte[]>() {
+    @Override
     protected byte[] initialValue() {
       return new byte[1024];
     }

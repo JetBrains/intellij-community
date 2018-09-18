@@ -58,12 +58,12 @@ public class MergeActionGroup extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myOperations.selectSuggestion();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myOperations.getCurrentFragment() != null);
     }
   }
@@ -77,7 +77,7 @@ public class MergeActionGroup extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myOperation.perform(e.getProject());
     }
   }

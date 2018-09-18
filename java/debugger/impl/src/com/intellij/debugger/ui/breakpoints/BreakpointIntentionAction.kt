@@ -27,9 +27,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
                               "Do not stop if called from: " +
                               StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(") ?: myCaller)) {
 
-    override fun update(e: AnActionEvent?) {
+    override fun update(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
-        e?.presentation?.setEnabled(!isCALLER_FILTERS_ENABLED || !callerExclusionFilters.contains(ClassFilter(myCaller)))
+        e.presentation.setEnabled(!isCALLER_FILTERS_ENABLED || !callerExclusionFilters.contains(ClassFilter(myCaller)))
       }
     }
 
@@ -49,9 +49,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
                               "Stop only if called from: " +
                               StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(") ?: myCaller)) {
 
-    override fun update(e: AnActionEvent?) {
+    override fun update(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
-        e?.presentation?.setEnabled(!isCALLER_FILTERS_ENABLED || !callerFilters.contains(ClassFilter(myCaller)))
+        e.presentation.setEnabled(!isCALLER_FILTERS_ENABLED || !callerFilters.contains(ClassFilter(myCaller)))
       }
     }
 
@@ -69,9 +69,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
   internal class AddInstanceFilter(breakpoint: XBreakpoint<*>, private val myInstance: Long) :
     BreakpointIntentionAction(breakpoint, "Stop only in the current object") {
 
-    override fun update(e: AnActionEvent?) {
+    override fun update(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
-        e?.presentation?.setEnabled(!isINSTANCE_FILTERS_ENABLED || !instanceFilters.contains(InstanceFilter.create(myInstance)))
+        e.presentation.setEnabled(!isINSTANCE_FILTERS_ENABLED || !instanceFilters.contains(InstanceFilter.create(myInstance)))
       }
     }
 
@@ -87,9 +87,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
   internal class AddClassFilter(breakpoint: XBreakpoint<*>, private val myClass: String) :
     BreakpointIntentionAction(breakpoint, "Stop only in the class: ${StringUtil.getShortName(myClass)}") {
 
-    override fun update(e: AnActionEvent?) {
+    override fun update(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
-        e?.presentation?.setEnabled(!isCLASS_FILTERS_ENABLED || !classFilters.contains(ClassFilter(myClass)))
+        e.presentation.setEnabled(!isCLASS_FILTERS_ENABLED || !classFilters.contains(ClassFilter(myClass)))
       }
     }
 
@@ -107,9 +107,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
   internal class AddClassNotFilter(breakpoint: XBreakpoint<*>, private val myClass: String) :
     BreakpointIntentionAction(breakpoint, "Do not stop in the class: ${StringUtil.getShortName(myClass)}") {
 
-    override fun update(e: AnActionEvent?) {
+    override fun update(e: AnActionEvent) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
-        e?.presentation?.setEnabled(!isCLASS_FILTERS_ENABLED || !classExclusionFilters.contains(ClassFilter(myClass)))
+        e.presentation.setEnabled(!isCLASS_FILTERS_ENABLED || !classExclusionFilters.contains(ClassFilter(myClass)))
       }
     }
 

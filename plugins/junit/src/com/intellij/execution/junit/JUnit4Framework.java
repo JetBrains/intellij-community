@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class JUnit4Framework extends JavaTestFramework {
+  @Override
   @NotNull
   public String getName() {
     return "JUnit4";
@@ -32,6 +33,7 @@ public class JUnit4Framework extends JavaTestFramework {
     return AllIcons.RunConfigurations.Junit;
   }
 
+  @Override
   protected String getMarkerClassFQName() {
     return JUnitUtil.TEST_ANNOTATION;
   }
@@ -42,11 +44,13 @@ public class JUnit4Framework extends JavaTestFramework {
     return JUnitExternalLibraryDescriptor.JUNIT4;
   }
 
+  @Override
   @Nullable
   public String getDefaultSuperClass() {
     return null;
   }
 
+  @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
     return JUnitUtil.isJUnit4TestClass(clazz, false);
@@ -131,14 +135,17 @@ public class JUnit4Framework extends JavaTestFramework {
     return type instanceof JUnitConfigurationType;
   }
 
+  @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 SetUp Method.java");
   }
 
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 TearDown Method.java");
   }
 
+  @Override
   @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Test Method.java");

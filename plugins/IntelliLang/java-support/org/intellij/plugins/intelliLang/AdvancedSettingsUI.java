@@ -49,6 +49,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     myConfiguration = configuration.getAdvancedConfiguration();
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new AdvancedSettingsPanel();
     return myPanel.myRoot;
@@ -69,10 +70,12 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     myPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Advanced";
@@ -98,6 +101,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       myField = annotationField;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
 
@@ -105,6 +109,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(myField.getText(), scope);
       final TreeClassChooser chooser =
         factory.createNoInnerClassesScopeChooser("Select Annotation Class", scope, new ClassFilter() {
+          @Override
           public boolean isAccepted(PsiClass aClass) {
             return aClass.isAnnotationType();
           }

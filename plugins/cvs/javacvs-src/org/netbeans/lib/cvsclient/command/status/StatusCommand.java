@@ -14,13 +14,14 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.status;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.DualListener;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
@@ -32,7 +33,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -61,7 +61,8 @@ public final class StatusCommand extends AbstractCommand {
 	 * services to this command, including the ability to actually process
 	 * all the requests.
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                  AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -95,7 +96,8 @@ public final class StatusCommand extends AbstractCommand {
 	 * resets all switches in the command. After calling this method,
 	 * the command should have no switches defined and should behave defaultly.
 	 */
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 		setIncludeTags(false);
@@ -105,7 +107,8 @@ public final class StatusCommand extends AbstractCommand {
 	 * This method returns how the command would looklike when typed on the command line.
 	 * Each command is responsible for constructing this information.
 	 */
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommand = new StringBuffer("status ");
 		cvsCommand.append(getCVSArguments());
 		appendFileArguments(cvsCommand);

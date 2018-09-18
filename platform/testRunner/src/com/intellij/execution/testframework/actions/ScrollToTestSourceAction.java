@@ -28,6 +28,7 @@ public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
           null, properties, TestConsoleProperties.SCROLL_TO_SOURCE);
   }
 
+  @Override
   protected boolean isEnabled() {
     return myModel != null;
   }

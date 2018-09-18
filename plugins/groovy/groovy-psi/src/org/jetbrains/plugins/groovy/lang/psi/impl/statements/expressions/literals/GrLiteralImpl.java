@@ -25,6 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+
 /**
  * @author ilyas
  */
@@ -94,14 +96,14 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     else if (elemType == GroovyTokenTypes.kTRUE) {
       return Boolean.TRUE;
     }
-    else if (elemType == GroovyTokenTypes.mSTRING_LITERAL) {
+    else if (elemType == STRING_SQ || elemType == STRING_TSQ) {
       if (!text.startsWith("'")) return null;
       text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());
       boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
-    else if (elemType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    else if (elemType == STRING_DQ || elemType == STRING_TDQ) {
       if (!text.startsWith("\"")) return null;
       text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());

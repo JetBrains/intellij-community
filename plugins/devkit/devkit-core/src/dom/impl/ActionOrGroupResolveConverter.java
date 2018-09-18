@@ -21,16 +21,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.impl.DomImplUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,17 +66,17 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public ActionOrGroup fromString(@Nullable @NonNls final String value, ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(value)) return null;
 
-    final ActionOrGroup[] result = {null};
+    Ref<ActionOrGroup> result = Ref.create();
     PairProcessor<String, ActionOrGroup> findProcessor = (s, actionOrGroup) -> {
       if (isRelevant(actionOrGroup) &&
           Comparing.strEqual(value, s)) {
-        result[0] = actionOrGroup;
+        result.set(actionOrGroup);
         return false;
       }
       return true;
     };
     processActionOrGroup(context, findProcessor);
-    return result[0];
+    return result.get();
   }
 
   @Nullable
@@ -88,40 +87,41 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve action or group '" + s + "'";
+    return "Cannot resolve " + getResultTypes() + " '" + s + "'";
   }
 
   @Nullable
   @Override
   public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
-    if (actionOrGroup instanceof Action) {
-      Action action = (Action)actionOrGroup;
-      String msg = action.getId().getStringValue() + " in " + DomUtil.getFile(action) + " " + action.isValid() + " ";
-      DomImplUtil.assertValidity(action, msg);
-      final PsiElement element = getPsiElement(actionOrGroup);
-      if (element == null) {
-        throw new IllegalStateException("no PSI: " + msg);
-      }
+    PsiElement psiElement = getPsiElement(actionOrGroup);
+    String name = StringUtil.notNullize(getName(actionOrGroup), "<invalid name>");
+    LookupElementBuilder builder = psiElement == null ? LookupElementBuilder.create(name) :
+                                   LookupElementBuilder.create(psiElement, name);
 
-      LookupElementBuilder builder =
-        LookupElementBuilder.create(ObjectUtils.assertNotNull(element),
-                                    ObjectUtils.assertNotNull(getName(action)));
+    builder = builder.withIcon(ElementPresentationManager.getIcon(actionOrGroup));
 
-      final String text = action.getText().getStringValue();
-      if (StringUtil.isNotEmpty(text)) {
-        String withoutMnemonic = StringUtil.replace(text, "_", "");
-        builder = builder.withTailText(" \"" + withoutMnemonic + "\"", true);
-      }
-
-      return builder;
+    final String text = actionOrGroup.getText().getStringValue();
+    if (StringUtil.isNotEmpty(text)) {
+      String withoutMnemonic = StringUtil.replace(text, "_", "");
+      builder = builder.withTailText(" \"" + withoutMnemonic + "\"", true);
     }
 
-    return super.createLookupElement(actionOrGroup);
+    final String description = actionOrGroup.getDescription().getStringValue();
+    if (StringUtil.isNotEmpty(description)) {
+      builder = builder.withTypeText(description);
+    }
+
+    return builder;
   }
 
   protected boolean isRelevant(ActionOrGroup actionOrGroup) {
     return true;
   }
+
+  protected String getResultTypes() {
+    return "action or group";
+  }
+
 
   public static class OnlyActions extends ActionOrGroupResolveConverter {
     @Override
@@ -130,8 +130,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     }
 
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
-      return "Cannot resolve action '" + s + "'";
+    protected String getResultTypes() {
+      return "action";
     }
   }
 
@@ -142,10 +142,11 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     }
 
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
-      return "Cannot resolve group '" + s + "'";
+    protected String getResultTypes() {
+      return "group";
     }
   }
+
 
   private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<String, ActionOrGroup> processor) {
     final Project project = context.getProject();
@@ -203,6 +204,6 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Nullable
   private static String getName(@NotNull ActionOrGroup actionOrGroup) {
-    return ElementPresentationManager.getElementName(actionOrGroup);
+    return actionOrGroup.getId().getStringValue();
   }
 }

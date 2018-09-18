@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
@@ -81,6 +81,7 @@ public class SyntheticWorker {
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
     private final SvnRepositoryCache myCache = SvnRepositoryCache.getInstance();
 
+    @Override
     @NotNull
     public Object fun(final RepositoryTreeNode repositoryTreeNode) {
       myCache.remove(repositoryTreeNode.getURL().toString());
@@ -97,6 +98,7 @@ public class SyntheticWorker {
       myNewParentUrl = newParentUrl;
     }
 
+    @Override
     @NotNull
     public Object fun(final RepositoryTreeNode repositoryTreeNode) {
       final List<DirectoryEntry> children = myCache.getChildren(repositoryTreeNode.getURL().toString());

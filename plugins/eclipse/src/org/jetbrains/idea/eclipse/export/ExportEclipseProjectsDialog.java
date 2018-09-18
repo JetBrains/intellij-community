@@ -34,6 +34,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
     myUserLibrariesTF.addBrowseFolderListener("Locate .userlibraries", "Locate .userlibraries file where project libraries would be exported", project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myExportProjectLibrariesCb.setSelected(true);
     myExportProjectLibrariesCb.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myUserLibrariesTF.setEnabled(myExportProjectLibrariesCb.isSelected());
         myPathToUserLibsLabel.setEnabled(myExportProjectLibrariesCb.isSelected());
@@ -41,6 +42,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
     });
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return contentPane;
@@ -48,6 +50,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
 
   private void createUIComponents() {
     moduleChooser = new ElementsChooser<Module>(true) {
+      @Override
       protected String getItemText(@NotNull final Module module) {
         return module.getName();
       }

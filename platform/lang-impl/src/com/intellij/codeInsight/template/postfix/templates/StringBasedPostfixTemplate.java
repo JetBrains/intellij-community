@@ -18,6 +18,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   /**
    * @deprecated use {@link #StringBasedPostfixTemplate(String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
+  @Deprecated
   public StringBasedPostfixTemplate(@NotNull String name,
                                     @NotNull String example,
                                     @NotNull PostfixTemplateExpressionSelector selector) {

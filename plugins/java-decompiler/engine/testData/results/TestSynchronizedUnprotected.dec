@@ -1,0 +1,42 @@
+package pkg;
+
+import kotlin.Metadata;
+import kotlin.Unit;
+
+@Metadata(
+   mv = {1, 1, 11},
+   bv = {1, 0, 2},
+   k = 1,
+   xi = 2,
+   d1 = {"\u0000\u0010\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0002\n\u0002\u0010\u0002\u0018\u00002\u00020\u0001B\u0005¢\u0006\u0002\u0010\u0002J\u0006\u0010\u0003\u001a\u00020\u0004"},
+   d2 = {"Lpkg/TestSynchronizedUnprotected;", "", "()V", "test", ""}
+)
+public final class TestSynchronizedUnprotected {
+   public final void test() {
+      synchronized(this) {
+         String var2 = "Boom";// 6
+         System.out.println(var2);
+         Unit var3 = Unit.INSTANCE;// 5 7
+      }
+   }
+}
+
+class 'pkg/TestSynchronizedUnprotected' {
+   method 'test ()V' {
+      3      15
+      5      16
+      7      16
+      8      17
+      c      17
+      f      18
+      12      18
+      15      20
+   }
+}
+
+Lines mapping:
+5 <-> 19
+6 <-> 17
+7 <-> 19
+Not mapped:
+8

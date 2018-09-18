@@ -95,6 +95,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     return descriptions;
   }
 
+  @Override
   protected void changeSelfUsage(SelfUsageInfo usageInfo) throws IncorrectOperationException {
     PsiElement element = usageInfo.getElement();
     PsiElement parent = element.getParent();
@@ -142,6 +143,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     }
   }
 
+  @Override
   protected void changeSelf(PsiElementFactory factory, UsageInfo[] usages)
           throws IncorrectOperationException {
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(myMember);
@@ -152,7 +154,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     final PsiClass containingClass = myMember.getContainingClass();
     LOG.assertTrue(containingClass != null);
-    
+
     if (mySettings.isDelegate()) {
       List<ParameterInfoImpl> params = new ArrayList<>();
       PsiParameter[] parameters = myMember.getParameterList().getParameters();
@@ -235,6 +237,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
   }
 
+  @Override
   protected void changeInternalUsage(InternalUsageInfo usage, PsiElementFactory factory)
           throws IncorrectOperationException {
     if (!mySettings.isChangeSignature()) return;
@@ -281,6 +284,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     }
   }
 
+  @Override
   protected void changeExternalUsage(UsageInfo usage, PsiElementFactory factory)
           throws IncorrectOperationException {
     final PsiElement element = usage.getElement();
@@ -392,6 +396,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     return mySettings.isMakeClassParameter();
   }
 
+  @Override
   protected void findExternalUsages(final ArrayList<UsageInfo> result) {
     if (mySettings.isDelegate()) return;
     findExternalReferences(myMember, result);

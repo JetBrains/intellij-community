@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
@@ -76,6 +62,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author traff
@@ -232,6 +220,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
 
   public void executeInConsole(@NotNull final String code) {
+    CountDownLatch latch = new CountDownLatch(1);
+
     TransactionGuard.submitTransaction(this, () -> {
       final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
       DocumentEx document = getConsoleEditor().getDocument();
@@ -256,7 +246,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
           getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
         }
       });
+
+      latch.countDown();
     });
+
+    try {
+      latch.await(1, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
@@ -405,6 +404,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     highlighter.putUserData(PyConsoleCopyHandler.PROMPT_LENGTH_MARKER, prompt.length() + 1);
   }
 
+  @Override
   @NotNull
   protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
     String text;

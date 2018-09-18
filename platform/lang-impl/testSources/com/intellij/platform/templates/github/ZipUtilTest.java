@@ -23,16 +23,12 @@ public class ZipUtilTest {
   public void testSimpleUnzip() throws Exception {
     File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
     File simpleZipFile = new File(getZipParentDir(), "simple.zip");
-    ZipInputStream stream = new ZipInputStream(new FileInputStream(simpleZipFile));
-    try {
+    try (ZipInputStream stream = new ZipInputStream(new FileInputStream(simpleZipFile))) {
       ZipUtil.unzip(null, tempDir, stream, null, null, true);
       checkFileStructure(tempDir,
                          fs()
                            .file("a.txt")
                            .dir("dir").file("b.txt"));
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -40,16 +36,12 @@ public class ZipUtilTest {
   public void testSingleRootDirUnzip() throws Exception {
     File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
     File simpleZipFile = new File(getZipParentDir(), "single-root-dir-archive.zip");
-    ZipInputStream stream = new ZipInputStream(new FileInputStream(simpleZipFile));
-    try {
+    try (ZipInputStream stream = new ZipInputStream(new FileInputStream(simpleZipFile))) {
       ZipUtil.unzip(null, tempDir, stream, null, null, true);
       checkFileStructure(tempDir,
                          fs()
                            .file("a.txt")
                            .dir("dir").file("b.txt"));
-    }
-    finally {
-      stream.close();
     }
   }
 

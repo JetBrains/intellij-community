@@ -36,10 +36,12 @@ public class DeleteTagAction extends ActionOnSelectedElement{
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("action.name.delete.tag");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final FilePath[] selectedFiles = context.getSelectedFilePaths();
     final DeleteTagDialog deleteTagDialog = new DeleteTagDialog(selectedFiles, context.getProject());

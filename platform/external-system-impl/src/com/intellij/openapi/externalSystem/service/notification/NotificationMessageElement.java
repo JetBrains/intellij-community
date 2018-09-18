@@ -45,6 +45,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
                                     String rendererTextPrefix) {
     super(kind, parent, message, navigatable, exportText, rendererTextPrefix);
     myLeftTreeCellRenderer = new CustomizeColoredTreeCellRenderer() {
+      @Override
       public void customizeCellRenderer(SimpleColoredComponent renderer,
                                         JTree tree,
                                         Object value,

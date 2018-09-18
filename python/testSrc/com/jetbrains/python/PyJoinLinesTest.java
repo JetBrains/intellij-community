@@ -33,9 +33,8 @@ public class PyJoinLinesTest extends PyTestCase {
   }
 
   private void doTestWithCodeStyleSettings() {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     settings.setRightMargin(PythonLanguage.getInstance(), 79);
-    CodeStyle.setTemporarySettings(myFixture.getProject(), settings);
 
     doTest();
   }

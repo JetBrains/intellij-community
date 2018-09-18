@@ -74,11 +74,13 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     processPostponedErrors();
   }
 
+  @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
   }
 
+  @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
     super.visitInnerClass(name, outerName, innerName, access);
     if (myClassName.equals(name)) {
@@ -86,6 +88,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     }
   }
 
+  @Override
   public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
     if (name.equals(ASSERTIONS_DISABLED_NAME)) {
       myHasAssertions = true;
@@ -97,6 +100,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     return super.visitField(access, name, desc, signature, value);
   }
 
+  @Override
   public void visitEnd() {
     if (myInstrumented) {
       addField(PATTERN_CACHE_NAME, ACC_PRIVATE + ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
@@ -178,6 +182,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     mv.visitFieldInsn(PUTSTATIC, myClassName, ASSERTIONS_DISABLED_NAME, "Z");
   }
 
+  @Override
   public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
     final MethodVisitor methodvisitor = cv.visitMethod(access, name, desc, signature, exceptions);
 
@@ -186,6 +191,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       myHasStaticInitializer = true;
 
       return new ErrorPostponingMethodVisitor(this, name, methodvisitor) {
+        @Override
         public void visitCode() {
           super.visitCode();
           patchStaticInitializer(mv);
@@ -225,14 +231,13 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   public boolean acceptAnnotation(String annotationClassName) {
     if (annotationClassName == null) {
       // unfortunately sometimes ASM may return null values
-      return false; 
+      return false;
     }
     processAnnotation(annotationClassName);
     return myAnnotationNameToPatternMap.containsKey(annotationClassName);
   }
 
   /**
-   * @param annotationClassname
    * @return pattern string for 'alias' annotations, as specified in the 'base' annotation,
    *         otherwise null, (for the  'base' annotation class name null is returned as well)
    */
@@ -261,6 +266,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
               }
               // dig into pattern annotation in order to discover the pattern string
               return new AnnotationVisitor(Opcodes.API_VERSION) {
+                @Override
                 public void visit(@NonNls String name, Object value) {
                   if ("value".equals(name) && value instanceof String) {
                     patternString.set((String)value);
@@ -295,16 +301,16 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       }
       final StringBuilder message = new StringBuilder();
       message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
-      
+
       final String errMessage = err.getMessage();
       if (errMessage != null) {
         message.append(errMessage);
       }
-      
+
       final ByteArrayOutputStream out = new ByteArrayOutputStream();
       err.printStackTrace(new PrintStream(out));
       message.append('\n').append(out.toString());
-      
+
       myPostponedError = new RuntimeException(message.toString(), err);
     }
     if (myInstrumented) {

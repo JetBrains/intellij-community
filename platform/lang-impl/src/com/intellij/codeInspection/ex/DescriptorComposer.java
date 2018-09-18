@@ -184,7 +184,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
       lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
       lineAnchor.append("\">");
-      lineAnchor.append(Integer.toString(lineNumber + 1));
+      lineAnchor.append((lineNumber + 1));
       //noinspection HardCodedStringLiteral
       lineAnchor.append("</a>");
       //noinspection HardCodedStringLiteral

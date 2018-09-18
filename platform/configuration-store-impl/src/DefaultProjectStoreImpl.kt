@@ -7,6 +7,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
+import java.io.Writer
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -25,10 +26,23 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
   }
 
   override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
-    override fun saveLocally(element: Element?) {
-      super.saveLocally(element?.let {
-        Element("application")
-          .addContent(Element("component").setAttribute("name", "ProjectManager").addContent(it))
+    override fun saveLocally(dataWriter: DataWriter?) {
+      super.saveLocally(when (dataWriter) {
+        null -> null
+        else -> object : StringDataWriter() {
+          override fun hasData(filter: DataWriterFilter) = dataWriter.hasData(filter)
+
+          override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+            val lineSeparatorWithIndent = "$lineSeparator    "
+            writer.append("<application>").append(lineSeparator)
+            writer.append("""  <component name="ProjectManager">""")
+            writer.append(lineSeparatorWithIndent)
+            (dataWriter as StringDataWriter).write(writer, lineSeparatorWithIndent, filter)
+            writer.append(lineSeparator)
+            writer.append("  </component>").append(lineSeparator)
+            writer.append("</application>")
+          }
+        }
       })
     }
   }
@@ -61,8 +75,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization() = storage.startExternalization()?.let(::MyExternalizationSession)
-
     override fun expandMacros(path: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
@@ -79,18 +91,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   override fun setPath(path: String) {
   }
-}
-
-private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
-  override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun createSaveSessions() = listOfNotNull(externalizationSession.createSaveSession())
 }
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation

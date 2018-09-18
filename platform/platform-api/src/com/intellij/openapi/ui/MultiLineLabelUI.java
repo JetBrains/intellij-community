@@ -31,6 +31,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
   private String myString;
   private String[] myLines;
 
+  @Override
   protected String layoutCL(
     JLabel label,
     FontMetrics fontMetrics,
@@ -309,12 +310,14 @@ public class MultiLineLabelUI extends BasicLabelUI {
     return rettext;
   }
 
+  @Override
   protected void paintEnabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getForeground());
     drawString(g, s, accChar, textX, textY);
   }
 
+  @Override
   protected void paintDisabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getBackground());

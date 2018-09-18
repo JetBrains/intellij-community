@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.intellij.myPlugin</id>
     <extensionPoints>
-        <extensionPoint name="foo.bar"/>
+        <extensionPoint name="foo.bar" interface="java.util.List"/>
         <extensionPoint name="ext" interface="java.lang.Runnable"/>
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
     </extensionPoints>
@@ -16,7 +16,7 @@
 
         <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
 
-        <myPlugin.foo.bar/>
+        <myPlugin.foo.bar implementation="java.util.ArrayList"/>
         <completion.contributor/>
         <custom.custom/>
         <indirect.indirect/>

@@ -61,7 +61,7 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
       var line = firstLine
       while (line != null && recordSize + estimator.estimate(line) < maxRecordSize) {
         val event = LogEventSerializer.fromString(line)
-        if (event != null && filter.accepts(event.group.id)) {
+        if (event != null && filter.accepts(event)) {
           recordSize += estimator.estimate(line)
           events.add(event)
         }

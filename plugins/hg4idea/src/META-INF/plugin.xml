@@ -131,7 +131,7 @@
         <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
       </action>
       <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete" text="Delete"
-              description="Delete selected patches" icon="AllIcons.Vcs.Remove" use-shortcut-of="$Delete"/>
+              description="Delete selected patches" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
     </group>
 
 

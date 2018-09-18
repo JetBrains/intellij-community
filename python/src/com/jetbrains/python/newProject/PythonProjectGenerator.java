@@ -223,16 +223,16 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * To support remote project creation, be sure to use {@link PyProjectSynchronizer}.
    * <br/>
    * When overwriting this method, <strong>be sure</strong> to call super() or call
-   * {@link PyProjectSynchronizer#syncProject(Module, PySyncDirection, Consumer)}  at least once: automatic sync works only after it.
+   * {@link PyProjectSynchronizer#syncProject(Module, PySyncDirection, Consumer, String...)}  at least once: automatic sync works only after it.
    *
    * @param synchronizer null if project is local and no sync required.
    *                     Otherwise, be sure to use it move code between local (java) and remote (python) side.
    *                     Remote interpreters can't be used with out of it. Contract is following:
    *                     <ol>
    *                     <li>Create some code on python (remote) side using helpers</li>
-   *                     <li>call {@link PyProjectSynchronizer#syncProject(Module, PySyncDirection, Consumer)}</li>
+   *                     <li>call {@link PyProjectSynchronizer#syncProject(Module, PySyncDirection, Consumer, String...)}</li>
    *                     <li>Change locally</li>
-   *                     <li>call {@link PyProjectSynchronizer#syncProject(Module, PySyncDirection, Consumer)} again in opposite direction</li>
+   *                     <li>call {@link PyProjectSynchronizer#syncProject(Module, PySyncDirection, Consumer, String...)} again in opposite direction</li>
    *                     </ol>
    */
 

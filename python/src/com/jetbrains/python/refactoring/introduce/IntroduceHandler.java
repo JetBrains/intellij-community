@@ -522,8 +522,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   private static class InitializerTextBuilder extends PyRecursiveElementVisitor {
     private final StringBuilder myResult = new StringBuilder();
+    private final boolean myPreserveFormatting;
 
     public InitializerTextBuilder(@NotNull PyExpression expression) {
+      myPreserveFormatting = shouldPreserveFormatting(expression);
       if (PsiTreeUtil.findChildOfType(expression, PsiComment.class) != null) {
         myResult.append(expression.getText());
       }
@@ -537,7 +539,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
     @Override
     public void visitWhiteSpace(PsiWhiteSpace space) {
-      myResult.append(space.getText().replace('\n', ' ').replace("\\", ""));
+      final String text = space.getText();
+      myResult.append(myPreserveFormatting ? text : text.replace('\n', ' ').replace("\\", ""));
     }
 
     @Override
@@ -580,6 +583,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       else {
         super.visitElement(element);
       }
+    }
+
+    private static boolean shouldPreserveFormatting(@NotNull PyExpression expression) {
+      // A collection literal in brackets
+      if (expression instanceof PyParenthesizedExpression) {
+        return ((PyParenthesizedExpression)expression).getContainedExpression() instanceof PyTupleExpression;
+      }
+      return expression instanceof PySequenceExpression && !(expression instanceof PyTupleExpression);
     }
 
     private static boolean needToWrapTopLevelExpressionInParenthesis(@NotNull PyExpression node) {

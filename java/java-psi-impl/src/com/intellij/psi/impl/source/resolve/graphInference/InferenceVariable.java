@@ -74,7 +74,7 @@ public class InferenceVariable extends LightTypeParameter {
     }
   }
 
-  static PsiType modifyAnnotations(PsiType type, BiFunction<PsiType, TypeAnnotationModifier, TypeAnnotationProvider> executeModifier) {
+  static PsiType modifyAnnotations(PsiType type, BiFunction<? super PsiType, ? super TypeAnnotationModifier, ? extends TypeAnnotationProvider> executeModifier) {
     for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
       if (type instanceof PsiClassType) {
         final TypeAnnotationProvider annotationProvider = executeModifier.apply(type, modifier);
@@ -130,8 +130,8 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   private void collectTransitiveDependencies(InferenceSession session,
-                                             Set<InferenceVariable> dependencies,
-                                             Set<InferenceVariable> rootDependencies) {
+                                             Set<? extends InferenceVariable> dependencies,
+                                             Set<? super InferenceVariable> rootDependencies) {
     final LinkedHashSet<InferenceVariable> newDependencies = new LinkedHashSet<>();
 
     for (InferenceVariable dependency : dependencies) {

@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -44,26 +43,31 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 public class ChooseFileIntentionAction implements IntentionAction {
   private Producer<VirtualFile[]> myFileChooser = null;
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return MavenDomBundle.message("intention.choose.file");
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!MavenDomUtil.isMavenFile(file)) return false;
     MavenDomDependency dep = getDependency(file, editor);
     return dep != null && "system".equals(dep.getScope().getStringValue());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final MavenDomDependency dep = getDependency(file, editor);
 

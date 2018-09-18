@@ -69,6 +69,7 @@ public class MavenUIUtil {
 
     final TreeCellRenderer baseRenderer = tree.getCellRenderer();
     tree.setCellRenderer(new TreeCellRenderer() {
+      @Override
       public Component getTreeCellRendererComponent(final JTree tree,
                                                     final Object value,
                                                     final boolean selected,
@@ -102,6 +103,7 @@ public class MavenUIUtil {
     });
 
     tree.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         int row = tree.getRowForLocation(e.getX(), e.getY());
         if (row >= 0) {
@@ -120,6 +122,7 @@ public class MavenUIUtil {
     });
 
     tree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath[] treePaths = tree.getSelectionPaths();

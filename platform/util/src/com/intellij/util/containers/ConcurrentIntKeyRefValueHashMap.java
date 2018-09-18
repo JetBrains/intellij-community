@@ -30,7 +30,7 @@ import java.util.*;
  * Null values are NOT allowed
  */
 abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObjectMap<V> {
-  private final ConcurrentIntObjectMap<IntReference<V>> myMap = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectHashMap<IntReference<V>> myMap = new ConcurrentIntObjectHashMap<IntReference<V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   @NotNull
@@ -127,56 +127,67 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   @NotNull
   @Override
-  public Iterable<Entry<V>> entries() {
-    final Iterator<Entry<IntReference<V>>> entryIterator = myMap.entries().iterator();
-    return new Iterable<Entry<V>>() {
-      @NotNull
+  public Set<Entry<V>> entrySet() {
+    return new MyEntrySetView();
+  }
+
+  private class MyEntrySetView extends AbstractSet<Entry<V>> {
+    @NotNull
+    @Override
+    public Iterator<Entry<V>> iterator() {
+      return entriesIterator();
+    }
+
+    @Override
+    public int size() {
+      return ConcurrentIntKeyRefValueHashMap.this.size();
+    }
+  }
+
+  @NotNull
+  private Iterator<Entry<V>> entriesIterator() {
+    final Iterator<Entry<IntReference<V>>> entryIterator = ((Iterable<Entry<IntReference<V>>>)myMap.entrySet()).iterator();
+    return new Iterator<Entry<V>>() {
+      private Entry<V> nextVEntry;
+      private Entry<IntReference<V>> nextReferenceEntry;
+      private Entry<IntReference<V>> lastReturned;
+      {
+        nextAliveEntry();
+      }
       @Override
-      public Iterator<Entry<V>> iterator() {
-        return new Iterator<Entry<V>>() {
-          private Entry<V> next = nextAliveEntry();
-          @Override
-          public boolean hasNext() {
-            return next != null;
-          }
+      public boolean hasNext() {
+        return nextVEntry != null;
+      }
 
-          @Override
-          public Entry<V> next() {
-            if (!hasNext()) throw new NoSuchElementException();
-            Entry<V> result = next;
-            next = nextAliveEntry();
-            return result;
-          }
+      @Override
+      public Entry<V> next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        Entry<V> result = nextVEntry;
+        lastReturned = nextReferenceEntry;
+        nextAliveEntry();
+        return result;
+      }
 
-          private Entry<V> nextAliveEntry() {
-            while (entryIterator.hasNext()) {
-              Entry<IntReference<V>> entry = entryIterator.next();
-              final V v = entry.getValue().get();
-              if (v == null) {
-                continue;
-              }
-              final int key = entry.getKey();
-              return new Entry<V>() {
-                @Override
-                public int getKey() {
-                  return key;
-                }
-
-                @NotNull
-                @Override
-                public V getValue() {
-                  return v;
-                }
-              };
-            }
-            return null;
+      private void nextAliveEntry() {
+        while (entryIterator.hasNext()) {
+          Entry<IntReference<V>> entry = entryIterator.next();
+          final V v = entry.getValue().get();
+          if (v == null) {
+            continue;
           }
+          final int key = entry.getKey();
+          nextVEntry = new SimpleEntry<V>(key, v);
+          nextReferenceEntry = entry;
+          return;
+        }
+        nextVEntry = null;
+      }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public void remove() {
+        Entry<IntReference<V>> last = lastReturned;
+        if (last == null) throw new NoSuchElementException();
+        myMap.replaceNode(last.getKey(), null, last.getValue());
       }
     };
   }

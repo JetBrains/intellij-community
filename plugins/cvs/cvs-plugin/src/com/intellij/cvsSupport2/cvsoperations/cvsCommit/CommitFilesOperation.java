@@ -36,6 +36,7 @@ public class CommitFilesOperation extends CvsOperationOnFiles {
     this(null, makeNewFilesReadOnly);
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final CommitCommand result = new CommitCommand();
     addFilesToCommand(root, result);
@@ -48,15 +49,18 @@ public class CommitFilesOperation extends CvsOperationOnFiles {
     myMessage = parameters;
   }
 
+  @Override
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setCheckedOutFilesReadOnly(myMakeNewFilesReadOnly);
   }
 
+  @Override
   protected String getOperationName() {
     return "commit";
   }
 
+  @Override
   public int getFilesToProcessCount() {
     return CvsHandler.UNKNOWN_COUNT;
   }

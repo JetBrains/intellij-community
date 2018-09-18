@@ -18,9 +18,9 @@ package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.*;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class RefsToSuperViewDescriptor implements UsageViewDescriptor{
@@ -35,15 +35,18 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     mySuper = anInterface;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myClass, mySuper};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return null;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
@@ -53,6 +56,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     return buffer.toString();
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

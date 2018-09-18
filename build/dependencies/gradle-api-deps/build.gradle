@@ -12,8 +12,9 @@ def gradleApiImplDepArtifactId = 'gradle-api-impldep'
 def gradleWrapperArtifactId = 'gradle-wrapper'
 def gradleLauncherArtifactId = 'gradle-launcher'
 
+def gradleApiBaseVersion = GradleVersion.version(gradleApiVersion).getBaseVersion().getVersion()
 def gradleWrapperFileName = "gradle-wrapper.jar"
-def gradleLauncherFileName = "gradle-launcher-${gradleApiVersion}.jar"
+def gradleLauncherFileName = "gradle-launcher-${gradleApiBaseVersion}.jar"
 
 def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build")
 

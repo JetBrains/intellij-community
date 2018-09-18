@@ -102,7 +102,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
       try {
         final XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
         if (xPathSupport != null) {
-          myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition); 
+          myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition);
         }
         else {
           myCompiledXPathCondition = null;
@@ -135,6 +135,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
   @Override
   public abstract AbstractTagInjection copy();
 
+  @Override
   public AbstractTagInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
     if (o instanceof AbstractTagInjection) {
@@ -148,11 +149,13 @@ public abstract class AbstractTagInjection extends BaseInjection {
     return this;
   }
 
+  @Override
   protected void readExternalImpl(Element e) {
     setXPathCondition(e.getChildText("xpath-condition"));
     myApplyToSubTags = e.getChild("apply-to-subtags") != null;
   }
 
+  @Override
   protected void writeExternalImpl(Element e) {
     if (StringUtil.isNotEmpty(myXPathCondition)) {
       e.addContent(new Element("xpath-condition").setText(myXPathCondition));

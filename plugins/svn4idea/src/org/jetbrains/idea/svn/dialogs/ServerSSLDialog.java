@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -37,10 +37,12 @@ public class ServerSSLDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return false;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getTempAction(), getCancelAction()};
@@ -49,6 +51,7 @@ public class ServerSSLDialog extends DialogWrapper {
   private Action getTempAction() {
     if (myTempAction == null) {
       myTempAction = new AbstractAction(SvnBundle.message("server.ssl.accept.temporary.action.name")) {
+        @Override
         public void actionPerformed(ActionEvent e) {
           myResult = AcceptResult.ACCEPTED_TEMPORARILY;
           close(0);
@@ -58,11 +61,13 @@ public class ServerSSLDialog extends DialogWrapper {
     return myTempAction;
   }
 
+  @Override
   protected void doOKAction() {
     myResult = AcceptResult.ACCEPTED_PERMANENTLY;
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
     myResult = AcceptResult.REJECTED;
     super.doCancelAction();
@@ -72,10 +77,12 @@ public class ServerSSLDialog extends DialogWrapper {
     return myResult;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.sslDialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(5,5));
     panel.add(new JLabel(SvnBundle.message("label.ssl.server.provided.certificate")), BorderLayout.NORTH);

@@ -1,3 +1,3 @@
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 
-public abstract class UnregisteredAbstractApplicationComponent implements ApplicationComponent {}
+public abstract class UnregisteredAbstractApplicationComponent implements BaseComponent {}

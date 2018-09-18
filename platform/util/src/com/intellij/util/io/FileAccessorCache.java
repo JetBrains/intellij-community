@@ -38,8 +38,10 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
     };
   }
 
+  @NotNull
   protected abstract T createAccessor(K key) throws IOException;
-  protected abstract void disposeAccessor(T fileAccessor) throws IOException;
+
+  protected abstract void disposeAccessor(@NotNull T fileAccessor) throws IOException;
 
   @NotNull
   public final Handle<T> get(K key) {
@@ -55,9 +57,8 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
 
   @NotNull
   private Handle<T> createHandle(K key) {
-    Handle<T> cached;
     try {
-      cached = new Handle<T>(createAccessor(key), this);
+      Handle<T> cached = new Handle<T>(createAccessor(key), this);
       cached.allocate();
 
       synchronized (myCacheLock) {
@@ -66,7 +67,8 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
 
       disposeInvalidAccessors();
       return cached;
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       throw new RuntimeException(ex);
     }
   }
@@ -137,10 +139,11 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
 
   public static final class Handle<T> extends ResourceHandle<T> {
     private final FileAccessorCache<?, T> myOwner;
+    @NotNull
     private final T myResource;
     private final AtomicInteger myRefCount = new AtomicInteger(1);
 
-    public Handle(T fileAccessor, FileAccessorCache<?, T> owner) {
+    public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, T> owner) {
       myResource = fileAccessor;
       myOwner = owner;
     }
@@ -167,6 +170,7 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
     }
 
     @Override
+    @NotNull
     public T get() {
       return myResource;
     }

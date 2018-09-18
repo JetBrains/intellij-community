@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumberLiteral {
 
-  public JsonNumberLiteralImpl(ASTNode node) {
+  public JsonNumberLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 

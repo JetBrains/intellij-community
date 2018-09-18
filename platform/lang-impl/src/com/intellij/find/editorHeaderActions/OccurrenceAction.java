@@ -33,7 +33,7 @@ public abstract class OccurrenceAction extends DumbAwareAction implements Shortc
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
     if (search == null) {
       e.getPresentation().setEnabledAndVisible(false);

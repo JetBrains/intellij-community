@@ -31,6 +31,7 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
     myVcs = vcs;
   }
 
+  @Override
   public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
@@ -65,10 +66,12 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
     return Pair.create(groups, singles);
   }
 
+  @Override
   public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
     return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
   }
 
+  @Override
   public long getNumber(final CommittedChangeList list) {
     return list.getNumber();
   }

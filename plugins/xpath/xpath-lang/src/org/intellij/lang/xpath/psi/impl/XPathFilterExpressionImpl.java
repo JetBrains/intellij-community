@@ -28,12 +28,14 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
         super(node);
     }
 
+    @Override
     @NotNull
     public XPathType getType() {
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
+    @Override
     @Nullable
     public XPathExpression getExpression() {
       final XPathExpression expression = findChildByClass(XPathExpression.class);
@@ -48,6 +50,7 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
 //        return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
+    @Override
     @NotNull
     public XPathPredicate getPredicate() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathElementTypes.PREDICATE));
@@ -55,6 +58,7 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
         return (XPathPredicate)nodes[0].getPsi();
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathFilterExpression(this);
   }

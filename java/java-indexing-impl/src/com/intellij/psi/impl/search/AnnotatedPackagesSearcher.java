@@ -94,10 +94,6 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
   }
 
   private static class PackageInfoFilesOnly extends GlobalSearchScope {
-    @Override
-    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-      return 0;
-    }
 
     @Override
     public boolean contains(@NotNull final VirtualFile file) {

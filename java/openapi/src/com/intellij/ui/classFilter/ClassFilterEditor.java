@@ -80,12 +80,12 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .addExtraAction(new AnActionButton(getAddButtonText(), getAddButtonIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           addClassFilter();
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }
@@ -93,12 +93,12 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     if (addPatternButtonVisible()) {
       decorator.addExtraAction(new AnActionButton(getAddPatternButtonText(), getAddPatternButtonIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           addPatternFilter();
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }
@@ -180,6 +180,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     return myTableModel.getFilters();
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myTable.setEnabled(enabled);
@@ -233,10 +234,12 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       fireTableRowsInserted(row, row);
     }
 
+    @Override
     public int getRowCount() {
       return myFilters.size();
     }
 
+    @Override
     public int getColumnCount() {
       if (myExcludeAllowed) {
         return 3;
@@ -255,6 +258,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       return IS_ACTIVE;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       com.intellij.ui.classFilter.ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
@@ -269,6 +273,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       com.intellij.ui.classFilter.ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
@@ -284,6 +289,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       fireTableRowsUpdated(rowIndex, rowIndex);
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == CHECK_MARK || columnIndex == INCLUDE_MARK) {
         return Boolean.class;
@@ -291,10 +297,12 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return isEnabled();
     }
 
+    @Override
     public void removeRow(final int idx) {
       myFilters.remove(idx);
       fireTableRowsDeleted(idx, idx);
@@ -302,6 +310,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   private class FilterCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
       Color color = UIUtil.getTableFocusCellBackground();
@@ -325,6 +334,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       myDelegate = delegate;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = myDelegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

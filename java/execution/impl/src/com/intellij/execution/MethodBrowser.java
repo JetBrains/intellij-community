@@ -18,7 +18,6 @@ package com.intellij.execution;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -39,6 +38,7 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
   protected abstract ConfigurationModuleSelector getModuleSelector();
   protected abstract Condition<PsiMethod> getFilter(PsiClass testClass);
 
+  @Override
   protected String showDialog() {
     final String className = getClassName();
     if (className.trim().length() == 0) {
@@ -82,5 +82,5 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
       }
     }.apply(field);
   }
-  
+
 }

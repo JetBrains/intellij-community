@@ -14,19 +14,19 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.response;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IConnectionStreams;
-import org.netbeans.lib.cvsclient.command.update.UpdatedFileInfo;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
+import org.netbeans.lib.cvsclient.command.update.UpdatedFileInfo;
 import org.netbeans.lib.cvsclient.file.*;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * @author Thomas Singer
@@ -35,22 +35,27 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
 
   // Implemented ============================================================
 
+  @Override
   public void processErrorMessageResponse(byte[] message, IResponseServices responseServices) {
     responseServices.getEventSender().notifyMessageListeners(message, true, false);
   }
 
+  @Override
   public void processMessageResponse(byte[] message, IResponseServices responseServices) {
     responseServices.getEventSender().notifyMessageListeners(message, false, false);
   }
 
+  @Override
   public void processMessageTaggedResponse(byte[] message, IResponseServices responseServices) {
     responseServices.getEventSender().notifyMessageListeners(message, false, true);
   }
 
+  @Override
   public void processBinaryMessageResponse(final int fileLength, final byte[] binaryContent, IResponseServices responseServices) {
     responseServices.getEventSender().notifyFileInfoListeners(binaryContent);
   }
 
+  @Override
   public void processCheckedInResponse(String relativeLocalDirectory,
                                        String repositoryFilePath,
                                        String entryLine,
@@ -77,6 +82,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     responseServices.getEventSender().notifyEntryListeners(fileObject, entry);
   }
 
+  @Override
   public void processNewEntryResponse(String relativeLocalDirectory,
                                       String repositoryFilePath,
                                       IResponseServices responseServoces,
@@ -93,6 +99,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     responseServoces.getEventSender().notifyEntryListeners(fileObject, entry);
   }
 
+  @Override
   public void processSetStaticDirectoryResponse(String relativeLocalDirectory,
                                                 String repositoryFilePath,
                                                 IResponseServices responseServices,
@@ -107,6 +114,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     responseServices.getEventSender().notifyDirectoryListeners(directoryObject, true);
   }
 
+  @Override
   public void processClearStaticDirectoryResponse(String relativeLocalDirectory,
                                                   String repositoryDirectoryPath,
                                                   IResponseServices responseServices,
@@ -121,6 +129,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     responseServices.getEventSender().notifyDirectoryListeners(directoryObject, false);
   }
 
+  @Override
   public void processSetStickyResponse(String relativeLocalDirectory,
                                        String repositoryFilePath,
                                        String tag,
@@ -130,6 +139,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     clientEnvironment.getAdminWriter().setStickyTagForDirectory(directoryObject, tag, clientEnvironment.getCvsFileSystem());
   }
 
+  @Override
   public void processClearStickyResponse(String relativeLocalDirectory, String repositoryFilePath, IClientEnvironment clientEnvironment)
     throws IOException {
     final ICvsFileSystem cvsFileSystem = clientEnvironment.getCvsFileSystem();
@@ -140,9 +150,11 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     adminWriter.setStickyTagForDirectory(directoryObject, null, cvsFileSystem);
   }
 
+  @Override
   public void processNotifiedResponse(String relativeLocalDirectory, String repositoryFilePath, IClientEnvironment clientEnvironment) {
   }
 
+  @Override
   public void processRemovedResponse(String relativeLocalDirectory,
                                      String repositoryFilePath,
                                      IResponseServices responseServices,
@@ -155,6 +167,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
       new UpdatedFileInfo(fileObject, fileSystem.getLocalFileSystem().getFile(fileObject), UpdatedFileInfo.UpdatedType.REMOVED, null));
   }
 
+  @Override
   public void processRemoveEntryResponse(String relativeLocalDirectory,
                                          String repositoryFilePath,
                                          IResponseServices responseServices,
@@ -165,6 +178,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     responseServices.getEventSender().notifyEntryListeners(fileObject, null);
   }
 
+  @Override
   public void processCopyFileResponse(String relativeLocalDirectory,
                                       String repositoryFilePath,
                                       String newName,
@@ -173,6 +187,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     clientEnvironment.getLocalFileWriter().renameLocalFile(fileObject, clientEnvironment.getCvsFileSystem(), newName);
   }
 
+  @Override
   public void processModTimeResponse(Date modifiedDate, IResponseServices responseServices) {
     // we assume the date is in GMT, this appears to be the case
     // We remove the ending because SimpleDateFormat does not parse
@@ -181,10 +196,12 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     responseServices.setNextFileDate(modifiedDate);
   }
 
+  @Override
   public void processModeResponse(String mode, IResponseServices responseServices) {
     responseServices.setNextFileMode(mode);
   }
 
+  @Override
   public void processTemplateResponse(String relativeLocalDirectory,
                                       String repositoryFilePath,
                                       int length,
@@ -197,10 +214,12 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
                                                          connectionStreams.getReaderFactory(), clientEnvironment);
   }
 
+  @Override
   public void processModuleExpansionResponse(String localPath, IResponseServices responseServices) {
     responseServices.getEventSender().notifyModuleExpansionListeners(localPath);
   }
 
+  @Override
   public void processUpdatedResponse(String relativeLocalDirectory,
                                      String repositoryFilePath,
                                      String entryLine,
@@ -213,6 +232,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
                                  fileLength, connectionStreams, false);
   }
 
+  @Override
   public void processMergedResponse(String relativeLocalDirectory,
                                     String repositoryFilePath,
                                     String entryLine,
@@ -225,6 +245,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
                                  fileLength, connectionStreams, true);
   }
 
+  @Override
   public void processValidRequestsResponse(String validRequests, IResponseServices responseServices) {
   }
 

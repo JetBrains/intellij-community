@@ -401,10 +401,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(@NotNull Update update) {
-    Map<Update, Update> updates = myScheduledUpdates.get(update.getPriority());
-    if (updates == null) {
-      myScheduledUpdates.put(update.getPriority(), updates = ContainerUtil.newLinkedHashMap());
-    }
+    Map<Update, Update> updates = myScheduledUpdates.computeIfAbsent(update.getPriority(), __ -> ContainerUtil.newLinkedHashMap());
     final Update existing = updates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();
@@ -429,7 +426,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myWaiterForMerge.cancelAllRequests();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
+  @Override
   public String toString() {
     synchronized (myScheduledUpdates) {
       return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();

@@ -155,7 +155,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       this(Arrays.asList(typeParameters));
     }
 
-    public TypeParameterNameSuggester(@NotNull Collection<PsiTypeParameter> typeParameters) {
+    public TypeParameterNameSuggester(@NotNull Collection<? extends PsiTypeParameter> typeParameters) {
       for (PsiTypeParameter p : typeParameters) {
         usedNames.add(p.getName());
       }

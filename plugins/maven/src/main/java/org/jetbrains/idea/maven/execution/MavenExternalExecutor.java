@@ -57,6 +57,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     }
   }
 
+  @Override
   public boolean execute(final ProgressIndicator indicator) {
     displayProgress();
 
@@ -91,6 +92,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     return printExitSummary();
   }
 
+  @Override
   void stop() {
     if (myProcessHandler != null) {
       myProcessHandler.destroyProcess();

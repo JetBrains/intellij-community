@@ -140,6 +140,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
@@ -151,6 +152,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return "Hg";
   }
 
+  @Override
   public Configurable getConfigurable() {
     return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
   }

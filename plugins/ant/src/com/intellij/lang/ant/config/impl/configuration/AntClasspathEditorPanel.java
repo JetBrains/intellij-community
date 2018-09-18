@@ -47,20 +47,25 @@ public class AntClasspathEditorPanel extends JPanel {
     classpathBinding.addAddManyFacility(myForm.myAddAllInDir,
                                         new AllJarsUnderDirEntry.AddEntriesFactory(myForm.myClasspathList));
     myBinding.addBinding(new UIPropertyBinding() {
+      @Override
       public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       }
 
+      @Override
       public void apply(AbstractProperty.AbstractPropertyContainer container) {
       }
 
+      @Override
       public void beDisabled() {
         myForm.enableButtons(false);
       }
 
+      @Override
       public void beEnabled() {
         myForm.enableButtons(true);
       }
 
+      @Override
       public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
       }
     });

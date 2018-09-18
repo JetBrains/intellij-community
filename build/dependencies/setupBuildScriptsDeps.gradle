@@ -4,8 +4,7 @@ import java.nio.file.Paths
 
 repositories {
   mavenCentral()
-  maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
-  maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+  maven { url "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies" }
   maven { url "https://jetbrains.bintray.com/test-discovery" }
   jcenter()
 }
@@ -35,7 +34,8 @@ List<String> projectLibraries = [
   "Slf4j",
   "jna",
   "jgoodies-forms",
-  "http-client"
+  "http-client",
+  "maven-model"
 ]
 
 dependencies {

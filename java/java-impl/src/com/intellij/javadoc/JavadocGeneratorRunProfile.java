@@ -106,11 +106,11 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       myProject = project;
       myConfiguration = configuration;
       addConsoleFilters(
-        new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),
-        new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"),
+        new RegexpFilter(project, "$FILE_PATH$:$LINE$:"),
         myArgFileFilter);
     }
 
+    @Override
     @NotNull
     protected OSProcessHandler startProcess() throws ExecutionException {
       OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
@@ -413,10 +413,10 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
   private static class MyContentIterator extends PsiRecursiveElementWalkingVisitor {
     private final PsiManager myPsiManager;
-    private final Set<Module> myModules;
-    private final Set<VirtualFile> mySourceFiles;
+    private final Set<? super Module> myModules;
+    private final Set<? super VirtualFile> mySourceFiles;
 
-    public MyContentIterator(Project project, Set<Module> modules, Set<VirtualFile> sources) {
+    public MyContentIterator(Project project, Set<? super Module> modules, Set<? super VirtualFile> sources) {
       myPsiManager = PsiManager.getInstance(project);
       myModules = modules;
       mySourceFiles = sources;

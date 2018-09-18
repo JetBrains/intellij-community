@@ -41,23 +41,26 @@ import java.util.Collection;
 
 public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
 
+  @Override
   @NotNull
   public String getText() {
     return "Generate missed test methods";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (Extensions.getExtensions(TestFramework.EXTENSION_NAME).length == 0) return false;
 
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiMethod)) return false;
 
-    if (!((PsiMethod)parent).hasModifierProperty(PsiModifier.PUBLIC) || 
+    if (!((PsiMethod)parent).hasModifierProperty(PsiModifier.PUBLIC) ||
         ((PsiMethod)parent).hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
     }
@@ -73,12 +76,12 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     if (srcClass == null) return;
 
     final Collection<PsiElement> testClasses = TestFinderHelper.findTestsForClass(srcClass);
-    
+
     if (testClasses.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, "No tests found.");
       return;
     }
-    
+
     if (testClasses.size() == 1) {
       generateMissedTests((PsiClass)ContainerUtil.getFirstItem(testClasses), srcClass, editor);
       return;
@@ -111,6 +114,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

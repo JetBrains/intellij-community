@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +40,7 @@ import java.util.List;
  * @date Aug 13, 2009
  * @deprecated use {@link AbstractBatchSuppressByNoInspectionCommentFix} and {@link com.intellij.codeInspection.SuppressIntentionActionFromFix}
  */
+@Deprecated
 public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressIntentionAction {
   @NotNull protected final String myID;
   private final boolean myReplaceOtherSuppressionIds;

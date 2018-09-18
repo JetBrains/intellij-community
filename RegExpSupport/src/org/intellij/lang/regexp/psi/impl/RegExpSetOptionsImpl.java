@@ -17,17 +17,17 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
-
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpSetOptions;
-import org.intellij.lang.regexp.psi.RegExpOptions;
 import org.intellij.lang.regexp.RegExpElementTypes;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpOptions;
+import org.intellij.lang.regexp.psi.RegExpSetOptions;
 
 public class RegExpSetOptionsImpl extends RegExpElementImpl implements RegExpSetOptions {
     public RegExpSetOptionsImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     public RegExpOptions getOnOptions() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(RegExpElementTypes.OPTIONS));
         for (ASTNode node : nodes) {
@@ -38,6 +38,7 @@ public class RegExpSetOptionsImpl extends RegExpElementImpl implements RegExpSet
         return null;
     }
 
+    @Override
     public RegExpOptions getOffOptions() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(RegExpElementTypes.OPTIONS));
         for (ASTNode node : nodes) {
@@ -48,6 +49,7 @@ public class RegExpSetOptionsImpl extends RegExpElementImpl implements RegExpSet
         return null;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpSetOptions(this);
     }

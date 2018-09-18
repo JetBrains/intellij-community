@@ -30,6 +30,7 @@ public abstract class MavenGenerateProvider<ELEMENT_TYPE extends DomElement> ext
     super(description, clazz);
   }
 
+  @Override
   protected DomElement getParentDomElement(Project project, Editor editor, PsiFile file) {
     DomElement el = DomUtil.getContextElement(editor);
     return DomUtil.getFileElement(el).getRootElement();

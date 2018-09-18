@@ -61,7 +61,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setIcon(AllIcons.Toolwindows.ToolWindowFavorites);
     presentation.setPresentableText(myName);
     presentation.setLocationString(myDescription);

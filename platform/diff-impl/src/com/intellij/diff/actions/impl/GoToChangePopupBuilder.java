@@ -74,7 +74,7 @@ public class GoToChangePopupBuilder {
       myChain.putUserData(POPUP_KEY, popup);
       popup.addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (myChain.getUserData(POPUP_KEY) == popup) {
             myChain.putUserData(POPUP_KEY, null);
           }

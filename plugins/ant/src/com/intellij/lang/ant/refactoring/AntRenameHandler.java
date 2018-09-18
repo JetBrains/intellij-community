@@ -37,12 +37,14 @@ import java.util.Collection;
  * @author Eugene Zhuravlev
  */
 public final class AntRenameHandler extends PsiElementRenameHandler {
-  
+
+  @Override
   public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     return elements != null && elements.length > 1;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     if (elements != null && elements.length > 0) {
@@ -62,7 +64,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     }
     return getPsiElementsIn(editor);
   }
-  
+
   @Nullable
   private static PsiElement[] getPsiElementsIn(final Editor editor) {
     try {
@@ -77,5 +79,5 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
       return null;
     }
   }
-  
+
 }

@@ -130,7 +130,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
                                                                          newInjection.setPlaceEnabled(placeText, false);
                                                                          return InjectorUtils.canBeRemoved(newInjection) ? null : newInjection;
                                                                        });
-    configuration.replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
+    configuration.replaceInjectionsWithUndo(project, psiElement.getContainingFile(), newInjections, originalInjections, annotations);
     return true;
   }
 

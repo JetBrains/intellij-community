@@ -16,6 +16,8 @@
 
 package com.intellij.facet;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
@@ -25,19 +27,19 @@ public abstract class ProjectWideFacetAdapter<F extends Facet> implements Projec
   }
 
   @Override
-  public void facetAdded(final F facet) {
+  public void facetAdded(@NotNull final F facet) {
   }
 
   @Override
-  public void facetConfigurationChanged(final F facet) {
+  public void facetConfigurationChanged(@NotNull final F facet) {
   }
 
   @Override
-  public void beforeFacetRemoved(final F facet) {
+  public void beforeFacetRemoved(@NotNull final F facet) {
   }
 
   @Override
-  public void facetRemoved(final F facet) {
+  public void facetRemoved(@NotNull final F facet) {
   }
 
   @Override

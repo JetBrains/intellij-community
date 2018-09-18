@@ -54,6 +54,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     myMethodName = name;
   }
 
+  @Override
   public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
     final AnnotationVisitor annotationvisitor = mv.visitParameterAnnotation(parameter, desc, visible);
 
@@ -72,6 +73,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     return annotationvisitor;
   }
 
+  @Override
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
     final AnnotationVisitor annotationvisitor = mv.visitAnnotation(desc, visible);
 
@@ -88,6 +90,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     return annotationvisitor;
   }
 
+  @Override
   public void visitCode() {
     for (PatternValue parameter : myParameterPatterns) {
       int j;
@@ -125,6 +128,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     }
   }
 
+  @Override
   public void visitInsn(int opcode) {
     if (opcode == Opcodes.ARETURN && myAssertLabel != null) {
       mv.visitJumpInsn(Opcodes.GOTO, myAssertLabel);
@@ -134,6 +138,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     }
   }
 
+  @Override
   public void visitMaxs(int maxStack, int maxLocals) {
     try {
       if (myAssertLabel != null) {
@@ -221,6 +226,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
       myPatternValue = v;
     }
 
+    @Override
     public void visit(@NonNls String name, Object value) {
       av.visit(name, value);
       if ("value".equals(name) && value instanceof String) {
@@ -228,18 +234,22 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
       }
     }
 
+    @Override
     public void visitEnum(String name, String desc, String value) {
       av.visitEnum(name, desc, value);
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(String name, String desc) {
       return av.visitAnnotation(name, desc);
     }
 
+    @Override
     public AnnotationVisitor visitArray(String name) {
       return av.visitArray(name);
     }
 
+    @Override
     public void visitEnd() {
       av.visitEnd();
     }

@@ -22,22 +22,19 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 
-@State(
-  name = "TodoConfiguration",
-  storages = {
-    @Storage("editor.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "TodoConfiguration", storages = @Storage("editor.xml"))
 public class TodoConfiguration implements PersistentStateComponent<Element> {
+  private boolean myMultiLine = true;
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
 
   private final EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
 
+  @NonNls public static final String PROP_MULTILINE = "multiLine";
   @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
   @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
+  @NonNls private static final String ELEMENT_MULTILINE = "multiLine";
   @NonNls private static final String ELEMENT_PATTERN = "pattern";
   @NonNls private static final String ELEMENT_FILTER = "filter";
   private final MessageBus myMessageBus;
@@ -138,6 +135,18 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     return myTodoFilters;
   }
 
+  public boolean isMultiLine() {
+    return myMultiLine;
+  }
+
+  public void setMultiLine(boolean multiLine) {
+    if (multiLine != myMultiLine) {
+      myMultiLine = multiLine;
+      myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_MULTILINE,
+                                                                                          !multiLine, multiLine));
+    }
+  }
+
   public void setTodoFilters(@NotNull TodoFilter[] filters) {
     TodoFilter[] oldFilters = myTodoFilters;
     myTodoFilters = filters;
@@ -150,6 +159,9 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(@NotNull Element element) {
+    String multiLineText = element.getChildText(ELEMENT_MULTILINE);
+    myMultiLine = multiLineText == null || Boolean.valueOf(multiLineText);
+
     List<TodoPattern> patternsList = new SmartList<>();
     for (Element child : element.getChildren(ELEMENT_PATTERN)) {
       patternsList.add(new TodoPattern(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes()));
@@ -171,6 +183,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   @Override
   public Element getState() {
     Element element = new Element("state");
+    if (!myMultiLine) {
+      Element m = new Element(ELEMENT_MULTILINE);
+      m.setText(Boolean.FALSE.toString());
+      element.addContent(m);
+    }
     TodoPattern[] todoPatterns = myTodoPatterns;
     if (!Arrays.equals(myTodoPatterns, getDefaultPatterns())) {
       for (TodoPattern pattern : todoPatterns) {

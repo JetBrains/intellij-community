@@ -15,37 +15,34 @@
  */
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public final class ColorKey implements Comparable<ColorKey> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
-  private static final Color NULL_COLOR = ColorUtil.marker("NULL_COLOR");
+  private static final ConcurrentMap<String, ColorKey> ourRegistry = new ConcurrentHashMap<>();
 
-  private static final Map<String, ColorKey> ourRegistry = ConcurrentFactoryMap.createMap(ColorKey::new);
-
+  @NotNull
   private final String myExternalName;
-  private Color myDefaultColor = NULL_COLOR;
-  private ColorKey myFallbackColorKey;
+  private final Color myDefaultColor;
 
-  private ColorKey(@NotNull String externalName) {
+  private ColorKey(@NotNull String externalName, Color defaultColor) {
     myExternalName = externalName;
+    myDefaultColor = defaultColor;
   }
 
   @NotNull
   public static ColorKey find(@NotNull String externalName) {
-    return ourRegistry.get(externalName);
+    return ourRegistry.computeIfAbsent(externalName, name -> new ColorKey(name,null));
   }
 
+  @Override
   public String toString() {
     return myExternalName;
   }
@@ -61,27 +58,13 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   public Color getDefaultColor() {
-    if (myDefaultColor == NULL_COLOR) {
-      myDefaultColor = null;
-    }
-
     return myDefaultColor;
   }
 
   @Nullable
+  @Deprecated
   public ColorKey getFallbackColorKey() {
-    return myFallbackColorKey;
-  }
-
-  public void setFallbackColorKey(@Nullable ColorKey fallbackColorKey) {
-    myFallbackColorKey = fallbackColorKey;
-    if (fallbackColorKey != null) {
-      JBIterable<ColorKey> it = JBIterable.generate(fallbackColorKey, o -> o == this ? null : o.myFallbackColorKey);
-      if (it.find(o -> o == this) == this) {
-        String cycle = StringUtil.join(it.map(ColorKey::getExternalName), "->");
-        LOG.error("Cycle detected: " + cycle);
-      }
-    }
+    return null;
   }
 
   @NotNull
@@ -90,19 +73,25 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   @NotNull
-  public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable ColorKey fallbackColorKey) {
-    ColorKey key = createColorKey(externalName);
-    key.setFallbackColorKey(fallbackColorKey);
-    return key;
+  public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable Color defaultColor) {
+    ColorKey existing = ourRegistry.get(externalName);
+    if (existing != null) {
+      if (Comparing.equal(existing.getDefaultColor(), defaultColor)) return existing;
+      // some crazy life cycle assumes we should overwrite default color
+      // (e.g. when read from external schema HintUtil.INFORMATION_COLOR_KEY with null color, then try to re-create it with not-null color in HintUtil initializer)
+      ourRegistry.remove(externalName, existing);
+    }
+    ColorKey newKey = new ColorKey(externalName, defaultColor);
+    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
   }
 
-  @NotNull
-  public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable Color defaultColor) {
-    ColorKey key = createColorKey(externalName);
+  @Override
+  public int hashCode() {
+    return myExternalName.hashCode();
+  }
 
-    if (key.getDefaultColor() == null) {
-      key.myDefaultColor = defaultColor;
-    }
-    return key;
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof ColorKey && myExternalName.equals(((ColorKey)obj).myExternalName);
   }
 }

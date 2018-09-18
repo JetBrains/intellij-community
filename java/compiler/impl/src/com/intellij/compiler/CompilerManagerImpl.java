@@ -6,8 +6,8 @@ import com.intellij.compiler.impl.*;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,14 +75,14 @@ public class CompilerManagerImpl extends CompilerManager {
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);
     }
-    for(CompilerFactory factory: Extensions.getExtensions(CompilerFactory.EP_NAME, myProject)) {
+    for (CompilerFactory factory : CompilerFactory.EP_NAME.getExtensionList(project)) {
       Compiler[] compilers = factory.createCompilers(this);
       for (Compiler compiler : compilers) {
         addCompiler(compiler);
       }
     }
 
-    for (InspectionValidator validator : Extensions.getExtensions(InspectionValidator.EP_NAME, myProject)) {
+    for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensionList(project)) {
       addCompiler(new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project), PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
     }
     addCompilableFileType(StdFileTypes.JAVA);
@@ -158,9 +158,8 @@ public class CompilerManagerImpl extends CompilerManager {
     return getCompilers(compilerClass, CompilerFilter.ALL);
   }
 
-  @Override
   @NotNull
-  public <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
+  private <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
       if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
@@ -256,13 +255,6 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback) {
     new CompileDriver(myProject).make(scope, true, new ListenerNotificator(callback));
-  }
-
-  @Override
-  public void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback) {
-    final CompileDriver compileDriver = new CompileDriver(myProject);
-    compileDriver.setCompilerFilter(filter);
-    compileDriver.make(scope, new ListenerNotificator(callback));
   }
 
   @Override
@@ -530,7 +522,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
       if (!myProject.isDisposed()) {
         myEventPublisher.compilationFinished(aborted, errors, warnings, compileContext);
       }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -327,7 +328,12 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       oldParameter.delete();
     }
     JavaCodeStyleManager.getInstance(parameterList.getProject()).shortenClassReferences(parameterList);
-    CodeStyleManager.getInstance(parameterList.getProject()).reformat(parameterList);
+    TextRange parametersRange = parameterList.getParametersRange();
+    CodeStyleManager.getInstance(parameterList.getProject()).reformatRange(
+      parameterList,
+      parametersRange.getStartOffset(),
+      parametersRange.getEndOffset()
+    );
 
     if (changeInfo.isExceptionSetOrOrderChanged()) {
       final ThrownExceptionInfo[] infos = changeInfo.getNewExceptions();

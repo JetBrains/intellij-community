@@ -34,9 +34,10 @@ public interface ElementFilter<T> {
     abstract class Impl<T> implements Active<T> {
       Set<Listener<T>> myListeners = new CopyOnWriteArraySet<>();
 
+      @Override
       public ActionCallback fireUpdate(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now) {
         final ActionCallback result = new ActionCallback(myListeners.size());
-        
+
         for (final Listener<T> myListener : myListeners) {
           myListener.update(preferredSelection, adjustSelection, now).doWhenProcessed(result.createSetDoneRunnable());
         }
@@ -44,9 +45,11 @@ public interface ElementFilter<T> {
         return result;
       }
 
+      @Override
       public void addListener(final Listener<T> listener, final Disposable parent) {
         myListeners.add(listener);
         Disposer.register(parent, new Disposable() {
+          @Override
           public void dispose() {
             myListeners.remove(listener);
           }

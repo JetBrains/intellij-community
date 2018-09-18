@@ -97,7 +97,7 @@ public final class DomManagerImpl extends DomManager {
     final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       @Override
-      public void modelChanged(PomModelEvent event) {
+      public void modelChanged(@NotNull PomModelEvent event) {
         if (myChanging) return;
         
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(pomModel.getModelAspect(XmlAspect.class));
@@ -112,7 +112,7 @@ public final class DomManagerImpl extends DomManager {
       }
 
       @Override
-      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
+      public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof XmlAspect;
       }
     }, project);
@@ -221,13 +221,13 @@ public final class DomManagerImpl extends DomManager {
     return new ModelMergerImpl();
   }
 
-  final void fireEvent(DomEvent event) {
+  final void fireEvent(@NotNull DomEvent event) {
     if (mySemService.isInsideAtomicChange()) return;
     incModificationCount();
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  private void fireEvents(Collection<DomEvent> events) {
+  private void fireEvents(@NotNull Collection<DomEvent> events) {
     for (DomEvent event : events) {
       fireEvent(event);
     }

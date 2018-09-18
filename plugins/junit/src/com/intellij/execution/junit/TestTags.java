@@ -48,7 +48,7 @@ class TestTags extends TestObject {
   private void parseAsJavaExpression(String tags) throws RuntimeConfigurationWarning {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getConfiguration().getProject());
     try {
-      PsiExpression expression = elementFactory.createExpressionFromText(tags.replaceAll("[^)(&|!]", "x"), null);
+      PsiExpression expression = elementFactory.createExpressionFromText(tags.replaceAll("[^)(&|!\\s]", "x"), null);
       if (expression instanceof PsiPolyadicExpression) {
         IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
         if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {

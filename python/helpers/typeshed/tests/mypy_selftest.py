@@ -19,7 +19,7 @@ if __name__ == '__main__':
         shutil.copytree('stdlib', str(dirpath / 'mypy/typeshed/stdlib'))
         shutil.copytree('third_party', str(dirpath / 'mypy/typeshed/third_party'))
         try:
-            subprocess.run(['./runtests.py', '-j12'], cwd=str(dirpath / 'mypy'), check=True)
+            subprocess.run(['pytest', '-n12'], cwd=str(dirpath / 'mypy'), check=True)
         except subprocess.CalledProcessError as e:
             print('mypy tests failed', file=sys.stderr)
             sys.exit(e.returncode)

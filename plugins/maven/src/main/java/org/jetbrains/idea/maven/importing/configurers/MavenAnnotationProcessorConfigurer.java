@@ -154,6 +154,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       if (!isDefault && moduleProfile != null && isSimilarProfiles(p, moduleProfile)) {
+        moduleProfile.setEnabled(p.isEnabled());
         final String mavenProjectRootProfileName = PROFILE_PREFIX + rootProject.getDisplayName();
         ProcessorConfigProfile mergedProfile = compilerConfiguration.findModuleProcessorProfile(mavenProjectRootProfileName);
         if (mergedProfile == null) {
@@ -187,9 +188,11 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
 
     ProcessorConfigProfileImpl p1 = new ProcessorConfigProfileImpl(profile1);
     p1.setName("tmp");
+    p1.setEnabled(true);
     p1.clearModuleNames();
     ProcessorConfigProfileImpl p2 = new ProcessorConfigProfileImpl(profile2);
     p2.setName("tmp");
+    p2.setEnabled(true);
     p2.clearModuleNames();
     return p1.equals(p2);
   }

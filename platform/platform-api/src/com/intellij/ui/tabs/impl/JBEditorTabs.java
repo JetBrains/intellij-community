@@ -52,7 +52,7 @@ public class JBEditorTabs extends JBTabsImpl {
     Registry.get(TABS_ALPHABETICAL_KEY).addListener(new RegistryValueListener.Adapter() {
 
       @Override
-      public void afterValueChanged(RegistryValue value) {
+      public void afterValueChanged(@NotNull RegistryValue value) {
         ApplicationManager.getApplication().invokeLater(() -> {
           resetTabsCache();
           relayout(true, false);

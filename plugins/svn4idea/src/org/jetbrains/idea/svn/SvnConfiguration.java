@@ -220,14 +220,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myState.MERGE_DIFF_USE_ANCESTRY = mergeDiffUseAncestry;
   }
 
-  public boolean isUpdateLockOnDemand() {
-    return myState.UPDATE_LOCK_ON_DEMAND;
-  }
-
-  public void setUpdateLockOnDemand(boolean updateLockOnDemand) {
-    myState.UPDATE_LOCK_ON_DEMAND = updateLockOnDemand;
-  }
-
   public boolean isIgnoreSpacesInMerge() {
     return myState.IGNORE_SPACES_IN_MERGE;
   }

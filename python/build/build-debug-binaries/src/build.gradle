@@ -20,38 +20,38 @@ envs {
   python "python26_64", "2.6.6", "64"
   virtualenv "py26_64", "python26_64", ["cython"]
 
-  python "python27_64", "2.7.14", "64"
+  python "python27_64", "2.7.15", "64"
   virtualenv "py27_64", "python27_64", ["cython"]
 
   python "python34_64", "3.4.4", "64"
   virtualenv "py34_64", "python34_64", ["cython"]
 
-  python "python35_64", "3.5.3", "64"
+  python "python35_64", "3.5.4", "64"
   virtualenv "py35_64", "python35_64", ["cython"]
 
-  python "python36_64", "3.6.3", "64"
+  python "python36_64", "3.6.6", "64"
   virtualenv "py36_64", "python36_64", ["cython"]
 
-  python "python37_64", "3.7.0b2", "64"
+  python "python37_64", "3.7.0", "64"
   virtualenv "py37_64", "python37_64", ["cython"]
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     python "python26_32", "2.6.6", "32"
     virtualenv "py26_32", "python26_32", ["cython"]
 
-    python "python27_32", "2.7.14", "32"
+    python "python27_32", "2.7.15", "32"
     virtualenv "py27_32", "python27_32", ["cython"]
 
     python "python34_32", "3.4.4", "32"
     virtualenv "py34_32", "python34_32", ["cython"]
 
-    python "python35_32", "3.5.3", "32"
+    python "python35_32", "3.5.4", "32"
     virtualenv "py35_32", "python35_32", ["cython"]
 
-    python "python36_32", "3.6.3", "32"
+    python "python36_32", "3.6.6", "32"
     virtualenv "py36_32", "python36_32", ["cython"]
 
-    python "python37_32", "3.7.0b2", "32"
+    python "python37_32", "3.7.0", "32"
     virtualenv "py37_32", "python37_32", ["cython"]
   }
 }

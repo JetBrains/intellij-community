@@ -271,7 +271,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "<artifactId>test-create-2</artifactId>" +
                      "<name>Maven archetype Test create-2-subModule</name>" +
                      "<packaging>pom</packaging>");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
   }
 
   public void testParentWithoutARelativePath() {
@@ -1118,10 +1118,31 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
   }
 
-  public void testProjectWithProfilesXmlFile() {
+  public void testProjectWithProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>false</activeByDefault>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <junit.version>4.0</junit.version>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>false</activeByDefault>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <junit.version>3.8.1</junit.version>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
 
                      "<dependencies>" +
                      "  <dependency>" +
@@ -1130,26 +1151,6 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "    <version>${junit.version}</version>" +
                      "  </dependency>" +
                      "</dependencies>");
-
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>false</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <junit.version>4.0</junit.version>" +
-                      "  </properties>" +
-                      "</profile>" +
-
-                      "<profile>" +
-                      "  <id>two</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>false</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <junit.version>3.8.1</junit.version>" +
-                      "  </properties>" +
-                      "</profile>");
 
     importProjectWithProfiles("one");
     assertModules("project");
@@ -1166,10 +1167,22 @@ public class StructureImportingTest extends MavenImportingTestCase {
     ignore(); // not supported by 2.2
   }
 
-  public void testProjectWithProfilesXmlWithNewRootTagFile() {
+  public void testProjectWithDefaultProfile() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <junit.version>4.0</junit.version>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
 
                      "<dependencies>" +
                      "  <dependency>" +
@@ -1178,60 +1191,6 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "    <version>${junit.version}</version>" +
                      "  </dependency>" +
                      "</dependencies>");
-
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>false</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <junit.version>4.0</junit.version>" +
-                      "  </properties>" +
-                      "</profile>" +
-
-                      "<profile>" +
-                      "  <id>two</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>false</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <junit.version>3.8.1</junit.version>" +
-                      "  </properties>" +
-                      "</profile>");
-
-    importProjectWithProfiles("one");
-    assertModules("project");
-
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
-
-    importProjectWithProfiles("two");
-    assertModules("project");
-
-    assertModuleLibDeps("project", "Maven: junit:junit:3.8.1");
-  }
-
-  public void testProjectWithDefaultProfileInProfilesXmlFile() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>${junit.version}</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <junit.version>4.0</junit.version>" +
-                      "  </properties>" +
-                      "</profile>");
 
     importProject();
     assertModules("project");

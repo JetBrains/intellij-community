@@ -18,12 +18,15 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class RemoveUnusedVariableUtil {
   public enum RemoveMode {
@@ -32,20 +35,21 @@ public class RemoveUnusedVariableUtil {
     CANCEL
   }
 
-  public static boolean checkSideEffects(PsiExpression element, @Nullable PsiVariable variableToIgnore, List<? super PsiElement> sideEffects) {
+  @Contract("_, _, null -> false; null, _, _ -> false")
+  public static boolean checkSideEffects(PsiExpression element,
+                                         @Nullable PsiVariable variableToIgnore,
+                                         List<? super PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
     List<PsiElement> writes = new ArrayList<>();
-    SideEffectChecker.checkSideEffects(element, writes);
-    if (variableToIgnore != null) {
-      for (int i = writes.size() - 1; i >= 0; i--) {
-        PsiElement write = writes.get(i);
-        if (!(write instanceof PsiAssignmentExpression)) continue;
-        PsiExpression lExpression = ((PsiAssignmentExpression)write).getLExpression();
-        if (lExpression instanceof PsiReference && ((PsiReference)lExpression).resolve() == variableToIgnore) {
-          writes.remove(i);
-        }
-      }
+    Predicate<PsiElement> allowedSideEffect;
+    if (variableToIgnore == null) {
+      allowedSideEffect = e -> false;
     }
+    else {
+      allowedSideEffect = e -> e instanceof PsiAssignmentExpression &&
+                               ExpressionUtils.isReferenceTo(((PsiAssignmentExpression)e).getLExpression(), variableToIgnore);
+    }
+    SideEffectChecker.checkSideEffects(element, writes, allowedSideEffect);
     sideEffects.addAll(writes);
     return !writes.isEmpty();
   }

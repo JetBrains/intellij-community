@@ -56,17 +56,20 @@ class LoopAnalyzer {
       }
     }
 
+    @NotNull
     @Override
     public Collection<Instruction> getNodes() {
       return Arrays.asList(myFlow.getInstructions());
     }
 
+    @NotNull
     @Override
     public Iterator<Instruction> getIn(Instruction n) {
       int[] ins = myIns.get(n.getIndex());
       return indicesToInstructions(ins);
     }
 
+    @NotNull
     @Override
     public Iterator<Instruction> getOut(Instruction instruction) {
       int fromIndex = instruction.getIndex();

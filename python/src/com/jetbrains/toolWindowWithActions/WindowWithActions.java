@@ -31,8 +31,8 @@ import java.util.Collections;
  * Creates toolwindow at the bottom of the screen displaying {@link ConsoleView console} or some custom {@link JComponent} with
  * actions on the left side.
  * <br/>
- * To display console consider using {@link #showConsole(ConsoleView, JComponent, String, Project, Runnable, AnAction...)}.
- * For everything else use {@link #show(JComponent, JComponent, String, Project, Runnable, AnAction...)}
+ * To display console consider using {@link #showConsole(ConsoleView, JComponent, String, Project, Collection, AnAction...)}.
+ * For everything else use {@link #show(JComponent, JComponent, String, Project, Collection, AnAction...)}
  *
  * @author Ilya.Kazakevich
  */

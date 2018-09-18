@@ -149,7 +149,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   private static String encodeColor(Color color) {
-    return String.valueOf((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
+    return ((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
   }
 

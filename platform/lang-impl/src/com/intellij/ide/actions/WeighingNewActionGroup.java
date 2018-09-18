@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -39,7 +40,7 @@ public class WeighingNewActionGroup extends WeighingActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(getTemplatePresentation().getText());
   }

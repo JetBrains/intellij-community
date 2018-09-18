@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
@@ -44,7 +30,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakList;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -382,7 +367,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     final List<DocumentEvent> events = new ArrayList<>();
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         events.add(e);
       }
     });
@@ -1148,35 +1133,24 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    LazyRangeMarkerFactoryImpl.LazyMarker marker = (LazyRangeMarkerFactoryImpl.LazyMarker)factory.createRangeMarker(virtualFile, 0);
-    WeakList<LazyRangeMarkerFactoryImpl.LazyMarker> markers = LazyRangeMarkerFactoryImpl.getMarkers(virtualFile);
-    assertSame(marker, assertOneElement(markers));
-
-    assertFalse(marker.isDelegated());
+    RangeMarker marker = factory.createRangeMarker(virtualFile, 0);
     assertTrue(marker.isValid());
     assertEquals(0, marker.getStartOffset());
-    assertFalse(marker.isDelegated());
 
     marker.dispose();
     assertFalse(marker.isValid());
-    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
 
 
-    marker = (LazyRangeMarkerFactoryImpl.LazyMarker)factory.createRangeMarker(virtualFile, 0);
-    assertFalse(marker.isDelegated());
+    marker = factory.createRangeMarker(virtualFile, 0);
     assertTrue(marker.isValid());
     assertEquals(0, marker.getStartOffset());
-    assertFalse(marker.isDelegated());
 
     Document document = marker.getDocument();
     document.insertString(2, "yyy");
-    assertTrue(marker.isDelegated());
     assertTrue(marker.isValid());
     assertEquals(0, marker.getStartOffset());
 
-    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
     marker.dispose();
-    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
   }
 
   public void testNonGreedyMarkersGrowOnAppendingReplace() {

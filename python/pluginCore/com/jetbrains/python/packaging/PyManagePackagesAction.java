@@ -21,13 +21,14 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyManagePackagesAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (module != null && sdk != null) {
@@ -36,7 +37,7 @@ public class PyManagePackagesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     e.getPresentation().setEnabled(module != null && PythonSdkType.findPythonSdk(module) != null);
   }

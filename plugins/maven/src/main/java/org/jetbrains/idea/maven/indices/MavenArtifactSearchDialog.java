@@ -114,11 +114,13 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane = new TabbedPaneWrapper(project);
 
     MavenArtifactSearchPanel.Listener listener = new MavenArtifactSearchPanel.Listener() {
+      @Override
       public void itemSelected() {
         clickDefaultButton();
       }
 
-      public void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect) {
+      @Override
+      public void canSelectStateChanged(@NotNull MavenArtifactSearchPanel from, boolean canSelect) {
         myOkButtonStates.put(from, canSelect);
         updateOkButtonState();
       }
@@ -134,6 +136,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane.getComponent().setPreferredSize(JBUI.size(900, 600));
 
     myTabbedPane.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         updateOkButtonState();
       }
@@ -156,6 +159,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     return result;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myTabbedPane.getComponent();
   }

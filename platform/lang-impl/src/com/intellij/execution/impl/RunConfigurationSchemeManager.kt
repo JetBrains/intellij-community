@@ -43,7 +43,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
   }
 
-  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
+  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<in String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
     val element = readData(settings, dataHolder)
     manager.addConfiguration(element, settings, isCheckRecentsLimit = false)

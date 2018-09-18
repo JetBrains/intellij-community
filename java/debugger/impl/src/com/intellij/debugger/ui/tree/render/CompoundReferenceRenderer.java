@@ -27,6 +27,7 @@ public class CompoundReferenceRenderer extends CompoundTypeRenderer {
     super(rendererSettings, name, labelRenderer, childrenRenderer);
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     if (type instanceof ReferenceType) {
       return super.isApplicable(type);

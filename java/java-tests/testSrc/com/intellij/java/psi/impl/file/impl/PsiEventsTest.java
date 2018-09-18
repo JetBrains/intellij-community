@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("ConstantConditions")
 @SkipSlowTestLocally
 public class PsiEventsTest extends PsiTestCase {
   private VirtualFile myPrjDir1;

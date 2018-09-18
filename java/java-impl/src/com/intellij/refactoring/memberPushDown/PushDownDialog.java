@@ -35,10 +35,12 @@ public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember
     super(project, memberInfos, aClass);
   }
 
+  @Override
   protected MemberInfoModel<PsiMember, MemberInfo> createMemberInfoModel() {
     return new MyMemberInfoModel();
   }
 
+  @Override
   protected MemberSelectionPanel createMemberInfoPanel() {
     return new MemberSelectionPanel(
       RefactoringBundle.message("members.to.be.pushed.down.panel.title"),
@@ -46,6 +48,7 @@ public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember
       RefactoringBundle.message("keep.abstract.column.header"));
   }
 
+  @Override
   protected int getDocCommentPolicy() {
     return JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC;
   }

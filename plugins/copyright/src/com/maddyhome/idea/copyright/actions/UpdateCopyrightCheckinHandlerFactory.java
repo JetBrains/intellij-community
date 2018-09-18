@@ -24,6 +24,7 @@ import java.util.List;
 
 
 public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory  {
+  @Override
   @NotNull
   public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new CheckinHandler() {

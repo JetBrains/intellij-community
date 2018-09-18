@@ -60,16 +60,19 @@ public final class UpdateMessageParser extends AbstractMessageParser implements 
 
   // Implemented ============================================================
 
+  @Override
   public void registerListeners(ICvsListenerRegistry listenerRegistry) {
     super.registerListeners(listenerRegistry);
     listenerRegistry.addEntryListener(this);
   }
 
+  @Override
   public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
     listenerRegistry.removeEntryListener(this);
     super.unregisterListeners(listenerRegistry);
   }
 
+  @Override
   protected void outputDone() {
     if (fileInfo == null) {
       return;
@@ -82,6 +85,7 @@ public final class UpdateMessageParser extends AbstractMessageParser implements 
     fileInfo = null;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void parseLine(String line, boolean isErrorMessage) {
     if (line.startsWith("RCS file:")) {
@@ -174,6 +178,7 @@ public final class UpdateMessageParser extends AbstractMessageParser implements 
     }
   }
 
+  @Override
   public void gotEntry(FileObject fileObject, Entry entry) {
     ensureExistingFileInfoContainer(fileObject);
     fileInfo.setEntry(entry);

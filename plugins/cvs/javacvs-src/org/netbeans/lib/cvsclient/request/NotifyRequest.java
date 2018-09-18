@@ -79,7 +79,8 @@ public final class NotifyRequest extends AbstractRequest {
 
 	// Implemented ============================================================
 
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return request;
 	}
 }

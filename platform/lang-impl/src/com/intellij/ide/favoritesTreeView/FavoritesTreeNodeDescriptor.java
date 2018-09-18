@@ -46,7 +46,7 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     myElement.update();
     presentation.copyFrom(myElement.getPresentation());
   }

@@ -42,7 +42,7 @@ class RunConfigurableTest {
 
     private fun createRunManager(element: Element): RunManagerImpl {
       val runManager = RunManagerImpl(projectRule.project)
-      runManager.initializeConfigurationTypes(arrayOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
+      runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
       runManager.loadState(element)
       return runManager
     }

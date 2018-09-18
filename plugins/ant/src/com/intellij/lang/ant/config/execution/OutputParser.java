@@ -191,6 +191,7 @@ public class OutputParser{
     com.intellij.compiler.OutputParser.Callback callback = new com.intellij.compiler.OutputParser.Callback() {
       private int myIndex = -1;
 
+      @Override
       @Nullable
       public String getCurrentLine() {
         if (myIndex >= javacMessages.size()) {
@@ -199,6 +200,7 @@ public class OutputParser{
         return javacMessages.get(myIndex);
       }
 
+      @Override
       public String getNextLine() {
         final int size = javacMessages.size();
         final int next = Math.min(myIndex + 1, javacMessages.size());
@@ -214,6 +216,7 @@ public class OutputParser{
         myIndex--;
       }
 
+      @Override
       public void message(final CompilerMessageCategory category,
                           final String message,
                           final String url,
@@ -236,12 +239,15 @@ public class OutputParser{
         });
       }
 
+      @Override
       public void setProgressText(String text) {
       }
 
+      @Override
       public void fileProcessed(String path) {
       }
 
+      @Override
       public void fileGenerated(String path) {
       }
     };

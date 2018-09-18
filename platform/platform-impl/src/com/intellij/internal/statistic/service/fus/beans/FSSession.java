@@ -25,6 +25,10 @@ public class FSSession {
     return new FSSession(Integer.toString(session.getId()), session.getBuildId());
   }
 
+  public static FSSession create(String id, String build) {
+    return new FSSession(id, build);
+  }
+
   private FSSession(String id, String build) {
     this.id = id;
     this.build = build;
@@ -65,7 +69,6 @@ public class FSSession {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id, build);
   }
 }

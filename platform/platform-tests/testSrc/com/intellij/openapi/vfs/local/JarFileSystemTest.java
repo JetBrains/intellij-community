@@ -20,6 +20,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,12 +36,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -92,7 +92,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(vFile);
 
     VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertThat(Stream.of(jarRoot.getChildren()).map(VirtualFile::getName)).containsExactly("META-INF");
+    VirtualFile child = assertOneElement(jarRoot.getChildren());
+    assertEquals("META-INF", child.getName());
 
     VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
     assertEquals("", VfsUtilCore.loadText(entry));
@@ -119,7 +120,10 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertEquals("update", VfsUtilCore.loadText(entry));
-    assertThat(Stream.of(jarRoot.getChildren()).map(VirtualFile::getName)).containsExactlyInAnyOrder("META-INF", "some.txt");
+    List<String> children = ContainerUtil.map(jarRoot.getChildren(), f -> f.getName());
+    assertEquals(2, children.size());
+    assertSameElements(children, "META-INF", "some.txt");
+
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
   }
@@ -259,7 +263,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile small1 = jarRoot.findChild("small1");
     VirtualFile small2 = jarRoot.findChild("small2");
     VirtualFile large = jarRoot.findChild("large");
-    try (InputStream is1 = small1.getInputStream(); InputStream is2 = small2.getInputStream(); InputStream il = large.getInputStream()) {
+    try (InputStream is1 = small1.getInputStream();
+         InputStream is2 = small2.getInputStream();
+         InputStream il = large.getInputStream()) {
       assertSame(is1.getClass(), is2.getClass());
       assertNotSame(is1.getClass(), il.getClass());
     }

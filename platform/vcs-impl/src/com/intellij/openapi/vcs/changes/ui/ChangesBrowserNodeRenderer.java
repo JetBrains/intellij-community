@@ -34,6 +34,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     return myShowFlatten.get();
   }
 
+  @Override
   public void customizeCellRenderer(@NotNull JTree tree,
                                     Object value,
                                     boolean selected,

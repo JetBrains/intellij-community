@@ -33,6 +33,7 @@ class ColorObjectRenderer extends CompoundReferenceRenderer {
     setEnabled(true);
   }
 
+  @Override
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     final Value value = descriptor.getValue();
     if (value instanceof ObjectReference) {

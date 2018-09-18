@@ -68,7 +68,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     mySchemesPanel = new CodeStyleSchemesPanel(model, createLinkComponent());
     myProperties = PropertiesComponent.getInstance();
 
-    model.addListener(new CodeStyleSettingsListener(){
+    model.addListener(new CodeStyleSchemesModelListener(){
       @Override
       public void currentSchemeChanged(final Object source) {
         if (source != mySchemesPanel) {

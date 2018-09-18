@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -608,6 +608,7 @@ public class PyExtractMethodUtil {
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
     final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<Object>() {
+      @Override
       @NotNull
       public String createMethodSignature(@NotNull ExtractMethodSettings<Object> settings) {
         final StringBuilder builder = new StringBuilder();
@@ -683,6 +684,7 @@ public class PyExtractMethodUtil {
       };
     }
 
+    @Override
     @Nullable
     public String check(final String name) {
       if (myFunction != null && !myFunction.fun(name)) {
@@ -691,6 +693,7 @@ public class PyExtractMethodUtil {
       return null;
     }
 
+    @Override
     public boolean isValidName(@NotNull final String name) {
       final NamesValidator validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
       assert validator != null;

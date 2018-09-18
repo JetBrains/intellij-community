@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -86,7 +87,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           return;
         }
         toRemove = (PsiVariable)target;
-        keySetExpression = toRemove.getInitializer();
+        keySetExpression = PsiUtil.skipParenthesizedExprDown(toRemove.getInitializer());
       } else {
         toRemove = null;
         keySetExpression = (PsiExpression)element;
@@ -96,7 +97,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)keySetExpression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return;
       }
@@ -170,7 +171,11 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           if (RedundantCastUtil.isCastRedundant(typeCastExpression)) {
             final PsiExpression operand = typeCastExpression.getOperand();
             assert operand != null;
+            PsiElement parent = typeCastExpression.getParent();
             typeCastExpression.replace(operand);
+            if (parent instanceof PsiParenthesizedExpression) {
+              ParenthesesUtils.removeParentheses((PsiExpression)parent, false);
+            }
           }
         }
       }
@@ -268,7 +273,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         if (VariableAccessUtils.variableIsAssignedAtPoint(variable, containingMethod, statement)) {
           return;
         }
-        iteratedExpression = variable.getInitializer();
+        iteratedExpression = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
       }
       else {
         iteratedExpression = iteratedValue;
@@ -293,7 +298,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (!"keySet".equals(methodName)) {
         return false;
       }
-      final PsiExpression expression = methodExpression.getQualifierExpression();
+      final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (!(expression instanceof PsiReferenceExpression)) {
         return false;
       }

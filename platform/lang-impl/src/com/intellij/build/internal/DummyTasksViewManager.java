@@ -20,6 +20,7 @@ import com.intellij.build.TasksViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -29,13 +30,14 @@ public class DummyTasksViewManager extends TasksViewManager {
     super(project, buildContentManager);
   }
 
+  @NotNull
   @Override
   protected String getViewName() {
     return "Tasks";
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if(event instanceof FinishBuildEvent) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(event.getMessage());

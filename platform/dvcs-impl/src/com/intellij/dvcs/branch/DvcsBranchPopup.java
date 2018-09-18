@@ -20,10 +20,14 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -102,7 +106,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   @NotNull
   private ActionGroup createActions() {
-    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
+    LightActionGroup popupGroup = new LightActionGroup(false);
     AbstractRepositoryManager<Repo> repositoryManager = myRepositoryManager;
     if (repositoryManager.moreThanOneRoot()) {
       if (userWantsSyncControl()) {
@@ -123,7 +127,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     return (myVcsSettings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC);
   }
 
-  protected abstract void fillWithCommonRepositoryActions(@NotNull DefaultActionGroup popupGroup,
+  protected abstract void fillWithCommonRepositoryActions(@NotNull LightActionGroup popupGroup,
                                                           @NotNull AbstractRepositoryManager<Repo> repositoryManager);
 
   @NotNull
@@ -143,10 +147,10 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   @NotNull
-  protected abstract DefaultActionGroup createRepositoriesActions();
+  protected abstract LightActionGroup createRepositoriesActions();
 
-  protected abstract void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup,
-                                                                @Nullable DefaultActionGroup actions);
+  protected abstract void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup,
+                                                                @Nullable LightActionGroup actions);
 
   public static class MyMoreIndex {
     public static final int MAX_NUM = 8;
@@ -162,12 +166,12 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myVcsSettings.setSyncSetting(state ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     }
   }

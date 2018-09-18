@@ -42,17 +42,20 @@ public abstract class FileSetToBeUpdated {
   }
 
   public final static FileSetToBeUpdated EMPTY = new FileSetToBeUpdated() {
+    @Override
     public void refreshFilesAsync(Runnable postRunnable) {
       if (postRunnable != null) {
         postRunnable.run();
       }
     }
 
+    @Override
     public void refreshFilesSync() {
     }
 
+    @Override
     protected void setSynchronizingFilesTextToProgress(ProgressIndicator progressIndicator) {
-      
+
     }
   };
 

@@ -54,7 +54,7 @@ public class SendToFavoritesGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setVisible(SendToFavoritesAction.isEnabled(e)
                                    && FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(e.getDataContext()) != null);
@@ -66,7 +66,7 @@ public class SendToFavoritesGroup extends ActionGroup implements DumbAware {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
       Project project = e.getProject();
       FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);

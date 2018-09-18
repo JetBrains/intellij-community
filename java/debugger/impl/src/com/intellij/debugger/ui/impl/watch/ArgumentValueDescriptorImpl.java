@@ -37,10 +37,12 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return LocalVariablesUtil.canSetValues();
   }
 
+  @Override
   public boolean isPrimitive() {
     return getValue() instanceof PrimitiveValue;
   }
 
+  @Override
   public Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getValue();
   }
@@ -49,6 +51,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return myVariable;
   }
 
+  @Override
   public String getName() {
     return myVariable.getDisplayName();
   }
@@ -57,6 +60,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return myVariable.isParam();
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     try {
@@ -76,6 +80,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
         if (local != null) {
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {

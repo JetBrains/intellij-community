@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.awt.event.InputEvent;
@@ -50,7 +51,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     //Force move focus to IdeFrame
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
 
@@ -73,7 +74,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(getProjectName(), false);
   }
 

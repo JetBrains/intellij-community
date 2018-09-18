@@ -79,7 +79,6 @@ public abstract class TailType {
   };
 
   public static final TailType SEMICOLON = new CharTailType(';');
-  @Deprecated public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
     @Override

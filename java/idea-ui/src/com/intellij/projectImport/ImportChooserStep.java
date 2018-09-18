@@ -39,7 +39,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -77,6 +76,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myList.setModel(model);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
@@ -102,6 +102,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myCreateFromSources.addActionListener(actionListener);
 
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         updateSteps();
       }
@@ -155,14 +156,17 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     return result;
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myCreateFromSources.isSelected() ? myCreateFromSources : myList;
   }
 
+  @Override
   public void updateDataModel() {
     final ProjectImportProvider provider = getSelectedProvider();
     if (provider != null) {
@@ -189,6 +193,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     return "Choose External Model";
   }
 
+  @Override
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.import";

@@ -165,7 +165,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
       }
 
       @Override
-      public void actionPerformed(AnActionEvent event) {
+      public void actionPerformed(@NotNull AnActionEvent event) {
         String name = askForProfileName("Create Copyright Profile", "");
         if (name != null) {
           addProfileNode(new CopyrightProfile(name));
@@ -179,7 +179,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
       }
 
       @Override
-      public void actionPerformed(AnActionEvent event) {
+      public void actionPerformed(@NotNull AnActionEvent event) {
         String profileName = askForProfileName("Copy Copyright Profile", "");
         if (profileName == null) {
           return;
@@ -192,14 +192,14 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
       }
 
       @Override
-      public void update(AnActionEvent event) {
+      public void update(@NotNull AnActionEvent event) {
         super.update(event);
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
     result.add(new DumbAwareAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent event) {
+      public void actionPerformed(@NotNull AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
           .withFileFilter(file -> {
             final FileType fileType = file.getFileType();

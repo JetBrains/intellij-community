@@ -225,10 +225,19 @@ public class IDEATestNGRemoteListener {
     if (ex != null) {
       ComparisonFailureData notification;
       try {
-        notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+        notification = ComparisonFailureData.create(ex);
       }
       catch (Throwable e) {
         notification = null;
+      }
+
+      if (notification == null) {
+        try {
+          notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+        }
+        catch (Throwable e) {
+          notification = null;
+        }
       }
       ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     }
@@ -253,7 +262,7 @@ public class IDEATestNGRemoteListener {
     final long duration = result.getDuration();
     myPrintStream.println("\n##teamcity[testFinished name=\'" +
                           escapeName(getTestMethodNameWithParams(result)) +
-                          (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") +
+                          (duration > 0 ? "\' duration=\'" + duration : "") +
                           "\']");
   }
 

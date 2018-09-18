@@ -40,10 +40,12 @@ public class ExtractedDirectoryPresentation extends PackagingElementPresentation
     myPathInJar = element.getPathInJar();
   }
 
+  @Override
   public String getPresentableName() {
     return PathUtil.getFileName(myJarPath) + myPathInJar;
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcon(AllIcons.Nodes.ExtractedFolder);
     final String parentPath = PathUtil.getParentPath(myJarPath);

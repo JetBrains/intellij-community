@@ -23,12 +23,12 @@ import org.fest.swing.core.MouseClickInfo;
 import org.fest.swing.core.Robot;
 import org.fest.swing.driver.AbstractButtonDriver;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
+
 
 /**
  * @author Sergey Karashevich
@@ -74,7 +74,7 @@ public class CheckBoxDriver extends AbstractButtonDriver {
     final Font font = checkBox.getFont();
 
     g.setFont(font);
-    FontMetrics fm = SwingUtilities2.getFontMetrics(checkBox, g, font);
+    FontMetrics fm = checkBox.getFontMetrics(font);
 
     Rectangle viewRect = new Rectangle(size);
     Rectangle iconRect = new Rectangle();

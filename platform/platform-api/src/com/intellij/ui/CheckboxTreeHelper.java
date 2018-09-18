@@ -145,6 +145,7 @@ public class CheckboxTreeHelper {
 
   private KeyListener setupKeyListener(final Tree tree, final JComponent mainComponent) {
     KeyListener listener = new KeyAdapter() {
+      @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (isToggleEvent(e, mainComponent)) {
           TreePath treePath = tree.getLeadSelectionPath();

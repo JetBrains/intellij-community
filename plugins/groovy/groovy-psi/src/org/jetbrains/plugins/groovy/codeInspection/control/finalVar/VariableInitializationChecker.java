@@ -87,7 +87,7 @@ public class VariableInitializationChecker {
   private static class MySemilattice implements Semilattice<Data> {
     @NotNull
     @Override
-    public Data join(@NotNull List<Data> ins) {
+    public Data join(@NotNull List<? extends Data> ins) {
       if (ins.isEmpty()) return new Data(false);
 
       boolean b = true;

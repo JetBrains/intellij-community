@@ -76,6 +76,16 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     doTest("xxx\n   222<caret>    \nyyy",
            "xxx\n   222<caret>\nyyy");
   }
+  public void testDoNotStripModifiedOnCurrentLastLine() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setEnsureNewLineAtEOF(true);
+
+    configureFromFileText("x.txt", "xxx\n        <caret>");
+    type(' ');
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx\n         <caret>\n");
+  }
 
   public void testStrippingWithMultipleCarets() {
     doTest("xxx\n   <caret>\nyyy<caret>  ",

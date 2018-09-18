@@ -73,6 +73,7 @@ implements ClassGenerator
     private String getClassName(final ClassLoader loader) {
         final Set nameCache = getClassNameCache(loader);
         return namingPolicy.getClassName(namePrefix, source.name, key, new Predicate() {
+            @Override
             public boolean evaluate(Object arg) {
                 return nameCache.contains(arg);
             }

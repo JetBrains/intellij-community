@@ -44,7 +44,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     setModel(new AsyncTreeModel(myModel));
     HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);
     TreeUIHelper.getInstance().installTreeSpeedSearch(this, o -> {
-      Object component = o.getLastPathComponent();
+      Object component = obj2psi(o.getLastPathComponent());
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
     }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
@@ -88,8 +88,8 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       //TODO
       boolean myAlreadyDone;
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
-        if (!myAlreadyDone && myModel.getTestCount() != 0) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
+        if (!myAlreadyDone && getTestCount() != 0) {
           myAlreadyDone = true;
           EdtInvocationManager.getInstance().invokeLater(() -> {
             TreeUtil.collapseAll(DiscoveredTestsTree.this, 0);
@@ -149,7 +149,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionModel().getSelectionPaths();
       List<PsiElement> result = ContainerUtil.newSmartList();

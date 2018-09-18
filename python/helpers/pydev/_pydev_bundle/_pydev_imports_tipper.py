@@ -27,6 +27,10 @@ TYPE_ATTR = '3'
 TYPE_BUILTIN = '4'
 TYPE_PARAM = '5'
 
+# completion types for IPython console
+TYPE_IPYTHON = '11'
+TYPE_IPYTHON_MAGIC = '12'
+
 def _imp(name, log=None):
     try:
         return __import__(name)

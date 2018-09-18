@@ -97,7 +97,7 @@ public class JsonSchemaCatalogManager {
       if (info != null) {
         FileDownloadingAdapter adapter = new FileDownloadingAdapter() {
           @Override
-          public void fileDownloaded(VirtualFile localFile) {
+          public void fileDownloaded(@NotNull VirtualFile localFile) {
             callback.run();
           }
         };

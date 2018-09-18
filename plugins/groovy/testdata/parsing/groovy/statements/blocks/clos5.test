@@ -33,7 +33,7 @@ Groovy script
               PsiWhiteSpace(' ')
               Command arguments
                 Literal
-                  PsiElement(Gstring)('"bugaga"')
+                  PsiElement(double quoted string)('"bugaga"')
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
             PsiWhiteSpace('  ')
@@ -52,7 +52,7 @@ Groovy script
             PsiElement(;)(';')
             PsiElement(new line)('\n')
             Literal
-              PsiElement(string)(''ved'')
+              PsiElement(single quoted string)(''ved'')
             PsiElement(})('}')
         GrStringContentImpl(STRING_CONTENT)
           PsiElement(Gstring content)('!')

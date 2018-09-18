@@ -35,6 +35,7 @@ public class PropertyResolver extends PropertyProviderFinder {
     myPropertyName = propertyName;
   }
 
+  @Override
   public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
     // deliberately skip ancall params, they will be processed as a special case
   }

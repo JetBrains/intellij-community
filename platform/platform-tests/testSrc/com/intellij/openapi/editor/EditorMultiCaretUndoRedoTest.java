@@ -30,11 +30,13 @@ import com.intellij.testFramework.TestFileType;
 public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   private CurrentEditorProvider mySavedCurrentEditorProvider;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     mySavedCurrentEditorProvider = getUndoManager().getEditorProvider();
   }
 
+  @Override
   public void tearDown() throws Exception {
     getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
     super.tearDown();

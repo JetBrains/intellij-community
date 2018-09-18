@@ -601,8 +601,23 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testTwoJavaDocs() {
-    doTextTest("/**\n" + " * \n" + " */\n" + "        class Test {\n" + "    /**\n" + "     */\n" + "     public void foo();\n" + "}",
-               "/**\n" + " *\n" + " */\n" + "class Test {\n" + "    /**\n" + "     */\n" + "    public void foo();\n" + "}")
+    doTextTest("""/**
+ *
+ */
+        class Test {
+    /**
+     */
+     public void foo();
+}""",
+               """/**
+ *
+ */
+class Test {
+    /**
+     *
+     */
+    public void foo();
+}""")
   }
 
   fun testJavaDocLinksWithParameterNames() {
@@ -3655,4 +3670,35 @@ public class Test {
        "}"
     )
   }
+
+
+  fun testIdea192024() {
+    codeStyleBean.apply{
+      rightMargin = 30
+    }
+    doTextTest(
+        """
+          public class Main {
+          public static void main(String[] args) {
+        int longCountVar = 0;
+              do {
+        System.out.println("Test");
+                  longCountVar ++;
+              } while(longCountVar <= 1000);
+          }
+      }""".trimIndent(),
+
+      """
+      public class Main {
+          public static void main(String[] args) {
+              int longCountVar = 0;
+              do {
+                  System.out.println("Test");
+                  longCountVar++;
+              } while (longCountVar <= 1000);
+          }
+      }""".trimIndent()
+    )
+  }
+
 }

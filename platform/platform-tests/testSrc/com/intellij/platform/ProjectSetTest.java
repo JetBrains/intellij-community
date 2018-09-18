@@ -126,14 +126,9 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   private static void readDescriptor(@NotNull File descriptor, @Nullable ProjectSetProcessor.Context context) throws IOException {
-    InputStreamReader input = new InputStreamReader(new FileInputStream(descriptor), CharsetToolkit.UTF8_CHARSET);
-    JsonElement parse;
-    try {
-      parse = new JsonParser().parse(input);
+    try (InputStreamReader input = new InputStreamReader(new FileInputStream(descriptor), CharsetToolkit.UTF8_CHARSET)) {
+      JsonElement parse = new JsonParser().parse(input);
+      new ProjectSetReader().readDescriptor(parse.getAsJsonObject(), context);
     }
-    finally {
-      input.close();
-    }
-    new ProjectSetReader().readDescriptor(parse.getAsJsonObject(), context);
   }
 }

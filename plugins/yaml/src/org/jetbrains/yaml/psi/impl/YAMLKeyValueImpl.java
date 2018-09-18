@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -37,6 +38,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return "YAML key value";
   }
 
+  @Override
   @Nullable
   public PsiElement getKey() {
     final PsiElement result = findChildByType(YAMLTokenTypes.SCALAR_KEY);
@@ -61,6 +63,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return getKeyText();
   }
 
+  @Override
   @NotNull
   public String getKeyText() {
     final PsiElement keyElement = getKey();
@@ -79,6 +82,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return StringUtil.unquoteString(text);
   }
 
+  @Override
   @Nullable
   public YAMLValue getValue() {
     for (PsiElement child = getLastChild(); child != null; child = child.getPrevSibling()) {
@@ -89,6 +93,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return null;
   }
 
+  @Override
   @NotNull
   public String getValueText() {
     final YAMLValue value = getValue();
@@ -105,7 +110,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @Override
   public void setValue(@NotNull YAMLValue value) {
     adjustWhitespaceToContentType(value instanceof YAMLScalar);
-    
+
     if (getValue() != null) {
       getValue().replace(value);
       return;
@@ -123,15 +128,15 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       add(value);
     }
   }
-  
+
   private void adjustWhitespaceToContentType(boolean isScalar) {
     assert getKey() != null;
     PsiElement key = getKey();
-    
+
     if (key.getNextSibling() != null && key.getNextSibling().getNode().getElementType() == YAMLTokenTypes.COLON) {
       key = key.getNextSibling();
     }
-    
+
     while (key.getNextSibling() != null && !(key.getNextSibling() instanceof YAMLValue)) {
       key.getNextSibling().delete();
     }
@@ -157,6 +162,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     final YAMLFile yamlFile = (YAMLFile)getContainingFile();
     final PsiElement value = getValue();
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         if (value instanceof YAMLScalar){
           return getValueText();
@@ -164,16 +170,19 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
         return getName();
       }
 
+      @Override
       public String getLocationString() {
         return "[" + yamlFile.getName() + "]";
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return YAMLKeyValueImpl.this.getIcon(0);
       }
     };
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String newName) throws IncorrectOperationException {
     return YAMLUtil.rename(this, newName);
   }
@@ -182,6 +191,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
    * Provide reference contributor with given method registerReferenceProviders implementation:
    * registrar.registerReferenceProvider(PlatformPatterns.psiElement(YAMLKeyValue.class), ReferenceProvider);
    */
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);

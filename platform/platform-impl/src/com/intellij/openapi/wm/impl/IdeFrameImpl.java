@@ -30,8 +30,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
@@ -85,7 +85,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
 
-    myRootPane = createRootPane(actionManager, dataManager, application);
+    myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -97,7 +97,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setSize(size);
     setLocationRelativeTo(null);
 
-    if (Registry.is("suppress.focus.stealing") && !ApplicationManagerEx.getApplicationEx().isActive()) {
+    if (Registry.is("suppress.focus.stealing") &&
+        Registry.is("suppress.focus.stealing.auto.request.focus") &&
+        !ApplicationManagerEx.getApplicationEx().isActive()) {
       setAutoRequestFocus(false);
     }
 
@@ -216,8 +218,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     */
   }
 
-  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application) {
-    return new IdeRootPane(actionManager, dataManager, application, this);
+  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+    return new IdeRootPane(actionManager, dataManager, this);
   }
 
   @NotNull
@@ -377,7 +379,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
         return myProject.isInitialized() ? myProject : null;
@@ -477,7 +479,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
       widgetIDs.clear();
 
-      //noinspection deprecation
       ((StatusBarEx)statusBar).removeCustomIndicationComponents();
     });
   }

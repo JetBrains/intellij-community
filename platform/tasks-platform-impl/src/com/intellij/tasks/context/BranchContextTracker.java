@@ -42,13 +42,10 @@ public class BranchContextTracker implements BranchChangeListener {
     if (!vcsConfiguration.RELOAD_CONTEXT) return;
 
     // check if the task is already switched
-    TaskManager manager = TaskManager.getManager(myProject);
-    if (manager != null) {
-      LocalTask task = manager.getActiveTask();
-      List<BranchInfo> branches = task.getBranches(false);
-      if (branches.stream().anyMatch(info -> branchName.equals(info.name)))
-        return;
-    }
+    LocalTask task = TaskManager.getManager(myProject).getActiveTask();
+    List<BranchInfo> branches = task.getBranches(false);
+    if (branches.stream().anyMatch(info -> branchName.equals(info.name)))
+      return;
 
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;
@@ -78,7 +75,7 @@ public class BranchContextTracker implements BranchChangeListener {
       }
     }).setContextHelpAction(new AnAction("What is a workspace?", "A workspace is a set of opened files, the current run configuration, and breakpoints.", null) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
 
       }
     }).notify(myProject);

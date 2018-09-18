@@ -34,10 +34,26 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   @Override
   void processMessage(LogMessage message) {
     switch (message.kind) {
-      case LogMessage.Kind.ERROR:
-      case LogMessage.Kind.WARNING:
       case LogMessage.Kind.INFO:
-        logPlainMessage(message)
+        logPlainMessage(message, "")
+        break
+      case LogMessage.Kind.WARNING:
+        logPlainMessage(message, " status='WARNING'")
+        break
+      case LogMessage.Kind.ERROR:
+        def messageText = message.text.trim()
+        int lineEnd = messageText.indexOf('\n')
+        String firstLine
+        String details
+        if (lineEnd != -1) {
+          firstLine = messageText.substring(0, lineEnd)
+          details = " errorDetails='${escape(messageText.substring(lineEnd + 1))}'"
+        }
+        else {
+          firstLine = messageText
+          details = ""
+        }
+        printTeamCityMessage("message", true, "text='${escape(firstLine)}'$details status='ERROR'")
         break
       case LogMessage.Kind.PROGRESS:
         printTeamCityMessage("progressMessage", false, "'${escape(message.text)}'")
@@ -89,8 +105,7 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
     }
   }
 
-  void logPlainMessage(LogMessage message) {
-    String status = message.kind == LogMessage.Kind.WARNING ? " status='WARNING'" : ""
+  void logPlainMessage(LogMessage message, String status) {
     if (parallelTaskId != null || !status.isEmpty()) {
       printTeamCityMessage("message", true, "text='${escape(message.text)}'$status")
     }

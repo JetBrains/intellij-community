@@ -45,7 +45,7 @@ public class HighlightData {
     myAdditionalColorKey = additionalColorKey;
   }
 
-  public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
+  public void addToCollection(@NotNull Collection<? super HighlightData> list, boolean highlighted) {
     list.add(this);
     if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES, getAdditionalColorKey()));
   }

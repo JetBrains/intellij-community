@@ -52,7 +52,7 @@ public class ViewStructureAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     final FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
@@ -106,7 +106,7 @@ public class ViewStructureAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       e.getPresentation().setEnabled(false);

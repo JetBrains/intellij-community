@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
@@ -47,15 +46,9 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
   }
 
   public void testInsertInnerClassImport() throws Exception {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
-    final boolean imports = settings.INSERT_INNER_CLASS_IMPORTS;
-    try {
-      settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doTest(new String[] { "pack1.Class1" }, "pack2.A");
-    }
-    finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = imports;
-    }
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
   public void testSimultaneousMove() throws Exception {

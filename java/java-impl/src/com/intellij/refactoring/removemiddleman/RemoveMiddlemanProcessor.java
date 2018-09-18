@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.removemiddleman.usageInfo.DeleteMethod;
@@ -55,12 +54,14 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     myDelegateMethodInfos = memberInfos;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
     return new RemoveMiddlemanUsageViewDescriptor(field);
   }
 
 
+  @Override
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {
     for (final MemberInfo memberInfo : myDelegateMethodInfos) {
       if (!memberInfo.isChecked()) continue;
@@ -108,6 +109,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     }
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
     if (getter != null) {
       try {
@@ -123,6 +125,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     super.performRefactoring(usageInfos);
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactorJBundle.message("exposed.delegation.command.name", containingClass.getName(), '.', field.getName());

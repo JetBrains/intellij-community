@@ -46,6 +46,7 @@ public class SuspendManagerImpl implements SuspendManager {
     });
   }
 
+  @NotNull
   @Override
   public SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
@@ -98,6 +99,7 @@ public class SuspendManagerImpl implements SuspendManager {
     return suspendContext;
   }
 
+  @NotNull
   @Override
   public SuspendContextImpl pushSuspendContext(final EventSet set) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set) {
@@ -275,7 +277,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
   }
 
-  private void processVote(final SuspendContextImpl suspendContext) {
+  private void processVote(@NotNull SuspendContextImpl suspendContext) {
     LOG.assertTrue(suspendContext.myVotesToVote > 0);
     suspendContext.myVotesToVote--;
 
@@ -310,7 +312,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
   }
 
-  public void notifyPaused(SuspendContextImpl suspendContext) {
+  public void notifyPaused(@NotNull SuspendContextImpl suspendContext) {
     pushPausedContext(suspendContext);
     myDebugProcess.myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
   }

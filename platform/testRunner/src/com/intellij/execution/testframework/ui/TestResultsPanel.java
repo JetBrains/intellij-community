@@ -146,7 +146,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     final TestTreeView view = getTreeView();
     if (view != null) {
       return view.getData(dataId);

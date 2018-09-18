@@ -95,6 +95,7 @@ class XPathUsageSearcher implements UsageSearcher {
             myTotalFileCount = fileCount;
         }
 
+        @Override
         protected void processXmlFile(VirtualFile t) {
             myIndicator.setText(findBundleMessage("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
 
@@ -195,6 +196,7 @@ class XPathUsageSearcher implements UsageSearcher {
     static class CountProcessor extends BaseProcessor {
         private int myFileCount;
 
+        @Override
         protected void processXmlFile(VirtualFile t) {
             myFileCount++;
         }

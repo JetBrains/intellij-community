@@ -75,7 +75,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   @Override
   protected String getHelpId() {
-    return "Getter and Setter Templates Dialog";
+    return "Getter_and_Setter_Templates_Dialog";
   }
 
   @Override
@@ -130,6 +130,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
     setComboboxModel(templatesManager, comboBox);
     comboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(@NotNull final ActionEvent M) {
         templatesManager.setDefaultTemplate((TemplateResource)comboBox.getSelectedItem());
       }

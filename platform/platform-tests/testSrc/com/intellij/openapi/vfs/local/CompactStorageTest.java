@@ -95,29 +95,22 @@ public class CompactStorageTest extends StorageTestBase {
   static  int createTestRecord(Storage storage) throws IOException {
     final int r = storage.createNewRecord();
 
-    DataOutputStream out = new DataOutputStream(storage.appendStream(r));
-    try {
+    try (DataOutputStream out = new DataOutputStream(storage.appendStream(r))) {
       Random random = new Random(r);
       for (int i = 0; i < TIMES_LIMIT; i++) {
         out.writeInt(random.nextInt());
       }
-    }
-    finally {
-      out.close();
     }
 
     return r;
   }
 
   void checkTestRecord(int id) throws IOException {
-    DataInputStream stream = myStorage.readStream(id);
-    try {
+    try (DataInputStream stream = myStorage.readStream(id)) {
       Random random = new Random(id);
       for (int i = 0; i < TIMES_LIMIT; i++) {
         assertEquals(random.nextInt(), stream.readInt());
       }
-    } finally {
-      stream.close();
     }
   }
 

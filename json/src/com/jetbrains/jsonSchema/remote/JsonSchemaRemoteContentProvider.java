@@ -72,6 +72,7 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
     Files.write(tagFile.toPath(), ContainerUtil.createMaybeSingletonList(headerValue));
   }
 
+  @Override
   public boolean isUpToDate(@NotNull Url url, @NotNull VirtualFile local) {
     long now = System.currentTimeMillis();
     // don't update more frequently than once in 4 hours

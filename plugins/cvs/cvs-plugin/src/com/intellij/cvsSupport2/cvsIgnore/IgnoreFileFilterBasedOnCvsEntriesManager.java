@@ -28,6 +28,7 @@ import java.io.File;
  * author: lesya
  */
 public class IgnoreFileFilterBasedOnCvsEntriesManager implements IIgnoreFileFilter{
+  @Override
   public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
     File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);

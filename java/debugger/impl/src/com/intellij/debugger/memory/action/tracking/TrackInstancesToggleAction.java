@@ -38,7 +38,7 @@ public class TrackInstancesToggleAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (project != null && selectedClass != null && !project.isDisposed()) {
@@ -50,7 +50,7 @@ public class TrackInstancesToggleAction extends ToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (selectedClass != null && project != null && !project.isDisposed()) {

@@ -41,7 +41,7 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && !getDependencies(e).isEmpty();
   }
 
@@ -50,6 +50,7 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
     return result == null ? Collections.emptyList() : result;
   }
 
+  @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
     manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs, null);
   }

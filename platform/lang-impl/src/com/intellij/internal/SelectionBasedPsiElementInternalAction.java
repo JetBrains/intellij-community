@@ -34,7 +34,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = getEditor(e);
     final PsiFile file = getPsiFile(e);
     if (editor == null || file == null) return;
@@ -109,7 +109,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     boolean enabled = ApplicationManagerEx.getApplicationEx().isInternal() && getEditor(e) != null && myFileClass.isInstance(getPsiFile(e));
     presentation.setVisible(enabled);

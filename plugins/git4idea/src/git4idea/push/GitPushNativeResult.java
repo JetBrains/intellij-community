@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,9 @@ public class GitPushNativeResult {
   }
 
   boolean isNonFFUpdate() {
-    return myType == Type.REJECTED && (NO_FF_REJECT_REASON.equals(myReason) || FETCH_FIRST_REASON.equals(myReason));
+    return myType == Type.REJECTED &&
+           myReason != null &&
+           (StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) || StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON));
   }
 
   @Override

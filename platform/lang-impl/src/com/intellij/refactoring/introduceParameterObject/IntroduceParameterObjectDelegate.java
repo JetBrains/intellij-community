@@ -75,9 +75,9 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
   public abstract List<P> getAllMethodParameters(M sourceMethod);
 
   /**
-   * Resulted parameter info should implement {@link ParameterInfo#getActualValue(PsiElement)} so the call site would be updated with actual values.
+   * Resulted parameter info should implement {@link ParameterInfo#getActualValue(PsiElement, Object)} so the call site would be updated with actual values.
    * At the same time, usages in another languages should be correctly proceed. In order to do that, usage's delegate should be found and
-   * {@link IntroduceParameterObjectDelegate#createNewParameterInitializerAtCallSite(PsiElement, IntroduceParameterObjectClassDescriptor, List)}
+   * {@link IntroduceParameterObjectDelegate#createNewParameterInitializerAtCallSite(PsiElement, IntroduceParameterObjectClassDescriptor, List, Object)}
    * should be called to provide actual value
    *
    * @return parameter info which would merge arguments on the call site, with name according to parameter class

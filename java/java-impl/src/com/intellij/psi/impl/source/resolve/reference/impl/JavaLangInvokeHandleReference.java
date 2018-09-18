@@ -75,6 +75,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
               return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isStaticField);
 
             case FIND_VIRTUAL:
+            case FIND_SPECIAL:
               return resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
             case FIND_STATIC:
               return resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isStaticMethod);

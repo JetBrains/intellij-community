@@ -251,6 +251,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return library.getUrls(type);
   }
 
+  @Override
   @NotNull
   public List<Module> getAllDependentModules(@NotNull Module module) {
     return ModuleUtilCore.getAllDependentModules(module);

@@ -8,11 +8,10 @@ Groovy script
     Built in type
       PsiElement(void)('void')
     PsiWhiteSpace(' ')
-    PsiElement(Gstring)('"abc"')
+    PsiElement(double quoted string)('"abc"')
     PsiWhiteSpace(' ')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>

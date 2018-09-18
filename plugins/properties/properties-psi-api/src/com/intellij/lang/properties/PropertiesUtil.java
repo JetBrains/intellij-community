@@ -68,7 +68,7 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static String getDefaultBaseName(final Collection<PropertiesFile> files) {
+  public static String getDefaultBaseName(final Collection<? extends PropertiesFile> files) {
     String commonPrefix = null;
     for (PropertiesFile file : files) {
       final String baseName = file.getVirtualFile().getNameWithoutExtension();
@@ -170,7 +170,7 @@ public class PropertiesUtil {
    * messages_en.properties is a parent of the messages_en_US.properties
    */
   @Nullable
-  public static PropertiesFile getParent(@NotNull PropertiesFile file, @NotNull Collection<PropertiesFile> candidates) {
+  public static PropertiesFile getParent(@NotNull PropertiesFile file, @NotNull Collection<? extends PropertiesFile> candidates) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     String name = virtualFile.getNameWithoutExtension();

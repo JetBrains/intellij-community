@@ -33,7 +33,7 @@ public class ChooseDeploymentAction extends ServersTreeAction<ServersTreeStructu
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
     node.deploy(e);
   }
 }

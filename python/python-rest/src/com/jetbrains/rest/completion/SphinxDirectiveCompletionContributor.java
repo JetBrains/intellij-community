@@ -43,7 +43,7 @@ public class SphinxDirectiveCompletionContributor extends CompletionContributor 
        new CompletionProvider<CompletionParameters>() {
          @Override
          protected void addCompletions(@NotNull CompletionParameters parameters,
-                                       ProcessingContext context,
+                                       @NotNull ProcessingContext context,
                                        @NotNull CompletionResultSet result) {
            Sdk sdk = ProjectRootManager.getInstance(parameters.getPosition().getProject()).getProjectSdk();
            if (sdk != null) {

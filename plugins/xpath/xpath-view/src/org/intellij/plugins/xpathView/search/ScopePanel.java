@@ -15,13 +15,13 @@
  */
 package org.intellij.plugins.xpathView.search;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -61,6 +61,7 @@ public class ScopePanel extends JPanel implements Disposable{
 
     public void initComponent(@Nullable Module currentModule, final SearchScope scope) {
         final ItemListener stateListener = new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 myModuleSelection.setEnabled(myModuleScope.isSelected());
                 myDirectory.setEnabled(myDirectoryScope.isSelected());
@@ -73,6 +74,7 @@ public class ScopePanel extends JPanel implements Disposable{
             }
         };
         final ItemListener scopeListener = new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     firePropertyChange("scope", null, getSelectedScope());
@@ -109,7 +111,8 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScopeSelection.getComboBox().addItemListener(scopeListener);
 
         myDirectory.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-            protected void textChanged(DocumentEvent e) {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent e) {
                 firePropertyChange("scope", null, getSelectedScope());
             }
         });
@@ -165,6 +168,7 @@ public class ScopePanel extends JPanel implements Disposable{
                 ((ScopeChooserCombo)myCustomScopeSelection).getSelectedScopeName());
     }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myCustomScopeSelection);
   }

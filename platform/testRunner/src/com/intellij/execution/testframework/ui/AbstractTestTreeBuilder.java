@@ -59,11 +59,13 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
     while (current != null);
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
   }
 
+  @Override
   protected boolean isSmartExpand() {
     return false;
   }

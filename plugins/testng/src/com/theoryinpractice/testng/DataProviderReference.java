@@ -45,6 +45,7 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
     return super.bindToElement(element);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final PsiClass cls = TestNGUtil.getProviderClass(getElement(), PsiUtil.getTopLevelClass(getElement()));
@@ -67,6 +68,7 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
     return null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final List<Object> list = new ArrayList<>();

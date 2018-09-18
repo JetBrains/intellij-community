@@ -15,13 +15,36 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 public class SerializableInnerClassWithNonSerializableOuterClassInspection
-  extends SerializableInnerClassWithNonSerializableOuterClassInspectionBase {
+  extends SerializableInspectionBase {
 
   @Override
   public JComponent createOptionsPanel() {
     return SerializableInspectionUtil.createOptions(this);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.with.non.serializable.outer.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.with.non.serializable.outer.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableInnerClassWithNonSerializableOuterClassVisitor(this);
   }
 }

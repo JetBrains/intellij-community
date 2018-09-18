@@ -53,7 +53,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
       return myManager;
     }

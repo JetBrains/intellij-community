@@ -616,7 +616,7 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  public static PsiClass getCircularClass(@NotNull PsiClass aClass, @NotNull Collection<PsiClass> usedClasses) {
+  public static PsiClass getCircularClass(@NotNull PsiClass aClass, @NotNull Collection<? super PsiClass> usedClasses) {
     if (usedClasses.contains(aClass)) {
       return aClass;
     }

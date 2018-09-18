@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -111,8 +112,7 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 
-    final String subPathUnderBranch = getRelativeUrl(myBranch.getUrl(), info.getURL());
-    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = checkPaths(list, branchPath, subPathUnderBranch);
+    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = checkPaths(list, branchPath, info.getURL());
 
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
@@ -127,19 +127,20 @@ public class BranchInfo {
   @NotNull
   private MultiMap<SvnMergeInfoCache.MergeCheckResult, String> checkPaths(@NotNull SvnChangeList list,
                                                                           @NotNull String branchPath,
-                                                                          final String subPathUnderBranch) {
+                                                                          @NotNull Url underBranchUrl) {
     MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = MultiMap.create();
-    String myTrunkPathCorrespondingToLocalBranchPath = Url.append(myInfo.getCurrentBranch().getUrl().toDecodedString(), subPathUnderBranch);
+    String subPathUnderBranch = getRelativeUrl(myBranch.getUrl(), underBranchUrl);
+    Url myTrunkUrlCorrespondingToLocalBranchPath = appendPath(myInfo.getCurrentBranch().getUrl(), subPathUnderBranch);
 
     for (String path : list.getAffectedPaths()) {
-      String absoluteInTrunkPath = Url.append(myInfo.getRepoUrl().toString(), path);
+      Url url = appendPath(myInfo.getRepoUrl(), path);
       SvnMergeInfoCache.MergeCheckResult mergeCheckResult;
 
-      if (!absoluteInTrunkPath.startsWith(myTrunkPathCorrespondingToLocalBranchPath)) {
+      if (!isAncestor(myTrunkUrlCorrespondingToLocalBranchPath, url)) {
         mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
       }
       else {
-        String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkPathCorrespondingToLocalBranchPath.length());
+        String relativeToTrunkPath = getRelativeUrl(myTrunkUrlCorrespondingToLocalBranchPath, url);
         String localPathInBranch = new File(branchPath, relativeToTrunkPath).getAbsolutePath();
 
         try {
@@ -354,5 +355,16 @@ public class BranchInfo {
   @NotNull
   public Collection<String> getNotMergedPaths(final long number) {
     return myPartlyMerged.get(number);
+  }
+
+  @NotNull
+  private static Url appendPath(@NotNull Url url, @NotNull String path) {
+    try {
+      return url.appendPath(path, false);
+    }
+    catch (SvnBindException e) {
+      ExceptionUtil.rethrow(e);
+      return null;
+    }
   }
 }

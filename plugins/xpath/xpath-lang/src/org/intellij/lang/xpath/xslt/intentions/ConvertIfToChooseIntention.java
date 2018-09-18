@@ -30,16 +30,19 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class ConvertIfToChooseIntention implements IntentionAction {
+    @Override
     @NotNull
     public String getFamilyName() {
         return "Convert if to choose";
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Convert xsl:if to xsl:choose";
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
@@ -64,6 +67,7 @@ public class ConvertIfToChooseIntention implements IntentionAction {
       CodeStyleManager.getInstance(tag.getManager().getProject()).reformat(tag.replace(chooseTag));
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         if (!XsltSupport.isXsltFile(file)) return false;
 
@@ -82,6 +86,7 @@ public class ConvertIfToChooseIntention implements IntentionAction {
         return child != null && child.getTextRange().contains(offset);
     }
 
+    @Override
     public boolean startInWriteAction() {
         return true;
     }

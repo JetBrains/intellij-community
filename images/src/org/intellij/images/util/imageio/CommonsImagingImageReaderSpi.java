@@ -69,10 +69,12 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
     }
   }
 
+  @Override
   public String getDescription(Locale locale) {
     return "Apache Commons Imaging adapter reader";
   }
 
+  @Override
   public boolean canDecodeInput(Object input) throws IOException {
     if (!(input instanceof ImageInputStream)) {
       return false;
@@ -91,6 +93,7 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
     }
   }
 
+  @Override
   public ImageReader createReaderInstance(Object extension) {
     return new MyImageReader(this, myFormat.get());
   }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.maven.embedder;
 
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
@@ -442,7 +442,7 @@ public class MavenEmbedder {
   }
 
   private MavenExecutionResult handleException(Throwable e) {
-    ExceptionUtil.rethrowUnchecked(e);
+    ExceptionUtilRt.rethrowUnchecked(e);
 
     return new MavenExecutionResult(null, Collections.singletonList((Exception)e));
   }

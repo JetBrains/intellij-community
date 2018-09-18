@@ -36,6 +36,7 @@ public class JavaRenameRefactoringImpl extends RenameRefactoringImpl implements 
     super(project, element, newName, toSearchInComments, toSearchInNonJavaFiles);
   }
 
+  @Override
   public void setShouldRenameVariables(boolean value) {
     if (value) {
       myProcessor.addRenamerFactory(ourVariableRenamerFactory);
@@ -45,6 +46,7 @@ public class JavaRenameRefactoringImpl extends RenameRefactoringImpl implements 
     }
   }
 
+  @Override
   public void setShouldRenameInheritors(boolean value) {
     if (value) {
       myProcessor.addRenamerFactory(ourInheritorRenamerFactory);

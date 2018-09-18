@@ -31,11 +31,13 @@ public abstract class IncludeAwareMatcher extends BaseMatcher {
         myDocument = document;
     }
 
+    @Override
     @Nullable
     public XmlTag getRoot() {
         return myDocument.getRootTag();
     }
 
+    @Override
     @Nullable
     public final Result match(XmlTag element) {
         if (XsltSupport.isIncludeOrImport(element)) {

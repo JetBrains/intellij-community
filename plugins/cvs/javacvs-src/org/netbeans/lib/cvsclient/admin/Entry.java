@@ -473,6 +473,7 @@ public final class Entry implements Cloneable {
     return buf.toString();
   }
 
+  @Override
   public Object clone() throws CloneNotSupportedException {
     return super.clone();
   }

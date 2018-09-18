@@ -18,7 +18,6 @@ package com.intellij.refactoring.openapi.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.ReplaceConstructorWithFactoryRefactoring;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
@@ -35,18 +34,22 @@ public class ReplaceConstructorWithFactoryRefactoringImpl extends RefactoringImp
     super(new ReplaceConstructorWithFactoryProcessor(project, null, originalClass, targetClass, factoryName));
   }
 
+  @Override
   public PsiClass getOriginalClass() {
     return myProcessor.getOriginalClass();
   }
 
+  @Override
   public PsiClass getTargetClass() {
     return myProcessor.getTargetClass();
   }
 
+  @Override
   public PsiMethod getConstructor() {
     return myProcessor.getConstructor();
   }
 
+  @Override
   public String getFactoryName() {
     return myProcessor.getFactoryName();
   }

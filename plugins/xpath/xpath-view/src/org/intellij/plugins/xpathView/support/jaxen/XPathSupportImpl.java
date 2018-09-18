@@ -15,29 +15,21 @@
  */
 package org.intellij.plugins.xpathView.support.jaxen;
 
-import org.intellij.plugins.xpathView.XPathExpressionGenerator;
-import org.intellij.plugins.xpathView.support.XPathSupport;
-import org.intellij.plugins.xpathView.support.jaxen.extensions.FunctionImplementation;
-import org.intellij.plugins.xpathView.util.Namespace;
-import org.intellij.plugins.xpathView.util.NamespaceCollector;
-
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.XPathFunctionProvider;
-
+import org.intellij.plugins.xpathView.XPathExpressionGenerator;
+import org.intellij.plugins.xpathView.support.XPathSupport;
+import org.intellij.plugins.xpathView.support.jaxen.extensions.FunctionImplementation;
+import org.intellij.plugins.xpathView.util.Namespace;
+import org.intellij.plugins.xpathView.util.NamespaceCollector;
+import org.jaxen.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.jaxen.JaxenException;
-import org.jaxen.SimpleNamespaceContext;
-import org.jaxen.UnresolvableException;
-import org.jaxen.XPath;
-import org.jaxen.XPathFunctionContext;
 
 import javax.xml.namespace.QName;
 import java.util.Collection;
@@ -47,6 +39,7 @@ import java.util.Map;
 class XPathSupportImpl extends XPathSupport {
     private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl");
 
+    @Override
     public XPath createXPath(@NotNull XmlFile file, String expression) throws JaxenException {
         final PsiXPath xpath = new PsiXPath(file, expression);
         xpath.setFunctionContext(new MyXPathFunctionContext());
@@ -55,6 +48,7 @@ class XPathSupportImpl extends XPathSupport {
         return xpath;
     }
 
+    @Override
     public XPath createXPath(@Nullable XmlFile psiFile, String expression, @NotNull Collection<Namespace> namespaces) throws JaxenException {
         final PsiXPath xpath = new PsiXPath(psiFile, expression);
         xpath.setFunctionContext(new MyXPathFunctionContext());
@@ -63,10 +57,12 @@ class XPathSupportImpl extends XPathSupport {
         return xpath;
     }
 
+    @Override
     public String getUniquePath(XmlElement element, XmlTag context) {
         return XPathExpressionGenerator.getUniquePath(element, context);
     }
 
+    @Override
     public String getPath(XmlElement element, XmlTag context) {
         return XPathExpressionGenerator.getPath(element, context);
     }
@@ -76,6 +72,7 @@ class XPathSupportImpl extends XPathSupport {
             super(map);
         }
 
+        @Override
         public String translateNamespacePrefixToUri(String prefix) {
             final String uri = super.translateNamespacePrefixToUri(prefix);
             // avoid matching of undefined prefixes on default namespace

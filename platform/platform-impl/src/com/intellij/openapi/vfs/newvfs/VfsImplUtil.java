@@ -211,7 +211,7 @@ public class VfsImplUtil {
     return handler;
   }
 
-  private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {
+  private static void forEachDirectoryComponent(String rootPath, Consumer<? super String> consumer) {
     int index = rootPath.lastIndexOf('/');
     while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);

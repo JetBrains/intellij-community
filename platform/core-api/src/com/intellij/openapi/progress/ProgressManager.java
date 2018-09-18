@@ -86,12 +86,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
   /**
-   * to be removed in 2017.2
-   */
-  @Deprecated
-  public abstract void setCancelButtonText(String cancelButtonText);
-
-  /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
    *
@@ -152,6 +146,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
    * @deprecated use {@link #run(Task)}
    */
+  @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
                                                             @NotNull Runnable process,
@@ -171,6 +166,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param option           progress indicator behavior controller.
    * @deprecated use {@link #run(Task)}
    */
+  @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
                                                             @NotNull Runnable process,

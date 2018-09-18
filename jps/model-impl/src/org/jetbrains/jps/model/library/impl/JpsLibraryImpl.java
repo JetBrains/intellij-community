@@ -119,6 +119,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
     getParent().removeChild(this);
   }
 
+  @Override
   public JpsElementCollectionImpl<JpsLibrary> getParent() {
     //noinspection unchecked
     return (JpsElementCollectionImpl<JpsLibrary>)myParent;

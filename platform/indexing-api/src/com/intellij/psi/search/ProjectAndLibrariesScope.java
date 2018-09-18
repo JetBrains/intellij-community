@@ -98,6 +98,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return true;
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Project project = getProject();
@@ -134,6 +135,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return this;
   }
 
+  @Override
   public String toString() {
     return getDisplayName();
   }

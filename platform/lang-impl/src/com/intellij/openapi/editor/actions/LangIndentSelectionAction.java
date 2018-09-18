@@ -33,7 +33,7 @@ public class LangIndentSelectionAction extends IndentSelectionAction {
     if (LookupManager.getActiveLookup(editor) != null) return false;
 
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    if (psiFile != null && NextPrevParameterAction.hasSutablePolicy(editor, psiFile)) return false;
+    if (psiFile != null && NextPrevParameterAction.hasSuitablePolicy(editor, psiFile)) return false;
 
     return true;
   }

@@ -82,6 +82,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     return e;
   }
 
+  @Override
   @Nullable
   public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = null;

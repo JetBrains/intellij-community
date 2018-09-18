@@ -86,7 +86,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
           public void run() {
             CommandProcessor.getInstance().runUndoTransparentAction(() -> {
               if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip &&
-                  (!settings.isKeepTrailingSpacesOnCaretLine() || !hasCaretIn(start, end))) {
+                  !(settings.isKeepTrailingSpacesOnCaretLine() && hasCaretIn(start, end))) {
                 document.deleteString(start, end);
               }
               else {

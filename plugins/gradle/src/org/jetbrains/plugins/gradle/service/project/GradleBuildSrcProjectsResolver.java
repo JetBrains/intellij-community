@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -96,6 +97,17 @@ public class GradleBuildSrcProjectsResolver {
       }
     }
 
+    List<String> jvmOptions = ContainerUtil.newSmartList();
+    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
+    // to avoid spawning of the second gradle daemon
+    BuildEnvironment mainBuildEnvironment = myResolverContext.getModels().getBuildEnvironment();
+    if (mainBuildEnvironment != null) {
+      jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
+    }
+    if (myMainBuildExecutionSettings != null) {
+      jvmOptions.addAll(myMainBuildExecutionSettings.getVmOptions());
+    }
+
     for (String buildPath : buildClasspathNodesMap.keySet()) {
       Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes = buildClasspathNodesMap.get(buildPath);
 
@@ -114,9 +126,9 @@ public class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings.setVerboseProcessing(myMainBuildExecutionSettings.isVerboseProcessing());
           buildSrcProjectSettings.setWrapperPropertyFile(myMainBuildExecutionSettings.getWrapperPropertyFile());
           buildSrcProjectSettings.withArguments(myMainBuildExecutionSettings.getArguments())
-                                 .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
-                                 .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
-                                 .withVmOptions(myMainBuildExecutionSettings.getVmOptions());
+            .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
+            .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
+            .withVmOptions(jvmOptions);
         }
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);

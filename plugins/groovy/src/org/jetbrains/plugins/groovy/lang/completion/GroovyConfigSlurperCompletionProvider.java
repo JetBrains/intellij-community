@@ -62,7 +62,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     if (!(file instanceof GroovyFile)) return;

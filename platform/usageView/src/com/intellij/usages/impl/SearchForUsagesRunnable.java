@@ -96,7 +96,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String createOptionsHtml(@NonNls UsageTarget[] searchFor) {
+  private static String createOptionsHtml(@NonNls @NotNull UsageTarget[] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
     String shortcutText = "";
     if (shortcut != null) {
@@ -152,6 +152,7 @@ class SearchForUsagesRunnable implements Runnable {
     ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
+  @NotNull
   private Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return ReadAction.compute(() -> {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
@@ -181,6 +182,7 @@ class SearchForUsagesRunnable implements Runnable {
     return resolveScope;
   }
 
+  @NotNull
   private static HyperlinkListener addHrefHandling(@Nullable final HyperlinkListener listener,
                                                    @NotNull final String hrefTarget, @NotNull final Runnable handler) {
     return new HyperlinkAdapter() {
@@ -202,7 +204,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String detailedLargeFilesMessage(@NotNull Collection<VirtualFile> largeFiles) {
+  private static String detailedLargeFilesMessage(@NotNull Collection<? extends VirtualFile> largeFiles) {
     String message = "";
     if (largeFiles.size() == 1) {
       final VirtualFile vFile = largeFiles.iterator().next();
@@ -496,7 +498,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
     String modulesText = unloadedModules.size() > 1 ? unloadedModules.size() + " unloaded modules"
                                                     : "unloaded module '" + ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(unloadedModules)).getName() + "'";
     return "Occurrences in " + modulesText + " may be skipped. Load all modules and repeat the search to get complete results.";

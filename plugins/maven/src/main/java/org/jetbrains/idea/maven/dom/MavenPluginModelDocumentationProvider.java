@@ -22,22 +22,27 @@ import com.intellij.psi.PsiManager;
 import java.util.List;
 
 public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
+  @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDocForMavenPluginParameter(element, false);
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDocForMavenPluginParameter(element, true);
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }

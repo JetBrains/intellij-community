@@ -36,9 +36,10 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     myDirectoryName = directoryName;
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DirectoryElementPresentation(this); 
+    return new DirectoryElementPresentation(this);
   }
 
   @NotNull
@@ -56,6 +57,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     return children;
   }
 
+  @Override
   public DirectoryPackagingElement getState() {
     return this;
   }
@@ -74,10 +76,12 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     myDirectoryName = directoryName;
   }
 
+  @Override
   public void rename(@NotNull String newName) {
     myDirectoryName = newName;
   }
 
+  @Override
   public String getName() {
     return myDirectoryName;
   }
@@ -87,6 +91,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(myDirectoryName);
   }
 
+  @Override
   public void loadState(@NotNull DirectoryPackagingElement state) {
     XmlSerializerUtil.copyBean(state, this);
   }

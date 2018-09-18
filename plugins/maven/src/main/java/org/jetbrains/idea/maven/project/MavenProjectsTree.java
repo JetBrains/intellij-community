@@ -1486,38 +1486,38 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+  private void fireProjectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
     for (Listener each : myListeners) {
       each.projectsIgnoredStateChanged(ignored, unignored, fromImport);
     }
   }
 
-  private void fireProjectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+  private void fireProjectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
     for (Listener each : myListeners) {
       each.projectsUpdated(updated, deleted);
     }
   }
 
-  private void fireProjectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                   NativeMavenProjectHolder nativeMavenProject) {
+  private void fireProjectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
     for (Listener each : myListeners) {
       each.projectResolved(projectWithChanges, nativeMavenProject);
     }
   }
 
-  private void firePluginsResolved(MavenProject project) {
+  private void firePluginsResolved(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.pluginsResolved(project);
     }
   }
 
-  private void fireFoldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+  private void fireFoldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     for (Listener each : myListeners) {
       each.foldersResolved(projectWithChanges);
     }
   }
 
-  private void fireArtifactsDownloaded(MavenProject project) {
+  private void fireArtifactsDownloaded(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.artifactsDownloaded(project);
     }
@@ -1687,23 +1687,23 @@ public class MavenProjectsTree {
     default void profilesChanged() {
     }
 
-    default void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+    default void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
     }
 
-    default void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    default void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
     }
 
-    default void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+    default void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                          @Nullable NativeMavenProjectHolder nativeMavenProject) {
     }
 
-    default void pluginsResolved(MavenProject project) {
+    default void pluginsResolved(@NotNull MavenProject project) {
     }
 
-    default void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    default void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     }
 
-    default void artifactsDownloaded(MavenProject project) {
+    default void artifactsDownloaded(@NotNull MavenProject project) {
     }
   }
 

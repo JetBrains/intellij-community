@@ -81,13 +81,16 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, body, true);
     final CommentTracker tracker = new CommentTracker();
     final String initializerText = (rhs == null) ? parameterName : tracker.text(rhs);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiType type = parameter.getType();
+    PsiType type = parameter.getType();
+    if (type instanceof PsiEllipsisType) {
+      type = ((PsiEllipsisType)type).toArrayType();
+    }
     if (type instanceof PsiLambdaParameterType) {
       return;
     }
     PsiDeclarationStatement newStatement = (PsiDeclarationStatement)
-      factory.createStatementFromText(type.getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);
+      JavaPsiFacade.getElementFactory(project).createStatementFromText(
+        type.getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);
     final CollectFilteredElements<PsiReferenceExpression> collector = new CollectFilteredElements<>(
       e -> e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).resolve() == parameter);
     final PsiCodeBlock codeBlock = (PsiCodeBlock)body;

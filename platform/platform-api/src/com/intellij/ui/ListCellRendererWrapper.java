@@ -58,6 +58,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
     myDefaultRenderer = renderer;
   }
 
+  @Override
   public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     mySeparator = false;
     myIcon = null;

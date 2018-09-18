@@ -32,6 +32,7 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
     super(element, nameNode);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final ContextProvider provider = getElement().getXPathContext();
@@ -45,7 +46,7 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
 
   @SuppressWarnings({"ConstantConditions"})
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XPathNodeTest expr =
             (XPathNodeTest)XPathChangeUtil.createExpression(getElement(), newElementName + ":x").getFirstChild().getChildren()[1];
     final ASTNode nameNode = getNameNode();
@@ -53,12 +54,14 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
     return getElement();
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     // handled in XPathCompletionData
     return EMPTY_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     if ("*".equals(getPrefix())) {
       return true;
@@ -69,10 +72,12 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
     return !canResolve();
   }
 
+  @Override
   public String getPrefix() {
     return getCanonicalText();
   }
 
+  @Override
   public boolean isUnresolved() {
     if (!canResolve()) return true;
 

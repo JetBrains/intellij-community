@@ -2,28 +2,33 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
-// see example:
-// public final class MyApplicationActionsUsageTriggerCollector extends ApplicationUsageTriggerCollector {
-//    public static void record(@NotNull String metric) {
-//       FUSApplicationUsageTrigger.getInstance().trigger(MyApplicationActionsUsageTriggerCollector.class, metric);
-//   }
-//
-//   public String getGroupId() { return "statistics.my.application.actions";}
-//  }
-//  in any place of code write: MyApplicationActionsUsageTriggerCollector.record("my.cool.action.performed");
-
+/**
+ * See example:
+ * <pre>{@code
+ * public final class MyApplicationActionsUsageTriggerCollector extends ApplicationUsageTriggerCollector {
+ *   public static void record(@NotNull String metric) {
+ *     FUSApplicationUsageTrigger.getInstance().trigger(MyApplicationActionsUsageTriggerCollector.class, metric);
+ *   }
+ *
+ *   public String getGroupId() {
+ *     return "statistics.my.application.actions";
+ *   }
+ * }
+ * }</pre>
+ * In any place of code write: {@code MyApplicationActionsUsageTriggerCollector.record("my.cool.action.performed");}
+ */
 public abstract class ApplicationUsageTriggerCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
   @NotNull
   @Override
   public final Set<UsageDescriptor> getUsages() {
-    Map<String, Integer> data = FUSApplicationUsageTrigger.getInstance().getData(getGroupId());
-
-    return ContainerUtil.map2Set(data.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
+    return FUSApplicationUsageTrigger.getInstance().getData(getGroupId());
   }
+
+  @Nullable
+  public final FUSUsageContext getContext() {return null;}
 }

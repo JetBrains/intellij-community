@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.pom.Navigatable;
 
 public class DiffNavigatableArrayRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     final Navigatable element = DiffDataKeys.NAVIGATABLE.getData(dataProvider);
     if (element == null) {

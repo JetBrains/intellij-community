@@ -39,9 +39,9 @@ import java.util.Set;
  */
 public class FunExprOccurrence {
   private final int argIndex;
-  private final List<ReferenceChainLink> referenceContext;
+  private final List<? extends ReferenceChainLink> referenceContext;
 
-  public FunExprOccurrence(int argIndex, List<ReferenceChainLink> referenceContext) {
+  public FunExprOccurrence(int argIndex, List<? extends ReferenceChainLink> referenceContext) {
     this.argIndex = argIndex;
     this.referenceContext = referenceContext;
   }
@@ -97,7 +97,7 @@ public class FunExprOccurrence {
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);
   }
 
-  public boolean canHaveType(@NotNull List<PsiClass> samClasses, @NotNull VirtualFile placeFile) {
+  public boolean canHaveType(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
     if (referenceContext.isEmpty()) return true;
 
     Set<PsiClass> qualifiers = null;
@@ -117,7 +117,7 @@ public class FunExprOccurrence {
     return true;
   }
 
-  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<PsiClass> samClasses) {
+  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<? extends PsiClass> samClasses) {
     if (link.isCall) {
       return member instanceof PsiMethod && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
     }
@@ -128,7 +128,7 @@ public class FunExprOccurrence {
            ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType()));
   }
 
-  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<PsiClass> samClasses) {
+  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<? extends PsiClass> samClasses) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
     return paramIndex < parameters.length &&

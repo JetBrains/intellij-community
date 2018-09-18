@@ -8,7 +8,6 @@ import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerColl
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.*;
@@ -394,8 +393,6 @@ public class IdeaApplication {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-        //safe for headless and unit test modes
-        UsageTrigger.trigger("lifecycle", app.getName() + "app.started");
         FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.start");
         FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
       });
