@@ -965,7 +965,13 @@ FunctionEnd
 
 
 Function getPathEnvVar
+  ClearErrors
   ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
+  IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
+  Goto done
+do_not_change_path:
+  StrCpy $pathEnvVar ""
+done:
 FunctionEnd
 
 
@@ -975,10 +981,14 @@ FunctionEnd
 
 
 Function updatePathEnvVar
+  StrCmp $pathEnvVar "" do_not_change_path 0
   ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
   StrCmp $R0 "" absent done
 absent:
   WriteRegExpandStr HKCU ${Environment} "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+  Goto done
+do_not_change_path:
+  MessageBox MB_OK|MB_ICONEXCLAMATION "PATH can not be updated. The size is very big."
 done:
 FunctionEnd
 
