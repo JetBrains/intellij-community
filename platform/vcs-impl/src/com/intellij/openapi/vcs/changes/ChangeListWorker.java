@@ -1112,9 +1112,13 @@ public class ChangeListWorker {
       }
 
       ListData list = myWorker.getDataByName(name);
-      if (list == null) return;
-
-      addChangeToList(list, change, vcs);
+      if (list != null) {
+        addChangeToList(list, change, vcs);
+      }
+      else {
+        LOG.error(String.format("Changelist not found: vcs - %s", vcs == null ? null : vcs.getName()));
+        addChangeToCorrespondingList(change, vcs);
+      }
     }
 
     public void addChangeToCorrespondingList(@NotNull Change change, AbstractVcs vcs) {
