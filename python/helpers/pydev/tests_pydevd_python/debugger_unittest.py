@@ -423,9 +423,9 @@ class DebuggerRunner(object):
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
         raise AssertionError(msg +
-            "\n\n===========================\nStdout: \n" + ''.join(stdout) +
-            "\n\n===========================\nStderr:" + ''.join(stderr) +
-            "\n\n===========================\nLog:\n" + '\n'.join(getattr(writerThread, 'log', [])))
+                             "\n\n===========================\nStdout: \n" + ''.join(stdout) +
+                             "\n\n===========================\nStderr:" + ''.join(stderr) +
+                             "\n\n===========================\nLog:\n" + '\n'.join(getattr(writerThread, 'log', [])))
 
 
 #=======================================================================================================================
@@ -456,13 +456,13 @@ class AbstractWriterThread(threading.Thread):
 
     def _ignore_stderr_line(self, line):
         if line.startswith((
-            'debugger: ',
-            '>>',
-            '<<',
-            'warning: Debugger speedups',
-            'pydev debugger: New process is launching',
-            'pydev debugger: To debug that process',
-            )):
+                'debugger: ',
+                '>>',
+                '<<',
+                'warning: Debugger speedups',
+                'pydev debugger: New process is launching',
+                'pydev debugger: To debug that process',
+        )):
             return True
 
         if re.match(r'^(\d+)\t(\d)+', line):
@@ -470,15 +470,15 @@ class AbstractWriterThread(threading.Thread):
 
         if IS_JYTHON:
             for expected in (
-                'org.python.netty.util.concurrent.DefaultPromise',
-                'org.python.netty.util.concurrent.SingleThreadEventExecutor',
-                'Failed to submit a listener notification task. Event loop shut down?',
-                'java.util.concurrent.RejectedExecutionException',
-                'An event executor terminated with non-empty task',
-                'java.lang.UnsupportedOperationException',
-                "RuntimeWarning: Parent module '_pydevd_bundle' not found while handling absolute import",
-                'from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames',
-                ):
+                    'org.python.netty.util.concurrent.DefaultPromise',
+                    'org.python.netty.util.concurrent.SingleThreadEventExecutor',
+                    'Failed to submit a listener notification task. Event loop shut down?',
+                    'java.util.concurrent.RejectedExecutionException',
+                    'An event executor terminated with non-empty task',
+                    'java.lang.UnsupportedOperationException',
+                    "RuntimeWarning: Parent module '_pydevd_bundle' not found while handling absolute import",
+                    'from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames',
+            ):
                 if expected in line:
                     return True
 
@@ -782,7 +782,7 @@ class AbstractWriterThread(threading.Thread):
             ignore_exceptions_thrown_in_lines_with_ignore_exception,
             ignore_libraries,
             exceptions=()
-        ):
+    ):
         # Only set the globals, others
         self.write("131\t%s\t%s" % (self.next_seq(), '%s;%s;%s;%s;%s;%s' % (
             'true' if break_on_uncaught else 'false',

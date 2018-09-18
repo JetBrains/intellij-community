@@ -16,7 +16,7 @@ from tests_pydevd_python import debugger_unittest
 from tests_pydevd_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
     REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
     CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
-    IS_APPVEYOR)
+    IS_APPVEYOR, wait_for_condition)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 try:
     from urllib import unquote
@@ -157,20 +157,89 @@ def test_case_3(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_JYTHON, reason='This test is flaky on Jython, so, skipping it.')
-def test_case_4(case_setup):
+def test_case_suspend_thread(case_setup):
     with case_setup.test_file('_debugger_case4.py') as writer:
-        writer.FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
         writer.write_make_initial_run()
 
         thread_id = writer.wait_for_new_thread()
 
         writer.write_suspend_thread(thread_id)
 
-        hit = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+        while True:
+            hit = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+            if hit.name == 'sleep':
+                break  # Ok, broke on 'sleep'.
+            else:
+                # i.e.: if it doesn't hit on 'sleep', release and pause again.
+                writer.write_run_thread(thread_id)
+                time.sleep(.1)
+                writer.write_suspend_thread(thread_id)
+
         assert hit.thread_id == thread_id
 
+        writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'exit_while_loop()')
+        writer.wait_for_evaluation([
+            [
+                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier),
+                '<var name="exit_while_loop()" type="str"  value="str: ok"',  # jython
+            ]
+        ])
+
         writer.write_run_thread(thread_id)
+
+        writer.finished_ok = True
+
+
+# Jython has a weird behavior: it seems it has fine-grained locking so that when
+# we're inside the tracing other threads don't run (so, we can have only one
+# thread paused in the debugger).
+@pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
+def test_case_suspend_all_thread(case_setup):
+    with case_setup.test_file('_debugger_case_suspend_all.py') as writer:
+        writer.write_make_initial_run()
+
+        main_thread_id = writer.wait_for_new_thread()  # Main thread
+        thread_id1 = writer.wait_for_new_thread()  # Thread 1
+        thread_id2 = writer.wait_for_new_thread()  # Thread 2
+
+        # Ok, all threads created, let's wait for the main thread to get to the join.
+        def get_frame_names():
+            writer.write_get_thread_stack(main_thread_id)
+            msg = writer.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_GET_THREAD_STACK,)))
+            if msg.thread.frame:
+                frame_names = [frame['name'] for frame in msg.thread.frame]
+                return frame_names
+            return [msg.thread.frame['name']]
+
+        def condition():
+            return get_frame_names() in (
+                ['wait', 'join', '<module>'],
+                ['_wait_for_tstate_lock', 'join', '<module>']
+            )
+
+        def msg():
+            return 'Found stack: %s' % (get_frame_names(),)
+
+        wait_for_condition(condition, msg, timeout=5, sleep=.5)
+
+        writer.write_suspend_thread('*')
+
+        # Wait for 2 threads to be suspended (the main thread is already in a join, so, it can't actually
+        # break out of it while others don't proceed).
+        hit0 = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+        hit1 = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+
+        writer.write_evaluate_expression('%s\t%s\t%s' % (hit0.thread_id, hit0.frame_id, 'LOCAL'), 'exit_while_loop(1)')
+        writer.wait_for_evaluation([
+            [
+                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier)
+            ]
+        ])
+
+        writer.write_evaluate_expression('%s\t%s\t%s' % (hit1.thread_id, hit1.frame_id, 'LOCAL'), 'exit_while_loop(2)')
+        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier))
+
+        writer.write_run_thread('*')
 
         writer.finished_ok = True
 
@@ -424,8 +493,8 @@ def test_case_13(case_setup):
 
             if IS_JYTHON:
                 for expected in (
-                    "RuntimeWarning: Parent module '_pydevd_bundle' not found while handling absolute import",
-                    "import __builtin__"):
+                        "RuntimeWarning: Parent module '_pydevd_bundle' not found while handling absolute import",
+                        "import __builtin__"):
                     if expected in line:
                         return True
 
@@ -502,7 +571,7 @@ def test_case_14(case_setup):
         writer.wait_for_var(
             [
                 '<xml><more>False</more><output message="0"></output><output message="1"></output><output message="2"></output></xml>'            ]
-            )
+        )
         assert 17 == writer._sequence, 'Expected 19. Had: %s' % writer._sequence
 
         writer.write_run_thread(hit.thread_id)
@@ -954,7 +1023,7 @@ def test_unhandled_exceptions_basic(case_setup):
             '_debugger_case_unhandled_exceptions.py',
             check_test_suceeded_msg=check_test_suceeded_msg,
             additional_output_checks=additional_output_checks,
-        ) as writer:
+    ) as writer:
 
         writer.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
         writer.write_make_initial_run()
@@ -1024,7 +1093,7 @@ def test_unhandled_exceptions_in_top_level(case_setup):
             '_debugger_case_unhandled_exceptions_on_top_level.py',
             additional_output_checks=additional_output_checks,
             check_test_suceeded_msg=check_test_suceeded_msg,
-        ) as writer:
+    ) as writer:
 
         writer.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
         writer.write_make_initial_run()
@@ -1073,7 +1142,7 @@ def test_unhandled_exceptions_in_top_level2(case_setup):
             additional_output_checks=additional_output_checks,
             check_test_suceeded_msg=check_test_suceeded_msg,
             update_command_line_args=update_command_line_args,
-            ) as writer:
+    ) as writer:
 
         writer.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
         writer.write_make_initial_run()
@@ -1102,7 +1171,7 @@ def test_unhandled_exceptions_in_top_level3(case_setup):
             '_debugger_case_unhandled_exceptions_on_top_level.py',
             additional_output_checks=additional_output_checks,
             check_test_suceeded_msg=check_test_suceeded_msg,
-        ) as writer:
+    ) as writer:
 
         # Handled and unhandled
         writer.write_add_exception_breakpoint_with_policy('Exception', "1", "1", "0")
@@ -1132,10 +1201,10 @@ def test_unhandled_exceptions_in_top_level4(case_setup):
 
     # Note: expecting unhandled exception to be printed to stderr.
     with case_setup.test_file(
-        '_debugger_case_unhandled_exceptions_on_top_level2.py',
-        additional_output_checks=additional_output_checks,
-        check_test_suceeded_msg=check_test_suceeded_msg,
-        ) as writer:
+            '_debugger_case_unhandled_exceptions_on_top_level2.py',
+            additional_output_checks=additional_output_checks,
+            check_test_suceeded_msg=check_test_suceeded_msg,
+    ) as writer:
 
         # Handled and unhandled
         writer.write_add_exception_breakpoint_with_policy('Exception', "1", "1", "0")
@@ -1576,10 +1645,10 @@ def test_path_translation(case_setup):
             writer.write_load_source(f)
             writer.wait_for_message(
                 lambda msg:
-                    '%s\t' % CMD_LOAD_SOURCE in msg and \
-                    "def main():" in msg and \
-                    "print('break here')" in msg and \
-                    "print('TEST SUCEEDED!')" in msg
+                '%s\t' % CMD_LOAD_SOURCE in msg and \
+                "def main():" in msg and \
+                "print('break here')" in msg and \
+                "print('TEST SUCEEDED!')" in msg
                 , expect_xml=False)
 
         # Request a file that does not exist
@@ -1684,8 +1753,8 @@ def test_case_get_thread_stack(case_setup):
 
             if IS_JYTHON:
                 for expected in (
-                    "RuntimeWarning: Parent module '_pydev_bundle' not found while handling absolute import",
-                    "from java.lang import System"):
+                        "RuntimeWarning: Parent module '_pydev_bundle' not found while handling absolute import",
+                        "from java.lang import System"):
                     if expected in line:
                         return True
 
@@ -1741,7 +1810,7 @@ def test_case_dump_threads_to_stderr(case_setup):
         return 'Thread Dump' in stderr and 'Thread pydevd.CommandThread  (daemon: True, pydevd thread: True)' in stderr
 
     with case_setup.test_file(
-        '_debugger_case_get_thread_stack.py', additional_output_checks=additional_output_checks) as writer:
+            '_debugger_case_get_thread_stack.py', additional_output_checks=additional_output_checks) as writer:
         writer.write_add_breakpoint(12, None)
         writer.write_make_initial_run()
 
@@ -1751,7 +1820,7 @@ def test_case_dump_threads_to_stderr(case_setup):
         wait_for_condition(
             lambda: is_stderr_ok(writer.get_stderr()),
             lambda: make_error_msg(writer.get_stderr())
-            )
+        )
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
@@ -1777,13 +1846,14 @@ def _get_breakpoint_cases():
         # Check breakpoint() and sys.__breakpointhook__ replacement.
         return ('_debugger_case_breakpoint.py', '_debugger_case_breakpoint2.py')
 
-@pytest.mark.parametrize("filename", ('_debugger_case_breakpoint.py', '_debugger_case_breakpoint2.py'))
+
+@pytest.mark.parametrize("filename", _get_breakpoint_cases())
 def test_py_37_breakpoint(case_setup, filename):
     with case_setup.test_file(filename) as writer:
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            REASON_THREAD_SUSPEND, file=filename, line=2)
+            REASON_THREAD_SUSPEND, file=filename, line=3)
 
         writer.write_run_thread(hit.thread_id)
 
@@ -1887,7 +1957,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.log.append('asserted')
 
         writer.finished_ok = True
-        
+
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
@@ -1895,7 +1965,7 @@ def test_py_37_breakpoint_remote(case_setup_remote):
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            REASON_THREAD_SUSPEND, 
+            REASON_THREAD_SUSPEND,
             filename='_debugger_case_breakpoint_remote.py',
             line=13,
         )
@@ -1911,8 +1981,10 @@ def test_py_37_breakpoint_remote(case_setup_remote):
 
         writer.finished_ok = True
 
+
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_py_37_breakpoint_remote_no_import(case_setup_remote):
+
     def get_environ(writer):
         env = os.environ.copy()
         curr_pythonpath = env.get('PYTHONPATH', '')
@@ -1926,12 +1998,12 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
         return env
 
     with case_setup_remote.test_file(
-        '_debugger_case_breakpoint_remote_no_import.py',
-        get_environ=get_environ) as writer:
+            '_debugger_case_breakpoint_remote_no_import.py',
+            get_environ=get_environ) as writer:
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            "108", 
+            "108",
             filename='_debugger_case_breakpoint_remote_no_import.py',
             line=12,
         )
@@ -1946,6 +2018,7 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
         writer.log.append('asserted')
 
         writer.finished_ok = True
+
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_remote_debugger_multi_proc(case_setup_remote):
@@ -2031,9 +2104,9 @@ def test_remote_unhandled_exceptions(case_setup_remote):
         assert 'ValueError: TEST SUCEEDED' in stderr
 
     with case_setup_remote.test_file(
-        '_debugger_case_remote_unhandled_exceptions.py',
-        additional_output_checks=additional_output_checks,
-        check_test_suceeded_msg=check_test_suceeded_msg) as writer:
+            '_debugger_case_remote_unhandled_exceptions.py',
+            additional_output_checks=additional_output_checks,
+            check_test_suceeded_msg=check_test_suceeded_msg) as writer:
 
         writer.log.append('making initial run')
         writer.write_make_initial_run()
@@ -2065,9 +2138,9 @@ def test_remote_unhandled_exceptions2(case_setup_remote):
         assert 'ValueError: TEST SUCEEDED' in stderr
 
     with case_setup_remote.test_file(
-        '_debugger_case_remote_unhandled_exceptions2.py',
-        additional_output_checks=additional_output_checks,
-        check_test_suceeded_msg=check_test_suceeded_msg) as writer:
+            '_debugger_case_remote_unhandled_exceptions2.py',
+            additional_output_checks=additional_output_checks,
+            check_test_suceeded_msg=check_test_suceeded_msg) as writer:
 
         writer.log.append('making initial run')
         writer.write_make_initial_run()
@@ -2099,4 +2172,4 @@ def test_remote_unhandled_exceptions2(case_setup_remote):
 # set JAVA_HOME=c:\bin\jdk1.8.0_172
 # set PATH=%PATH%;C:\bin\jython2.7.0\bin
 # set PATH=%PATH%;%JAVA_HOME%\bin
-# c:\bin\jython2.7.0\bin\jython.exe -m py.test tests_pydevd_python
+# c:\bin\jython2.7.0\bin\jython.exe -m py.test tests_python
