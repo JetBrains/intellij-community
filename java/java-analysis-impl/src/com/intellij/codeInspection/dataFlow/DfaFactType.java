@@ -65,6 +65,12 @@ public abstract class DfaFactType<T> extends Key<T> {
              super.isSuper(superFact, subFact);
     }
 
+    @NotNull
+    @Override
+    DfaNullability unionFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
+      return left == right ? left : DfaNullability.FLUSHED;
+    }
+
     @Nullable
     @Override
     DfaNullability intersectFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
