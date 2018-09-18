@@ -56,6 +56,9 @@ abstract class InlayImpl<T extends InlayImpl> extends RangeMarkerWithGetterImpl<
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();
         if (bounds != null) {
+          if (this instanceof BlockInlayImpl) {
+            bounds.width = contentComponent.getWidth();
+          }
           contentComponent.repaint(bounds);
         }
       }
