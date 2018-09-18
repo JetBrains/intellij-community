@@ -15,7 +15,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 
 public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase {
   private final JTree myTree;
@@ -33,11 +32,9 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   public void repaintWithParents(final AbstractTestProxy testProxy) {
     TreeUtil.promiseVisit(getTree(), visitor(testProxy))
       .onSuccess(path -> {
-        if (path != null) {
-          myTreeModel.invalidate(path, true);
-        }
-        else {
-          myTreeModel.invalidate();
+        while (path != null) {
+          myTreeModel.invalidate(path, false);
+          path = path.getParentPath();
         }
       });
   }
@@ -98,11 +95,6 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     myTreeModel = asyncTreeModel;
   }
 
-
-  public void performUpdate() {
-    getTreeModel().invalidate();
-  }
-
   public void expand(AbstractTestProxy test) {
     TreeUtil.promiseExpand(getTree(), visitor(test));
   }
@@ -121,10 +113,9 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   @NotNull
   private static TreeVisitor visitor(@NotNull AbstractTestProxy proxy) {
     return path -> {
-      Object component = path.getLastPathComponent();
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
-      Object object = node.getUserObject();
-      AbstractTestProxy currentProxy = ((BaseTestProxyNodeDescriptor)object).getElement();
+      BaseTestProxyNodeDescriptor descriptor = TreeUtil.getLastUserObject(BaseTestProxyNodeDescriptor.class, path);;
+      assert descriptor != null;
+      AbstractTestProxy currentProxy = descriptor.getElement();
       if (currentProxy == proxy) return TreeVisitor.Action.INTERRUPT;
       return isAncestor(currentProxy, proxy)
              ? TreeVisitor.Action.CONTINUE
