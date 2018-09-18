@@ -53,9 +53,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(Arrays.asList("ri21", "ri22", "ri23", "ri24", "ri25"), collector.getFoundItems("readAction2"));
       Assert.assertEquals(Arrays.asList("wi11", "wi12", "wi13", "wi14"), collector.getFoundItems("writeAction1"));
     }
-    catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    catch (InterruptedException e) {}
   }
 
   public void testWriteActionPriority() {
@@ -84,6 +82,26 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(Arrays.asList("ri21", "ri22", "ri23", "ri24"), collector.getFoundItems("readAction2"));
       Assert.assertEquals(3, action1.getAttemptsCount());
       Assert.assertEquals(1, action2.getAttemptsCount());
+    }
+    catch (InterruptedException e) {}
+  }
+
+  public void testCancelOnWaiting() {
+    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
+    contributorsMap.put(new ReadActionContributor<>("readAction1", 0, 0, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 5);
+    contributorsMap.put(new WriteActionContributor<>("writeAction1", 500, 0, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 5);
+
+    Collector collector = new Collector();
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
+    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
+    searcher.search(contributorsMap, "", false, ignrd -> null);
+
+    try {
+      if (!collector.awaitFinish(2000)) {
+        Assert.fail("Searching still haven't finished. Possible deadlock");
+      }
+      Assert.assertEquals(Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15"), collector.getFoundItems("readAction1"));
+      Assert.assertEquals(Arrays.asList("wi11", "wi12", "wi13", "wi14"), collector.getFoundItems("writeAction1"));
     }
     catch (InterruptedException e) {}
   }
