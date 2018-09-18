@@ -1093,7 +1093,7 @@ public class ChangeListWorker {
           myWorker.myIdx.changeAdded(newChange, vcs);
 
           ListData list = myWorker.removeChangeMapping(oldChange);
-          myWorker.putChangeMapping(newChange, myWorker.notNullList(list));
+          if (list != null) myWorker.putChangeMapping(newChange, list);
         }
       }
     }
