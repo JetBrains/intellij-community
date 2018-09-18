@@ -1,0 +1,12 @@
+top:
+  first: >
+    hello
+    world
+
+  second: >
+    aaa
+    ttt
+
+  hhh: |
+    ddd
+    ddadasd

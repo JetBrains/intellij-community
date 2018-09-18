@@ -16,7 +16,6 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -230,11 +229,23 @@ public abstract class InplaceRefactoring {
   protected PsiElement checkLocalScope() {
     final SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
-      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+      final PsiElement[] elements = getElements((LocalSearchScope)searchScope);
       return PsiTreeUtil.findCommonParent(elements);
     }
 
     return null;
+  }
+
+  @NotNull
+  private PsiElement[] getElements(LocalSearchScope searchScope) {
+    final PsiElement[] elements = searchScope.getScope();
+    FileViewProvider provider = myElementToRename.getContainingFile().getViewProvider();
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile) || ((PsiFile)element).getViewProvider() != provider) {
+        return elements;
+      }
+    }
+    return new PsiElement[] { myElementToRename.getContainingFile() };
   }
 
   protected abstract void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages);

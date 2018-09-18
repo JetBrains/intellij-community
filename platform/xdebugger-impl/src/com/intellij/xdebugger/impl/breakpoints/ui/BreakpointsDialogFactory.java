@@ -52,7 +52,7 @@ public class BreakpointsDialogFactory {
   }
 
   public void showDialog(@Nullable Object initialBreakpoint) {
-    if (myDialogShowing != null) {
+    if (myDialogShowing != null && myDialogShowing.getWindow().isDisplayable()) { // workaround for IDEA-197804
       myDialogShowing.toFront();
       return;
     }

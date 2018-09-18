@@ -75,7 +75,8 @@ public class PyKnownDecoratorUtil {
     ATTR_S("attr.__init__.s"),
     ATTR_ATTRS("attr.__init__.attrs"),
     ATTR_ATTRIBUTES("attr.__init__.attributes"),
-    ATTR_DATACLASS("attr.__init__.dataclass");
+    ATTR_DATACLASS("attr.__init__.dataclass"),
+    PYTEST_FIXTURE("pytest.fixture");
 
     private final QualifiedName myQualifiedName;
 

@@ -173,6 +173,51 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     }
   }
 
+  fun `test tracker when file is moved on top of another file`() {
+    createChangelist("Test #1")
+    createChangelist("Test #2")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a1_b_c_d_e1")
+    setBaseVersion(FILE_2, "a1_b_c_d_e1")
+    refreshCLM()
+
+
+    file1.withOpenedEditor {
+      val tracker = file1.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[0], "Test #2".asListNameToList())
+    }
+
+    file2.withOpenedEditor {
+      val tracker = file2.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[1], "Test #2".asListNameToList())
+    }
+
+    releaseUnneededTrackers()
+    assertNotNull(file1.tracker)
+    assertNotNull(file2.tracker)
+
+    runWriteAction {
+      file1.delete(this)
+      file2.rename(this, file1.name)
+    }
+    assertNull(file1.tracker)
+
+    refreshCLM()
+    lstm.waitUntilBaseContentsLoaded()
+
+    file2.moveAllChangesTo("Test #1")
+    releaseUnneededTrackers()
+    assertNull(file2.tracker)
+  }
+
   fun `test tracker changes moves - empty tracker`() {
     createChangelist("Test #1")
     createChangelist("Test #2")

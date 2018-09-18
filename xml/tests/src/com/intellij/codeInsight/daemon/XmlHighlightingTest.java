@@ -1959,6 +1959,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     }, true, false);
   }
 
+  public void testSubstitutionFromImport() throws Exception {
+    doTest(new VirtualFile[]{
+      getVirtualFile(BASE_PATH + "SubstitutionGroup/problem-with-substitution-groups.xml"),
+      getVirtualFile(BASE_PATH + "SubstitutionGroup/munit-runner.xsd"),
+      getVirtualFile(BASE_PATH + "SubstitutionGroup/mule.xsd")
+    }, true, false);
+  }
+
   public void testDtdWithXsd() throws Exception {
     doTest(
       new VirtualFile[] {

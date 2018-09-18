@@ -26,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidate: MethodCandidate) {
 
+  private var closureSkipList = mutableListOf<GrMethodCall>()
+
   private var left: PsiType? = null
 
   private var skipClosureBlock = true
@@ -41,6 +43,11 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
 
   fun startFromTop(startFromTop: Boolean): GroovyInferenceSessionBuilder {
     this.startFromTop = startFromTop
+    return this
+  }
+
+  fun skipClosureIn(call: GrMethodCall): GroovyInferenceSessionBuilder {
+    closureSkipList.add(call)
     return this
   }
 
@@ -63,17 +70,18 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
   fun build(): GroovyInferenceSession {
     if (!startFromTop) {
       val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
-      val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, skipClosureBlock)
+      val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
       session.addConstraint(MethodCallConstraint(ref, candidate))
+      val left = left ?: return session
 
-      val returnType = PsiUtil.getSmartReturnType(candidate.method) //TODO: Fix with startFromTop in GroovyResolveProcessor
-      val left = left
-      if (left == null || returnType == null || PsiType.VOID == returnType) return session
+      val returnType = PsiUtil.getSmartReturnType(candidate.method)
+      if (returnType == null || PsiType.VOID == returnType) return session
       session.repeatInferencePhases()
       session.addConstraint(TypeConstraint(left, returnType, ref))
       return session
-    } else {
-      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, skipClosureBlock)
+    }
+    else {
+      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
       val methodCall = ref.parent as? GrMethodCall ?: return session
       session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
       return session
@@ -87,9 +95,11 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
       val gparent = parent?.parent
       topLevel = if (parent is GrMethodCall) {
         parent
-      } else if (parent is GrArgumentList && gparent is GrMethodCall) {
+      }
+      else if (parent is GrArgumentList && gparent is GrMethodCall) {
         gparent
-      } else {
+      }
+      else {
         return topLevel
       }
     }

@@ -18,7 +18,7 @@ class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, 
     resolved as? GroovyMethodResult ?: return true
     resolved.candidate?.let {
       val typeParameters = it.method.typeParameters
-      val nestedSession = GroovyInferenceSession(typeParameters, it.siteSubstitutor, callRef, session.skipClosureBlock)
+      val nestedSession = GroovyInferenceSession(typeParameters, it.siteSubstitutor, callRef, emptyList(), session.skipClosureBlock)
       session.myNestedSessions[callRef] = nestedSession
       nestedSession.propagateVariables(session.inferenceVariables, session.restoreNameSubstitution)
 

@@ -52,6 +52,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
+
 /**
  * @author Denis Zhdanov
  * @since 3/14/13 5:09 PM
@@ -96,6 +98,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       boolean isJdk9orLater = jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
       effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater));
     }
+    CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+    myCancellationMap.put(id, cancellationTokenSource);
     Function<ProjectConnection, Void> f = connection -> {
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
@@ -117,9 +121,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           myCancellationMap.put(id, new UnsupportedCancellationToken());
         }
         else {
-          final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
           launcher.withCancellationToken(cancellationTokenSource.token());
-          myCancellationMap.put(id, cancellationTokenSource);
         }
         try {
           launcher.run();
@@ -135,6 +137,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
       }
     };
+    if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
+      myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
+    }
     myHelper.execute(projectPath, effectiveSettings, f);
   }
 

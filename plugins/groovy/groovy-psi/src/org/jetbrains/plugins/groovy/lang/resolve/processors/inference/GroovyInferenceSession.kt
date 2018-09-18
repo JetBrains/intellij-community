@@ -5,11 +5,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
 class GroovyInferenceSession(typeParams: Array<PsiTypeParameter>,
                              val siteSubstitutor: PsiSubstitutor,
                              context: PsiElement,
+                             val closureSkipList: List<GrMethodCall> = emptyList(),
                              val skipClosureBlock: Boolean = true) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
 
   val myNestedSessions = mutableMapOf<GrReferenceExpression, GroovyInferenceSession>()

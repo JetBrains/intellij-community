@@ -194,4 +194,12 @@ class AdvancedArrayAccess {
       System.out.println("Always");
     }
   }
+
+  int[] getArray() {
+    return new int[0];
+  }
+
+  void testInitializerWrong() {
+    getArray() = <error descr="Array initializer is not allowed here">{1,2,3}</error>;
+  }
 }

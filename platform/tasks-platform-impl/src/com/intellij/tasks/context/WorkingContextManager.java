@@ -297,4 +297,9 @@ public class WorkingContextManager {
   public File getContextFile() {
     return getArchiveFile(CONTEXT_ZIP_POSTFIX);
   }
+
+  @TestOnly
+  public File getTaskFile() {
+    return getArchiveFile(TASKS_ZIP_POSTFIX);
+  }
 }

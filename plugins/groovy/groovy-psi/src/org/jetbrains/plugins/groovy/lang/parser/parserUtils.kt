@@ -16,8 +16,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
-import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS
-import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.set
 import org.jetbrains.plugins.groovy.util.withKey
@@ -268,12 +267,8 @@ fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Pa
     if (T_COLON === builder.tokenType) {
       labelMarker.done(ARGUMENT_LABEL)
       builder.advanceLexer()
-      if (report_error_(builder, expression.parse(builder, level + 1))) {
-        argumentMarker.done(NAMED_ARGUMENT)
-      }
-      else {
-        argumentMarker.drop()
-      }
+      report_error_(builder, expression.parse(builder, level + 1))
+      argumentMarker.done(NAMED_ARGUMENT)
     }
     else {
       labelMarker.drop()
@@ -287,6 +282,8 @@ fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Pa
     return false
   }
 }
+
+fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(KEYWORDS)
 
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 

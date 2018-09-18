@@ -484,6 +484,23 @@ new E().bar()()
 '''
   }
 
+  void 'test with closeable IDEA-197035'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    def stream = new FileInputStream("df")
+    def c = stream.with { file ->
+        new BufferedInputStream(file)
+    }.withCloseable {
+        int a = 0
+        new BufferedInputStream(it)
+    }
+}
+'''
+  }
+
 //TODO: IDEA-194192
   void '_test call without reference with generics'() {
     testHighlighting '''

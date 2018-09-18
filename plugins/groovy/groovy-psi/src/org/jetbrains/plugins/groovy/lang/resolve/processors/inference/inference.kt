@@ -23,7 +23,9 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
   if (expression is GrMethodCall) {
     val resolved = expression.advancedResolve()
     (resolved as? GroovyMethodResult)?.candidate?.let {
-      val session = GroovyInferenceSessionBuilder(expression.invokedExpression as GrReferenceExpression, it).build()
+      val session = GroovyInferenceSessionBuilder(expression.invokedExpression as GrReferenceExpression, it)
+        .resolveMode(false)
+        .build()
       return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method))
     }
   }

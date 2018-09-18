@@ -49,7 +49,7 @@ public class DialogManager {
                                           @NotNull String noButtonText,
                                           @NotNull String cancelButtonText,
                                           @Nullable Icon icon) {
-    return dialogManager().showMessageDialog(project, message, title, new String[]{yesButtonText, noButtonText, cancelButtonText}, 0, icon);
+    return dialogManager().showMessageDialog(project, message, title, new String[]{yesButtonText, noButtonText, cancelButtonText}, 0, 1, icon);
   }
 
   protected void showDialog(@NotNull DialogWrapper dialog) {
@@ -63,6 +63,16 @@ public class DialogManager {
                                   int defaultButtonIndex,
                                   @Nullable Icon icon) {
     return Messages.showDialog(project, message, title, options, defaultButtonIndex, icon);
+  }
+
+  protected int showMessageDialog(@NotNull Project project,
+                                  @NotNull String message,
+                                  @NotNull String title,
+                                  @NotNull String[] options,
+                                  int defaultButtonIndex,
+                                  int focusedButtonIndex,
+                                  @Nullable Icon icon) {
+    return Messages.showDialog(project, message, title, null, options, defaultButtonIndex, focusedButtonIndex, icon);
   }
 
   protected int showMessageDialog(@NotNull String description,
