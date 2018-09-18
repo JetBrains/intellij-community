@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.ui.GroupedElementsRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     myDefaultNormalBorderColor = UIUtil.getBorderColor();
     Color selectionBorderColor = UIUtil.getTreeSelectionBorderColor();
     if (selectionBorderColor == null) {
-      selectionBorderColor = GroupedElementsRenderer.SELECTED_FRAME_FOREGROUND;
+      selectionBorderColor = JBColor.black;
     }
     myDefaultSelectedBorderColor = selectionBorderColor;
   }

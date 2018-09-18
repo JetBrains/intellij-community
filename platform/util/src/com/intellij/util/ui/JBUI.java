@@ -1542,7 +1542,7 @@ public class JBUI {
     public static class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
-        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+        return JBColor.namedColor("Separator.foreground", new JBColor(0xcdcdcd, 0x515151));
       }
 
       @NotNull

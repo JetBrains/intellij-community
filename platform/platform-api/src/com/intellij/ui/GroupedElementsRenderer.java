@@ -24,10 +24,6 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
-  public static final Color POPUP_SEPARATOR_FOREGROUND = JBColor.namedColor("Popup.Separator.color", new JBColor(Color.gray.brighter(), Gray.x51));
-  public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = JBColor.namedColor("Popup.Separator.foreground", Color.gray);
-  public static final Color SELECTED_FRAME_FOREGROUND = JBColor.namedColor("", Color.black);
-
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
   protected abstract JComponent createItemComponent();
@@ -95,10 +91,6 @@ public abstract class GroupedElementsRenderer {
 
   protected Border getDefaultItemComponentBorder() {
     return getBorder();
-  }
-
-  private static Border getSelectedBorder() {
-    return UIUtil.isToUseDottedCellBorder() ? new DottedBorder(UIUtil.getListCellPadding(), SELECTED_FRAME_FOREGROUND) : new EmptyBorder(UIUtil.getListCellPadding());
   }
 
   private static Border getBorder() {
