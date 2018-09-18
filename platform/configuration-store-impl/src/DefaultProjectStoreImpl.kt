@@ -14,7 +14,10 @@ import java.nio.file.Paths
 private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
 private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
-  override public fun loadLocalData(): Element? {
+  override val isUseVfsForWrite: Boolean
+    get() = false
+
+  public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
     try {
       return element.getChild("component").getChild("defaultProject")
@@ -54,11 +57,13 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
+  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+
   init {
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
-  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+
 
   override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?

@@ -182,7 +182,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
 
-    public SuppressAction(String location) {
+    SuppressAction(String location) {
       myLocation = location;
     }
 

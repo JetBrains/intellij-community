@@ -20,7 +20,7 @@ class InstanceofEvaluator implements Evaluator {
   private final Evaluator myOperandEvaluator;
   private final TypeEvaluator myTypeEvaluator;
 
-  public InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
+  InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
     myOperandEvaluator = operandEvaluator;
     myTypeEvaluator = typeEvaluator;
   }

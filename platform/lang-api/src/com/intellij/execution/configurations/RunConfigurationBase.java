@@ -12,16 +12,15 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +85,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public final void setName(String name) {
-    myName = StringUtil.nullize(name);
+    myName = name;
   }
 
   @NotNull
@@ -101,10 +100,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return myFactory == null ? null : myFactory.getIcon();
   }
 
+  @NotNull
   @Override
   @Transient
   public final String getName() {
-    // todo is clients ready for null?
+    // a lot of clients not ready that name can be null and in most cases it is not convenient - just add more work to handle null value
+    // in any case for run configuration empty name it is the same as null, we don't need to bother clients and use null
     return StringUtilRt.notNullize(myName);
   }
 
@@ -136,6 +137,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
     runConfiguration.myOptions = createOptions();
     runConfiguration.myOptions.copyFrom(myOptions);
+    runConfiguration.myOptions.resetModificationCount();
     copyCopyableDataTo(runConfiguration);
 
     myBeforeRunTasks = myBeforeRunTasks.isEmpty() ? Collections.emptyList() : new SmartList<>(myBeforeRunTasks);
@@ -214,6 +216,11 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myOptions = XmlSerializer.deserialize(element, getOptionsClass());
   }
 
+  @ApiStatus.Experimental
+  public void setState(@NotNull BaseState state) {
+    myOptions = (RunConfigurationOptions)state;
+  }
+
   // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
   /**
    * Do not override this method, use {@link ConfigurationFactory#getOptionsClass()}.
@@ -243,7 +250,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    JDOMExternalizerUtil.addChildren(element, PREDEFINED_LOG_FILE_ELEMENT, myPredefinedLogFiles);
+    for (PredefinedLogFile child : myPredefinedLogFiles) {
+      if (child != null) {
+        Element element1 = new Element(PREDEFINED_LOG_FILE_ELEMENT);
+        child.writeExternal(element1);
+        element.addContent(element1);
+      }
+    }
     XmlSerializer.serializeObjectInto(myOptions, element);
   }
 
@@ -287,18 +300,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return true;
   }
 
+  /**
+   * @deprecated Use {@link RunProfileWithCompileBeforeLaunchOption#isExcludeCompileBeforeLaunchOption()}
+   * @return
+   */
+  @Deprecated
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
-
-  /**
-   * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
-   */
-  @Deprecated
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
-  }
-
+  
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
@@ -310,6 +320,16 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Deprecated
   protected boolean isNewSerializationUsed() {
     return false;
+  }
+
+  @Override
+  public final boolean isAllowRunningInParallel() {
+    return getOptions().isAllowRunningInParallel();
+  }
+
+  @Override
+  public final void setAllowRunningInParallel(boolean value) {
+    getOptions().setAllowRunningInParallel(value);
   }
 
   /**

@@ -4,10 +4,10 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.psi.PsiMethod;
@@ -16,12 +16,13 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PowerStatus;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
@@ -30,7 +31,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
   private final ChangeListManager myChangeListManager;
   private final ChangeListAdapter myChangeListListener;
   private final Alarm myAlarm;
-  private final Set<String> myCache = new HashSet<>();
+  private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
 
   public AffectedTestsInChangeListPainter(@NotNull Project project, ChangeListManager changeListManager) {
     myProject = project;
@@ -56,7 +57,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
         scheduleUpdate();
       }
     };
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     myChangeListManager.addChangeListListener(myChangeListListener);
   }
 
@@ -67,14 +68,20 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
 
   @Override
   public void projectClosed() {
-    myAlarm.cancelAllRequests();
+    disposeComponent();
   }
 
   @Override
   public void disposeComponent() {
     myAlarm.cancelAllRequests();
-    myCache.clear();
+    myChangeListsToShow.set(Collections.emptySet());
     myChangeListManager.removeChangeListListener(myChangeListListener);
+  }
+
+  private void scheduleRefresh() {
+    if (!myProject.isDisposed()) {
+      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+    }
   }
 
   private static int updateDelay() {
@@ -90,7 +97,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     if (!Registry.is("show.affected.tests.in.changelists")) return;
     if (!ShowAffectedTestsAction.isEnabled(myProject)) return;
     if (changeList.getChanges().isEmpty()) return;
-    if (!myCache.contains(changeList.getId())) return;
+    if (!myChangeListsToShow.get().contains(changeList.getId())) return;
 
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     renderer.append("show affected tests", new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
@@ -104,22 +111,31 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     if (!Registry.is("show.affected.tests.in.changelists")) return;
     if (!ShowAffectedTestsAction.isEnabled(myProject)) return;
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> update(), updateDelay());
+    if (!myAlarm.isDisposed()) {
+      myAlarm.addRequest(() -> update(), updateDelay());
+    }
   }
 
   private void update() {
-    myCache.clear();
-    List<LocalChangeList> lists = myChangeListManager.getChangeLists();
-    for (LocalChangeList list : lists) {
-      if (list.getChanges().isEmpty()) continue;
+    myChangeListsToShow.set(
+      myChangeListManager.getChangeLists().stream()
+        .filter(list -> !list.getChanges().isEmpty())
+        .map(list -> {
+          Collection<Change> changes = list.getChanges();
 
-      PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(list.getChanges(), Change.class));
-      if (methods.length == 0) continue;
-      ReadAction.run(
-        () -> ShowAffectedTestsAction.processMethods(myProject, methods, (clazz, method, parameter) -> {
-          myCache.add(list.getId());
-          return false;
-        }, () -> ChangesViewManager.getInstance(myProject).scheduleRefresh()));
-    }
+          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
+          List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
+          if (methods.length == 0 && paths.isEmpty()) return null;
+
+          Ref<String> ref = Ref.create();
+          ShowAffectedTestsAction.processMethods(myProject, methods, paths, (clazz, method, parameter) -> {
+            ref.set(list.getId());
+            return false;
+          });
+          return ref.get();
+        }).filter(Objects::nonNull).collect(Collectors.toSet())
+    );
+
+    EdtInvocationManager.getInstance().invokeLater(this::scheduleRefresh);
   }
 }

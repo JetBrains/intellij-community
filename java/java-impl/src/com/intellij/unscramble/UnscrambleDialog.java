@@ -285,7 +285,7 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   private final class NormalizeTextAction extends AbstractAction {
-    public NormalizeTextAction(){
+    NormalizeTextAction(){
       putValue(NAME, IdeBundle.message("unscramble.normalize.button"));
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }

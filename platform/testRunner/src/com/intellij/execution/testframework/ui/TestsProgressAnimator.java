@@ -35,9 +35,9 @@ public class TestsProgressAnimator implements Runnable, Disposable {
 
   private Alarm myAlarm;
   private AbstractTestProxy myCurrentTestCase;
-  private AbstractTestTreeBuilder myTreeBuilder;
+  private AbstractTestTreeBuilderBase myTreeBuilder;
 
-  public TestsProgressAnimator(AbstractTestTreeBuilder builder) {
+  public TestsProgressAnimator(AbstractTestTreeBuilderBase builder) {
     Disposer.register(builder, this);
     init(builder);
   }
@@ -65,7 +65,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
    * Initializes animator: creates alarm and sets tree builder
    * @param treeBuilder tree builder
    */
-  protected void init(final AbstractTestTreeBuilder treeBuilder) {
+  protected void init(final AbstractTestTreeBuilderBase treeBuilder) {
     myAlarm = new Alarm();
     myTreeBuilder = treeBuilder;
   }

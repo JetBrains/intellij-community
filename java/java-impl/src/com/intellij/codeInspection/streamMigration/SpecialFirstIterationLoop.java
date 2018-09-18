@@ -42,7 +42,7 @@ class SpecialFirstIterationLoop {
   private final @NotNull List<PsiStatement> myOtherIterationStatements;
   private final @Nullable PsiLocalVariable myVariable;
 
-  public SpecialFirstIterationLoop(@NotNull List<PsiStatement> firstIterationStatements,
+  SpecialFirstIterationLoop(@NotNull List<PsiStatement> firstIterationStatements,
                                    @NotNull List<PsiStatement> otherIterationStatements,
                                    @Nullable PsiLocalVariable variable) {
     myFirstIterationStatements = firstIterationStatements;

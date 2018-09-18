@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -178,7 +179,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     private final Project myProject;
     private final XDebuggerTreePanel myTreePanel;
 
-    public MySelectionListener(Editor editor,
+    MySelectionListener(Editor editor,
                                XStackFrame stackFrame,
                                Project project,
                                XDebuggerTreePanel panel) {
@@ -216,11 +217,16 @@ public abstract class XVariablesViewBase extends XDebugView {
       }
     }
 
-    private void showTooltip(Point point, ExpressionInfo info, XDebuggerEvaluator evaluator, XDebugSession session) {
+    private void showTooltip(@NotNull Point point,
+                             @NotNull ExpressionInfo info,
+                             @NotNull XDebuggerEvaluator evaluator,
+                             @NotNull XDebugSession session) {
       ALARM.cancelAllRequests();
-      ALARM.addRequest(
-        () -> new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session, true).invokeHint(),
-        EVALUATION_DELAY_MILLIS);
+      ALARM.addRequest(() -> {
+        if (DocumentUtil.isValidOffset(info.getTextRange().getEndOffset(), myEditor.getDocument())) {
+          new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session, true).invokeHint();
+        }
+      }, EVALUATION_DELAY_MILLIS);
     }
   }
 }

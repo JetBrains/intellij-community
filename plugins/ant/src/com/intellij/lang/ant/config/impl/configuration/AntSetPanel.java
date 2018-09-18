@@ -108,7 +108,7 @@ public class AntSetPanel {
       }
     };
 
-    public Form(final GlobalAntConfiguration antInstallation) {
+    Form(final GlobalAntConfiguration antInstallation) {
       mySplitter.setShowDividerControls(true);
       mySplitter.setFirstComponent(myAnts);
       myGlobalWorkingProperties = new EditPropertyContainer(antInstallation.getProperties());
@@ -197,7 +197,7 @@ public class AntSetPanel {
       private AntClasspathEditorPanel myClasspath;
       private JPanel myWholePanel;
 
-      public RightPanel(UIPropertyBinding.Composite binding, PropertyChangeListener immediateUpdater) {
+      RightPanel(UIPropertyBinding.Composite binding, PropertyChangeListener immediateUpdater) {
         myNameLabel.setLabelFor(myName);
         binding.addBinding(myClasspath.setClasspathProperty(AntInstallation.CLASS_PATH));
         binding.bindString(myHome, AntInstallation.HOME_DIR);
@@ -209,7 +209,7 @@ public class AntSetPanel {
   private static class NewAntFactory implements Factory<AntInstallation> {
     private final AnActionListEditor<AntInstallation> myParent;
 
-    public NewAntFactory(AnActionListEditor<AntInstallation> parent) {
+    NewAntFactory(AnActionListEditor<AntInstallation> parent) {
       myParent = parent;
     }
 
@@ -250,7 +250,7 @@ public class AntSetPanel {
   }
 
   private class MyDialog extends DialogWrapper {
-    public MyDialog(final JComponent parent) {
+    MyDialog(final JComponent parent) {
       super(parent, true);
       setTitle(AntBundle.message("configure.ant.dialog.title"));
       init();

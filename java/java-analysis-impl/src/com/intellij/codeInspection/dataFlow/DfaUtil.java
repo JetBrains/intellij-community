@@ -5,10 +5,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -16,9 +13,11 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -365,6 +364,27 @@ public class DfaUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isComparedByEquals(PsiType type) {
+    return type != null && (TypeUtils.isJavaLangString(type) || TypeConversionUtil.isPrimitiveWrapper(type));
+  }
+
+  public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
+    if (TypeConversionUtil.isPrimitiveWrapper(type)) {
+      if (value instanceof DfaConstValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(value.getType()))) {
+        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value);
+        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+      }
+    }
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
+      if (value instanceof DfaBoxedValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
+        return value.getFactory().getBoxedFactory().createUnboxed(value, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
+      }
+    }
+    return value;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

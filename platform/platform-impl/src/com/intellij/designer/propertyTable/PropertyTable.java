@@ -940,7 +940,7 @@ public abstract class PropertyTable extends JBTable {
     private final boolean myExpand;
     private final boolean mySelect;
 
-    public MyExpandCurrentAction(boolean expand, boolean select) {
+    MyExpandCurrentAction(boolean expand, boolean select) {
       myExpand = expand;
       mySelect = select;
     }
@@ -1324,7 +1324,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private static class GroupProperty extends Property {
-    public GroupProperty(@Nullable String name) {
+    GroupProperty(@Nullable String name) {
       super(null, StringUtil.notNullize(name));
     }
 

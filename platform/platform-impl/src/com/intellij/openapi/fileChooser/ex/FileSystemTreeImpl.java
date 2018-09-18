@@ -421,7 +421,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   @Override
-  public <T> T getData(DataKey<T> key) {
+  public <T> T getData(@NotNull DataKey<T> key) {
     return myDescriptor.getUserData(key);
   }
 

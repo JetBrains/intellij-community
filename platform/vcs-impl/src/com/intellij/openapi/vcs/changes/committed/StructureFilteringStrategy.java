@@ -128,7 +128,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     private final Set<FilePath> myFilePaths = new HashSet<>();
     private TreeState myState;
 
-    public MyUI() {
+    MyUI() {
       myStructureTree = new Tree();
       myStructureTree.setRootVisible(false);
       myStructureTree.setShowsRootHandles(true);

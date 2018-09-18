@@ -290,7 +290,7 @@ public class DebuggerTreeNodeExpression {
   private static class IncorrectOperationRuntimeException extends RuntimeException {
     private final IncorrectOperationException myException;
 
-    public IncorrectOperationRuntimeException(IncorrectOperationException exception) {
+    IncorrectOperationRuntimeException(IncorrectOperationException exception) {
       myException = exception;
     }
 

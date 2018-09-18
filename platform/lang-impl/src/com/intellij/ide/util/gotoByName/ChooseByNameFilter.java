@@ -212,7 +212,7 @@ public abstract class ChooseByNameFilter<T> {
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
-    public FilterAction() {
+    FilterAction() {
       super("Filter", "Filter files by type", AllIcons.General.Filter);
     }
 

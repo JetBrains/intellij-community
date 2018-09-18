@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -71,8 +71,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     });
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
-    actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
-    actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()).withClickCount(1));
+    actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()));
 
     List<AnAction> actions = generateSelectRebaseActionActions();
     for (AnAction action : actions) {
@@ -396,7 +396,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class SetActionAction extends DumbAwareAction {
     private final GitRebaseEntry.Action myAction;
 
-    public SetActionAction(GitRebaseEntry.Action action) {
+    SetActionAction(GitRebaseEntry.Action action) {
       super(action.toString());
       myAction = action;
       KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.getExtendedKeyCodeForChar(action.getMnemonic()), InputEvent.ALT_MASK);
@@ -415,7 +415,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class MoveUpDownActionListener implements AnActionButtonRunnable {
     private final MoveDirection direction;
 
-    public MoveUpDownActionListener(@NotNull MoveDirection direction) {
+    MoveUpDownActionListener(@NotNull MoveDirection direction) {
       this.direction = direction;
     }
 

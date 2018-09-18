@@ -246,7 +246,7 @@ public class ExistingTemplatesComponent {
 
     private final ListSpeedSearch mySpeedSearch;
 
-    public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
+    ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
       mySpeedSearch = speedSearch;
     }
 

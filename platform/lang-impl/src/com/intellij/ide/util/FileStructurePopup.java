@@ -157,7 +157,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
 
       @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
+      public boolean isToBuildChildrenInBackground(@NotNull Object element) {
         return getRootElement() == element;
       }
 
@@ -177,7 +177,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
     myStructureTreeModel = new StructureTreeModel(myFilteringStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
@@ -203,7 +203,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       @Override
       protected Transferable createTransferable(JComponent component) {
         JBIterable<Pair<FilteringTreeStructure.FilteringNode, PsiElement>> pairs = JBIterable.of(myTree.getSelectionPaths())
-          .filterMap(o -> TreeUtil.getUserObject(o.getLastPathComponent()))
+          .filterMap(TreeUtil::getLastUserObject)
           .filter(FilteringTreeStructure.FilteringNode.class)
           .filterMap(o -> o.getDelegate() instanceof PsiElement ? Pair.create(o, (PsiElement)o.getDelegate()) : null)
           .collect();
@@ -391,7 +391,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
       TreeUtil.ensureSelection(myTree);
-      Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+      Object userObject = TreeUtil.getLastUserObject(path);
       if (userObject != null && Comparing.equal(element, StructureViewComponent.unwrapValue(userObject))) {
         myInitialNodeIsLeaf = myFilteringStructure.getChildElements(userObject).length == 0;
       }
@@ -426,7 +426,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
     TreeVisitor visitor = path -> {
-      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
@@ -976,7 +976,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private class MyTreeSpeedSearch extends TreeSpeedSearch {
 
     MyTreeSpeedSearch() {
-      super(myTree, path -> getSpeedSearchText(TreeUtil.getUserObject(path.getLastPathComponent())), true);
+      super(myTree, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)), true);
     }
 
     @Override

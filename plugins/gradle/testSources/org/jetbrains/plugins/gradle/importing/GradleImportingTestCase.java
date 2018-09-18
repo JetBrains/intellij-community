@@ -152,7 +152,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected String getTestsTempDir() {
-    return "gradleImportTests";
+    return "tmp";
   }
 
   @Override

@@ -28,6 +28,8 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
@@ -564,12 +566,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       @Override
       public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
-        return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
+        return element instanceof PsiField && ((PsiField)element).getName() != null && ((PsiField)element).getName().startsWith("field");
       }
 
       @Override
       public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
-        return element instanceof PsiClass && ((PsiClass)element).getName().equals("Instrumented");
+        return element instanceof PsiClass && Objects.equals(((PsiClass)element).getName(), "Instrumented");
       }
     }, myFixture.getTestRootDisposable());
     doTest();
@@ -639,4 +641,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testVoidIsAlwaysNull() { doTest(); }
   public void testStringEquality() { doTest(); }
   public void testAssignmentFieldAliasing() { doTest(); }
+  public void testNewBoxedNumberEquality() { doTest(); }
+  public void testBoxingIncorrectLiteral() { doTest(); }
+
+  public void testIncompleteArrayAccessInLoop() { doTest(); }
+  public void testSameArguments() { doTest(); }
+  public void testMaxLoop() { doTest(); }
+  public void testExplicitBoxing() { doTest(); }
+  public void testBoxedBoolean() { doTest(); }
 }

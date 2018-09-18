@@ -53,14 +53,12 @@ open class GuiTestCaseExt : GuiTestCase() {
 
   @Before
   open fun setUp() {
-    guiTestRule.IdeHandling().setUp()
     logStartTest(testMethod.methodName)
   }
 
   @After
   fun tearDown() {
     logEndTest(testMethod.methodName)
-    guiTestRule.IdeHandling().tearDown()
   }
 
   open fun isIdeFrameRun(): Boolean = true
@@ -108,6 +106,34 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
     kotlin.assert(exists { jTree(*expectedItem) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+  }
+}
+
+/**
+ * Performs test whether the specified item exists in a list
+ * Note: the dialog with the investigated list must be open
+ * before using this test
+ * @param expectedItem - expected exact item
+ * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * */
+fun GuiTestCase.testListItemExist(name: String, expectedItem: String) {
+  ideFrame {
+    logInfo("Check that $name -> $expectedItem exists in a list element")
+    kotlin.assert(exists { jList(expectedItem, timeout = Timeouts.seconds05) }) { "$name '$expectedItem' not found" }
+  }
+}
+
+/**
+ * Performs test whether the specified item exists in a table
+ * Note: the dialog with the investigated list must be open
+ * before using this test
+ * @param expectedItem - expected exact item
+ * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * */
+fun GuiTestCase.testTableItemExist(name: String, expectedItem: String) {
+  ideFrame {
+    logInfo("Check that $name -> $expectedItem exists in a list element")
+    kotlin.assert(exists { table(expectedItem, timeout = Timeouts.seconds05) }) { "$name '$expectedItem' not found" }
   }
 }
 

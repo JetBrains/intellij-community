@@ -78,8 +78,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
@@ -114,16 +114,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private final FileStatusListener myFileStatusListener = new FileStatusListener() {
     @Override
     public void fileStatusesChanged() {
-      final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree);
-      for (TreePath treePath : treePaths) {
-        final Object component = treePath.getLastPathComponent();
-        if (component instanceof PackageDependenciesNode) {
-          ((PackageDependenciesNode)component).updateColor();
-          for (int i = 0; i< ((PackageDependenciesNode)component).getChildCount(); i++) {
-            ((PackageDependenciesNode)((PackageDependenciesNode)component).getChildAt(i)).updateColor();
-          }
-        }
-      }
+      TreeUtil.visitVisibleRows(myTree,
+                                path -> TreeUtil.getLastUserObject(PackageDependenciesNode.class, path),
+                                node -> node.updateColor());
     }
 
     @Override
@@ -333,7 +326,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {

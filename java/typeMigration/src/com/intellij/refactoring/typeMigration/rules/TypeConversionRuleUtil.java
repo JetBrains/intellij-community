@@ -46,7 +46,7 @@ class TypeConversionRuleUtil {
   private static class MyControlFlowPolicy implements ControlFlowPolicy {
     private final PsiElement myElement;
 
-    public MyControlFlowPolicy(PsiElement element) {myElement = element;}
+    MyControlFlowPolicy(PsiElement element) {myElement = element;}
 
     @Override
     public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {

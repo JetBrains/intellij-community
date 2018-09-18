@@ -270,7 +270,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     private TObjectIntHashMap<Object> myElements;
     private Object[] myElementsArray;
 
-    public MySpeedSearch(final JTable component) {
+    MySpeedSearch(final JTable component) {
       super(component);
     }
 
@@ -312,7 +312,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   }
 
   private class NewKeyValueAction extends AbstractAction {
-    public NewKeyValueAction() {
+    NewKeyValueAction() {
       putValue(Action.NAME, UIDesignerBundle.message("key.chooser.new.property"));
     }
 

@@ -2,15 +2,11 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNew
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonOk
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJsModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
@@ -40,10 +36,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppExperimental
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
@@ -117,7 +110,8 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libWebApplication = "Web Application"
     const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
-    const val itemKotlinMppWeb = "Kotlin (Multiplatform - Web)"
+    const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
+    const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
   }
 
   enum class Groups(private val title: String) {
@@ -246,44 +240,6 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
         typeText(basePackage)
       }
-      logUIStep("Close New Project dialog with Finish")
-      button(buttonFinish).click()
-    }
-    ideFrame {
-      this.waitForBackgroundTasksToFinish()
-      waitAMoment()
-    }
-  }
-}
-
-/**
- * Creates a new project from Java Enterprise group (ultimate only)
- * @param projectPath - path where the project is going to be created
- * @param libs - path to additional library/framework that should be checked
- * Note: only one library/framework can be checked!
- * */
-fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
-  with(guiTestCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    with(connectDialog()) {
-      selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
-      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
-      else {
-        button(buttonNext).click()
-        if (template.isNotEmpty()) {
-          waitForPageTransitionFinished {
-            checkbox(checkCreateProjectFromTemplate).target().locationOnScreen
-          }
-          val checkboxTemplate = checkbox(checkCreateProjectFromTemplate)
-          if (!checkboxTemplate.isSelected) checkboxTemplate.click()
-          jList(template).clickItem(template)
-        }
-      }
-      button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
     }
@@ -487,14 +443,15 @@ fun NewProjectDialogModel.createKotlinMPProjectDeprecated(
   }
 }
 
-fun NewProjectDialogModel.createKotlinMPProjectWeb(
-  projectPath: String
+fun NewProjectDialogModel.createKotlinMPProject(
+  projectPath: String,
+  templateName: String
 ) {
   with(guiTestCase) {
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
-      logUIStep("Select `$itemKotlinMppWeb` kind of project")
-      jList(itemKotlinMppWeb).clickItem(itemKotlinMppWeb)
+      logUIStep("Select `$templateName` kind of project")
+      jList(templateName).clickItem(templateName)
       button(buttonNext).click()
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
@@ -548,7 +505,7 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * @param projectPath - path where the project is going to be created
  * @param libs - set of additional libraries/frameworks that should be checked
  * */
-internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
+fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
                                                         libs: LibrariesSet) {
   with(guiTestCase) {
@@ -571,14 +528,6 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
   }
 }
 
-fun NewProjectDialogModel.createJBossProject(projectPath: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.JBoss, projectPath, libs)
-}
-
-fun NewProjectDialogModel.createSpringProject(projectPath: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.Spring, projectPath, libs)
-}
-
 fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: LibrariesSet) {
   createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, libs)
 }
@@ -592,38 +541,6 @@ fun NewProjectDialogModel.waitLoadingTemplates() {
     GuiRobotHolder.robot,
     progressTitle = progressLoadingTemplates
   )
-}
-
-fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath: String) {
-  with(connectDialog()) {
-    selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
-    guiTestCase.logUIStep("Add a new application server")
-    combobox(textApplicationServer)
-    buttons(buttonNew)[1].click()
-    popupMenu(serverKind).clickSearchedItem()
-    guiTestCase.dialog(serverKind) {
-      typeText(serverInstallPath)
-      button(buttonOk).click()
-      GuiTestUtilKt.waitProgressDialogUntilGone(
-        GuiRobotHolder.robot,
-        progressTitle = progressSearchingForAppServerLibraries
-      )
-
-    }
-    button(buttonCancel).click()
-  }
-}
-
-fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
-  with(connectDialog()) {
-    selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
-    guiTestCase.logUIStep("Check that a application server `$serverName` exists")
-    val cmb = combobox(textApplicationServer)
-    assert(combobox(textApplicationServer)
-             .listItems()
-             .contains(serverName)) { "Appserver `$serverName` doesn't exist" }
-    button(buttonCancel).click()
-  }
 }
 
 fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {

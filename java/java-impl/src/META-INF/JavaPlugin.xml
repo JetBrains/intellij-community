@@ -602,6 +602,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Field assignment can be moved to initializer"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
+    <localInspection language="JAVA" shortName="ConditionCoveredByFurtherCondition" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     displayName="Condition is covered by further condition"
+                     implementationClass="com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection"/>
     <localInspection language="JAVA" shortName="IdempotentLoopBody" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.InspectionsBundle" key="inspection.idempotent.loop.body"
@@ -732,7 +736,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
-                     displayName="Replace with Map.forEach"/>
+                     displayName="Map.forEach can be used"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapApi"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
@@ -893,6 +897,11 @@
                      enabledByDefault="true" level="INFORMATION"
                      key="inspection.fold.expression.into.stream.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.streamMigration.FoldExpressionIntoStreamInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateExpressions"
+                     key="inspection.duplicate.expressions.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>

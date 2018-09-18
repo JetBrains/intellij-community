@@ -6,6 +6,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -16,7 +17,6 @@ import java.util.function.Function;
 /**
  * @author Konstantin Bulenkov
  */
-//todo generic? #UX-1
 public interface SearchEverywhereContributor<F> {
 
   ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
@@ -27,6 +27,7 @@ public interface SearchEverywhereContributor<F> {
   @NotNull
   String getGroupName();
 
+  @Nullable
   String includeNonProjectItemsText();
 
   int getSortWeight();
@@ -37,15 +38,22 @@ public interface SearchEverywhereContributor<F> {
     return false;
   }
 
-  default int getElementPriority(Object element, String searchPattern) {
+  default int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return 0;
   }
 
-  void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                     ProgressIndicator progressIndicator, Function<Object, Boolean> consumer);
+  void fetchElements(@NotNull String pattern,
+                     boolean everywhere,
+                     @Nullable SearchEverywhereContributorFilter<F> filter,
+                     @NotNull ProgressIndicator progressIndicator,
+                     @NotNull Function<Object, Boolean> consumer);
 
-  default ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                                         ProgressIndicator progressIndicator, int elementsLimit) {
+  @NotNull
+  default ContributorSearchResult<Object> search(@NotNull String pattern,
+                                                 boolean everywhere,
+                                                 @Nullable SearchEverywhereContributorFilter<F> filter,
+                                                 @NotNull ProgressIndicator progressIndicator,
+                                                 int elementsLimit) {
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     fetchElements(pattern, everywhere, filter, progressIndicator, element -> {
       if (elementsLimit < 0 || builder.itemsCount() < elementsLimit) {
@@ -61,20 +69,26 @@ public interface SearchEverywhereContributor<F> {
     return builder.build();
   }
 
-  default List<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                              ProgressIndicator progressIndicator) {
+  @NotNull
+  default List<Object> search(@NotNull String pattern,
+                              boolean everywhere,
+                              @Nullable SearchEverywhereContributorFilter<F> filter,
+                              @NotNull ProgressIndicator progressIndicator) {
     List<Object> res = new ArrayList<>();
     fetchElements(pattern, everywhere, filter, progressIndicator, o -> res.add(o));
     return res;
   }
 
-  boolean processSelectedItem(Object selected, int modifiers, String searchText);
+  boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText);
 
-  ListCellRenderer getElementsRenderer(JList<?> list);
+  @NotNull
+  ListCellRenderer getElementsRenderer(@NotNull JList<?> list);
 
-  Object getDataForItem(Object element, String dataId);
+  @Nullable
+  Object getDataForItem(@NotNull Object element, @NotNull String dataId);
 
-  default String filterControlSymbols(String pattern) {
+  @NotNull
+  default String filterControlSymbols(@NotNull String pattern) {
     return pattern;
   }
 
@@ -86,6 +100,7 @@ public interface SearchEverywhereContributor<F> {
     return true;
   }
 
+  @NotNull
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());
   }

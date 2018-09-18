@@ -36,9 +36,10 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -82,42 +83,84 @@ public final class TreeUtil {
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
   }
 
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @return a list of expanded paths
+   */
   @NotNull
-  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree){
-    return treePathTraverser(tree).expandAndFilter(tree::isExpanded).toList();
+  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree) {
+    return collectExpandedObjects(tree, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @return a list of user objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static List<Object> collectExpandedUserObjects(@NotNull JTree tree) {
+    return collectExpandedObjects(tree, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which viewable paths are processed
+   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @return a list of objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper) {
+    return collectVisibleRows(tree, tree::isExpanded, mapper);
   }
 
   @Nullable
   public static <T> T findObjectInPath(@Nullable TreePath path, @NotNull Class<T> clazz) {
     while (path != null) {
-      T object = getUserObject(clazz, path.getLastPathComponent());
+      T object = getLastUserObject(clazz, path);
       if (object != null) return object;
       path = path.getParentPath();
     }
     return null;
   }
 
+  /**
+   * @param tree a tree, which selection is processed
+   * @param type a {@code Class} object to filter selected user objects
+   * @return a list of user objects of the specified type retrieved from all selected paths
+   */
   @NotNull
-  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> clazz) {
-    final TreePath[] selections = tree.getSelectionPaths();
-    if (selections != null) {
-      final ArrayList<T> result = new ArrayList<>();
-      for (TreePath selection : selections) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (clazz.isInstance(userObject)) {
-          //noinspection unchecked
-          result.add((T)userObject);
-        }
-      }
-      return result;
-    }
-    return Collections.emptyList();
+  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> type) {
+    return collectSelectedObjects(tree, path -> getLastUserObject(type, path));
   }
 
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @param root an ascendant tree path to filter expanded tree paths
+   * @return a list of expanded paths under the specified root node
+   */
   @NotNull
-  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree, @NotNull TreePath path) {
-    return treePathTraverser(tree).expandAndFilter(tree::isExpanded).withRoot(path).toList();
+  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectExpandedObjects(tree, root, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @param root an ascendant tree path to filter expanded tree paths
+   * @return a list of user objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static List<Object> collectExpandedUserObjects(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectExpandedObjects(tree, root, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which viewable paths are processed
+   * @param root   an ascendant tree path to filter expanded tree paths
+   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @return a list of objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<TreePath, T> mapper) {
+    if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be expanded
+    return collectVisibleRows(tree, path -> tree.isExpanded(path) && root.isDescendant(path), mapper);
   }
 
   /**
@@ -357,7 +400,7 @@ public final class TreeUtil {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
 
-  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<TreePath> paths) {
+  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
     if (paths.isEmpty()) return;
     selectPaths(tree, paths.toArray(new TreePath[0]));
   }
@@ -555,15 +598,14 @@ public final class TreeUtil {
     if (visible.contains(bounds)) {
       selectRunnable.run();
       return ActionCallback.DONE;
-    } else {
-      final Component comp =
-        tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
+    }
+    final Component comp =
+      tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
 
-      if (comp instanceof SimpleColoredComponent) {
-        final SimpleColoredComponent renderer = (SimpleColoredComponent)comp;
-        final Dimension scrollableSize = renderer.computePreferredSize(true);
-        bounds.width = scrollableSize.width;
-      }
+    if (comp instanceof SimpleColoredComponent) {
+      final SimpleColoredComponent renderer = (SimpleColoredComponent)comp;
+      final Dimension scrollableSize = renderer.computePreferredSize(true);
+      bounds.width = scrollableSize.width;
     }
 
     final ActionCallback callback = new ActionCallback();
@@ -670,7 +712,7 @@ public final class TreeUtil {
     return rowHeight == 0 ? tree.getVisibleRowCount() : tree.getVisibleRect().height / rowHeight;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       @Override
@@ -846,9 +888,7 @@ public final class TreeUtil {
     final TreePath treePath = new TreePath(node.getPath());
     tree.expandPath(treePath);
     if (requestFocus) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(tree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(tree, true));
     }
     return selectPath(tree, treePath, center);
   }
@@ -868,18 +908,87 @@ public final class TreeUtil {
     return selectPath(tree, treePath, center);
   }
 
+  /**
+   * Returns {@code true} if the node identified by the {@code path} is currently viewable in the {@code tree}.
+   * The difference from the {@link JTree#isVisible(TreePath)} method is that this method
+   * returns {@code false} for the hidden root node, when {@link JTree#isRootVisible()} returns {@code false}.
+   *
+   * @param tree a tree, to which the given path belongs
+   * @param path a path whose visibility in the given tree is checking
+   * @return {@code true} if {@code path} is viewable in {@code tree}
+   * @see JTree#isRootVisible()
+   * @see JTree#isVisible(TreePath)
+   */
+  private static boolean isViewable(@NotNull JTree tree, @NotNull TreePath path) {
+    TreePath parent = path.getParentPath();
+    return parent != null ? tree.isExpanded(parent) : tree.isRootVisible();
+  }
+
+  /**
+   * @param tree a tree, which selection is processed
+   * @return a list of all selected paths
+   */
   @NotNull
-  public static List<TreePath> collectSelectedPaths(@NotNull final JTree tree, @NotNull final TreePath treePath) {
-    final ArrayList<TreePath> result = new ArrayList<>();
-    final TreePath[] selections = tree.getSelectionPaths();
-    if (selections != null) {
-      for (TreePath selection : selections) {
-        if (treePath.isDescendant(selection)) {
-          result.add(selection);
-        }
-      }
-    }
-    return result;
+  public static List<TreePath> collectSelectedPaths(@NotNull JTree tree) {
+    return collectSelectedObjects(tree, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which selection is processed
+   * @return a list of user objects which correspond to all selected paths
+   */
+  @NotNull
+  public static List<Object> collectSelectedUserObjects(@NotNull JTree tree) {
+    return collectSelectedObjects(tree, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which selection is processed
+   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @return a list of objects which correspond to all selected paths
+   */
+  @NotNull
+  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper) {
+    return getSelection(tree, path -> isViewable(tree, path), mapper);
+  }
+
+  /**
+   * @param tree a tree, which selection is processed
+   * @param root an ascendant tree path to filter selected tree paths
+   * @return a list of selected paths under the specified root node
+   */
+  @NotNull
+  public static List<TreePath> collectSelectedPaths(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectSelectedObjects(tree, root, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which selection is processed
+   * @param root an ascendant tree path to filter selected tree paths
+   * @return a list of user objects which correspond to selected paths under the specified root node
+   */
+  @NotNull
+  public static List<Object> collectSelectedUserObjects(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectSelectedObjects(tree, root, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which selection is processed
+   * @param root   an ascendant tree path to filter selected tree paths
+   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @return a list of objects which correspond to selected paths under the specified root node
+   */
+  @NotNull
+  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<TreePath, T> mapper) {
+    if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be selected
+    return getSelection(tree, path -> isViewable(tree, path) && root.isDescendant(path), mapper);
+  }
+
+  @NotNull
+  private static <T> List<T> getSelection(@NotNull JTree tree, @NotNull Predicate<TreePath> filter, @NotNull Function<TreePath, T> mapper) {
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) return Collections.emptyList(); // nothing is selected
+    return Stream.of(paths).filter(filter).map(mapper).filter(Objects::nonNull).collect(toList());
   }
 
   public static void unselectPath(@NotNull JTree tree, @Nullable TreePath path) {
@@ -907,12 +1016,7 @@ public final class TreeUtil {
       int boxWidth;
       Insets i = aTree.getInsets();
 
-      if (expandedIcon != null) {
-        boxWidth = expandedIcon.getIconWidth();
-      }
-      else {
-        boxWidth = 8;
-      }
+      boxWidth = expandedIcon != null ? expandedIcon.getIconWidth() : 8;
 
       int boxLeftX = i != null ? i.left : 0;
 
@@ -991,7 +1095,20 @@ public final class TreeUtil {
   @Nullable
   public static <T> T getUserObject(@NotNull Class<T> type, @Nullable Object node) {
     node = getUserObject(node);
-    return node != null && type.isInstance(node) ? type.cast(node) : null;
+    return type.isInstance(node) ? type.cast(node) : null;
+  }
+
+  /**
+   * @return an user object retrieved from the last component of the specified {@code path}
+   */
+  @Nullable
+  public static Object getLastUserObject(@Nullable TreePath path) {
+    return path == null ? null : getUserObject(path.getLastPathComponent());
+  }
+
+  @Nullable
+  public static <T> T getLastUserObject(@NotNull Class<T> type, @Nullable TreePath path) {
+    return path == null ? null : getUserObject(type, path.getLastPathComponent());
   }
 
   @Nullable
@@ -1091,7 +1208,7 @@ public final class TreeUtil {
    * @param visitors visitors to control expanding of tree nodes
    */
   @NotNull
-  public static Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<TreeVisitor> visitors) {
+  public static Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     return promiseMakeVisible(tree, visitors).onSuccess(paths -> paths.forEach(path -> expandPathWithDebug(tree, path)));
   }
 
@@ -1136,7 +1253,7 @@ public final class TreeUtil {
    * @param visitors visitors to control expanding of tree nodes
    */
   @NotNull
-  public static Promise<List<TreePath>> promiseMakeVisible(@NotNull JTree tree, @NotNull Stream<TreeVisitor> visitors) {
+  public static Promise<List<TreePath>> promiseMakeVisible(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     AsyncPromise<List<TreePath>> promise = new AsyncPromise<>();
     List<Promise<TreePath>> promises = visitors
       .filter(Objects::nonNull)
@@ -1214,7 +1331,7 @@ public final class TreeUtil {
    * @param visitors visitors to control expanding of tree nodes
    */
   @NotNull
-  public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<TreeVisitor> visitors) {
+  public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     return promiseMakeVisible(tree, visitors).onSuccess(paths -> {
       tree.setSelectionPaths(paths.toArray(new TreePath[0]));
       for (TreePath path : paths) {
@@ -1287,10 +1404,10 @@ public final class TreeUtil {
       default:
         return null; // skip children
     }
-    ArrayDeque<ArrayDeque<TreePath>> stack = new ArrayDeque<>();
+    Deque<Deque<TreePath>> stack = new ArrayDeque<>();
     stack.push(children(model, path));
     while (path != null) {
-      ArrayDeque<TreePath> siblings = stack.peek();
+      Deque<TreePath> siblings = stack.peek();
       if (siblings == null) return null; // nothing to process
 
       TreePath next = siblings.poll();
@@ -1318,11 +1435,14 @@ public final class TreeUtil {
     return null;
   }
 
-  private static ArrayDeque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
+  @NotNull
+  private static Deque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
     Object object = path.getLastPathComponent();
     int count = model.getChildCount(object);
-    ArrayDeque<TreePath> deque = new ArrayDeque<>(count);
-    for (int i = 0; i < count; i++) deque.add(path.pathByAddingChild(model.getChild(object, i)));
+    Deque<TreePath> deque = new ArrayDeque<>(count);
+    for (int i = 0; i < count; i++) {
+      deque.add(path.pathByAddingChild(model.getChild(object, i)));
+    }
     return deque;
   }
 
@@ -1361,5 +1481,37 @@ public final class TreeUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Processes visible nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be processed
+   * @param mapper   a function to convert a visible tree path to a corresponding object
+   * @param consumer a visible path processor
+   */
+  public static <T> void visitVisibleRows(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper, @NotNull Consumer<T> consumer) {
+    visitVisibleRows(tree, path -> {
+      T object = mapper.apply(path);
+      if (object != null) consumer.accept(object);
+      return TreeVisitor.Action.CONTINUE;
+    });
+  }
+
+  /**
+   * @param tree   a tree, which visible paths are processed
+   * @param filter a predicate to filter visible tree paths
+   * @param mapper a function to convert a visible tree path to a corresponding object
+   * @return a list of objects which correspond to filtered visible paths
+   */
+  @NotNull
+  private static <T> List<T> collectVisibleRows(@NotNull JTree tree,
+                                                @NotNull Predicate<TreePath> filter,
+                                                @NotNull Function<TreePath, T> mapper) {
+    int count = tree.getRowCount();
+    if (count == 0) return Collections.emptyList();
+    List<T> list = new ArrayList<>(count);
+    visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
+    return list;
   }
 }

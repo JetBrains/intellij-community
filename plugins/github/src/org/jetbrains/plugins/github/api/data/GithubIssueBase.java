@@ -9,6 +9,7 @@ import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 //region Base for issues api model and search issues/pr api model
 /*{
@@ -169,5 +170,18 @@ public abstract class GithubIssueBase {
   @NotNull
   public Date getUpdatedAt() {
     return updatedAt;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GithubIssueBase)) return false;
+    GithubIssueBase base = (GithubIssueBase)o;
+    return number.equals(base.number);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(number);
   }
 }

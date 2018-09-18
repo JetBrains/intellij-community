@@ -12,3 +12,5 @@
    key
   -Reuse anchor
    key
+
+LeadPath: [anchorsAndAliases.yml, YAML document, Override anchor, key]

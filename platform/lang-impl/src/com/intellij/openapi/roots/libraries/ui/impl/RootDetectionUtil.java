@@ -168,7 +168,7 @@ public class RootDetectionUtil {
   }
 
   private static class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
-    public ChooseRootTypeElementsDialog(Project project, List<String> names, String title, String description) {
+    ChooseRootTypeElementsDialog(Project project, List<String> names, String title, String description) {
       super(project, names, title, description, true);
     }
 

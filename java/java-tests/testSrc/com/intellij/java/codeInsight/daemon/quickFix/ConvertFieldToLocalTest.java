@@ -44,5 +44,4 @@ public class ConvertFieldToLocalTest extends LightQuickFixParameterizedTestCase 
     return new LocalInspectionTool[] { inspection };
   }
 
-  public void test() { doAllTests(); }
 }

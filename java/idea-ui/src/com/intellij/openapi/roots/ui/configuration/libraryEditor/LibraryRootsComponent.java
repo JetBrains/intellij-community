@@ -382,7 +382,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    public AttachFilesAction(String title) {
+    AttachFilesAction(String title) {
       super(title);
     }
 
@@ -531,7 +531,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AddExcludedRootActionButton extends AnActionButton {
-    public AddExcludedRootActionButton() {
+    AddExcludedRootActionButton() {
       super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
     }
 

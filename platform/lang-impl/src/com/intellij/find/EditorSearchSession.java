@@ -551,7 +551,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   private class ExcludeAction extends ButtonAction {
-    public ExcludeAction() {
+    ExcludeAction() {
       super("", 'l');
     }
 

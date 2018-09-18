@@ -922,7 +922,7 @@ public class ControlFlowUtil {
       // false if control flow at this offset terminates either by return called or exception thrown
       private final boolean[] isNormalCompletion = new boolean[flow.getSize() + 1];
 
-      public MyVisitor() {
+      MyVisitor() {
         int i;
         final int length = flow.getSize();
         for (i = 0; i < startOffset; i++) {
@@ -2214,5 +2214,34 @@ public class ControlFlowUtil {
       return false;
     }
     return throwType.isAssignableFrom(catchType);
+  }
+
+  public static boolean areVariablesUnmodifiedAtLocations(@NotNull ControlFlow flow,
+                                                          int startOffset,
+                                                          int endOffset,
+                                                          @NotNull Set<? extends PsiVariable> variables,
+                                                          @NotNull Iterable<? extends PsiElement> locations) {
+    List<Instruction> instructions = flow.getInstructions();
+    startOffset = Math.max(startOffset, 0);
+    endOffset = Math.min(endOffset, instructions.size());
+
+    IntArrayList locationOffsetList = new IntArrayList();
+    for (PsiElement location : locations) {
+      int offset = flow.getStartOffset(location);
+      if (offset >= startOffset && offset < endOffset) {
+        locationOffsetList.add(offset);
+      }
+    }
+    int[] locationOffsets = locationOffsetList.toArray();
+
+    for (int offset = startOffset; offset < endOffset; offset++) {
+      Instruction instruction = instructions.get(offset);
+      if (instruction instanceof WriteVariableInstruction && variables.contains(((WriteVariableInstruction)instruction).variable)) {
+        if (areInstructionsReachable(flow, locationOffsets, offset)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

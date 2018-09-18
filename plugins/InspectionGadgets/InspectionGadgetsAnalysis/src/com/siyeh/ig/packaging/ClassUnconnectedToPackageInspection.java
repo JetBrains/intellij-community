@@ -24,12 +24,15 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UElement;
 
 import java.util.Set;
 
@@ -72,13 +75,10 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
         return null;
       }
     }
-    final PsiClass aClass = refClass.getElement();
-    final PsiIdentifier identifier = aClass.getNameIdentifier();
-    if (identifier == null) {
-      return null;
-    }
+    PsiElement anchorPsi = UDeclarationKt.getAnchorPsi(refClass.getUastElement());
+    if (anchorPsi == null) return null;
     return new CommonProblemDescriptor[]{
-      manager.createProblemDescriptor(identifier,
+      manager.createProblemDescriptor(anchorPsi,
                                       InspectionGadgetsBundle.message(
                                         "class.unconnected.to.package.problem.descriptor"),
                                       true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)

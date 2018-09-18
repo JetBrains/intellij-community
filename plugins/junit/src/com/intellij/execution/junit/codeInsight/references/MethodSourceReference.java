@@ -21,12 +21,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
 
@@ -93,6 +95,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   private static boolean staticNoParams(PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().isEmpty();
+    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    return (TestUtils.testInstancePerClass(Objects.requireNonNull(method.getContainingClass())) != isStatic) && method.getParameterList().isEmpty();
   }
 }

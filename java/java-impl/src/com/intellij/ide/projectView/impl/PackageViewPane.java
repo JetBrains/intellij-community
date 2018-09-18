@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class PackageViewPane extends AbstractProjectViewPSIPane {
@@ -112,16 +111,9 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Nullable
   private PackageElement getSelectedPackageElement() {
-    PackageElement result = null;
-    TreePath path = getSelectedPath();
-    if (path != null) {
-      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
-      if (node != null) {
-        Object selected = node.getValue();
-        result = selected instanceof PackageElement ? (PackageElement)selected : null;
-      }
-    }
-    return result;
+    AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, getSelectedPath());
+    Object selected = node == null ? null : node.getValue();
+    return selected instanceof PackageElement ? (PackageElement)selected : null;
   }
 
   @NotNull
@@ -213,7 +205,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
       }
 
       @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
+      public boolean isToBuildChildrenInBackground(@NotNull Object element) {
         return Registry.is("ide.projectView.PackageViewTreeStructure.BuildChildrenInBackground");
       }
     };

@@ -579,7 +579,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile {
     private final FilePath myPath;
 
-    public MyBinaryLightVirtualFile(@NotNull FilePath path, FileType type, @NotNull byte[] content) {
+    MyBinaryLightVirtualFile(@NotNull FilePath path, FileType type, @NotNull byte[] content) {
       super(path.getName(), type, content);
       myPath = path;
     }

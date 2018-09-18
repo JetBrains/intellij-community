@@ -19,13 +19,15 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -1125,7 +1127,15 @@ public class ExpressionUtils {
    */
   @Contract("null -> false")
   public static boolean isNewObject(@Nullable PsiExpression expression) {
-    return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
+    return expression != null && nonStructuralChildren(expression).allMatch(call -> {
+      if (call instanceof PsiNewExpression) return true;
+      if (call instanceof PsiMethodCallExpression) {
+        ContractReturnValue returnValue =
+          JavaMethodContractUtil.getNonFailingReturnValue(JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)call));
+        return ContractReturnValue.returnNew().equals(returnValue);
+      }
+      return false;
+    });
   }
 
   /**

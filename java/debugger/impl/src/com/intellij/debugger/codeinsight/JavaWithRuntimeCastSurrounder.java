@@ -56,7 +56,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
   private static class SurroundWithCastWorker extends RuntimeTypeEvaluator {
     private final Editor myEditor;
 
-    public SurroundWithCastWorker(Editor editor, PsiExpression expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
+    SurroundWithCastWorker(Editor editor, PsiExpression expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
       super(editor, expression, context, indicator);
       myEditor = editor;
     }

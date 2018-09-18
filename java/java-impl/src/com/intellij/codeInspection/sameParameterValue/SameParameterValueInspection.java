@@ -30,6 +30,10 @@ import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.components.fields.valueEditors.IntegerValueEditor;
+import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -37,8 +41,12 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -55,18 +63,31 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   private static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PROTECTED;
   @PsiModifier.ModifierConstant
   public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public int minimalUsageCount = 1;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
+    JPanel panel = new JPanel(new GridBagLayout());
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
-                                                                                    "Methods to report:",
+                                                                                    "Minimal reported method visibility:",
                                                                                     BorderLayout.WEST);
+    panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHEAST, JBUI.emptyInsets(), 0, 0));
+
+    IntegerField minimalUsageCountEditor = new IntegerField(null, 1, Integer.MAX_VALUE);
+    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<Integer>() {
+      @Override
+      public void valueChanged(@NotNull Integer newValue) {
+        minimalUsageCount = newValue;
+      }
+    });
+    minimalUsageCountEditor.setValue(minimalUsageCount);
+    minimalUsageCountEditor.setColumns(4);
+    panel.add(LabeledComponent.create(minimalUsageCountEditor, "Minimal reported method usage count:", BorderLayout.WEST),
+              new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHWEST, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -94,6 +115,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       for (RefParameter refParameter : parameters) {
         Object value = refParameter.getActualConstValue();
         if (value != VALUE_IS_NOT_CONST && value != VALUE_UNDEFINED) {
+          if (minimalUsageCount != 0 && refParameter.getUsageCount() < minimalUsageCount) continue;
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
           problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
@@ -412,10 +434,11 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           }
           Arrays.fill(paramValues, VALUE_UNDEFINED);
 
+          int[] usageCount = {0};
           if (UnusedSymbolUtil
             .processUsages(holder.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, info -> {
             PsiElement element = info.getElement();
-
+            usageCount[0]++;
             if (!(element instanceof PsiReferenceExpression)) {
               return false;
             }
@@ -430,7 +453,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final Object currentArg = getArgValue(arguments[i], method);
+              final Object currentArg = getArgValue(UastContextKt.toUElement(arguments[i], UExpression.class), method);
               if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
                 if (currentArg != VALUE_IS_NOT_CONST) {
@@ -447,6 +470,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
             return needFurtherProcess;
           })) {
+            if (minimalUsageCount != 0 && usageCount[0] < minimalUsageCount) return;
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
               if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
@@ -458,7 +482,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       };
     }
 
-    private Object getArgValue(PsiExpression arg, PsiMethod method) {
+    private Object getArgValue(UExpression arg, PsiMethod method) {
       return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }

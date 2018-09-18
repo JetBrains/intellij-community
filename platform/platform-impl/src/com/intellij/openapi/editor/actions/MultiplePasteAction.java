@@ -122,7 +122,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
   private static class ClipboardContentChooser extends ContentChooser<Transferable> {
 
-    public ClipboardContentChooser(Project project) {
+    ClipboardContentChooser(Project project) {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
       setOKButtonMnemonic('P');

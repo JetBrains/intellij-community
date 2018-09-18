@@ -606,7 +606,7 @@ public class GitRebaseProcess {
   private class ResolveAction extends NotificationAction {
     @NotNull private final GitRepository myCurrentRepository;
 
-    public ResolveAction(@NotNull GitRepository currentRepository) {
+    ResolveAction(@NotNull GitRepository currentRepository) {
       super("Resolve...");
       myCurrentRepository = currentRepository;
     }

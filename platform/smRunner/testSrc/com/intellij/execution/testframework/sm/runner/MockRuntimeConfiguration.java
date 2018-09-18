@@ -43,7 +43,7 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
   }
 
   private static class MockConfigurationFactory extends ConfigurationFactory {
-    public MockConfigurationFactory() {
+    MockConfigurationFactory() {
       super(new MyConfigurationType());
     }
 

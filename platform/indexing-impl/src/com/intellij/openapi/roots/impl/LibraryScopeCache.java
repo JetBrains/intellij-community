@@ -193,7 +193,7 @@ public class LibraryScopeCache {
       united.add(GlobalSearchScope.moduleWithDependentsScope(module));
     }
 
-    return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[0]));
+    return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
   private static class LibrariesOnlyScope extends GlobalSearchScope {

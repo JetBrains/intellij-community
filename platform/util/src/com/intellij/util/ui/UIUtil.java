@@ -496,7 +496,7 @@ public class UIUtil {
   private static volatile boolean jreHiDPI_earlierVersion;
 
   @TestOnly
-  public static final AtomicReference<Boolean> test_jreHiDPI() {
+  public static AtomicReference<Boolean> test_jreHiDPI() {
     if (jreHiDPI.get() == null) isJreHiDPIEnabled(); // force init
     return jreHiDPI;
   }
@@ -1275,8 +1275,7 @@ public class UIUtil {
   }
 
   public static Color getTableBackground() {
-    // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
-    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("Table.background");
+    return UIManager.getColor("Table.background");
   }
 
   public static Color getTableBackground(final boolean isSelected) {
@@ -1300,8 +1299,7 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
-    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
+    return UIManager.getColor("List.background");
   }
 
   public static Color getListBackground(boolean isSelected) {
@@ -1362,7 +1360,7 @@ public class UIUtil {
   }
 
   public static Color getTextFieldBackground() {
-    return UIManager.getColor(isUnderGTKLookAndFeel() ? "EditorPane.background" : "TextField.background");
+    return UIManager.getColor("TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -1418,7 +1416,7 @@ public class UIUtil {
   }
 
   public static Color getSeparatorColor() {
-    return isUnderGTKLookAndFeel() ? Gray._215 : getSeparatorForeground();
+    return getSeparatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -1517,7 +1515,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedCollapsedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
         !isUnderWin10LookAndFeel()) {
@@ -1528,7 +1525,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedExpandedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
         !isUnderWin10LookAndFeel()) {
@@ -1575,11 +1571,13 @@ public class UIUtil {
     return false;
   }
 
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
@@ -1652,9 +1650,13 @@ public class UIUtil {
     }
   }
 
+  @Deprecated
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
+
+  @Deprecated
   public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
 
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
   public static String getGtkThemeName() {
@@ -1679,6 +1681,7 @@ public class UIUtil {
     return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
   }
 
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isMurrineBasedTheme() {
     final String gtkTheme = getGtkThemeName();
@@ -1711,7 +1714,7 @@ public class UIUtil {
   }
 
   public static boolean isFullRowSelectionLAF() {
-    return isUnderGTKLookAndFeel();
+    return false;
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {
@@ -2648,19 +2651,16 @@ public class UIUtil {
     builder.append("}\n");
 
     builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-
-    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
-    if (resource != null) {
-      builder.append("ul {list-style-image:url('").append(StringUtil.escapeCharCharacters(resource.toExternalForm())).append("');}\n");
-    }
-
+    builder.append("ul {list-style:disc; margin-left:15px;}\n");
     return builder.append("</style>").toString();
   }
 
+  @Deprecated
   public static boolean isWinLafOnVista() {
     return SystemInfo.isWinVistaOrNewer && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
 
+  @Deprecated
   public static boolean isStandardMenuLAF() {
     return isWinLafOnVista() ||
            isUnderGTKLookAndFeel();
@@ -2763,6 +2763,10 @@ public class UIUtil {
 
   public static Color getHeaderActiveColor() {
     return ACTIVE_HEADER_COLOR;
+  }
+
+  public static Color getFocusedBorderColor() {
+    return JBUI.CurrentTheme.Focus.focusColor();
   }
 
   public static Color getHeaderInactiveColor() {
@@ -3245,6 +3249,7 @@ public class UIUtil {
     if (systemLaFClassName != null) {
       return systemLaFClassName;
     }
+
     if (SystemInfo.isLinux) {
       // Normally, GTK LaF is considered "system" when:
       // 1) Gnome session is run
@@ -3263,6 +3268,7 @@ public class UIUtil {
       catch (Exception ignore) {
       }
     }
+
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 

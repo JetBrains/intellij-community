@@ -566,7 +566,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class IntegrateChangeListsAction extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
     private final boolean myIntegrate;
 
-    public IntegrateChangeListsAction(boolean integrate) {
+    IntegrateChangeListsAction(boolean integrate) {
       super(false);
       myIntegrate = integrate;
     }
@@ -673,7 +673,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     private boolean myInitialized;
     private final static String ourKey = "MERGE_PANEL";
 
-    public MergePanelFiltering(final JComponent panel) {
+    MergePanelFiltering(final JComponent panel) {
       myPanel = panel;
     }
 

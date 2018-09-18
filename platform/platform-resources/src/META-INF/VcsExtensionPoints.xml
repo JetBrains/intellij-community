@@ -40,6 +40,8 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="vcs.branchStateProvider" interface="com.intellij.vcs.branch.BranchStateProvider" area="IDEA_PROJECT"/>
+
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider"/>
 
     <extensionPoint name="editChangelistSupport"

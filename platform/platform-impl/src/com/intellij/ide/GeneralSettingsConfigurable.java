@@ -226,7 +226,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private TextFieldWithBrowseButton myProjectDirectoryTextField;
     private JPanel myProjectOpeningPanel;
 
-    public MyComponent() {
+    MyComponent() {
       String conceptName = IdeUICustomization.getInstance().getProjectConceptName();
       myChkReopenLastProject.setText(IdeBundle.message("checkbox.reopen.last.project.on.startup", conceptName));
       ((TitledBorder) myProjectOpeningPanel.getBorder()).setTitle(IdeBundle.message("border.title.project.opening",

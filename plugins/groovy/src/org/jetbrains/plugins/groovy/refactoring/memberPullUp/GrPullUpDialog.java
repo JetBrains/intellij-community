@@ -53,7 +53,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     boolean checkConflicts(GrPullUpDialog dialog);
   }
 
-  public GrPullUpDialog(Project project,
+  GrPullUpDialog(Project project,
                         PsiClass typeDefinition,
                         List<PsiClass> superClasses,
                         GrMemberInfoStorage storage,
@@ -165,7 +165,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   }
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<GrMember, GrMemberInfo> {
-    public MyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
+    MyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
       super(aClass, superClass, recursive, myInterfaceContainmentVerifier);
     }
 

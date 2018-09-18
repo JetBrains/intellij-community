@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
  * @author lesya
  */
 class AllFilesInProject extends FileSetToBeUpdated {
-  public AllFilesInProject() { }
+  AllFilesInProject() { }
 
   @Override
   public void refreshFilesAsync(Runnable postRunnable) {

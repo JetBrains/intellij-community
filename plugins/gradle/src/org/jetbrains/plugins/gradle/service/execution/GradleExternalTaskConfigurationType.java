@@ -10,6 +10,11 @@ public final class GradleExternalTaskConfigurationType extends AbstractExternalS
     super(GradleConstants.SYSTEM_ID);
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.GradleRunConfiguration";
+  }
+
   public static GradleExternalTaskConfigurationType getInstance() {
     return (GradleExternalTaskConfigurationType)ExternalSystemUtil.findConfigurationType(GradleConstants.SYSTEM_ID);
   }

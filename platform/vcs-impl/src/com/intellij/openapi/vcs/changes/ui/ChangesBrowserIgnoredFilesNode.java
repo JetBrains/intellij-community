@@ -19,14 +19,17 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesNode {
 
   private final boolean myUpdatingMode;
 
-  protected ChangesBrowserIgnoredFilesNode(Project project, int filesSize, int dirsSize, boolean many, boolean updatingMode) {
-    super(IGNORED_FILES_TAG, filesSize, dirsSize, many, () -> {
+  protected ChangesBrowserIgnoredFilesNode(Project project, @NotNull List<VirtualFile> files, boolean updatingMode) {
+    super(IGNORED_FILES_TAG, files, () -> {
       if (!project.isDisposed()) new IgnoredViewDialog(project).show();
     });
     myUpdatingMode = updatingMode;

@@ -245,7 +245,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   static class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
-    public BundledScheme() {
+    BundledScheme() {
       super(null);
     }
 

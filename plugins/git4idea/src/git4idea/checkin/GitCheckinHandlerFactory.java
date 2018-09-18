@@ -62,7 +62,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull private final Project myProject;
 
 
-    public MyCheckinHandler(@NotNull CheckinProjectPanel panel) {
+    MyCheckinHandler(@NotNull CheckinProjectPanel panel) {
       myPanel = panel;
       myProject = myPanel.getProject();
     }
@@ -378,7 +378,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final VirtualFile myRoot;
       final boolean myRebase; // rebase in progress, or just detached due to a checkout of a commit.
 
-      public DetachedRoot(@NotNull VirtualFile root, boolean rebase) {
+      DetachedRoot(@NotNull VirtualFile root, boolean rebase) {
         myRoot = root;
         myRebase = rebase;
       }

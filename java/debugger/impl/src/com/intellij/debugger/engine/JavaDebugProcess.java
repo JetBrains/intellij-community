@@ -4,14 +4,11 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.xdebugger.memory.component.InstancesTracker;
-import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
@@ -50,6 +47,8 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
@@ -204,17 +203,8 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private void saveNodeHistory(final StackFrameProxyImpl frameProxy) {
-    myJavaSession.getProcess().getManagerThread().invoke(new DebuggerCommandImpl() {
-      @Override
-      protected void action() {
-        myNodeManager.setHistoryByContext(frameProxy);
-      }
-
-      @Override
-      public Priority getPriority() {
-        return Priority.NORMAL;
-      }
-    });
+    myJavaSession.getProcess().getManagerThread().invoke(PrioritizedTask.Priority.NORMAL,
+                                                         () -> myNodeManager.setHistoryByContext(frameProxy));
   }
 
   private DebuggerStateManager getDebuggerStateManager() {
@@ -419,7 +409,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private static class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
 
-    public AutoVarsSwitchAction() {
+    AutoVarsSwitchAction() {
       super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
@@ -441,7 +431,7 @@ public class JavaDebugProcess extends XDebugProcess {
     private final String myText;
     private final String myTextUnavailable;
 
-    public WatchLastMethodReturnValueAction() {
+    WatchLastMethodReturnValueAction() {
       super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myText = DebuggerBundle.message("action.watches.method.return.value.enable");
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");

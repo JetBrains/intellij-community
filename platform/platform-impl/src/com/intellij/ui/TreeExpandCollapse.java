@@ -44,7 +44,7 @@ public class TreeExpandCollapse {
     private final int myLevelsLeft;
     private int myExpansionLimit;
 
-    public ExpandContext(int expansionLimit, int levelsLeft) {
+    ExpandContext(int expansionLimit, int levelsLeft) {
       myExpansionLimit = expansionLimit;
       myLevelsLeft = levelsLeft;
     }

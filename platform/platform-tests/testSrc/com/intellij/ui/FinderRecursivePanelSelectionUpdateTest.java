@@ -109,7 +109,7 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
       initPanel();
     }
 
-    public StringFinderRecursivePanel(StringFinderRecursivePanel panel) {
+    StringFinderRecursivePanel(StringFinderRecursivePanel panel) {
       super(panel);
       initPanel();
     }

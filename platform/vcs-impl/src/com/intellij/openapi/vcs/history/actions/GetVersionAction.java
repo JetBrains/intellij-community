@@ -155,7 +155,7 @@ public class GetVersionAction extends AnAction implements DumbAware {
     @NotNull private final VcsFileRevision myRevision;
     @Nullable private final VirtualFile myFile;
 
-    public MyWriteVersionTask(@NotNull Project project, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
+    MyWriteVersionTask(@NotNull Project project, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
       super(project, VcsBundle.message("show.diff.progress.title"));
       myProject = project;
       myFilePath = filePath;

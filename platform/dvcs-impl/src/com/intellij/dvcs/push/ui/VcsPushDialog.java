@@ -258,7 +258,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (VcsPushUi.VCS_PUSH_DIALOG.is(dataId)) {
       return this;
     }
@@ -299,7 +299,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     @NotNull private final VcsPushUi myDialog;
     @NotNull private final PushActionBase myRealAction;
 
-    public ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
+    ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
       super(realAction.getTemplatePresentation().getTextWithMnemonic());
       myProject = project;
       myDialog = dialog;

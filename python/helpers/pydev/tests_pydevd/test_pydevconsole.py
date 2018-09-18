@@ -52,7 +52,7 @@ class Test(unittest.TestCase):
             time.sleep(.3)  #let's give it some time to start the threads
 
             from _pydev_bundle import pydev_localhost
-            from _pydev_bundle.pydev_console_utils import CodeFragment
+            from _pydev_bundle.pydev_console_types import CodeFragment
 
             interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
             sys.stdout = pydevd_io.IOBuf()

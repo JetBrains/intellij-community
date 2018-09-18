@@ -689,7 +689,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private static class PackageChooserActionListener extends BrowseModuleValueActionListener {
-    public PackageChooserActionListener(final Project project) {
+    PackageChooserActionListener(final Project project) {
       super(project);
     }
 
@@ -703,7 +703,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private class TestsChooserActionListener extends TestClassBrowser {
-    public TestsChooserActionListener(final Project project) {
+    TestsChooserActionListener(final Project project) {
       super(project);
     }
 
@@ -733,7 +733,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private class TestClassBrowser extends ClassBrowser {
-    public TestClassBrowser(final Project project) {
+    TestClassBrowser(final Project project) {
       super(project, ExecutionBundle.message("choose.test.class.dialog.title"));
     }
 
@@ -769,7 +769,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private class CategoryBrowser extends ClassBrowser {
-    public CategoryBrowser(Project project) {
+    CategoryBrowser(Project project) {
       super(project, "Category Interface");
     }
 

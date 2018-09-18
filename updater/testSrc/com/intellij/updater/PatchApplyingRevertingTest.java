@@ -658,7 +658,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {
-    public MyFailOnApplyPatchAction(Patch patch) {
+    MyFailOnApplyPatchAction(Patch patch) {
       super(patch, "_dummy_file_", Digester.INVALID);
     }
 

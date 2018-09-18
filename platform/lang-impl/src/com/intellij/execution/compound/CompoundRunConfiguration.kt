@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.impl.compareTypesForUi
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -17,20 +18,15 @@ import org.jdom.Element
 import java.util.*
 import javax.swing.Icon
 
-data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
-
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
-class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = CompoundRunConfigurationType.getInstance().configurationFactories.first()) :
-  RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
+class CompoundRunConfiguration @JvmOverloads constructor(name: String, project: Project, factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
+  RunConfigurationMinimalBase(name, factory, project), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
-    val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
-      val i = o1.type.displayName.compareTo(o2.type.displayName)
-      when {
-        i != 0 -> i
-        else -> o1.name.compareTo(o2.name)
-      }
+    internal val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
+      val compareTypeResult = compareTypesForUi(o1.type, o2.type)
+      if (compareTypeResult == 0) o1.name.compareTo(o2.name) else compareTypeResult
     }
   }
 
@@ -41,8 +37,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   private var sortedConfigurationsWithTargets = TreeMap<RunConfiguration, ExecutionTarget?>(COMPARATOR)
   private var isInitialized = false
 
-  @JvmOverloads
-  fun getConfigurationsWithTargets(runManager: RunManagerImpl? = null): Map<RunConfiguration, ExecutionTarget?> {
+  fun getConfigurationsWithTargets(runManager: RunManagerImpl): Map<RunConfiguration, ExecutionTarget?> {
     initIfNeed(runManager)
     return sortedConfigurationsWithTargets
   }
@@ -58,14 +53,13 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     setConfigurationsWithTargets(value.associate { it to null })
   }
 
-  private fun initIfNeed(_runManager: RunManagerImpl?) {
+  private fun initIfNeed(runManager: RunManagerImpl) {
     if (isInitialized) {
       return
     }
 
     sortedConfigurationsWithTargets.clear()
 
-    val runManager = _runManager ?: RunManagerImpl.getInstanceImpl(project)
     val targetManager = ExecutionTargetManager.getInstance(project) as ExecutionTargetManagerImpl
 
     for ((type, name, targetId) in unsortedConfigurations) {
@@ -84,7 +78,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     isInitialized = true
   }
 
-  override fun getConfigurationEditor(): CompoundRunConfigurationSettingsEditor = CompoundRunConfigurationSettingsEditor(project)
+  override fun getConfigurationEditor() = CompoundRunConfigurationSettingsEditor(project)
 
   override fun checkConfiguration() {
     if (sortedConfigurationsWithTargets.isEmpty()) {
@@ -166,7 +160,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   }
 
   override fun clone(): RunConfiguration {
-    val clone = super<RunConfigurationBase>.clone() as CompoundRunConfiguration
+    val clone = CompoundRunConfiguration(name, project, factory)
     clone.unsortedConfigurations = unsortedConfigurations
     clone.sortedConfigurationsWithTargets = TreeMap(COMPARATOR)
     clone.sortedConfigurationsWithTargets.putAll(sortedConfigurationsWithTargets)
@@ -174,10 +168,10 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   }
 
   override fun getExecutorIcon(configuration: RunConfiguration, executor: Executor): Icon? {
-    return if (DefaultRunExecutor.EXECUTOR_ID == executor.id && hasRunningSingletons()) {
-      AllIcons.Actions.Restart
+    return when {
+      DefaultRunExecutor.EXECUTOR_ID == executor.id && hasRunningSingletons() -> AllIcons.Actions.Restart
+      else -> executor.icon
     }
-    else executor.icon
   }
 
   private fun hasRunningSingletons(): Boolean {
@@ -193,8 +187,8 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
           return@getRunningDescriptors true
         }
 
-        val settings = manager.findConfigurationByTypeAndName(configuration.type, configuration.name)
-        if (settings != null && settings.isSingleton && configuration == s.configuration) {
+        val settings = manager.findSettings(configuration)
+        if (settings != null && !settings.configuration.isAllowRunningInParallel && configuration == s.configuration) {
           return@getRunningDescriptors true
         }
       }
@@ -202,3 +196,5 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
     }.isNotEmpty()
   }
 }
+
+internal data class TypeNameTarget(val type: String, val name: String, val targetId: String?)

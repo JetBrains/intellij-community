@@ -236,7 +236,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private class MyUpdater implements Consumer<String> {
     private final VcsRoot myVcsRoot;
 
-    public MyUpdater(final VcsRoot vcsRoot) {
+    MyUpdater(final VcsRoot vcsRoot) {
       myVcsRoot = vcsRoot;
     }
 
@@ -273,7 +273,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private class MyShouldUpdateChecker implements Computable<Boolean> {
     private final VcsRoot myVcsRoot;
 
-    public MyShouldUpdateChecker(final VcsRoot vcsRoot) {
+    MyShouldUpdateChecker(final VcsRoot vcsRoot) {
       myVcsRoot = vcsRoot;
     }
 

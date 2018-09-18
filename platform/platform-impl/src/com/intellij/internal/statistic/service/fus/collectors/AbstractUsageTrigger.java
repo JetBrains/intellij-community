@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
@@ -43,6 +44,8 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   protected void doTrigger(@NotNull String usageCollectorId,
                            @NotNull String feature,
                            @Nullable FUSUsageContext context) {
+    FeatureUsageLogger.INSTANCE.log(usageCollectorId, feature, context != null ? context.getData() : Collections.emptyMap());
+
     SessionInfo sessionInfo = getOrCreateSessionInfo();
     UsagesCollectorInfo collectorInfo = sessionInfo.getUsageCollectorInfo(usageCollectorId);
 

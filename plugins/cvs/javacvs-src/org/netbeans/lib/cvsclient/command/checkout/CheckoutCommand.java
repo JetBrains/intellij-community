@@ -113,7 +113,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
    */
   @Override
   public String getCvsCommandLine() {
-    @NonNls final StringBuffer cvsCommandLine = new StringBuffer("checkout ");
+    @NonNls final StringBuilder cvsCommandLine = new StringBuilder("checkout ");
     cvsCommandLine.append(getCvsArguments());
     for (final String module : modules) {
       cvsCommandLine.append(module);
@@ -326,7 +326,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
   }
 
   private String getCvsArguments() {
-    @NonNls final StringBuffer cvsArguments = new StringBuffer();
+    @NonNls final StringBuilder cvsArguments = new StringBuilder();
     if (!isRecursive()) {
       cvsArguments.append("-l ");
     }

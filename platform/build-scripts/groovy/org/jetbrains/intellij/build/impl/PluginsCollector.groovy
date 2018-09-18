@@ -60,8 +60,9 @@ class PluginsCollector {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
+    def allBundledPlugins = productLayout.allBundledPluginsModules
     myBuildContext.project.modules.each {
-      if (productLayout.bundledPluginModules.contains(it.name)) {
+      if (allBundledPlugins.contains(it.name)) {
         return
       }
       if (productLayout.compatiblePluginsToIgnore.contains(it.name)) {

@@ -257,13 +257,11 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(GroovyLanguage.INSTANCE);
-    defaultSettings.initIndentOptions();
-    defaultSettings.SPACE_WITHIN_BRACES = true;
-    defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
-    defaultSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    return defaultSettings;
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+    commonSettings.SPACE_WITHIN_BRACES = true;
+    commonSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    commonSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
   }
 
   @Override

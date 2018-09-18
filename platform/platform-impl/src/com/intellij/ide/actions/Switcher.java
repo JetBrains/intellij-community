@@ -744,7 +744,7 @@ public class Switcher extends AnAction implements DumbAware {
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
-      if (ctrl && isAutoHide()) {
+      if ((ctrl && isAutoHide()) || e.getKeyCode() == VK_ENTER) {
         navigate(e);
       }
     }
@@ -1048,7 +1048,7 @@ public class Switcher extends AnAction implements DumbAware {
     private class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
       private Object[] myElements;
 
-      public SwitcherSpeedSearch() {
+      SwitcherSpeedSearch() {
         super(SwitcherPanel.this);
         addChangeListener(this);
         setComparator(new SpeedSearchComparator(false, true));
@@ -1202,7 +1202,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;
 
-    public VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
+    VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
       mySwitcherPanel = switcherPanel;
     }
 
@@ -1236,7 +1236,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final Project myProject;
     private String myNameForRendering;
 
-    public FileInfo(VirtualFile first, EditorWindow second, Project project) {
+    FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
       myProject = project;
     }

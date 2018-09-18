@@ -23,7 +23,7 @@ import java.util.List;
 class DiffFragmentsDiffIterable extends ChangeDiffIterableBase {
   @NotNull private final List<? extends DiffFragment> myFragments;
 
-  public DiffFragmentsDiffIterable(@NotNull List<? extends DiffFragment> ranges, int length1, int length2) {
+  DiffFragmentsDiffIterable(@NotNull List<? extends DiffFragment> ranges, int length1, int length2) {
     super(length1, length2);
     myFragments = ranges;
   }

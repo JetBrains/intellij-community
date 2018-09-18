@@ -299,7 +299,7 @@ public class DependencyResultsTransformer {
   private static class ComponentIdKey implements ComponentResultKey {
     private final ComponentIdentifier myId;
 
-    public ComponentIdKey(ComponentIdentifier id) {
+    ComponentIdKey(ComponentIdentifier id) {
       myId = id;
     }
 
@@ -325,7 +325,7 @@ public class DependencyResultsTransformer {
     private final ComponentIdentifier myId;
     private final AttributeContainer myAttributes;
 
-    public AttributesBasedKey(ComponentIdentifier id, AttributeContainer attributes) {
+    AttributesBasedKey(ComponentIdentifier id, AttributeContainer attributes) {
       myId = id;
       myAttributes = attributes;
     }

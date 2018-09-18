@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -84,7 +85,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
 
-      if (Registry.is("execution.java.always.debug")) {
+      if (Registry.is("execution.java.always.debug") && DebuggerSettings.getInstance().ALWAYS_DEBUG) {
         ParametersList parametersList = parameters.getVMParametersList();
         if (parametersList.getList().stream().noneMatch(s -> s.startsWith("-agentlib:jdwp"))) {
           parametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,quiet=y");
@@ -241,8 +242,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     @SuppressWarnings("unchecked")
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (myConnection == null) {
-        myConnection = e.getProject().getMessageBus().connect();
+      Project project = e.getProject();
+      if (project != null && myConnection == null) {
+        myConnection = project.getMessageBus().connect();
         myConnection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
           @Override
           public void processStarted(@NotNull XDebugProcess debugProcess) {
@@ -291,7 +293,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     private final ProcessHandler myProcessHandler;
     private final CapturingProcessAdapter myListener;
 
-    public WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
+    WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
       myProject = project;
       myProcessHandler = processHandler;
       myListener = new CapturingProcessAdapter();

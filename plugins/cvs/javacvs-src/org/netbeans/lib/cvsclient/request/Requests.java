@@ -35,7 +35,7 @@ public final class Requests {
 
 	// Fields =================================================================
 
-	private final List requestList = new ArrayList();
+	private final List<IRequest> requestList = new ArrayList<>();
 	private final ICvsFileSystem cvsFileSystem;
 	private final IAdminReader adminReader;
 	private final ResponseExpectingRequest responseExpectingRequest;
@@ -137,7 +137,7 @@ public final class Requests {
 		}
 	}
 
-	public List getRequests() {
+	public List<IRequest> getRequests() {
 		return Collections.unmodifiableList(requestList);
 	}
 

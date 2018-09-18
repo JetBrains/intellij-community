@@ -408,7 +408,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
-    AllIcons.General.Mdot.getIconWidth();  // keep icon reference
     return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 

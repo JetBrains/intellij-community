@@ -70,6 +70,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -102,7 +103,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindString() throws InterruptedException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-
+    @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = myFindManager.findString(text, 0, findModel);
     assertTrue(findResult.isStringFound());
@@ -609,6 +610,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInCommentsInJsInsideHtml() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("@param t done");
 
+    @Language("HTML")
     String text = "<script>\n" +
                   "/**\n" +
                   " * @param t done\n" +

@@ -9,10 +9,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.LazyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -25,7 +26,7 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
 
   public PluginConfigurationType() {
     super("#org.jetbrains.idea.devkit.run.PluginConfigurationType", DevKitBundle.message("run.configuration.title"), DevKitBundle.message("run.configuration.type.description"),
-          LazyUtil.create(() -> AllIcons.Nodes.Plugin));
+          NotNullLazyValue.createValue(() -> AllIcons.Nodes.Plugin));
   }
 
   @NotNull
@@ -46,8 +47,9 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
     return ModuleUtil.hasModulesOfType(project, PluginModuleType.getInstance());
   }
 
+  @NotNull
   @Override
-  public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+  public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
     PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
     if (pluginRunConfiguration.getModule() == null) {
       Collection<Module> modules = ModuleUtil.getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());
@@ -60,6 +62,11 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
   @Override
   public String getTag() {
     return "plugin";
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.#org.jetbrains.idea.devkit.run.PluginConfigurationType";
   }
 
   @NotNull

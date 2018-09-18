@@ -16,13 +16,13 @@ class ExtractableFragment {
   private final SmartPsiElementPointer<PsiElement> myStart;
   private final SmartPsiElementPointer<PsiElement> myEnd;
 
-  public ExtractableFragment(@NotNull PsiElement start, @NotNull PsiElement end) {
+  ExtractableFragment(@NotNull PsiElement start, @NotNull PsiElement end) {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(start.getProject());
     myStart = smartPointerManager.createSmartPsiElementPointer(start);
     myEnd = start != end ? smartPointerManager.createSmartPsiElementPointer(end) : myStart;
   }
 
-  public ExtractableFragment(@NotNull PsiElement[] elements) {
+  ExtractableFragment(@NotNull PsiElement[] elements) {
     if (elements.length == 0) {
       myStart = null;
       myEnd = null;

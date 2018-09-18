@@ -226,7 +226,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (PlatformDataKeys.HELP_ID.equals(key)) {
       sink.put(PlatformDataKeys.HELP_ID, getHelpId());
     }
@@ -295,7 +295,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
     private Object[][] myTableData;
 
-    public MyListTableModel() {
+    MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
       setSortable(false);
     }

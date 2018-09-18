@@ -232,7 +232,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
 
-    public MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
+    MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
       myHolder = holder;
       myOnTheFly = onTheFly;
     }

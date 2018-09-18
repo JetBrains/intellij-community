@@ -38,13 +38,10 @@ import java.util.Map;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static git4idea.util.GitUIUtil.code;
 
-/**
- * @author Kirill Likhodedov
- */
-class GitRejectedPushUpdateDialog extends DialogWrapper {
+public class GitRejectedPushUpdateDialog extends DialogWrapper {
 
-  static final int MERGE_EXIT_CODE = NEXT_USER_EXIT_CODE;
-  static final int REBASE_EXIT_CODE = MERGE_EXIT_CODE + 1;
+  public static final int MERGE_EXIT_CODE = NEXT_USER_EXIT_CODE;
+  public static final int REBASE_EXIT_CODE = MERGE_EXIT_CODE + 1;
 
   private static final String HTML_IDENT = "&nbsp;&nbsp;&nbsp;&nbsp;";
   public static final String DESCRIPTION_START = "Push of current branch ";

@@ -3,7 +3,6 @@ package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -35,7 +34,6 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
     RunnerAndConfigurationSettings configuration = (RunnerAndConfigurationSettings)wrapper.getValue();
     Project project = fetchProject(dataContext);
 
-    RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(configuration);
     RunManager.getInstance(project).setSelectedConfiguration(configuration);
 
     Executor executor = EXECUTOR_KEY.getData(dataContext);

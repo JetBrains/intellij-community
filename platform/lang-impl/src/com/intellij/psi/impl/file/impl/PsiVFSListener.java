@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
+import com.intellij.application.Topics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -33,6 +34,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +81,7 @@ public class PsiVFSListener implements BulkFileListener {
    */
   private static void installGlobalListener() {
     if (ourGlobalListenerInstalled.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      Topics.subscribe(VirtualFileManager.VFS_CHANGES, null, new BulkFileListener() {
         @Override
         public void before(@NotNull List<? extends VFileEvent> events) {
           for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -112,7 +114,6 @@ public class PsiVFSListener implements BulkFileListener {
   private PsiDirectory getCachedDirectory(VirtualFile parent) {
     return parent == null ? null : myFileManager.getCachedDirectory(parent);
   }
-
 
   private void fileCreated(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().runWriteAction(
@@ -434,15 +435,15 @@ public class PsiVFSListener implements BulkFileListener {
         boolean isExcluded = vFile.isDirectory() &&
                              Registry.is("ide.hide.excluded.files") && myProjectRootManager.getFileIndex().isExcluded(vFile);
         if (oldParentDir != null && !isExcluded) {
+          PsiElement eventChild = vFile.isDirectory() ? myFileManager.findDirectory(vFile) : myFileManager.findFile(vFile);
+          treeEvent.setChild(eventChild);
           if (newParentDir != null) {
             treeEvent.setOldParent(oldParentDir);
             treeEvent.setNewParent(newParentDir);
-            findEventChild(vFile, treeEvent);
             myManager.beforeChildMovement(treeEvent);
           }
           else {
             treeEvent.setParent(oldParentDir);
-            findEventChild(vFile, treeEvent);
             myManager.beforeChildRemoval(treeEvent);
           }
         }
@@ -453,17 +454,6 @@ public class PsiVFSListener implements BulkFileListener {
         }
       }
     );
-  }
-
-  private void findEventChild(@NotNull VirtualFile vFile, @NotNull PsiTreeChangeEventImpl treeEvent) {
-    if (vFile.isDirectory()) {
-      PsiDirectory psiDir = myFileManager.findDirectory(vFile);
-      treeEvent.setChild(psiDir);
-    }
-    else {
-      PsiFile psiFile = myFileManager.findFile(vFile);
-      treeEvent.setChild(psiFile);
-    }
   }
 
   private void filesMoved(@NotNull List<? extends VFileEvent> events) {
@@ -678,63 +668,46 @@ public class PsiVFSListener implements BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    // group same type events together and call fireForGrouped() for the whole batch
-    VFileEvent prev = null;
-    int prevI = 0;
-    for (int i = 0; i <= events.size(); i++) {
-      VFileEvent event = i == events.size() ? null : events.get(i);
-      boolean fireImmediately = !(event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent);
-      if (fireImmediately) {
-        if (prev != null) {
-          fireForGrouped(events, prevI, i);
-        }
-        if (event instanceof VFileCopyEvent) {
-          VFileCopyEvent ce = (VFileCopyEvent)event;
-          final VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
-          if (copy != null) {
-            fileCreated(copy); // no need to group creation
-          }
-        }
-        else if (event instanceof VFileCreateEvent) {
-          VirtualFile file = event.getFile();
-          if (file != null) {
-            fileCreated(file); // no need to group creation
-          }
-        }
-        else {
-          if (event instanceof VFilePropertyChangeEvent) {
-            propertyChanged((VFilePropertyChangeEvent)event);
-          }
-        }
-      
-        prev = null;
-        prevI = i+1;
-        continue;
-      }
-
-      if (prev == null || event.getClass() == prev.getClass()) {
-        prev = event;
-      }
-      else {
-        fireForGrouped(events, prevI, i);
-        prev = null;
-        prevI = i;
-      }
-    }
+    groupAndFire(events);
     myReportedUnloadedPsiChange = false;
   }
 
-  private void fireForGrouped(@NotNull List<? extends VFileEvent> events, int prevI, int i) {
-    List<? extends VFileEvent> subList = events.subList(prevI, i);
-    VFileEvent first = subList.get(0);
-    if (first instanceof VFileDeleteEvent) {
+  // group same type events together and call fireForGrouped() for the whole batch
+  private void groupAndFire(@NotNull List<? extends VFileEvent> events) {
+    StreamEx.of(events)
+      // group sequential VFileDeleteEvent or VFileMoveEvent together, place all other events into one-element lists
+      .groupRuns((event1, event2) ->
+                    event1 instanceof VFileDeleteEvent && event2 instanceof VFileDeleteEvent
+                 || event1 instanceof VFileMoveEvent && event2 instanceof VFileMoveEvent)
+      .forEach(this::fireForGrouped);
+  }
+
+  private void fireForGrouped(@NotNull List<? extends VFileEvent> subList) {
+    VFileEvent event = subList.get(0);
+    if (event instanceof VFileDeleteEvent) {
       filesDeleted(subList);
     }
-    else if (first instanceof VFileMoveEvent) {
+    else if (event instanceof VFileMoveEvent) {
       filesMoved(subList);
     }
     else {
-      throw new IllegalStateException("unknown event: " + first);
+      assert subList.size() == 1;
+      if (event instanceof VFileCopyEvent) {
+        VFileCopyEvent ce = (VFileCopyEvent)event;
+        final VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
+        if (copy != null) {
+          fileCreated(copy); // no need to group creation
+        }
+      }
+      else if (event instanceof VFileCreateEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null) {
+          fileCreated(file); // no need to group creation
+        }
+      }
+      else if (event instanceof VFilePropertyChangeEvent) {
+        propertyChanged((VFilePropertyChangeEvent)event);
+      }
     }
   }
 }

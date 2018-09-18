@@ -49,12 +49,12 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
 
   private final ReferenceGroup myGroup;
 
-  public AntDomTargetReference(PsiElement element) {
+  AntDomTargetReference(PsiElement element) {
     super(element, true);
     myGroup = null;
   }
 
-  public AntDomTargetReference(PsiElement element, TextRange range, ReferenceGroup group) {
+  AntDomTargetReference(PsiElement element, TextRange range, ReferenceGroup group) {
     super(element, range, true);
     myGroup = group;
     group.addReference(this);

@@ -28,7 +28,7 @@ class SerializableInnerClassHasSerialVersionUIDFieldVisitor
 
   private final SerializableInspectionBase inspection;
 
-  public SerializableInnerClassHasSerialVersionUIDFieldVisitor(
+  SerializableInnerClassHasSerialVersionUIDFieldVisitor(
     SerializableInspectionBase inspection) {
     this.inspection = inspection;
   }

@@ -239,7 +239,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     private final JavaParameters myJavaParameters;
     private final MavenRunConfiguration myRunConfiguration;
 
-    public ExecRemoteConnectionCreator(JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
+    ExecRemoteConnectionCreator(JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
       myJavaParameters = javaParameters;
       myRunConfiguration = runConfiguration;
     }

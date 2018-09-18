@@ -51,7 +51,7 @@ public class TestsUIUtil {
   }
 
   @Nullable
-  public static Object getData(final AbstractTestProxy testProxy, final String dataId, final TestFrameworkRunningModel model) {
+  public static Object getData(final AbstractTestProxy testProxy, @NotNull String dataId, final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
     final Project project = properties.getProject();
     if (testProxy == null) return null;

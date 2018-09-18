@@ -76,8 +76,7 @@ public class MethodListDlg extends DialogWrapper {
   }
 
   private void createList(final PsiMethod[] allMethods, final Condition<? super PsiMethod> filter) {
-    for (int i = 0; i < allMethods.length; i++) {
-      final PsiMethod method = allMethods[i];
+    for (final PsiMethod method : allMethods) {
       if (filter.value(method)) myListModel.add(method);
     }
   }

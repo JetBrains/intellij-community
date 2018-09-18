@@ -61,8 +61,8 @@ import java.awt.event.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -405,7 +405,7 @@ public class IdeEventQueue extends EventQueue {
             runnable.run();
           }
           catch (Exception exc) {
-            LOG.info(exc);
+            LOG.error(exc);
           }
         });
     }
@@ -563,7 +563,7 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof WindowEvent) {
+    if (e instanceof WindowEvent || e instanceof FocusEvent) {
       ActivityTracker.getInstance().inc();
     }
 
@@ -738,22 +738,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static void fixStickyAlt(@NotNull AWTEvent e) {
-    if (Registry.is("actionSystem.win.suppressAlt.new")) {
-      if (UIUtil.isUnderWindowsLookAndFeel() &&
-          e instanceof InputEvent &&
-          (((InputEvent)e).getModifiers() & (InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)) != 0 &&
-          !(e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT)) {
-        try {
-          if (FieldHolder.ourStickyAltField != null) {
-            FieldHolder.ourStickyAltField.set(null, true);
-          }
-        }
-        catch (Exception exception) {
-          LOG.error(exception);
-        }
-      }
-    }
-    else if (SystemInfo.isWinXpOrNewer && !SystemInfo.isWinVistaOrNewer && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+    if (!Registry.is("actionSystem.win.suppressAlt.new") &&
+      SystemInfo.isWinXpOrNewer && !SystemInfo.isWinVistaOrNewer && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
       ((KeyEvent)e).consume();  // IDEA-17359
     }
   }
@@ -1000,7 +986,8 @@ public class IdeEventQueue extends EventQueue {
   private static class EditingCanceller implements EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE) {
+      if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
+          !getInstance().getPopupManager().isPopupActive()) {
         final Component owner = UIUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
                                                              component -> component instanceof JTable || component instanceof JTree);
 
@@ -1221,7 +1208,7 @@ public class IdeEventQueue extends EventQueue {
         int size = myDelayedKeyEvents.size();
         TYPEAHEAD_LOG.debug("Stop delaying events. Events to post: " + size);
         for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
-          KeyEvent theEvent = myDelayedKeyEvents.remove();
+          KeyEvent theEvent = myDelayedKeyEvents.remove(0);
           TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
           super.postEvent(theEvent);
         }
@@ -1236,10 +1223,11 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
+    if (!delayKeyEvents.get()) return;
     delayKeyEvents.set(false);
     int size = myDelayedKeyEvents.size();
     for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
-      KeyEvent theEvent = myDelayedKeyEvents.remove();
+      KeyEvent theEvent = myDelayedKeyEvents.remove(0);
       TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
       super.postEvent(theEvent);
     }
@@ -1274,7 +1262,7 @@ public class IdeEventQueue extends EventQueue {
     return shortcutsShowingPopups;
   }
 
-  private final LinkedList<KeyEvent> myDelayedKeyEvents = new LinkedList<>();
+  private final List<KeyEvent> myDelayedKeyEvents = Collections.synchronizedList(new LinkedList<>());
   private final AtomicBoolean delayKeyEvents = new AtomicBoolean();
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {

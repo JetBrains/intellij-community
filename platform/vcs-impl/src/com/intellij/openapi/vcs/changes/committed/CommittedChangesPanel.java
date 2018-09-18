@@ -298,7 +298,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key.equals(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER)) {
       sink.put(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER, myIfNotCachedReloader);
     } else if (VcsDataKeys.REMOTE_HISTORY_LOCATION.equals(key)) {
@@ -328,7 +328,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
     private final List<ChangeListener> myList = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
     }
 

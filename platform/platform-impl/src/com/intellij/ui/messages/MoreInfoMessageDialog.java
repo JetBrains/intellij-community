@@ -14,7 +14,7 @@ import java.awt.*;
 class MoreInfoMessageDialog extends MessageDialog {
   @Nullable private final String myInfoText;
 
-  public MoreInfoMessageDialog(Project project,
+  MoreInfoMessageDialog(Project project,
                                String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
                                @Nullable String moreInfo,

@@ -263,7 +263,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       }
 
       private int compare(int x, int y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
+        return Integer.compare(x, y);
       }
     });
 
@@ -339,7 +339,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     @NotNull String projectName;
     @NotNull ExternalProjectSettings myProjectSettings;
 
-    public ProjectItem(@NotNull String projectName, @NotNull ExternalProjectSettings projectPath) {
+    ProjectItem(@NotNull String projectName, @NotNull ExternalProjectSettings projectPath) {
       this.projectName = projectName;
       this.myProjectSettings = projectPath;
     }
@@ -415,7 +415,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     ModuleData myModuleData;
     List<String> myTasks;
 
-    public ProjectPopupItem(ModuleData moduleData, List<String> tasks) {
+    ProjectPopupItem(ModuleData moduleData, List<String> tasks) {
       myModuleData = moduleData;
       myTasks = tasks;
     }
@@ -472,7 +472,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       super(aParent);
     }
 
-    public MyNode(Project aProject, @Nullable NodeDescriptor aParentDescriptor) {
+    MyNode(Project aProject, @Nullable NodeDescriptor aParentDescriptor) {
       super(aProject, aParentDescriptor);
     }
   }
@@ -480,7 +480,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   private class RootNode extends MyNode {
     private final ExternalProjectsStateProvider myStateProvider;
 
-    public RootNode() {
+    RootNode() {
       super(ConfigureTasksActivationDialog.this.myProject, null);
       myStateProvider = getInstance(ConfigureTasksActivationDialog.this.myProject).getStateProvider();
     }
@@ -511,7 +511,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     private final String myProjectPath;
     private final String myProjectName;
 
-    public ProjectNode(RootNode parent,
+    ProjectNode(RootNode parent,
                        ExternalProjectsStateProvider stateProvider,
                        String rootProjectPath,
                        String projectPath) {
@@ -545,7 +545,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     private final TaskActivationState myTaskActivationState;
     private final String myProjectPath;
 
-    public PhaseNode(final String projectPath, Phase phase, TaskActivationState taskActivationState, SimpleNode parent) {
+    PhaseNode(final String projectPath, Phase phase, TaskActivationState taskActivationState, SimpleNode parent) {
       super(parent);
       myPhase = phase;
       myTaskActivationState = taskActivationState;
@@ -578,7 +578,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   private class TaskNode extends MyNode {
     private final String myTaskName;
 
-    public TaskNode(String taskName, PhaseNode parent) {
+    TaskNode(String taskName, PhaseNode parent) {
       super(parent);
       myTaskName = taskName;
     }

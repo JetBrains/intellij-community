@@ -267,7 +267,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     final T impl;
     Op nextOp;
 
-    public Op(T impl) {
+    Op(T impl) {
       this.impl = impl;
     }
 
@@ -284,7 +284,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   private static class CountDown<A> implements Condition<A> {
     int cur;
 
-    public CountDown(int count) {
+    CountDown(int count) {
       cur = count;
     }
 

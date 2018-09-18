@@ -447,7 +447,6 @@ public class FileUtil extends FileUtilRt {
     performCopy(fromFile, toFile, false);
   }
 
-  @SuppressWarnings("Duplicates")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
     final FileOutputStream fos = openOutputStream(toFile);

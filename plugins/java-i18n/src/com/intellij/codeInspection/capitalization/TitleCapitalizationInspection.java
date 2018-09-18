@@ -187,7 +187,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     private final String myTitleValue;
     private final Nls.Capitalization myCapitalization;
 
-    public TitleCapitalizationFix(String titleValue, Nls.Capitalization capitalization) {
+    TitleCapitalizationFix(String titleValue, Nls.Capitalization capitalization) {
       myTitleValue = titleValue;
       myCapitalization = capitalization;
     }

@@ -588,7 +588,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     private final String myMethodSignature;
     private PsiMethod myCompiledMethod;
 
-    public MethodFinder(final String className, final String methodName, final String methodSignature) {
+    MethodFinder(final String className, final String methodName, final String methodSignature) {
       myClassName = className;
       myMethodName = methodName;
       myMethodSignature = methodSignature;

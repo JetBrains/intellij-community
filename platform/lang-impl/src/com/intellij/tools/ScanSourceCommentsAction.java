@@ -118,7 +118,7 @@ public class ScanSourceCommentsAction extends AnAction {
     private final String myText;
     private final Set<VirtualFile> myFiles = new LinkedHashSet<>();
 
-    public CommentDescriptor(String text) {
+    CommentDescriptor(String text) {
       myText = text;
     }
 

@@ -457,7 +457,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<Void>> reads = ContainerUtil.newConcurrentSet();
+    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -496,7 +496,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
     finally {
       Disposer.dispose(disposable); // unregister listener early
-      for (Job<Void> read : reads) {
+      for (Job<?> read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
         }
@@ -504,9 +504,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static void stressRead(VirtualFilePointer pointer, Collection<Job<Void>> reads) {
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
     for (int i = 0; i < 10; i++) {
-      AtomicReference<Job<Void>> reference = new AtomicReference<>();
+      AtomicReference<Job<?>> reference = new AtomicReference<>();
       reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         VirtualFile file = pointer.getFile();
         if (file != null && !file.isValid()) {
@@ -617,7 +617,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       };
 
       run.set(true);
-      List<Thread> threads = IntStream.range(0, nThreads).mapToObj(n -> new Thread(read, "reader" + n)).collect(Collectors.toList());
+      List<Thread> threads = IntStream.range(0, nThreads).mapToObj(n -> new Thread(read, "reader " + n)).collect(Collectors.toList());
       threads.forEach(Thread::start);
       ready.await();
 

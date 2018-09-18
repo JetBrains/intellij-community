@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -229,21 +230,22 @@ public class SpellCheckerManager implements Disposable {
     final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
       if(file != null) {
-        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
-          @Override
-          public void undo() {
-            dictionary.removeFromDictionary(transformed);
-            myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-            restartInspections();
-          }
+        WriteCommandAction.writeCommandAction(project)
+          .run(() -> UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
+            @Override
+            public void undo() {
+              dictionary.removeFromDictionary(transformed);
+              myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
+              restartInspections();
+            }
 
-          @Override
-          public void redo() {
-            dictionary.addToDictionary(transformed);
-            myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-            restartInspections();
-          }
-        });
+            @Override
+            public void redo() {
+              dictionary.addToDictionary(transformed);
+              myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
+              restartInspections();
+            }
+          }));
       }
       dictionary.addToDictionary(transformed);
       myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
@@ -384,7 +386,7 @@ public class SpellCheckerManager implements Disposable {
   private class CustomDictFileListener implements VirtualFileListener {
     private final SpellCheckerSettings mySettings;
 
-    public CustomDictFileListener(@NotNull SpellCheckerSettings settings) {mySettings = settings;}
+    CustomDictFileListener(@NotNull SpellCheckerSettings settings) {mySettings = settings;}
 
     @Override
     public void fileDeleted(@NotNull VirtualFileEvent event) {

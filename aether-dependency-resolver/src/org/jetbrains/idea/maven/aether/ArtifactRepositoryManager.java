@@ -308,7 +308,7 @@ public class ArtifactRepositoryManager {
   private static class ArtifactWithChangedClassifier extends DelegatingArtifact {
     private final String myClassifier;
 
-    public ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
+    ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
       super(artifact);
       myClassifier = classifier;
     }
@@ -331,7 +331,7 @@ public class ArtifactRepositoryManager {
     private final ArtifactKind myKind;
     private final List<ArtifactRequest> myRequests = new ArrayList<>();
 
-    public ArtifactRequestBuilder(ArtifactKind kind) {
+    ArtifactRequestBuilder(ArtifactKind kind) {
       myKind = kind;
     }
 
@@ -362,7 +362,7 @@ public class ArtifactRepositoryManager {
   private static class ExcludeDependenciesFilter implements DependencyFilter {
     private final HashSet<String> myExcludedDependencies;
 
-    public ExcludeDependenciesFilter(List<String> excludedDependencies) {
+    ExcludeDependenciesFilter(List<String> excludedDependencies) {
       myExcludedDependencies = new HashSet<>(excludedDependencies);
     }
 
@@ -385,7 +385,7 @@ public class ArtifactRepositoryManager {
   private static class ArtifactDependencyTreeBuilder implements DependencyVisitor {
     private final List<List<ArtifactDependencyNode>> myCurrentChildren = new ArrayList<>();
 
-    public ArtifactDependencyTreeBuilder() {
+    ArtifactDependencyTreeBuilder() {
       myCurrentChildren.add(new ArrayList<>());
     }
 

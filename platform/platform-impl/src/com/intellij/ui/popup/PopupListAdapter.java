@@ -37,7 +37,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   private PopupChooserBuilder myBuilder;
   private ListWithFilter myListWithFilter;
 
-  public PopupListAdapter(PopupChooserBuilder builder, JList list) {
+  PopupListAdapter(PopupChooserBuilder builder, JList list) {
     myBuilder = builder;
     myList = list;
   }

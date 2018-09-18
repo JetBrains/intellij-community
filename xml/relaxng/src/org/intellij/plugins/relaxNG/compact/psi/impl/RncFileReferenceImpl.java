@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
-  public RncFileReferenceImpl(ASTNode node) {
+  RncFileReferenceImpl(ASTNode node) {
     super(node);
   }
 

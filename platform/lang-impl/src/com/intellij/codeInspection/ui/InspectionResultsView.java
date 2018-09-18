@@ -389,7 +389,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Nullable
   private static Navigatable getOpenFileDescriptor(final RefElement refElement) {
-    PsiElement psiElement = refElement.getElement();
+    PsiElement psiElement = refElement.getPsiElement();
     if (psiElement == null) return null;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return null;
@@ -481,8 +481,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
     final JPanel editorPanel = new JPanel();
     editorPanel.setLayout(new BorderLayout());
-    final JPanel toolsPanel = new JPanel(new BorderLayout());
-    editorPanel.add(toolsPanel, BorderLayout.NORTH);
+    final JPanel actionsPanel = new JPanel(new BorderLayout());
+    editorPanel.add(actionsPanel, BorderLayout.NORTH);
     final int problemCount = myTree.getSelectedProblemCount(true);
     JComponent previewPanel = null;
     final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
@@ -495,9 +495,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)last).getDescriptor();
           if (descriptor != null) {
             previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
-            JComponent customTools = presentation.getCustomToolsPanel(descriptor, this);
-            if (customTools != null) {
-              toolsPanel.add(customTools, BorderLayout.EAST);
+            JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
+            if (customActions != null) {
+              actionsPanel.add(customActions, BorderLayout.EAST);
             }
           }
         }
@@ -524,7 +524,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
-        toolsPanel.add(fixToolbar, BorderLayout.WEST);
+        actionsPanel.add(fixToolbar, BorderLayout.WEST);
       }
     }
     if (previewEditor != null) {
@@ -536,8 +536,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement &&
         selectedEntity.isValid() &&
-        !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
-      PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
+        !(((RefElement)selectedEntity).getPsiElement() instanceof PsiDirectory)) {
+      PsiElement selectedElement = ((RefElement)selectedEntity).getPsiElement();
       if (problemCount == 1) {
         CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
         if (descriptors.length != 0) {
@@ -787,7 +787,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
       if (!item.isValid()) return null;
 
-      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getElement() : null;
+      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
       if (psiElement == null) return null;
 
       final CommonProblemDescriptor problem = refElementNode.getDescriptor();
@@ -872,7 +872,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<>();
     for (RefEntity refElement : refElements) {
-      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         psiElements.add(psiElement);
       }

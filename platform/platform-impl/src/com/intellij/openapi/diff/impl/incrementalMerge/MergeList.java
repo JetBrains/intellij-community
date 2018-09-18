@@ -332,7 +332,7 @@ public class MergeList implements UserDataHolder {
   static class ApplyAction extends DumbAwareAction {
     private final Change myChange;
 
-    public ApplyAction(Icon arrowIcon, Change change) {
+    ApplyAction(Icon arrowIcon, Change change) {
       super(DiffBundle.message("merge.dialog.apply.change.action.name"), null, arrowIcon);
       myChange = change;
     }

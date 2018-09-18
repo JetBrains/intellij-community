@@ -29,10 +29,6 @@ public class ListRemoveInLoopFixTest extends LightQuickFixParameterizedTestCase 
     return new LocalInspectionTool[]{new ListRemoveInLoopInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/com/siyeh/igfixes/fixes/list_remove_in_loop";

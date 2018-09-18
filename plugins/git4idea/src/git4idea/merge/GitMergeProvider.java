@@ -709,7 +709,7 @@ public class GitMergeProvider implements MergeProvider2 {
        */
       private final boolean myIsTheirs;
 
-      public StatusColumn(boolean isTheirs, @Nullable String branchName) {
+      StatusColumn(boolean isTheirs, @Nullable String branchName) {
         super(calcColumnName(isTheirs, branchName));
         myIsTheirs = isTheirs;
       }

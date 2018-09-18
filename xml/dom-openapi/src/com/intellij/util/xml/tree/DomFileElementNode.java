@@ -18,6 +18,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.NotNull;
 
 public class DomFileElementNode extends BaseDomElementNode {
   private final DomFileElement myFileElement;
@@ -28,6 +29,7 @@ public class DomFileElementNode extends BaseDomElementNode {
     myFileElement = fileElement;
   }
 
+  @NotNull
   @Override
   public SimpleNode[] getChildren() {
     return doGetChildren(myFileElement.getRootElement());

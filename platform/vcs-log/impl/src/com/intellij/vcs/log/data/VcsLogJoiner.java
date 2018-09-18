@@ -194,7 +194,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private final Stack<Commit> commitsStack;
 
-    public NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
+    NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
       this.list = list;
       newCommitsMap = ContainerUtil.newHashMap();
       for (Commit commit : newCommits) {

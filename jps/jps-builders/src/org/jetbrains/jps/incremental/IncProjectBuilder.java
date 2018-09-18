@@ -204,8 +204,7 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
-      if (cause instanceof PersistentEnumerator.CorruptedException ||
-          cause instanceof MappingFailedException ||
+      if (cause instanceof MappingFailedException ||
           cause instanceof IOException ||
           cause instanceof BuildDataCorruptedException ||
           (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
@@ -396,11 +395,15 @@ public class IncProjectBuilder {
   }
 
   private void sendElapsedTimeMessages(CompileContext context) {
-    for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
-      AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
-      int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
-      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1000000));
-    }
+    myElapsedTimeNanosByBuilder.entrySet()
+      .stream()
+      .map(entry -> {
+        AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
+        int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
+        return new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1_000_000);
+      })
+      .sorted(Comparator.comparing(BuilderStatisticsMessage::getBuilderName))
+      .forEach(context::processMessage);
   }
 
   private void startTempDirectoryCleanupTask() {

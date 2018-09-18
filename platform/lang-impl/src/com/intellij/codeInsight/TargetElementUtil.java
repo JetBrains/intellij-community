@@ -345,7 +345,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private static PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
+  private static PsiElement getReferenceOrReferencedElement(@NotNull PsiFile file, @NotNull Editor editor, int flags, int offset) {
     PsiElement result = doGetReferenceOrReferencedElement(editor, flags, offset);
     PsiElement languageElement = file.findElementAt(offset);
     Language language = languageElement != null ? languageElement.getLanguage() : file.getLanguage();
@@ -357,7 +357,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private static PsiElement doGetReferenceOrReferencedElement(Editor editor, int flags, int offset) {
+  private static PsiElement doGetReferenceOrReferencedElement(@NotNull Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
 

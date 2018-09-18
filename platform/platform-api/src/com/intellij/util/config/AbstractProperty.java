@@ -92,15 +92,13 @@ public abstract class AbstractProperty<T> {
     }
 
     public final void copyFrom(AbstractPropertyContainer source, AbstractProperty[] properties) {
-      for (int i = 0; i < properties.length; i++) {
-        AbstractProperty property = properties[i];
+      for (AbstractProperty property : properties) {
         setValueOf((PropertyImpl)property, source.getValueOf(property));
       }
     }
 
     public final boolean areValueEqual(AbstractPropertyContainer other, AbstractProperty[] properties) {
-      for (int i = 0; i < properties.length; i++) {
-        AbstractProperty property = properties[i];
+      for (AbstractProperty property : properties) {
         if (!property.areEqual(getValueOf((PropertyImpl)property), other.getValueOf(property))) return false;
       }
       return true;

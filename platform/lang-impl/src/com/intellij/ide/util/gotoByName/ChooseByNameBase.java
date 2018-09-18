@@ -648,6 +648,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
+        if (checkDisposed()) {
+          return;
+        }
+
         chosenElementMightChange();
         updateDocumentation();
 
@@ -1099,7 +1103,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private MyTextField() {
       super(40);
       // Set UI and border for Darcula and all except Win10, Mac and GTK
-      if (!UIUtil.isUnderGTKLookAndFeel() && !UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
+      if (!UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
         if (!(getUI() instanceof DarculaTextFieldUI)) {
           setUI(DarculaTextFieldUI.createUI(this));
         }
@@ -1135,7 +1139,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public void calcData(final DataKey key, @NotNull final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (LangDataKeys.POSITION_ADJUSTER_POPUP.equals(key)) {
         if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
           sink.put(key, myDropdownPopup);
@@ -1537,7 +1541,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
-    public ShowFindUsagesAction() {
+    ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.Pin_tab);
     }
 

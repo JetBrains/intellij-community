@@ -45,44 +45,45 @@ class JarLoader extends Loader {
 
   private final String myFilePath;
   private final ClassPath myConfiguration;
+  private final URL myUrl;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
-  private final Map<Resource.Attribute, String> myAttributes;
-  private final SoftReference<Attributes> myCachedManifestAttributes;
+  private volatile Map<Resource.Attribute, String> myAttributes;
+  private volatile String myClassPathManifestAttribute; 
+  private static final String NULL_STRING = "<null>";
 
   JarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
     myConfiguration = configuration;
+    myUrl = url;
 
-    ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
-    try {
-      Attributes manifestAttributes = configuration.getManifestData(url);
-      if (manifestAttributes == null) {
-        ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-        manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
-        if (manifestAttributes == null) manifestAttributes = new Attributes(0);
-        configuration.cacheManifestData(url, manifestAttributes);
-      }
-
-      myAttributes = getAttributes(manifestAttributes);
-      myCachedManifestAttributes = new SoftReference<Attributes>(manifestAttributes);
-
-      if (configuration.myPreloadJarContents) {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myAttributes);
-        if (loader != null) {
-          myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+    if (!configuration.myLazyClassloadingCaches) {
+      ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
+      try {
+        if (configuration.myPreloadJarContents) {
+          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), this);
+          if (loader != null) {
+            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+          }
         }
       }
-    }
-    finally {
-      releaseZipFile(zipFile);
+      finally {
+        releaseZipFile(zipFile);
+      }
     }
   }
 
-  Attributes getManifestAttributes() {
-    return myCachedManifestAttributes.get();
+  Map<Resource.Attribute, String> getAttributes() {
+    loadManifestAttributes();
+    return myAttributes;
+  }
+  
+  @Nullable String getClassPathManifestAttribute() {
+    loadManifestAttributes();
+    String manifestAttribute = myClassPathManifestAttribute;
+    return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 
   private static String urlToFilePath(URL url) {
@@ -109,6 +110,33 @@ class JarLoader extends Loader {
     return map;
   }
 
+  private void loadManifestAttributes() {
+    if (myClassPathManifestAttribute != null) return;
+    synchronized (this) {
+      try {
+        if (myClassPathManifestAttribute != null) return;
+        ZipFile zipFile = getZipFile();
+        try {
+          Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
+          if (manifestAttributes == null) {
+            ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+            manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+            if (manifestAttributes == null) manifestAttributes = new Attributes(0);
+            myConfiguration.cacheManifestData(myUrl, manifestAttributes);
+          }
+
+          myAttributes = getAttributes(manifestAttributes);
+          Object attribute = manifestAttributes.get(Attributes.Name.CLASS_PATH);
+          myClassPathManifestAttribute = attribute instanceof String ? (String)attribute : NULL_STRING;
+        }
+        finally {
+          releaseZipFile(zipFile);
+        }
+      } catch (IOException io) {
+        throw new RuntimeException(io);
+      }
+    }
+  }
   @Nullable
   private static Attributes loadManifestAttributes(@Nullable InputStream stream) {
     if (stream == null) return null;
@@ -176,7 +204,7 @@ class JarLoader extends Loader {
     private final URL myUrl;
     private final ZipEntry myEntry;
 
-    public MyResource(URL url, ZipEntry entry) throws IOException {
+    MyResource(URL url, ZipEntry entry) throws IOException {
       myUrl = new URL(url, entry.getName());
       myEntry = entry;
     }
@@ -206,6 +234,7 @@ class JarLoader extends Loader {
 
     @Override
     public String getValue(Attribute key) {
+      loadManifestAttributes();
       return myAttributes != null ? myAttributes.get(key) : null;
     }
   }

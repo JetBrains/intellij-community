@@ -357,7 +357,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     private final Module myModule;
     private final boolean myInCycle;
 
-    public MyUserObject(boolean inCycle, Module module) {
+    MyUserObject(boolean inCycle, Module module) {
       myInCycle = inCycle;
       myModule = module;
     }
@@ -402,7 +402,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     private final Tree myTree;
     private final Project myProject;
 
-    public MyTreePanel(Tree tree, Project project) {
+    MyTreePanel(Tree tree, Project project) {
       super(new BorderLayout());
       myTree = tree;
       myProject = project;
@@ -443,7 +443,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     private final Tree myTree;
     private final boolean myEnableExpandAll;
 
-    public MyTreeExpander(Tree tree, boolean enableExpandAll) {
+    MyTreeExpander(Tree tree, boolean enableExpandAll) {
       myTree = tree;
       myEnableExpandAll = enableExpandAll;
     }

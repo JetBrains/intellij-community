@@ -235,7 +235,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    if (!myUiUpdating || !UIUtil.isUnderGTKLookAndFeel()) {
+    if (!myUiUpdating) {
       myRowHeight = rowHeight;
       myRowHeightIsExplicitlySet = true;
     }
@@ -537,19 +537,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private static boolean isTableDecorationSupported() {
     return UIUtil.isUnderNativeMacLookAndFeel()
            || UIUtil.isUnderDarcula()
-           || UIUtil.isUnderIntelliJLaF()
-           || UIUtil.isUnderWindowsLookAndFeel();
+           || UIUtil.isUnderIntelliJLaF();
   }
 
   @NotNull
   @Override
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
-
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      UIUtil.changeBackGround(this, UIUtil.getTreeTextBackground());
-    }
 
     if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
       final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
@@ -577,7 +571,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
     private boolean myIsActive = false;
 
-    public MyCellEditorRemover() {
+    MyCellEditorRemover() {
       addPropertyChangeListener("tableCellEditor", this);
       new UiNotifyConnector(JBTable.this, this);
     }
@@ -1012,7 +1006,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     private int myStartXCoordinate = 0;
     private int myStartYCoordinate = 0;
 
-    public MyBasicTableHeaderUI(@NotNull InvisibleResizableHeader tableHeader) {
+    MyBasicTableHeaderUI(@NotNull InvisibleResizableHeader tableHeader) {
       header = tableHeader;
       mouseInputListener = createMouseInputListener();
     }

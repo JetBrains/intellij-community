@@ -40,7 +40,7 @@ public class RecentChangesPopup {
     private final JLabel myDateLabel = new JLabel("", JLabel.RIGHT);
     private final JPanel mySpacePanel = new JPanel();
 
-    public RecentChangesListCellRenderer() {
+    RecentChangesListCellRenderer() {
       myPanel.add(myActionLabel, BorderLayout.WEST);
       myPanel.add(myDateLabel, BorderLayout.EAST);
       myPanel.add(mySpacePanel, BorderLayout.CENTER);

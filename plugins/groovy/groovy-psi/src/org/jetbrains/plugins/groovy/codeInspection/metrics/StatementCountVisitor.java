@@ -15,38 +15,29 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
-class StatementCountVisitor extends GroovyRecursiveElementVisitor {
+class StatementCountVisitor extends PsiRecursiveElementWalkingVisitor {
+
   private int statementCount = 0;
 
   @Override
-  public void visitElement(@NotNull GroovyPsiElement element) {
-    int oldCount = 0;
-    if (element instanceof GrMethod) {
-      oldCount = statementCount;
+  public void visitElement(PsiElement element) {
+    if (element instanceof GrBlockStatement || element instanceof GrOpenBlock) {
+      super.visitElement(element);
     }
-    super.visitElement(element);
-
-    if (element instanceof GrMethod) {
-      statementCount = oldCount;
+    else if (element instanceof GrStatement) {
+      if (element.getParent() instanceof GrStatementOwner) {
+        statementCount++;
+      }
+      super.visitElement(element);
     }
   }
-
-  @Override
-  public void visitStatement(@NotNull GrStatement statement) {
-    super.visitStatement(statement);
-    if (statement instanceof GrBlockStatement) {
-      return;
-    }
-    statementCount++;
-  }
-
 
   public int getStatementCount() {
     return statementCount;

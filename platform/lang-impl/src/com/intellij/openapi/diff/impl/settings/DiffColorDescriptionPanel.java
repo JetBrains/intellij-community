@@ -34,7 +34,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
 
   @NotNull private final ColorAndFontOptions myOptions;
 
-  public DiffColorDescriptionPanel(@NotNull ColorAndFontOptions options) {
+  DiffColorDescriptionPanel(@NotNull ColorAndFontOptions options) {
     super(new BorderLayout());
     myOptions = options;
     add(myPanel, BorderLayout.CENTER);

@@ -13,7 +13,10 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -153,7 +156,12 @@ public class HTMLTextPainter {
             writer.write(closeTag);
             closeTag = null;
           }
-          writer.write(c);
+          if (c == '\n') {
+            writeLineSeparatorAndNumber(writer, hStart);
+          }
+          else {
+            writer.write(c);
+          }
         }
         else {
           break;
@@ -292,19 +300,24 @@ public class HTMLTextPainter {
           writeChar(writer, " ");
         }
 
-        LineMarkerInfo marker = getMethodSeparator(i + 1);
-        if (marker == null) {
-          writer.write('\n');
-        }
-        else {
-          writer.write("<hr class=\"" + htmlStyleManager.getSeparatorClassName(marker.separatorColor) + "\">");
-        }
-        writeLineNumber(writer);
+        writeLineSeparatorAndNumber(writer, i);
       }
       else {
-        writeChar(writer, String.valueOf(c));
+        writer.write(c);
+        myColumn++;
       }
     }
+  }
+
+  private void writeLineSeparatorAndNumber(@NotNull Writer writer, int i) throws IOException {
+    LineMarkerInfo marker = getMethodSeparator(i + 1);
+    if (marker == null) {
+      writer.write('\n');
+    }
+    else {
+      writer.write("<hr class=\"" + htmlStyleManager.getSeparatorClassName(marker.separatorColor) + "\">");
+    }
+    writeLineNumber(writer);
   }
 
   private void writeChar(Writer writer, String s) throws IOException {

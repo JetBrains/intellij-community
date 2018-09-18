@@ -300,7 +300,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   }
 
   private static class MyDetailView extends DetailViewImpl {
-    public MyDetailView(Project project) {
+    MyDetailView(Project project) {
       super(project);
     }
 

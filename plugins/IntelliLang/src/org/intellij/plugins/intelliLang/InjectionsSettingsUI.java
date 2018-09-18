@@ -801,7 +801,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     final THashSet<BaseInjection> bundledInjections = new THashSet<>(new SameParamsAndPlacesStrategy());
     final String title;
 
-    public CfgInfo(Configuration cfg, final String title) {
+    CfgInfo(Configuration cfg, final String title) {
       this.cfg = cfg;
       this.title = title;
       bundledInjections.addAll(cfg.getDefaultInjections());

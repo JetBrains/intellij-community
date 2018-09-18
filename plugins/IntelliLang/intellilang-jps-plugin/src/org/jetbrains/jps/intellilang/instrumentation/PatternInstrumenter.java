@@ -52,7 +52,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private RuntimeException myPostponedError;
   boolean myIsNonStaticInnerClass;
 
-  public PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
+  PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
                              InstrumentationType instrumentation,
                              InstrumentationClassFinder classFinder) {
     super(Opcodes.API_VERSION, classvisitor);

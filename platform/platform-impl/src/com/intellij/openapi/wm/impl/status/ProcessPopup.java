@@ -163,7 +163,7 @@ public class ProcessPopup  {
 
     myActiveFocusedContent.add(wrapper, BorderLayout.CENTER);
 
-    final JScrollPane scrolls = new JBScrollPane(myActiveFocusedContent) {
+    myActiveContentComponent = new JBScrollPane(myActiveFocusedContent) {
       @Override
       public Dimension getPreferredSize() {
         if (myProcessBox.getComponentCount() > 0) {
@@ -173,7 +173,6 @@ public class ProcessPopup  {
         }
       }
     };
-    myActiveContentComponent = scrolls;
     updateContentUI();
   }
 
@@ -211,7 +210,7 @@ public class ProcessPopup  {
 
     private final JLabel myLabel = new JLabel("XXX");
 
-    public ActiveContent() {
+    ActiveContent() {
       super(new BorderLayout());
       setBorder(DialogWrapper.ourDefaultBorder);
       setFocusable(true);

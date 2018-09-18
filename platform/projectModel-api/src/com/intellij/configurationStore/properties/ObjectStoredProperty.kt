@@ -4,9 +4,10 @@ package com.intellij.configurationStore.properties
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlin.reflect.KProperty
 
-internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
+abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
 
@@ -52,6 +53,33 @@ internal open class ObjectStoredProperty<T>(private val defaultValue: T) : Objec
   @Suppress("UNCHECKED_CAST")
   override fun parseAndSetValue(rawValue: String?) {
     value = (StringUtil.equalsIgnoreCase(rawValue, "true") || StringUtil.equalsIgnoreCase(rawValue, "yes") || StringUtil.equalsIgnoreCase(rawValue, "on")) as T
+  }
+}
+
+class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: Class<T>) : ObjectStateStoredPropertyBase<T?>(defaultValue), ScalarProperty {
+  override val jsonType: JsonSchemaType
+    get() = JsonSchemaType.STRING
+
+  override fun isEqualToDefault() = value === defaultValue
+
+  override fun getModificationCount() = 0L
+
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
+    val v = newValue ?: defaultValue
+    if (value !== v) {
+      thisRef.intIncrementModificationCount()
+      value = v
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun parseAndSetValue(rawValue: String?) {
+    if (rawValue == null) {
+      value = defaultValue
+    }
+    else {
+      value = XmlSerializerUtil.stringToEnum(rawValue, clazz, true /* lowercase in YAML by default */) as T? ?: defaultValue
+    }
   }
 }
 

@@ -2,7 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.model
 
 enum class TargetPlatform(private val stringValue: String) {
-  JVM16("JVM 1.6"), JVM18("JVM 1.8"), JavaScript("JavaScript"), Common("Common (experimental)")
+  JVM16("JVM 1.6"), JVM18("JVM 1.8"), JavaScript("JavaScript"), Common("Common (experimental)"), Native ("Native")
   ;
 
   companion object {

@@ -358,7 +358,7 @@ public abstract class AbstractValueHint {
     if (!myProject.equals(hint.myProject)) return false;
     if (!myEditor.equals(hint.myEditor)) return false;
     if (myType != hint.myType) return false;
-    if (myCurrentRange != null ? !myCurrentRange.equals(hint.myCurrentRange) : hint.myCurrentRange != null) return false;
+    if (!Objects.equals(myCurrentRange, hint.myCurrentRange)) return false;
 
     return true;
   }

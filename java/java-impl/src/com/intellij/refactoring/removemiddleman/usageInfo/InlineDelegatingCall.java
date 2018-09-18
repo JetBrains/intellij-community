@@ -39,7 +39,7 @@ public class InlineDelegatingCall extends FixableUsageInfo {
 
   @Override
   public void fixUsage() throws IncorrectOperationException {
-    final StringBuffer replacementText = new StringBuffer();
+    final StringBuilder replacementText = new StringBuilder();
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier != null) {

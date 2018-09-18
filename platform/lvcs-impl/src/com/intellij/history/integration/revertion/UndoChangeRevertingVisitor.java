@@ -221,7 +221,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   private static class DelayedContentApply extends DelayedApply {
     private final Content myContent;
 
-    public DelayedContentApply(VirtualFile f, Content content) {
+    DelayedContentApply(VirtualFile f, Content content) {
       super(f);
       myContent = content;
     }

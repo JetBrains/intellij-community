@@ -370,7 +370,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     private final Map<String, String> myParameters;
     private final boolean myShouldEscape;
 
-    public MyContentIterator(ProgressIndicator indicator,
+    MyContentIterator(ProgressIndicator indicator,
                              ZipOutputStream finalStream,
                              Project project,
                              Map<String, String> parameters,

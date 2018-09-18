@@ -51,7 +51,7 @@ class AssociationsEditor {
   private final TransactionalManager myManager;
   private final ProjectTreeBuilder myBuilder;
 
-  public AssociationsEditor(final Project project, final TreeState oldState) {
+  AssociationsEditor(final Project project, final TreeState oldState) {
     myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
 
     initUI();
@@ -182,7 +182,7 @@ class AssociationsEditor {
   }
 
   class AddAssociationActionWrapper extends AddAssociationAction {
-    public AddAssociationActionWrapper() {
+    AddAssociationActionWrapper() {
       super(myManager);
     }
 
@@ -200,7 +200,7 @@ class AssociationsEditor {
   }
 
   class RemoveAssociationAction extends AnAction {
-    public RemoveAssociationAction() {
+    RemoveAssociationAction() {
       super("Remove", "Remove Association", IconUtil.getRemoveIcon());
     }
 
@@ -224,7 +224,7 @@ class AssociationsEditor {
   }
 
   private static class MyGroupByTypeComparator extends GroupByTypeComparator {
-    public MyGroupByTypeComparator() {
+    MyGroupByTypeComparator() {
       super(true);
     }
 
@@ -245,8 +245,9 @@ class AssociationsEditor {
       return Collections.EMPTY_LIST;
     }
 
+    @NotNull
     @Override
-    public Object[] getChildElements(Object obj) {
+    public Object[] getChildElements(@NotNull Object obj) {
       final Object[] childElements = super.getChildElements(obj);
       List l = new ArrayList(childElements.length);
       for (Object o : childElements) {
@@ -297,7 +298,7 @@ class AssociationsEditor {
     private final FileAssociationsManager myManager;
     private PsiFile[] myFiles;
 
-    public AssociationsModel(Tree tree, FileAssociationsManager manager) {
+    AssociationsModel(Tree tree, FileAssociationsManager manager) {
       myTree = tree;
       myManager = manager;
       myFiles = PsiFile.EMPTY_ARRAY;
@@ -340,7 +341,7 @@ class AssociationsEditor {
     private final DefaultMutableTreeNode myTemp = new DefaultMutableTreeNode();
     private final FileAssociationsManager myManager;
 
-    public MyNodeRenderer(FileAssociationsManager manager) {
+    MyNodeRenderer(FileAssociationsManager manager) {
       myManager = manager;
     }
 
@@ -369,7 +370,7 @@ class AssociationsEditor {
     private static class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
       private final PsiFileNode myNode;
 
-      public MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
+      MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
         super(nodeDescriptor.getProject(), null);
         myName = nodeDescriptor.toString();
         setIcon(LayeredIcon.create(nodeDescriptor.getIcon(), XpathIcons.Association_small));

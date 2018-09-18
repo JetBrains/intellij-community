@@ -298,7 +298,7 @@ public class AnnotateDiffViewerAction {
   private static class MyDiffViewerListener extends DiffViewerListener {
     @NotNull private final DiffViewerBase myViewer;
 
-    public MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
+    MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
       myViewer = viewer;
     }
 
@@ -369,7 +369,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
     }
 
     @Override
@@ -402,7 +402,7 @@ public class AnnotateDiffViewerAction {
     public void showAnnotation(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       if (side != viewer.getSide()) return;
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, data.annotation, data.vcs);
     }
 
     @Override
@@ -436,7 +436,7 @@ public class AnnotateDiffViewerAction {
       if (side != viewer.getMasterSide()) return;
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
       UnifiedUpToDateLineNumberProvider lineNumberProvider = new UnifiedUpToDateLineNumberProvider(viewer, side);
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs, lineNumberProvider);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, data.annotation, data.vcs, lineNumberProvider);
     }
 
     @Override
@@ -450,7 +450,7 @@ public class AnnotateDiffViewerAction {
     @NotNull private final Side mySide;
     @NotNull private final UpToDateLineNumberProvider myLocalChangesProvider;
 
-    public UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
+    UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
       myViewer = viewer;
       mySide = side;
       myLocalChangesProvider = new UpToDateLineNumberProviderImpl(myViewer.getDocument(mySide), viewer.getProject());
@@ -510,7 +510,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side, @NotNull AnnotationData data) {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
     }
 
     @Override
@@ -742,7 +742,7 @@ public class AnnotateDiffViewerAction {
     @Nullable private VcsException myException;
     @Nullable private FileAnnotation myResult;
 
-    public FileAnnotationLoader(@NotNull AbstractVcs vcs) {
+    FileAnnotationLoader(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
     }
 
@@ -772,7 +772,7 @@ public class AnnotateDiffViewerAction {
     @NotNull public final AbstractVcs vcs;
     @NotNull public final FileAnnotation annotation;
 
-    public AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
+    AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
       this.vcs = vcs;
       this.annotation = annotation;
     }
@@ -782,7 +782,7 @@ public class AnnotateDiffViewerAction {
     @NotNull public final DiffViewerBase viewer;
     @NotNull public final ViewerAnnotator annotator;
 
-    public EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
+    EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
       this.viewer = viewer;
       this.annotator = annotator;
     }

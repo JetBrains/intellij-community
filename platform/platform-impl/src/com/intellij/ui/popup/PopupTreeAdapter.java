@@ -21,7 +21,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   private PopupChooserBuilder myBuilder;
   private final JTree myTree;
 
-  public PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {
+  PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {
     myBuilder = builder;
     myTree = tree;
   }

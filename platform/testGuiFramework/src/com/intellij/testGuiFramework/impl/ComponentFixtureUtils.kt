@@ -20,6 +20,7 @@ import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.treeStructure.treetable.TreeTable
@@ -200,6 +201,13 @@ fun <C : Container> ContainerFixture<C>.actionButtonByClass(actionClassName: Str
 
 }
 
+
+fun <C : Container> ContainerFixture<C>.tab(textLabel: String, timeout: Timeout = defaultTimeout): JBTabbedPaneFixture {
+  val jbTabbedPane: JBTabbedPane = findComponentWithTimeout(timeout) {
+    it.indexOfTab(textLabel) != -1
+  }
+  return JBTabbedPaneFixture(textLabel, jbTabbedPane, robot())
+}
 
 /**
  * Finds a JRadioButton component in hierarchy of context component by label text and returns JRadioButtonFixture.

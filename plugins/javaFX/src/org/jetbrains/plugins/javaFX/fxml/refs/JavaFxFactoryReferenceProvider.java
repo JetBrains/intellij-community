@@ -36,7 +36,7 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
   }
 
   private static class JavaFXFactoryReference extends PsiReferenceBase<XmlAttributeValue> {
-    public JavaFXFactoryReference(XmlAttributeValue attributeValue) {
+    JavaFXFactoryReference(XmlAttributeValue attributeValue) {
       super(attributeValue);
     }
 

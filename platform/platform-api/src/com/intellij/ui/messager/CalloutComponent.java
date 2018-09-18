@@ -314,7 +314,7 @@ public class CalloutComponent {
 
   private class Wrapper extends NonOpaquePanel {
 
-    public Wrapper(JComponent component) {
+    Wrapper(JComponent component) {
       setBorder(BorderFactory.createEmptyBorder(2, 3, 2, 3));
       setLayout(new BorderLayout());
       add(component, BorderLayout.CENTER);
@@ -339,7 +339,7 @@ public class CalloutComponent {
   private class Pointer extends NonOpaquePanel {
     private final int myOrientation;
 
-    public Pointer(int orientation) {
+    Pointer(int orientation) {
       myOrientation = orientation;
     }
 

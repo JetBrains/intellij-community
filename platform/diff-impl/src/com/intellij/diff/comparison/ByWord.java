@@ -239,7 +239,7 @@ public class ByWord {
 
     private final ChangeBuilder myBuilder;
 
-    public AdjustmentPunctuationMatcher(@NotNull CharSequence text1,
+    AdjustmentPunctuationMatcher(@NotNull CharSequence text1,
                                         @NotNull CharSequence text2,
                                         @NotNull List<InlineChunk> words1,
                                         @NotNull List<InlineChunk> words2,
@@ -482,7 +482,7 @@ public class ByWord {
 
     @NotNull private final List<Range> myChanges;
 
-    public DefaultCorrector(@NotNull DiffIterable iterable,
+    DefaultCorrector(@NotNull DiffIterable iterable,
                             @NotNull CharSequence text1,
                             @NotNull CharSequence text2,
                             @NotNull ProgressIndicator indicator) {
@@ -524,7 +524,7 @@ public class ByWord {
 
     @NotNull private final List<MergeRange> myChanges;
 
-    public MergeDefaultCorrector(@NotNull List<MergeRange> iterable,
+    MergeDefaultCorrector(@NotNull List<MergeRange> iterable,
                                  @NotNull CharSequence text1,
                                  @NotNull CharSequence text2,
                                  @NotNull CharSequence text3,
@@ -569,7 +569,7 @@ public class ByWord {
 
     @NotNull private final List<Range> myChanges;
 
-    public IgnoreSpacesCorrector(@NotNull DiffIterable iterable,
+    IgnoreSpacesCorrector(@NotNull DiffIterable iterable,
                                  @NotNull CharSequence text1,
                                  @NotNull CharSequence text2,
                                  @NotNull ProgressIndicator indicator) {
@@ -607,7 +607,7 @@ public class ByWord {
 
     @NotNull private final List<MergeRange> myChanges;
 
-    public MergeIgnoreSpacesCorrector(@NotNull List<MergeRange> iterable,
+    MergeIgnoreSpacesCorrector(@NotNull List<MergeRange> iterable,
                                       @NotNull CharSequence text1,
                                       @NotNull CharSequence text2,
                                       @NotNull CharSequence text3,
@@ -645,7 +645,7 @@ public class ByWord {
 
     @NotNull private final List<Range> myChanges;
 
-    public TrimSpacesCorrector(@NotNull DiffIterable iterable,
+    TrimSpacesCorrector(@NotNull DiffIterable iterable,
                                @NotNull CharSequence text1,
                                @NotNull CharSequence text2,
                                @NotNull ProgressIndicator indicator) {
@@ -699,7 +699,7 @@ public class ByWord {
 
     @NotNull private final List<MergeRange> myChanges;
 
-    public MergeTrimSpacesCorrector(@NotNull List<MergeRange> iterable,
+    MergeTrimSpacesCorrector(@NotNull List<MergeRange> iterable,
                                     @NotNull CharSequence text1,
                                     @NotNull CharSequence text2,
                                     @NotNull CharSequence text3,
@@ -850,7 +850,7 @@ public class ByWord {
     private final int myOffset2;
     private final int myHash;
 
-    public WordChunk(@NotNull CharSequence text, int offset1, int offset2, int hash) {
+    WordChunk(@NotNull CharSequence text, int offset1, int offset2, int hash) {
       myText = text;
       myOffset1 = offset1;
       myOffset2 = offset2;
@@ -893,7 +893,7 @@ public class ByWord {
   static class NewlineChunk implements InlineChunk {
     private final int myOffset;
 
-    public NewlineChunk(int offset) {
+    NewlineChunk(int offset) {
       myOffset = offset;
     }
 

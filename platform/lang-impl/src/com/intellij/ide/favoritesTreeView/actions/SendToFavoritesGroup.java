@@ -61,7 +61,7 @@ public class SendToFavoritesGroup extends ActionGroup implements DumbAware {
   }
 
   private static class SendToNewFavoritesListAction extends AnAction {
-    public SendToNewFavoritesListAction() {
+    SendToNewFavoritesListAction() {
       super(IdeBundle.message("action.send.to.new.favorites.list"));
     }
 

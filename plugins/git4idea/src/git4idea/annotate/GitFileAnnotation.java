@@ -17,6 +17,7 @@ package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
@@ -201,7 +202,7 @@ public class GitFileAnnotation extends FileAnnotation {
    * Revision annotation aspect implementation
    */
   private abstract class GitAnnotationAspect extends LineAnnotationAspectAdapter {
-    public GitAnnotationAspect(String id, boolean showByDefault) {
+    GitAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);
     }
 
@@ -237,7 +238,7 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
 
-    public LineInfo(@NotNull Project project,
+    LineInfo(@NotNull Project project,
                     @NotNull GitRevisionNumber revision,
                     @NotNull FilePath path,
                     @NotNull Date committerDate,
@@ -409,5 +410,23 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     return () -> orderedRevisions;
+  }
+
+  /**
+   * Ignore `myFile.isInLocalFileSystem()` check, as we do in {@link GitAnnotationAspect#showAffectedPaths},
+   * ({@link ShowAllAffectedGenericAction#showSubmittedFiles} delegates to the same {@link CommittedChangesProvider#getOneList} call)
+   */
+  @Nullable
+  @Override
+  public RevisionChangesProvider getRevisionsChangesProvider() {
+    CommittedChangesProvider<?, ?> changesProvider = myVcs.getCommittedChangesProvider();
+    assert changesProvider != null;
+
+    return (lineNumber) -> {
+      LineInfo lineInfo = getLineInfo(lineNumber);
+      if (lineInfo == null) return null;
+
+      return changesProvider.getOneList(myFile, lineInfo.getRevisionNumber());
+    };
   }
 }

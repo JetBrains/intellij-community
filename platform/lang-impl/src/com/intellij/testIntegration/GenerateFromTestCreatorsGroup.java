@@ -39,7 +39,7 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
         public void update(@NotNull AnActionEvent e) {
           String text = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getPresentableText() : null;
           Presentation presentation = e.getPresentation();
-          presentation.setText(ObjectUtils.notNull(text, "New Test..."));
+          presentation.setText(ObjectUtils.notNull(text, "Test..."));
           presentation.setEnabledAndVisible(creator.isAvailable(project, editor, file));
         }
 

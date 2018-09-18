@@ -209,7 +209,7 @@ public abstract class OrderPanel<T> extends JPanel {
   private class MyTableModel extends DefaultTableModel {
     private final boolean myShowCheckboxes;
 
-    public MyTableModel(boolean showCheckboxes) {
+    MyTableModel(boolean showCheckboxes) {
       myShowCheckboxes = showCheckboxes;
     }
 

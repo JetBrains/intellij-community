@@ -133,6 +133,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     });
   }
 
+  @NotNull
   @Override
   public RootNode getRootElement() {
     return myRoot;

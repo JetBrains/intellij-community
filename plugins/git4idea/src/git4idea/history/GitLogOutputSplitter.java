@@ -41,7 +41,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   @NotNull private final StringBuilder myErrors = new StringBuilder();
   @Nullable private VcsException myException = null;
 
-  public GitLogOutputSplitter(@NotNull GitLineHandler handler,
+  GitLogOutputSplitter(@NotNull GitLineHandler handler,
                               @NotNull GitLogParser parser,
                               @NotNull Consumer<GitLogRecord> recordConsumer) {
     myHandler = handler;

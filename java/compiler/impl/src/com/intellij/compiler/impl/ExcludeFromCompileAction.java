@@ -39,7 +39,7 @@ class ExcludeFromCompileAction extends AnAction {
   private final Project myProject;
   private final NewErrorTreeViewPanel myErrorTreeView;
 
-  public ExcludeFromCompileAction(Project project, NewErrorTreeViewPanel errorTreeView) {
+  ExcludeFromCompileAction(Project project, NewErrorTreeViewPanel errorTreeView) {
     super(CompilerBundle.message("actions.exclude.from.compile.text"));
     myProject = project;
     myErrorTreeView = errorTreeView;

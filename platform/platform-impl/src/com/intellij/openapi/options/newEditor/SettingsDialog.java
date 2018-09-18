@@ -118,6 +118,13 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return myEditor;
   }
 
+  @SuppressWarnings("unused") // used in Rider
+  protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
+    if (myEditor instanceof SettingsEditor) {
+      ((SettingsEditor) myEditor).addOptionsListener(colleague);
+    }
+  }
+
   @NotNull
   @Override
   protected Action[] createActions() {

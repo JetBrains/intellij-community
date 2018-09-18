@@ -51,7 +51,7 @@ public class MigrationDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     class MyTextArea extends JTextArea {
-      public MyTextArea(String s, int a, int b) {
+      MyTextArea(String s, int a, int b) {
         super(s, a, b);
         setFocusable(false);
       }

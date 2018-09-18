@@ -43,11 +43,13 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -110,8 +112,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
     StructureTreeModel structureTreeModel = new StructureTreeModel(structure, TodoTreeBuilder.MyComparator.ourInstance);
-    AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, true, myProject);
+    AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, myProject);
     myTree.setModel(asyncTreeModel);
+    asyncTreeModel.addTreeModelListener(new MyExpandListener(todoTreeBuilder));
     todoTreeBuilder.setModel(structureTreeModel);
     Object selectableElement = structure.getFirstSelectableElement();
     if (selectableElement != null) {
@@ -120,6 +123,32 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     return todoTreeBuilder;
   }
 
+  private class MyExpandListener extends TreeModelAdapter {
+
+    private final TodoTreeBuilder myBuilder;
+
+    MyExpandListener(TodoTreeBuilder builder) {
+      myBuilder = builder;
+    }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) {
+      TreePath parentPath = e.getTreePath();
+      if (parentPath == null || parentPath.getPathCount() > 2) return;
+      Object[] children = e.getChildren();
+      for (Object o : children) {
+        NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
+        if (descriptor != null && myBuilder.isAutoExpandNode(descriptor)) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myTree.isVisible(parentPath) && myTree.isExpanded(parentPath)) {
+              myTree.expandPath(parentPath.pathByAddingChild(o));
+            }
+          }, myBuilder.myProject.getDisposed());
+        }
+      }
+    }
+  }
+  
   protected abstract TodoTreeBuilder createTreeBuilder(JTree tree, Project project);
 
   private void initUI() {

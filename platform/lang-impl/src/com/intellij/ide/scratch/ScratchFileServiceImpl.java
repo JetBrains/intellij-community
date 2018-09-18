@@ -191,6 +191,9 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   public static class TypeFactory extends FileTypeFactory {
+    /** @noinspection unused*/
+    public TypeFactory(ScratchFileService service) {
+    }
 
     @Override
     public void createFileTypes(@NotNull FileTypeConsumer consumer) {

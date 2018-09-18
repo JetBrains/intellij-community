@@ -43,7 +43,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
   private final Project myProject;
   private final LibraryType myLibraryType;
 
-  public NewLibraryChooser(final Project project,
+  NewLibraryChooser(final Project project,
                            final ModifiableRootModel rootModel,
                            LibraryType libraryType, StructureConfigurableContext context, final JComponent parentComponent) {
     myRootModel = rootModel;

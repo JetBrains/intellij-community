@@ -68,7 +68,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
   }
 
   private static class PyParameterColumn extends NameColumn<PyParameterInfo, PyParameterTableModelItem> {
-    public PyParameterColumn(Project project) {
+    PyParameterColumn(Project project) {
       super(project);
     }
   }
@@ -112,7 +112,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
 
   private static class MyCodeFragmentTableCellRenderer extends CodeFragmentTableCellRenderer {
 
-    public MyCodeFragmentTableCellRenderer(Project project) {
+    MyCodeFragmentTableCellRenderer(Project project) {
       super(project);
     }
     @Override
@@ -136,7 +136,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     protected EditorTextField myEditorTextField;
     private final Set<DocumentListener> myListeners = new HashSet<>();
 
-    public MyCodeFragmentTableCellEditor(Project project) {
+    MyCodeFragmentTableCellEditor(Project project) {
       myProject = project;
       myFileType = PythonFileType.INSTANCE;
     }

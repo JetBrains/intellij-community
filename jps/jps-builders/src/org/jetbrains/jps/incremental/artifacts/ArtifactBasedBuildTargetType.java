@@ -54,7 +54,7 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
   private class Loader extends BuildTargetLoader<T> {
     private final Map<String, JpsArtifact> myArtifacts;
 
-    public Loader(JpsModel model) {
+    Loader(JpsModel model) {
       myArtifacts = new HashMap<>();
       for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(model, true)) {
         myArtifacts.put(artifact.getName(), artifact);

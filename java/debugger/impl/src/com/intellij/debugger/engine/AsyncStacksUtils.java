@@ -196,7 +196,7 @@ public class AsyncStacksUtils {
     final String myClass;
     final String myMethod;
 
-    public ProcessStackFrameItem(Location location, String aClass, String method) {
+    ProcessStackFrameItem(Location location, String aClass, String method) {
       super(location, null);
       myClass = aClass;
       myMethod = method;

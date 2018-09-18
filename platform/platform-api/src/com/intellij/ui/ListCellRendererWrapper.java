@@ -96,12 +96,10 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
   public static Component createSeparator(@Nullable String text) {
     final TitledSeparator separator = new TitledSeparator(text);
     separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
-    if (!UIUtil.isUnderGTKLookAndFeel()) {
-      separator.setOpaque(false);
-      separator.setBackground(UIUtil.TRANSPARENT_COLOR);
-      separator.getLabel().setOpaque(false);
-      separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
+    separator.setOpaque(false);
+    separator.setBackground(UIUtil.TRANSPARENT_COLOR);
+    separator.getLabel().setOpaque(false);
+    separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
     return separator;
   }
 

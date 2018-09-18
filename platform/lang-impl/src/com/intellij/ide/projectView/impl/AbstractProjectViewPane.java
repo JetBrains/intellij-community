@@ -44,7 +44,6 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -288,9 +287,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (paths == null) return Collections.emptyList();
     final ArrayList<T> result = new ArrayList<>();
     for (TreePath path : paths) {
-      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (userObject != null && ReflectionUtil.isAssignable(nodeClass, userObject.getClass())) {
-        result.add((T)userObject);
+      T userObject = TreeUtil.getLastUserObject(nodeClass, path);
+      if (userObject != null) {
+        result.add(userObject);
       }
     }
     return result;
@@ -334,9 +333,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
-    TreePath path = getSelectedPath();
-    Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
-    return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
+    return TreeUtil.getLastUserObject(NodeDescriptor.class, getSelectedPath());
   }
 
   /**
@@ -797,7 +794,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @TestOnly
   @Deprecated
   @NotNull
-  public Promise<TreePath> promisePathToElement(Object element) {
+  public Promise<TreePath> promisePathToElement(@NotNull Object element) {
     AbstractTreeBuilder builder = getTreeBuilder();
     if (builder != null) {
       DefaultMutableTreeNode node = builder.getNodeForElement(element);
@@ -819,7 +816,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
-  public static TreeVisitor createVisitor(Object object) {
+  public static TreeVisitor createVisitor(@NotNull Object object) {
     if (object instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)object;
       object = node.getValue();

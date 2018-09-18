@@ -5,21 +5,11 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class WrapWithMutableCollectionFixTest extends LightQuickFixParameterizedTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
-    }
-  };
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
@@ -29,12 +19,8 @@ public class WrapWithMutableCollectionFixTest extends LightQuickFixParameterized
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return LightCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
   }
-
-  public void test() {
-     doAllTests();
-   }
 
   @Override
   protected String getBasePath() {

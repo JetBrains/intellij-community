@@ -61,6 +61,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       if (selected) {
         setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
       }
+      else {
+        setBackground(null);
+      }
     }
     else if (selected) {
       setPaintFocusBorder(true);
@@ -84,11 +87,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      super.setOpaque(false);  // avoid nasty background
-      super.setIconOpaque(false);
-    }
-    else if (WideSelectionTreeUI.isWideSelection(tree)) {
+    if (WideSelectionTreeUI.isWideSelection(tree)) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }

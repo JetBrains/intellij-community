@@ -267,11 +267,11 @@ public class PluginManager extends PluginManagerCore {
   private static class StartupAbortedException extends RuntimeException {
     private int exitCode = Main.STARTUP_EXCEPTION;
 
-    public StartupAbortedException(Throwable cause) {
+    StartupAbortedException(Throwable cause) {
       super(cause);
     }
 
-    public StartupAbortedException(String message, Throwable cause) {
+    StartupAbortedException(String message, Throwable cause) {
       super(message, cause);
     }
 

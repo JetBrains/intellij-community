@@ -3,20 +3,20 @@ package com.siyeh.igtest.controlflow.unnecessary_continue;
 public class UnnecessaryContinue {
     public UnnecessaryContinue() {
         for (; ;) {
-        continue;
+        <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
         }
     }
 
     public void foo() {
         while (true)
-            continue;
+            <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
     }
 
     public void foo2() {
         while (true)
             if (true)
             {
-                continue;
+                <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
             }
     }
 

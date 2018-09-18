@@ -26,7 +26,7 @@ class AtomicConstructorConversionDescriptor extends ArrayInitializerAwareConvers
   @NotNull
   private final AtomicConversionType myType;
 
-  public AtomicConstructorConversionDescriptor(String stringToReplace,
+  AtomicConstructorConversionDescriptor(String stringToReplace,
                                                String replaceByString,
                                                PsiExpression expression,
                                                @NotNull AtomicConversionType type) {

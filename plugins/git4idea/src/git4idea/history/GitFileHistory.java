@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.commands.Git;
@@ -258,7 +259,7 @@ public class GitFileHistory {
     @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
+    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
                                 @NotNull Consumer<VcsException> exceptionConsumer) {
       myExceptionConsumer = exceptionConsumer;
       myRevisionConsumer = revisionConsumer;
@@ -279,12 +280,12 @@ public class GitFileHistory {
 
       try {
         myRevisionConsumer.consume(createGitFileRevision(record));
-        List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
+        List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
         if (statusInfos.isEmpty()) {
           // can safely be empty, for example, for simple merge commits that don't change anything.
           return;
         }
-        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
+        if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
           mySkipFurtherOutput.set(true);
         }
       }
