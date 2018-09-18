@@ -36,7 +36,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -246,13 +245,19 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       Collection<HighlightInfo> infos = doHighlighting();
 
       String text = myEditor.getDocument().getText();
-      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
-      data.checkResult(infos, text);
+      doCheckResult(data, infos, text);
       return infos;
     }
     finally {
       PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
     }
+  }
+
+  protected void doCheckResult(@NotNull ExpectedHighlightingData data,
+                             Collection<HighlightInfo> infos,
+                             String text) {
+    data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
+    data.checkResult(infos, text);
   }
 
   @Override
