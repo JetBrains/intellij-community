@@ -136,12 +136,12 @@ def overrides(method):
 TIMEOUT = 20
 
 
-def wait_for_condition(condition, msg=None):
+def wait_for_condition(condition, msg=None, timeout=TIMEOUT, sleep=.05):
     curtime = time.time()
     while True:
         if condition():
             break
-        if time.time() - curtime > TIMEOUT:
+        if time.time() - curtime > timeout:
             error_msg = 'Condition not reached in %s seconds'
             if msg is not None:
                 error_msg += '\n'
@@ -151,7 +151,7 @@ def wait_for_condition(condition, msg=None):
                     error_msg += str(msg)
 
             raise AssertionError(error_msg)
-        time.sleep(.05)
+        time.sleep(sleep)
 
 
 #=======================================================================================================================
@@ -477,6 +477,7 @@ class AbstractWriterThread(threading.Thread):
                 'An event executor terminated with non-empty task',
                 'java.lang.UnsupportedOperationException',
                 "RuntimeWarning: Parent module '_pydevd_bundle' not found while handling absolute import",
+                'from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames',
                 ):
                 if expected in line:
                     return True
@@ -697,7 +698,7 @@ class AbstractWriterThread(threading.Thread):
                     if v not in all_found:
                         missing.append(v)
                 raise ValueError('Not Found:\n%s\nNot found messages: %s\nFound messages: %s\nExpected messages: %s\nIgnored messages:\n%s' % (
-                    '\n'.join(missing), len(missing), len(all_found), len(expected_vars), '\n'.join(ignored)))
+                    '\n'.join(str(x) for x in missing), len(missing), len(all_found), len(expected_vars), '\n'.join(str(x) for x in ignored)))
 
             was_message_used = False
             new_expected = []
