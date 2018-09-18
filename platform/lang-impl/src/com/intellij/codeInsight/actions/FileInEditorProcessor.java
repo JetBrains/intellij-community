@@ -78,7 +78,7 @@ public class FileInEditorProcessor {
     myProject = file.getProject();
     myEditor = editor;
 
-    myShouldCleanupCode = runOptions.isApplyCodeCleanup();
+    myShouldCleanupCode = runOptions.isCodeCleanup();
     myShouldOptimizeImports = runOptions.isOptimizeImports();
     myShouldRearrangeCode = runOptions.isRearrangeCode();
     myProcessSelectedText = myEditor != null && runOptions.getTextRangeType() == SELECTED_TEXT;

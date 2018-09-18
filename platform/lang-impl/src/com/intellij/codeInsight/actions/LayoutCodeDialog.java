@@ -163,7 +163,7 @@ public class LayoutCodeDialog extends DialogWrapper {
       }
 
       @Override
-      public boolean isApplyCodeCleanup() {
+      public boolean isCodeCleanup() {
         return myApplyCodeCleanup.isEnabled() && myApplyCodeCleanup.isSelected();
       }
     };

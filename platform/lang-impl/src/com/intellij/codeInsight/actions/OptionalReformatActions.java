@@ -24,7 +24,7 @@ public interface OptionalReformatActions {
   /**
    * @return true if it is required to apply code cleanup inspections' fixes
    */
-  default boolean isApplyCodeCleanup() {
+  default boolean isCodeCleanup() {
     return false;
   }
 
