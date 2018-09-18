@@ -189,7 +189,7 @@ class LibraryLicensesListGenerator {
 
     List<String> withoutLicenses = []
     libraries.each { JpsLibrary lib ->
-      def name = getLibraryName(lib)
+      def name = getLibraryNames(lib).get(0)
       if (!libWithLicenses.contains(name)) {
         withoutLicenses << "$name (used in module ${lib2Module[lib].name})".toString()
       }
