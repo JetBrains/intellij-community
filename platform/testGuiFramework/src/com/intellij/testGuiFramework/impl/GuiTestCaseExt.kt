@@ -101,11 +101,12 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
  * before using this test
  * @param expectedItem - expected exact item
  * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * @param predicate - searcher rule, how to compare an item and name. By default they are compared by equality
  * */
-fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
+fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
   }
 }
 
