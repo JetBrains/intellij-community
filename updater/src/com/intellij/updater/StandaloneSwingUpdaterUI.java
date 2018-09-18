@@ -84,6 +84,11 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   }
 
   @Override
+  public void setDescription(String text) {
+    invokeLater(() -> myProcessTitle.setText(text.isEmpty() ? " " : text));
+  }
+
+  @Override
   public void startProcess(String title) {
     invokeLater(() -> {
       myProcessStatus.setText(title);
