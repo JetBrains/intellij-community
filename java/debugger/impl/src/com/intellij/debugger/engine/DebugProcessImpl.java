@@ -861,6 +861,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return cause.getCause().getLocalizedMessage();
       }
     }
+    else if (cause instanceof IllegalStateException) {
+      return cause.getLocalizedMessage();
+    }
 
     String message;
     final StringBuilder buf = new StringBuilder();
