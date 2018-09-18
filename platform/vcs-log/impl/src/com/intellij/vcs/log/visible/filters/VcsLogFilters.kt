@@ -2,15 +2,16 @@
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.OpenTHashSet
-import com.intellij.vcs.log.VcsLogFilter
-import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
-import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import gnu.trove.TObjectHashingStrategy
+import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -34,6 +35,76 @@ object VcsLogFilterObject {
     if (patterns.isEmpty()) return fromPattern("", false, isMatchCase)
     if (patterns.size == 1) return fromPattern(patterns.single(), false, isMatchCase)
     return VcsLogMultiplePatternsTextFilter(patterns, isMatchCase)
+  }
+
+  @JvmStatic
+  fun fromBranch(branchName: String): VcsLogBranchFilter {
+    return object : VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList()) {}
+  }
+
+  @JvmStatic
+  fun fromBranchPatterns(strings: Collection<String>, existingBranches: Set<String>): VcsLogBranchFilter {
+    val branchNames = ArrayList<String>()
+    val excludedBranches = ArrayList<String>()
+    val patterns = ArrayList<Pattern>()
+    val excludedPatterns = ArrayList<Pattern>()
+
+    for (s in strings) {
+      val isExcluded = s.startsWith("-")
+      val string = if (isExcluded) s.substring(1) else s
+      val isRegexp = !existingBranches.contains(string)
+
+      if (isRegexp) {
+        try {
+          val pattern = Pattern.compile(string)
+          if (isExcluded) {
+            excludedPatterns.add(pattern)
+          }
+          else {
+            patterns.add(pattern)
+          }
+        }
+        catch (e: PatternSyntaxException) {
+          LOG.warn("Pattern $string is not a proper regular expression and no branch can be found with that name.", e)
+          if (isExcluded) {
+            excludedBranches.add(string)
+          }
+          else {
+            branchNames.add(string)
+          }
+        }
+
+      }
+      else {
+        if (isExcluded) {
+          excludedBranches.add(string)
+        }
+        else {
+          branchNames.add(string)
+        }
+      }
+    }
+
+    return object : VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns) {}
+  }
+
+  @JvmStatic
+  fun fromCommit(commit: CommitId): VcsLogRevisionFilter {
+    return VcsLogRevisionFilterImpl(listOf(commit))
+  }
+
+  @JvmStatic
+  fun fromHash(text: String): VcsLogHashFilter? {
+    val hashes = mutableListOf<String>()
+    for (word in StringUtil.split(text, " ")) {
+      if (!word.matches("[a-fA-F0-9]{7,}".toRegex())) {
+        return null
+      }
+      hashes.add(word)
+    }
+    if (hashes.isEmpty()) return null
+
+    return VcsLogHashFilterImpl(hashes)
   }
 }
 

@@ -15,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.CompressedRefs
 import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
@@ -27,7 +26,6 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.visible.filters.VcsLogRevisionFilterImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.CommitCountStage
@@ -35,6 +33,7 @@ import com.intellij.vcs.log.visible.VcsLogFilterer
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.createFilterCollection
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
@@ -233,8 +232,8 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
       val revisionFilter = when {
         showAllBranches -> null
-        revision != null -> VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
-        else -> VcsLogBranchFilterImpl.fromBranch("HEAD")
+        revision != null -> VcsLogFilterObject.fromCommit(CommitId(revision, root))
+        else -> VcsLogFilterObject.fromBranch("HEAD")
       }
       return createFilterCollection(fileFilter, revisionFilter)
     }

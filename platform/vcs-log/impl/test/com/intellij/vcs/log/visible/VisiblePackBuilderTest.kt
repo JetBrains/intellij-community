@@ -15,6 +15,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl
 import com.intellij.vcs.log.visible.filters.createFilterCollection
 import org.junit.Test
@@ -71,7 +72,7 @@ class VisiblePackBuilderTest {
       3(4)
       4()
     }
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master"))))
+    val visiblePack = graph.build(filters(VcsLogFilterObject.fromBranchPatterns(setOf("-master"), setOf("master"))))
     val visibleGraph = visiblePack.visibleGraph
     assertEquals(3, visibleGraph.visibleCommitCount)
     assertDoesNotContain(visibleGraph, 1)
@@ -96,7 +97,7 @@ class VisiblePackBuilderTest {
     }
 
     graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master")), userFilter(DEFAULT_USER)))
+    val visiblePack = graph.build(filters(VcsLogFilterObject.fromBranchPatterns(setOf("-master"), setOf("master")), userFilter(DEFAULT_USER)))
     val visibleGraph = visiblePack.visibleGraph
     assertEquals(3, visibleGraph.visibleCommitCount)
     assertDoesNotContain(visibleGraph, 1)
@@ -170,8 +171,8 @@ class VisiblePackBuilderTest {
 
   fun filters(branch: List<String>? = null, user: VcsUser? = null) = createFilterCollection(branchFilter(branch), userFilter(user))
 
-  fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
-    return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null
+  fun branchFilter(branch: List<String>?): VcsLogBranchFilter? {
+    return if (branch != null) VcsLogFilterObject.fromBranchPatterns(branch, branch.toHashSet()) else null
   }
 
   fun userFilter(user: VcsUser?): VcsLogUserFilter? {

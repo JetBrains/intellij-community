@@ -21,7 +21,6 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
@@ -46,8 +45,6 @@ import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterC
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
-
-  private static final String HASH_PATTERN = "[a-fA-F0-9]{7,}";
   private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
 
   @NotNull private final VcsLogUiImpl myUi;
@@ -148,23 +145,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     VcsLogTextFilter textFilter = VcsLogFilterObject.fromPattern(text, isRegexAllowed, matchesCase);
-    VcsLogHashFilterImpl hashFilter = createHashFilter(text);
+    VcsLogHashFilter hashFilter = VcsLogFilterObject.fromHash(text);
     return Pair.create(textFilter, hashFilter);
-  }
-
-  @Nullable
-  private static VcsLogHashFilterImpl createHashFilter(@NotNull String text) {
-    List<String> hashes = ContainerUtil.newArrayList();
-    for (String word : StringUtil.split(text, " ")) {
-      if (!word.matches(HASH_PATTERN)) {
-        return null;
-      }
-      hashes.add(word);
-    }
-    if (hashes.isEmpty()) {
-      return null;
-    }
-    return new VcsLogHashFilterImpl(hashes);
   }
 
   /**
@@ -236,8 +218,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected VcsLogBranchFilter createFilter(@NotNull List<String> values) {
-      return VcsLogBranchFilterImpl
-        .fromTextPresentation(values, ContainerUtil.map2Set(getDataPack().getRefs().getBranches(), VcsRef::getName));
+      return VcsLogFilterObject.fromBranchPatterns(values,
+                                                   ContainerUtil.map2Set(getDataPack().getRefs().getBranches(), VcsRef::getName));
     }
 
     @NotNull

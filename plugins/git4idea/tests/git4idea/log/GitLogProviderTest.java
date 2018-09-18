@@ -9,7 +9,6 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
@@ -140,7 +139,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_filter_by_branch() throws Exception {
     List<String> hashes = generateHistoryForFilters(true, false);
-    VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
+    VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("feature");
     repo.update();
     List<String> actualHashes = getFilteredHashes(createFilterCollection(branchFilter));
     assertEquals(hashes, actualHashes);
@@ -148,7 +147,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_filter_by_branch_and_user() throws Exception {
     List<String> hashes = generateHistoryForFilters(false, false);
-    VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
+    VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("feature");
     VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
     VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
                                                            Collections.emptyMap(),

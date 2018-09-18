@@ -6,17 +6,11 @@ import com.intellij.vcs.log.VcsLogRevisionFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 
-public class VcsLogRevisionFilterImpl implements VcsLogRevisionFilter {
+class VcsLogRevisionFilterImpl implements VcsLogRevisionFilter {
   @NotNull private final Collection<CommitId> myHeads;
 
-  public VcsLogRevisionFilterImpl(@NotNull Collection<CommitId> heads) {myHeads = heads;}
-
-  @NotNull
-  public static VcsLogRevisionFilterImpl fromCommit(@NotNull CommitId commit) {
-    return new VcsLogRevisionFilterImpl(Collections.singletonList(commit));
-  }
+  VcsLogRevisionFilterImpl(@NotNull Collection<CommitId> heads) {myHeads = heads;}
 
   @NotNull
   @Override
