@@ -33,10 +33,6 @@ open class GuiTestCaseExt : GuiTestCase() {
   @JvmField
   val logActionsDuringTest = LogActionsDuringTest()
 
-  @get:Rule
-  val testRootPath: TemporaryFolder by lazy {
-    TemporaryFolder()
-  }
   val projectFolder: String by lazy {
     testRootPath.newFolder(testMethod.methodName).canonicalPath
   }
