@@ -60,7 +60,12 @@ def install_breakpointhook():
     def custom_sitecustomize_breakpointhook(*args, **kwargs):
         import os
         hookname = os.getenv('PYTHONBREAKPOINT')
-        if hookname is not None and len(hookname) > 0 and hasattr(sys, '__breakpointhook__'):
+        if (
+               hookname is not None 
+               and len(hookname) > 0 
+               and hasattr(sys, '__breakpointhook__')
+               and sys.__breakpointhook__ != custom_sitecustomize_breakpointhook
+            ):
             sys.__breakpointhook__(*args, **kwargs)
         else:
             sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -87,6 +92,7 @@ def install_breakpointhook():
         # In older versions, breakpoint() isn't really available, so, install the hook directly
         # in the builtins.
         __builtin__.breakpoint = custom_sitecustomize_breakpointhook
+        sys.__breakpointhook__ = custom_sitecustomize_breakpointhook
 
 # Install the breakpoint hook at import time.
 install_breakpointhook()

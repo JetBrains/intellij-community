@@ -1777,13 +1777,13 @@ def _get_breakpoint_cases():
         # Check breakpoint() and sys.__breakpointhook__ replacement.
         return ('_debugger_case_breakpoint.py', '_debugger_case_breakpoint2.py')
 
-@pytest.mark.parametrize("filename", _get_breakpoint_cases())
+@pytest.mark.parametrize("filename", ('_debugger_case_breakpoint.py', '_debugger_case_breakpoint2.py'))
 def test_py_37_breakpoint(case_setup, filename):
     with case_setup.test_file(filename) as writer:
         writer.write_make_initial_run()
 
         hit = writer.wait_for_breakpoint_hit(
-            REASON_THREAD_SUSPEND, file=filename, line=3)
+            REASON_THREAD_SUSPEND, file=filename, line=2)
 
         writer.write_run_thread(hit.thread_id)
 
