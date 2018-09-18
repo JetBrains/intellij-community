@@ -4,9 +4,6 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
 public class MergeIfOrIntentionTest extends LightIntentionActionTestCase {
-
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mergeIfOr";

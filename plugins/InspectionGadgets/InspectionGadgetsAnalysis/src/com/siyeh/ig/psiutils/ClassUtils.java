@@ -142,11 +142,14 @@ public class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    String qualifiedName = aClass.getQualifiedName();
-    if (immutableTypes.contains(qualifiedName) || (qualifiedName != null && qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
-      return true;
-    }
+    if (isImmutableClass(aClass)) return true;
     return JCiPUtil.isImmutable(aClass, checkDocComment);
+  }
+
+  public static boolean isImmutableClass(@NotNull PsiClass aClass) {
+    String qualifiedName = aClass.getQualifiedName();
+    return qualifiedName != null && (immutableTypes.contains(qualifiedName) ||
+                                     qualifiedName.startsWith("com.google.common.collect.Immutable"));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1,

@@ -73,7 +73,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       if (parent instanceof UMethod || parent instanceof UClass || parent instanceof UField) {
         break;
       }
-      parent = UDeclarationKt.getContainingDeclaration(uClass);
+      parent = UDeclarationKt.getContainingDeclaration(parent);
     }
     if (parent != null) {
       RefElement refParent = getRefManager().getReference(parent.getSourcePsi());
@@ -108,7 +108,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     setAbstract(javaPsi.hasModifier(JvmModifier.ABSTRACT));
     setAnonymous(uClass.getName() == null);
 
-    setIsLocal(!(isAnonymous() || parent instanceof UClass || parent instanceof UFile));
+    setIsLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
 
     setInterface(uClass.isInterface());
 
@@ -290,6 +290,13 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
 
       RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(new UElement[0]));
+
+      for (PsiTypeParameter parameter : uClass.getJavaPsi().getTypeParameters()) {
+        UElement uTypeParameter = UastContextKt.toUElement(parameter);
+        if (uTypeParameter != null) {
+          RefJavaUtil.getInstance().addReferencesTo(uClass, this, uTypeParameter);
+        }
+      }
 
       UField[] uFields = uClass.getFields();
       for (UField uField : uFields) {

@@ -278,7 +278,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     DfaValue value = memState.pop();
     if (type instanceof PsiPrimitiveType) {
-      value = factory.getBoxedFactory().createUnboxed(value);
+      value = DfaUtil.boxUnbox(value, type);
     }
     pushExpressionResult(value, instruction, memState);
 
@@ -287,10 +287,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected void onInstructionProducesCCE(TypeCastInstruction instruction) {}
 
+  protected void beforeMethodCall(@NotNull PsiExpression expression,
+                                  @NotNull DfaCallArguments arguments,
+                                  @NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState memState) {
+
+  }
+
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
     DfaValueFactory factory = runner.getFactory();
     DfaCallArguments callArguments = popCall(instruction, factory, memState);
+
+    if (callArguments.myArguments != null && instruction.getExpression() != null) {
+      beforeMethodCall(instruction.getExpression(), callArguments, runner, memState);
+    }
 
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     finalStates.addAll(handleKnownMethods(instruction, runner, memState, callArguments));
@@ -414,7 +425,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         memState.forceVariableFact((DfaVariableValue)value, DfaFactType.MUTABILITY, Mutability.MUTABLE);
       }
     }
-    if (value instanceof DfaVariableValue && !(((DfaVariableValue)value).getVariableType() instanceof PsiArrayType)) {
+    if (value instanceof DfaVariableValue && !(value.getType() instanceof PsiArrayType)) {
       if (instruction.shouldFlushFields() || !(instruction.getResultType() instanceof PsiPrimitiveType)) {
         // For now drop locality on every qualified call except primitive returning pure calls
         // as value might escape through the return value
@@ -520,7 +531,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
-      return factory.getBoxedFactory().createUnboxed(qualifierValue);
+      return factory.getBoxedFactory().createUnboxed(qualifierValue, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
     }
 
     if (methodType == MethodCallInstruction.MethodType.BOXING) {
@@ -665,7 +676,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       isStringComparison(instruction.getExpression()) &&
+       dfaLeft != dfaRight && isComparedByEquals(instruction.getExpression()) &&
        !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
@@ -707,11 +718,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private static boolean isStringComparison(PsiExpression expression) {
+  private static boolean isComparedByEquals(PsiExpression expression) {
     if (expression instanceof PsiBinaryExpression) {
       PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (TypeUtils.isJavaLangString(left.getType()) && TypeUtils.isJavaLangString(right.getType()));
+      return right != null && (DfaUtil.isComparedByEquals(left.getType()) && DfaUtil.isComparedByEquals(right.getType()));
     }
     return false;
   }

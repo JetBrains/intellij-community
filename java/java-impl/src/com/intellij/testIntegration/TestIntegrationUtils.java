@@ -35,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.SmartList;
@@ -125,21 +126,18 @@ public class TestIntegrationUtils {
 
   public static List<MemberInfo> extractClassMethods(PsiClass clazz, boolean includeInherited) {
     List<MemberInfo> result = new ArrayList<>();
-
-    do {
-      MemberInfo.extractClassMembers(clazz, result, new MemberInfo.Filter<PsiMember>() {
+    Set<PsiClass> classes = includeInherited ? InheritanceUtil.getSuperClasses(clazz) : Collections.singleton(clazz);
+    for (PsiClass aClass : classes) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
+      MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<PsiMember>() {
         @Override
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;
-          PsiModifierList list = member.getModifierList();
-          return !list.hasModifierProperty(PsiModifier.PRIVATE);
+          if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
+          return true;
         }
       }, false);
-      clazz = clazz.getSuperClass();
     }
-    while (clazz != null
-           && clazz.getSuperClass() != null // not the Object
-           && includeInherited);
 
     return result;
   }

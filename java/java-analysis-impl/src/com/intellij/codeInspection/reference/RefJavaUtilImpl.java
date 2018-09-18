@@ -253,6 +253,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitClass(@NotNull UClass uClass) {
+                         for (UTypeReferenceExpression type : uClass.getUastSuperTypes()) {
+                           type.accept(this);
+                         }
                          RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(uClass.getSourcePsi());
                          refFrom.addReference(refClass, uClass.getSourcePsi(), decl, false, true, null);
                          return false;

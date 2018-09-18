@@ -80,6 +80,10 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
+  public void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title) {
+  }
+
+  @Override
   public void showChangesBrowser(List<CommittedChangeList> changelists) {
   }
 
@@ -151,6 +155,20 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                                        String singleFileTitle,
                                                        String singleFilePromptTemplate,
                                                        @NotNull VcsShowConfirmationOption confirmationOption) {
+    notifyListeners();
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
+                                                       String title,
+                                                       @Nullable String prompt,
+                                                       @Nullable String singleFileTitle,
+                                                       @Nullable String singleFilePromptTemplate,
+                                                       @NotNull VcsShowConfirmationOption confirmationOption,
+                                                       @Nullable String okActionName,
+                                                       @Nullable String cancelActionName) {
     notifyListeners();
     return null;
   }

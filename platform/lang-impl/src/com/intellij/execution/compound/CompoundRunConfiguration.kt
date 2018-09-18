@@ -20,7 +20,7 @@ import javax.swing.Icon
 
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
-class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
+class CompoundRunConfiguration @JvmOverloads constructor(name: String, project: Project, factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
   RunConfigurationMinimalBase(name, factory, project), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
@@ -160,7 +160,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   }
 
   override fun clone(): RunConfiguration {
-    val clone = CompoundRunConfiguration(project, name, factory)
+    val clone = CompoundRunConfiguration(name, project, factory)
     clone.unsortedConfigurations = unsortedConfigurations
     clone.sortedConfigurationsWithTargets = TreeMap(COMPARATOR)
     clone.sortedConfigurationsWithTargets.putAll(sortedConfigurationsWithTargets)

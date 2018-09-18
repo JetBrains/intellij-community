@@ -38,6 +38,7 @@ public class StubTreeNode extends SimpleNode {
     return myStub;
   }
 
+  @NotNull
   @Override
   public StubTreeNode[] getChildren() {
     return ContainerUtil.map2Array(myStub.getChildrenStubs(), StubTreeNode.class, stub -> new StubTreeNode(stub, this));

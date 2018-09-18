@@ -151,7 +151,7 @@ public class AlarmTest extends PlatformTestCase {
     alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
     alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
     assertEquals("", sb.toString());
-    alarm.flush();
+    alarm.drainRequestsInTest();
     assertEquals("12", sb.toString());
   }
 

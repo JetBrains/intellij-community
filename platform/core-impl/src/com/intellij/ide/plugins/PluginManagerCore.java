@@ -46,6 +46,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -103,7 +104,7 @@ public class PluginManagerCore {
     }
   }
 
-  private static List<Runnable> myDisablePluginListeners;
+  private static final List<Runnable> ourDisabledPluginsListeners = new CopyOnWriteArrayList<>();
 
   /**
    * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
@@ -134,6 +135,7 @@ public class PluginManagerCore {
     if (file.isFile()) {
       List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
       try {
+        boolean updateDisablePluginsList = false;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
           String id;
           while ((id = reader.readLine()) != null) {
@@ -141,11 +143,14 @@ public class PluginManagerCore {
             if (!requiredPlugins.contains(id)) {
               disabledPlugins.add(id);
             }
+            else {
+              updateDisablePluginsList = true;
+            }
           }
         }
         finally {
-          if (!requiredPlugins.isEmpty()) {
-            savePluginsList(disabledPlugins, false, new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME));
+          if (updateDisablePluginsList) {
+            savePluginsList(disabledPlugins, false, file);
             fireEditDisablePlugins();
           }
         }
@@ -215,23 +220,16 @@ public class PluginManagerCore {
   }
 
   public static void addDisablePluginListener(@NotNull Runnable listener) {
-    if (myDisablePluginListeners == null) {
-      myDisablePluginListeners = new ArrayList<>();
-    }
-    myDisablePluginListeners.add(listener);
+    ourDisabledPluginsListeners.add(listener);
   }
 
   public static void removeDisablePluginListener(@NotNull Runnable listener) {
-    if (myDisablePluginListeners != null) {
-      myDisablePluginListeners.remove(listener);
-    }
+    ourDisabledPluginsListeners.remove(listener);
   }
 
   private static void fireEditDisablePlugins() {
-    if (myDisablePluginListeners != null) {
-      for (Runnable listener : myDisablePluginListeners) {
-        listener.run();
-      }
+    for (Runnable listener : ourDisabledPluginsListeners) {
+      listener.run();
     }
   }
 

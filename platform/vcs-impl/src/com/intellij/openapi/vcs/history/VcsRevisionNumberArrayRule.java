@@ -63,8 +63,11 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
     }
 
     VcsFileRevision[] fileRevisions = VcsDataKeys.VCS_FILE_REVISIONS.getData(dataProvider);
-    if (fileRevisions != null && fileRevisions.length > 0) {
-      return ContainerUtil.mapNotNull(fileRevisions, FileRevisionToRevisionNumberFunction.INSTANCE);
+    if (fileRevisions != null) {
+      List<VcsFileRevision> revisions = ContainerUtil.filter(fileRevisions, r -> r != VcsFileRevision.NULL);
+      if (!revisions.isEmpty()) {
+        return ContainerUtil.mapNotNull(fileRevisions, FileRevisionToRevisionNumberFunction.INSTANCE);
+      }
     }
 
     return null;

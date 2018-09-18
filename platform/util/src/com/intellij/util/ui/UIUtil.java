@@ -2651,12 +2651,7 @@ public class UIUtil {
     builder.append("}\n");
 
     builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-
-    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
-    if (resource != null) {
-      builder.append("ul {list-style-image:url('").append(StringUtil.escapeCharCharacters(resource.toExternalForm())).append("');}\n");
-    }
-
+    builder.append("ul {list-style:disc; margin-left:15px;}\n");
     return builder.append("</style>").toString();
   }
 

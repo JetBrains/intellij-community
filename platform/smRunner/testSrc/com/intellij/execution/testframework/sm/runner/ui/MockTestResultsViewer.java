@@ -34,10 +34,4 @@ public class MockTestResultsViewer implements TestResultsViewer {
   public void dispose() {
     Disposer.dispose(myProperties);
   }
-
-  @Override
-  public void setShowStatisticForProxyHandler(final PropagateSelectionHandler handler) {}
-
-  @Override
-  public void showStatisticsForSelectedProxy() {}
 }

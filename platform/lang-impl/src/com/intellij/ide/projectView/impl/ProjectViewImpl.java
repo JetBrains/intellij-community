@@ -2089,7 +2089,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
       super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
-      getTemplatePresentation().setHoveredIcon(AllIcons.General.LocateHover);
     }
 
     @Override

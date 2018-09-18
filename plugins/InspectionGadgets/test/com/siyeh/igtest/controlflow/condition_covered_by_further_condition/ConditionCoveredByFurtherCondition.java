@@ -3,7 +3,6 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionCoveredByFurtherCondition {
-
     public void testInstanceOf(Object arg) {
         if (<warning descr="Condition 'arg != null' covered by subsequent condition 'arg instanceof String'">arg != null</warning> && arg instanceof String) {
             System.out.println("this should trigger a warning");
@@ -91,4 +90,56 @@ public class ConditionCoveredByFurtherCondition {
     void testNullCheck(Object o1, Object o2) {
         if(<warning descr="Condition '(o1 != null || o2 != null)' covered by subsequent condition 'o1 != o2'">(o1 != null || o2 != null)</warning> && o1 != o2) {}
     }
+
+    void testAlwaysTrue(@NotNull Object obj, Object obj2) {
+        // obj != null is true, but does not depend on the second condition, do not report it (will be reported by CC&E)
+        if(obj != null && obj2 != null) {
+
+        }
+    }
+
+    void testDereferenceNotNull(@NotNull Object obj) {
+        if(obj != null && obj.hashCode() == 10) {}
+    }
+
+    void testDereference(Object obj) {
+        if(obj != null && obj.hashCode() == 10) {}
+    }
+
+    void testIncomplete(String s) {
+        if(s != null && <error descr="Operator '!' cannot be applied to 'java.lang.String'">!s</error>) {}
+        if(<error descr="Operator '&&' cannot be applied to 'boolean', 'java.lang.String'">s != null && s</error>) {}
+    }
+
+    void testUnboxing(Integer x, Boolean b) {
+        if(x != null && x > 5) {}
+        if(b != null && b) {}
+    }
+
+    void testEnum(X x) {
+        if(<warning descr="Condition 'x != null' covered by subsequent condition 'x == X.A'">x != null</warning> && x == X.A) {}
+        if(<warning descr="Condition 'x != X.A' covered by subsequent condition 'x == X.B'">x != X.A</warning> && x == X.B) {}
+        if(<warning descr="Condition 'x == X.A' covered by subsequent condition 'x != X.C'">x == X.A</warning> || x != X.C) {}
+    }
+
+    void testDereferenceOk(int[] arr1, int[] arr2) {
+        if(<warning descr="Condition 'arr1.length == 0' covered by subsequent conditions">arr1.length == 0</warning> || arr2.length == 0 || arr1.length != arr2.length) {
+
+        }
+    }
+
+    void testErrorElement(Object obj) {
+        if(!(obj instanceof Integer) && !(obj instanceof Long) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error>Number<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {}
+        if(<warning descr="Condition '!(obj instanceof Integer)' covered by subsequent condition '!(obj instanceof Number)'">!(obj instanceof Integer)</warning> && !(obj instanceof Number) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error>Number<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {}
+    }
+
+    void testErrorElement2(char ch) {
+        if(ch != ']' && ch != <error descr="Unclosed character literal">'})</error><EOLError descr="')' expected"></EOLError>
+    }
+
+    void testInstanceOfUnknown(Object obj) {
+        if(obj instanceof <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error> || obj == null) { }
+        if((obj instanceof <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>) || obj == null) { }
+    }
 }
+enum X {A, B, C}

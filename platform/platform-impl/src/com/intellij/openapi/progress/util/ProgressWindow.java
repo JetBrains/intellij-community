@@ -359,6 +359,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   private class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
+    private long myLastUpdatedButtonTimestamp;
     @Override
     public void cancel() {
       super.cancel();
@@ -371,7 +372,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     public void checkCanceled() {
       super.checkCanceled();
       // assume checkCanceled() would be called from the correct thread
-      enableCancelButton(!ProgressManager.getInstance().isInNonCancelableSection());
+      long now = System.currentTimeMillis();
+      if (now - myLastUpdatedButtonTimestamp > 10) {
+        enableCancelButton(!ProgressManager.getInstance().isInNonCancelableSection());
+        myLastUpdatedButtonTimestamp = now;
+      }
     }
 
     @Override

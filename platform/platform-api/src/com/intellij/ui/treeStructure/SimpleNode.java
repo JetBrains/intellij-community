@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.LeafState;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
@@ -35,7 +36,7 @@ import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class SimpleNode extends PresentableNodeDescriptor implements ComparableObject {
+public abstract class SimpleNode extends PresentableNodeDescriptor implements ComparableObject, LeafState.Supplier {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
@@ -221,9 +222,10 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return -1;
   }
 
+  @NotNull
   public abstract SimpleNode[] getChildren();
 
-  public void accept(SimpleNodeVisitor visitor) {
+  public void accept(@NotNull SimpleNodeVisitor visitor) {
     visitor.accept(this);
   }
 
@@ -231,6 +233,14 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
+  }
+
+  @NotNull
+  @Override
+  public LeafState getLeafState() {
+    if (isAlwaysShowPlus()) return LeafState.NEVER;
+    if (isAlwaysLeaf()) return LeafState.ALWAYS;
+    return LeafState.DEFAULT;
   }
 
   public boolean isAlwaysShowPlus() {

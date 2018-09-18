@@ -69,7 +69,7 @@ public class AnsiEscapeDecoder {
       if (escSeqEndInd < 0) {
         if (escSeqEndInd == -1) {
           // malformed escape sequence => add ESC[
-          findEscSeqFromIndex = escSeqBeginInd + 2;
+          findEscSeqFromIndex = escSeqBeginInd + CSI.length();
         }
         else {
           unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqEndInd);

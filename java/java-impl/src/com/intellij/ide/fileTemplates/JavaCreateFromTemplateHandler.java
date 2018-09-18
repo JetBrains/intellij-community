@@ -103,11 +103,11 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
 
   @NotNull
   @Override
-  public PsiElement createFromTemplate(Project project,
-                                       PsiDirectory directory,
+  public PsiElement createFromTemplate(@NotNull Project project,
+                                       @NotNull PsiDirectory directory,
                                        String fileName,
-                                       FileTemplate template,
-                                       String templateText,
+                                       @NotNull FileTemplate template,
+                                       @NotNull String templateText,
                                        @NotNull Map<String, Object> props) throws IncorrectOperationException {
     String extension = template.getExtension();
     PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
@@ -116,7 +116,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   }
 
   @Override
-  public boolean canCreate(final PsiDirectory[] dirs) {
+  public boolean canCreate(@NotNull final PsiDirectory[] dirs) {
     for (PsiDirectory dir : dirs) {
       if (canCreate(dir)) return true;
     }
@@ -128,13 +128,14 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return false;
   }
 
+  @NotNull
   @Override
   public String getErrorMessage() {
     return IdeBundle.message("title.cannot.create.class");
   }
 
   @Override
-  public void prepareProperties(Map<String, Object> props) {
+  public void prepareProperties(@NotNull Map<String, Object> props) {
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     if (packageName == null || packageName.length() == 0) {
       props.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);

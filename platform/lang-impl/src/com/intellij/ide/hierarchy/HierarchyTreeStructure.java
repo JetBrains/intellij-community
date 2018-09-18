@@ -38,6 +38,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.tree.LeafState;
 import com.intellij.usageView.UsageViewLongNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ArrayUtil;
@@ -69,7 +70,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public final NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
+  public final NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)element;
     }
@@ -80,7 +81,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final boolean isToBuildChildrenInBackground(final Object element) {
+  public final boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor){
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       final Object[] cachedChildren = descriptor.getCachedChildren();
@@ -89,8 +90,9 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return false;
   }
 
+  @NotNull
   @Override
-  public final Object[] getChildElements(final Object element) {
+  public final Object[] getChildElements(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       Object[] cachedChildren = descriptor.getCachedChildren();
@@ -114,7 +116,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final Object getParentElement(final Object element) {
+  public final Object getParentElement(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       return ((HierarchyNodeDescriptor)element).getParentDescriptor();
     }
@@ -140,6 +142,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   @NotNull
   protected abstract Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor);
 
+  @NotNull
   @Override
   public final Object getRootElement() {
     return myRoot;
@@ -211,6 +214,14 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     public final boolean update() {
       return true;
     }
+  }
+
+  @NotNull
+  @Override
+  public LeafState getLeafState(@NotNull Object element) {
+    if (isAlwaysShowPlus()) return LeafState.NEVER;
+    LeafState state = super.getLeafState(element);
+    return state != LeafState.DEFAULT ? state : LeafState.ASYNC;
   }
 
   public boolean isAlwaysShowPlus() {

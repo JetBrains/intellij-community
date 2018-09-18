@@ -113,7 +113,7 @@ class AsyncProjectViewSupport {
       }
 
       @Override
-      protected boolean addSubtreeToUpdateByElement(PsiElement element) {
+      protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {
         VirtualFile file = PsiUtilCore.getVirtualFile(element);
         if (file != null) {
           myNodeUpdater.updateFromFile(file);

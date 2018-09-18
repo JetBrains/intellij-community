@@ -96,8 +96,6 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixParame
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantUncheckedVarargs";

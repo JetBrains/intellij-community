@@ -19,6 +19,7 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.chains.MutableDiffRequestChain;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -41,6 +42,20 @@ public abstract class CacheDiffRequestChainProcessor extends CacheDiffRequestPro
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project, requestChain);
     myRequestChain = requestChain;
+
+    if (myRequestChain instanceof MutableDiffRequestChain) {
+      ((MutableDiffRequestChain)myRequestChain).onAssigned(true);
+      ((MutableDiffRequestChain)myRequestChain).addListener(new MyChangeListener(), this);
+    }
+  }
+
+  @Override
+  protected void onDispose() {
+    if (myRequestChain instanceof MutableDiffRequestChain) {
+      ((MutableDiffRequestChain)myRequestChain).onAssigned(false);
+    }
+
+    super.onDispose();
   }
 
   //
@@ -131,5 +146,13 @@ public abstract class CacheDiffRequestChainProcessor extends CacheDiffRequestPro
         updateRequest();
       }
     });
+  }
+
+  private class MyChangeListener implements MutableDiffRequestChain.Listener {
+    @Override
+    public void onChainChange() {
+      dropCaches();
+      updateRequest(true);
+    }
   }
 }

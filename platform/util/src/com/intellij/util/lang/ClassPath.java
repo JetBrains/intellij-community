@@ -54,6 +54,7 @@ public class ClassPath {
   private final boolean myAcceptUnescapedUrls;
   final boolean myPreloadJarContents;
   final boolean myCanHavePersistentIndex;
+  final boolean myLazyClassloadingCaches;
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
@@ -66,9 +67,12 @@ public class ClassPath {
                    boolean canHavePersistentIndex,
                    @Nullable CachePoolImpl cachePool,
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
-                   boolean logErrorOnMissingJar) {
+                   boolean logErrorOnMissingJar,
+                   boolean lazyClassloadingCaches
+  ) {
+    myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
-    myCanUseCache = canUseCache;
+    myCanUseCache = canUseCache && !myLazyClassloadingCaches;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
     myPreloadJarContents = preloadJarContents;
     myCachePool = cachePool;
@@ -208,6 +212,7 @@ public class ClassPath {
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
+          //long s2 = System.nanoTime();
           for (String referencedJar : referencedJars) {
             try {
               URI uri = new URI(referencedJar);
@@ -222,6 +227,7 @@ public class ClassPath {
               Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
             }
           }
+          //System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
         }
       }
       return loader;
@@ -429,14 +435,24 @@ public class ClassPath {
     if (time > 10000000L) {
       System.out.println(time / 1000000 + " ms for " + msg);
     }
-    if (ourTotalRequests % 1000 == 0) {
+    if (ourTotalRequests % 10000 == 0) {
       System.out.println(path + ", requests:" + ourTotalRequests + ", time:" + (ourTotalTime / 1000000) + "ms");
+    }
+  }
+  static {
+    if (ourLogTiming) {
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          System.out.println("Classloading requests:" + ourTotalRequests + ", time:" + (ourTotalTime / 1000000) + "ms");
+        }
+      });
     }
   }
 
   private static String[] loadManifestClasspath(JarLoader loader) {
     try {
-      String classPath = loader.getManifestAttributes().getValue(Attributes.Name.CLASS_PATH);
+      String classPath = loader.getClassPathManifestAttribute();
 
       if (classPath != null) {
         String[] urls = classPath.split(" ");

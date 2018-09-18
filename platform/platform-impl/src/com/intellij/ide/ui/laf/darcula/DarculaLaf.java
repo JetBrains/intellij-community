@@ -14,7 +14,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.JBUI;
@@ -380,7 +379,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
         myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
         myMnemonicAlarm.cancelAllRequests();
-        final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+        final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (focusOwner != null) {
           myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
         }

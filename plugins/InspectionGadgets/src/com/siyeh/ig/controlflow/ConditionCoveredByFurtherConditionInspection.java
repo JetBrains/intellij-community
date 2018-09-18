@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
@@ -13,20 +13,17 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -60,23 +57,28 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         .forEach(operands -> process(expression, operands, and));
     }
 
-    private static boolean isAllowed(PsiExpression expression) {
+    private boolean isAllowed(PsiExpression expression) {
       // Disallow anything which may throw or produce side effect
       return PsiTreeUtil.processElements(expression, element -> {
         if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
-            element instanceof PsiTypeCastExpression) {
+            element instanceof PsiTypeCastExpression || element instanceof PsiErrorElement) {
           return false;
         }
         if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
           return false;
         }
+        if (element instanceof PsiLiteralExpression) {
+          return HighlightUtil.checkLiteralExpressionParsingError((PsiLiteralExpression)element, PsiUtil.getLanguageLevel(myHolder.getFile()),
+                                                           myHolder.getFile()) == null;
+        }
         if (element instanceof PsiReferenceExpression) {
-          PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-          if (qualifier != null && NullabilityUtil.getExpressionNullability(qualifier) != Nullability.NOT_NULL) {
+          PsiReferenceExpression ref = (PsiReferenceExpression)element;
+          PsiType type = ref.getType();
+          PsiType expectedType = ExpectedTypeUtils.findExpectedType(ref, false);
+          if (type != null && !(type instanceof PsiPrimitiveType) && expectedType instanceof PsiPrimitiveType) {
+            // Unboxing is possible
             return false;
           }
-          PsiType type = ((PsiReferenceExpression)element).getType();
-          return !TypeConversionUtil.isPrimitiveWrapper(type);
         }
         if (element instanceof PsiPolyadicExpression) {
           PsiPolyadicExpression expr = (PsiPolyadicExpression)element;
@@ -87,7 +89,6 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
             Object divisor = ExpressionUtils.computeConstantExpression(operands[1]);
             if ((!(divisor instanceof Integer) && !(divisor instanceof Long)) || ((Number)divisor).longValue() == 0) return false;
           }
-          return true;
         }
         return true;
       });
@@ -114,23 +115,17 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     private static List<PsiExpression> minimizeDependencies(PsiPolyadicExpression context,
                                                             PsiExpression operand,
                                                             boolean and, List<PsiExpression> dependencies) {
-      // This implementation tries to remove some dependencies from the start and the end,
-      // so we have at most linear number of getRedundantOperandIndices calls
-      int start = 0;
-      int end = dependencies.size();
-      for (; start < end; end--) {
-        List<PsiExpression> minimized = StreamEx.of(dependencies.subList(start, end - 1)).prepend(operand).toList();
-        if (ArrayUtil.indexOf(getRedundantOperandIndices(context, minimized, and), 0) == -1) {
-          break;
+      if (dependencies.isEmpty() || getRedundantOperandIndices(context, Collections.singletonList(operand), and).length != 0) {
+        // Does not actually depend on dependencies
+        return Collections.emptyList();
+      }
+      if (dependencies.size() == 1) return dependencies;
+      for (PsiExpression dependency : dependencies) {
+        if (ArrayUtil.indexOf(getRedundantOperandIndices(context, Arrays.asList(operand, dependency), and), 0) != -1) {
+          return Collections.singletonList(dependency);
         }
       }
-      for (; start < end; start++) {
-        List<PsiExpression> minimized = StreamEx.of(dependencies.subList(start + 1, end)).prepend(operand).toList();
-        if (ArrayUtil.indexOf(getRedundantOperandIndices(context, minimized, and), 0) == -1) {
-          break;
-        }
-      }
-      return dependencies.subList(start, end);
+      return dependencies;
     }
 
     private static int[] getRedundantOperandIndices(PsiPolyadicExpression context, List<PsiExpression> operands, boolean and) {
@@ -141,7 +136,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       if (operands.size() == 1) {
         expressionToAnalyze = operands.get(0);
         reversedOperands = operands;
-        isOperand = Predicate.isEqual(expressionToAnalyze);
+        isOperand = Predicate.isEqual(PsiUtil.skipParenthesizedExprDown(expressionToAnalyze));
       }
       else {
         expressionToAnalyze = JavaPsiFacade.getElementFactory(context.getProject())
@@ -152,6 +147,13 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       DataFlowRunner runner = new StandardDataFlowRunner(false, context);
       Map<PsiExpression, ThreeState> values = new HashMap<>();
       StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
+        @Override
+        protected boolean checkNotNullable(DfaMemoryState state,
+                                           DfaValue value,
+                                           @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+          return true;
+        }
+
         @Override
         protected void beforeExpressionPush(@NotNull DfaValue value,
                                             @NotNull PsiExpression expression,

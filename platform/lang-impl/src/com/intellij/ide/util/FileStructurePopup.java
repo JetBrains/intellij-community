@@ -157,7 +157,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
 
       @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
+      public boolean isToBuildChildrenInBackground(@NotNull Object element) {
         return getRootElement() == element;
       }
 

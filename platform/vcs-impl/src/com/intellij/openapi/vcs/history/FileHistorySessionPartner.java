@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -82,7 +84,10 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
       comp instanceof FileHistoryContentPanel &&
       sameHistories(((FileHistoryContentPanel)comp).getPath(), ((FileHistoryContentPanel)comp).getRevision(), path,
                     startingRevisionNumber));
-    return component == null ? null : VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData((DataProvider)component);
+    if (component == null) return null;
+    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(component);
+    if (dataProvider == null) return null;
+    return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataProvider);
   }
 
   @CalledInBackground
@@ -175,6 +180,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
         myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider,
                                                       myRefresher, false);
         add(myFileHistoryPanel, BorderLayout.CENTER);
+        DataManager.registerDataProvider(this, myFileHistoryPanel);
         Disposer.register(FileHistorySessionPartner.this, myFileHistoryPanel);
       }
       else if (!session.getRevisionList().isEmpty()) {

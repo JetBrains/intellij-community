@@ -193,6 +193,7 @@ abstract class TerminalOperation extends Operation {
         fn = FunctionHelper.create(collectorArgs[0], 0);
         return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
       case "collectingAndThen": {
+        if (collectorArgs.length != 2) return null;
         PsiExpression collectorCall = collectorArgs[0];
         PsiType downstreamResultType = PsiUtil.substituteTypeParameter(collectorCall.getType(), "java.util.stream.Collector", 2, false);
         if (downstreamResultType == null) return null;

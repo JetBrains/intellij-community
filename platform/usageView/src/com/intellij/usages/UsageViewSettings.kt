@@ -58,46 +58,46 @@ open class UsageViewSettings(
   internal var EXPORT_FILE_NAME by property("report.txt")
 
   @get:OptionTag("IS_EXPANDED")
-  var isExpanded: Boolean by property(false)
+  var isExpanded by property(false)
 
   @get:OptionTag("IS_AUTOSCROLL_TO_SOURCE")
-  var isAutoScrollToSource: Boolean by property(false)
+  var isAutoScrollToSource by property(false)
 
   @get:OptionTag("IS_FILTER_DUPLICATED_LINE")
-  var isFilterDuplicatedLine: Boolean by property(true)
+  var isFilterDuplicatedLine by property(true)
 
   @get:OptionTag("IS_SHOW_METHODS")
-  var isShowModules: Boolean by property(false)
+  var isShowModules by property(false)
 
   @get:OptionTag("IS_PREVIEW_USAGES")
-  var isPreviewUsages: Boolean by property(false)
+  var isPreviewUsages by property(false)
 
   @get:OptionTag("IS_REPLACE_PREVIEW_USAGES")
-  var isReplacePreviewUsages: Boolean by property(true)
+  var isReplacePreviewUsages by property(true)
 
   @get:OptionTag("IS_SORT_MEMBERS_ALPHABETICALLY")
-  var isSortAlphabetically: Boolean by property(false)
+  var isSortAlphabetically by property(false)
 
   @get:OptionTag("PREVIEW_USAGES_SPLITTER_PROPORTIONS")
   var previewUsagesSplitterProportion: Float by property(0.5f)
 
   @get:OptionTag("GROUP_BY_USAGE_TYPE")
-  var isGroupByUsageType: Boolean by property(isGroupByUsageType)
+  var isGroupByUsageType by property(isGroupByUsageType)
 
   @get:OptionTag("GROUP_BY_MODULE")
-  var isGroupByModule: Boolean by property(isGroupByModule)
+  var isGroupByModule by property(isGroupByModule)
 
   @get:OptionTag("FLATTEN_MODULES")
-  var isFlattenModules: Boolean by property(true)
+  var isFlattenModules by property(true)
 
   @get:OptionTag("GROUP_BY_PACKAGE")
-  var isGroupByPackage: Boolean by property(isGroupByPackage)
+  var isGroupByPackage by property(isGroupByPackage)
 
   @get:OptionTag("GROUP_BY_FILE_STRUCTURE")
-  var isGroupByFileStructure: Boolean by property(isGroupByFileStructure)
+  var isGroupByFileStructure by property(isGroupByFileStructure)
 
   @get:OptionTag("GROUP_BY_SCOPE")
-  var isGroupByScope: Boolean by property(isGroupByScope)
+  var isGroupByScope by property(isGroupByScope)
 
   var exportFileName: String?
     @Transient
