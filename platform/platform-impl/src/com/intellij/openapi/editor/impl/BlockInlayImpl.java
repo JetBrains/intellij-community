@@ -58,6 +58,7 @@ class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
       }
     }
     else {
+      y += myEditor.getLineHeight();
       for (Inlay inlay : allInlays) {
         if (inlay == this) break;
         y += inlay.getHeightInPixels();
