@@ -573,5 +573,7 @@
     <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
       <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
     </experimentalFeature>
+
+    <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
   </extensions>
 </idea-plugin>

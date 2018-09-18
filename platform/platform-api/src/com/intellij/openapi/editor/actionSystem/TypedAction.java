@@ -34,6 +34,12 @@ public class TypedAction {
     }
   }
 
+  private void loadRawHandlers() {
+    for (EditorTypedHandlerBean handlerBean: Extensions.getExtensions(EditorTypedHandlerBean.RAW_EP_NAME)) {
+      myRawHandler = handlerBean.getHandler(myRawHandler);
+    }
+  }
+
   private static class Handler implements TypedActionHandler {
     @Override
     public void execute(@NotNull final Editor editor, char charTyped, @NotNull DataContext dataContext) {
@@ -107,6 +113,9 @@ public class TypedAction {
   public TypedActionHandler setupRawHandler(@NotNull TypedActionHandler handler) {
     TypedActionHandler tmp = myRawHandler;
     myRawHandler = handler;
+    if (tmp == null) {
+      loadRawHandlers();
+    }
     return tmp;
   }
 
