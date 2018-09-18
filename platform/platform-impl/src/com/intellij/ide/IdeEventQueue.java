@@ -375,7 +375,7 @@ public class IdeEventQueue extends EventQueue {
         // Pause and save any currently-running stopwatch, then start a new one.
         long oldStopwatchState = myRecursiveStopwatch.start();
         try {
-          _dispatchEvent(e, false);
+          _dispatchEvent(e);
         }
         finally {
           // Stop the current stopwatch and resume any previously-running stopwatch.
