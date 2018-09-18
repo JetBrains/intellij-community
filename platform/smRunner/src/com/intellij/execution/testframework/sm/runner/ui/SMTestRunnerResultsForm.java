@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -37,6 +38,7 @@ import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -62,6 +64,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,10 +82,9 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author: Roman Chernyatchik
@@ -123,6 +125,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private AbstractTestProxy myLastSelected;
   private boolean myDisposed = false;
   private SMTestProxy myLastFailed;
+  private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -582,7 +585,19 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final SMTestProxy parentSuite = newTestOrSuite.getParent();
     assert parentSuite != null;
 
-    myTreeBuilder.updateTestsSubtree(newTestOrSuite);
+    final Update update = new Update(parentSuite) {
+      @Override
+      public void run() {
+        myRequests.remove(this);
+        myTreeBuilder.updateTestsSubtree(parentSuite);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      update.run();
+    }
+    else if (myRequests.add(update) && !myDisposed) {
+      JobScheduler.getScheduler().schedule(update, 100, TimeUnit.MILLISECONDS);
+    }
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
 
