@@ -863,7 +863,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       List<SearchEverywhereContributor> list = contributors();
       int index = list.lastIndexOf(contributor);
       if (index >= 0) {
-        return index;
+        return isMoreElement(index) ? index : index + 1;
       }
 
       for (int i = 0; i < list.size(); i++) {
