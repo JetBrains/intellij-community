@@ -69,13 +69,7 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean areOptionsEquivalent(RegExpOptions options1, RegExpOptions options2) {
-    if (options1 == null) {
-      return options2 == null;
-    }
-    else if (options2 == null) {
-      return false;
-    }
-    return StringUtil.containsAnyChar(options1.getText(), options2.getText());
+    return options1 == null ? options2 == null : options2 != null && StringUtil.containsAnyChar(options1.getText(), options2.getText());
   }
 
   private static boolean areNamedGroupRefsEquivalent(RegExpNamedGroupRef namedGroupRef1, RegExpNamedGroupRef namedGroupRef2) {
@@ -84,19 +78,7 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean areIntersectionsEquivalent(RegExpIntersection intersection1, RegExpIntersection intersection2) {
-    final RegExpClassElement[] operands1 = intersection1.getOperands();
-    final RegExpClassElement[] operands2 = intersection2.getOperands();
-    if (operands1.length != operands2.length) {
-      return false;
-    }
-    Arrays.sort(operands1, TEXT_COMPARATOR);
-    Arrays.sort(operands2, TEXT_COMPARATOR);
-    for (int i = 0; i < operands1.length; i++) {
-      if (!areElementsEquivalent(operands1[i], operands2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return areElementArraysEquivalent(intersection1.getOperands(), intersection2.getOperands(), true);
   }
 
   private static boolean areGroupsEquivalent(RegExpGroup group1, RegExpGroup group2) {
@@ -104,21 +86,9 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean arePatternsEquivalent(RegExpPattern pattern1, RegExpPattern pattern2) {
-    if (pattern1 == null) return pattern2 == null;
-    if (pattern2 == null) return false;
-    final RegExpBranch[] branches1 = pattern1.getBranches();
-    final RegExpBranch[] branches2 = pattern2.getBranches();
-    if (branches1.length != branches2.length) {
-      return false;
-    }
-    Arrays.sort(branches1, TEXT_COMPARATOR);
-    Arrays.sort(branches2, TEXT_COMPARATOR);
-    for (int i = 0; i < branches1.length; i++) {
-      if (!areBranchesEquivalent(branches1[i], branches2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return pattern1 == null ?
+           pattern2 == null :
+           pattern2 != null && areElementArraysEquivalent(pattern1.getBranches(), pattern2.getBranches(), true);
   }
 
   private static boolean areClosuresEquivalent(RegExpClosure element1, RegExpClosure element2) {
@@ -148,37 +118,27 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean areCharRangesEquivalent(RegExpCharRange charRange1, RegExpCharRange charRange2) {
-    return areCharsEquivalent(charRange1.getFrom(), charRange2.getFrom()) &&
-           areCharsEquivalent(charRange1.getTo(), charRange2.getTo());
+    return areCharsEquivalent(charRange1.getFrom(), charRange2.getFrom()) && areCharsEquivalent(charRange1.getTo(), charRange2.getTo());
   }
 
   private static boolean areClassesEquivalent(RegExpClass aClass1, RegExpClass aClass2) {
-    if (aClass1.isNegated() != aClass2.isNegated()) {
-      return false;
-    }
-    final RegExpClassElement[] elements1 = aClass1.getElements();
-    final RegExpClassElement[] elements2 = aClass2.getElements();
-    if (elements1.length != elements2.length) {
-      return false;
-    }
-    Arrays.sort(elements1, TEXT_COMPARATOR);
-    Arrays.sort(elements2, TEXT_COMPARATOR);
-    for (int i = 0; i < elements1.length; i++){
-      if (!areElementsEquivalent(elements1[i], elements2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return aClass1.isNegated() == aClass2.isNegated() && areElementArraysEquivalent(aClass1.getElements(), aClass2.getElements(), true);
   }
 
   private static boolean areBranchesEquivalent(RegExpBranch branch1, RegExpBranch branch2) {
-    final RegExpAtom[] atoms1 = branch1.getAtoms();
-    final RegExpAtom[] atoms2 = branch2.getAtoms();
-    if (atoms1.length != atoms2.length) {
+    return areElementArraysEquivalent(branch1.getAtoms(), branch2.getAtoms(), false);
+  }
+
+  private static boolean areElementArraysEquivalent(RegExpElement[] elements1, RegExpElement[] elements2, boolean inAnyOrder) {
+    if (elements1.length != elements2.length) {
       return false;
     }
-    for (int i = 0; i < atoms1.length; i++) {
-      if (!areElementsEquivalent(atoms1[i], atoms2[i])) {
+    if (inAnyOrder) {
+      Arrays.sort(elements1, TEXT_COMPARATOR);
+      Arrays.sort(elements2, TEXT_COMPARATOR);
+    }
+    for (int i = 0; i < elements1.length; i++) {
+      if (!areElementsEquivalent(elements1[i], elements2[i])) {
         return false;
       }
     }
