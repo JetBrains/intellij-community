@@ -207,19 +207,14 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.deserializeAndLoadState(element)
-    }
-    else {
-      configuration.readExternal(element)
-    }
+    deserializeConfigurationFrom(configuration, element, factory)
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
 
     manager.readBeforeRunTasks(element.getChild(METHOD), this, configuration)
   }
-
+  
   // do not call directly
   // cannot be private - used externally
   fun writeExternal(element: Element) {
@@ -294,16 +289,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
     PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
-
-  private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.serializeStateInto(element)
-    }
-    else {
-      configuration.writeExternal(element)
-    }
-  }
-
+  
   override fun writeScheme(): Element {
     val element = Element("configuration")
     writeExternal(element)
@@ -508,3 +494,28 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
+
+fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
+  if (configuration is PersistentStateComponent<*>) {
+    serializeStateInto(configuration, element)
+  }
+  else {
+    configuration.writeExternal(element)
+  }
+}
+
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, factory: ConfigurationFactory) {
+  if (configuration is PersistentStateComponent<*>) {
+    val optionsClass = factory.optionsClass
+    if (optionsClass == null) {
+      deserializeAndLoadState(configuration, element)
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      deserializeAndLoadState(configuration as PersistentStateComponent<Any>, element, optionsClass as Class<Any>)
+    }
+  }
+  else {
+    configuration.readExternal(element)
+  }
+}

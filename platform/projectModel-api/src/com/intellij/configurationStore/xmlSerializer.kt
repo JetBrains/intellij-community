@@ -6,6 +6,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
+import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -82,7 +83,7 @@ fun <T> Element.deserialize(clazz: Class<T>): T {
 
 fun <T> deserialize(url: URL, aClass: Class<T>): T {
   try {
-    var document = JDOMUtil.loadDocument(url)
+    var document = JDOMUtil.loadDocument(URLUtil.openStream(url))
     document = JDOMXIncluder.resolve(document, url.toExternalForm())
     return document.rootElement.deserialize(aClass)
   }
@@ -106,15 +107,17 @@ fun Element.deserializeInto(bean: Any) {
   }
 }
 
-fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
-  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(javaClass))
+@JvmOverloads
+fun <T> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass<T>(component::class.java)) {
+  val state = element.deserialize(clazz)
   (state as? BaseState)?.resetModificationCount()
-  @Suppress("UNCHECKED_CAST")
-  (this as PersistentStateComponent<Any>).loadState(state)
+  component.loadState(state)
 }
 
-fun PersistentStateComponent<*>.serializeStateInto(element: Element) {
-  state?.let { serializeObjectInto(it, element) }
+fun serializeStateInto(component: PersistentStateComponent<*>, element: Element) {
+  component.state?.let { 
+    serializeObjectInto(it, element)
+  }
 }
 
 @JvmOverloads

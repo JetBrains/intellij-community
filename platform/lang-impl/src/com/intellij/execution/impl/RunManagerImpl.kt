@@ -524,7 +524,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (!task.isEnabled) {
           child.setAttribute("enabled", "false")
         }
-        task.serializeStateInto(child)
+        serializeStateInto(task, child)
       }
       else {
         @Suppress("DEPRECATION")
@@ -771,7 +771,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (beforeRunTask is PersistentStateComponent<*>) {
           // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
           beforeRunTask.isEnabled = true
-          beforeRunTask.deserializeAndLoadState(methodElement)
+          deserializeAndLoadState(beforeRunTask, methodElement)
         }
         else {
           @Suppress("DEPRECATION")
