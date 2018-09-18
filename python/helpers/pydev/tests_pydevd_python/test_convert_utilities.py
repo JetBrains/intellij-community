@@ -55,17 +55,17 @@ def test_to_server_and_to_client(tmpdir):
             # Client and server are on windows.
             pydevd_file_utils.set_ide_os('WINDOWS')
             for in_eclipse, in_python  in ([
-                    ('c:\\foo', 'c:\\bar'),
-                    ('c:/foo', 'c:\\bar'),
-                    ('c:\\foo', 'c:/bar'),
-                    ('c:\\foo', 'c:\\bar\\'),
-                    ('c:/foo', 'c:\\bar\\'),
-                    ('c:\\foo', 'c:/bar/'),
-                    ('c:\\foo\\', 'c:\\bar'),
-                    ('c:/foo/', 'c:\\bar'),
-                    ('c:\\foo\\', 'c:/bar'),
-                    
-                ]):
+                ('c:\\foo', 'c:\\bar'),
+                ('c:/foo', 'c:\\bar'),
+                ('c:\\foo', 'c:/bar'),
+                ('c:\\foo', 'c:\\bar\\'),
+                ('c:/foo', 'c:\\bar\\'),
+                ('c:\\foo', 'c:/bar/'),
+                ('c:\\foo\\', 'c:\\bar'),
+                ('c:/foo/', 'c:\\bar'),
+                ('c:\\foo\\', 'c:/bar'),
+
+            ]):
                 PATHS_FROM_ECLIPSE_TO_PYTHON = [
                     (in_eclipse, in_python)
                 ]
@@ -79,14 +79,14 @@ def test_to_server_and_to_client(tmpdir):
             # Client on unix and server on windows
             pydevd_file_utils.set_ide_os('UNIX')
             for in_eclipse, in_python  in ([
-                    ('/foo', 'c:\\bar'),
-                    ('/foo', 'c:/bar'),
-                    ('/foo', 'c:\\bar\\'),
-                    ('/foo', 'c:/bar/'),
-                    ('/foo/', 'c:\\bar'),
-                    ('/foo/', 'c:\\bar\\'),
-                ]):
-                
+                ('/foo', 'c:\\bar'),
+                ('/foo', 'c:/bar'),
+                ('/foo', 'c:\\bar\\'),
+                ('/foo', 'c:/bar/'),
+                ('/foo/', 'c:\\bar'),
+                ('/foo/', 'c:\\bar\\'),
+            ]):
+
                 PATHS_FROM_ECLIPSE_TO_PYTHON = [
                     (in_eclipse, in_python)
                 ]
@@ -142,11 +142,11 @@ def test_to_server_and_to_client(tmpdir):
             # Client on windows and server on unix
             pydevd_file_utils.set_ide_os('WINDOWS')
             for in_eclipse, in_python  in ([
-                    ('c:\\foo', '/bar'),
-                    ('c:/foo', '/bar'),
-                    ('c:/foo/', '/bar'),
-                ]):
-                
+                ('c:\\foo', '/bar'),
+                ('c:/foo', '/bar'),
+                ('c:/foo/', '/bar'),
+            ]):
+
                 PATHS_FROM_ECLIPSE_TO_PYTHON = [
                     (in_eclipse, in_python)
                 ]
@@ -156,10 +156,10 @@ def test_to_server_and_to_client(tmpdir):
                 assert pydevd_file_utils.norm_file_to_server('c:/foo/my') == '/bar/my'
                 assert pydevd_file_utils.norm_file_to_server('c:\\foo\\my\\') == '/bar/my'
                 assert pydevd_file_utils.norm_file_to_server('c:/foo/my/') == '/bar/my'
-                
+
                 assert pydevd_file_utils.norm_file_to_client('/bar/my') == 'c:\\foo\\my'
                 assert pydevd_file_utils.norm_file_to_client('/bar/my/') == 'c:\\foo\\my'
-    
+
                 # Files for which there's no translation have only their separators updated.
                 assert pydevd_file_utils.norm_file_to_client('/usr/bin') == '\\usr\\bin'
                 assert pydevd_file_utils.norm_file_to_client('/usr/bin/') == '\\usr\\bin'
@@ -212,11 +212,11 @@ def test_zip_paths(tmpdir):
 
         # Check that we can deal with zip contents.
         for path in [
-                zipfile_path + '/zipped%s/__init__.py' % (i,),
-                zipfile_path + '/zipped%s/zipped_contents.py' % (i,),
-                zipfile_path + '\\zipped%s\\__init__.py' % (i,),
-                zipfile_path + '\\zipped%s\\zipped_contents.py' % (i,),
-            ]:
+            zipfile_path + '/zipped%s/__init__.py' % (i,),
+            zipfile_path + '/zipped%s/zipped_contents.py' % (i,),
+            zipfile_path + '\\zipped%s\\__init__.py' % (i,),
+            zipfile_path + '\\zipped%s\\zipped_contents.py' % (i,),
+        ]:
             assert pydevd_file_utils.exists(path), 'Expected exists to return True for path:\n%s' % (path,)
             abspath, realpath, basename = pydevd_file_utils.get_abs_path_real_path_and_base_from_file(path)
             assert pydevd_file_utils.exists(abspath), 'Expected exists to return True for path:\n%s' % (abspath,)
