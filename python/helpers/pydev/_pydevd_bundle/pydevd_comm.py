@@ -611,6 +611,8 @@ class NetCommand:
         if IS_PY2:
             if isinstance(text, unicode):
                 text = text.encode('utf-8')
+            else:
+                assert isinstance(text, str)
         else:
             assert isinstance(text, str)
 
