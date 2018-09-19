@@ -70,7 +70,11 @@ public class JavaDebuggerInlayUtil {
         }
       }
       if (editor != currentEditor || method != currentMethod) {
-        if (currentEditor != null) XDebuggerInlayUtil.clearBlockInlays(currentEditor);
+        if (currentEditor != null) {
+          CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(editor);
+          XDebuggerInlayUtil.clearBlockInlays(currentEditor);
+          keeper.restoreOriginalLocation(true);
+        }
         if (editor != null) setupValuePlaceholders(editor, method);
         currentEditor = editor;
         currentMethod = method;
