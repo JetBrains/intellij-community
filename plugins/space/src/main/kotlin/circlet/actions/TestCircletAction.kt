@@ -7,7 +7,6 @@ import circlet.platform.client.*
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.*
-import com.intellij.openapi.wm.impl.welcomeScreen.*
 import kotlinx.coroutines.experimental.*
 import runtime.*
 
@@ -20,7 +19,7 @@ class TestCircletAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
 
 
-        launch(UiDispatch.coroutineContext) {
+        GlobalScope.launch(UiDispatch.coroutineContext) {
             val project = e.project!!
             val result = project.connection.loginModel!!.client.me.info()
 
