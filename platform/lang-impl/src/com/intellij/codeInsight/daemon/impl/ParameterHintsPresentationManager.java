@@ -167,7 +167,7 @@ public class ParameterHintsPresentationManager implements Disposable {
 
     @Nullable
     @Override
-    public String getContextMenuGroupId() {
+    public String getContextMenuGroupId(@NotNull Inlay inlay) {
       return "ParameterNameHints";
     }
 
@@ -186,8 +186,8 @@ public class ParameterHintsPresentationManager implements Disposable {
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      int endWidth = super.calcWidthInPixels(editor);
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      int endWidth = super.calcWidthInPixels(inlay);
       return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
     }
   }
@@ -211,7 +211,7 @@ public class ParameterHintsPresentationManager implements Disposable {
           if (!renderer.nextStep()) {
             it.remove();
           }
-          if (renderer.calcWidthInPixels(myEditor) == 0) {
+          if (renderer.calcWidthInPixels(inlay) == 0) {
             Disposer.dispose(inlay);
           }
           else {

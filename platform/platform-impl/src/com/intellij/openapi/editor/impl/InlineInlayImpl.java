@@ -49,7 +49,7 @@ class InlineInlayImpl extends InlayImpl<InlineInlayImpl> {
   }
 
   void doUpdateSize() {
-    myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
+    myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {
       throw new IllegalArgumentException("Positive width should be defined for an inline element");
     }

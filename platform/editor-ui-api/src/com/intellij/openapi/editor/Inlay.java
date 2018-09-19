@@ -25,6 +25,14 @@ import java.awt.*;
 @ApiStatus.Experimental
 public interface Inlay extends Disposable, UserDataHolderEx {
   /**
+   * Returns editor, this custom visual element belongs to.
+   *
+   * @since 2018.3
+   */
+  @NotNull
+  Editor getEditor();
+
+  /**
    * Defines relative position of inlay element with respect to the containing text.
    *
    * @since 2018.3
@@ -97,8 +105,8 @@ public interface Inlay extends Disposable, UserDataHolderEx {
   /**
    * Updates inlay's size by querying information from inlay's renderer. Also, repaint the inlay.
    *
-   * @see EditorCustomElementRenderer#calcWidthInPixels(Editor)
-   * @see EditorCustomElementRenderer#calcHeightInPixels(Editor)
+   * @see EditorCustomElementRenderer#calcWidthInPixels(Inlay)
+   * @see EditorCustomElementRenderer#calcHeightInPixels(Inlay)
    * @see #repaint()
    */
   void updateSize();

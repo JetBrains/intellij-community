@@ -32,12 +32,12 @@ class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
   }
 
   void doUpdateSize() {
-    myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
+    myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels < 0) {
       throw new IllegalArgumentException("Non-negative width should be defined for a block element");
     }
     int oldHeightInPixels = myHeightInPixels;
-    myHeightInPixels = myRenderer.calcHeightInPixels(myEditor);
+    myHeightInPixels = myRenderer.calcHeightInPixels(this);
     if (oldHeightInPixels != myHeightInPixels) getTree().valueUpdated(this);
     if (myHeightInPixels < 0) {
       throw new IllegalArgumentException("Non-negative height should be defined for a block element");

@@ -151,16 +151,12 @@ public class XDebuggerInlayUtil {
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      return 0;
-    }
-
-    @Override
-    public void paint(@NotNull Editor editor,
+    public void paint(@NotNull Inlay inlay,
                       @NotNull Graphics g,
                       @NotNull Rectangle targetRegion,
                       @NotNull TextAttributes textAttributes) {
       if (values.isEmpty()) return;
+      Editor editor = inlay.getEditor();
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
       TextAttributes attributes = colorsScheme.getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
       if (attributes == null) return;
@@ -218,13 +214,14 @@ public class XDebuggerInlayUtil {
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      FontInfo fontInfo = getFontInfo(editor);
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      FontInfo fontInfo = getFontInfo(inlay.getEditor());
       return fontInfo.fontMetrics().stringWidth(myText);
     }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      Editor editor = inlay.getEditor();
       TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
       if (attributes == null) return;
       Color fgColor = attributes.getForegroundColor();

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.util.Key;
@@ -35,6 +36,12 @@ abstract class InlayImpl<T extends InlayImpl> extends RangeMarkerWithGetterImpl<
   }
 
   abstract RangeMarkerTree<T> getTree();
+
+  @NotNull
+  @Override
+  public Editor getEditor() {
+    return myEditor;
+  }
 
   @Override
   public void updateSize() {
