@@ -15,14 +15,11 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -116,20 +113,11 @@ class MacDmgBuilder {
 
   private void doSignAndBuildDmg(String macZipPath, String jreArchivePath) {
     def suffix = jreArchivePath != null ? "" : "-no-jdk"
-    def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
-    MacDistributionBuilder.generateProductJson(buildContext, productJsonDir,
-                                               jreArchivePath != null ? "jdk/Contents/Home/jre/bin/java" : null)
-    def installationArchives = [Pair.create(macZipPath, MacDistributionBuilder.getZipRoot(buildContext, customizer))]
-    if (jreArchivePath != null) {
-      installationArchives.add(Pair.create(jreArchivePath, ""))
-    }
-    new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, [], installationArchives)
-
     String targetFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: macZipPath, tofile: sitFilePath)
     ftpAction("mkdir") {}
-    signMacZip(sitFilePath, targetFileName, jreArchivePath, new File(productJsonDir, ProductInfoGenerator.FILE_NAME).absolutePath)
+    signMacZip(sitFilePath, targetFileName, jreArchivePath)
     buildDmg(targetFileName)
   }
 
@@ -177,7 +165,7 @@ class MacDmgBuilder {
     }
   }
 
-  private def signMacZip(String sitFilePath, String targetFileName, String jreArchivePath, String productJsonFilePath) {
+  private def signMacZip(String sitFilePath, String targetFileName, String jreArchivePath) {
     buildContext.messages.progress("Signing ${targetFileName}.sit")
 
     if (jreArchivePath != null) {
@@ -189,7 +177,6 @@ class MacDmgBuilder {
     buildContext.messages.progress("Sending $sitFilePath to ${this.macHostProperties.host}")
     ftpAction("put") {
       ant.fileset(file: sitFilePath)
-      ant.fileset(file: productJsonFilePath)
     }
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
