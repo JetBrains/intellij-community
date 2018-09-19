@@ -26,7 +26,7 @@ import java.util.List;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
-  private final EnumSet<ArtifactKind> myArtifactKinds;
+  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.of(ArtifactKind.ARTIFACT);
   private boolean includeTransitiveDependencies;
   private List<String> myExcludedDependencies;
 
@@ -42,7 +42,7 @@ public class RepositoryLibraryPropertiesModel {
   public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
                                           boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     this.version = version;
-    this.myArtifactKinds = EnumSet.copyOf(artifactKinds);
+    this.myArtifactKinds.addAll(artifactKinds);
     this.includeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = new ArrayList<>(excludedDependencies);
   }
@@ -94,6 +94,18 @@ public class RepositoryLibraryPropertiesModel {
       myArtifactKinds.add(ArtifactKind.JAVADOC);
     } else {
       myArtifactKinds.remove(ArtifactKind.JAVADOC);
+    }
+  }
+
+  public boolean isDownloadAnnotations() {
+    return myArtifactKinds.contains(ArtifactKind.ANNOTATIONS);
+  }
+
+  public void setDownloadAnnotations(boolean downloadAnnotations) {
+    if (downloadAnnotations) {
+      myArtifactKinds.add(ArtifactKind.ANNOTATIONS);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.ANNOTATIONS);
     }
   }
 
