@@ -37,8 +37,6 @@ public class ExcessiveLambdaUsageInspectionTest extends LightQuickFixParameteriz
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/excessiveLambdaUsage";

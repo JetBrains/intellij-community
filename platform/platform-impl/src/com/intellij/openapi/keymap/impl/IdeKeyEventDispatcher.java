@@ -682,6 +682,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
+    IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 

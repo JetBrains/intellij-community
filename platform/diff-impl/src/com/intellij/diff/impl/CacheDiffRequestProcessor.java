@@ -92,6 +92,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
+    myQueue.abort();
 
     final T requestProvider = getCurrentRequestProvider();
     if (requestProvider == null) {

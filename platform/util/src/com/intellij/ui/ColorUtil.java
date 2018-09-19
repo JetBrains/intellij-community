@@ -165,10 +165,22 @@ public class ColorUtil {
 
   @NotNull
   public static String toHex(@NotNull final Color c) {
+    return toHex(c, false);
+  }
+
+  @NotNull
+  public static String toHex(@NotNull final Color c, final boolean withAlpha) {
     final String R = Integer.toHexString(c.getRed());
     final String G = Integer.toHexString(c.getGreen());
     final String B = Integer.toHexString(c.getBlue());
-    return (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
+
+    final String rgbHex = (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
+    if (!withAlpha){
+      return rgbHex;
+    }
+
+    final String A = Integer.toHexString(c.getAlpha());
+    return rgbHex + (A.length() < 2 ? "0" : "") + A;
   }
 
   @NotNull

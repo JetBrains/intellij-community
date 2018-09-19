@@ -49,8 +49,4 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
     CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = myElseOnNewLine;
   }
-
-  public void test() {
-    doAllTests();
-  }
 }

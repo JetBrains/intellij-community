@@ -24,10 +24,6 @@ public class WrapExpressionFixTest extends LightQuickFixParameterizedTestCase {
     return LanguageLevel.JDK_1_6;
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapExpression";

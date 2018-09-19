@@ -1193,7 +1193,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     override fun update(e: AnActionEvent) {
       val configuration = selectedConfiguration
-      e.presentation.isEnabled = configuration != null && configuration.configuration !is UnknownRunConfiguration
+      e.presentation.isEnabled = configuration != null && configuration.configuration.type.isManaged
     }
   }
 

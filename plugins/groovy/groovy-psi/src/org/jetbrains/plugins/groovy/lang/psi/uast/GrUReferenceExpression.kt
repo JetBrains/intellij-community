@@ -26,7 +26,7 @@ class GrUReferenceExpression(
   override val annotations: List<UAnnotation> = emptyList()
 
   override fun resolve(): PsiElement? = sourcePsi.resolve()
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    (psi as? PsiPolyVariantReference)?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    (psi as? PsiPolyVariantReference)?.multiResolve(false)?.asIterable() ?: emptyList()
 
 }

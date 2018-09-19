@@ -15,6 +15,17 @@ class App {
     a1.field = 10;
     assert <warning descr="Condition 'a2.field == 10' is always 'true'">a2.field == 10</warning>;
   }
+
+  void testThreeClasses(Node x, Node y, Node z) {
+    if (x.a == y && x.b == z && x == y.b && x == z.a && x == z) {
+      assert <warning descr="Condition 'x == x.a' is always 'true'">x == x.a</warning>;
+      assert <warning descr="Condition 'x == x.b' is always 'true'">x == x.b</warning>;
+    }
+  }
+
+  class Node {
+    Node a, b;
+  }
 }
 
 class A {

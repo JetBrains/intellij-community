@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.text.Caret;
 import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
@@ -108,9 +109,14 @@ public abstract class CellPluginComponent extends JPanel {
     myDescription.setFocusable(false);
     myDescription.setOpaque(false);
     myDescription.setBorder(null);
+
+    Caret caret = myDescription.getCaret();
+    myDescription.setCaret(null);
+
     myDescription.setText(XmlStringUtil.wrapInHtml(description));
 
-    if (myDescription.getCaret() != null) {
+    if (caret != null) {
+      myDescription.setCaret(caret);
       myDescription.setCaretPosition(0);
     }
 
@@ -143,8 +149,12 @@ public abstract class CellPluginComponent extends JPanel {
       }
     }
 
-    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurableNew.MAIN_BG_COLOR : HOVER_COLOR);
+    updateColors(type);
     repaint();
+  }
+
+  protected void updateColors(@NotNull EventHandler.SelectionType type) {
+    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurableNew.MAIN_BG_COLOR : HOVER_COLOR);
   }
 
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {

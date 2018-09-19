@@ -99,7 +99,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
   // Make changes available for diff action
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
       int[] rows = myTable.getSelectedRows();
       if (rows.length != 1) return;

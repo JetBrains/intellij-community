@@ -73,7 +73,7 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath) {
+  void buildInstaller(String winDistPath, String additionalDirectoryToInclude) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
@@ -110,6 +110,7 @@ class WinExeInstallerBuilder {
       def generator = new NsisFileListGenerator()
       generator.addDirectory(buildContext.paths.distAll)
       generator.addDirectory(winDistPath, ["**/idea.properties", "**/*.vmoptions"])
+      generator.addDirectory(additionalDirectoryToInclude)
 
       if (bundleJre) {
         generator.addDirectory(jreDirectoryPath)

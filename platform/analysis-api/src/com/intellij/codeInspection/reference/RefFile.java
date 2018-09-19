@@ -30,5 +30,13 @@ public interface RefFile extends RefElement {
    * @return the file for the node.
    */
   @Override
-  PsiFile getElement();
+  default PsiFile getPsiElement() {
+    return getElement();
+  }
+
+  @Deprecated
+  @Override
+  default PsiFile getElement() {
+    throw new UnsupportedOperationException();
+  }
 }

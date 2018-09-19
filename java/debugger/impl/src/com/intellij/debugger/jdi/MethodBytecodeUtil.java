@@ -24,8 +24,7 @@ import java.util.*;
  * @author egor
  */
 public class MethodBytecodeUtil {
-  private MethodBytecodeUtil() {
-  }
+  private MethodBytecodeUtil() { }
 
   /**
    * Allows to use ASM MethodVisitor with jdi method bytecode
@@ -114,8 +113,7 @@ public class MethodBytecodeUtil {
         }, 0);
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
   }
 
   @NotNull
@@ -143,7 +141,7 @@ public class MethodBytecodeUtil {
 
   @Nullable
   private static Attribute createBootstrapMethods(ClassReader classReader, ClassWriter classWriter) throws IOException {
-    Set<Short> indys = new HashSet<>();
+    Set<Short> bootstrapMethods = new HashSet<>();
     // scan class pool for indy calls
     for (int i = 1; i < classReader.getItemCount(); i++) {
       int index = classReader.getItem(i);
@@ -151,23 +149,22 @@ public class MethodBytecodeUtil {
       switch (tag) {
         case 5: // ClassWriter.LONG
         case 6: // ClassWriter.DOUBLE
+          //noinspection AssignmentToForLoopParameter
           ++i;
           break;
         case 18: // ClassWriter.INDY
-          indys.add(classReader.readShort(index));
-          //short methodIndex = classReader.readShort(index);
-          short nameTypeIndex = classReader.readShort(index + 2);
+          bootstrapMethods.add(classReader.readShort(index));
+          classReader.readShort(index + 2);
       }
     }
 
-    if (!indys.isEmpty()) {
+    if (!bootstrapMethods.isEmpty()) {
       int dummyRef = classWriter.newHandle(Opcodes.H_INVOKESTATIC, "DummyOwner", "DummyMethod", "", false); // dummy for now
       return createAttribute("BootstrapMethods", dos -> {
-        dos.writeShort(indys.size());
-        for (Short indy : indys) {
+        dos.writeShort(bootstrapMethods.size());
+        for (int i = 0; i < bootstrapMethods.size(); i++) {
           dos.writeShort(dummyRef); // bootstrap_method_ref
           dos.writeShort(0); // num_bootstrap_arguments
-          //dos.writeShort(0); // bootstrap_arguments
         }
       });
     }
@@ -286,7 +283,6 @@ public class MethodBytecodeUtil {
     for (Location location : locations) {
       byMethod.putValue(location.method(), location);
     }
-
     List<Location> res = new ArrayList<>();
     for (Map.Entry<Method, Collection<Location>> entry : byMethod.entrySet()) {
       res.addAll(removeMethodSameLineLocations(entry.getKey(), (List<Location>)entry.getValue()));
@@ -299,11 +295,12 @@ public class MethodBytecodeUtil {
     if (locationsSize < 2) {
       return locations;
     }
-    //noinspection ConstantConditions
-    int lineNumber = ContainerUtil.getFirstItem(locations).lineNumber();
+
+    int lineNumber = locations.get(0).lineNumber();
     List<Boolean> mask = new ArrayList<>(locationsSize);
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
       boolean myNewBlock = true;
+
       @Override
       public void visitLineNumber(int line, Label start) {
         if (lineNumber == line) {
@@ -336,6 +333,7 @@ public class MethodBytecodeUtil {
       }
       return res;
     }
+
     return locations;
   }
 

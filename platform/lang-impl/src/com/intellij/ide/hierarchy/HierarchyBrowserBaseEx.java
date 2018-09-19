@@ -465,10 +465,15 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getOccurrenceNavigator().getPreviousOccurenceActionName();
   }
 
+  @NotNull
+  public StructureTreeModel getTreeModel(@NotNull String viewType) {
+    return myType2Sheet.get(viewType).myStructureTreeModel;
+  }
+
   @Override
   StructureTreeModel getCurrentBuilder() {
     String viewType = getCurrentViewType();
-    return viewType == null ? null : myType2Sheet.get(viewType).myStructureTreeModel;
+    return viewType == null ? null : getTreeModel(viewType);
   }
 
   final boolean isValidBase() {

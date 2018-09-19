@@ -4,7 +4,6 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.util.LazyUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
@@ -32,7 +31,7 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
   public final PythonConfigurationFactoryBase LEGACY_PYTEST_FACTORY = new PythonLegacyPyTestConfigurationFactory(this);
 
   // due to PyTestLegacyInterop must be lazy
-  private final NotNullLazyValue<ConfigurationFactory[]> myFactories = LazyUtil.create(() -> {
+  private final NotNullLazyValue<ConfigurationFactory[]> myFactories = NotNullLazyValue.createValue(() -> {
     // use new or legacy factories depending to new config
     if (PyTestLegacyInteropKt.isNewTestsModeEnabled()) {
       for (PythonConfigurationFactoryBase factory : PyTestsSharedKt.getFactories()) {
@@ -54,7 +53,8 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
 
   public PythonTestConfigurationType() {
     //noinspection SpellCheckingInspection
-    super(ID, PyBundle.message("runcfg.test.display_name"), PyBundle.message("runcfg.test.description"), LazyUtil.create(() -> PythonIcons.Python.PythonTests));
+    super(ID, PyBundle.message("runcfg.test.display_name"), PyBundle.message("runcfg.test.description"),
+          NotNullLazyValue.createValue(() -> PythonIcons.Python.PythonTests));
   }
 
   @NotNull

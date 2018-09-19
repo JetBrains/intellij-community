@@ -17,7 +17,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 class JavaUAnnotationCallExpression(
   override val psi: PsiAnnotation,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionExMultiResolve, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
 
   val uAnnotation: JavaUAnnotation by lz {
     JavaUAnnotation(psi, this)
@@ -53,7 +53,7 @@ class JavaUAnnotationCallExpression(
     uAnnotation.attributeValues
   }
 
-  override fun getArgumentForParameter(i: Int, multiResolve: Boolean, incompleteCode: Boolean): UExpression? = valueArguments.getOrNull(i)
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override fun accept(visitor: UastVisitor) {
     visitor.visitCallExpression(this)
@@ -67,5 +67,5 @@ class JavaUAnnotationCallExpression(
 
   override fun resolve(): PsiMethod? = uAnnotation.resolve()?.constructors?.firstOrNull()
 
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = uAnnotation.multiResolve(incompleteCode)
+  override fun multiResolve(): Iterable<ResolveResult> = uAnnotation.multiResolve()
 }

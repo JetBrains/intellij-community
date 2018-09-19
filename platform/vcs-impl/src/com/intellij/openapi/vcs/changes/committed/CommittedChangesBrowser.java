@@ -19,7 +19,7 @@ import java.util.Set;
 public class CommittedChangesBrowser extends SimpleChangesBrowser {
   private CommittedChangesBrowserUseCase myUseCase;
 
-  public CommittedChangesBrowser(Project project) {
+  public CommittedChangesBrowser(@NotNull Project project) {
     super(project, false, false);
   }
 

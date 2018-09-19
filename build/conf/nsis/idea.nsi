@@ -965,7 +965,13 @@ FunctionEnd
 
 
 Function getPathEnvVar
+  ClearErrors
   ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
+  IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
+  Goto done
+do_not_change_path:
+  StrCpy $pathEnvVar ""
+done:
 FunctionEnd
 
 
@@ -975,10 +981,14 @@ FunctionEnd
 
 
 Function updatePathEnvVar
+  StrCmp $pathEnvVar "" do_not_change_path 0
   ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
   StrCmp $R0 "" absent done
 absent:
   WriteRegExpandStr HKCU ${Environment} "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+  Goto done
+do_not_change_path:
+  MessageBox MB_OK|MB_ICONEXCLAMATION "PATH can not be updated. The size is very big."
 done:
 FunctionEnd
 
@@ -1123,10 +1133,10 @@ skip_ipr:
   ; Regenerating the Shared Archives for java x64 and x86 bit.
   ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
   IfFileExists $INSTDIR\jre32\bin\javaw.exe 0 java64
-  ExecWait "$INSTDIR\jre32\bin\javaw.exe -Xshare:dump"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre32\bin\javaw.exe" -Xshare:dump'
 java64:
   IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
-  ExecWait "$INSTDIR\jre64\bin\javaw.exe -Xshare:dump"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre64\bin\javaw.exe" -Xshare:dump'
 
 skip_regeneration_shared_archive_for_java_64:
   SetOutPath $INSTDIR\bin

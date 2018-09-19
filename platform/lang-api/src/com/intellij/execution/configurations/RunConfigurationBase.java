@@ -300,18 +300,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return true;
   }
 
+  /**
+   * @deprecated Use {@link RunProfileWithCompileBeforeLaunchOption#isExcludeCompileBeforeLaunchOption()}
+   * @return
+   */
+  @Deprecated
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
-
-  /**
-   * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
-   */
-  @Deprecated
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
-  }
-
+  
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();

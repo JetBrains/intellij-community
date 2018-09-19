@@ -205,20 +205,27 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           for (PsiElement element : owner.getChildren()) {
             if (element instanceof PsiErrorElement) return false;
           }
-          if (owner instanceof PsiExpressionList && ((PsiExpressionList)owner).isEmpty()) {
-            PsiElement parent = owner.getParent();
-            if (parent instanceof PsiCall) {
-              PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
-              if (chosenMethod != null) {
-                int parametersCount = chosenMethod.getParameterList().getParametersCount();
-                if ((parametersCount == 1 && !chosenMethod.isVarArgs() || parametersCount == 2 && chosenMethod.isVarArgs()) && 
-                                            !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) return false;
+          PsiElement parent = owner.getParent();
+          if (owner instanceof PsiExpressionList && parent instanceof PsiCall) {
+            PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
+            if (chosenMethod != null) {
+              int parametersCount = chosenMethod.getParameterList().getParametersCount();
+              boolean varArgs = chosenMethod.isVarArgs();
+              if (Registry.is("editor.completion.hints.virtual.comma")) {
+                int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
+                int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
+                if (actualParameters < requiredParameters) return false;
+              }
+              else if (((PsiExpressionList)owner).isEmpty() &&
+                       (parametersCount == 1 && !varArgs || parametersCount == 2 && varArgs) &&
+                       !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) {
+                  return false;
+                }
               }
             }
           }
         }
       }
-    }
     return true;
   }
 
@@ -359,8 +366,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
 
-    context.setHighlightedParameter((Registry.is("editor.completion.hints.virtual.comma") || args.length == 0) && chosenInfo != null
-                                    ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
+    CandidateInfo parameterToHighlight = chosenInfo;
+    if (completeMatch != null &&
+        (chosenInfo == null || (args.length > 0 && !(context.isPreservedOnHintHidden() &&
+                                                     Registry.is("editor.completion.hints.virtual.comma") &&
+                                                     getParameterCount(completeMatch) < getParameterCount(chosenInfo))))) {
+      parameterToHighlight = completeMatch;
+    }
+    context.setHighlightedParameter(parameterToHighlight);
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
@@ -368,6 +381,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                                      ? ((CandidateInfo)highlightedCandidate).getElement() : highlightedCandidate);
       if (!method.isVarArgs() && index > 0 && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
     }
+  }
+
+  private static int getParameterCount(@NotNull CandidateInfo info) {
+    return ((PsiMethod)info.getElement()).getParameterList().getParametersCount();
   }
 
   private static void highlightHints(@NotNull Editor editor, @Nullable PsiExpressionList expressionList, int currentHintIndex,

@@ -194,6 +194,7 @@ abstract class RunManager {
    */
   fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean {
     val oldName = configuration.name
+    @Suppress("UsePropertyAccessSyntax")
     configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type))
     return oldName != configuration.name
   }
@@ -205,9 +206,9 @@ abstract class RunManager {
 
   abstract fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings?
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
-  fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String): RunnerAndConfigurationSettings? = type?.let { findConfigurationByTypeAndName(it.id, name) }
+  fun findConfigurationByTypeAndName(type: ConfigurationType, name: String) = allSettings.firstOrNull { type === it.type && name == it.name }
 
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 

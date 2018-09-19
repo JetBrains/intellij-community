@@ -5,7 +5,9 @@ class Foo {
     Integer c = 128;
 
     System.out.println(a == b);
-    System.out.println(<warning descr="Condition 'a == c' is always 'false'">a == c</warning>);
+    System.out.println(a == c); // Not known: integer cache could be enlarged and in general VM is free to cache more integral values
+    System.out.println(<warning descr="Result of 'a.equals(b)' is always 'true'">a.equals(b)</warning>);
+    System.out.println(<warning descr="Result of 'a.equals(c)' is always 'true'">a.equals(c)</warning>);
 
     System.out.println(<warning descr="Condition '(Long)128L == (Long)128L' is always 'false'">(Long)128L == (Long)128L</warning>);
     System.out.println(<warning descr="Condition '128 == 128' is always 'true'">128 == 128</warning>);

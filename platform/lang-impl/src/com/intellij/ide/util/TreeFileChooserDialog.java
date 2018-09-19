@@ -140,8 +140,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         return true;
       }
 
+      @NotNull
       @Override
-      public Object[] getChildElements(final Object element) {
+      public Object[] getChildElements(@NotNull final Object element) {
         return filterFiles(super.getChildElements(element));
       }
 

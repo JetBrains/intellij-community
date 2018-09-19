@@ -24,8 +24,4 @@ class DeleteUnreachableTest : LightQuickFixParameterizedTestCase() {
 
   override fun getBasePath() = "/codeInsight/daemonCodeAnalyzer/quickFix/deleteUnreachable"
 
-  @Suppress("DEPRECATION")
-  fun test() {
-    doAllTests()
-  }
 }

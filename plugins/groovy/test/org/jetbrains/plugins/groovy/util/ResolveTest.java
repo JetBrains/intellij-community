@@ -28,6 +28,11 @@ public interface ResolveTest extends BaseTest {
   }
 
   @NotNull
+  default GroovyResolveResult advancedResolveByText(@NotNull String text) {
+    return referenceByText(text).advancedResolve();
+  }
+
+  @NotNull
   default Collection<? extends GroovyResolveResult> multiResolveByText(@NotNull String text) {
     return referenceByText(text).resolve(false);
   }

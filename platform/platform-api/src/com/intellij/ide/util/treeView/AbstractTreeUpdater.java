@@ -40,7 +40,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   private final LinkedList<TreeUpdatePass> myNodeQueue = new LinkedList<>();
   private final AbstractTreeBuilder myTreeBuilder;
   private final List<Runnable> myRunAfterUpdate = new ArrayList<>();
-  private Runnable myRunBeforeUpdate;
   private final MergingUpdateQueue myUpdateQueue;
 
   private long myUpdateCount;
@@ -146,7 +145,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
     if (toAdd.getUpdateStamp() >= 0) {
       Object element = ui.getElementFor(toAdd.getNode());
-      if (!ui.isParentLoadingInBackground(element) && !ui.isParentUpdatingChildrenNow(toAdd.getNode())) {
+      if ((element == null || !ui.isParentLoadingInBackground(element)) && !ui.isParentUpdatingChildrenNow(toAdd.getNode())) {
         toAdd.setUpdateStamp(-1);
       }
     }
@@ -226,15 +225,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public synchronized void performUpdate() {
-    if (myRunBeforeUpdate != null) {
-      myRunBeforeUpdate.run();
-      myRunBeforeUpdate = null;
-    }
-
-
     while (!myNodeQueue.isEmpty()) {
       if (isInPostponeMode()) break;
-
 
       final TreeUpdatePass eachPass = myNodeQueue.removeFirst();
 
@@ -317,10 +309,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     }
   }
 
-  public synchronized void runBeforeUpdate(final Runnable runnable) {
-    myRunBeforeUpdate = runnable;
-  }
-
   public synchronized long getUpdateCount() {
     return myUpdateCount;
   }
@@ -364,7 +352,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     queue(new Update("UserSelection", Update.LOW_PRIORITY) {
       @Override
       public void run() {
-        request.execute(myTreeBuilder.getUi());
+        AbstractTreeUi ui = myTreeBuilder.getUi();
+        if (ui != null) {
+          request.execute(ui);
+        }
       }
 
       @Override

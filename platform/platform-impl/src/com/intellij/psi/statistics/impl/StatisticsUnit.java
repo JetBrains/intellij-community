@@ -52,7 +52,7 @@ class StatisticsUnit {
     return diff >= StatisticsManager.RECENCY_OBLIVION_THRESHOLD ? Integer.MAX_VALUE : diff;
   }
 
-  public int getData(String key1, String key2) {
+  public int getData(@NotNull String key1, @NotNull String key2) {
     final List<String> list = myDataMap.get(key1);
     if (list == null) return 0;
 

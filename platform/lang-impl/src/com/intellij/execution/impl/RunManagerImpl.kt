@@ -413,13 +413,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
-    get() = selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
+    get() {
+      return lock.read { 
+        selectedConfigurationId?.let { idToSettings.get(it) }
+      }
+    }
     set(value) {
-      if (value?.uniqueID == selectedConfigurationId) {
-        return
+      fun isTheSame() = value?.uniqueID == selectedConfigurationId
+      
+      lock.read {
+        if (isTheSame()) {
+          return
+        }
       }
 
-      selectedConfigurationId = value?.uniqueID
+      lock.write {
+        if (isTheSame()) {
+          return
+        }
+        
+        selectedConfigurationId = value?.uniqueID
+      }
+      
       eventPublisher.runConfigurationSelected()
     }
 
@@ -636,7 +651,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private fun runConfigurationFirstLoaded() {
     if (selectedConfiguration == null) {
-      selectedConfiguration = allSettings.firstOrNull { it.type !== UnknownConfigurationType.getInstance() }
+      selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
     }
   }
 
@@ -892,7 +907,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? {
-    return allSettings.firstOrNull { it.configuration === configuration } ?: findConfigurationByName(configuration.name)
+    val id = RunnerAndConfigurationSettingsImpl.getUniqueIdFor(configuration)
+    lock.read {
+      return idToSettings.get(id)
+    }
   }
 
   override fun isTemplate(configuration: RunConfiguration): Boolean {
@@ -938,7 +956,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {
-    if (configuration is UnknownRunConfiguration) {
+    if (!configuration.type.isManaged) {
       return
     }
 

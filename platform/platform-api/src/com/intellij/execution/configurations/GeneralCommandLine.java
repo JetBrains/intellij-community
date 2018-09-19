@@ -508,15 +508,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     @Override
     public String put(String key, String value) {
-      if (key == null || value == null) {
-        LOG.error(new Exception("Nulls are not allowed"));
-        return null;
-      }
-      if (key.isEmpty()) {
-        // Windows: passing an environment variable with empty name causes "CreateProcess error=87, The parameter is incorrect"
-        LOG.warn("Skipping environment variable with empty name, value: " + value);
-        return null;
-      }
+      EnvironmentUtil.validate(key, value);
       return super.put(key, value);
     }
 

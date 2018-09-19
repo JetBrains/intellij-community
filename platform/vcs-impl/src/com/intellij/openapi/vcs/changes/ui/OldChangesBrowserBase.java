@@ -158,7 +158,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
       if (list.isEmpty()) list = myViewer.getChanges();

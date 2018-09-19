@@ -103,8 +103,8 @@ class GrUAnnotation(val grElement: GrAnnotation,
     get() = grElement.qualifiedName
 
   override fun resolve(): PsiClass? = grElement.nameReferenceElement?.resolve() as PsiClass?
-  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
-    grElement.nameReferenceElement?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    grElement.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
 
   override val uastAnchor: UIdentifier?
     get() = grElement.classReference.referenceNameElement?.let { UIdentifier(it, this) }

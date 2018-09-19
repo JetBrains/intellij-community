@@ -31,7 +31,7 @@ interface UResolvable {
 
 @ApiStatus.Experimental
 interface UMultiResolvable {
-  fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult>
+  fun multiResolve(): Iterable<ResolveResult>
 }
 
 fun UResolvable.resolveToUElement(): UElement? = resolve().toUElement()

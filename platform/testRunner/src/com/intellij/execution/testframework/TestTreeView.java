@@ -231,6 +231,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         if (isExpandableHandlerVisibleForCurrentRow(row)) {
           continue;
         }
+        if (row == -1) continue;
         Object node = getPathForRow(row).getLastPathComponent();
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();

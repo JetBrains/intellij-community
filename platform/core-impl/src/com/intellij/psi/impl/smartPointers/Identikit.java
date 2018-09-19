@@ -97,10 +97,7 @@ public abstract class Identikit {
     public PsiElement findInside(@NotNull PsiElement element, int startOffset, int endOffset) {
       PsiElement anchor = AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
       if (anchor == null && startOffset == element.getTextLength()) {
-        PsiElement lastChild = element.getLastChild();
-        if (lastChild != null) {
-          anchor = PsiTreeUtil.getDeepestLast(lastChild);
-        }
+        anchor = PsiTreeUtil.getDeepestLast(element);
       }
       if (anchor == null) return null;
 
@@ -121,7 +118,7 @@ public abstract class Identikit {
     private PsiElement findParent(int startOffset, int endOffset, PsiElement anchor) {
       TextRange range = anchor.getTextRange();
 
-      if (range.getStartOffset() != startOffset) return null;
+      if (range == null || range.getStartOffset() != startOffset) return null;
       while (range.getEndOffset() < endOffset) {
         anchor = anchor.getParent();
         if (anchor == null || anchor.getTextRange() == null) {

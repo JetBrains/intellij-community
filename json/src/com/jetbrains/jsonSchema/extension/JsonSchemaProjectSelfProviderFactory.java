@@ -54,6 +54,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
+      if (myProject.isDisposed()) return false;
       JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
       if (!service.isApplicableToFile(file)) return false;
       JsonSchemaVersion schemaVersion = service.getSchemaVersion(file);

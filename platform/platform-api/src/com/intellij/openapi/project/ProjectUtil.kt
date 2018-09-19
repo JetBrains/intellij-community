@@ -76,19 +76,6 @@ fun guessProjectForContentFile(file: VirtualFile,
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
 
-fun getActiveInitializedProject(): Project? {
-  val projects = ProjectManager.getInstance().openProjects.filter {
-    !it.isDefault && !it.isDisposed
-  }
-
-  if (projects.size == 1) {
-    return projects.first()
-  }
-  else {
-    return projects.firstOrNull { WindowManager.getInstance().getFrame(it)?.isActive ?: false }
-  }
-}
-
 fun guessCurrentProject(component: JComponent?): Project {
   var project: Project? = null
   if (component != null) {

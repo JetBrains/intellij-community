@@ -128,8 +128,9 @@ public final class DfaVariableValue extends DfaValue {
     return mySource;
   }
 
+  @Override
   @Nullable
-  public PsiType getVariableType() {
+  public PsiType getType() {
     return myVarType;
   }
 

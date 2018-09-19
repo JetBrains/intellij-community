@@ -8,8 +8,10 @@ import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,7 +80,14 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
       return;
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> findKeys(consumer, pattern, everywhere, progressIndicator));
+    Runnable task = () -> findKeys(consumer, pattern, everywhere, progressIndicator);
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      application.runReadAction(task);
+    } else {
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, progressIndicator);
+    }
   }
 
   @Override

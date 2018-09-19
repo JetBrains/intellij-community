@@ -34,8 +34,6 @@ public class SuppressLocalInspectionTest extends LightQuickFixParameterizedTestC
     return new LocalInspectionTool[]{new LocalCanBeFinal(), new FieldCanBeLocalInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/suppressLocalInspection";
