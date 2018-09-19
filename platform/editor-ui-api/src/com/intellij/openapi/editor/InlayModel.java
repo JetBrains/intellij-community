@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.EventListener;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Provides an ability to introduce custom visual elements into editor's representation.
@@ -24,7 +25,7 @@ public interface InlayModel {
    * Same as {@link #addInlineElement(int, boolean, EditorCustomElementRenderer)}, making created element associated with following text.
    */
   @Nullable
-  default Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
+  default <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, @NotNull T renderer) {
     return addInlineElement(offset, false, renderer);
   }
 
@@ -39,7 +40,7 @@ public interface InlayModel {
    * @since 2017.3
    */
   @Nullable
-  Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer);
+  <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
 
   /**
    * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
@@ -50,11 +51,11 @@ public interface InlayModel {
    * @since 2018.3
    */
   @Nullable
-  Inlay addBlockElement(int offset,
-                        boolean relatesToPrecedingText,
-                        boolean showAbove,
-                        int priority,
-                        @NotNull EditorCustomElementRenderer renderer);
+  <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                boolean relatesToPrecedingText,
+                                                                boolean showAbove,
+                                                                int priority,
+                                                                @NotNull T renderer);
 
   /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.
@@ -64,6 +65,20 @@ public interface InlayModel {
   List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
 
   /**
+   * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
+   *
+   * @since 2018.3
+   */
+  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+    return getInlineElementsInRange(startOffset, endOffset).stream()
+      .filter(i -> type.isInstance(i.getRenderer()))
+      .map(i -> {
+        //noinspection unchecked
+        return (Inlay<? extends T>)i;
+      }).collect(Collectors.toList());
+  }
+
+  /**
    * Returns a list of block elements for a given offset range (both limits are inclusive) in priority order
    * (higher priority ones appear first). Both visible and invisible (due to folding) elements are returned.
    *
@@ -71,6 +86,20 @@ public interface InlayModel {
    */
   @NotNull
   List<Inlay> getBlockElementsInRange(int startOffset, int endOffset);
+
+  /**
+   * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
+   *
+   * @since 2018.3
+   */
+  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+    return getBlockElementsInRange(startOffset, endOffset).stream()
+      .filter(i -> type.isInstance(i.getRenderer()))
+      .map(i -> {
+        //noinspection unchecked
+        return (Inlay<? extends T>)i;
+      }).collect(Collectors.toList());
+  }
 
   /**
    * Returns a list of block elements displayed for a given visual line in appearance order (top to bottom).

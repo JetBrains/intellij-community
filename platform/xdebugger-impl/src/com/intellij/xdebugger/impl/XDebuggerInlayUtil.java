@@ -62,13 +62,7 @@ public class XDebuggerInlayUtil {
         Editor e = ((TextEditor)editor).getEditor();
         CharSequence text = e.getDocument().getImmutableCharSequence();
         int insertOffset = getIdentifierEndOffset(text, offset);
-        List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset);
-        for (Inlay inlay : existing) {
-          if (inlay.getRenderer() instanceof MyRenderer) {
-            Disposer.dispose(inlay);
-          }
-        }
-
+        e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, MyRenderer.class).forEach(Disposer::dispose);
         e.getInlayModel().addInlineElement(insertOffset, new MyRenderer(inlayText));
       }
     });
@@ -80,12 +74,7 @@ public class XDebuggerInlayUtil {
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           Editor e = ((TextEditor)editor).getEditor();
-          List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(0, e.getDocument().getTextLength());
-          for (Inlay inlay : existing) {
-            if (inlay.getRenderer() instanceof MyRenderer) {
-              Disposer.dispose(inlay);
-            }
-          }
+          e.getInlayModel().getInlineElementsInRange(0, e.getDocument().getTextLength(), MyRenderer.class).forEach(Disposer::dispose);
         }
       }
     });
@@ -117,22 +106,19 @@ public class XDebuggerInlayUtil {
 
   public static void addValueToBlockInlay(@NotNull Editor editor, int offset, String inlayText) {
     int lineStartOffset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
-    List<Inlay> inlays = editor.getInlayModel().getBlockElementsInRange(lineStartOffset, lineStartOffset);
+    List<Inlay<? extends MyBlockRenderer>>
+      inlays = editor.getInlayModel().getBlockElementsInRange(lineStartOffset, lineStartOffset, MyBlockRenderer.class);
     if (inlays.size() != 1) return;
-    Inlay inlay = inlays.get(0);
+    Inlay<? extends MyBlockRenderer> inlay = inlays.get(0);
     CharSequence text = editor.getDocument().getImmutableCharSequence();
     int identifierEndOffset = getIdentifierEndOffset(text, offset);
-    ((MyBlockRenderer)inlay.getRenderer()).addValue(offset, identifierEndOffset, inlayText);
+    inlay.getRenderer().addValue(offset, identifierEndOffset, inlayText);
     inlay.updateSize();
   }
 
   public static void clearBlockInlays(@NotNull Editor editor) {
-    List<Inlay> existing = editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength());
-    for (Inlay inlay : existing) {
-      if (inlay.getRenderer() instanceof MyBlockRenderer) {
-        Disposer.dispose(inlay);
-      }
-    }
+    editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength(), MyBlockRenderer.class)
+      .forEach(Disposer::dispose);
   }
 
   public interface Helper {
@@ -144,7 +130,7 @@ public class XDebuggerInlayUtil {
   private static class MyBlockRenderer implements EditorCustomElementRenderer  {
     private final SortedSet<ValueInfo> values = new TreeSet<>();
 
-    private void addValue(int refStartOffset, int refEndOffset, @NotNull String value) {
+    void addValue(int refStartOffset, int refEndOffset, @NotNull String value) {
       ValueInfo info = new ValueInfo(refStartOffset, refEndOffset, value);
       values.remove(info);
       values.add(info); // retain latest reported value for given offset

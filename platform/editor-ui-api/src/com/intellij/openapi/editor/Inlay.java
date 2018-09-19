@@ -23,7 +23,7 @@ import java.awt.*;
  * @since 2016.3
  */
 @ApiStatus.Experimental
-public interface Inlay extends Disposable, UserDataHolderEx {
+public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable, UserDataHolderEx {
   /**
    * Returns editor, this custom visual element belongs to.
    *
@@ -86,7 +86,7 @@ public interface Inlay extends Disposable, UserDataHolderEx {
    * Returns renderer, which defines size and representation for this inlay.
    */
   @NotNull
-  EditorCustomElementRenderer getRenderer();
+  T getRenderer();
 
   /**
    * Returns current inlay's width. Width is defined at inlay's creation using information returned by inlay's renderer.

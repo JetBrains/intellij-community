@@ -184,7 +184,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     return result;
   }
 
-  private class MyRange extends RangeMarkerWithGetterImpl<MyRange> implements IntSupplier {
+  private class MyRange extends RangeMarkerWithGetterImpl implements IntSupplier {
     private int myValue;
 
     MyRange(int offset, int value) {
