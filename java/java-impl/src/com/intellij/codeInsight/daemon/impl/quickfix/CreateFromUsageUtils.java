@@ -517,8 +517,9 @@ public class CreateFromUsageUtils {
 
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
+          PsiMethod resolveMethod = ((PsiMethodCallExpression)expression).resolveMethod();
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName())) {
+          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) && methodExpression.resolve() == resolveMethod) {
             result.add(expr.getMethodExpression());
           }
         }
