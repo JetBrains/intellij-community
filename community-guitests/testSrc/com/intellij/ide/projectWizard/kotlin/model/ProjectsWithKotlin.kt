@@ -718,13 +718,15 @@ fun KotlinGuiTestCase.createKotlinMPProjectDeprecated(
   )
 }
 
-fun KotlinGuiTestCase.createKotlinMPProjectWeb(
-  projectPath: String
+fun KotlinGuiTestCase.createKotlinMPProject(
+  projectPath: String,
+  templateName: String
 ) {
-  logTestStep("Create new MPP (web) project")
+  logTestStep("Create new $templateName project")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createKotlinMPProjectWeb(
-    projectPath = projectPath
+  newProjectDialogModel.createKotlinMPProject(
+    projectPath = projectPath,
+    templateName = templateName
   )
 }

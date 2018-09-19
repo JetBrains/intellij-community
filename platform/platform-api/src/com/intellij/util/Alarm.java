@@ -122,7 +122,7 @@ public class Alarm implements Disposable {
                         AppExecutorUtil.createBoundedScheduledExecutorService("Alarm Pool", 1);
 
     if (parentDisposable == null) {
-      if (threadToUse == ThreadToUse.POOLED_THREAD || threadToUse != ThreadToUse.SWING_THREAD) {
+      if (threadToUse != ThreadToUse.SWING_THREAD) {
         boolean crash = threadToUse == ThreadToUse.POOLED_THREAD || ApplicationManager.getApplication().isUnitTestMode();
         IllegalArgumentException t = new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm");
         if (crash) {
@@ -255,7 +255,8 @@ public class Alarm implements Disposable {
     return count;
   }
 
-  public void flush() {
+  @TestOnly
+  public void drainRequestsInTest() {
     List<Runnable> unfinishedTasks;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {

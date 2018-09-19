@@ -26,5 +26,5 @@ public interface UsageViewFactory {
   UsageViewEx createUsageView(@NotNull UsageTarget[] targets,
                               @NotNull Usage[] usages,
                               @NotNull UsageViewPresentation presentation,
-                              Factory<UsageSearcher> usageSearcherFactory);
+                              Factory<? extends UsageSearcher> usageSearcherFactory);
 }

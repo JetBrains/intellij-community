@@ -19,6 +19,7 @@ import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -305,9 +306,9 @@ public class FileTemplateUtil {
       }
     }
     propsMap.put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName + (StringUtil.isEmpty(template.getExtension()) ? "" : "." + template.getExtension()));
-    String path = VfsUtilCore.getRelativePath(directory.getVirtualFile(), directory.getProject().getBaseDir());
-    if (path != null) {
-      propsMap.put(FileTemplate.ATTRIBUTE_DIR_PATH, path);
+    String dirPath = getDirPathRelativeToProjectBaseDir(directory);
+    if (dirPath != null) {
+      propsMap.put(FileTemplate.ATTRIBUTE_DIR_PATH, dirPath);
     }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitly set)
@@ -329,6 +330,12 @@ public class FileTemplateUtil {
         .writeCommandAction(project)
         .withName(handler.commandName(template))
         .compute(()->handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
+  }
+
+  @Nullable
+  private static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+    VirtualFile baseDir = directory.getProject().getBaseDir();
+    return baseDir != null ? VfsUtilCore.getRelativePath(directory.getVirtualFile(), baseDir) : null;
   }
 
   @NotNull

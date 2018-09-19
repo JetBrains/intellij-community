@@ -407,4 +407,25 @@ class FinallyTest
   }
 
   private native void methodB();
+
+  void testPrimitive() {
+    OptionalInt a = OptionalInt.of(123);
+    int b = a.getAsInt();
+    OptionalLong c = OptionalLong.of(123);
+    long d = c.getAsLong();
+    OptionalDouble e = OptionalDouble.of(123);
+    double f = e.getAsDouble();
+  }
+
+  void testPrimitive2(OptionalInt a, OptionalLong c, OptionalDouble e) {
+    int b = a.<warning descr="'OptionalInt.getAsInt()' without 'isPresent()' check">getAsInt</warning>();
+    long d = c.<warning descr="'OptionalLong.getAsLong()' without 'isPresent()' check">getAsLong</warning>();
+    double f = e.<warning descr="'OptionalDouble.getAsDouble()' without 'isPresent()' check">getAsDouble</warning>();
+  }
+
+  void testPrimitive3(OptionalInt a) {
+    if (a.isPresent()) {
+      System.out.println(a.getAsInt());
+    }
+  }
 }

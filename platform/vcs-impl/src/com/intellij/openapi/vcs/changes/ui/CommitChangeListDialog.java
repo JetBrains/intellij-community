@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -329,11 +328,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true,
                                                                                     myShowVcsCommit, myEnablePartialCommit);
       myBrowser = browser;
-
-      CurrentBranchComponent branchComponent = new CurrentBranchComponent(myProject, browser);
-      addBorder(branchComponent, JBUI.Borders.empty(5, 0, 0, 7));
-      browser.getViewerScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-      browser.getViewerScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, branchComponent);
 
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
       myCommitMessageArea.setChangeList(browser.getSelectedChangeList());

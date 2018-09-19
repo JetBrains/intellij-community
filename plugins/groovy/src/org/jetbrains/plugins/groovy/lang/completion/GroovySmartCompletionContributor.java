@@ -338,7 +338,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
   @Nullable
   private static LookupElement addExpectedType(PsiType type, final PsiElement place, CompletionParameters parameters, @Nullable PsiType diamond) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type, place)) return null;
 
     final PsiClass psiClass = com.intellij.psi.util.PsiUtil.resolveClassInType(type);
     if (psiClass == null) return null;

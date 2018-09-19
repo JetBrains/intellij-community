@@ -103,8 +103,10 @@ fun buildTopLevelArgumentTypes(place: PsiElement): Array<PsiType?> {
 }
 
 fun PsiSubstitutor.putAll(parameters: Array<out PsiTypeParameter>, arguments: Array<out PsiType>): PsiSubstitutor {
-  if (arguments.size != parameters.size) return this
-  return parameters.zip(arguments).fold(this) { acc, (param, arg) ->
-    acc.put(param, arg)
-  }
+  return this
+//  TODO deal with it
+//  if (arguments.size != parameters.size) return this
+//  return parameters.zip(arguments).fold(this) { acc, (param, arg) ->
+//    acc.put(param, arg)
+//  }
 }

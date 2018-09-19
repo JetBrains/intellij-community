@@ -2,15 +2,11 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNew
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonOk
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJsModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
@@ -40,10 +36,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppExperimental
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
@@ -117,7 +110,8 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libWebApplication = "Web Application"
     const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
-    const val itemKotlinMppWeb = "Kotlin (Multiplatform - Web)"
+    const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
+    const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
   }
 
   enum class Groups(private val title: String) {
@@ -449,14 +443,15 @@ fun NewProjectDialogModel.createKotlinMPProjectDeprecated(
   }
 }
 
-fun NewProjectDialogModel.createKotlinMPProjectWeb(
-  projectPath: String
+fun NewProjectDialogModel.createKotlinMPProject(
+  projectPath: String,
+  templateName: String
 ) {
   with(guiTestCase) {
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
-      logUIStep("Select `$itemKotlinMppWeb` kind of project")
-      jList(itemKotlinMppWeb).clickItem(itemKotlinMppWeb)
+      logUIStep("Select `$templateName` kind of project")
+      jList(templateName).clickItem(templateName)
       button(buttonNext).click()
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")

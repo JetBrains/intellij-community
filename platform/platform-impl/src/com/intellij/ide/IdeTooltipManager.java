@@ -397,7 +397,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
-    return JBColor.blue;
+    return JBColor.link();
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})

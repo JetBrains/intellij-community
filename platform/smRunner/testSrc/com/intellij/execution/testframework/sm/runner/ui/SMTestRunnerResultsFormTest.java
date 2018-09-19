@@ -264,6 +264,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onSuiteTreeStarted("suite1", null, null, "suite1", "0");
     myEventsProcessor.onSuiteTreeNodeAdded("test1", null, null,"test1", "suite1");
     myEventsProcessor.onSuiteTreeEnded("suite1");
+    myEventsProcessor.onBuildTreeEnded();
 
     //start testing
     myEventsProcessor.onStartTesting();

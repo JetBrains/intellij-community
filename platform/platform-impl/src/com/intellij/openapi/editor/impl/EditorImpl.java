@@ -960,7 +960,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
     if (myProject == null || !myProject.isDisposed()) {
-      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+      CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
+      if (settingsManager != null) {
+        settingsManager.removeListener(this);
+      }
     }
 
     if (myBulkUpdateListener != null) {

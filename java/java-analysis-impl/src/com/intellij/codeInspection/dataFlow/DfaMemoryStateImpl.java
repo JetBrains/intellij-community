@@ -337,9 +337,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  private static boolean canBeInRelation(@NotNull DfaValue dfaValue) {
-    DfaValue unwrapped = unwrap(dfaValue);
-    return unwrapped instanceof DfaVariableValue || unwrapped instanceof DfaConstValue;
+  private static boolean canBeInRelation(@NotNull DfaValue value) {
+    return value instanceof DfaBoxedValue || value instanceof DfaVariableValue || value instanceof DfaConstValue;
   }
 
   @NotNull
@@ -425,7 +424,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (int i = 0; i < c2.size(); i++) {
       int c = c2.get(i);
       newClass.add(c);
-      myIdToEqClassesIndices.remove(c);
       myIdToEqClassesIndices.put(c, c1Index);
     }
 
@@ -530,7 +528,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaConstValue) {
       return (DfaConstValue)value;
     }
-    if (value instanceof DfaUnboxedValue || value instanceof DfaVariableValue) {
+    if (value instanceof DfaVariableValue) {
       EqClass ec = getEqClass(value);
       return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
     }
@@ -662,9 +660,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaBoxedValue) {
       return ((DfaBoxedValue)value).getWrappedValue();
     }
-    if (value instanceof DfaUnboxedValue) {
-      return ((DfaUnboxedValue)value).getVariable();
-    }
     return value;
   }
 
@@ -711,14 +706,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public boolean applyCondition(DfaValue dfaCond) {
     if (dfaCond instanceof DfaUnknownValue) return true;
-    if (dfaCond instanceof DfaUnboxedValue) {
-      DfaVariableValue dfaVar = ((DfaUnboxedValue)dfaCond).getVariable();
-      final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(myFactory.getConstFactory().getTrue());
-      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaVar, RelationType.EQ, boxedTrue));
-    }
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
-      DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
+      DfaValue dfaTrue = myFactory.getConstFactory().getTrue();
+      if (dfaVar.getSource() == SpecialField.UNBOX) {
+        dfaVar = dfaVar.getQualifier();
+        dfaTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
+      }
       return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaVar, RelationType.EQ, dfaTrue));
     }
 
@@ -877,12 +871,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     StreamEx<Couple<DfaValue>> stream = StreamEx.empty();
     if (left instanceof DfaVariableValue) {
       stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)left).getDependentVariables()))
-        .filter(leftVar -> leftVar.getQualifier() == left && leftVar.getSource() instanceof SpecialField)
+                               .filter(leftVar -> leftVar.getQualifier() == left &&
+                                                  leftVar.getSource() instanceof SpecialField &&
+                                                  leftVar.getSource() != SpecialField.UNBOX)
         .map(leftVar -> Couple.of(leftVar, ((SpecialField)leftVar.getSource()).createValue(myFactory, right))));
     }
     if (right instanceof DfaVariableValue) {
       stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)right).getDependentVariables()))
-        .filter(rightVar -> rightVar.getQualifier() == right && rightVar.getSource() instanceof SpecialField)
+                               .filter(rightVar -> rightVar.getQualifier() == right &&
+                                                   rightVar.getSource() instanceof SpecialField &&
+                                                   rightVar.getSource() != SpecialField.UNBOX)
         .map(rightVar -> Couple.of(((SpecialField)rightVar.getSource()).createValue(myFactory, left), rightVar)));
     }
     return stream.distinct().toList();
@@ -899,19 +897,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
-    if (!(dfaLeft instanceof DfaBoxedValue) && !TypeConversionUtil.isPrimitiveWrapper(dfaLeft.getType())) {
+    if (!(dfaLeft instanceof DfaBoxedValue) && !TypeConversionUtil.isPrimitiveWrapper(dfaLeft.getType()) ||
+        !(dfaRight instanceof DfaBoxedValue) && !TypeConversionUtil.isPrimitiveWrapper(dfaRight.getType())) {
       return true;
     }
 
     DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
-    DfaValue unboxedLeft = boxedFactory.createUnboxed(dfaLeft);
-    DfaValue unboxedRight = boxedFactory.createUnboxed(dfaRight);
+    DfaValue unboxedLeft = boxedFactory.createUnboxed(dfaLeft, null);
+    DfaValue unboxedRight = boxedFactory.createUnboxed(dfaRight, null);
     if (negated && (PsiType.FLOAT.equals(unboxedLeft.getType()) || PsiType.DOUBLE.equals(unboxedLeft.getType()))) {
       // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0
       return true;
     }
-    return applyRelation(unboxedLeft, unboxedRight, negated) &&
-           ((negated && !isNotNull(dfaLeft)) || checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, negated));
+    return applyRelation(unboxedLeft, unboxedRight, negated);
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
@@ -968,7 +966,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyBooleanInequality(DfaValue var, DfaValue value) {
-    if (!(var instanceof DfaVariableValue) || !PsiType.BOOLEAN.equals(var.getType())) return false;
+    if (!(var instanceof DfaVariableValue) ||
+        !PsiType.BOOLEAN.equals(var.getType()) ||
+        ((DfaVariableValue)var).getSource() == SpecialField.UNBOX) {
+      return false;
+    }
     if (!(value instanceof DfaConstValue)) return false;
     Boolean constValue = ObjectUtils.tryCast(((DfaConstValue)value).getValue(), Boolean.class);
     return constValue != null && applyRelation(var, myFactory.getBoolean(!constValue), false);
@@ -1135,9 +1137,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     if (value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue() instanceof DfaVariableValue) {
       return Objects.requireNonNull(myFactory.getBoxedFactory().createBoxed(canonicalize(((DfaBoxedValue)value).getWrappedValue())));
-    }
-    if (value instanceof DfaUnboxedValue) {
-      return myFactory.getBoxedFactory().createUnboxed(canonicalize(((DfaUnboxedValue)value).getVariable()));
     }
     if (value instanceof DfaConstValue) {
       Object constant = ((DfaConstValue)value).getValue();
@@ -1320,7 +1319,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void removeEquivalenceForVariableAndWrappers(@NotNull DfaVariableValue var) {
     removeEquivalence(var);
-    DfaValue wrapped = myFactory.getBoxedFactory().getWrappedIfExists(var);
+    DfaValue wrapped = myFactory.getBoxedFactory().getBoxedIfExists(var);
     if (wrapped != null) {
       removeEquivalence(wrapped);
     }

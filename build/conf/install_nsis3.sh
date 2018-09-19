@@ -22,7 +22,7 @@ buildNSIS() {
   cd share
   ln -s "$tools/nsis-$nsisVersion" nsis
   cd "$tools/nsis-$nsisVersion-src"
-  "$tools/scons-$sconsVersion/bin/scons" SKIPSTUBS=all SKIPPLUGINS=all SKIPUTILS=all SKIPMISC=all NSIS_CONFIG_CONST_DATA=no NSIS_CONFIG_LOG=yes PREFIX="$tools/nsis-$nsisVersion" install-compiler
+  "$tools/scons-$sconsVersion/bin/scons" SKIPSTUBS=all SKIPPLUGINS=all SKIPUTILS=all SKIPMISC=all NSIS_CONFIG_CONST_DATA=no NSIS_MAX_STRLEN=8192 PREFIX="$tools/nsis-$nsisVersion" install-compiler
 }
 
 if [ ! -d "$tools/scons-$sconsVersion" ]; then

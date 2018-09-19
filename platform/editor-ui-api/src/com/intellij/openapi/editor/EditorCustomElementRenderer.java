@@ -27,6 +27,8 @@ import java.awt.*;
  * @see InlayModel#addInlineElement(int, EditorCustomElementRenderer)
  * @see InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)
  * @see Inlay#getRenderer()
+ *
+ * @since 2016.3
  */
 public interface EditorCustomElementRenderer {
   /**
@@ -36,6 +38,8 @@ public interface EditorCustomElementRenderer {
 
   /**
    * Defines height of custom element (in pixels). This value is currently not used for 'inline' elements.
+   *
+   * @since 2018.3
    */
   default int calcHeightInPixels(@NotNull Editor editor) {
     return editor.getLineHeight();
@@ -46,6 +50,8 @@ public interface EditorCustomElementRenderer {
    * 
    * @param targetRegion region where painting should be performed
    * @param textAttributes attributes of surrounding text
+   *
+   * @since 2017.3
    */
   void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes);
 

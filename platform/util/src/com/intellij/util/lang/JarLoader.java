@@ -59,16 +59,19 @@ class JarLoader extends Loader {
     myConfiguration = configuration;
     myUrl = url;
 
-    ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
-    try {
-      if (configuration.myPreloadJarContents) {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), this);
-        if (loader != null) {
-          myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+    if (!configuration.myLazyClassloadingCaches) {
+      ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
+      try {
+        if (configuration.myPreloadJarContents) {
+          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), this);
+          if (loader != null) {
+            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+          }
         }
       }
-    } finally {
-      releaseZipFile(zipFile);
+      finally {
+        releaseZipFile(zipFile);
+      }
     }
   }
 

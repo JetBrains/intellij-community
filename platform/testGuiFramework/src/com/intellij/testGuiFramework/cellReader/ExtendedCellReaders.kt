@@ -119,14 +119,14 @@ private fun getValueWithCellRenderer(cellRendererComponent: Component, isExtende
 
 private fun SimpleColoredComponent.getFullText(): String? {
   return computeOnEdt {
-    this.iterator().asSequence().joinToString()
+    this.getCharSequence(false).toString()
   }
 }
 
 
 private fun SimpleColoredComponent.getFirstText(): String? {
   return computeOnEdt {
-    this.iterator().asSequence().joinToString()
+    this.getCharSequence(true).toString()
   }
 }
 

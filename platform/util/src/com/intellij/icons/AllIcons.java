@@ -891,6 +891,7 @@ public class AllIcons {
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.svg"); // 16x16
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.svg"); // 16x16
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.svg"); // 16x16
+    public static final Icon User = IconLoader.getIcon("/general/user.svg"); // 16x16
     public static final Icon Warning = IconLoader.getIcon("/general/warning.svg"); // 16x16
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.svg"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.svg"); // 32x32
@@ -1667,7 +1668,7 @@ public class AllIcons {
 
   public static class Modules {
     public static final Icon AddExcludedRoot = IconLoader.getIcon("/modules/addExcludedRoot.svg"); // 16x16
-    public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.png"); // 16x16
+    public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.svg"); // 16x16
     public static final Icon DeleteContentFolder = IconLoader.getIcon("/modules/deleteContentFolder.png"); // 9x9
     public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); // 9x9
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 9x9
@@ -1678,29 +1679,24 @@ public class AllIcons {
     public static final Icon GeneratedFolder = IconLoader.getIcon("/modules/generatedFolder.svg"); // 16x16
     public static final Icon GeneratedSourceRoot = IconLoader.getIcon("/modules/generatedSourceRoot.svg"); // 16x16
     public static final Icon GeneratedTestRoot = IconLoader.getIcon("/modules/generatedTestRoot.svg"); // 16x16
-    public static final Icon Library = IconLoader.getIcon("/modules/library.svg"); // 16x16
-    public static final Icon Merge = IconLoader.getIcon("/modules/merge.png"); // 16x16
-    public static final Icon ModulesNode = IconLoader.getIcon("/modules/modulesNode.svg"); // 16x16
     public static final Icon Output = IconLoader.getIcon("/modules/output.svg"); // 16x16
     public static final Icon ResourcesRoot = IconLoader.getIcon("/modules/resourcesRoot.svg"); // 16x16
-    public static final Icon SetPackagePrefix = IconLoader.getIcon("/modules/setPackagePrefix.png"); // 9x9
-    public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); // 9x9
-    public static final Icon SourceFolder = IconLoader.getIcon("/modules/sourceFolder.svg"); // 16x16
     public static final Icon SourceRoot = IconLoader.getIcon("/modules/sourceRoot.svg"); // 16x16
     public static final Icon SourceRootFileLayer = IconLoader.getIcon("/modules/sourceRootFileLayer.png"); // 16x16
-    public static final Icon Sources = IconLoader.getIcon("/modules/sources.svg"); // 16x16
-    public static final Icon Split = IconLoader.getIcon("/modules/split.png"); // 16x16
+    public static final Icon Split = IconLoader.getIcon("/modules/split.svg"); // 16x16
     public static final Icon TestResourcesRoot = IconLoader.getIcon("/modules/testResourcesRoot.svg"); // 16x16
     public static final Icon TestRoot = IconLoader.getIcon("/modules/testRoot.svg"); // 16x16
-    public static final Icon TestSourceFolder = IconLoader.getIcon("/modules/testSourceFolder.svg"); // 16x16
 
     public static class Types {
-      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.User */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon UserDefined = AllIcons.General.User;
 
     }
-    public static final Icon UnloadedModule = IconLoader.getIcon("/modules/unloadedModule.png"); // 16x16
+    public static final Icon UnloadedModule = IconLoader.getIcon("/modules/unloadedModule.svg"); // 16x16
     public static final Icon UnmarkWebroot = IconLoader.getIcon("/modules/unmarkWebroot.svg"); // 16x16
-    public static final Icon WebRoot = IconLoader.getIcon("/modules/webRoot.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Add */
     @SuppressWarnings("unused")
@@ -1711,6 +1707,51 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Edit = AllIcons.Actions.Edit;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.PpLib */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Library = AllIcons.Nodes.PpLib;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Merge */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Merge = AllIcons.Vcs.Merge;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.ModuleGroup */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ModulesNode = AllIcons.Nodes.ModuleGroup;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Inline_edit */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SetPackagePrefix = AllIcons.General.Inline_edit;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Inline_edit_hovered */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SetPackagePrefixRollover = AllIcons.General.Inline_edit_hovered;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SourceFolder = AllIcons.Nodes.Package;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Sources = IconLoader.getIcon("/modules/sources.svg");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TestSourceFolder */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestSourceFolder = AllIcons.Nodes.TestSourceFolder;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.WebFolder */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon WebRoot = AllIcons.Nodes.WebFolder;
 
   }
 
@@ -2289,7 +2330,7 @@ public class AllIcons {
 
   public static class Toolbar {
     public static final Icon Filterdups = IconLoader.getIcon("/toolbar/filterdups.svg"); // 16x16
-    public static final Icon Unknown = IconLoader.getIcon("/toolbar/unknown.png"); // 16x16
+    public static final Icon Unknown = IconLoader.getIcon("/toolbar/unknown.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.GroupByPackage */
     @SuppressWarnings("unused")
@@ -2308,12 +2349,10 @@ public class AllIcons {
     public static final Icon AddPattern = IconLoader.getIcon("/toolbarDecorator/addPattern.svg"); // 16x16
     public static final Icon AddRemoteDatasource = IconLoader.getIcon("/toolbarDecorator/addRemoteDatasource.svg"); // 16x16
     public static final Icon AddYouTrack = IconLoader.getIcon("/toolbarDecorator/addYouTrack.svg"); // 16x16
-    public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/analyze.png"); // 14x14
     public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
     public static final Icon Import = IconLoader.getIcon("/toolbarDecorator/import.svg"); // 16x16
 
     public static class Mac {
-      public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/mac/analyze.png"); // 14x14
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Add */
       @SuppressWarnings("unused")
@@ -2370,6 +2409,11 @@ public class AllIcons {
       @Deprecated
       public static final Icon AddYouTrack = AllIcons.ToolbarDecorator.AddYouTrack;
 
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/mac/analyze.png");
+
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
       @SuppressWarnings("unused")
       @Deprecated
@@ -2401,6 +2445,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon AddPackage = AllIcons.ToolbarDecorator.AddFolder;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Analyze = IconLoader.getIcon("/toolbarDecorator/analyze.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")

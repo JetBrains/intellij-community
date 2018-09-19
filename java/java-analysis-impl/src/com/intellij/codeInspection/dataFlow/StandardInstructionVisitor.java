@@ -278,7 +278,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     DfaValue value = memState.pop();
     if (type instanceof PsiPrimitiveType) {
-      value = factory.getBoxedFactory().createUnboxed(value);
+      value = DfaUtil.boxUnbox(value, type);
     }
     pushExpressionResult(value, instruction, memState);
 
@@ -531,7 +531,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
-      return factory.getBoxedFactory().createUnboxed(qualifierValue);
+      return factory.getBoxedFactory().createUnboxed(qualifierValue, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
     }
 
     if (methodType == MethodCallInstruction.MethodType.BOXING) {

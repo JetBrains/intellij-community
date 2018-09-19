@@ -413,13 +413,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
-    get() = selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
+    get() {
+      return lock.read { 
+        selectedConfigurationId?.let { idToSettings.get(it) }
+      }
+    }
     set(value) {
-      if (value?.uniqueID == selectedConfigurationId) {
-        return
+      fun isTheSame() = value?.uniqueID == selectedConfigurationId
+      
+      lock.read {
+        if (isTheSame()) {
+          return
+        }
       }
 
-      selectedConfigurationId = value?.uniqueID
+      lock.write {
+        if (isTheSame()) {
+          return
+        }
+        
+        selectedConfigurationId = value?.uniqueID
+      }
+      
       eventPublisher.runConfigurationSelected()
     }
 

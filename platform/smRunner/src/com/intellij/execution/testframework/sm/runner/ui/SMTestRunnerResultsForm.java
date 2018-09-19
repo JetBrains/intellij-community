@@ -37,6 +37,7 @@ import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -57,11 +58,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,10 +82,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: Roman Chernyatchik
@@ -123,6 +124,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private AbstractTestProxy myLastSelected;
   private boolean myDisposed = false;
   private SMTestProxy myLastFailed;
+  private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
+  private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this); 
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -173,6 +176,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.setModel(structureTreeModel);
     myTreeBuilder.setTestsComparator(this);
     Disposer.register(this, myTreeBuilder);
+    Disposer.register(this, asyncTreeModel);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
@@ -289,6 +293,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateIconProgress(true);
 
     myAnimator.stopMovie();
+
+    myRequests.clear();
+    myUpdateTreeRequests.cancelAllRequests();
     myTreeBuilder.updateFromRoot();
 
     LvcsHelper.addLabel(this);
@@ -467,7 +474,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // (e.g no tests found or all tests passed, etc.)
     // treeStructure.getChildElements(treeStructure.getRootElement()).length == 0
 
-    myTreeBuilder.performUpdate();
+    myTreeBuilder.updateFromRoot();
   }
 
   @Override
@@ -582,7 +589,26 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final SMTestProxy parentSuite = newTestOrSuite.getParent();
     assert parentSuite != null;
 
-    myTreeBuilder.updateTestsSubtree(newTestOrSuite);
+    final Update update = new Update(parentSuite) {
+      @Override
+      public void run() {
+        if (parentSuite.getParent() == null) {
+          myUpdateTreeRequests.cancelAllRequests();
+          myRequests.clear();
+          myTreeBuilder.updateFromRoot();
+        }
+        else {
+          myRequests.remove(this);
+          myTreeBuilder.updateTestsSubtree(parentSuite);
+        }
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      update.run();
+    }
+    else if (!myDisposed && myRequests.add(update)) {
+      myUpdateTreeRequests.addRequest(update, 100);
+    }
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
 
@@ -661,7 +687,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * for java unit tests
    */
   public void performUpdate() {
-    myTreeBuilder.performUpdate();
+    myTreeBuilder.updateFromRoot();
   }
 
   private void updateIconProgress(boolean updateWithAttention) {

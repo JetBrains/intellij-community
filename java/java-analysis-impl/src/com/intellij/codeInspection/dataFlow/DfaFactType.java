@@ -84,7 +84,7 @@ public abstract class DfaFactType<T> extends Key<T> {
       if (value instanceof DfaConstValue) {
         return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULLABLE : DfaNullability.NOT_NULL;
       }
-      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue) return DfaNullability.NOT_NULL;
+      if (value instanceof DfaBoxedValue) return DfaNullability.NOT_NULL;
       if (value instanceof DfaFactMapValue) {
         DfaFactMapValue factValue = (DfaFactMapValue)value;
         if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return DfaNullability.NOT_NULL;
@@ -162,7 +162,10 @@ public abstract class DfaFactType<T> extends Key<T> {
     LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
       DfaVariableSource source = var.getSource();
       if(source instanceof SpecialField) {
-        return ((SpecialField)source).getRange();
+        LongRangeSet fromSpecialField = ((SpecialField)source).getRange();
+        if (fromSpecialField != null) {
+          return fromSpecialField;
+        }
       }
       LongRangeSet fromType = LongRangeSet.fromType(var.getType());
       return fromType == null ? null : LongRangeSet.fromPsiElement(var.getPsiVariable()).intersect(fromType);

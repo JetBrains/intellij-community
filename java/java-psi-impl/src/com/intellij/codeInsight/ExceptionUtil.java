@@ -65,14 +65,13 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getThrownExceptions(@NotNull PsiElement element) {
     List<PsiClassType> result = new ArrayList<>();
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
         final PsiExpressionList argumentList = aClass.getArgumentList();
-        if (argumentList != null){
-          super.visitExpressionList(argumentList);
+        if (argumentList != null && !argumentList.isEmpty()) {
+          argumentList.accept(new Visitor());
         }
-        super.visitAnonymousClass(aClass);
       }
 
       @Override
@@ -128,7 +127,8 @@ public class ExceptionUtil {
         addExceptions(result, getTryExceptions(statement));
         // do not call super: try exception goes into try body recursively
       }
-    });
+    }
+    element.accept(new Visitor());
     return result;
   }
 

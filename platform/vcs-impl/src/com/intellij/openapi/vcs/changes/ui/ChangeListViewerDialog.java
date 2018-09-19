@@ -6,7 +6,6 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -97,7 +96,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
           emptyText.setText(e.getMessage(), SimpleTextAttributes.ERROR_ATTRIBUTES);
         };
       }
-    }, () -> myLoadingPanel.startLoading(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
+    }, () -> myLoadingPanel.startLoading());
   }
 
   @Override

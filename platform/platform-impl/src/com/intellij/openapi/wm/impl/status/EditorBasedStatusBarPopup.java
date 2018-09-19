@@ -174,18 +174,18 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @TestOnly
   public void updateInTests(boolean immediately) {
     update();
-    update.flush();
+    update.drainRequestsInTest();
     UIUtil.dispatchAllInvocationEvents();
     if (immediately) {
       // for widgets with background activities, the first flush() adds handlers to be called
-      update.flush();
+      update.drainRequestsInTest();
       UIUtil.dispatchAllInvocationEvents();
     }
   }
 
   @TestOnly
   public void flushUpdateInTests() {
-    update.flush();
+    update.drainRequestsInTest();
   }
 
   public void update() {
