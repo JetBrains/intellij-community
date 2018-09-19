@@ -23,7 +23,6 @@ echo "Unzipping $1.sit to ${EXPLODED}..."
 unzip -q $1.sit -d ${EXPLODED}/
 rm $1.sit
 BUILD_NAME=$(ls ${EXPLODED}/)
-cp product-info.json ${EXPLODED}/"$BUILD_NAME"/Contents/
 
 if [ $# -eq 7 ] && [ -f $7 ]; then
   archiveJDK="$7"
