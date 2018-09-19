@@ -33,9 +33,12 @@ import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
+
+import static com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME;
 
 public class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
@@ -45,8 +48,6 @@ public class CodeStyleSettingsCodeFragmentFilter {
   private final Document myDocument;
   private final RangeMarker myTextRangeMarker;
   private final LanguageCodeStyleSettingsProvider myProvider;
-
-  private CommonCodeStyleSettings myCommonSettings;
 
   public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile file,
                                              @NotNull TextRange range, 
@@ -63,7 +64,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
   @NotNull
   public CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     CodeStyleSettings clonedSettings = CodeStyle.getSettings(myFile).clone();
-    myCommonSettings = clonedSettings.getCommonSettings(myProvider.getLanguage());
+    CommonCodeStyleSettings commonSettings = clonedSettings.getCommonSettings(myProvider.getLanguage());
+    CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, clonedSettings);
 
     try {
       CodeStyle.setTemporarySettings(myProject, clonedSettings);
@@ -78,13 +80,13 @@ public class CodeStyleSettingsCodeFragmentFilter {
       final Map<LanguageCodeStyleSettingsProvider.SettingsType, FilterFieldsTask> typeToTask = ContainerUtil.newHashMap();
       for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
         Set<String> fields = myProvider.getSupportedFields(type);
-        FilterFieldsTask task = new FilterFieldsTask(fields);
+        FilterFieldsTask task = new FilterFieldsTask(commonSettings, customSettings,  fields);
         compositeTask.addTask(task);
         typeToTask.put(type, task);
       }
 
       Set<String> otherFields = myProvider.getSupportedFields();
-      final FilterFieldsTask otherFieldsTask = new FilterFieldsTask(otherFields);
+      final FilterFieldsTask otherFieldsTask = new FilterFieldsTask(commonSettings, customSettings, otherFields);
       if (!otherFields.isEmpty()) {
         compositeTask.addTask(otherFieldsTask);
       }
@@ -96,10 +98,9 @@ public class CodeStyleSettingsCodeFragmentFilter {
       return new CodeStyleSettingsToShow() {
         @Override
         public List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type) {
-          FilterFieldsTask task = typeToTask.get(type);
-          return task.getAffectedFields();
+          return typeToTask.get(type).getAffectedFields();
         }
-        
+
         @Override
         public List<String> getOtherSetting() {
           return ContainerUtil.newArrayList(otherFieldsTask.getAffectedFields());
@@ -109,6 +110,20 @@ public class CodeStyleSettingsCodeFragmentFilter {
     finally {
       CodeStyle.dropTemporarySettings(myProject);
     }
+  }
+
+  @Nullable
+  private static CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
+                                                           CodeStyleSettings tempSettings) {
+    for (CodeStyleSettingsProvider codeStyleSettingsProvider : EXTENSION_POINT_NAME.getExtensionList()) {
+      if (languageProvider.getLanguage().equals(codeStyleSettingsProvider.getLanguage())) {
+        CustomCodeStyleSettings modelSettings = codeStyleSettingsProvider.createCustomSettings(tempSettings);
+        if (modelSettings != null) {
+          return tempSettings.getCustomSettings(modelSettings.getClass());
+        }
+      }
+    }
+    return null;
   }
 
   private boolean formattingChangedFragment() {
@@ -134,10 +149,16 @@ public class CodeStyleSettingsCodeFragmentFilter {
     private final Collection<String> myAllFields;
 
     private List<String> myAffectingFields = ContainerUtil.newArrayList();
+    private final Object myCommonSettings;
+    @Nullable private final CustomCodeStyleSettings myCustomSettings;
 
-    FilterFieldsTask(@NotNull Collection<String> fields) {
+    FilterFieldsTask(@NotNull CommonCodeStyleSettings commonSettings,
+                     @Nullable CustomCodeStyleSettings customSettings,
+                     @NotNull Collection<String> fields) {
+      myCustomSettings = customSettings;
       myAllFields = fields;
       myIterator = fields.iterator();
+      myCommonSettings = commonSettings;
       myTotalFieldsNumber = fields.size();
     }
 
@@ -165,23 +186,31 @@ public class CodeStyleSettingsCodeFragmentFilter {
       if (!myIterator.hasNext()) return true;
 
       String field = myIterator.next();
-      try {
-        Field classField = CommonCodeStyleSettings.class.getField(field);
+      if (myCustomSettings != null) {
+        checkFieldAffectsSettings(myCustomSettings, field);
+      }
+      checkFieldAffectsSettings(myCommonSettings, field);
 
+      return true;
+    }
+
+    private void checkFieldAffectsSettings(@NotNull Object settings, String field) {
+      try {
+        Field classField = settings.getClass().getField(field);
         if (classField.getType() == Integer.TYPE) {
-          int oldValue = classField.getInt(myCommonSettings);
+          int oldValue = classField.getInt(settings);
           int newValue = getNewIntValue(classField, oldValue);
           if (newValue == oldValue) {
-            return true;
+            return;
           }
-          classField.set(myCommonSettings, newValue);
+          classField.set(settings, newValue);
         }
         else if (classField.getType() == Boolean.TYPE) {
-          boolean value = classField.getBoolean(myCommonSettings);
-          classField.set(myCommonSettings, !value);
+          boolean value = classField.getBoolean(settings);
+          classField.set(settings, !value);
         }
         else {
-          return true;
+          return;
         }
 
         if (formattingChangedFragment()) {
@@ -190,13 +219,9 @@ public class CodeStyleSettingsCodeFragmentFilter {
       }
       catch (Exception ignored) {
       }
-
-      return true;
     }
 
-    private int getNewIntValue(Field classField, int oldValue) throws IllegalAccessException {
-      int newValue = oldValue;
-
+    private int getNewIntValue(Field classField, int oldValue) {
       String fieldName = classField.getName();
       if (fieldName.contains("WRAP")) {
         return oldValue == CommonCodeStyleSettings.WRAP_ALWAYS

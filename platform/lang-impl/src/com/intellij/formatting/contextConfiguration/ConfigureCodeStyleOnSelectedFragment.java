@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
     CodeStyleSettingsToShow settingsToShow = new CodeStyleSettingsCodeFragmentFilter(file, textFormatter.getSelectedRange(), settingsProvider)
       .getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
 
-    new FragmentCodeStyleSettingsDialog(editor, textFormatter, settingsProvider.getLanguage(), settings, settingsToShow).show();
+    new FragmentCodeStyleSettingsDialog(editor, textFormatter, settingsProvider, settings, settingsToShow).show();
   }
 
   @Override
@@ -115,14 +116,14 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
 
     FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
-                                           @NotNull SelectedTextFormatter selectedTextFormatter,
-                                           @NotNull Language language,
-                                           CodeStyleSettings settings,
-                                           CodeStyleSettingsToShow settingsToShow) {
+                                    @NotNull SelectedTextFormatter selectedTextFormatter,
+                                    @NotNull LanguageCodeStyleSettingsProvider settingsProvider,
+                                    CodeStyleSettings settings,
+                                    CodeStyleSettingsToShow settingsToShow) {
       super(editor.getContentComponent(), true);
       mySettings = settings;
       mySelectedTextFormatter = selectedTextFormatter;
-      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, language, selectedTextFormatter);
+      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, settingsProvider, selectedTextFormatter);
 
       myOKAction = new ApplyToSettings();
       myOKAction.setEnabled(false);
@@ -136,7 +137,8 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
 
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
-      setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
+      String languageName = ObjectUtils.coalesce(settingsProvider.getLanguageName(), settingsProvider.getLanguage().getDisplayName());
+      setTitle(StringUtil.capitalizeWords(title, true) + ": " + languageName);
 
       setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());
 
