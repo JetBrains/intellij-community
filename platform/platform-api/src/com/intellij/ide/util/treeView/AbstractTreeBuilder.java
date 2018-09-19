@@ -455,7 +455,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     AbstractTreeNodeWrapper() {
-      super(null, null);
+      super(null, TREE_WRAPPER_VALUE);
     }
 
     @Override
