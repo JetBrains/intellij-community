@@ -199,17 +199,22 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
       String fieldName = classField.getName();
       if (fieldName.contains("WRAP")) {
-        newValue = oldValue == CommonCodeStyleSettings.WRAP_ALWAYS
+        return oldValue == CommonCodeStyleSettings.WRAP_ALWAYS
                    ? CommonCodeStyleSettings.DO_NOT_WRAP
                    : CommonCodeStyleSettings.WRAP_ALWAYS;
       }
-      else if (fieldName.contains("BRACE")) {
-        newValue = oldValue == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+      else if (fieldName.contains("BRACE_FORCE")) {
+        return oldValue == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
                    ? CommonCodeStyleSettings.DO_NOT_FORCE
-                   : CommonCodeStyleSettings.WRAP_ALWAYS;
+                   : CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+      }
+      else if (fieldName.contains("BRACE_STYLE")) {
+        return oldValue == CommonCodeStyleSettings.END_OF_LINE
+               ? CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+               : CommonCodeStyleSettings.END_OF_LINE;
       }
 
-      return newValue;
+      return oldValue;
     }
 
     @Override
