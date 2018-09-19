@@ -351,7 +351,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = pydevd_file_utils.norm_file_to_server(file)
+                if pydevd_file_utils.is_real_file(file):
+                    file = pydevd_file_utils.norm_file_to_server(file)
 
                 try:
                     breakpoint_id = int(breakpoint_id)
