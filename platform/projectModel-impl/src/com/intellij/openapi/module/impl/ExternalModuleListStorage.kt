@@ -13,13 +13,21 @@ import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import org.jdom.Element
 
+interface ExternalModuleListStorage {
+  fun getExternalModules(): Set<ModulePath>?
+}
+
 /**
  * todo rename component state name to "ExternalProjectModuleManager" for consistency (2018.1 release)
  */
 @State(name = "ExternalModuleListStorage", storages = [(Storage("modules.xml"))], externalStorageOnly = true)
-internal class ExternalModuleListStorage(private val project: Project) : PersistentStateComponent<Element>, ProjectModelElement {
+internal class ExternalModuleListStorageImpl(private val project: Project)
+  : PersistentStateComponent<Element>, ProjectModelElement, ExternalModuleListStorage {
+
   var loadedState: Set<ModulePath>? = null
     private set
+
+  override fun getExternalModules(): Set<ModulePath>? = loadedState
 
   override fun getState(): Element {
     val e = Element("state")
