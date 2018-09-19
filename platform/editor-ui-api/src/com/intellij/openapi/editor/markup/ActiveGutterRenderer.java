@@ -75,14 +75,15 @@ public interface ActiveGutterRenderer extends LineMarkerRenderer, SimpleAccessib
 
   /**
    * Calculates the rectangular bounds enclosing the marker.
-   * Returns null when no marker is actually rendered.
+   * Returns null if the marker is not rendered for the provided line.
    *
    * @param editor the editor the renderer belongs to
+   * @param lineNum the line which the marker should intersect
    * @param preferredBounds the preferred bounds to take into account
    * @return the new calculated bounds or the preferred bounds or null
    */
   @Nullable
-  default Rectangle calcBounds(@NotNull Editor editor, @NotNull Rectangle preferredBounds) {
+  default Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
     return preferredBounds;
   }
 }

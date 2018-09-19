@@ -249,19 +249,29 @@ public abstract class LineStatusMarkerRenderer {
   // Gutter painting
   //
 
-  private Rectangle calcBounds(Editor editor, Rectangle bounds) {
-    // [amp] todo: fix bounds for deleted line, etc.
+  private Rectangle calcBounds(Editor editor, int lineNum, Rectangle bounds) {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return null;
 
     List<ChangesBlock> blocks = createMerger(editor).run(ranges, bounds);
     if (blocks.isEmpty()) return null;
 
-    ChangesBlock firstBlock = blocks.get(0);
-    ChangesBlock lastBlock = blocks.get(blocks.size() - 1);
+    ChangesBlock lineBlock = null;
+    for (ChangesBlock block : blocks) {
+      for (ChangedLines lines : block.changes) {
+        int dec = lines.line1 < lines.line2 ? 1 : 0;
+        if (lines.line1 <= lineNum && lines.line2 - dec >= lineNum) {
+          lineBlock = block;
+          break;
+        }
+      }
+      if (lineBlock != null) break;
+    }
 
-    int startLine = firstBlock.changes.get(0).line1;
-    int endLine = lastBlock.changes.get(lastBlock.changes.size() - 1).line2;
+    if (lineBlock == null) return null;
+
+    int startLine = lineBlock.changes.get(0).line1;
+    int endLine = lineBlock.changes.get(lineBlock.changes.size() - 1).line2;
 
     EditorImpl editorEx = (EditorImpl)editor;
     IntPair area = getGutterArea(editor);
@@ -710,8 +720,8 @@ public abstract class LineStatusMarkerRenderer {
 
     @Nullable
     @Override
-    public Rectangle calcBounds(@NotNull Editor editor, @NotNull Rectangle preferredBounds) {
-      return LineStatusMarkerRenderer.this.calcBounds(editor, preferredBounds);
+    public Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
+      return LineStatusMarkerRenderer.this.calcBounds(editor, lineNum, preferredBounds);
     }
 
     @NotNull

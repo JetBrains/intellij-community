@@ -191,7 +191,7 @@ class AccessibleGutterLine extends JPanel {
         if (renderer instanceof ActiveGutterRenderer) {
           Rectangle rect = myGutter.getLineRendererRectangle(highlighter);
           if (rect != null) {
-            Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(editor, rect);
+            Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(editor, myLineNum, rect);
             if (bounds != null) {
               addNewElement((ActiveGutterRenderer)renderer, bounds.x, 0, bounds.width, bounds.height);
             }
