@@ -6,7 +6,6 @@ import com.intellij.openapi.application.*
 import junit.framework.*
 import junit.framework.TestCase.*
 import kotlinx.coroutines.experimental.*
-import java.lang.Runnable
 import java.util.concurrent.*
 
 
@@ -19,14 +18,14 @@ class TestApplicationDispatcher : TestCase() {
     }
 
     fun testCoroutineDispatched() = runBlocking {
-        val job = async(dispatcher.coroutineContext) {
+        val job = GlobalScope.async(dispatcher.coroutineContext) {
             application.assertIsDispatchThread()
         }
         job.await()
     }
 
     fun testCoroutineDelay() = runBlocking {
-        val job = async(dispatcher.coroutineContext) {
+        val job = GlobalScope.async(dispatcher.coroutineContext) {
             delay(10)
             application.assertIsDispatchThread()
         }
