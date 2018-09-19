@@ -482,7 +482,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public IFileElementType getFileElementType() {
     return myElementType instanceof IFileElementType ? (IFileElementType)myElementType
-                                                     : ObjectUtils.tryCast(myElementType, IFileElementType.class);
+                                                     : ObjectUtils.tryCast(myContentElementType, IFileElementType.class);
   }
 
   @Override
