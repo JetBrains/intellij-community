@@ -92,7 +92,7 @@ public class JsonSchemaObject {
 
   @Nullable private Integer myMaxProperties;
   @Nullable private Integer myMinProperties;
-  @Nullable private List<String> myRequired;
+  @Nullable private Set<String> myRequired;
 
   @Nullable private Map<String, List<String>> myPropertyDependencies;
   @Nullable private Map<String, JsonSchemaObject> mySchemaDependencies;
@@ -255,7 +255,12 @@ public class JsonSchemaObject {
     if (other.myUniqueItems != null) myUniqueItems = other.myUniqueItems;
     if (other.myMaxProperties != null) myMaxProperties = other.myMaxProperties;
     if (other.myMinProperties != null) myMinProperties = other.myMinProperties;
-    myRequired = copyList(myRequired, other.myRequired);
+    if (myRequired != null && other.myRequired != null) {
+      myRequired.addAll(other.myRequired);
+    }
+    else if (other.myRequired != null) {
+      myRequired = other.myRequired;
+    }
     myPropertyDependencies = copyMap(myPropertyDependencies, other.myPropertyDependencies);
     mySchemaDependencies = copyMap(mySchemaDependencies, other.mySchemaDependencies);
     if (other.myEnum != null) myEnum = other.myEnum;
@@ -559,11 +564,11 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public List<String> getRequired() {
+  public Set<String> getRequired() {
     return myRequired;
   }
 
-  public void setRequired(@Nullable List<String> required) {
+  public void setRequired(@Nullable Set<String> required) {
     myRequired = required;
   }
 

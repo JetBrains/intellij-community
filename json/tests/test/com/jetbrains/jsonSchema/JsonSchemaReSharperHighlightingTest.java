@@ -171,7 +171,7 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   public void test026() throws Exception {
     doTestFiles("test026", "schema026");
   }
-  public void _test027() throws Exception { // TODO bug
+  public void _test027() throws Exception { // todo file refs cannot be resolved in tests for now
     doTestFiles("test027", "schema027");
   }
   public void test028() throws Exception {
@@ -179,6 +179,9 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   }
   public void _test029() throws Exception { // TODO bug
     doTestFiles("test029", "schema029");
+  }
+  public void test030() throws Exception {
+    doTestFiles("test030", "schema030");
   }
 
 }
