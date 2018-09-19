@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase {
+public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
   private final JTree myTree;
   private final AbstractTreeStructure myTreeStructure;
   private boolean myDisposed;
@@ -29,14 +29,8 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   @Override
-  public void repaintWithParents(final AbstractTestProxy testProxy) {
-    TreeUtil.promiseVisit(getTree(), visitor(testProxy))
-      .onSuccess(path -> {
-        while (path != null) {
-          myTreeModel.invalidate(path, false);
-          path = path.getParentPath();
-        }
-      });
+  public void repaintWithParents(final SMTestProxy testProxy) {
+    updateTestsSubtree(testProxy);
   }
 
   @Override
@@ -58,9 +52,6 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
       .onSuccess(path -> {
         if (path != null) {
           getTreeModel().invalidate(path, true);
-        }
-        else {
-          getTreeModel().invalidate();
         }
       });
   }
