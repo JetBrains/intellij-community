@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -108,16 +109,42 @@ public class JarRepositoryManager {
     final String coord = dialog.getCoordinateText();
     final boolean attachSources = dialog.getAttachSources();
     final boolean attachJavaDoc = dialog.getAttachJavaDoc();
+    final boolean attachAnnotations = dialog.getAttachExternalAnnotations();
     boolean includeTransitiveDependencies = dialog.getIncludeTransitiveDependencies();
     final String copyTo = dialog.getDirectoryPath();
 
+    final EnumSet<ArtifactKind> artifactKinds = kindsOf(attachSources, attachJavaDoc);
+    if (attachAnnotations) {
+      artifactKinds.add(ArtifactKind.ANNOTATIONS);
+    }
+
     final NewLibraryConfiguration config = resolveAndDownload(
-      project, coord, attachSources, attachJavaDoc, includeTransitiveDependencies, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
+      project, coord, artifactKinds, includeTransitiveDependencies, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
     );
     if (config == null) {
       Messages.showErrorDialog(parentComponent, "No files were downloaded for " + coord, CommonBundle.getErrorTitle());
     }
     return config;
+  }
+
+  private static NewLibraryConfiguration resolveAndDownload(Project project,
+                                                            String coord,
+                                                            EnumSet<ArtifactKind> kinds,
+                                                            boolean includeTransitiveDependencies,
+                                                            String copyTo,
+                                                            List<RemoteRepositoryDescription> repositories) {
+    RepositoryLibraryProperties props = new RepositoryLibraryProperties(coord, includeTransitiveDependencies);
+    final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
+    final Collection<OrderRoot> roots = ContainerUtil.newArrayList();
+    if (libDescriptor.getMavenId() != null) {
+      roots.addAll(loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo));
+    }
+
+    if (!roots.isEmpty()) {
+      notifyArtifactsDownloaded(project, roots);
+      return createNewLibraryConfiguration(props, roots);
+    }
+    return null;
   }
 
   @Nullable
@@ -135,17 +162,22 @@ public class JarRepositoryManager {
 
     if (roots != null && !roots.isEmpty()) {
       notifyArtifactsDownloaded(project, roots);
-      return new NewLibraryConfiguration(
-        RepositoryLibraryDescription.findDescription(props).getDisplayName(props.getVersion()),
-        RepositoryLibraryType.getInstance(),
-        props) {
-        @Override
-        public void addRoots(@NotNull LibraryEditor editor) {
-          editor.addRoots(roots);
-        }
-      };
+      return createNewLibraryConfiguration(props, roots);
     }
     return null;
+  }
+
+  @NotNull
+  protected static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props, Collection<OrderRoot> roots) {
+    return new NewLibraryConfiguration(
+      RepositoryLibraryDescription.findDescription(props).getDisplayName(props.getVersion()),
+      RepositoryLibraryType.getInstance(),
+      props) {
+      @Override
+      public void addRoots(@NotNull LibraryEditor editor) {
+        editor.addRoots(roots);
+      }
+    };
   }
 
 
@@ -188,7 +220,7 @@ public class JarRepositoryManager {
                                                             @Nullable Collection<RemoteRepositoryDescription> repositories) {
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
     if (libDescriptor.getMavenId() != null) {
-      EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc);;
+      EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc);
       return loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo);
     }
     return Collections.emptyList();
@@ -241,7 +273,6 @@ public class JarRepositoryManager {
   }
 
   protected static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc) {
-
     final EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc);
     kinds.add(ArtifactKind.ARTIFACT);
     return kinds;
