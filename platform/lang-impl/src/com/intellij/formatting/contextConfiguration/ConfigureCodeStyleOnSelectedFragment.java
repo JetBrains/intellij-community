@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -47,6 +46,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
 public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
@@ -86,12 +87,17 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
-    TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
     assert settingsProvider != null;
-    CodeStyleSettingsToShow settingsToShow = CodeFragmentCodeStyleSettingsPanel.calcSettingNamesToShow(
-      new CodeStyleSettingsCodeFragmentFilter(file, selectionRange, settingsProvider));
+
+    //reformat before calculating settings to show 
+    //to avoid considering that arbitrary first setting affects formatting for this fragment
     CodeStyleSettings settings = CodeStyle.getSettings(file);
+    textFormatter.reformatSelectedText(settings);
+
+    CodeStyleSettingsToShow settingsToShow = new CodeStyleSettingsCodeFragmentFilter(file, textFormatter.getSelectedRange(), settingsProvider)
+      .getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
+
     new FragmentCodeStyleSettingsDialog(editor, textFormatter, settingsProvider.getLanguage(), settings, settingsToShow).show();
   }
 

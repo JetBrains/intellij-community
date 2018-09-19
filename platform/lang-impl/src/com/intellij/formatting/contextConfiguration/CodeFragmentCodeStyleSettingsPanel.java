@@ -107,10 +107,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
                                  : myWrappingPanel.getPreferredFocusedComponent();
   }
 
-  public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
-    return filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
-  }
-
   public static boolean hasOptionsToShow(LanguageCodeStyleSettingsProvider provider) {
     LanguageCodeStyleSettingsProvider.SettingsType[] types = { SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS };
     for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
