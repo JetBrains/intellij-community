@@ -323,6 +323,20 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
+  protected void addExternalAnnotations(@NotNull PsiFile fromFile, @NotNull PsiFile annotationsFile) {
+    VirtualFile virtualFile = fromFile.getVirtualFile();
+    if (virtualFile != null) {
+      myExternalAnnotationsCache.compute(virtualFile, (k, v) -> {
+        if (v == null || v == NULL_LIST) {
+          return new SmartList<>(annotationsFile);
+        }
+
+        v.add(annotationsFile);
+        return v;
+      });
+    }
+  }
+
   public static class AnnotationData {
     private final String annotationClassFqName;
     private final String annotationParameters;
