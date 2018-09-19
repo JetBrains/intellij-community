@@ -37,10 +37,7 @@ import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -479,6 +476,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @NotNull
   public Language getLanguage() {
     return myElementType.getLanguage();
+  }
+
+  @Nullable
+  @Override
+  public IFileElementType getFileElementType() {
+    return myElementType instanceof IFileElementType ? (IFileElementType)myElementType
+                                                     : ObjectUtils.tryCast(myElementType, IFileElementType.class);
   }
 
   @Override
