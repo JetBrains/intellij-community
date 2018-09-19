@@ -416,7 +416,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
 
-        if (renderersChanged && getGutterComponentEx().getCurrentAccessibleLine() != null) {
+        if (renderersChanged &&
+            getGutterComponentEx().getCurrentAccessibleLine() != null &&
+            AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
+        {
           int startVisLine = offsetToVisualLine(start);
           int endVisLine = offsetToVisualLine(end);
           int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;

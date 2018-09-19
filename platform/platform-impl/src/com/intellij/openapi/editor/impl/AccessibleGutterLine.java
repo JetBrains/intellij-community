@@ -262,6 +262,10 @@ class AccessibleGutterLine extends JPanel {
     return this == myGutter.getCurrentAccessibleLine();
   }
 
+  public static boolean isAccessibleGutterElement(Object element) {
+    return element instanceof SimpleAccessible;
+  }
+
   /**
    * A component which represents a particular element in the gutter like a line number, an icon, a marker, etc.
    * The component is transparent, placed above the element and is made focusable. It's possible to navigate the
