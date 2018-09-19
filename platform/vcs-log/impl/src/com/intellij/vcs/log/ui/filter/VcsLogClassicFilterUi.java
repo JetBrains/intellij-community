@@ -22,13 +22,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogDateFilterImpl;
-import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.visible.filters.*;
+import com.intellij.vcs.log.visible.filters.VcsLogFileFilter;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,7 +319,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, path -> {
+      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, path -> {
         if (path.startsWith(DIR)) {
           return VcsUtil.getFilePath(path.substring(DIR.length()), true);
         }
@@ -362,7 +362,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         }
       }
       if (selectedRoots.isEmpty()) return null;
-      return new VcsLogRootFilterImpl(selectedRoots);
+      return VcsLogFilterObject.fromRoots(selectedRoots);
     }
 
     @NotNull
@@ -393,8 +393,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       String after = values.get(0);
       String before = values.get(1);
       try {
-        return new VcsLogDateFilterImpl(after.isEmpty() ? null : new Date(Long.parseLong(after)),
-                                        before.isEmpty() ? null : new Date(Long.parseLong(before)));
+        return VcsLogFilterObject.fromDates(after.isEmpty() ? 0 : Long.parseLong(after),
+                                            before.isEmpty() ? 0 : Long.parseLong(before));
       }
       catch (NumberFormatException e) {
         LOG.warn("Can not create date filter from " + values);
@@ -420,7 +420,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected VcsLogUserFilter createFilter(@NotNull List<String> values) {
-      return new VcsLogUserFilterImpl(values, myLogData.getCurrentUser(), myLogData.getAllUsers());
+      return VcsLogFilterObject.fromUserNames(values, myLogData);
     }
 
     @NotNull

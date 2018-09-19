@@ -21,12 +21,12 @@ import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
-import com.intellij.vcs.log.visible.filters.VcsLogHashFilterImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes;
 import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 
 public class VcsLogFiltererImpl implements VcsLogFilterer {
@@ -198,7 +198,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, filterResult);
     VisiblePack visiblePack = new VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
-                                              createFilterCollection(new VcsLogHashFilterImpl(hashes), textFilter));
+                                              createFilterCollection(fromHashes(hashes), textFilter));
     return Pair.create(visiblePack, textFilterResult.commitCount);
   }
 
@@ -327,7 +327,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       }
 
       Set<FilePath> filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection);
-      VcsLogStructureFilterImpl structureFilter = filesForRoot.isEmpty() ? null : new VcsLogStructureFilterImpl(filesForRoot);
+      VcsLogStructureFilter structureFilter = filesForRoot.isEmpty() ? null : VcsLogFilterObject.fromPaths(filesForRoot);
       VcsLogFilterCollection rootSpecificCollection = VcsLogFiltersKt.with(filterCollection, structureFilter);
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);

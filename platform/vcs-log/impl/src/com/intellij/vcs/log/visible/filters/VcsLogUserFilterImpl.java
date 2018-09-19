@@ -26,9 +26,9 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @NotNull private final MultiMap<String, VcsUser> myAllUsersByNames = MultiMap.create();
   @NotNull private final MultiMap<String, VcsUser> myAllUsersByEmails = MultiMap.create();
 
-  public VcsLogUserFilterImpl(@NotNull Collection<String> users,
-                              @NotNull Map<VirtualFile, VcsUser> meData,
-                              @NotNull Set<VcsUser> allUsers) {
+  VcsLogUserFilterImpl(@NotNull Collection<String> users,
+                       @NotNull Map<VirtualFile, VcsUser> meData,
+                       @NotNull Set<VcsUser> allUsers) {
     myUsers = users;
     myData = meData;
 

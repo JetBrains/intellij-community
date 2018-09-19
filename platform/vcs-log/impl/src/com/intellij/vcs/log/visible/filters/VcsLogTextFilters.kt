@@ -5,7 +5,7 @@ import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import java.util.regex.Pattern
 
-internal class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
+class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun matches(message: String): Boolean = pattern.matcher(message).find()
 
   override fun getText(): String = pattern.pattern()

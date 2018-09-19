@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class VcsLogRootFilterImpl implements VcsLogRootFilter {
+class VcsLogRootFilterImpl implements VcsLogRootFilter {
   @NotNull private final Collection<VirtualFile> myRoots;
 
-  public VcsLogRootFilterImpl(@NotNull Collection<VirtualFile> roots) {
+  VcsLogRootFilterImpl(@NotNull Collection<VirtualFile> roots) {
     myRoots = roots;
   }
 

@@ -148,10 +148,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   public void test_filter_by_branch_and_user() throws Exception {
     List<String> hashes = generateHistoryForFilters(false, false);
     VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("feature");
-    VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
-                                                           Collections.emptyMap(),
-                                                           singleton(user));
+    VcsUser user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, singleton(user));
     repo.update();
     List<String> actualHashes = getFilteredHashes(createFilterCollection(branchFilter, userFilter));
     assertEquals(hashes, actualHashes);
@@ -207,11 +205,9 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   private void filter_by_text_and_user(boolean regexp) throws Exception {
     List<String> hashes = generateHistoryForFilters(false, true);
     VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
-                                                           Collections.emptyMap(),
-                                                           singleton(user));
-    assertEquals(hashes,
-                 getFilteredHashes(createFilterCollection(userFilter, VcsLogFilterObject.fromPattern(regexp ? ".*" : "", regexp, false))));
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, singleton(user));
+    VcsLogTextFilter textFilter = VcsLogFilterObject.fromPattern(regexp ? ".*" : "", regexp, false);
+    assertEquals(hashes, getFilteredHashes(createFilterCollection(userFilter, textFilter)));
   }
 
   public void test_filter_by_text_with_regex_and_user() throws Exception {

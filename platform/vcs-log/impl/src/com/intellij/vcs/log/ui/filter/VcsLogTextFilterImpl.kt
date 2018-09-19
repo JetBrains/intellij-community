@@ -7,6 +7,7 @@ import com.intellij.vcs.log.visible.filters.caseSensitiveText
 
 class VcsLogTextFilterImpl internal constructor(private val text: String,
                                                 private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+  @Deprecated("Use VcsLogFilterObject.fromPattern instead")
   @Suppress("unused")
   // used in upsource
   constructor(text: String) : this(text, false)

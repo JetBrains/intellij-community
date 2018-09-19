@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
@@ -27,6 +28,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
     myExcludedPatterns = excludedPatterns;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromBranchPatterns(Collection, Set)} or
+   * {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromBranch(String)}
+   */
   @Deprecated
   public VcsLogBranchFilterImpl(@NotNull Collection<String> branches, @NotNull Collection<String> excludedBranches) {
     myBranches = new ArrayList<>(branches);

@@ -9,9 +9,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.util.UserNameRegex;
-import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -180,7 +180,7 @@ public abstract class VcsLogUserFilterTest {
     MultiMap<VcsUser, String> commits = generateHistory(users);
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
     StringBuilder builder = new StringBuilder();
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton("jeka"), emptyMap(), commits.keySet());
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUserNames(singleton("jeka"), emptyMap(), commits.keySet());
     checkFilter(userFilter, "jeka", commits.get(jeka), metadata, builder);
     assertFilteredCorrectly(builder);
   }
@@ -190,7 +190,7 @@ public abstract class VcsLogUserFilterTest {
                                   @NotNull Collection<String> expectedHashes,
                                   @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
     throws VcsException {
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), emptyMap(), allUsers);
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, allUsers);
     checkFilter(userFilter, user.toString(), expectedHashes, metadata, errorMessageBuilder);
   }
 

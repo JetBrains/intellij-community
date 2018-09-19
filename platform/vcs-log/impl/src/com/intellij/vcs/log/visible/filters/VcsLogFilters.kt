@@ -3,13 +3,20 @@ package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogDateFilterImpl
+import com.intellij.vcs.log.data.VcsLogStructureFilterImpl
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.VcsUserUtil
+import com.intellij.vcsUtil.VcsUtil
 import gnu.trove.TObjectHashingStrategy
 import java.util.*
 import java.util.regex.Pattern
@@ -104,7 +111,59 @@ object VcsLogFilterObject {
     }
     if (hashes.isEmpty()) return null
 
+    return fromHashes(hashes)
+  }
+
+  @JvmStatic
+  fun fromHashes(hashes: Collection<String>): VcsLogHashFilter {
     return VcsLogHashFilterImpl(hashes)
+  }
+
+  @JvmStatic
+  fun fromDates(after: Date?, before: Date?): VcsLogDateFilter {
+    @Suppress("DEPRECATION")
+    return VcsLogDateFilterImpl(after, before)
+  }
+
+  @JvmStatic
+  fun fromDates(after: Long, before: Long): VcsLogDateFilter {
+    return fromDates(if (after > 0) Date(after) else null, if (before > 0) Date(before) else null)
+  }
+
+  @JvmStatic
+  fun fromUserNames(userNames: Collection<String>, vcsLogData: VcsLogData): VcsLogUserFilter {
+    return VcsLogUserFilterImpl(userNames, vcsLogData.currentUser, vcsLogData.allUsers)
+  }
+
+  @JvmStatic
+  fun fromUser(user: VcsUser, allUsers: Set<VcsUser> = setOf(user)): VcsLogUserFilter {
+    return fromUserNames(listOf(VcsUserUtil.getShortPresentation(user)), emptyMap(), allUsers)
+  }
+
+  @JvmStatic
+  fun fromUserNames(userNames: Collection<String>, meData: Map<VirtualFile, VcsUser>, allUsers: Set<VcsUser>): VcsLogUserFilter {
+    return VcsLogUserFilterImpl(userNames, meData, allUsers)
+  }
+
+  @JvmStatic
+  fun fromPaths(files: Collection<FilePath>): VcsLogStructureFilter {
+    @Suppress("DEPRECATION")
+    return VcsLogStructureFilterImpl(files)
+  }
+
+  @JvmStatic
+  fun fromVirtualFiles(files: Collection<VirtualFile>): VcsLogStructureFilter {
+    return fromPaths(files.map { file -> VcsUtil.getFilePath(file) })
+  }
+
+  @JvmStatic
+  fun fromRoot(root: VirtualFile): VcsLogRootFilter {
+    return fromRoots(listOf(root))
+  }
+
+  @JvmStatic
+  fun fromRoots(roots: Collection<VirtualFile>): VcsLogRootFilter {
+    return VcsLogRootFilterImpl(roots)
   }
 }
 

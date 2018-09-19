@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class VcsLogHashFilterImpl implements VcsLogHashFilter {
+class VcsLogHashFilterImpl implements VcsLogHashFilter {
 
   @NotNull private final Collection<String> myHashes;
 
-  public VcsLogHashFilterImpl(@NotNull Collection<String> hashes) {
+  VcsLogHashFilterImpl(@NotNull Collection<String> hashes) {
     myHashes = hashes;
   }
 
