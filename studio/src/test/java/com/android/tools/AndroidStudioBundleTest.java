@@ -17,7 +17,7 @@ package com.android.tools;
 
 import com.android.testutils.TestUtils;
 import com.android.tools.perflogger.Benchmark;
-import com.android.tools.perflogger.MedianWindowDeviationAnalyzer;
+import com.android.tools.perflogger.WindowDeviationAnalyzer;
 import com.android.tools.perflogger.Metric;
 import org.junit.Test;
 
@@ -43,11 +43,14 @@ public class AndroidStudioBundleTest {
         binary.length(),
         // we don't expect this to deviate so tighten parameters
         // to detect slightest regression.
-        new MedianWindowDeviationAnalyzer.Builder()
+        new WindowDeviationAnalyzer.Builder()
           .setRunInfoQueryLimit(5)
           .setRecentWindowSize(1)
-          .setMedianCoeff(0.01)
-          .setMadCoeff(0.0)
+          .addMeanTolerance(
+            new WindowDeviationAnalyzer.MeanToleranceParams.Builder()
+              .setMeanCoeff(0.01)
+              .setStddevCoeff(0.0)
+              .build())
           .build());
     }
 
