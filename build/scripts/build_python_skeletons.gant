@@ -33,6 +33,7 @@ target('default': 'Generate python skeletons') {
     // com.intellij.util package gets loaded by AntClassLoader before this script starts
     // so we have to add dependencies to AntClassLoader classpath directly
     BuildUtils.addToJpsClassPath(it.absolutePath, ant)
+    println("Adding to classpath: ${it.absolutePath}")
   }
 
   Class.forName('com.jetbrains.python.tools.BuildZippedSkeletonsKt').main()
