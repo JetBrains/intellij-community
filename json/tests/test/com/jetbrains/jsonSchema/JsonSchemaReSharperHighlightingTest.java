@@ -99,7 +99,7 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   public void test012() throws Exception {
     doTestFiles("test012", "schema012");
   }
-  public void _test012_2() throws Exception {  // TODO bug
+  public void test012_2() throws Exception {
     doTestFiles("test012_2", "schema012");
   }
   public void test012_3() throws Exception {

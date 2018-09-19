@@ -1,5 +1,5 @@
 {
 
-  "a": true
+  "a": <warning descr="Type is not allowed. Expected: string.">true</warning>
 }
 

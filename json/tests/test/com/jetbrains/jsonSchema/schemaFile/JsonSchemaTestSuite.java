@@ -34,6 +34,7 @@ public class JsonSchemaTestSuite extends TestCase {
     suite.addTestSuite(JsonSchemaCrossReferencesTest.class);
     suite.addTestSuite(JsonSchemaDocumentationTest.class);
     suite.addTestSuite(JsonSchemaHighlightingTest.class);
+    suite.addTestSuite(JsonSchemaReSharperHighlightingTest.class);
     suite.addTestSuite(JsonSchemaPatternComparatorTest.class);
     suite.addTestSuite(JsonSchemaSelfHighligthingTest.class);
     suite.addTestSuite(JsonBySchemaCompletionTest.class);
