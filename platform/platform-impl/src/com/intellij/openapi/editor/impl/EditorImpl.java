@@ -404,7 +404,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
 
         if (highlighter.getGutterIconRenderer() != null) {
-          EditorGutterComponentImpl.MyAccessibleLine.escape(EditorImpl.this, true);
+          getGutterComponentEx().escapeCurrentAccessibleLine(true);
         }
 
         boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
@@ -1557,7 +1557,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    EditorGutterComponentImpl.MyAccessibleLine.escape(this, true);
+    getGutterComponentEx().escapeCurrentAccessibleLine(true);
 
     validateSize();
 
