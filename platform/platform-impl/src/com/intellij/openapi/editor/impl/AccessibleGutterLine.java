@@ -24,10 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -73,6 +70,12 @@ class AccessibleGutterLine extends JPanel {
       @Override
       public void focusGained(FocusEvent e) {
         gutter.setCurrentAccessibleLine(createAndActivate(gutter));
+      }
+    });
+    gutter.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        gutter.escapeCurrentAccessibleLine(true);
       }
     });
   }

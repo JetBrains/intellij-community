@@ -403,10 +403,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           updateGutterSize();
         }
 
-        if (highlighter.getGutterIconRenderer() != null) {
-          getGutterComponentEx().escapeCurrentAccessibleLine(true);
-        }
-
         boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
         if (myDocumentChangeInProgress) {
           // postpone repaint request, as folding model can be in inconsistent state and so coordinate
@@ -419,6 +415,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
+
+        if (renderersChanged && getGutterComponentEx().getCurrentAccessibleLine() != null) {
+          int startVisLine = offsetToVisualLine(start);
+          int endVisLine = offsetToVisualLine(end);
+          int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
+          if (startVisLine <= line && endVisLine >= line) {
+            getGutterComponentEx().escapeCurrentAccessibleLine(true);
+          }
+        }
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
@@ -1557,7 +1562,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    getGutterComponentEx().escapeCurrentAccessibleLine(true);
+    if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
+      int startVisLine = offsetToVisualLine(e.getOffset());
+      int endVisLine = offsetToVisualLine(e.getOffset() + e.getNewLength());
+      int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
+      if (startVisLine <= line && endVisLine >= line) {
+        getGutterComponentEx().escapeCurrentAccessibleLine(true);
+      }
+    }
 
     validateSize();
 
