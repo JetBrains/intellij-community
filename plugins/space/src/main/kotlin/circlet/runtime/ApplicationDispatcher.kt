@@ -75,6 +75,13 @@ private class ApplicationCoroutineContext(
     }
 }
 
+private class DisposableFutureHandle(private val future: Future<*>) : DisposableHandle {
+    override fun dispose() {
+        future.cancel(false)
+    }
+    override fun toString(): String = "DisposableFutureHandle[$future]"
+}
+
 private const val LOG_NAME = "circlet.runtime.ApplicationDispatcherKt"
 private val ERROR_TO_WARNING_LOG = ErrorToWarningKLoggers.logger(LOG_NAME)
 private val EXPLICIT_LOG = ExplicitKLoggers.logger(LOG_NAME)
