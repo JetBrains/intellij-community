@@ -48,6 +48,7 @@ class InlineInlayImpl extends InlayImpl<InlineInlayImpl> {
     }
   }
 
+  @Override
   void doUpdateSize() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {

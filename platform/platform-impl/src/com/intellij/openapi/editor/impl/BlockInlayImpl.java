@@ -31,6 +31,7 @@ class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
     return myEditor.getInlayModel().myBlockElementsTree;
   }
 
+  @Override
   void doUpdateSize() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels < 0) {
