@@ -2007,6 +2007,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testEnumeratedList() {
+    configureByFiles(null, BASE_PATH + "servers.xml", BASE_PATH + "servers.xsd");
+    doDoTest(true, false);
+  }
+
   public void testCustomBoolean() {
     configureByFiles(null, BASE_PATH + "CustomBoolean.xml", BASE_PATH + "CustomBoolean.xsd");
     doDoTest(true, false);
