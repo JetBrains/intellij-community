@@ -37,7 +37,9 @@ import java.util.List;
 class AccessibleGutterLine extends JPanel {
   private final EditorGutterComponentImpl myGutter;
   private AccessibleGutterElement mySelectedElement;
-  private final int myLineNum;
+  // [tav] todo: soft-wrap doesn't work correctly
+  private final int myLogicalLineNum;
+  private final int myVisualLineNum;
 
   public static AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
     return new AccessibleGutterLine(gutter);
@@ -115,7 +117,8 @@ class AccessibleGutterLine extends JPanel {
     int lineHeight = editor.getLineHeight();
 
     myGutter = gutter;
-    myLineNum = editor.getCaretModel().getPrimaryCaret().getVisualPosition().line;
+    myLogicalLineNum = editor.getCaretModel().getPrimaryCaret().getLogicalPosition().line;
+    myVisualLineNum = editor.getCaretModel().getPrimaryCaret().getVisualPosition().line;
 
     /* line numbers */
     if (myGutter.isLineNumbersShown()) {
@@ -123,7 +126,7 @@ class AccessibleGutterLine extends JPanel {
         @NotNull
         @Override
         public String getAccessibleName() {
-          return "line " + String.valueOf(myLineNum + 1);
+          return "line " + String.valueOf(myLogicalLineNum + 1);
         }
         @Override
         public String getAccessibleTooltipText() {
@@ -140,9 +143,9 @@ class AccessibleGutterLine extends JPanel {
       StringBuilder buf = new StringBuilder("annotation: ");
       for (int i = 0; i < myGutter.myTextAnnotationGutters.size(); i++) {
         TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
-        if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLineNum, editor); // [tav] todo: take first non-null?
+        if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLogicalLineNum, editor); // [tav] todo: take first non-null?
         int annotationSize = myGutter.myTextAnnotationGutterSizes.get(i);
-        buf.append(ObjectUtils.notNull(gutterProvider.getLineText(myLineNum, editor), ""));
+        buf.append(ObjectUtils.notNull(gutterProvider.getLineText(myLogicalLineNum, editor), ""));
         width += annotationSize;
       }
       if (buf.length() > 0) {
@@ -163,9 +166,9 @@ class AccessibleGutterLine extends JPanel {
 
     /* icons */
     if (myGutter.areIconsShown()) {
-      List<GutterMark> row = myGutter.getGutterRenderers(myLineNum);
+      List<GutterMark> row = myGutter.getGutterRenderers(myVisualLineNum);
       if (row != null) {
-        myGutter.processIconsRow(myLineNum, row, (x, y, renderer) -> {
+        myGutter.processIconsRow(myVisualLineNum, row, (x, y, renderer) -> {
           Icon icon = myGutter.scaleIcon(renderer.getIcon());
           addNewElement(new SimpleAccessible() {
             @NotNull
@@ -187,14 +190,14 @@ class AccessibleGutterLine extends JPanel {
 
     /* active markers */
     if (myGutter.isLineMarkersShown()) {
-      int firstVisibleOffset = editor.visualLineStartOffset(myLineNum);
-      int lastVisibleOffset = editor.visualLineStartOffset(myLineNum + 1);
+      int firstVisibleOffset = editor.visualLineStartOffset(myVisualLineNum);
+      int lastVisibleOffset = editor.visualLineStartOffset(myVisualLineNum + 1);
       myGutter.processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
         LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
         if (renderer instanceof ActiveGutterRenderer) {
           Rectangle rect = myGutter.getLineRendererRectangle(highlighter);
           if (rect != null) {
-            Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(editor, myLineNum, rect);
+            Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(editor, myVisualLineNum, rect);
             if (bounds != null) {
               addNewElement((ActiveGutterRenderer)renderer, bounds.x, 0, bounds.width, bounds.height);
             }
@@ -208,7 +211,7 @@ class AccessibleGutterLine extends JPanel {
     setFocusCycleRoot(true);
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
-    setBounds(0, editor.visibleLineToY(myLineNum), myGutter.getWhitespaceSeparatorOffset(), lineHeight);
+    setBounds(0, editor.visibleLineToY(myVisualLineNum), myGutter.getWhitespaceSeparatorOffset(), lineHeight);
 
     myGutter.add(this);
     mySelectedElement = (AccessibleGutterElement)getFocusTraversalPolicy().getFirstComponent(this);
@@ -245,7 +248,7 @@ class AccessibleGutterLine extends JPanel {
   }
 
   private void maybeLineChanged() {
-    if (myLineNum == myGutter.getEditor().getCaretModel().getPrimaryCaret().getLogicalPosition().line) return;
+    if (myLogicalLineNum == myGutter.getEditor().getCaretModel().getPrimaryCaret().getLogicalPosition().line) return;
 
     myGutter.remove(this);
     myGutter.setCurrentAccessibleLine(createAndActivate(myGutter));
@@ -254,7 +257,7 @@ class AccessibleGutterLine extends JPanel {
   @Override
   public void repaint() {
     if (myGutter == null) return;
-    int y = myGutter.getEditor().visibleLineToY(myLineNum);
+    int y = myGutter.getEditor().visibleLineToY(myVisualLineNum);
     myGutter.repaint(0, y, myGutter.getWhitespaceSeparatorOffset(), y + myGutter.getEditor().getLineHeight());
   }
 
