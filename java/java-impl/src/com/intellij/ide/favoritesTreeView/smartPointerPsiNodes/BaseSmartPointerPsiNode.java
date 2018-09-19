@@ -131,7 +131,6 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
   }
 
   protected PsiElement getPsiElement(){
-    final Type value = getValue();
-    return value == null ? null : value.getElement();
+    return (PsiElement)getValue(); // automatically de-anchorized in AbstractTreeNode.getValue
   }
 }
