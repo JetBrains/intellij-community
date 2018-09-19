@@ -740,16 +740,28 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (!reportedAnchors.add(psiAnchor)) return;
 
     List<LocalQuickFix> fixes = new ArrayList<>();
-    ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
-    if (isAssertion && holder.isOnTheFly()) {
-      fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                           InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+    if (!isCoveredBySurroundingFix(psiAnchor, evaluatesToTrue)) {
+      ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
+      if (isAssertion && holder.isOnTheFly()) {
+        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                             InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+      }
+      ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }
-    ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                "dataflow.message.constant.condition.when.reached" :
                                                "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
     holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+  }
+
+  private static boolean isCoveredBySurroundingFix(PsiElement anchor, boolean evaluatesToTrue) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
+    if (parent instanceof PsiPolyadicExpression) {
+      IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      return tokenType.equals(JavaTokenType.ANDAND) && !evaluatesToTrue ||
+             tokenType.equals(JavaTokenType.OROR) && evaluatesToTrue;
+    }
+    return parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
   }
 
   @Contract("null -> false")
