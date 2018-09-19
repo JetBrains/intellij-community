@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
@@ -48,13 +49,6 @@ abstract class SingleWorkerProcessExecutor(private val progressManager: Progress
   override fun dispose() {
     progressIndicator.cancel()
     executor.shutdownNow()
-  }
-
-  private class NonReusableEmptyProgressIndicator : EmptyProgressIndicator() {
-    override fun start() {
-      checkCanceled()
-      super.start()
-    }
   }
 
   interface ProcessStateListener : EventListener {

@@ -15,8 +15,13 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN
 import com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE
 import com.intellij.ui.components.JBList
+import com.intellij.util.IconUtil
+import com.intellij.util.ImageLoader
 import com.intellij.util.progress.ProgressVisibilityManager
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -24,9 +29,10 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -39,8 +45,7 @@ private const val LINK_TAG = "EDIT_LINK"
 
 internal class GithubAccountsPanel(private val project: Project,
                                    private val executorFactory: GithubApiRequestExecutor.Factory,
-                                   private val accountInformationProvider: GithubAccountInformationProvider)
-  : BorderLayoutPanel(), Disposable {
+                                   private val avatarLoader: CachingGithubUserAvatarLoader) : BorderLayoutPanel(), Disposable {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
@@ -223,9 +228,7 @@ internal class GithubAccountsPanel(private val project: Project,
       override fun run(indicator: ProgressIndicator) {
         val executor = executorFactory.create(token)
         val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
-        val image = details.avatarUrl?.let {
-          accountInformationProvider.getAvatar(executor, indicator, account, it)
-        }
+        val image = avatarLoader.requestAvatar(executor, details).get()
         data = details to image
       }
 
@@ -344,8 +347,7 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
     }
     profilePicture.apply {
       icon = value.profilePicture?.let {
-        val size = JBUI.scale(ACCOUNT_PICTURE_SIZE)
-        JBImageIcon(it.getScaledInstance(size, size, java.awt.Image.SCALE_FAST))
+        IconUtil.createImageIcon(ImageLoader.scaleImage(it, JBUI.scale(ACCOUNT_PICTURE_SIZE)))
       } ?: GithubIcons.DefaultAvatar_40
     }
     fullName.apply {
