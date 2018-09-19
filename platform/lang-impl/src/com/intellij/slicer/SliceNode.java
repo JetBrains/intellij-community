@@ -50,7 +50,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   protected boolean changed;
   private int index; // my index in parent's mycachedchildren
 
-  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
+  protected SliceNode(@NotNull Project project, @NotNull SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
     super(project, sliceUsage);
     this.targetEqualUsages = targetEqualUsages;
   }

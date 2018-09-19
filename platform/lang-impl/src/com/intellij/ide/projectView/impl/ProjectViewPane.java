@@ -220,7 +220,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+    protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
       return new ProjectViewProjectNode(project, settings);
     }
 

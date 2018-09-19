@@ -27,7 +27,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
                                                                                                                   PsiElementNavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
-  protected BaseSmartPointerPsiNode(Project project, Type value, ViewSettings viewSettings) {
+  protected BaseSmartPointerPsiNode(Project project, @NotNull Type value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

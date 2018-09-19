@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
-  public ClassTreeNode(Project project, PsiClass value, ViewSettings viewSettings) {
+  public ClassTreeNode(Project project, @NotNull PsiClass value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
