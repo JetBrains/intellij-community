@@ -1380,9 +1380,10 @@ public final class TreeUtil {
       TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
       return acceptor.accept(visitor);
     }
-    return model == null
-           ? Promises.rejectedPromise("tree model is not set")
-           : Promises.resolvedPromise(visitModel(model, visitor));
+    if (model == null) return Promises.rejectedPromise("tree model is not set");
+    AsyncPromise<TreePath> promise = new AsyncPromise<>();
+    UIUtil.invokeLaterIfNeeded(() -> promise.setResult(visitModel(model, visitor)));
+    return promise;
   }
 
   /**
