@@ -30,7 +30,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun createFileChangeSubscriber(): ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null
 
-  override final fun <T : Any, MutableT : T> create(directoryName: String,
+  final override fun <T : Any, MutableT : T> create(directoryName: String,
                                                     processor: SchemeProcessor<T, MutableT>,
                                                     presentableName: String?,
                                                     roamingType: RoamingType,
@@ -84,7 +84,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     }
   }
 
-  override final fun save() {
+  final override fun save() {
     val errors = SmartList<Throwable>()
     for (registeredManager in managers) {
       try {

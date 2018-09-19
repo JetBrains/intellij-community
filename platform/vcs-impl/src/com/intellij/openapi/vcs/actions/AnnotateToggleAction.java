@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
@@ -95,25 +94,22 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   public static void doAnnotate(@NotNull final Editor editor,
                                 @NotNull final Project project,
-                                @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs) {
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
-    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumberProvider);
+    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
 
   public static void doAnnotate(@NotNull final Editor editor,
                                 @NotNull final Project project,
-                                @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
                                 @NotNull final UpToDateLineNumberProvider upToDateLineNumbers) {
-    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumbers, true);
+    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, true);
   }
 
   private static void doAnnotate(@NotNull final Editor editor,
                                  @NotNull final Project project,
-                                 @Nullable final VirtualFile currentFile,
                                  @NotNull final FileAnnotation fileAnnotation,
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
@@ -125,7 +121,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
         editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
-          doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumbers, false);
+          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
         }));
         return;
       }
@@ -144,7 +140,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       if (editor.getGutter().isAnnotationsShown()) {
         if (newFileAnnotation != null) {
           assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-          doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
+          doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, false);
         }
         else {
           DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
@@ -189,9 +185,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
 
     final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, upToDateLineNumbers, switcher, disposable);
-    if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
-      presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
-    }
+    presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs));
     presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
     presentation.addAction(Separator.getInstance());
 

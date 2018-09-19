@@ -49,8 +49,7 @@ class GuiDTTestRunner internal constructor(runner: GuiTestRunnerInterface) : Gui
       stopServerAndKillIde(server)
   }
 
-  override fun processTestFinished(eachNotifier: EachTestNotifier,
-                                   testIsRunning1: Boolean): Boolean {
+  override fun processTestFinished(eachNotifier: EachTestNotifier): Boolean {
     val inputStream = IdeProcessControlManager.getInputStream()
 
     val server = JUnitServerHolder.getServer()

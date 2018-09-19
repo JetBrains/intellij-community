@@ -34,7 +34,6 @@ import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -146,13 +145,12 @@ public final class RequestProcessor implements IRequestProcessor {
 
   private void sendSetRequests(IGlobalOptions globalOptions, ConnectionStreams connectionStreams)
     throws CommandAbortedException, IOException {
-    Map envVariables = globalOptions.getEnvVariables();
+    Map<String, String> envVariables = globalOptions.getEnvVariables();
     if (envVariables == null) {
       return;
     }
-    for (Object o : envVariables.keySet()) {
-      String varName = (String)o;
-      String varValue = (String)envVariables.get(varName);
+    for (String varName : envVariables.keySet()) {
+      String varValue = envVariables.get(varName);
       sendRequest(new SetRequest(varName, varValue), connectionStreams);
     }
   }
@@ -277,9 +275,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
   private void sendRequests(Requests requests, IConnectionStreams connectionStreams, IRequestsProgressHandler communicationProgressHandler)
     throws CommandAbortedException, IOException {
-    for (Object o : requests.getRequests()) {
-      final IRequest request = (IRequest)o;
-
+    for (IRequest request : requests.getRequests()) {
       sendRequest(request, connectionStreams);
 
       final FileDetails fileDetails = request.getFileForTransmission();

@@ -968,4 +968,19 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "  \"description\": \"asdasdqwdqw\"\n" +
                 "}");
   }
+
+  public void testJsonPointerEscapes() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"q~q/q\": {\n" +
+           "      \"type\": \"string\"\n" +
+           "    },\n" +
+           "    \"a\": {\n" +
+           "      \"$ref\": \"#/properties/q~0q~1q\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"a\": <warning>1</warning>\n" +
+                "}");
+  }
 }

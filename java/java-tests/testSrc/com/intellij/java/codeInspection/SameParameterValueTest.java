@@ -97,4 +97,8 @@ public class SameParameterValueTest extends InspectionTestCase {
       myTool.minimalUsageCount = previous;
     }
   }
+
+  public void testField() {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }

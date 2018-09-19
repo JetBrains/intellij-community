@@ -124,7 +124,7 @@ public class PatchProjectUtil {
                 for (Pattern pattern : dirPatterns) {
                   if (pattern.matcher(relativeName).matches()) {
                     contentEntry.addExcludeFolder(fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent());
-                    return SKIP_CHILDREN;
+                    return relativeName.isEmpty() ? CONTINUE : SKIP_CHILDREN;
                   }
                 }
               }

@@ -32,7 +32,5 @@ class JavaLangInvokeFieldHandleSignatureFixTest : LightQuickFixParameterizedTest
     enableInspectionTool(JavaLangInvokeHandleSignatureInspection())
   }
 
-  fun test() = doAllTests()
-
   override fun getBasePath() = "/codeInsight/daemonCodeAnalyzer/quickFix/fieldHandle"
 }

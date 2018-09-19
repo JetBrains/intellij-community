@@ -49,7 +49,7 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public EditorFactoryImpl(EditorActionManager editorActionManager) {
+  public EditorFactoryImpl(/* unused for API compatibility reasons */ @SuppressWarnings("unused") EditorActionManager editorActionManager) {
     MessageBus bus = ApplicationManager.getApplication().getMessageBus();
     MessageBusConnection busConnection = bus.connect();
     busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
@@ -69,9 +69,6 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
         refreshAllEditors();
       }
     });
-    TypedAction typedAction = editorActionManager.getTypedAction();
-    TypedActionHandler originalHandler = typedAction.getRawHandler();
-    typedAction.setupRawHandler(new MyTypedHandler(originalHandler));
   }
 
   @Override
@@ -275,10 +272,10 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
     return myEditorEventMulticaster;
   }
 
-  private static class MyTypedHandler implements TypedActionHandlerEx {
+  public static class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
-    private MyTypedHandler(TypedActionHandler delegate) {
+    public MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }
 

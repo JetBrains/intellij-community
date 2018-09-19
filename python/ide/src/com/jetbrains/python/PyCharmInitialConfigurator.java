@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.ui.UISettings;
@@ -47,7 +48,7 @@ public class PyCharmInitialConfigurator {
     }
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V2")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V2", true);
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
+      final CodeStyleSettings settings = CodeStyle.getDefaultSettings();
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       UISettings.getInstance().setShowDirectoryForNonUniqueFilenames(true);
     }

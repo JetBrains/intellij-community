@@ -30,6 +30,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
@@ -75,6 +76,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
       }
     }
+    ProjectTypeStep.resetGroupForTests();
   }
 
   @Override
@@ -95,6 +97,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         extension.setDefault(null);
         extension.setLanguageLevel(myOldLevel);
         ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       });
       SelectTemplateSettings.getInstance().setLastTemplate(null, null);
       UIUtil.dispatchAllInvocationEvents(); // let vfs update pass

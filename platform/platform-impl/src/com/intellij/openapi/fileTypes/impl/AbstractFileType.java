@@ -366,12 +366,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
-      if (approved) {
-        mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
-      }
     }
     else if (writePattern(matcher, mapping)) {
       return null;
+    }
+    if (approved) {
+      mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
     }
     if (specifyTypeName) {
       mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());

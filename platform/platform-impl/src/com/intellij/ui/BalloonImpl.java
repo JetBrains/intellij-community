@@ -328,7 +328,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      Dimension pointerSize,
                      int cornerToPointerDistance) {
     myBorderColor = borderColor;
-    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(3);
+    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(5, 8);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
@@ -1348,7 +1348,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     EmptyBorder createBorder(final BalloonImpl balloon) {
       Insets insets = balloon.getInsetsCopy();
-      insets.bottom = balloon.getPointerLength(this);
+      insets.bottom += balloon.getPointerLength(this);
       return new EmptyBorder(insets);
     }
 

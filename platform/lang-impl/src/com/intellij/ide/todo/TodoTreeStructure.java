@@ -125,7 +125,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     if (element instanceof AbstractTreeNode) {
       element = ((AbstractTreeNode)element).getValue();
     }
-    return element == getRootElement() || element == mySummaryElement;
+    return element == getRootElement() || element == mySummaryElement && (myAreModulesShown || myArePackagesShown);
   }
 
   @Override
@@ -144,6 +144,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return asyncCommitDocuments(myProject);
   }
 
+  @NotNull
   @Override
   public final Object getRootElement(){
     return myRootElement;

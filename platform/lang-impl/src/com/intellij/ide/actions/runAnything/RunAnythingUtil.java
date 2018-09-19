@@ -136,7 +136,7 @@ public class RunAnythingUtil {
 
   static void jumpNextGroup(boolean forward, JBList list) {
     final int index = list.getSelectedIndex();
-    final RunAnythingSearchListModel model = RunAnythingAction.getSearchingModel(list);
+    final RunAnythingSearchListModel model = getSearchingModel(list);
     if (model != null && index >= 0) {
       final int newIndex = forward ? model.next(index) : model.prev(index);
       list.setSelectedIndex(newIndex);
@@ -192,5 +192,11 @@ public class RunAnythingUtil {
         break;
       }
     }
+  }
+
+  @Nullable
+  public static RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
+    ListModel model = list.getModel();
+    return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }
 }

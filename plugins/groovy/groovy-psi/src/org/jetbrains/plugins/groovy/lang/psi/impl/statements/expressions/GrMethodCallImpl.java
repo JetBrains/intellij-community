@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -69,5 +70,10 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @Override
   public GrArgumentList getArgumentList() {
     return findNotNullChildByClass(GrArgumentList.class);
+  }
+
+  @Override
+  public void accept(@NotNull GroovyElementVisitor visitor) {
+    visitor.visitMethodCall(this);
   }
 }

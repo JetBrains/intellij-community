@@ -137,6 +137,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
     runConfiguration.myOptions = createOptions();
     runConfiguration.myOptions.copyFrom(myOptions);
+    runConfiguration.myOptions.resetModificationCount();
     copyCopyableDataTo(runConfiguration);
 
     myBeforeRunTasks = myBeforeRunTasks.isEmpty() ? Collections.emptyList() : new SmartList<>(myBeforeRunTasks);
@@ -299,18 +300,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return true;
   }
 
+  /**
+   * @deprecated Use {@link RunProfileWithCompileBeforeLaunchOption#isExcludeCompileBeforeLaunchOption()}
+   * @return
+   */
+  @Deprecated
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
-
-  /**
-   * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
-   */
-  @Deprecated
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
-  }
-
+  
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
@@ -322,6 +320,16 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Deprecated
   protected boolean isNewSerializationUsed() {
     return false;
+  }
+
+  @Override
+  public final boolean isAllowRunningInParallel() {
+    return getOptions().isAllowRunningInParallel();
+  }
+
+  @Override
+  public final void setAllowRunningInParallel(boolean value) {
+    getOptions().setAllowRunningInParallel(value);
   }
 
   /**

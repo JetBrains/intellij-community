@@ -17,6 +17,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
@@ -115,7 +117,10 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath)
+      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
+      generateProductJson(productJsonDir, jreDirectoryPath64 != null)
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, [winDistPath, jreDirectoryPath64], [])
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir)
     }
   }
 
@@ -230,12 +235,24 @@ IDS_VM_OPTIONS=$vmOptions
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths.findAll {it != null}
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
+      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
+      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
+      dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
         }
       }
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
       buildContext.notifyArtifactBuilt(targetPath)
     }
+  }
+
+  private void generateProductJson(String targetDir, boolean isJreIncluded) {
+    def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
+    def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
+    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    new ProductInfoGenerator(buildContext)
+      .generateProductJson(targetDir, null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

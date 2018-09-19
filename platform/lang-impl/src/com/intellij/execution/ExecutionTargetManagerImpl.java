@@ -246,7 +246,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<? super Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
     if (settings == null) return true;
 
-    RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
 
     Set<RunnerAndConfigurationSettings> recursionGuard = new THashSet<>();
     LinkedList<Pair<RunnerAndConfigurationSettings, ExecutionTarget>> toProcess = new LinkedList<>();
@@ -259,7 +259,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       RunConfiguration eachConfiguration = eachWithTarget.first.getConfiguration();
       if (eachConfiguration instanceof CompoundRunConfiguration) {
         for (Map.Entry<RunConfiguration, ExecutionTarget> subConfigWithTarget
-          : ((CompoundRunConfiguration)eachConfiguration).getConfigurationsWithTargets().entrySet()) {
+          : ((CompoundRunConfiguration)eachConfiguration).getConfigurationsWithTargets(runManager).entrySet()) {
           RunnerAndConfigurationSettingsImpl subSettings = runManager.getSettings(subConfigWithTarget.getKey());
           if (subSettings != null /* it might have been already deleted */) {
             toProcess.add(Pair.create(subSettings, subConfigWithTarget.getValue()));

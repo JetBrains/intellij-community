@@ -129,7 +129,7 @@ public class ControlFlowBuilderUtil {
       if (pparent instanceof GrBlockStatement || pparent instanceof GrCatchClause || pparent instanceof GrLabeledStatement) {
         pparent = pparent.getParent();
       }
-      if (pparent instanceof GrIfStatement || pparent instanceof GrControlStatement || pparent instanceof GrTryCatchStatement) {
+      if (pparent instanceof GrControlStatement || pparent instanceof GrTryCatchStatement) {
         return isCertainlyReturnStatement((GrStatement)pparent);
       }
     }

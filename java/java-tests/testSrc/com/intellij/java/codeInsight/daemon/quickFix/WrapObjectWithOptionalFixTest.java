@@ -21,10 +21,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author Dmitry Batkovich
  */
 public class WrapObjectWithOptionalFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapObjectWithOptional";

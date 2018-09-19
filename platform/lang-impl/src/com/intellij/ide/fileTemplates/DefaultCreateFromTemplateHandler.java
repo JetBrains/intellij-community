@@ -36,14 +36,14 @@ import java.util.Map;
  */
 public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandler {
   @Override
-  public boolean handlesTemplate(final FileTemplate template) {
+  public boolean handlesTemplate(@NotNull final FileTemplate template) {
     return true;
   }
 
   @NotNull
   @Override
-  public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
-                                       final String templateText,
+  public PsiElement createFromTemplate(@NotNull final Project project, @NotNull final PsiDirectory directory, String fileName, @NotNull final FileTemplate template,
+                                       @NotNull final String templateText,
                                        @NotNull final Map<String, Object> props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
 
@@ -63,7 +63,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return file;
   }
 
-  protected String checkAppendExtension(String fileName, final FileTemplate template) {
+  protected String checkAppendExtension(String fileName, @NotNull FileTemplate template) {
     final String suggestedFileNameEnd = "." + template.getExtension();
 
     if (!fileName.endsWith(suggestedFileNameEnd)) {
@@ -73,7 +73,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   }
 
   @Override
-  public boolean canCreate(final PsiDirectory[] dirs) {
+  public boolean canCreate(@NotNull final PsiDirectory[] dirs) {
     return true;
   }
 
@@ -82,13 +82,14 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return true;
   }
 
+  @NotNull
   @Override
   public String getErrorMessage() {
     return IdeBundle.message("title.cannot.create.file");
   }
 
   @Override
-  public void prepareProperties(Map<String, Object> props) {
+  public void prepareProperties(@NotNull Map<String, Object> props) {
     // ignore
   }
 }

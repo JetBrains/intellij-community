@@ -38,6 +38,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.tree.LeafState;
 import com.intellij.usageView.UsageViewLongNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ArrayUtil;
@@ -69,7 +70,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public final NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
+  public final NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)element;
     }
@@ -80,19 +81,18 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final boolean isToBuildChildrenInBackground(final Object element) {
+  public final boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor){
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       final Object[] cachedChildren = descriptor.getCachedChildren();
-      if (cachedChildren == null && descriptor.isValid()){
-        return true;
-      }
+      return cachedChildren == null && descriptor.isValid();
     }
     return false;
   }
 
+  @NotNull
   @Override
-  public final Object[] getChildElements(final Object element) {
+  public final Object[] getChildElements(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       Object[] cachedChildren = descriptor.getCachedChildren();
@@ -116,7 +116,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final Object getParentElement(final Object element) {
+  public final Object getParentElement(@NotNull final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       return ((HierarchyNodeDescriptor)element).getParentDescriptor();
     }
@@ -142,6 +142,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   @NotNull
   protected abstract Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor);
 
+  @NotNull
   @Override
   public final Object getRootElement() {
     return myRoot;
@@ -166,38 +167,35 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return searchScope;
   }
 
-  protected boolean isInScope(final PsiElement baseClass, final PsiElement srcElement, final String scopeType) {
+  protected boolean isInScope(final PsiElement baseClass, @NotNull PsiElement srcElement, final String scopeType) {
     if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
-      if (!PsiTreeUtil.isAncestor(baseClass, srcElement, true)) {
-        return false;
-      }
+      return PsiTreeUtil.isAncestor(baseClass, srcElement, true);
     }
-    else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
       final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
-      if (virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, myProject)) {
-        return false;
-      }
+      return virtualFile == null || !TestSourcesFilter.isTestSources(virtualFile, myProject);
     }
-    else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
       final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
-      if (virtualFile != null && !TestSourcesFilter.isTestSources(virtualFile, myProject)) {
-        return false;
-      }
-    } else if (!HierarchyBrowserBaseEx.SCOPE_ALL.equals(scopeType)) {
-      final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
-      if (namedScope == null) {
-        return false;
-      }
-      final PackageSet namedScopePattern = namedScope.getValue();
-      if (namedScopePattern == null) {
-        return false;
-      }
-      final PsiFile psiFile = srcElement.getContainingFile();
-      if (psiFile != null && !namedScopePattern.contains(psiFile, NamedScopesHolder.getHolder(myProject, scopeType, NamedScopeManager.getInstance(myProject)))) {
-        return false;
-      }
+      return virtualFile == null || TestSourcesFilter.isTestSources(virtualFile, myProject);
     }
-    return true;
+    if (HierarchyBrowserBaseEx.SCOPE_ALL.equals(scopeType)) {
+      return true;
+    }
+    final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
+    if (namedScope == null) {
+      return false;
+    }
+    final PackageSet namedScopePattern = namedScope.getValue();
+    if (namedScopePattern == null) {
+      return false;
+    }
+    PsiFile psiFile = srcElement.getContainingFile();
+    if (psiFile == null) {
+      return true;
+    }
+    NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scopeType, NamedScopeManager.getInstance(myProject));
+    return namedScopePattern.contains(psiFile, holder);
   }
 
   private static final class TextInfoNodeDescriptor extends NodeDescriptor {
@@ -216,6 +214,14 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     public final boolean update() {
       return true;
     }
+  }
+
+  @NotNull
+  @Override
+  public LeafState getLeafState(@NotNull Object element) {
+    if (isAlwaysShowPlus()) return LeafState.NEVER;
+    LeafState state = super.getLeafState(element);
+    return state != LeafState.DEFAULT ? state : LeafState.ASYNC;
   }
 
   public boolean isAlwaysShowPlus() {

@@ -157,7 +157,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
 
       @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
+      public boolean isToBuildChildrenInBackground(@NotNull Object element) {
         return getRootElement() == element;
       }
 
@@ -177,7 +177,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
     myStructureTreeModel = new StructureTreeModel(myFilteringStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);

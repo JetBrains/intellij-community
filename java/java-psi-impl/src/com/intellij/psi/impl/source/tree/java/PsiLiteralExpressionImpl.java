@@ -134,13 +134,10 @@ public class PsiLiteralExpressionImpl
       return PsiLiteralUtil.parseDouble(text);
     }
     if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (StringUtil.endsWithChar(text, '\'')) {
-        if (textLength == 1) return null;
-        text = text.substring(1, textLength - 1);
+      if (textLength == 1 || !StringUtil.endsWithChar(text, '\'')) {
+        return null;
       }
-      else {
-        text = text.substring(1, textLength);
-      }
+      text = text.substring(1, textLength - 1);
       StringBuilder chars = new StringBuilder();
       boolean success = parseStringCharacters(text, chars, null);
       if (!success) return null;

@@ -638,8 +638,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      if (pparent instanceof PsiReferenceExpression ||
-          pparent instanceof PsiVariable ||
+      if (pparent instanceof PsiVariable ||
           pparent instanceof PsiExpression) {
         expectedFieldNames.add(refName);
       }

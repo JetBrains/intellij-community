@@ -1,0 +1,10 @@
+﻿{
+
+  "a": |true|(0)
+}
+
+
+---------------------------------------------------------
+(0): ReSharper Underlined Error Highlighting: JSON validation failed: Should satisfy at least one of constraints: 
+	Expression must be of type 'string'
+	Expression must be of type 'number'

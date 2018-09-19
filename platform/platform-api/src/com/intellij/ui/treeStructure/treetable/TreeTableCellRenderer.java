@@ -170,6 +170,11 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
       }
 
       @Override
+      protected Container getDelegateParent() {
+        return myComponent.getParent();
+      }
+
+      @Override
       public AccessibleStateSet getAccessibleStateSet() {
         AccessibleStateSet set = super.getAccessibleStateSet();
         if (!myLeaf) {

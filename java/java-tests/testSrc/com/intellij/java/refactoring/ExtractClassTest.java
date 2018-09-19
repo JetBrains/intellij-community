@@ -88,13 +88,7 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
   
   public void testIncrement() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTestField(null, false);
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTestField(null, false));
   }
 
   public void testVarargs() {

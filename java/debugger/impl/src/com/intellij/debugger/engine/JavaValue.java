@@ -74,7 +74,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                     @NotNull EvaluationContextImpl evaluationContext,
                     NodeManagerImpl nodeManager,
                     boolean contextSet) {
-    super(valueDescriptor.calcValueName());
+    this(parent, valueDescriptor.calcValueName(), valueDescriptor, evaluationContext, nodeManager, contextSet);
+  }
+
+  protected JavaValue(JavaValue parent,
+                      String name,
+                      @NotNull ValueDescriptorImpl valueDescriptor,
+                      @NotNull EvaluationContextImpl evaluationContext,
+                      NodeManagerImpl nodeManager,
+                      boolean contextSet) {
+    super(name);
     myParent = parent;
     myValueDescriptor = valueDescriptor;
     myEvaluationContext = evaluationContext;

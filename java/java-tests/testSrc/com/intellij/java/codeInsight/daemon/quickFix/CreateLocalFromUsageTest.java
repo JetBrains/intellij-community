@@ -33,5 +33,4 @@ public class CreateLocalFromUsageTest extends LightQuickFixParameterizedTestCase
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = getTestName(true).contains("final");
   }
 
-  public void test() { doAllTests(); }
 }

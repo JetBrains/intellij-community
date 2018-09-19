@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface PriorityAction {
 
   enum Priority {
+    TOP,
     HIGH,
     NORMAL,
     LOW

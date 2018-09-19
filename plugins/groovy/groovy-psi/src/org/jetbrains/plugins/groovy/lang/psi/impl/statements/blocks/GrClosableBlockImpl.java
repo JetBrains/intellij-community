@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
@@ -46,7 +46,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProc
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
 
-  private volatile GrParameter[] mySyntheticItParameter;
+  private final AtomicReference<GrParameter[]> mySyntheticItParameter = new AtomicReference<>();
 
   public GrClosableBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -60,7 +60,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   @Override
   public void clearCaches() {
     super.clearCaches();
-    mySyntheticItParameter = null;
+    mySyntheticItParameter.set(null);
   }
 
   @Override
@@ -267,18 +267,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (getParent() instanceof GrStringInjection) {
       return GrParameter.EMPTY_ARRAY;
     }
-
-    GrParameter[] res = mySyntheticItParameter;
-    if (res == null) {
-      res = new GrParameter[]{new ClosureSyntheticParameter(this, true)};
-      synchronized (this) {
-        if (mySyntheticItParameter == null) {
-          mySyntheticItParameter = res;
-        }
-      }
-    }
-
-    return res;
+    return mySyntheticItParameter.updateAndGet(
+      value -> value == null ? new GrParameter[]{new ClosureSyntheticParameter(this, true)} : value
+    );
   }
 
   @Nullable

@@ -12,9 +12,9 @@ public class SynchronizationOnLockObjectInspection
 
 
     public  void barzoomb() throws InterruptedException {
-        synchronized (lock) {
+        synchronized (<warning descr="Synchronization on a 'java.util.concurrent.locks.Lock' object is unlikely to be intentional">lock</warning>) {
         }
-        synchronized (lock2) {
+        synchronized (<warning descr="Synchronization on a 'java.util.concurrent.locks.ReadWriteLock' object is unlikely to be intentional">lock2</warning>) {
             
         }
     }

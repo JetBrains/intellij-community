@@ -30,8 +30,6 @@ public class UseCompareMethodInspectionTest extends LightQuickFixParameterizedTe
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/useCompareMethod";

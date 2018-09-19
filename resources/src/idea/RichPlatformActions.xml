@@ -354,12 +354,6 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="TestStatisticsTablePopupMenu">
-      <reference ref="TestTreePopupMenu"/>
-      <action id="Testing.SelectInTree" class="com.intellij.execution.testframework.actions.SelectInTreeAction"
-              text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
-    </group>
-
     <!--  TODO: fix
       <group id="UsageView.Popup">-->
     <!--<reference ref="EditSource"/>-->

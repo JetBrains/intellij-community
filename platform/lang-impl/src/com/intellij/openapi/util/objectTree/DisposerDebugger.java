@@ -311,6 +311,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       return null;
     }
 
+    @NotNull
     @Override
     public Object getRootElement() {
       return myRoot;

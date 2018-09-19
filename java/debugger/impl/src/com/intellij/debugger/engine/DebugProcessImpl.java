@@ -151,12 +151,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void reloadRenderers() {
-    getManagerThread().invoke(new DebuggerCommandImpl() {
-      @Override
-      public Priority getPriority() {
-        return Priority.HIGH;
-      }
-
+    getManagerThread().invoke(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
       @Override
       protected void action() {
         myNodeRenderersMap.clear();
@@ -865,6 +860,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (cause.getCause() != null) {
         return cause.getCause().getLocalizedMessage();
       }
+    }
+    else if (cause instanceof IllegalStateException) {
+      return cause.getLocalizedMessage();
     }
 
     String message;

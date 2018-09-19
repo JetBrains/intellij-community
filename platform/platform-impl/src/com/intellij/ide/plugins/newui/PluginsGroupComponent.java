@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurableNew;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
@@ -174,7 +173,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, (Condition<CellPluginComponent>)component -> component.myPlugin == descriptor);
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
     assert index != -1;
     CellPluginComponent component = group.ui.plugins.remove(index);
     remove(component);
@@ -206,8 +205,8 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEventHandler.initialSelection(scrollAndFocus);
-      if (getComponentCount() > 0) {
-        scrollRectToVisible(getComponent(0).getBounds());
+      if (!myGroups.isEmpty()) {
+        scrollRectToVisible(myGroups.get(0).panel.getBounds());
       }
     });
   }

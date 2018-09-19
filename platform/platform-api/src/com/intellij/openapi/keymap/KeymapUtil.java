@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -35,9 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.List;
 
 public class KeymapUtil {
 
@@ -90,6 +90,7 @@ public class KeymapUtil {
   }
 
   @NotNull
+  @Deprecated
   public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       return AllIcons.General.KeyboardShortcut;
@@ -588,5 +589,18 @@ public class KeymapUtil {
         }
       }
     }
+  }
+
+  @Nullable
+  public static ShortcutSet filterKeyStrokes(@NotNull ShortcutSet source, KeyStroke...toLeaveOut) {
+    List<Shortcut> filtered = new ArrayList<>(Arrays.asList(source.getShortcuts()));
+    for (Shortcut shortcut : source.getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        if (ArrayUtil.find(toLeaveOut, ((KeyboardShortcut)shortcut).getFirstKeyStroke()) != -1) {
+          filtered.remove(shortcut);
+        }
+      }
+    }
+    return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
 }

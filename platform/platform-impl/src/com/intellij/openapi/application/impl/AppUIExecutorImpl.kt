@@ -7,7 +7,8 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.impl.AsyncExecution.*
+import com.intellij.openapi.application.impl.AsyncExecution.ExpirableContextConstraint
+import com.intellij.openapi.application.impl.AsyncExecution.SimpleContextConstraint
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -22,7 +23,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      override val disposables: Set<Disposable>,
-                                                     override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport(),
+                                                     override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport<AppUIExecutorEx>(),
                                                                                                      AppUIExecutorEx {
   constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
@@ -34,17 +35,8 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     override fun toString() = "onUiThread($modality)"
   })
 
-  private fun withConstraint(constraint: ContextConstraint): AppUIExecutor {
-    val disposables = (constraint as? ExpirableContextConstraint)?.expirable?.let { disposable ->
-      disposables + disposable
-    } ?: disposables
-    return AppUIExecutorImpl(myModality, disposables, constraint.toCoroutineDispatcher(dispatcher))
-  }
-
-  override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
-    val disposables = disposables + parentDisposable
-    return if (disposables === this.disposables) this else AppUIExecutorImpl(myModality, disposables, dispatcher)
-  }
+  override fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): AppUIExecutorImpl =
+    AppUIExecutorImpl(myModality, disposables, dispatcher)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null
@@ -92,7 +84,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
         get() = !DumbService.getInstance(project).isDumb
 
       override fun scheduleExpirable(runnable: Runnable) {
-        DumbService.getInstance(project).smartInvokeLater(runnable, myModality)
+        DumbService.getInstance(project).runWhenSmart(runnable)
       }
 
       override fun toString() = "inSmartMode"
@@ -101,18 +93,19 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
     val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : ExpirableContextConstraint {
-      override val expirable = parentDisposable
-
+    return withConstraint(object : SimpleContextConstraint {
       override val isCorrectContext: Boolean
         get() = TransactionGuard.getInstance().contextTransaction != null
 
-      override fun scheduleExpirable(runnable: Runnable) {
-        TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable)
+      override fun schedule(runnable: Runnable) {
+        // The Application instance is passed as a disposable here to ensure the runnable is always invoked,
+        // regardless expiration state of the proper parentDisposable. In case the latter is disposed,
+        // a continuation is resumed with a cancellation exception anyway (.expireWith() takes care of that).
+        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), id, runnable)
       }
 
       override fun toString() = "inTransaction"
-    })
+    }).expireWith(parentDisposable)
   }
 
   override fun inUndoTransparentAction(): AppUIExecutor {

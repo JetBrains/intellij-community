@@ -206,12 +206,12 @@ class ProgressDialog implements Disposable {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false;
-        EdtExecutorService.getInstance().submit(myRepaintRunnable);
+        EdtExecutorService.getInstance().execute(myRepaintRunnable);
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          EdtExecutorService.getInstance().submit(() -> {
+          EdtExecutorService.getInstance().execute(() -> {
             if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
               myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
             }

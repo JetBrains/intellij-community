@@ -54,6 +54,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;

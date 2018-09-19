@@ -32,7 +32,7 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
 
   public BranchActionGroup() {
     super("", true);
-    setIcons(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16, AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);
+    setIcons(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16, AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
   }
 
   protected void setIcons(@NotNull Icon favorite,

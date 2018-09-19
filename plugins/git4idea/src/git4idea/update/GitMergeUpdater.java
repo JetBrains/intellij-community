@@ -100,12 +100,9 @@ public class GitMergeUpdater extends GitUpdater {
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-          @Override protected String getDescription() {
-            return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                              "Please, commit your changes or stash them before you can merge.";
-          }
-        };
+        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes);
+        dialog.setDescription("Your local changes to the following files would be overwritten by merge.<br/>" +
+                              "Please, commit your changes or stash them before you can merge.");
         dialog.show();
       });
       return GitUpdateResult.ERROR;
