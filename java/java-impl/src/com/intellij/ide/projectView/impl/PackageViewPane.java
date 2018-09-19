@@ -200,7 +200,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
 

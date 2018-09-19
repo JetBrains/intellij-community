@@ -27,11 +27,11 @@ import java.util.Set;
 public class FormNode extends ProjectViewNode<Form>{
   private final Collection<BasePsiNode<? extends PsiElement>> myChildren;
 
-  public FormNode(Project project, Object value, ViewSettings viewSettings) {
+  public FormNode(Project project, @NotNull Object value, ViewSettings viewSettings) {
     this(project, (Form)value, viewSettings, getChildren(project, (Form) value, viewSettings));
   }
 
-  public FormNode(Project project, Form value, ViewSettings viewSettings, Collection<BasePsiNode<? extends PsiElement>> children) {
+  public FormNode(Project project, @NotNull Form value, ViewSettings viewSettings, Collection<BasePsiNode<? extends PsiElement>> children) {
     super(project, value, viewSettings);
     myChildren = children;
   }

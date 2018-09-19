@@ -25,13 +25,13 @@ import java.util.*;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public PackageElementNode(@NotNull Project project,
-                            final PackageElement value,
+                            @NotNull PackageElement value,
                             final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   public PackageElementNode(@NotNull Project project,
-                            final Object value,
+                            @NotNull Object value,
                             final ViewSettings viewSettings) {
     this(project, (PackageElement)value, viewSettings);
   }

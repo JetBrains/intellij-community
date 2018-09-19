@@ -238,7 +238,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     private final Module myModule;
 
     GradleModuleDirectoryNode(Project project,
-                                     PsiDirectory psiDirectory,
+                              @NotNull PsiDirectory psiDirectory,
                                      ViewSettings settings,
                                      Module module,
                                      String moduleShortName,

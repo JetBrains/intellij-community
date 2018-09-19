@@ -48,11 +48,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   private final PsiFileSystemItemFilter myFilter;
 
-  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+  public PsiDirectoryNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     this(project, value, viewSettings, null);
   }
 
-  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings, @Nullable PsiFileSystemItemFilter filter) {
+  public PsiDirectoryNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings, @Nullable PsiFileSystemItemFilter filter) {
     super(project, value, viewSettings);
     myFilter = filter;
   }
