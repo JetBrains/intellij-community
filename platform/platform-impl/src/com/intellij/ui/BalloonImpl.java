@@ -477,31 +477,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         }
       });
     }
-    if (myRequestFocus) {
-      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
-        @Override
-        public boolean isExpired() {
-          return isDisposed();
-        }
-
-        @Override
-        public void run() {
-          myOriginalFocusOwner = myFocusManager.getFocusOwner();
-
-          // Set the accessible parent so that screen readers don't announce
-          // a window context change -- the tooltip is "logically" hosted
-          // inside the component (e.g. editor) it appears on top of.
-          AccessibleContextUtil.setParent((Component)myContent, myOriginalFocusOwner);
-
-          // Set the focus to "myContent"
-          myFocusManager.requestFocus(getContentToFocus(), true);
-          EventQueue.invokeLater(() -> {
-            myFocusManager.requestFocus(getContentToFocus(), true);
-          });
-        }
-      });
-    }
-
     myLayeredPane.addComponentListener(myComponentListener);
 
     myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutShift);
@@ -576,6 +551,28 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.revalidate();
     myLayeredPane.repaint();
 
+    if (myRequestFocus) {
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return isDisposed();
+        }
+
+        @Override
+        public void run() {
+          myOriginalFocusOwner = myFocusManager.getFocusOwner();
+
+          // Set the accessible parent so that screen readers don't announce
+          // a window context change -- the tooltip is "logically" hosted
+          // inside the component (e.g. editor) it appears on top of.
+          AccessibleContextUtil.setParent((Component)myContent, myOriginalFocusOwner);
+
+          // Set the focus to "myContent"
+          myFocusManager.requestFocus(getContentToFocus(), true);
+        }
+      });
+    }
+
     if (mnemonicsFix) {
       proxyFocusRequest.get().doWhenDone(() -> myFocusManager.requestFocus(originalFocusOwner.get(), true));
     }
@@ -612,14 +609,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
    */
   @NotNull
   private Component getContentToFocus() {
-    JComponent focusComponent = myContent;
+    Component focusComponent = myContent;
+    FocusTraversalPolicy policy = myContent.getFocusTraversalPolicy();
+    if (policy instanceof SortingFocusTraversalPolicy &&
+        ((SortingFocusTraversalPolicy)policy).getImplicitDownCycleTraversal())
+    {
+      focusComponent = policy.getDefaultComponent(myContent);
+    }
     while (true) {
-      FocusTraversalPolicy policy = focusComponent.getFocusTraversalPolicy();
-      if (policy instanceof SortingFocusTraversalPolicy &&
-          ((SortingFocusTraversalPolicy)policy).getImplicitDownCycleTraversal())
-      {
-        focusComponent = (JComponent)policy.getDefaultComponent(focusComponent);
-      }
       // Setting focus to a JScrollPane is not very useful. Better setting focus to the
       // contained view. This is useful for Tooltip popups, for example.
       if (focusComponent instanceof JScrollPane) {
@@ -627,7 +624,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         if (viewport == null) {
           break;
         }
-        JComponent child = (JComponent)viewport.getView();
+        Component child = viewport.getView();
         if (child == null) {
           break;
         }

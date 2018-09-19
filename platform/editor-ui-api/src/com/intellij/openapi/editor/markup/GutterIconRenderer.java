@@ -7,11 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.accessibility.DescAccessible;
+import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.regex.Pattern;
 
 /**
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
-public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, DescAccessible {
+public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, SimpleAccessible {
   /**
    * Returns the action group actions from which are used to fill the context menu
    * displayed when the icon is right-clicked.
@@ -115,17 +116,23 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
 
   @Override
   @NotNull
-  public String getAccessibleDesc() {
+  public String getAccessibleName() {
     Icon icon = getIcon();
     if (icon instanceof IconLoader.CachedImageIcon) {
       String path = ((IconLoader.CachedImageIcon)icon).getOriginalPath();
       if (path != null) {
         String[] split = path.split(Pattern.quote("/") + "|" + Pattern.quote("\\"));
         String name = split[split.length - 1];
-        return name.split(Pattern.quote("."))[0];
+        return "icon: " + name.split(Pattern.quote("."))[0];
       }
     }
-    return "unknown icon";
+    return "icon: unknown";
+  }
+
+  @Nullable
+  @Override
+  public String getAccessibleTooltipText() {
+    return getTooltipText();
   }
 
   public enum Alignment {

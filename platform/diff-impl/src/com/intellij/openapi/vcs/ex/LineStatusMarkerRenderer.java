@@ -249,6 +249,27 @@ public abstract class LineStatusMarkerRenderer {
   // Gutter painting
   //
 
+  private Rectangle calcBounds(Editor editor, Rectangle bounds) {
+    // [amp] todo: fix bounds for deleted line, etc.
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges == null) return null;
+
+    List<ChangesBlock> blocks = createMerger(editor).run(ranges, bounds);
+    if (blocks.isEmpty()) return null;
+
+    ChangesBlock firstBlock = blocks.get(0);
+    ChangesBlock lastBlock = blocks.get(blocks.size() - 1);
+
+    int startLine = firstBlock.changes.get(0).line1;
+    int endLine = lastBlock.changes.get(lastBlock.changes.size() - 1).line2;
+
+    EditorImpl editorEx = (EditorImpl)editor;
+    IntPair area = getGutterArea(editor);
+    int y = editorEx.visibleLineToY(startLine);
+    int endY = editorEx.visibleLineToY(endLine);
+    return new Rectangle(area.val1, y, area.val2 - area.val1, endY - y);
+  }
+
   protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return;
@@ -685,6 +706,18 @@ public abstract class LineStatusMarkerRenderer {
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       LineStatusMarkerRenderer.this.doAction(editor, e);
+    }
+
+    @Nullable
+    @Override
+    public Rectangle calcBounds(@NotNull Editor editor, @NotNull Rectangle preferredBounds) {
+      return LineStatusMarkerRenderer.this.calcBounds(editor, preferredBounds);
+    }
+
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "VCS marker: changed line";
     }
   }
 }

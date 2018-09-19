@@ -194,12 +194,8 @@
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" use-shortcut-of="$Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
 
-      <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction" text="Focus &amp;Gutter (a11y)">
-        <keyboard-shortcut first-keystroke="alt shift G" second-keystroke="F" keymap="$default"/>
-      </action>
-      <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction" text="Show Gutter Icon &amp;Tooltip (a11y)">
-        <keyboard-shortcut first-keystroke="alt shift G" second-keystroke="T" keymap="$default"/>
-      </action>
+      <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction" text="Focus &amp;Gutter (a11y)"/>
+      <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction" text="Show Gutter Icon &amp;Tooltip (a11y)"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>

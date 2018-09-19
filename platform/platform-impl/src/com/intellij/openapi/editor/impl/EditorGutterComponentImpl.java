@@ -58,7 +58,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.JBValue.JBValueGroup;
-import com.intellij.util.ui.accessibility.DescAccessible;
+import com.intellij.util.ui.accessibility.SimpleAccessible;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
@@ -2019,21 +2019,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
    * have meaningful bounds and receive focus events (which is essential for a11y to track them).
    */
   static class MyAccessibleLine extends JPanel implements MyAccessibleFocusable {
-    private static MyAccessibleLine mySelectedRow;
+    private static MyAccessibleLine mySelectedLine;
     private final EditorImpl myEditor;
     private final EditorGutterComponentImpl myGutter;
     private final int myLineNum;
-    private MyAccessibleMarker mySelectedAccessible;
+    private MyAccessibleElement mySelectedAccessible;
 
     public static MyAccessibleLine create(@NotNull EditorImpl editor) {
-      return mySelectedRow = new MyAccessibleLine(editor);
+      return mySelectedLine = new MyAccessibleLine(editor);
     }
 
     public static void escape(Editor editor, boolean requestFocusToEditor) {
       if (isActive()) {
-        Component toPaint = mySelectedRow.myGutter;
-        mySelectedRow.getParent().remove(mySelectedRow);
-        EventQueue.invokeLater(() -> toPaint.repaint());
+        Component toPaint = mySelectedLine.myGutter;
+        mySelectedLine.getParent().remove(mySelectedLine);
+        toPaint.repaint();
       }
       if (requestFocusToEditor) {
         IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
@@ -2042,7 +2042,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     public static void paintSelection(Graphics2D g) {
       if (isActive()) {
-        mySelectedRow.mySelectedAccessible.paintSelection(g);
+        mySelectedLine.mySelectedAccessible.paintSelection(g);
       }
     }
 
@@ -2081,20 +2081,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     private static void moveRight() {
       if (isActive()) {
         IdeFocusManager.getGlobalInstance().requestFocus(
-          mySelectedRow.getFocusTraversalPolicy().getComponentAfter(mySelectedRow, mySelectedRow.mySelectedAccessible), true);
+          mySelectedLine.getFocusTraversalPolicy().getComponentAfter(mySelectedLine, mySelectedLine.mySelectedAccessible), true);
       }
     }
 
     private static void moveLeft() {
       if (isActive()) {
         IdeFocusManager.getGlobalInstance().requestFocus(
-          mySelectedRow.getFocusTraversalPolicy().getComponentBefore(mySelectedRow, mySelectedRow.mySelectedAccessible), true);
+          mySelectedLine.getFocusTraversalPolicy().getComponentBefore(mySelectedLine, mySelectedLine.mySelectedAccessible), true);
       }
     }
 
     public static void showTooltipIfPresent() {
       if (isActive()) {
-        mySelectedRow.mySelectedAccessible.showTooltip();
+        mySelectedLine.mySelectedAccessible.showTooltip();
       }
     }
 
@@ -2102,21 +2102,30 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       super(null);
       myEditor = editor;
       myGutter = editor.getGutterComponentEx();
-      myLineNum = myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition().line;
+      myLineNum = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition().line;
       int lineHeight = myEditor.getLineHeight();
 
+      /* line numbers */
       if (myGutter.isLineNumbersShown()) {
-        int width = UIUtilities.stringWidth(myGutter,
-                                            UIUtilities.getFontMetrics(myGutter, myEditor.getColorsScheme().getFont(EditorFontType.PLAIN)),
-                                            String.valueOf(myEditor.getVisibleLineCount()));
-        addNewAccessible(() -> "line " + String.valueOf(myLineNum + 1), null, myGutter.getLineNumberAreaOffset(), 0, width, lineHeight);
+        addNewAccessible(new SimpleAccessible() {
+          @NotNull
+          @Override
+          public String getAccessibleName() {
+            return "line " + String.valueOf(myLineNum + 1);
+          }
+          @Override
+          public String getAccessibleTooltipText() {
+            return null;
+          }
+        }, myGutter.getLineNumberAreaOffset(), 0, myGutter.getLineNumberAreaWidth(), lineHeight);
       }
 
+      /* annotations */
       if (myGutter.isAnnotationsShown()) {
         int x = myGutter.getAnnotationsAreaOffset();
         int width = 0;
-        StringBuilder buf = new StringBuilder("annotation ");
         String tooltipText = null;
+        StringBuilder buf = new StringBuilder("annotation: ");
         for (int i = 0; i < myGutter.myTextAnnotationGutters.size(); i++) {
           TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
           if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLineNum, myEditor); // [tav] todo: take first non-null?
@@ -2125,30 +2134,61 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           width += annotationSize;
         }
         if (buf.length() > 0) {
-          addNewAccessible(() -> buf.toString(), tooltipText, x, 0, width, lineHeight);
+          String tt = tooltipText;
+          addNewAccessible(new SimpleAccessible() {
+            @NotNull
+            @Override
+            public String getAccessibleName() {
+              return buf.toString();
+            }
+            @Override
+            public String getAccessibleTooltipText() {
+              return tt;
+            }
+          }, x, 0, width, lineHeight);
         }
       }
 
+      /* icons */
       if (myGutter.areIconsShown()) {
         List<GutterMark> row = myGutter.getGutterRenderers(myLineNum);
         if (row != null) {
           myGutter.processIconsRow(myLineNum, row, (x, y, renderer) -> {
             Icon icon = myGutter.scaleIcon(renderer.getIcon());
-            addNewAccessible(() -> {
-              if (renderer instanceof DescAccessible) {
-                return "icon " + ((DescAccessible)renderer).getAccessibleDesc();
+            addNewAccessible(new SimpleAccessible() {
+              @NotNull
+              @Override
+              public String getAccessibleName() {
+                if (renderer instanceof SimpleAccessible) {
+                  return ((SimpleAccessible)renderer).getAccessibleName();
+                }
+                return "icon: " + renderer.getClass().getSimpleName();
               }
-              return "icon " + renderer.getClass().getSimpleName();
-            }, renderer.getTooltipText(), x, 0, icon.getIconWidth(), lineHeight);
+              @Override
+              public String getAccessibleTooltipText() {
+                return renderer.getTooltipText();
+              }
+            }, x, 0, icon.getIconWidth(), lineHeight);
           });
         }
       }
 
+      /* active markers */
       if (myGutter.isLineMarkersShown()) {
-        if (isLineModified()) {
-          int markerWidth = JBUI.scale(8); // [tav] todo: extract real width
-          addNewAccessible(() -> "line modified", null, myGutter.getWhitespaceSeparatorOffset() - markerWidth, 0, markerWidth, lineHeight);
-        }
+        int firstVisibleOffset = myEditor.visualLineStartOffset(myLineNum);
+        int lastVisibleOffset = myEditor.visualLineStartOffset(myLineNum + 1);
+        myGutter.processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
+          LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
+          if (renderer instanceof ActiveGutterRenderer) {
+            Rectangle rect = myGutter.getLineRendererRectangle(highlighter);
+            if (rect != null) {
+              Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(myEditor, rect);
+              if (bounds != null) {
+                addNewAccessible((ActiveGutterRenderer)renderer, bounds.x, 0, bounds.width, bounds.height);
+              }
+            }
+          }
+        });
       }
 
       setOpaque(false);
@@ -2159,18 +2199,28 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       setBounds(0, myEditor.visibleLineToY(myLineNum), myGutter.getWhitespaceSeparatorOffset(), lineHeight);
 
       myGutter.add(this);
-      mySelectedAccessible = (MyAccessibleMarker)getFocusTraversalPolicy().getFirstComponent(this);
+      mySelectedAccessible = (MyAccessibleElement)getFocusTraversalPolicy().getFirstComponent(this);
       if (mySelectedAccessible == null) {
         Rectangle b = getBounds(); // set above
-        mySelectedAccessible = addNewAccessible(() -> "empty", null, 0, 0, b.width, b.height);
+        mySelectedAccessible = addNewAccessible(new SimpleAccessible() {
+          @NotNull
+          @Override
+          public String getAccessibleName() {
+            return "empty";
+          }
+          @Override
+          public String getAccessibleTooltipText() {
+            return null;
+          }
+        }, 0, 0, b.width, b.height);
       }
 
       IdeFocusManager.getGlobalInstance().requestFocus(mySelectedAccessible, true);
     }
 
     @NotNull
-    private MyAccessibleMarker addNewAccessible(DescAccessible name, String tooltipText, int x, int y, int width, int height) {
-      MyAccessibleMarker obj = new MyAccessibleMarker(name, tooltipText, x, y, width, height);
+    private MyAccessibleElement addNewAccessible(@NotNull SimpleAccessible accessible, int x, int y, int width, int height) {
+      MyAccessibleElement obj = new MyAccessibleElement(accessible, new Rectangle(x, y, width, height));
       add(obj);
       return obj;
     }
@@ -2178,68 +2228,54 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     @Override
     public void removeNotify() {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      mySelectedRow = null;
-      EventQueue.invokeLater(() -> repaintRow());
+      mySelectedLine = null;
+      repaintLine();
       super.removeNotify();
     }
 
     private static void maybeLineChanged() {
       if (isActive()) {
-        if (mySelectedRow.myLineNum == mySelectedRow.myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition().line) return;
+        if (mySelectedLine.myLineNum == mySelectedLine.myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition().line) return;
 
-        EditorImpl editor = mySelectedRow.myEditor;
-        mySelectedRow.getParent().remove(mySelectedRow);
+        EditorImpl editor = mySelectedLine.myEditor;
+        mySelectedLine.getParent().remove(mySelectedLine);
         create(editor);
       }
     }
 
-    public void repaintRow() {
+    public void repaintLine() {
       int y = myEditor.visibleLineToY(myLineNum);
       myGutter.repaint(0, y, myGutter.getWhitespaceSeparatorOffset(), y + myEditor.getLineHeight());
     }
 
     public boolean isSelected() {
-      return mySelectedRow == this;
+      return mySelectedLine == this;
     }
 
     public static boolean isActive() {
-      return mySelectedRow != null;
-    }
-
-    private boolean isLineModified() {
-      try {
-        // [tav] todo: rewrite it in a good way
-        Class<?> clsProvider = Class.forName("com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl");
-        Object inst = clsProvider.getConstructor(Document.class, Project.class).newInstance(myEditor.getDocument(), myEditor.getProject());
-        return (Boolean)new MethodInvocator(clsProvider, "isLineChanged", int.class).invoke(inst, myLineNum);
-
-      } catch (Throwable ignored) {
-        return false;
-      }
+      return mySelectedLine != null;
     }
 
     /**
      * Represents an element on the gutter line, like a line number, an icon etc. (including an empty space when no elements are present).
      */
-    private class MyAccessibleMarker extends JLabel implements MyAccessibleFocusable {
-      private @NotNull final DescAccessible myName;
-      private @Nullable final String myTooltipText;
+    private class MyAccessibleElement extends JLabel implements MyAccessibleFocusable {
+      private @NotNull final SimpleAccessible myAccessible;
 
-      MyAccessibleMarker(@NotNull DescAccessible name, @Nullable String tooltipText, int x, int y, int width, int height) {
-        myName = name;
-        myTooltipText = tooltipText;
+      MyAccessibleElement(@NotNull SimpleAccessible accessible, @NotNull Rectangle bounds) {
+        myAccessible = accessible;
 
         setFocusable(true);
-        setBounds(x, y, width, height);
+        setBounds(bounds.x, bounds.y, bounds.width, myEditor.getLineHeight());
         setOpaque(false);
 
-        setText(myName.getAccessibleDesc());
+        setText(myAccessible.getAccessibleName());
 
         addFocusListener(new FocusListener() {
           @Override
           public void focusGained(FocusEvent e) {
-            mySelectedAccessible = MyAccessibleMarker.this;
-            EventQueue.invokeLater(() -> repaintRow());
+            mySelectedAccessible = MyAccessibleElement.this;
+            repaintLine();
           }
           @Override
           public void focusLost(FocusEvent e) {
@@ -2265,8 +2301,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           Rectangle bounds = getBounds();
           bounds.setLocation(parentLoc.x + bounds.x, parentLoc.y + bounds.y);
           int y = bounds.y + bounds.height - JBUI.scale(1);
-          double pix = 0;//PaintUtil.devPixel(g);
-          LinePainter2D.paint(g, bounds.x, y - pix, bounds.x + bounds.width, y - pix,
+          LinePainter2D.paint(g, bounds.x, y, bounds.x + bounds.width, y,
                               StrokeType.INSIDE, JBUI.scale(1));
         } finally {
           g.setColor(oldColor);
@@ -2274,13 +2309,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
 
       public void showTooltip() {
-        if (myTooltipText != null) {
+        if (myAccessible.getAccessibleTooltipText() != null) {
           Rectangle bounds = getBounds();
           Rectangle pBounds = getParent().getBounds();
           int x = pBounds.x + bounds.x + bounds.width / 2;
           int y = pBounds.y + bounds.y + bounds.height / 2;
           MouseEvent e = new MouseEvent(myGutter, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, x, y, 0, false, MouseEvent.BUTTON1);
-          myGutter.tooltipAvailable(myTooltipText, e, null);
+          myGutter.tooltipAvailable(myAccessible.getAccessibleTooltipText(), e, null);
         }
       }
 

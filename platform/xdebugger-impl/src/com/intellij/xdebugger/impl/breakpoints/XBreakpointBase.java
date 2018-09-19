@@ -521,9 +521,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     @NotNull
     @Override
-    public String getAccessibleDesc() {
+    public String getAccessibleName() {
       // [tav] todo: add "hit" state
-      return getType().getTitle() + (getCondition() != null ? " conditional" : "") + (!isEnabled() ? " disabled" : "");
+      return "icon: " + getType().getTitle() + (getCondition() != null ? " conditional" : "") + (!isEnabled() ? " disabled" : "");
     }
 
     @Override
