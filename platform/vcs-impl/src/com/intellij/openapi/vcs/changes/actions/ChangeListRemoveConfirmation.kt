@@ -53,15 +53,14 @@ object ChangeListRemoveConfirmation {
   }
 
   @JvmStatic
-  fun deleteLists(project: Project, explicitly: Boolean, lists: Collection<LocalChangeList>,
-                  askIfShouldRemoveChangeLists: (toAsk: List<LocalChangeList>) -> Boolean) {
+  fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {
     val manager = ChangeListManager.getInstance(project)
 
     val toRemove = mutableListOf<LocalChangeList>()
     val toAsk = mutableListOf<LocalChangeList>()
 
     for (list in lists.mapNotNull { manager.getChangeList(it.id) }) {
-      when (checkCanDeleteChangelist(project, list, explicitly)) {
+      when (checkCanDeleteChangelist(project, list, explicitly = true)) {
         ThreeState.UNSURE -> toAsk.add(list)
         ThreeState.YES -> toRemove.add(list)
         ThreeState.NO -> {
@@ -69,7 +68,7 @@ object ChangeListRemoveConfirmation {
       }
     }
 
-    if (toAsk.isNotEmpty() && askIfShouldRemoveChangeLists(toAsk)) {
+    if (toAsk.isNotEmpty() && RemoveChangeListAction.askIfShouldRemoveChangeLists(project, toAsk)) {
       toRemove.addAll(toAsk)
     }
 
@@ -81,6 +80,34 @@ object ChangeListRemoveConfirmation {
 
     if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList))) {
       manager.removeChangeList(defaultList.name)
+    }
+  }
+
+  @JvmStatic
+  fun deleteEmptyInactiveLists(project: Project, lists: Collection<LocalChangeList>,
+                               confirm: (toAsk: List<LocalChangeList>) -> Boolean) {
+    val manager = ChangeListManager.getInstance(project)
+
+    val toRemove = mutableListOf<LocalChangeList>()
+    val toAsk = mutableListOf<LocalChangeList>()
+
+    for (list in lists.mapNotNull { manager.getChangeList(it.id) }) {
+      if (list.isDefault) continue
+
+      when (checkCanDeleteChangelist(project, list, explicitly = false)) {
+        ThreeState.UNSURE -> toAsk.add(list)
+        ThreeState.YES -> toRemove.add(list)
+        ThreeState.NO -> {
+        }
+      }
+    }
+
+    if (toAsk.isNotEmpty() && confirm(toAsk)) {
+      toRemove.addAll(toAsk)
+    }
+
+    toRemove.forEach {
+      manager.removeChangeList(it.name)
     }
   }
 }

@@ -222,9 +222,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       listsToBeDeleted.clear();
     }
 
-    ChangeListRemoveConfirmation.deleteLists(myProject, false, listsToBeDeletedSilently, toAsk -> true);
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
 
-    ChangeListRemoveConfirmation.deleteLists(myProject, false, listsToBeDeleted, toAsk -> {
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted, toAsk -> {
       return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
              showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
     });

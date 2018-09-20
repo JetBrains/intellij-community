@@ -67,12 +67,10 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     final ChangeList[] selectedLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS);
 
     //noinspection unchecked
-    ChangeListRemoveConfirmation.deleteLists(project, true, (Collection)Arrays.asList(selectedLists), toAsk -> {
-      return askIfShouldRemoveChangeLists(project, toAsk);
-    });
+    ChangeListRemoveConfirmation.deleteLists(project, (Collection)Arrays.asList(selectedLists));
   }
 
-  private static boolean askIfShouldRemoveChangeLists(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists) {
+  public static boolean askIfShouldRemoveChangeLists(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists) {
     boolean activeChangelistSelected = lists.stream().anyMatch(LocalChangeList::isDefault);
     if (activeChangelistSelected) {
       return confirmActiveChangeListRemoval(project, lists);
