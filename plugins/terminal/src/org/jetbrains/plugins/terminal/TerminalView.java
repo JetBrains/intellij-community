@@ -8,12 +8,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -29,14 +26,12 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.util.ui.UIUtil;
-import com.jediterm.terminal.ui.JediTermWidget;
-import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -45,15 +40,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author traff
  */
 public class TerminalView {
   private final static String TERMINAL_FEATURE = "terminal";
-  public final static Key<JediTermWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
+  public final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
 
   private ToolWindow myToolWindow;
   private final Project myProject;
@@ -86,12 +79,12 @@ public class TerminalView {
     ((ToolWindowImpl)myToolWindow).setTitleActions(new AnAction("New Session", "Create new session", AllIcons.General.Add) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        newTab();
+        newTab(null);
       }
     });
 
     myToolWindow.setToHideOnEmptyContent(true);
-    newTab();
+    newTab(null);
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
@@ -129,24 +122,30 @@ public class TerminalView {
     }
   }
 
-  private void newTab() {
-    final Content content = createTerminalContent(myTerminalRunner, myToolWindow);
+  private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
+    final Content content = createTerminalContent(myTerminalRunner, myToolWindow, terminalWidget);
     final ContentManager contentManager = myToolWindow.getContentManager();
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);;
+    return content;
   }
 
   private Content createTerminalContent(@NotNull AbstractTerminalRunner terminalRunner,
-                                        final @NotNull ToolWindow toolWindow) {
+                                        final @NotNull ToolWindow toolWindow,
+                                        @Nullable JBTerminalWidget terminalWidget) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
     String name = "Tab " + (myNextTabNumber++);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, name, false);
-    final JBTerminalWidget terminalWidget = terminalRunner.createTerminalWidget(content);;
+    if (terminalWidget == null)
+      terminalWidget = terminalRunner.createTerminalWidget(content);
+    else
+      Disposer.register(content, terminalWidget);
+
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, terminalWidget);
 
-    terminalWidget.setListener(this::newTab);
+    terminalWidget.setListener(() -> newTab(null));
     panel.setContent(terminalWidget.getComponent());
     panel.addFocusListener(createFocusListener());
 
@@ -234,8 +233,9 @@ public class TerminalView {
     public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
       if (isTerminalSessionContent(content)) {
         TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
-        //myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
-        //terminalFile.getTerminal().setNextProvider(myTerminalWidget);
+        String name = terminalFile.getName();
+        Content newContent = newTab(terminalFile.getTerminalWidget());
+        newContent.setDisplayName(name);
       }
     }
 

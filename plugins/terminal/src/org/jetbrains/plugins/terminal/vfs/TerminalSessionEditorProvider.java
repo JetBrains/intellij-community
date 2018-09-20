@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.tabs.TabInfo;
 import com.jediterm.terminal.ui.JediTermWidget;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
     }
     else {
       TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
-      JediTermWidget widget = terminalFile.getTerminalWidget();
+      JBTerminalWidget widget = terminalFile.getTerminalWidget();
 
       TabInfo tabInfo = new TabInfo(widget).setText(terminalFile.getName());
       TerminalSessionVirtualFileImpl newSessionVirtualFile =
