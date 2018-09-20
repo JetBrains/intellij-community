@@ -94,6 +94,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testQuantifiers19() throws IOException { doCodeTest("a{"); }
   public void testQuantifiers20() throws IOException { doCodeTest("a}"); }
   public void testQuantifiers21() throws IOException { doCodeTest("a{}"); }
+  public void testQuantifiers22() throws IOException { doCodeTest("{1,2}"); }
 
   public void testCharclasses1() throws IOException { doCodeTest("a[bc]d"); }
   public void testCharclasses2() throws IOException { doCodeTest("a[b-d]e"); }

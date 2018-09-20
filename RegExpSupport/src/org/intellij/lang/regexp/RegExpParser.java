@@ -42,7 +42,6 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       parsePattern(builder);
       if (builder.eof()) break;
       patternExpected(builder);
-      builder.advanceLexer();
       if (builder.eof()) break;
     }
 
@@ -87,7 +86,6 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         return;
       }
       patternExpected(builder);
-      builder.advanceLexer();
     }
 
     //noinspection StatementWithEmptyBody
@@ -383,6 +381,12 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       marker.drop();
       parseCharacter(builder);
     }
+    else if (type == RegExpTT.NUMBER || type == RegExpTT.COMMA) {
+      // don't show these as errors
+      builder.remapCurrentToken(RegExpTT.CHARACTER);
+      builder.advanceLexer();
+      marker.done(RegExpElementTypes.CHAR);
+    }
     else if (RegExpTT.BOUNDARIES.contains(type)) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.BOUNDARY);
@@ -535,6 +539,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else {
       builder.error("Pattern expected");
     }
+    builder.advanceLexer();
   }
 
   protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
