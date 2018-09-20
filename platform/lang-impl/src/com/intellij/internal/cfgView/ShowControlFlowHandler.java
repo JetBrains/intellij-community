@@ -10,6 +10,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,6 +34,11 @@ import java.io.IOException;
 public class ShowControlFlowHandler implements CodeInsightActionHandler {
 
   private static final Logger LOGGER = Logger.getInstance(ShowControlFlowHandler.class);
+
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Show control flow group");
+  private static final String NO_GRAPHVIZ_HELP = "Probably graphviz is missing." +
+                                                 "You could install graphviz using `apt install graphviz` or `brew install graphviz`";
+
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -68,7 +74,12 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
           }
         });
       }
-    } catch (IOException | ExecutionException e) {
+    }
+    catch (FileNotFoundException e) {
+      NOTIFICATION_GROUP.createNotification("Show CFG:", e.getMessage(), NO_GRAPHVIZ_HELP, NotificationType.ERROR).notify(project);
+      LOGGER.warn(e);
+    }
+    catch (IOException | ExecutionException e) {
       LOGGER.warn(e);
     }
   }
@@ -78,7 +89,6 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  @Nullable
   public static boolean toSvgFile(@NotNull final String outSvgFile, @NotNull final PsiElement target) throws IOException, ExecutionException {
     String dotUtilName = SystemInfoRt.isUnix ? "dot" : "dot.exe";
     File dotFullPath = PathEnvironmentVariableUtil.findInPath(dotUtilName);
@@ -104,7 +114,8 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
       GeneralCommandLine generalCommandLine = new GeneralCommandLine(dotFullPath.getAbsolutePath()).withInput(tmpFile.getAbsoluteFile())
         .withParameters("-Tsvg", "-o" + outSvgFile, tmpFile.getAbsolutePath()).withRedirectErrorStream(true);
       ExecUtil.execAndGetOutput(generalCommandLine);
-    } finally {
+    }
+    finally {
       if (!tmpFile.delete()) {
         LOGGER.warn("Cannot delete tmp file: " + tmpFile);
       }
@@ -161,7 +172,8 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static String escape(String text) {
+  @NotNull
+  private static String escape(@NotNull String text) {
     return StringUtil.replace(StringUtil.escapeChars(text, '"'), "\n", "\\n");
   }
 }
