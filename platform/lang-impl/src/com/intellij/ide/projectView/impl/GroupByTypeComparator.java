@@ -134,6 +134,12 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
       return naturalCompare((String)key1, (String)key2);
     }
     //noinspection unchecked
-    return key1.compareTo(key2);
+    try {
+      //noinspection unchecked
+      return key1.compareTo(key2);
+    }
+    catch (ClassCastException ignored) {
+      return 0;
+    }
   }
 }
