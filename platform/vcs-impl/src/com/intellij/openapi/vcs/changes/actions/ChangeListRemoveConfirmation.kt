@@ -31,16 +31,15 @@ abstract class ChangeListRemoveConfirmation() {
       val manager = ChangeListManager.getInstance(project)
       val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
-      val toAsk = hashSetOf<String>()
-      val toRemove = hashSetOf<String>()
+      val toAsk = mutableListOf<LocalChangeList>()
+      val toRemove = mutableListOf<LocalChangeList>()
 
-      for (id in allLists.map { it.id }) {
+      for (list in allLists.mapNotNull { manager.getChangeList(it.id) }) {
         var confirmationAsked = false
         var removeVetoed = false
 
         for (vcs in activeVcss) {
-          val list = manager.getChangeList(id)
-          val permission = if (list == null) ThreeState.NO else vcs.mayRemoveChangeList(list, explicitly)
+          val permission = vcs.mayRemoveChangeList(list, explicitly)
           if (permission != ThreeState.UNSURE) {
             confirmationAsked = true
           }
@@ -51,23 +50,24 @@ abstract class ChangeListRemoveConfirmation() {
         }
 
         if (!confirmationAsked) {
-          toAsk.add(id)
+          toAsk.add(list)
         }
         else if (!removeVetoed) {
-          toRemove.add(id)
+          toRemove.add(list)
         }
       }
 
-      val toAskLists = toAsk.mapNotNull { manager.getChangeList(it) }
-      if (toAskLists.isNotEmpty() && ask.askIfShouldRemoveChangeLists(toAskLists)) {
+      if (toAsk.isNotEmpty() && ask.askIfShouldRemoveChangeLists(toAsk)) {
         toRemove.addAll(toAsk)
       }
 
-      val toRemoveLists = toRemove.mapNotNull { manager.getChangeList(it) }
-      val defaultList = toRemoveLists.find { it.isDefault }
-      toRemoveLists.forEach { if (it != defaultList) manager.removeChangeList(it.name) }
+      // default changelist might have been changed in `askIfShouldRemoveChangeLists()`
+      val defaultList = manager.defaultChangeList
+      val shouldRemoveDefault = toRemove.remove(defaultList)
 
-      if (defaultList != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList), defaultList.getChanges().isEmpty())) {
+      toRemove.forEach { manager.removeChangeList(it.name) }
+
+      if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList), defaultList.getChanges().isEmpty())) {
         manager.removeChangeList(defaultList.name)
       }
     }
