@@ -249,7 +249,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
       generateProductJson(unixSnapDistPath, "jre64/bin/java")
-      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, [unixSnapDistPath, jreDirectoryPath], [])
+      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")
       buildContext.messages.progress("Building package")
