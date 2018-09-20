@@ -485,10 +485,13 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void annotateProductDescriptor(ProductDescriptor productDescriptor, DomElementAnnotationHolder holder) {
     checkMaxLength(productDescriptor.getCode(), 15, holder);
 
+    String releaseDate = productDescriptor.getReleaseDate().getValue();
+    if (releaseDate == null) return;
+
     try {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
       dateFormat.setLenient(false);
-      dateFormat.parse(productDescriptor.getReleaseDate().getValue());
+      dateFormat.parse(releaseDate);
     }
     catch (ParseException e) {
       holder.createProblem(productDescriptor.getReleaseDate(),
