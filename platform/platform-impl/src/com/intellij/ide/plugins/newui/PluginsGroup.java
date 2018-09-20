@@ -21,6 +21,7 @@ public class PluginsGroup {
   public LinkLabel<Object> rightAction;
   public final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
   public UIPluginGroup ui;
+  public Runnable clearCallback;
 
   public PluginsGroup(@NotNull String title) {
     myTitlePrefix = title;
@@ -32,6 +33,10 @@ public class PluginsGroup {
     descriptors.clear();
     titleLabel = null;
     rightAction = null;
+    if (clearCallback != null) {
+      clearCallback.run();
+      clearCallback = null;
+    }
   }
 
   public void titleWithCount() {

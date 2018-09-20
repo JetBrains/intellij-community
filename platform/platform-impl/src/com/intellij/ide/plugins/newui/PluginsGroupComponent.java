@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +65,39 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void addGroup(@NotNull PluginsGroup group, int groupIndex) {
+    addGroup(group, group.descriptors, groupIndex);
+  }
+
+  public void addLazyGroup(@NotNull PluginsGroup group, @NotNull JScrollBar scrollBar, int gapSize, @NotNull Runnable uiCallback) {
+    if (group.descriptors.size() <= gapSize) {
+      addGroup(group);
+    }
+    else {
+      addGroup(group, group.descriptors.subList(0, gapSize), -1);
+      AdjustmentListener listener = new AdjustmentListener() {
+        @Override
+        public void adjustmentValueChanged(AdjustmentEvent e) {
+          if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
+            int fromIndex = group.ui.plugins.size();
+            int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
+            int uiIndex = getComponentIndex(group.ui.plugins.get(fromIndex - 1));
+            addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex);
+
+            if (group.descriptors.size() == group.ui.plugins.size()) {
+              scrollBar.removeAdjustmentListener(this);
+              group.clearCallback = null;
+            }
+
+            uiCallback.run();
+          }
+        }
+      };
+      group.clearCallback = () -> scrollBar.removeAdjustmentListener(listener);
+      scrollBar.addAdjustmentListener(listener);
+    }
+  }
+
+  private void addGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
@@ -123,9 +158,13 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     uiGroup.panel = panel;
 
-    for (IdeaPluginDescriptor descriptor : group.descriptors) {
+    addToGroup(group, descriptors, index);
+  }
+
+  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int index) {
+    for (IdeaPluginDescriptor descriptor : descriptors) {
       CellPluginComponent pluginComponent = myFunction.fun(descriptor);
-      uiGroup.plugins.add(pluginComponent);
+      group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, index);
       pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
