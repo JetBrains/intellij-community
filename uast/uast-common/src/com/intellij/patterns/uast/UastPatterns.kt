@@ -93,21 +93,30 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self>>(clazz: Class<T>) : UElementPattern<T, Self>(clazz) {
 
   fun annotationParam(@NonNls parameterName: String, annotationPattern: ElementPattern<UAnnotation>): Self =
+    annotationParams(annotationPattern, StandardPatterns.string().equalTo(parameterName))
+
+  fun annotationParams(annotationPattern: ElementPattern<UAnnotation>, parameterNames: ElementPattern<String>): Self =
     this.with(object : PatternCondition<T>("annotationParam") {
+
       override fun accepts(uElement: T, context: ProcessingContext?): Boolean {
         val namedExpression = uElement.getParentOfType<UNamedExpression>(true) ?: return false
-        if ((namedExpression.name ?: "value") != parameterName) return false
+        if (!parameterNames.accepts(namedExpression.name ?: "value")) return false
         val annotation = namedExpression.getParentOfType<UAnnotation>(true) ?: return false
         return (annotationPattern.accepts(annotation, context))
       }
     })
 
   fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String): Self =
-    annotationParam(parameterName, capture(UAnnotation::class.java)
-      .filter { it.qualifiedName?.let { annotationQualifiedName.accepts(it) } ?: false })
+    annotationParam(parameterName, qualifiedNamePattern(annotationQualifiedName))
+
+  private fun qualifiedNamePattern(annotationQualifiedName: ElementPattern<String>): UElementPattern<UAnnotation, *> =
+    capture(UAnnotation::class.java).filter { it.qualifiedName?.let { annotationQualifiedName.accepts(it) } ?: false }
 
   fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String): Self =
     annotationParam(StandardPatterns.string().equalTo(annotationQualifiedName), parameterName)
+
+  fun annotationParams(@NonNls annotationQualifiedName: String, @NonNls parameterNames: ElementPattern<String>): Self =
+    annotationParams(qualifiedNamePattern(StandardPatterns.string().equalTo(annotationQualifiedName)), parameterNames)
 
   open class Capture<T : UExpression>(clazz: Class<T>) : UExpressionPattern<T, UExpressionPattern.Capture<T>>(clazz)
 }
