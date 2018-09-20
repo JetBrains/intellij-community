@@ -78,8 +78,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -264,7 +264,11 @@ public class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis) {
-    assert getMillisSince(startTimeMillis) <= MAX_WAIT_TIME : "the waiting takes too long";
+    assertMaxWaitTimeSince(startTimeMillis, MAX_WAIT_TIME);
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
+    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
@@ -314,6 +318,11 @@ public class PlatformTestUtil {
 
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
+    return waitForPromise(promise, MAX_WAIT_TIME);
+  }
+
+  @Nullable
+  public static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.onProcessed(ignore -> complete.set(true));
@@ -326,7 +335,7 @@ public class PlatformTestUtil {
       }
       catch (Exception ignore) {
       }
-      assertMaxWaitTimeSince(start);
+      assertMaxWaitTimeSince(start, timeout);
     }
     while (!complete.get());
     UIUtil.dispatchAllInvocationEvents();
