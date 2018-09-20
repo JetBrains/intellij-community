@@ -115,7 +115,7 @@ public abstract class GithubIssueBase {
   @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private GithubUser assignee;
-  private List<GithubUser> assignees;
+  @Mandatory private List<GithubUser> assignees;
   //private ??? milestone;
   private Long comments;
   @Mandatory private Date createdAt;
@@ -161,6 +161,11 @@ public abstract class GithubIssueBase {
   @Nullable
   public GithubUser getAssignee() {
     return assignee;
+  }
+
+  @NotNull
+  public List<GithubUser> getAssignees() {
+    return assignees;
   }
 
   @Nullable

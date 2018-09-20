@@ -58,8 +58,6 @@ internal class GithubAccountsPanel(private val project: Project,
   private val accountList = JBList<GithubAccountDecorator>(accountListModel).apply {
     cellRenderer = GithubAccountDecoratorRenderer()
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-    selectionForeground = UIUtil.getListForeground()
-    selectionBackground = JBColor(0xE9EEF5, 0x464A4D)
     emptyText.apply {
       appendText("No GitHub accounts added.")
       appendSecondaryText("Add account", SimpleTextAttributes.LINK_ATTRIBUTES, { addAccount() })
@@ -331,19 +329,18 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    UIUtil.setBackgroundRecursively(this, if (isSelected) list.selectionBackground else list.background)
-
-    val textColor = if (isSelected) list.selectionForeground else list.foreground
-    val grayTextColor = if (isSelected) list.selectionForeground else Gray._120
+    UIUtil.setBackgroundRecursively(this, GithubUIUtil.List.WithTallRow.background(list, isSelected))
+    val primaryTextColor = GithubUIUtil.List.WithTallRow.foreground(list, isSelected)
+    val secondaryTextColor = GithubUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
 
     accountName.apply {
       text = value.account.name
       setBold(if (value.fullName == null) value.projectDefault else false)
-      foreground = if (value.fullName == null) textColor else grayTextColor
+      foreground = if (value.fullName == null) primaryTextColor else secondaryTextColor
     }
     serverName.apply {
       text = value.account.server.toString()
-      foreground = grayTextColor
+      foreground = secondaryTextColor
     }
     profilePicture.apply {
       icon = value.profilePicture?.let {
@@ -354,7 +351,7 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
       text = value.fullName
       setBold(value.projectDefault)
       isVisible = value.fullName != null
-      foreground = textColor
+      foreground = primaryTextColor
     }
     loadingError.apply {
       clear()

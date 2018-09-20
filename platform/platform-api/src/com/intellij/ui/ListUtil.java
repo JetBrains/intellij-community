@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -211,6 +212,12 @@ public class ListUtil {
         }
       };
     return model;
+  }
+
+  public static boolean isPointOnSelection(@NotNull JList list, int x, int y) {
+    int row = list.locationToIndex(new Point(x, y));
+    if (row < 0) return false;
+    return list.isSelectedIndex(row);
   }
 
   public static boolean canMoveSelectedItemsDown(JList list) {
