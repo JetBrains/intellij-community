@@ -680,21 +680,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @Nullable
   @VisibleForTesting
   public static XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName, PsiManager manager) {
-    final String[] dirs = packageName.split("\\.");
-    for (String dir : dirs) {
-      if (dir.isEmpty()) break;
-      VirtualFile subdir = root.findChild(dir);
-      if (subdir == null) {
-        try {
-          subdir = root.createChildDirectory(null, dir);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-      root = subdir;
-    }
-    final PsiDirectory directory = manager.findDirectory(root);
+    final PsiDirectory directory = getDirectoryForAnnotations(root, packageName, manager);
     if (directory == null) return null;
 
     final PsiFile psiFile = directory.findFile(ANNOTATIONS_XML);
@@ -710,6 +696,46 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       LOG.error(e);
     }
     return null;
+  }
+
+  /**
+   * Reformat and register file with external annotations.
+   *
+   * @param fromFile file to associate annotations with
+   * @param annotationsFile external annotations file
+   */
+  public void addAnnotationsXml(@NotNull PsiFile fromFile, @NotNull XmlFile annotationsFile) {
+    commitChanges(annotationsFile);
+    addExternalAnnotations(fromFile, annotationsFile);
+  }
+
+  /**
+   * Recursively finds directory for annotations starting from root.
+   * Creates directory in path if not present.
+   *
+   * @param root start
+   * @param packageName path to traverse
+   * @return found directory or null if failed
+   */
+  @Nullable
+  public static PsiDirectory getDirectoryForAnnotations(@NotNull VirtualFile root, @NonNls @NotNull String packageName, PsiManager manager) {
+    final String[] dirs = packageName.split("\\.");
+    for (String dir : dirs) {
+      if (dir.isEmpty()) break;
+      VirtualFile subdir = root.findChild(dir);
+      if (subdir == null) {
+        try {
+          subdir = root.createChildDirectory(null, dir);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return null;
+        }
+      }
+      root = subdir;
+    }
+
+    return manager.findDirectory(root);
   }
 
   @Override
