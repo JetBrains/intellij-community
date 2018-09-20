@@ -82,6 +82,7 @@ class CompilationPartsUploader {
       conn.setInstanceFollowRedirects(true)
       conn.setRequestMethod("HEAD")
 
+      conn.setRequestProperty("User-Agent", "CompilationPartsUploader")
       conn.setRequestProperty("Connection", "Keep-Alive")
       conn.setRequestProperty("Accept", "*/*")
 
@@ -106,6 +107,7 @@ class CompilationPartsUploader {
       conn.setUseCaches(false)
       conn.setRequestMethod("PUT")
 
+      conn.setRequestProperty("User-Agent", "CompilationPartsUploader")
       conn.setRequestProperty("Connection", "Keep-Alive")
       conn.setRequestProperty("Accept-Charset", UTF_8)
       conn.setRequestProperty("Content-Type", "application/octet-stream")
