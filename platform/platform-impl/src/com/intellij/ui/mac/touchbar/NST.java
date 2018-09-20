@@ -84,7 +84,7 @@ public class NST {
     return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
   }
 
-  public static boolean isAvailable() { return false /*ourNSTLibrary != null*/; }
+  public static boolean isAvailable() { return ourNSTLibrary != null; }
 
   public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
     return ourNSTLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
