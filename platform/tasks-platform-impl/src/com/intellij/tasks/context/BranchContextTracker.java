@@ -8,7 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.tasks.BranchInfo;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class BranchContextTracker implements BranchChangeListener {
 
@@ -35,6 +40,15 @@ public class BranchContextTracker implements BranchChangeListener {
   public void branchHasChanged(@NotNull String branchName) {
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     if (!vcsConfiguration.RELOAD_CONTEXT) return;
+
+    // check if the task is already switched
+    TaskManager manager = TaskManager.getManager(myProject);
+    if (manager != null) {
+      LocalTask task = manager.getActiveTask();
+      List<BranchInfo> branches = task.getBranches(false);
+      if (branches.stream().anyMatch(info -> branchName.equals(info.name)))
+        return;
+    }
 
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;

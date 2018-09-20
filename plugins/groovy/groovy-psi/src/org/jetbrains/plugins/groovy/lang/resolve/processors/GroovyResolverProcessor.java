@@ -11,6 +11,8 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -83,14 +85,15 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     if (!isPropertyResolve() || !isPropertyName(myName)) {
       return Collections.emptyList();
     }
+    final Lazy<PsiType> receiverType = LazyKt.lazy(() -> getTopLevelQualifierType());
     if (myIsLValue) {
       return Collections.singletonList(
-        new PropertyProcessor(getTopLevelQualifierType(), myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
+        new PropertyProcessor(receiverType, myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
       );
     }
     return ContainerUtil.newArrayList(
-      new PropertyProcessor(getTopLevelQualifierType(), myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
-      new PropertyProcessor(getTopLevelQualifierType(), myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
+      new PropertyProcessor(receiverType, myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
+      new PropertyProcessor(receiverType, myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
     );
   }
 

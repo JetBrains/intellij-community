@@ -662,19 +662,35 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        if (file.isDirectory) {
-          for (data in trackers.values) {
-            if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
-              reregisterTrackerInCLM(data)
-            }
-          }
-        }
-        else {
-          val document = fileDocumentManager.getCachedDocument(file) ?: return
-          val data = trackers[document] ?: return
-
+        forEachTrackerUnder(file) { data ->
           reregisterTrackerInCLM(data)
         }
+      }
+    }
+
+    override fun fileDeleted(event: VirtualFileEvent) {
+      if (!partialChangeListsEnabled) return
+
+      synchronized(LOCK) {
+        forEachTrackerUnder(event.file) { data ->
+          releaseTracker(data.tracker.document)
+        }
+      }
+    }
+
+    private fun forEachTrackerUnder(file: VirtualFile, action: (TrackerData) -> Unit) {
+      if (file.isDirectory) {
+        for (data in trackers.values) {
+          if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
+            action(data)
+          }
+        }
+      }
+      else {
+        val document = fileDocumentManager.getCachedDocument(file) ?: return
+        val data = trackers[document] ?: return
+
+        action(data)
       }
     }
   }

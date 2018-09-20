@@ -154,7 +154,7 @@ public class GithubApiUtil {
 
         for (int i = 1; i < 100; i++) {
           final String newNote = note + "_" + i;
-          if (!ContainerUtil.exists(tokens, authorization -> newNote.equals(authorization.getNote()))) {
+          if (!ContainerUtil.exists(tokens, authorization -> newNote.equalsIgnoreCase(authorization.getNote()))) {
             return getNewScopedToken(connection, scopes, newNote).getToken();
           }
         }

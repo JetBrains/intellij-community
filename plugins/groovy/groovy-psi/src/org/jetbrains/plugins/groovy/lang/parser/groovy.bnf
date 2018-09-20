@@ -518,7 +518,7 @@ private throws_list_item ::= mb_nl type_code_reference
 
 
 // region Generics
-type_parameter_list ::= '<' mb_nl type_parameters mb_nl '>'
+type_parameter_list ::= '<' mb_nl type_parameters <<mb_nl_group '>'>>
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
@@ -532,14 +532,14 @@ type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter
   name = 'type parameter'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'
 }
-type_parameter_bounds_list ::= 'extends' type_parameter_bounds
+type_parameter_bounds_list ::= 'extends' mb_nl type_parameter_bounds
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterBoundsElementType'
 }
 empty_type_parameter_bounds_list ::= { elementType = type_parameter_bounds_list }
 private type_parameter_bounds ::= type_code_reference type_parameter_bounds_tail*
-private type_parameter_bounds_tail ::= '&' type_code_reference { pin = 1 }
+private type_parameter_bounds_tail ::= '&' mb_nl type_code_reference { pin = 1 }
 
 type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
 private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
@@ -989,17 +989,8 @@ private property_dot ::= reference_dot | method_reference_dot
 private qualified_reference_expression_identifiers ::= IDENTIFIER
                                                      | STR_SQ | STR_DQ
                                                      | regex_literal
-                                                     | 'true'
-                                                     | 'false'
-                                                     | 'null'
-                                                     | 'new'
-                                                     | 'class' | 'interface' | 'trait' | 'enum'
-                                                     | 'this' | 'super'
-                                                     | 'case'
-                                                     | 'as' | 'in'
-                                                     | 'else'
                                                      | modifier
-                                                     | statement_keywords
+                                                     | keyword
                                                      | primitive_type
 {
   name = 'property selector'
@@ -1082,10 +1073,8 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 }
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
-assignment_expression ::= expression (<<assignmentOperator>> mb_nl) expression application*
-{
-  rightAssociative = true
-}
+assignment_expression ::= expression assignment_expression_rvalue { rightAssociative = true }
+private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
 private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
@@ -1155,10 +1144,7 @@ private named_argument_tail ::= ':' expression
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 
@@ -1284,6 +1270,7 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 
 
 // region Generated parser utils
+private external keyword ::= parseKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
 private external clear_error ::= clearError

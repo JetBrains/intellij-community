@@ -42,6 +42,8 @@ public class RedundantCastTest extends InspectionTestCase {
 
   public void testAmbigousParm5() { doTest(); }
 
+  public void testConditionalNoType() { doTest(); }
+
   public void testOneOfTwo() { doTest(); }
 
   public void testAnyOfTwo() { doTest(); }

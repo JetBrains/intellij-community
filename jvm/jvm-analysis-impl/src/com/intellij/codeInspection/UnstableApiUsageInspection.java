@@ -50,7 +50,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!isApplicable(holder.getProject())) {
+    if (!isApplicable(holder.getFile(), holder.getProject())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
@@ -58,6 +58,9 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
+        if (element instanceof PsiLanguageInjectionHost) {
+          return; // better performance
+        }
 
         // Java constructors must be handled a bit differently (works fine with Kotlin)
         PsiMethod resolvedConstructor = null;
@@ -130,14 +133,19 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     return null;
   }
 
-  private boolean isApplicable(@NotNull Project project) {
+  private boolean isApplicable(@Nullable PsiFile file, @Nullable Project project) {
+    if (file == null || project == null) {
+      return false;
+    }
+
     JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    GlobalSearchScope scope = file.getResolveScope();
     for (String annotation : unstableApiAnnotations) {
       if (javaPsiFacade.findClass(annotation, scope) != null) {
         return true;
       }
     }
+
     return false;
   }
 }

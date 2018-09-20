@@ -188,9 +188,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myId = idString != null ? PluginId.getId(idString) : nameString != null ? PluginId.getId(nameString) : null;
     myName = ObjectUtils.chooseNotNull(nameString, idString);
 
-    myProductCode = pluginBean.productCode;
+    final ProductDescriptor pd = pluginBean.productDescriptor;
+    myProductCode = pd != null? pd.code : null;
     myReleaseDate = parseReleaseDate(pluginBean);
-    myReleaseVersion = pluginBean.releaseVersion;
+    myReleaseVersion = pd != null? pd.releaseVersion : 0;
+
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
@@ -295,8 +297,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  private static Date parseReleaseDate(PluginBean bean) {
-    final String dateStr = bean.releaseDate;
+  private static Date parseReleaseDate(@NotNull PluginBean bean) {
+    final ProductDescriptor pd = bean.productDescriptor;
+    final String dateStr = pd != null? pd.releaseDate : null;
     if (dateStr != null) {
       try {
         return new SimpleDateFormat("yyyyMMdd", Locale.US).parse(dateStr);
