@@ -15,21 +15,23 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
+import one.util.streamex.Joining;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspection {
 
@@ -46,7 +48,14 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
   @NotNull
   public String buildErrorString(Object... infos) {
     final String enumName = (String)infos[0];
-    return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.problem.descriptor", enumName);
+    @SuppressWarnings("unchecked") Set<String> names = (Set<String>)infos[1];
+    if (names.size() == 1) {
+      return InspectionGadgetsBundle
+        .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());
+    }
+    String namesString = StreamEx.of(names).map(name -> "'" + name + "'").mapLast("and "::concat)
+      .collect(Joining.with(", ").maxChars(50).cutAfterDelimiter());
+    return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.problem.descriptor", enumName, namesString);
   }
 
   @Override
@@ -67,21 +76,39 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
       final PsiExpression expression = statement.getExpression();
-      if (expression == null) {
-        return;
-      }
+      PsiCodeBlock body = statement.getBody();
+      if (expression == null || body == null) return;
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      if (aClass == null || !aClass.isEnum()) {
-        return;
+      if (aClass == null || !aClass.isEnum()) return;
+      Set<String> constants = StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiEnumConstant::getName)
+        .toCollection(LinkedHashSet::new);
+      if (constants.isEmpty()) return;
+      for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class)) {
+        if (child.isDefaultCase() && ignoreSwitchStatementsWithDefault) return;
+        PsiExpression caseValue = child.getCaseValue();
+        if (!(caseValue instanceof PsiReferenceExpression)) {
+          // Probably syntax error
+          return;
+        }
+        PsiEnumConstant enumConstant = ObjectUtils.tryCast(((PsiReferenceExpression)caseValue).resolve(), PsiEnumConstant.class);
+        if (enumConstant == null || enumConstant.getContainingClass() != aClass) {
+          // Unresolved constant: do not report anything on incomplete code
+          return;
+        }
+        constants.remove(enumConstant.getName());
       }
-      final int count = SwitchUtils.calculateBranchCount(statement);
-      if (ignoreSwitchStatementsWithDefault && count < 0) {
-        return;
+      if (constants.isEmpty()) return;
+      CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(expression);
+      if (dataflow != null) {
+        Set<Object> values = dataflow.getValuesNotEqualToExpression(expression);
+        for (Object value : values) {
+          if (value instanceof PsiEnumConstant) {
+            constants.remove(((PsiEnumConstant)value).getName());
+          }
+        }
       }
-      if (count == 0 || ControlFlowUtils.hasChildrenOfTypeCount(aClass, Math.abs(count), PsiEnumConstant.class)) {
-        return;
-      }
-      registerStatementError(statement, aClass.getQualifiedName());
+      if (constants.isEmpty()) return;
+      registerStatementError(statement, aClass.getQualifiedName(), constants);
     }
   }
 }

@@ -332,38 +332,8 @@ public class DfaUtil {
    */
   @Nullable
   public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
-    condition = PsiUtil.skipParenthesizedExprDown(condition);
-    if (condition == null || !PsiType.BOOLEAN.equals(condition.getType())) return null;
-    Object o = ExpressionUtils.computeConstantExpression(condition);
-    if (o instanceof Boolean) return (Boolean)o;
-    if (!(condition instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-    PsiElement context = getDataflowContext(condition);
-    if (context == null) return null;
-    class MyVisitor extends StandardInstructionVisitor {
-      boolean myTrueReachable = false;
-      boolean myFalseReachable = false;
-
-      @Override
-      public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-        DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
-        if (instruction.getPsiAnchor() == binOp) {
-          myTrueReachable |= instruction.isTrueReachable();
-          myFalseReachable |= instruction.isFalseReachable();
-          if (myTrueReachable && myFalseReachable) {
-            runner.cancel();
-          }
-        }
-        return states;
-      }
-    }
-    MyVisitor visitor = new MyVisitor();
-    if (new DataFlowRunner().analyzeMethodRecursively(context, visitor) == RunnerResult.OK) {
-      if (visitor.myTrueReachable != visitor.myFalseReachable) {
-        return visitor.myTrueReachable;
-      }
-    }
-    return null;
+    CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
+    return result == null ? null : ObjectUtils.tryCast(result.getExpressionValue(condition), Boolean.class);
   }
 
   public static boolean isComparedByEquals(PsiType type) {
