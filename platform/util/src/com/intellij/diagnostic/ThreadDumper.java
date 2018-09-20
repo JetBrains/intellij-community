@@ -170,7 +170,7 @@ public class ThreadDumper {
    * @param threadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
    */
   @Nullable
-  public static String getEdtStackForCrash(@NotNull String fullThreadDump) {
+  public static String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
     // We know that the AWT-EventQueue-* thread is dumped out first (see #sort above), and for each thread, there are at the very least
     // 3 lines printed out before the stack trace. If we don't see any of this, then return early
     List<String> threadDump = Arrays.asList(fullThreadDump.split("\n"));
@@ -186,7 +186,7 @@ public class ThreadDumper {
     }
 
     StringBuilder sb = new StringBuilder(200);
-    sb.append("com.android.ApplicationNotResponding: ");
+    sb.append(exceptionType + ": ");
     sb.append(line.substring(1, i)); // append thread name (e.g. AWT-EventQueue-0)
 
     line = threadDump.get(1); // e.g. " java.lang.Thread.State: RUNNABLE"

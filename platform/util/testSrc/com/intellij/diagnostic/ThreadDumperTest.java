@@ -44,7 +44,7 @@ public class ThreadDumperTest {
                  "\tat java.io.UnixFileSystem.canonicalize(UnixFileSystem.java:172)\n" +
                  "\tat java.io.File.getCanonicalPath(File.java:618)\n" +
                  "\tat java.io.File.getCanonicalFile(File.java:643)",
-                 ThreadDumper.getEdtStackForCrash(stackTrace));
+                 ThreadDumper.getEdtStackForCrash(stackTrace, "com.android.ApplicationNotResponding"));
 
     stackTrace = "\"AWT-EventQueue-0 2.3#__BUILD_NUMBER__ Studio, eap:true, os:Linux 3.13.0-93-generic, java-version:Oracle Corporation 1.8.0_60-b27\" prio=0 tid=0x0 nid=0x0 waiting on condition\n" +
                  "     java.lang.Thread.State: WAITING\n" +
@@ -54,6 +54,6 @@ public class ThreadDumperTest {
     assertEquals("com.android.ApplicationNotResponding: AWT-EventQueue-0 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@4fd95514\n" +
                  "\tat sun.misc.Unsafe.park(Native Method)\n" +
                  "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)",
-                 ThreadDumper.getEdtStackForCrash(stackTrace));
+                 ThreadDumper.getEdtStackForCrash(stackTrace, "com.android.ApplicationNotResponding"));
   }
 }
