@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.model.PsiSymbolReference;
 import com.intellij.model.Symbol;
-import com.intellij.model.SymbolReference;
 import com.intellij.model.SymbolResolveResult;
 import com.intellij.model.SymbolService;
 import com.intellij.model.psi.PsiSymbolResolveResult;
@@ -28,7 +28,7 @@ import java.util.Collections;
  * @see PsiReferenceBase
  * @see PsiReferenceContributor
  */
-public interface PsiReference extends SymbolReference {
+public interface PsiReference extends PsiSymbolReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   ArrayFactory<PsiReference> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiReference[count];
@@ -39,6 +39,7 @@ public interface PsiReference extends SymbolReference {
    * @return the underlying element of the reference.
    */
   @NotNull
+  @Override
   PsiElement getElement();
 
   /**
@@ -48,6 +49,7 @@ public interface PsiReference extends SymbolReference {
    * @return Relative range in element
    */
   @NotNull
+  @Override
   TextRange getRangeInElement();
 
   /**
@@ -135,6 +137,6 @@ public interface PsiReference extends SymbolReference {
   @Override
   default boolean references(@NotNull Symbol target) {
     PsiElement psi = SymbolService.getPsiElement(target);
-    return psi == null ? SymbolReference.super.references(target) : isReferenceTo(psi);
+    return psi == null ? PsiSymbolReference.super.references(target) : isReferenceTo(psi);
   }
 }
