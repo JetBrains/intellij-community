@@ -33,10 +33,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -93,11 +92,9 @@ public class XDebuggerInlayUtil {
 
   public static boolean showValueInBlockInlay(@NotNull XDebugSessionImpl session,
                                               @NotNull XValueNodeImpl node,
-                                              @NotNull XSourcePosition position,
-                                              @NotNull XValue value,
-                                              @NotNull XValuePresentation presentation) {
+                                              @NotNull XSourcePosition position) {
     XDebuggerInlayUtil.Helper helper = session.getSessionData().getUserData(HELPER_KEY);
-    return helper != null && helper.showValueInBlockInlay(session.getProject(), node, position, value, presentation);
+    return helper != null && helper.showValueInBlockInlay(session.getProject(), node, position);
   }
 
   public static void createBlockInlay(@NotNull Editor editor, int offset) {
@@ -123,8 +120,7 @@ public class XDebuggerInlayUtil {
 
   public interface Helper {
     void setupValuePlaceholders(@NotNull Project project, @Nullable XSourcePosition currentPosition);
-    boolean showValueInBlockInlay(@NotNull Project project, @NotNull XValueNodeImpl node, @NotNull XSourcePosition position,
-                                  @NotNull XValue value, @NotNull XValuePresentation presentation);
+    boolean showValueInBlockInlay(@NotNull Project project, @NotNull XValueNodeImpl node, @NotNull XSourcePosition position);
   }
 
   private static class MyBlockRenderer implements EditorCustomElementRenderer  {
@@ -153,7 +149,7 @@ public class XDebuggerInlayUtil {
 
       int curX = 0;
       for (ValueInfo value : values) {
-        curX += 5; // minimum gap between values
+        curX += JBUI.scale(5); // minimum gap between values
         int xStart = editor.offsetToXY(value.refStartOffset, true, false).x;
         int xEnd = editor.offsetToXY(value.refEndOffset, false, true).x;
         int width = g.getFontMetrics().stringWidth(value.value);
