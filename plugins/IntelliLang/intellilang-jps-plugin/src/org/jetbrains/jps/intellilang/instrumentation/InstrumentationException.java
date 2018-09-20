@@ -2,6 +2,10 @@
 package org.jetbrains.jps.intellilang.instrumentation;
 
 class InstrumentationException extends RuntimeException {
+  InstrumentationException(String message) {
+    super(message);
+  }
+
   InstrumentationException(String s, Exception e) {
     super(s, e);
   }
