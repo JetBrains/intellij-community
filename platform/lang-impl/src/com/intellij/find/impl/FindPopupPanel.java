@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -100,6 +102,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private final AtomicBoolean myCanClose = new AtomicBoolean(true);
   private final AtomicBoolean myIsPinned = new AtomicBoolean(false);
   private JBLabel myOKHintLabel;
+  private JBLabel myNavigationHintLabel;
   private Alarm mySearchRescheduleOnCancellationsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
@@ -588,8 +591,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceComponent.setRows(1);
     mySearchTextArea = new SearchTextArea(mySearchComponent, true, true);
     myReplaceTextArea = new SearchTextArea(myReplaceComponent, false, false);
-    mySearchTextArea.setMultilineEnabled(false);
-    myReplaceTextArea.setMultilineEnabled(false);
+    mySearchTextArea.setMultilineEnabled(Registry.is("ide.find.as.popup.allow.multiline"));
+    myReplaceTextArea.setMultilineEnabled(Registry.is("ide.find.as.popup.allow.multiline"));
 
     Pair<FindPopupScopeUI.ScopeType, JComponent>[] scopeComponents = myScopeUI.getComponents();
 
@@ -634,13 +637,38 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
-    ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
-    ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
-    ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceSelectedButton);
+    JComponent[] tableAware = {mySearchComponent, myReplaceComponent, myReplaceSelectedButton};
+    for (JComponent component : tableAware) {
+      ScrollingUtil.installActions(myResultsPreviewTable, false, component);
+    }
 
     ActionListener helpAction = __ -> HelpManager.getInstance().invokeHelp("reference.dialogs.findinpath");
     registerKeyboardAction(helpAction,KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
     registerKeyboardAction(helpAction,KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    Keymap activeKeymap = keymapManager != null ? keymapManager.getActiveKeymap() : null;
+    if (activeKeymap != null) {
+      ShortcutSet findNextShortcutSet = new CustomShortcutSet(activeKeymap.getShortcuts("FindNext"));
+      ShortcutSet findPreviousShortcutSet = new CustomShortcutSet(activeKeymap.getShortcuts("FindPrevious"));
+      DumbAwareAction findNextAction = DumbAwareAction.create(event -> {
+        int selectedRow = myResultsPreviewTable.getSelectedRow();
+        if (selectedRow >= 0 && selectedRow < myResultsPreviewTable.getRowCount() - 1) {
+          myResultsPreviewTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
+          ScrollingUtil.ensureIndexIsVisible(myResultsPreviewTable, selectedRow + 1, 1);
+        }
+      });
+      DumbAwareAction findPreviousAction = DumbAwareAction.create(event -> {
+        int selectedRow = myResultsPreviewTable.getSelectedRow();
+        if (selectedRow > 0 && selectedRow <= myResultsPreviewTable.getRowCount() - 1) {
+          myResultsPreviewTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+          ScrollingUtil.ensureIndexIsVisible(myResultsPreviewTable, selectedRow - 1, 1);
+        }
+      });
+      for (JComponent component : tableAware) {
+        findNextAction.registerCustomShortcutSet(findNextShortcutSet, component);
+        findPreviousAction.registerCustomShortcutSet(findPreviousShortcutSet, component);
+      }
+    }
 
     myUsageViewPresentation = new UsageViewPresentation();
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, myUsageViewPresentation, Registry.is("ide.find.as.popup.editable.code")) {
@@ -686,8 +714,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        mySearchComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
-        myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
+        int maxRows = Math.max(1, Math.min(25, Registry.get("ide.find.as.popup.max.rows").asInteger()));
+        mySearchComponent.setRows(Math.max(1, Math.min(maxRows, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
+        myReplaceComponent.setRows(Math.max(1, Math.min(maxRows, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
 
         if (myBalloon == null) return;
         if (e.getDocument() == mySearchComponent.getDocument()) {
@@ -720,12 +749,17 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     splitter.setFirstComponent(scrollPane);
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 3, gap 0"));
     bottomPanel.add(myTabResultsButton);
-    bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
     myOKHintLabel = new JBLabel("");
     myOKHintLabel.setEnabled(false);
+    myNavigationHintLabel = new JBLabel("");
+    myNavigationHintLabel.setEnabled(false);
+    myNavigationHintLabel.setFont(JBUI.Fonts.smallFont());
     Insets insets = myOKButton.getInsets();
-    bottomPanel.add(myOKHintLabel);
     String btnGapLeft = "gapleft " + Math.max(0, JBUI.scale(12) - insets.left - insets.right);
+
+    bottomPanel.add(myNavigationHintLabel, btnGapLeft);
+    bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
+    bottomPanel.add(myOKHintLabel);
     bottomPanel.add(myOKButton, btnGapLeft);
     bottomPanel.add(myReplaceAllButton, btnGapLeft);
     bottomPanel.add(myReplaceSelectedButton, btnGapLeft);
@@ -970,6 +1004,19 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
     myReplaceAllButton.setVisible(myHelper.isReplaceState());
     myReplaceSelectedButton.setVisible(myHelper.isReplaceState());
+    myNavigationHintLabel.setVisible(mySearchComponent.getText().contains("\n"));
+    if (myNavigationHintLabel.isVisible()) {
+      myNavigationHintLabel.setText("");
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      Keymap activeKeymap = keymapManager != null ? keymapManager.getActiveKeymap() : null;
+      if (activeKeymap != null) {
+        String findNextText = KeymapUtil.getFirstKeyboardShortcutText("FindNext");
+        String findPreviousText = KeymapUtil.getFirstKeyboardShortcutText("FindPrevious");
+        if (!StringUtil.isEmpty(findNextText) &&  !StringUtil.isEmpty(findPreviousText)) {
+          myNavigationHintLabel.setText("Use " + findNextText + " and " + findPreviousText + " to select usages");
+        }
+      }
+    }
   }
 
   private void updateScopeDetailsPanel() {
