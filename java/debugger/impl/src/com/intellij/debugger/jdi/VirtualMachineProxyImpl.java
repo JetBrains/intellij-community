@@ -56,7 +56,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVirtualMachine = virtualMachine;
     myDebugProcess = debugProcess;
 
-    myVersionHigher_15 = versionHigher("1.5");
+    // All versions of Dalvik/ART support at least the JDWP spec as of 1.6.
+    myVersionHigher_15 = myVirtualMachine.name().equals("Dalvik") || versionHigher("1.5");
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
     // avoid lazy-init for some properties: the following will pre-calculate values
