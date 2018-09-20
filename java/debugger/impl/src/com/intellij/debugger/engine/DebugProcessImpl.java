@@ -876,27 +876,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return cause.getCause().getLocalizedMessage();
       }
     }
-    else if (cause instanceof IllegalStateException) {
-      return cause.getLocalizedMessage();
-    }
 
-    String message;
-    final StringBuilder buf = new StringBuilder();
-    buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+    StringBuilder buf = new StringBuilder();
     if (address != null) {
-      buf.append(" (").append(address).append(")");
+      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+      buf.append(" (").append(address).append("): ");
     }
-    buf.append(": ");
     buf.append(e.getClass().getName()).append(" ");
-    final String localizedMessage = e.getLocalizedMessage();
-    if (!StringUtil.isEmpty(localizedMessage)) {
-      buf.append('"');
-      buf.append(localizedMessage);
-      buf.append('"');
+    if (!StringUtil.isEmpty(e.getLocalizedMessage())) {
+      buf.append('"').append(e.getLocalizedMessage()).append('"');
+    }
+    if (cause != null && !StringUtil.isEmpty(cause.getLocalizedMessage())) {
+      buf.append(" (").append(cause.getLocalizedMessage()).append(')');
     }
     LOG.debug(e);
-    message = buf.toString();
-    return message;
+    return buf.toString();
   }
 
   public void dispose() {
