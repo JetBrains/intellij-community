@@ -1,3 +1,4 @@
+// "Fix all 'Enum 'switch' statement that misses case' problems in file" "false"
 enum E {
   foo, bar;
 

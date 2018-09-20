@@ -1,16 +1,14 @@
+// "Create missing switch branch 'INACTIVE'" "true"
 package com.siyeh.ipp.enumswitch;
 
 class BeforeDefault {
   enum Status { ACTIVE, INACTIVE, ERROR }
 
   private void foo (Status status) {
-    switch (status)<caret> {
+    if (status == Status.ERROR) return;
+    sw<caret>itch (status) {
       case ACTIVE:
         break;
-      case INACTIVE:
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown Status " + status);
     }
   }
 }

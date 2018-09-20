@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-class InlineInlayImpl extends InlayImpl<InlineInlayImpl> {
+class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl> {
   InlineInlayImpl(@NotNull EditorImpl editor,
                   int offset,
                   boolean relatesToPrecedingText,
-                  @NotNull EditorCustomElementRenderer renderer) {
+                  @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
   }
 

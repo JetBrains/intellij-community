@@ -22,6 +22,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
@@ -37,6 +38,11 @@ public class ParameterHintsPresentationManager implements Disposable {
   }
 
   private ParameterHintsPresentationManager() {
+  }
+
+  public List<Inlay> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
+    //noinspection unchecked
+    return (List)editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset, MyRenderer.class);
   }
 
   public boolean isParameterHint(@NotNull Inlay inlay) {

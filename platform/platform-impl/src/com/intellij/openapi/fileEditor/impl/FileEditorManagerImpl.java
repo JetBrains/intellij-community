@@ -77,6 +77,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -705,7 +706,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     // Shift was used while clicking
     if (event instanceof MouseEvent &&
-        ((MouseEvent)event).isShiftDown() &&
+        ((MouseEvent)event).getModifiersEx() == InputEvent.SHIFT_DOWN_MASK &&
         (event.getID() == MouseEvent.MOUSE_CLICKED ||
          event.getID() == MouseEvent.MOUSE_PRESSED ||
          event.getID() == MouseEvent.MOUSE_RELEASED)) {

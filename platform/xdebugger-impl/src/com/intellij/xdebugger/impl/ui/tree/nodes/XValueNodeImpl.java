@@ -146,14 +146,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                               XSourcePosition debuggerPosition) {
     if (!Registry.is("debugger.show.values.between.lines") && !Registry.is("debugger.show.values.inplace")) return false;
 
-    XValue container = getValueContainer();
-
-    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl && myValuePresentation != null) {
-      if (XDebuggerInlayUtil.showValueInBlockInlay((XDebugSessionImpl)session, this, position, container, myValuePresentation)) {
+    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
+      if (XDebuggerInlayUtil.showValueInBlockInlay((XDebugSessionImpl)session, this, position)) {
         return true;
       }
     }
     if (Registry.is("debugger.show.values.inplace")) {
+      XValue container = getValueContainer();
       if (debuggerPosition.getLine() == position.getLine() && container instanceof XValueWithInlinePresentation) {
         String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
         if (presentation != null) {

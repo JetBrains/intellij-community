@@ -9,6 +9,9 @@ import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public class XmlEnumeratedReferenceSet extends ReferenceSetBase<XmlEnumeratedValueReference> {
 
   private final XmlEnumerationDescriptor myDescriptor;
@@ -22,5 +25,11 @@ public class XmlEnumeratedReferenceSet extends ReferenceSetBase<XmlEnumeratedVal
   @Override
   protected XmlEnumeratedValueReference createReference(TextRange range, int index) {
     return new XmlEnumeratedValueReference((XmlElement)getElement(), myDescriptor, range);
+  }
+
+  @Override
+  public List<XmlEnumeratedValueReference> getReferences() {
+    if (myDescriptor.isList()) return super.getReferences();
+    return Collections.singletonList(new XmlEnumeratedValueReference((XmlElement)getElement(), myDescriptor));
   }
 }

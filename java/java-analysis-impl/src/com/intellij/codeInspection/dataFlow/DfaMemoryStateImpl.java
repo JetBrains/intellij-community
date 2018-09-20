@@ -521,6 +521,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myDistinctClasses.areDistinctUnordered(c1Index, c2Index);
   }
 
+  /**
+   * Returns constants which are known to be not equal to given value
+   *
+   * @param value a value to test
+   * @return set of non-equal constant values
+   */
+  public Set<Object> getNonEqualConstants(DfaVariableValue value) {
+    int index = getEqClassIndex(value);
+    if (index == -1 || myEqClasses.get(index).findConstant(true) != null) return Collections.emptySet();
+    return getDistinctClassPairs().stream()
+      .map(pair -> pair.getOtherClass(index))
+      .filter(Objects::nonNull)
+      .map(otherClass -> otherClass.findConstant(true))
+      .filter(Objects::nonNull)
+      .map(constant -> ((DfaConstValue)unwrap(constant)).getValue())
+      .collect(Collectors.toSet());
+  }
+
   @Override
   @Nullable
   @Contract("null -> null")

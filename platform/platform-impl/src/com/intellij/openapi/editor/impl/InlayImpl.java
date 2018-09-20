@@ -12,20 +12,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-abstract class InlayImpl<T extends InlayImpl> extends RangeMarkerWithGetterImpl<T> implements Inlay {
+abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl> extends RangeMarkerWithGetterImpl implements Inlay<R> {
   static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
   private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
 
   @NotNull
   final EditorImpl myEditor;
   @NotNull
-  final EditorCustomElementRenderer myRenderer;
+  final R myRenderer;
   private final boolean myRelatedToPrecedingText;
 
   int myWidthInPixels;
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
-  InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, @NotNull R renderer) {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
     myRelatedToPrecedingText = relatesToPrecedingText;
@@ -111,7 +111,7 @@ abstract class InlayImpl<T extends InlayImpl> extends RangeMarkerWithGetterImpl<
 
   @NotNull
   @Override
-  public EditorCustomElementRenderer getRenderer() {
+  public R getRenderer() {
     return myRenderer;
   }
 

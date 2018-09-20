@@ -19,14 +19,12 @@ import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,9 +111,6 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
         sessionImpl.addExtraActions(executionResult.getActions());
         if (executionResult instanceof DefaultExecutionResult) {
           sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
-        }
-        if (Registry.is("debugger.show.values.between.lines")) {
-          sessionImpl.getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
         }
         return JavaDebugProcess.create(session, debuggerSession);
       }

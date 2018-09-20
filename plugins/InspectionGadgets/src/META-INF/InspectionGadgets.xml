@@ -645,7 +645,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DuplicateConditionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumSwitchStatementWhichMissesCases" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="enum.switch.statement.which.misses.cases.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="fallthrough" shortName="FallthruInSwitchStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="fallthru.in.switch.statement.display.name" groupBundle="messages.InspectionsBundle"

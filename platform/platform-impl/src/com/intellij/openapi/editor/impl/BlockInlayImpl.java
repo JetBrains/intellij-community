@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
+class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl> implements IntSupplier {
   final boolean myShowAbove;
   final int myPriority;
   private int myHeightInPixels;
@@ -20,7 +20,7 @@ class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
                  boolean relatesToPrecedingText,
                  boolean showAbove,
                  int priority,
-                 @NotNull EditorCustomElementRenderer renderer) {
+                 @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     myShowAbove = showAbove;
     myPriority = priority;

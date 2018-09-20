@@ -56,7 +56,7 @@ class AnnotationHintsPass(
   }
 
   private class AnnotationHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId(inlay: Inlay) = "AnnotationHintsContextMenu"
+    override fun getContextMenuGroupId(inlay: Inlay<*>) = "AnnotationHintsContextMenu"
   }
 
   class ToggleExternalAnnotationsHintsAction : ToggleAction() {

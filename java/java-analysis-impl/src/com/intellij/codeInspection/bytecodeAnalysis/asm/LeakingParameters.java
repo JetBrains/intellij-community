@@ -128,13 +128,10 @@ final class IParamsValue implements Value {
 }
 
 class ParametersUsage extends Interpreter<ParamsValue> {
+  private int param = -1;
+  final int arity;
   final ParamsValue val1;
   final ParamsValue val2;
-  int called = -1;
-  final int rangeStart;
-  final int rangeEnd;
-  final int arity;
-  final int shift;
 
   ParametersUsage(MethodNode methodNode) {
     super(API_VERSION);
@@ -142,24 +139,25 @@ class ParametersUsage extends Interpreter<ParamsValue> {
     boolean[] emptyParams = new boolean[arity];
     val1 = new ParamsValue(emptyParams, 1);
     val2 = new ParamsValue(emptyParams, 2);
-    shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
-    rangeStart = shift;
-    rangeEnd = arity + shift;
+  }
+
+  @Override
+  public ParamsValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
+    param++;
+    int n = isInstanceMethod ? param - 1 : param;
+    if (n >= 0 && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
+      boolean[] params = new boolean[arity];
+      params[n] = true;
+      return new ParamsValue(params, type.getSize());
+    }
+    return newValue(type);
   }
 
   @Override
   public ParamsValue newValue(Type type) {
     if (type == null) return val1;
-    called++;
     if (type == Type.VOID_TYPE) return null;
-    if (rangeStart <= called && called < rangeEnd && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
-      boolean[] params = new boolean[arity];
-      params[called - shift] = true;
-      return new ParamsValue(params, type.getSize());
-    }
-    else {
-      return type.getSize() == 1 ? val1 : val2;
-    }
+    return type.getSize() == 1 ? val1 : val2;
   }
 
   @Override
@@ -283,34 +281,32 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 class IParametersUsage extends Interpreter<IParamsValue> {
   static final IParamsValue val1 = new IParamsValue(0, 1);
   static final IParamsValue val2 = new IParamsValue(0, 2);
+
+  private int param = -1;
+  final int arity;
   int leaking;
   int nullableLeaking;
-  int called = -1;
-  final int rangeStart;
-  final int rangeEnd;
-  final int arity;
-  final int shift;
 
   IParametersUsage(MethodNode methodNode) {
     super(API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
-    shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
-    rangeStart = shift;
-    rangeEnd = arity + shift;
+  }
+
+  @Override
+  public IParamsValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
+    param++;
+    int n = isInstanceMethod ? param - 1 : param;
+    if (n >= 0 && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
+      return new IParamsValue(1 << n, type.getSize());
+    }
+    return newValue(type);
   }
 
   @Override
   public IParamsValue newValue(Type type) {
     if (type == null) return val1;
-    called++;
     if (type == Type.VOID_TYPE) return null;
-    if (rangeStart <= called && called < rangeEnd && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
-      int n = called - shift;
-      return new IParamsValue(1 << n, type.getSize());
-    }
-    else {
-      return type.getSize() == 1 ? val1 : val2;
-    }
+    return type.getSize() == 1 ? val1 : val2;
   }
 
   @Override

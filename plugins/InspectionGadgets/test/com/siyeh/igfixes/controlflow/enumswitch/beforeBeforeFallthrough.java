@@ -1,3 +1,4 @@
+// "Create missing switch branch 'ERROR'" "true"
 class BeforeDefault {
     enum Status { ACTIVE, INACTIVE, ERROR }
 

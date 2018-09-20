@@ -90,7 +90,7 @@ class MethodChainHintsPass(
   override fun createRenderer(text: String): HintRenderer = MethodChainHintRenderer(text)
 
   private class MethodChainHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId(inlay: Inlay) = "MethodChainHintsContextMenu"
+    override fun getContextMenuGroupId(inlay: Inlay<*>) = "MethodChainHintsContextMenu"
   }
 
   companion object {

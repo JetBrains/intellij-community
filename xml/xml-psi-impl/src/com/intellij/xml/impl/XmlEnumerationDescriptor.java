@@ -38,6 +38,8 @@ public abstract class XmlEnumerationDescriptor<T extends XmlElement> {
 
   protected abstract PsiElement getDefaultValueDeclaration();
 
+  public boolean isList() { return false; }
+
   public PsiReference[] getValueReferences(T element, @NotNull String text) {
     return new XmlEnumeratedReferenceSet(element, this).getPsiReferences();
   }
