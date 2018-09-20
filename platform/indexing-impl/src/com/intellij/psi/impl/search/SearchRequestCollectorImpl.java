@@ -154,19 +154,3 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
     return result;
   }
 }
-
-final class WordRequests {
-
-  final Map<SearchWordRequest, List<TextOccurenceProcessor>> immediateWordRequests;
-  final Map<SearchWordRequest, List<TextOccurenceProcessorProvider>> deferredWordRequests;
-
-  WordRequests(Map<SearchWordRequest, List<TextOccurenceProcessor>> immediateRequests,
-               Map<SearchWordRequest, List<TextOccurenceProcessorProvider>> deferredRequests) {
-    immediateWordRequests = immediateRequests;
-    deferredWordRequests = deferredRequests;
-  }
-
-  boolean isEmpty() {
-    return immediateWordRequests.isEmpty() && deferredWordRequests.isEmpty();
-  }
-}
