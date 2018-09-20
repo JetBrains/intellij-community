@@ -70,27 +70,25 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     ChangeListRemoveConfirmation.processLists(project, true, (Collection)Arrays.asList(selectedLists), new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists) {
-        return RemoveChangeListAction.askIfShouldRemoveChangeLists(lists, project);
+        return RemoveChangeListAction.askIfShouldRemoveChangeLists(project, lists);
       }
     });
   }
 
-  private static boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists, Project project) {
+  private static boolean askIfShouldRemoveChangeLists(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists) {
     boolean activeChangelistSelected = lists.stream().anyMatch(LocalChangeList::isDefault);
-    boolean haveNoChanges = lists.stream().allMatch(l -> l.getChanges().isEmpty());
-
     if (activeChangelistSelected) {
       return confirmActiveChangeListRemoval(project, lists);
     }
 
+    boolean haveNoChanges = lists.stream().allMatch(l -> l.getChanges().isEmpty());
+    if (haveNoChanges) return true;
+
     String message = lists.size() == 1
                      ? VcsBundle.message("changes.removechangelist.warning.text", lists.get(0).getName())
                      : VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.size());
-
-    return haveNoChanges ||
-           Messages.YES ==
-           Messages
-             .showYesNoDialog(project, message, VcsBundle.message("changes.removechangelist.warning.title"), Messages.getQuestionIcon());
+    return Messages.YES == Messages.showYesNoDialog(project, message, VcsBundle.message("changes.removechangelist.warning.title"),
+                                                    Messages.getQuestionIcon());
   }
 
   static boolean confirmActiveChangeListRemoval(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists) {
