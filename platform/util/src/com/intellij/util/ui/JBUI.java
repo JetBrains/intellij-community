@@ -1705,6 +1705,14 @@ public class JBUI {
       public static int toolbarHeight() {
         return scale(28);
       }
+
+      public static Color separatorColor() {
+        return JBColor.namedColor("Popup.Separator.color", new JBColor(Color.gray.brighter(), Gray.x51));
+      }
+
+      public static Color separatorTextColor() {
+        return JBColor.namedColor("Popup.Separator.foreground", Color.gray);
+      }
     }
 
     public static class Focus {

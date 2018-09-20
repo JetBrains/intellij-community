@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -18,9 +20,9 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
 
   @Override
   protected void installDefaults(JSeparator s) {
-    Color bg = s.getBackground();
+    Color bg = s.getForeground();
     if (bg == null || bg instanceof UIResource) {
-      s.setForeground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      s.setForeground(JBColor.namedColor(getColorResourceName(), new JBColor(Gray.xCD, Gray.x51)));
     }
 
     LookAndFeel.installProperty( s, "opaque", Boolean.FALSE);
@@ -29,7 +31,6 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     Rectangle r = new Rectangle(c.getSize());
-
     g.setColor(c.getForeground());
 
     if (((JSeparator)c).getOrientation() == SwingConstants.VERTICAL) {
@@ -44,5 +45,9 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
   public Dimension getPreferredSize(JComponent c){
     return ((JSeparator)c).getOrientation() == SwingConstants.VERTICAL ?
            JBUI.size(3, 0) : JBUI.size(0, 3);
+  }
+
+  protected String getColorResourceName() {
+    return "Separator.foreground";
   }
 }

@@ -43,8 +43,8 @@ public class SeparatorWithText extends JComponent implements Accessible {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
     setFont(UIUtil.getLabelFont());
     setFont(getFont().deriveFont(Font.BOLD));
-    setForeground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
-    setTextForeground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+    setForeground(JBUI.CurrentTheme.Popup.separatorColor());
+    setTextForeground(JBUI.CurrentTheme.Popup.separatorTextColor());
   }
 
   public Color getTextForeground() {

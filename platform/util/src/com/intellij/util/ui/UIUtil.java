@@ -1394,8 +1394,9 @@ public class UIUtil {
     return UIManager.getFont("Menu.font");
   }
 
+  @Deprecated
   public static Color getSeparatorForeground() {
-    return UIManager.getColor("Separator.foreground");
+    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
   public static Color getSeparatorBackground() {
@@ -1414,8 +1415,9 @@ public class UIUtil {
     return UIManager.getColor("nimbusBlueGrey");
   }
 
+  @Deprecated
   public static Color getSeparatorColor() {
-    return getSeparatorForeground();
+    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {

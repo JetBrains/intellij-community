@@ -19,7 +19,7 @@ import static javax.swing.SwingConstants.LEFT;
 public class SidePanelSeparator extends SeparatorWithText {
   @Override
   protected void paintComponent(Graphics g) {
-    Color separatorColor = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
+    Color separatorColor = JBUI.CurrentTheme.Popup.separatorColor();
     g.setColor(separatorColor);
     if ("--".equals(getCaption())) {
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
