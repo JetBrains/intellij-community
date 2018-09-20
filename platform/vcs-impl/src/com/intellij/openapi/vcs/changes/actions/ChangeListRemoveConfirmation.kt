@@ -28,13 +28,15 @@ abstract class ChangeListRemoveConfirmation() {
   companion object {
     @JvmStatic
     fun processLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
+      val manager = ChangeListManager.getInstance(project)
+      val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+
       val allIds = allLists.map { it.id }
       val confirmationAsked = hashSetOf<String>()
       val doNotRemove = hashSetOf<String>()
 
-      val manager = ChangeListManager.getInstance(project)
       for (id in allIds) {
-        for (vcs in ProjectLevelVcsManager.getInstance(project).allActiveVcss) {
+        for (vcs in activeVcss) {
           val list = manager.getChangeList(id)
           val permission = if (list == null) ThreeState.NO else vcs.mayRemoveChangeList(list, explicitly)
           if (permission != ThreeState.UNSURE) {
