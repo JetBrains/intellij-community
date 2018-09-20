@@ -73,7 +73,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     do {
       next = findNextSeparator(str, current);
       final TextRange range = new TextRange(offset + current + 1, offset + (next >= 0 ? next : str.length()));
-      if (!range.isEmpty()) {
+      if (!range.isEmpty() || !Character.isWhitespace(mySeparator)) {
         references.addAll(createReferences(range, index ++));
       }
     } while ((current = next) >= 0);
