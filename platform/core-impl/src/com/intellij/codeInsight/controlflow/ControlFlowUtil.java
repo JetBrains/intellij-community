@@ -105,12 +105,19 @@ public class ControlFlowUtil {
     return true;
   }
 
-  /**
-   * Iterates over write instructions in CFG with reversed order
-   */
   public static void iteratePrev(final int startInstruction,
                                  @NotNull final Instruction[] instructions,
                                  @NotNull final Function<? super Instruction, Operation> closure) {
+    iterate(startInstruction, instructions, closure, true);
+  }
+
+  /**
+   * Iterates over write instructions in CFG with reversed order
+   */
+  public static void iterate(final int startInstruction,
+                             @NotNull final Instruction[] instructions,
+                             @NotNull final Function<? super Instruction, Operation> closure,
+                             boolean prev) {
     final IntStack stack = new IntStack(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
@@ -130,7 +137,8 @@ public class ControlFlowUtil {
       }
       // If we are here, we should process previous nodes in natural way
       assert nextOperation == Operation.NEXT;
-      for (Instruction pred : instr.allPred()) {
+      Collection<Instruction> nextToProcess = prev ? instr.allPred() : instr.allSucc();
+      for (Instruction pred : nextToProcess) {
         final int predNum = pred.num();
         if (!visited[predNum]) {
           visited[predNum] = true;
@@ -142,7 +150,7 @@ public class ControlFlowUtil {
 
   public enum Operation {
     /**
-     * CONTINUE is used to ignore previous elements processing for the node, however it doesn't stop the iteration process
+     * CONTINUE is used to ignore previous/next elements processing for the node, however it doesn't stop the iteration process
      */
     CONTINUE,
     /**
