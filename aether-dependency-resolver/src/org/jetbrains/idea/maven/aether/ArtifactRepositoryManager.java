@@ -212,6 +212,14 @@ public class ArtifactRepositoryManager {
         else {
           requests = new ArrayList<>();
           for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
+            if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
+              final VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
+              final VersionRangeResult result = ourSystem.resolveVersionRange(mySession, versionRangeRequest);
+              if (!result.getVersions().isEmpty()) {
+                Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
+                requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
+              }
+            }
             requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
           }
         }

@@ -72,6 +72,23 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertEquals(AnnotationOrderRootType.getInstance(), root.type)
   }
 
+  @Test
+  fun `test resolving annotations artifacts without transitive dependencies`() {
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1.0")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0",
+                                                          false, emptyList())
+    val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
+                                                                                              listOf(myTestRepo), null)
+    val result: List<OrderRoot>? = getResultingRoots(promise)
+    assertEquals(1, result?.size)
+    val root = result?.get(0)!!
+    assertEquals(AnnotationOrderRootType.getInstance(), root.type)
+  }
+
   @Test fun `test resolving latest annotations artifact`() {
     val expectedName = MavenRepoFixture(myMavenRepo).run {
       addAnnotationsArtifact(version = "1.0")
