@@ -21,55 +21,51 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
 
-abstract class ChangeListRemoveConfirmation() {
-  
-  abstract fun askIfShouldRemoveChangeLists(ask: List<LocalChangeList>): Boolean
-  
-  companion object {
-    @JvmStatic
-    fun processLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
-      val manager = ChangeListManager.getInstance(project)
-      val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+object ChangeListRemoveConfirmation {
+  @JvmStatic
+  fun deleteLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>,
+                  askIfShouldRemoveChangeLists: (toAsk: List<LocalChangeList>) -> Boolean) {
+    val manager = ChangeListManager.getInstance(project)
+    val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
-      val toAsk = mutableListOf<LocalChangeList>()
-      val toRemove = mutableListOf<LocalChangeList>()
+    val toAsk = mutableListOf<LocalChangeList>()
+    val toRemove = mutableListOf<LocalChangeList>()
 
-      for (list in allLists.mapNotNull { manager.getChangeList(it.id) }) {
-        var confirmationAsked = false
-        var removeVetoed = false
+    for (list in allLists.mapNotNull { manager.getChangeList(it.id) }) {
+      var confirmationAsked = false
+      var removeVetoed = false
 
-        for (vcs in activeVcss) {
-          val permission = vcs.mayRemoveChangeList(list, explicitly)
-          if (permission != ThreeState.UNSURE) {
-            confirmationAsked = true
-          }
-          if (permission == ThreeState.NO) {
-            removeVetoed = true
-            break
-          }
+      for (vcs in activeVcss) {
+        val permission = vcs.mayRemoveChangeList(list, explicitly)
+        if (permission != ThreeState.UNSURE) {
+          confirmationAsked = true
         }
-
-        if (!confirmationAsked) {
-          toAsk.add(list)
-        }
-        else if (!removeVetoed) {
-          toRemove.add(list)
+        if (permission == ThreeState.NO) {
+          removeVetoed = true
+          break
         }
       }
 
-      if (toAsk.isNotEmpty() && ask.askIfShouldRemoveChangeLists(toAsk)) {
-        toRemove.addAll(toAsk)
+      if (!confirmationAsked) {
+        toAsk.add(list)
       }
-
-      // default changelist might have been changed in `askIfShouldRemoveChangeLists()`
-      val defaultList = manager.defaultChangeList
-      val shouldRemoveDefault = toRemove.remove(defaultList)
-
-      toRemove.forEach { manager.removeChangeList(it.name) }
-
-      if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList))) {
-        manager.removeChangeList(defaultList.name)
+      else if (!removeVetoed) {
+        toRemove.add(list)
       }
+    }
+
+    if (toAsk.isNotEmpty() && askIfShouldRemoveChangeLists(toAsk)) {
+      toRemove.addAll(toAsk)
+    }
+
+    // default changelist might have been changed in `askIfShouldRemoveChangeLists()`
+    val defaultList = manager.defaultChangeList
+    val shouldRemoveDefault = toRemove.remove(defaultList)
+
+    toRemove.forEach { manager.removeChangeList(it.name) }
+
+    if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList))) {
+      manager.removeChangeList(defaultList.name)
     }
   }
 }
