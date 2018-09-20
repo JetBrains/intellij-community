@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -64,52 +65,53 @@ public class CodeStyleSettingsCodeFragmentFilter {
   @NotNull
   public CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     CodeStyleSettings clonedSettings = CodeStyle.getSettings(myFile).clone();
-    CommonCodeStyleSettings commonSettings = clonedSettings.getCommonSettings(myProvider.getLanguage());
-    CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, clonedSettings);
+    Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
+    CodeStyle.doWithTemporarySettings(myProject, clonedSettings,
+                                      () -> settingsToShow.set(computeFieldsWithTempSettings(clonedSettings, types)));
+    return settingsToShow.get();
+  }
 
-    try {
-      CodeStyle.setTemporarySettings(myProject, clonedSettings);
+  @NotNull
+  private CodeStyleSettingsToShow computeFieldsWithTempSettings(CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType[] types) {
+    CommonCodeStyleSettings commonSettings = tempSettings.getCommonSettings(myProvider.getLanguage());
+    CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, tempSettings);
 
-      String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
-      SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, StringUtil.capitalizeWords(title, true));
-      progressTask.setCancelText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.cancel"));
-      CompositeSequentialTask compositeTask = new CompositeSequentialTask(progressTask);
-      compositeTask.setProgressText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text"));
-      compositeTask.setProgressText2(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text.under"));
+    String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
+    SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, StringUtil.capitalizeWords(title, true));
+    progressTask.setCancelText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.cancel"));
+    CompositeSequentialTask compositeTask = new CompositeSequentialTask(progressTask);
+    compositeTask.setProgressText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text"));
+    compositeTask.setProgressText2(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text.under"));
 
-      final Map<LanguageCodeStyleSettingsProvider.SettingsType, FilterFieldsTask> typeToTask = ContainerUtil.newHashMap();
-      for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
-        Set<String> fields = myProvider.getSupportedFields(type);
-        FilterFieldsTask task = new FilterFieldsTask(commonSettings, customSettings,  fields);
-        compositeTask.addTask(task);
-        typeToTask.put(type, task);
+    final Map<LanguageCodeStyleSettingsProvider.SettingsType, FilterFieldsTask> typeToTask = ContainerUtil.newHashMap();
+    for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
+      Set<String> fields = myProvider.getSupportedFields(type);
+      FilterFieldsTask task = new FilterFieldsTask(commonSettings, customSettings, fields);
+      compositeTask.addTask(task);
+      typeToTask.put(type, task);
+    }
+
+    Set<String> otherFields = myProvider.getSupportedFields();
+    final FilterFieldsTask otherFieldsTask = new FilterFieldsTask(commonSettings, customSettings, otherFields);
+    if (!otherFields.isEmpty()) {
+      compositeTask.addTask(otherFieldsTask);
+    }
+
+    progressTask.setTask(compositeTask);
+    progressTask.setMinIterationTime(10);
+    ProgressManager.getInstance().run(progressTask);
+
+    return new CodeStyleSettingsToShow() {
+      @Override
+      public List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type) {
+        return typeToTask.get(type).getAffectedFields();
       }
 
-      Set<String> otherFields = myProvider.getSupportedFields();
-      final FilterFieldsTask otherFieldsTask = new FilterFieldsTask(commonSettings, customSettings, otherFields);
-      if (!otherFields.isEmpty()) {
-        compositeTask.addTask(otherFieldsTask);
+      @Override
+      public List<String> getOtherSetting() {
+        return ContainerUtil.newArrayList(otherFieldsTask.getAffectedFields());
       }
-      
-      progressTask.setTask(compositeTask);
-      progressTask.setMinIterationTime(10);
-      ProgressManager.getInstance().run(progressTask);
-
-      return new CodeStyleSettingsToShow() {
-        @Override
-        public List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type) {
-          return typeToTask.get(type).getAffectedFields();
-        }
-
-        @Override
-        public List<String> getOtherSetting() {
-          return ContainerUtil.newArrayList(otherFieldsTask.getAffectedFields());
-        }
-      };
-    }
-    finally {
-      CodeStyle.dropTemporarySettings(myProject);
-    }
+    };
   }
 
   @Nullable
