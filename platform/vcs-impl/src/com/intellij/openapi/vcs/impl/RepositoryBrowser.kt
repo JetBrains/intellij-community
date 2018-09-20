@@ -45,8 +45,7 @@ const val TOOLWINDOW_ID = "Repositories"
 
 fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, title: String) {
   val toolWindowManager = ToolWindowManager.getInstance(project)
-  val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID)
-                       ?: registerRepositoriesToolWindow(toolWindowManager)
+  val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager, project)
 
   for (content in repoToolWindow.contentManager.contents) {
     val component = content.component as? RepositoryBrowserPanel ?: continue
@@ -64,8 +63,8 @@ fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localR
   repoToolWindow.activate(null)
 }
 
-private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {
-  val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT)
+private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager, project: Project): ToolWindow {
+  val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT, project, true)
   ContentManagerWatcher(toolWindow, toolWindow.contentManager)
   return toolWindow
 }
