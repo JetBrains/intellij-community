@@ -80,7 +80,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     boolean haveNoChanges = lists.stream().allMatch(l -> l.getChanges().isEmpty());
 
     if (activeChangelistSelected) {
-      return confirmActiveChangeListRemoval(project, lists, haveNoChanges);
+      return confirmActiveChangeListRemoval(project, lists);
     }
 
     String message = lists.size() == 1
@@ -93,7 +93,9 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
              .showYesNoDialog(project, message, VcsBundle.message("changes.removechangelist.warning.title"), Messages.getQuestionIcon());
   }
 
-  static boolean confirmActiveChangeListRemoval(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists, boolean empty) {
+  static boolean confirmActiveChangeListRemoval(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists) {
+    boolean haveNoChanges = lists.stream().allMatch(l -> l.getChanges().isEmpty());
+
     List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(lists);
 
@@ -104,13 +106,13 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
 
     // don't ask "Which changelist to make active" if there is only one option anyway
     // unless there are some changes to be moved - give user a chance to cancel deletion
-    if (remainingLists.size() == 1 && empty) {
+    if (remainingLists.size() == 1 && haveNoChanges) {
       ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists.get(0));
       return true;
     }
 
     String[] remainingListsNames = remainingLists.stream().map(ChangeList::getName).toArray(String[]::new);
-    int nameIndex = Messages.showChooseDialog(project, empty
+    int nameIndex = Messages.showChooseDialog(project, haveNoChanges
                                                        ? VcsBundle.message("changes.remove.active.empty.prompt")
                                                        : VcsBundle.message("changes.remove.active.prompt"),
                                               VcsBundle.message("changes.remove.active.title"), Messages.getQuestionIcon(),

@@ -67,7 +67,7 @@ abstract class ChangeListRemoveConfirmation() {
 
       toRemove.forEach { manager.removeChangeList(it.name) }
 
-      if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList), defaultList.getChanges().isEmpty())) {
+      if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList))) {
         manager.removeChangeList(defaultList.name)
       }
     }
