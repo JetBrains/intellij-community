@@ -113,24 +113,20 @@ public class UIUtil {
 
   // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
   public static void markAsTypeAheadAware(Window window) {
-    if (window instanceof RootPaneContainer) {
-      ((RootPaneContainer)window).getRootPane().putClientProperty("TypeAheadAwareWindow", Boolean.TRUE);
-    }
+    putWindowClientProperty(window, "TypeAheadAwareWindow", Boolean.TRUE);
   }
 
   public static boolean isTypeAheadAware(Window window) {
-    return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
+    return isWindowClientPropertyTrue(window, "TypeAheadAwareWindow");
   }
 
   // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
   public static void markAsPossibleOwner(Dialog dialog) {
-    if (dialog instanceof RootPaneContainer) {
-      ((RootPaneContainer)dialog).getRootPane().putClientProperty("PossibleOwner", Boolean.TRUE);
-    }
+    putWindowClientProperty(dialog, "PossibleOwner", Boolean.TRUE);
   }
 
   public static boolean isPossibleOwner(Dialog dialog) {
-    return (dialog instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)dialog).getRootPane(), "PossibleOwner"));
+    return isWindowClientPropertyTrue(dialog, "PossibleOwner");
   }
 
   private static void blockATKWrapper() {
@@ -710,6 +706,29 @@ public class UIUtil {
     String name = "apple.awt.contentScaleFactor";
     for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
       toolkit.removePropertyChangeListener(name, each);
+    }
+  }
+
+  public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
+    return Boolean.TRUE.equals(getWindowClientProperty(window, key));
+  }
+
+  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        return pane.getClientProperty(key);
+      }
+    }
+    return null;
+  }
+
+  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        pane.putClientProperty(key, value);
+      }
     }
   }
 
