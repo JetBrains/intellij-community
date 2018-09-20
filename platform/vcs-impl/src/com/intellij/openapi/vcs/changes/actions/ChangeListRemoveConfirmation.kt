@@ -22,35 +22,50 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
 
 object ChangeListRemoveConfirmation {
-  @JvmStatic
-  fun deleteLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>,
-                  askIfShouldRemoveChangeLists: (toAsk: List<LocalChangeList>) -> Boolean) {
-    val manager = ChangeListManager.getInstance(project)
+  private fun checkCanDeleteChangelist(project: Project,
+                                       list: LocalChangeList,
+                                       explicitly: Boolean): ThreeState {
     val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
-    val toAsk = mutableListOf<LocalChangeList>()
+    var confirmationAsked = false
+    var removeVetoed = false
+
+    for (vcs in activeVcss) {
+      val permission = vcs.mayRemoveChangeList(list, explicitly)
+      if (permission != ThreeState.UNSURE) {
+        confirmationAsked = true
+      }
+      if (permission == ThreeState.NO) {
+        removeVetoed = true
+        break
+      }
+    }
+
+    if (!confirmationAsked) {
+      return ThreeState.UNSURE
+    }
+    else if (removeVetoed) {
+      return ThreeState.NO
+    }
+    else {
+      return ThreeState.YES
+    }
+  }
+
+  @JvmStatic
+  fun deleteLists(project: Project, explicitly: Boolean, lists: Collection<LocalChangeList>,
+                  askIfShouldRemoveChangeLists: (toAsk: List<LocalChangeList>) -> Boolean) {
+    val manager = ChangeListManager.getInstance(project)
+
     val toRemove = mutableListOf<LocalChangeList>()
+    val toAsk = mutableListOf<LocalChangeList>()
 
-    for (list in allLists.mapNotNull { manager.getChangeList(it.id) }) {
-      var confirmationAsked = false
-      var removeVetoed = false
-
-      for (vcs in activeVcss) {
-        val permission = vcs.mayRemoveChangeList(list, explicitly)
-        if (permission != ThreeState.UNSURE) {
-          confirmationAsked = true
+    for (list in lists.mapNotNull { manager.getChangeList(it.id) }) {
+      when (checkCanDeleteChangelist(project, list, explicitly)) {
+        ThreeState.UNSURE -> toAsk.add(list)
+        ThreeState.YES -> toRemove.add(list)
+        ThreeState.NO -> {
         }
-        if (permission == ThreeState.NO) {
-          removeVetoed = true
-          break
-        }
-      }
-
-      if (!confirmationAsked) {
-        toAsk.add(list)
-      }
-      else if (!removeVetoed) {
-        toRemove.add(list)
       }
     }
 
