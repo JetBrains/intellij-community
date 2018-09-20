@@ -21,9 +21,11 @@ fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().f
 
 fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
-fun uExpression(): UElementPattern.Capture<UExpression> = capture(UExpression::class.java)
+fun uExpression(): UExpressionPattern<UExpression, *> = expressionCapture(UExpression::class.java)
 
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
+
+fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
 
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>): Self =
@@ -88,11 +90,11 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
 }
 
-class ULiteralExpressionPattern : UElementPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java) {
+open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self>>(clazz: Class<T>) : UElementPattern<T, Self>(clazz) {
 
-  fun annotationParam(@NonNls parameterName: String, annotationPattern: ElementPattern<UAnnotation>): ULiteralExpressionPattern =
-    this.with(object : PatternCondition<ULiteralExpression>("annotationParam") {
-      override fun accepts(uElement: ULiteralExpression, context: ProcessingContext?): Boolean {
+  fun annotationParam(@NonNls parameterName: String, annotationPattern: ElementPattern<UAnnotation>): Self =
+    this.with(object : PatternCondition<T>("annotationParam") {
+      override fun accepts(uElement: T, context: ProcessingContext?): Boolean {
         val namedExpression = uElement.getParentOfType<UNamedExpression>(true) ?: return false
         if ((namedExpression.name ?: "value") != parameterName) return false
         val annotation = namedExpression.getParentOfType<UAnnotation>(true) ?: return false
@@ -100,11 +102,14 @@ class ULiteralExpressionPattern : UElementPattern<ULiteralExpression, ULiteralEx
       }
     })
 
-  fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String): ULiteralExpressionPattern =
+  fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String): Self =
     annotationParam(parameterName, capture(UAnnotation::class.java)
       .filter { it.qualifiedName?.let { annotationQualifiedName.accepts(it) } ?: false })
 
-  fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String): ULiteralExpressionPattern =
+  fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String): Self =
     annotationParam(StandardPatterns.string().equalTo(annotationQualifiedName), parameterName)
 
+  open class Capture<T : UExpression>(clazz: Class<T>) : UExpressionPattern<T, UExpressionPattern.Capture<T>>(clazz)
 }
+
+class ULiteralExpressionPattern : UExpressionPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java)
