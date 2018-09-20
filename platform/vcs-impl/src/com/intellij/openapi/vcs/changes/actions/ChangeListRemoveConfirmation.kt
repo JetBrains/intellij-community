@@ -64,11 +64,11 @@ abstract class ChangeListRemoveConfirmation() {
       }
 
       val toRemoveLists = toRemove.mapNotNull { manager.getChangeList(it) }
-      val active = toRemoveLists.find { it.isDefault }
-      toRemoveLists.forEach { if (it != active) manager.removeChangeList(it.name) }
+      val defaultList = toRemoveLists.find { it.isDefault }
+      toRemoveLists.forEach { if (it != defaultList) manager.removeChangeList(it.name) }
 
-      if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.getChanges().isEmpty())) {
-        manager.removeChangeList(active.name)
+      if (defaultList != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList), defaultList.getChanges().isEmpty())) {
+        manager.removeChangeList(defaultList.name)
       }
     }
   }
