@@ -103,7 +103,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
     if (element instanceof PackageElement) {
-      return new PackageElementNode(project, element, viewSettings);
+      return new PackageElementNode(project, (PackageElement)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
   }
@@ -113,7 +113,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     if (element instanceof PackageElement) {
       final Set<Boolean> find = new HashSet<>();
       final ContentIterator contentIterator = fileOrDir -> {
-        if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
+        if (fileOrDir.getPath().equals(vFile.getPath())) {
           find.add(Boolean.TRUE);
         }
         return true;
@@ -143,9 +143,9 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public String getElementLocation(final Object element) {
     if (element instanceof PackageElement) {
-      final PackageElement packageElement = ((PackageElement)element);
+      final PackageElement packageElement = (PackageElement)element;
       final Module module = packageElement.getModule();
-      return (module != null ? (module.getName() + ":") : "") + packageElement.getPackage().getQualifiedName();
+      return (module != null ? module.getName() + ":" : "") + packageElement.getPackage().getQualifiedName();
     }
     return null;
   }
@@ -166,7 +166,6 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     if (element instanceof PackageElement) {
       PackageElement packageElement = (PackageElement)element;
       PsiPackage aPackage = packageElement.getPackage();
-      if (aPackage == null) return null;
       return aPackage.getQualifiedName();
     }
     return null;

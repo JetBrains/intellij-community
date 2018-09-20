@@ -598,6 +598,7 @@ public class PsiUtilCore {
   public static IElementType getElementType(@Nullable PsiElement element) {
     return element == null ? null :
            element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getElementType() :
+           element instanceof PsiFile ? ((PsiFile)element).getFileElementType() :
            getElementType(element.getNode());
   }
 

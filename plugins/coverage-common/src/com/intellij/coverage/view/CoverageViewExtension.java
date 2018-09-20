@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -48,6 +49,7 @@ public abstract class CoverageViewExtension {
   @Nullable
   public abstract PsiElement getParentElement(PsiElement element);
 
+  @NotNull
   public abstract AbstractTreeNode createRootNode();
   
   public boolean canSelectInCoverageView(Object object) {

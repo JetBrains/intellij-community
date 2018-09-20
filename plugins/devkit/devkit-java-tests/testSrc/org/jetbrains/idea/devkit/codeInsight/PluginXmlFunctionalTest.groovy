@@ -534,4 +534,12 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testPluginWithSinceBuildGreaterThanUntilBuild() {
     myFixture.testHighlighting("pluginWithSinceBuildGreaterThanUntilBuild.xml")
   }
+
+  void testProductDescriptor() {
+    myFixture.testHighlighting("productDescriptorInvalid.xml")
+  }
+
+  void testProductDescriptorInvalid() {
+    myFixture.testHighlighting("productDescriptorInvalid.xml")
+  }
 }

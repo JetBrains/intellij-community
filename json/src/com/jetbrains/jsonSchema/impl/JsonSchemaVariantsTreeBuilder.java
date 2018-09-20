@@ -308,7 +308,10 @@ public class JsonSchemaVariantsTreeBuilder {
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
     List<JsonSchemaObject> list = ContainerUtil.newArrayListWithCapacity(group.size());
     for (JsonSchemaObject s: group) {
-      list.add(merge(object, s, s));
+      JsonSchemaObject schemaObject = merge(object, s, s);
+      if (schemaObject.isValidByExclusion()) {
+        list.add(schemaObject);
+      }
     }
     return list;
   }
@@ -369,6 +372,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
+  @NotNull
   public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
                                        @NotNull JsonSchemaObject other,
                                        @NotNull JsonSchemaObject pointTo) {

@@ -565,3 +565,18 @@ fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups
     waitLoadingTemplates()
   }
 }
+
+fun NewProjectDialogModel.selectSdk(sdk: String) {
+  with(guiTestCase) {
+    logUIStep("Going to select $sdk as a project SDK")
+    with(connectDialog()) {
+      val sdkCombo = combobox("Project SDK:")
+      val selectedItem = sdkCombo.listItems().firstOrNull { it.startsWith(sdk) }
+      if (selectedItem != null)
+        sdkCombo.selectItem(selectedItem)
+      else
+        throw IllegalStateException(
+          "Required SDK $sdk is absent in the \"Project SDK\" list. Found following values: ${sdkCombo.listItems()}")
+    }
+  }
+}

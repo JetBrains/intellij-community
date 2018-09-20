@@ -159,14 +159,13 @@ public abstract class Invoker implements Disposable {
         LOG.debug("Task is restarted");
       }
     }
-    catch (Exception exception) {
-      LOG.warn(exception);
-      promise.setError(exception);
-    }
     catch (Throwable throwable) {
-      LOG.warn(throwable);
-      promise.setError(throwable);
-      throw throwable;
+      try {
+        LOG.error(throwable);
+      }
+      finally {
+        promise.setError(throwable);
+      }
     }
     finally {
       count.decrementAndGet();
@@ -292,10 +291,14 @@ public abstract class Invoker implements Disposable {
     @Override
     void offer(@NotNull Runnable runnable, int delay) {
       schedule(executor, () -> {
-        if (thread != null) LOG.warn("unexpected thread: " + thread);
-        thread = Thread.currentThread();
-        runnable.run();
-        thread = null;
+        if (thread != null) LOG.error("unexpected thread: " + thread);
+        try {
+          thread = Thread.currentThread();
+          runnable.run(); // may throw an assertion error
+        }
+        finally {
+          thread = null;
+        }
       }, delay);
     }
   }

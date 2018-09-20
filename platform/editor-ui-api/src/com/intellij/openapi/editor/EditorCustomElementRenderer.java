@@ -24,21 +24,36 @@ import java.awt.*;
 /**
  * An interface, defining size and representation of custom visual element in editor.
  *
- * @see InlayModel#addInlineElement(int, EditorCustomElementRenderer)
- * @see InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)
+ * @see InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
+ * @see InlayModel#addBlockElement(int, boolean, boolean, int, EditorCustomElementRenderer)
  * @see Inlay#getRenderer()
+ *
+ * @since 2016.3
  */
 public interface EditorCustomElementRenderer {
   /**
    * Defines width of custom element (in pixels)
+   *
+   * @since 2018.3
    */
-  int calcWidthInPixels(@NotNull Editor editor);
+  default int calcWidthInPixels(@NotNull Inlay inlay) {
+    return calcWidthInPixels(inlay.getEditor());
+  }
+
+  /**
+   * @deprecated Override/use {@link #calcWidthInPixels(Inlay)} instead. This method will be removed.
+   */
+  default int calcWidthInPixels(@NotNull Editor editor) {
+    return 0;
+  }
 
   /**
    * Defines height of custom element (in pixels). This value is currently not used for 'inline' elements.
+   *
+   * @since 2018.3
    */
-  default int calcHeightInPixels(@NotNull Editor editor) {
-    return editor.getLineHeight();
+  default int calcHeightInPixels(@NotNull Inlay inlay) {
+    return inlay.getEditor().getLineHeight();
   }
 
   /**
@@ -46,14 +61,34 @@ public interface EditorCustomElementRenderer {
    * 
    * @param targetRegion region where painting should be performed
    * @param textAttributes attributes of surrounding text
+   *
+   * @since 2018.3
    */
-  void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes);
+  default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
+    paint(inlay.getEditor(), g, targetRegion, textAttributes);
+  }
+
+  /**
+   * @deprecated Override/use {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} instead. This method will be removed.
+   */
+  default void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
+  }
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
    * If {@code null} is returned, standard editor's context menu will be displayed upon corresponding mouse event.
+   *
+   * @since 2018.3
    */
   @Nullable
+  default String getContextMenuGroupId(@NotNull Inlay inlay) {
+    //noinspection deprecation
+    return getContextMenuGroupId();
+  }
+
+  /**
+   * @deprecated Override/use {@link #getContextMenuGroupId(Inlay)} instead. This method will be removed.
+   */
   default String getContextMenuGroupId() {
     return null;
   }

@@ -39,7 +39,6 @@ import java.util.*;
 /**
  * @author cdr
  */
-@SuppressWarnings("deprecation")
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   @SuppressWarnings("RedundantStringConstructorCall")
@@ -114,16 +113,16 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @NotNull
   public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
     DocumentWindow documentWindow = getDocumentWindow(injectedContext);
-    return (documentWindow == null) ? injectedTextRange : documentWindow.injectedToHost(injectedTextRange);
+    return documentWindow == null ? injectedTextRange : documentWindow.injectedToHost(injectedTextRange);
   }
 
   @Override
   public int injectedToHost(@NotNull PsiElement element, int offset) {
     DocumentWindow documentWindow = getDocumentWindow(element);
-    return (documentWindow == null) ? offset : documentWindow.injectedToHost(offset);
+    return documentWindow == null ? offset : documentWindow.injectedToHost(offset);
   }
 
-  private static DocumentWindow getDocumentWindow(PsiElement element) {
+  private static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
@@ -227,7 +226,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
    *  @return list of ranges in encoded (raw) PSI
    */
   @Override
-  @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);

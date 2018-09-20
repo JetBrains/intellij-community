@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -453,21 +452,12 @@ public class EditorTestUtil {
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
     return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
       @Override
-      public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
-
-      @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 1; }
     });
   }
 
   public static Inlay addBlockInlay(@NotNull Editor editor, int offset) {
-    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Editor editor) { return 0; }
-
-      @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
-    });
+    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {});
   }
 
   public static void waitForLoading(Editor editor) {

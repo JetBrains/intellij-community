@@ -47,6 +47,7 @@
 
 1.6 => lib/external-system-rt.jar
 - => lib/jshell-frontend.jar
+- => lib/sa-jdwp
 
 1.6 => plugins/gradle/lib/gradle-tooling-extension-api.jar
 1.6 => plugins/gradle/lib/gradle-tooling-extension-impl.jar

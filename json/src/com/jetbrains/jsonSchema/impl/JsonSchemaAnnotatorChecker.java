@@ -294,7 +294,7 @@ class JsonSchemaAnnotatorChecker {
     }
 
     if (object.shouldCheckIntegralRequirements()) {
-      final List<String> required = schema.getRequired();
+      final Set<String> required = schema.getRequired();
       if (required != null) {
         HashSet<String> requiredNames = ContainerUtil.newHashSet(required);
         requiredNames.removeAll(set);
@@ -1017,10 +1017,8 @@ class JsonSchemaAnnotatorChecker {
         return object;
       }
       // maybe we still find the correct schema - continue to iterate
-      if (!checker.isHadTypeError()) {
-        candidateErroneousCheckers.add(checker);
-        candidateErroneousSchemas.add(object);
-      }
+      candidateErroneousCheckers.add(checker);
+      candidateErroneousSchemas.add(object);
     }
 
     return showErrorsAndGetLeastErroneous(candidateErroneousCheckers, candidateErroneousSchemas, false);

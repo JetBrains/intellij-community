@@ -88,6 +88,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final Logger LOG = Logger.getInstance(RunAnythingPopupUI.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final String HELP_PLACEHOLDER = "?";
+  private static final int LIST_REBUILD_DELAY = 200;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final AnActionEvent myActionEvent;
   private boolean myIsUsedTrigger;
@@ -645,7 +646,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
                 myResultsList.setModel(myListModel);
                 updatePopup();
               }
-            }, 50);
+            }, LIST_REBUILD_DELAY);
           }
           else {
             myResultsList.setModel(myListModel);

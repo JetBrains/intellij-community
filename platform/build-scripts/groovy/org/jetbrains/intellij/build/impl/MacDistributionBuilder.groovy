@@ -328,7 +328,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
         zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
-      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipRoot)
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
       return targetPath
     }
   }
@@ -339,7 +339,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
     String executable = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext).generateProductJson(productJsonDir, null, "MacOS/${executable}", javaExecutablePath, "bin/${executable}.vmoptions", OsFamily.MACOS)
+    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", null,
+                                                               "../MacOS/${executable}", javaExecutablePath,
+                                                               "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
 
 

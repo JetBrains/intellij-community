@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWithText {
-  public PsiFileNode(Project project, PsiFile value, ViewSettings viewSettings) {
+  public PsiFileNode(Project project, @NotNull PsiFile value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

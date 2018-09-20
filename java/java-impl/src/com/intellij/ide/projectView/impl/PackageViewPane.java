@@ -200,7 +200,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
 
@@ -237,7 +237,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean addSubtreeToUpdateByElement(Object element) {
+    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
       // should convert PsiDirectories into PackageElements
       if (element instanceof PsiDirectory) {
         PsiDirectory dir = (PsiDirectory)element;
@@ -277,6 +277,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
       return addedOk;
     }
 
+    @NotNull
     private Object getTreeElementToUpdateFrom(PsiPackage packageToUpdateFrom, Module module) {
       if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || "".equals(packageToUpdateFrom.getQualifiedName())) {
         return module == null ? myTreeStructure.getRootElement() : module;

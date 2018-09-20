@@ -75,7 +75,7 @@ public class FindUtil {
     if (editor != null) {
       String s = editor.getSelectionModel().getSelectedText();
       if (s != null && s.length() < 10000) {
-        FindModel.initStringToFindNoMultiline(findModel, s);
+        FindModel.initStringToFind(findModel, s);
       }
     }
   }

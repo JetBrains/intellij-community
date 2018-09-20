@@ -2216,6 +2216,10 @@ public class ControlFlowUtil {
     return throwType.isAssignableFrom(catchType);
   }
 
+  /**
+   * Check that in the <code>flow</code> between <code>startOffset</code> and <code>endOffset</code> there are no writes
+   * to the <code>variables</code> or these writes aren't observable at the <code>locations</code>.
+   */
   public static boolean areVariablesUnmodifiedAtLocations(@NotNull ControlFlow flow,
                                                           int startOffset,
                                                           int endOffset,

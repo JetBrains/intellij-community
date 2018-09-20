@@ -456,7 +456,7 @@ public class EditorPainter implements TextDrawingCallback {
           int lineHeight = myView.getLineHeight();
           Inlay inlay = fragment.getCurrentInlay();
           if (inlay != null) {
-            inlay.getRenderer().paint(myEditor, g, 
+            inlay.getRenderer().paint(inlay, g,
                                       new Rectangle((int) xStart, y - myView.getAscent(), inlay.getWidthInPixels(), lineHeight),
                                       attributes);
             return;
@@ -991,14 +991,14 @@ public class EditorPainter implements TextDrawingCallback {
       for (Inlay inlay : inlaysAbove) {
         int height = inlay.getHeightInPixels();
         int newY = curY - height;
-        inlay.getRenderer().paint(myEditor, g, new Rectangle(0, newY, inlay.getWidthInPixels(), height), TextAttributes.ERASE_MARKER);
+        inlay.getRenderer().paint(inlay, g, new Rectangle(0, newY, inlay.getWidthInPixels(), height), TextAttributes.ERASE_MARKER);
         curY = newY;
       }
       curY = y + myEditor.getLineHeight();
       List<Inlay> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
       for (Inlay inlay : inlaysBelow) {
         int height = inlay.getHeightInPixels();
-        inlay.getRenderer().paint(myEditor, g, new Rectangle(0, curY, inlay.getWidthInPixels(), height), TextAttributes.ERASE_MARKER);
+        inlay.getRenderer().paint(inlay, g, new Rectangle(0, curY, inlay.getWidthInPixels(), height), TextAttributes.ERASE_MARKER);
         curY += height;
       }
       visLinesIterator.advance();

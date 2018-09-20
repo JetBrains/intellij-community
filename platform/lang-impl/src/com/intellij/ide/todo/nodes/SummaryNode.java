@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class SummaryNode extends BaseToDoNode<ToDoSummary> {
-  public SummaryNode(Project project, ToDoSummary value, TodoTreeBuilder builder) {
+  public SummaryNode(Project project, @NotNull ToDoSummary value, TodoTreeBuilder builder) {
     super(project, value, builder);
   }
 

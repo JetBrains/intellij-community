@@ -3,6 +3,7 @@ package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +41,9 @@ class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
 
   @Override
   protected Match unaryExpressionsMatch(@NotNull PsiUnaryExpression unaryExpression1, @NotNull PsiUnaryExpression unaryExpression2) {
-    if (isSideEffectUnaryOperator(unaryExpression1.getOperationTokenType())) {
+    if (PsiUtil.isIncrementDecrementOperation(unaryExpression1)) {
       return EXACT_MISMATCH;
     }
     return super.unaryExpressionsMatch(unaryExpression1, unaryExpression2);
-  }
-
-  private static boolean isSideEffectUnaryOperator(IElementType tokenType) {
-    return JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType);
   }
 }

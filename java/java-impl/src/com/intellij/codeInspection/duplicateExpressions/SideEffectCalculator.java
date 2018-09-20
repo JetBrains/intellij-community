@@ -4,8 +4,11 @@ package com.intellij.codeInspection.duplicateExpressions;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,10 +16,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 import static com.intellij.psi.CommonClassNames.*;
-import static com.siyeh.ig.psiutils.MethodUtils.methodMatches;
 
 /**
- * @author Pavel.Dolgov
+ * Verifies that the expression is free of side effects and always yields the same result (in terms of <code>Object.equals()</code>),
+ * so that it's safe to compute the expression only once and then reuse the result.<br>
+ * Well-known APIs, such as <code>Object.equals()</code>, <code>Object.hashCode()</code>, <code>Object.toString()</code>,
+ * <code>Comparable.compareTo()</code>, and <code>Comparator.compare()</code> are considered safe because of their contract.
+ * Immutable classes like <code>String</code>, <code>BigDecimal</code>, etc, and utility classes like
+ * <code>Objects</code>, <code>Math</code> (except <code>random()</code>) are OK too.
+ *
+ *  @author Pavel.Dolgov
  */
 class SideEffectCalculator {
   private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
@@ -41,8 +50,7 @@ class SideEffectCalculator {
       return mayHaveSideEffect(((PsiParenthesizedExpression)e).getExpression());
     }
     if (e instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)e;
-      return mayHaveSideEffect(unary.getOperand());
+      return PsiUtil.isIncrementDecrementOperation(e) || mayHaveSideEffect(((PsiUnaryExpression)e).getOperand());
     }
     if (e instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
@@ -72,10 +80,10 @@ class SideEffectCalculator {
              !Boolean.TRUE.equals(CommonDataflow.getExpressionFact(array, DfaFactType.LOCALITY));
     }
     if (e instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)e;
-      PsiExpression bodyExpr = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      return bodyExpr == null || // null means the body is a non-trivial code block
-             mayHaveSideEffect(bodyExpr);
+      return false; // lambda itself (unless called) has no side effect
+    }
+    if (e instanceof PsiNewExpression) {
+      return calculateNewSideEffect((PsiNewExpression)e);
     }
     return true;
   }
@@ -94,46 +102,67 @@ class SideEffectCalculator {
     }
     if (resolved instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)resolved;
-      String name = method.getName();
-      if ("hashCode".equals(name) || "equals".equals(name)) {
-        return true;
-      }
-      PsiClass psiClass = method.getContainingClass();
-      return !(psiClass != null && ClassUtils.isImmutableClass(psiClass));
+      return methodHasSideEffect(method);
     }
     return true;
   }
 
   private boolean calculateCallSideEffect(@NotNull PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
-    if (method == null) return true; // can't be sure
-    PsiClass psiClass = method.getContainingClass();
-    if (psiClass == null) return true; // can't be sure
+    return methodHasSideEffect(method) ||
+           calculateSideEffect(call, call.getMethodExpression().getQualifierExpression());
+  }
 
-    if (ClassUtils.isImmutableClass(psiClass)) {
-      return calculateCallPartsSideEffect(call);
+  private boolean calculateNewSideEffect(@NotNull PsiNewExpression newExpr) {
+    if (newExpr.getAnonymousClass() != null ||
+        mayHaveSideEffect(newExpr.getArrayInitializer())) {
+      return true;
     }
-
-    int paramCount = method.getParameterList().getParametersCount();
-    if (paramCount == 0 && methodMatches(method, null, PsiType.INT, "hashCode", (PsiType[])null) ||
-        paramCount == 1 && methodMatches(method, null, PsiType.BOOLEAN, "equals", (PsiType[])null) ||
-        paramCount == 1 && methodMatches(method, JAVA_LANG_COMPARABLE, PsiType.INT, "compareTo", (PsiType[])null) ||
-        paramCount == 2 && methodMatches(method, JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", (PsiType[])null)) {
-      return calculateCallPartsSideEffect(call);
-    }
-
-    String className = psiClass.getQualifiedName();
-    if (JAVA_LANG_MATH.equals(className) || JAVA_LANG_STRICT_MATH.equals(className)) {
-      return !"random".equals(method.getName());
+    PsiJavaCodeReferenceElement ref = newExpr.getClassReference();
+    if (ref != null) {
+      PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass) {
+        PsiClass psiClass = (PsiClass)resolved;
+        return !ClassUtils.isImmutableClass(psiClass) ||
+               calculateSideEffect(newExpr, newExpr.getQualifier());
+      }
     }
     return true;
   }
 
-  private boolean calculateCallPartsSideEffect(@NotNull PsiMethodCallExpression call) {
-    for (PsiExpression argument : call.getArgumentList().getExpressions()) {
-      if (mayHaveSideEffect(argument)) return true;
+  private boolean calculateSideEffect(@NotNull PsiCallExpression call, @Nullable PsiExpression qualifier) {
+    PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList != null) {
+      for (PsiExpression argument : argumentList.getExpressions()) {
+        if (mayHaveSideEffect(argument)) return true;
+      }
     }
-    PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     return mayHaveSideEffect(qualifier);
+  }
+
+  @Contract("null -> true")
+  private static boolean methodHasSideEffect(@Nullable PsiMethod method) {
+    if (method == null) return true;
+    PsiClass psiClass = method.getContainingClass();
+    if (psiClass == null) return true;
+
+    if (ClassUtils.isImmutableClass(psiClass) ||
+        MethodUtils.isEquals(method) ||
+        MethodUtils.isHashCode(method) ||
+        MethodUtils.isToString(method) ||
+        MethodUtils.isCompareTo(method) ||
+        MethodUtils.isComparatorCompare(method)) {
+      return false;
+    }
+
+    String className = psiClass.getQualifiedName();
+    if (JAVA_UTIL_OBJECTS.equals(className)) {
+      return false;
+    }
+    if (JAVA_LANG_MATH.equals(className) ||
+        JAVA_LANG_STRICT_MATH.equals(className)) {
+      return "random".equals(method.getName()); // it's the only exception
+    }
+    return true;
   }
 }

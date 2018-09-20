@@ -318,7 +318,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       return false
     }
 
-    private fun Disposable.registerOrInvokeJobDisposable(job: Job, disposableBlock: () -> Unit): Disposable {
+    private fun Disposable.registerOrInvokeJobDisposable(job: Job, disposableBlock: () -> Unit): AutoCloseable {
       val runOnce = RunOnce()
       val child = Disposable {
         runOnce {
@@ -326,21 +326,26 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
         }
       }
       if (!tryRegisterDisposable(this, child)) {
-        Disposer.dispose(child)
+        Disposer.dispose(child)  // runs disposableBlock()
+        return AutoCloseable { }
       }
       else {
-        job.invokeOnCompletion {
+        val completionHandler: CompletionHandler = {
           runOnce {
             Disposer.dispose(child)  // unregisters only, does not run disposableBlock()
           }
         }
+        val jobCompletionUnregisteringHandle = job.invokeOnCompletion(completionHandler)
+        return AutoCloseable {
+          jobCompletionUnregisteringHandle.dispose()
+          completionHandler(null)
+        }
       }
-      return child
     }
 
-    internal fun Disposable.cancelJobOnDisposal(job: Job, onceCancelledBlock: () -> Unit = {}) {
+    internal fun Disposable.cancelJobOnDisposal(job: Job, onceCancelledBlock: () -> Unit = {}): AutoCloseable {
       val debugTraceThrowable = Throwable()
-      registerOrInvokeJobDisposable(job) {
+      return registerOrInvokeJobDisposable(job) {
         if (!job.isCancelled && !job.isCompleted) {
           job.cancel(DisposedException(this).apply {
             addSuppressed(debugTraceThrowable)

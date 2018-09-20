@@ -31,7 +31,7 @@ public final class TodoFileNode extends PsiFileNode {
   private final boolean mySingleFileMode;
 
   public TodoFileNode(Project project,
-                      PsiFile file,
+                      @NotNull PsiFile file,
                       TodoTreeBuilder treeBuilder,
                       boolean singleFileMode){
     super(project,file,ViewSettings.DEFAULT);

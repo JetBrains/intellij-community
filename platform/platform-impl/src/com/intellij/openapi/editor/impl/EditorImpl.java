@@ -960,7 +960,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
     if (myProject == null || !myProject.isDisposed()) {
-      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+      CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
+      if (settingsManager != null) {
+        settingsManager.removeListener(this);
+      }
     }
 
     if (myBulkUpdateListener != null) {
@@ -4590,7 +4593,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String contextMenuGroupId = myContextMenuGroupId;
       Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
       if (inlay != null) {
-        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId();
+        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
         if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
       }
       AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(contextMenuGroupId);
