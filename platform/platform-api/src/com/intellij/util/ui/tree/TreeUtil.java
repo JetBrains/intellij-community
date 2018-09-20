@@ -832,7 +832,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expandAll(@NotNull JTree tree, @NotNull Runnable onDone) {
-    promiseExpandAll(tree).onProcessed(path -> onDone.run());
+    promiseExpandAll(tree).onSuccess(result -> onDone.run());
   }
 
   /**
@@ -841,7 +841,7 @@ public final class TreeUtil {
    * @param tree a tree, which nodes should be expanded
    */
   @NotNull
-  public static Promise<TreePath> promiseExpandAll(@NotNull JTree tree) {
+  public static Promise<?> promiseExpandAll(@NotNull JTree tree) {
     return promiseExpand(tree, Integer.MAX_VALUE);
   }
 
@@ -862,7 +862,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expand(@NotNull JTree tree, int depth, @NotNull Runnable onDone) {
-    promiseExpand(tree, depth).onProcessed(path -> onDone.run());
+    promiseExpand(tree, depth).onSuccess(result -> onDone.run());
   }
 
   /**
@@ -872,8 +872,15 @@ public final class TreeUtil {
    * @param depth a depth starting from the root node
    */
   @NotNull
-  public static Promise<TreePath> promiseExpand(@NotNull JTree tree, int depth) {
-    return promiseExpand(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE);
+  public static Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    promiseMakeVisible(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE, promise)
+      .onError(promise::setError)
+      .onSuccess(path -> {
+        if (promise.isCancelled()) return;
+        promise.setResult(null);
+      });
+    return promise;
   }
 
   @NotNull
