@@ -1,3 +1,4 @@
+// "Create missing switch branch 'ERROR'" "true"
 package com.siyeh.ipp.enumswitch;
 
 class BeforeDefault {
