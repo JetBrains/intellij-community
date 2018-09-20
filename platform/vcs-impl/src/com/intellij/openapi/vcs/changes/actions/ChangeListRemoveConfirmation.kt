@@ -31,31 +31,41 @@ abstract class ChangeListRemoveConfirmation() {
       val manager = ChangeListManager.getInstance(project)
       val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
-      val allIds = allLists.map { it.id }
-      val confirmationAsked = hashSetOf<String>()
-      val doNotRemove = hashSetOf<String>()
+      val toAsk = hashSetOf<String>()
+      val toRemove = hashSetOf<String>()
 
-      for (id in allIds) {
+      for (id in allLists.map { it.id }) {
+        var confirmationAsked = false
+        var removeVetoed = false
+
         for (vcs in activeVcss) {
           val list = manager.getChangeList(id)
           val permission = if (list == null) ThreeState.NO else vcs.mayRemoveChangeList(list, explicitly)
           if (permission != ThreeState.UNSURE) {
-            confirmationAsked.add(id)
+            confirmationAsked = true
           }
           if (permission == ThreeState.NO) {
-            doNotRemove.add(id)
+            removeVetoed = true
             break
           }
         }
+
+        if (!confirmationAsked) {
+          toAsk.add(id)
+        }
+        else if (!removeVetoed) {
+          toRemove.add(id)
+        }
       }
 
-      val toAsk = allIds.filter { it !in confirmationAsked && it !in doNotRemove }
-      if (toAsk.isNotEmpty() && !ask.askIfShouldRemoveChangeLists(toAsk.map { manager.getChangeList(it) }.filterNotNull())) {
-        doNotRemove.addAll(toAsk)
+      val toAskLists = toAsk.mapNotNull { manager.getChangeList(it) }
+      if (toAskLists.isNotEmpty() && ask.askIfShouldRemoveChangeLists(toAskLists)) {
+        toRemove.addAll(toAsk)
       }
-      val toRemove = allIds.filter { it !in doNotRemove }.map { manager.getChangeList(it) }.filterNotNull()
-      val active = toRemove.find { it.isDefault }
-      toRemove.forEach { if (it != active) manager.removeChangeList(it.name) }
+
+      val toRemoveLists = toRemove.mapNotNull { manager.getChangeList(it) }
+      val active = toRemoveLists.find { it.isDefault }
+      toRemoveLists.forEach { if (it != active) manager.removeChangeList(it.name) }
 
       if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.getChanges().isEmpty())) {
         manager.removeChangeList(active.name)
