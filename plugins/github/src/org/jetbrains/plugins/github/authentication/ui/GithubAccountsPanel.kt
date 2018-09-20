@@ -177,7 +177,7 @@ internal class GithubAccountsPanel(private val project: Project,
 
       val rendererComponent = accountList.cellRenderer.getListCellRendererComponent(accountList, decorator, idx, true, true)
       rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height)
-      layoutRecursively(rendererComponent)
+      UIUtil.layoutRecursively(rendererComponent)
 
       val rendererRelativeX = point.x - cellBounds.x
       val rendererRelativeY = point.y - cellBounds.y
@@ -276,17 +276,6 @@ internal class GithubAccountsPanel(private val project: Project,
   }
 
   override fun dispose() {}
-
-  companion object {
-    private fun layoutRecursively(component: Component) {
-      if (component is JComponent) {
-        component.doLayout()
-        for (child in component.components) {
-          layoutRecursively(child)
-        }
-      }
-    }
-  }
 }
 
 private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDecorator>, JPanel() {

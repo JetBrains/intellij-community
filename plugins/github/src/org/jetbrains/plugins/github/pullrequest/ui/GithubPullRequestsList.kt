@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
@@ -22,6 +23,7 @@ import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Color
 import java.awt.Component
 import java.awt.FlowLayout
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
@@ -40,6 +42,12 @@ internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubA
 
     ScrollingUtil.installActions(this)
     Disposer.register(this, avatarIconsProvider)
+  }
+
+  override fun getToolTipText(event: MouseEvent): String? {
+    val childComponent = ListUtil.getDeepestRendererChildComponentAt(this, event.point)
+    if (childComponent !is JComponent) return null
+    return childComponent.toolTipText
   }
 
   override fun dispose() {}

@@ -2623,6 +2623,15 @@ public class UIUtil {
     return component;
   }
 
+  public static void layoutRecursively(@NotNull Component component) {
+    if (component instanceof JComponent) {
+      component.doLayout();
+      for (Component child : ((JComponent)component).getComponents()) {
+        layoutRecursively(child);
+      }
+    }
+  }
+
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
     return getCssFontDeclaration(font, null, null, null);
