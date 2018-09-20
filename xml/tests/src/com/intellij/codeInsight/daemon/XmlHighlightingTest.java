@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.include.FileIncludeManager;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -128,8 +127,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFiles(null, BASE_PATH + getTestName(false) + ".xml", BASE_PATH + getTestName(false) + ".xsd");
 
     final String url = "http://www.foo.org/schema";
-    final String url2 = "http://www.bar.org/foo";
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, getTestName(false) + ".xsd", getTestRootDisposable());
+    final String url2 = "http://www.bar.org/foo";
     ExternalResourceManagerExImpl.registerResourceTemporarily(url2, getTestName(false) + ".xsd", getTestRootDisposable());
     final Collection<HighlightInfo> infoCollection = doDoTest(true, false, true);
     final TextRange startTagNameRange = XmlTagUtil.getStartTagNameElement(((XmlFile)myFile).getDocument().getRootTag()).getTextRange();
@@ -297,7 +296,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals(getTestName(false) + "_2.xsd",psiElement.getContainingFile().getName());
   }
 
-  private static void addRefsInPresent(final XmlTag tag, final String name, final List<PsiReference> refs) {
+  private static void addRefsInPresent(final XmlTag tag, final String name, final List<? super PsiReference> refs) {
     if (tag.getAttributeValue(name) != null) {
       ContainerUtil.addAll(refs, tag.getAttribute(name, null).getValueElement().getReferences());
     }
@@ -374,14 +373,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final String[][] resources = {{"http://www.test.com/test", getTestName(false) + ".dtd"}};
     doConfigureWithLocations(resources, "xml");
 
-    try {
-      doDoTest(true,true);
-      WriteCommandAction.runWriteCommandAction(null, () -> myEditor.getDocument().insertString(myEditor.getDocument().getCharsSequence().toString().indexOf("?>") + 2, "\n"));
+    doDoTest(true,true);
+    WriteCommandAction.runWriteCommandAction(null, () -> myEditor.getDocument().insertString(myEditor.getDocument().getCharsSequence().toString().indexOf("?>") + 2, "\n"));
 
-      doDoTest(true,true);
-    }
-    finally {
-    }
+    doDoTest(true,true);
   }
 
   public void testComplexSchemaValidation13() {
@@ -853,25 +848,22 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     XmlUtil.processXmlElements(
       rootTag,
-      new PsiElementProcessor() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          if (element instanceof XmlTag &&
-              (((XmlTag)element).getName().equals("xs:element") ||
-               ((XmlTag)element).getName().equals("xs:attribute") ||
-               ((XmlTag)element).getName().equals("xs:restriction") ||
-               ((XmlTag)element).getName().equals("xs:group") ||
-               ((XmlTag)element).getName().equals("xs:attributeGroup")
-              ) &&
-                ( ((XmlTag)element).getAttributeValue("type") != null ||
-                  ((XmlTag)element).getAttributeValue("ref") != null ||
-                  ((XmlTag)element).getAttributeValue("base") != null
-                )
-             ) {
-            tags.add((XmlTag)element);
-          }
-          return true;
+      element -> {
+        if (element instanceof XmlTag &&
+            (((XmlTag)element).getName().equals("xs:element") ||
+             ((XmlTag)element).getName().equals("xs:attribute") ||
+             ((XmlTag)element).getName().equals("xs:restriction") ||
+             ((XmlTag)element).getName().equals("xs:group") ||
+             ((XmlTag)element).getName().equals("xs:attributeGroup")
+            ) &&
+              ( ((XmlTag)element).getAttributeValue("type") != null ||
+                ((XmlTag)element).getAttributeValue("ref") != null ||
+                ((XmlTag)element).getAttributeValue("base") != null
+              )
+           ) {
+          tags.add((XmlTag)element);
         }
+        return true;
       },
       true
     );
@@ -917,7 +909,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @HighlightingFlags({HighlightingFlag.SkipExternalValidation})
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testXsltValidation() throws Exception {
     doTest(getFullRelativeTestName(".xsl"), true, false);
     doTest(getFullRelativeTestName("2.xsl"), true, false);
@@ -937,16 +929,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     XmlUtil.processXmlElements(
       ((XmlFile)myFile).getDocument(),
-      new PsiElementProcessor() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          if (element instanceof XmlTag &&
-              ((XmlTag)element).getName().equals("xs:include")
-             ) {
-            tags.add((XmlTag)element);
-          }
-          return true;
+      element -> {
+        if (element instanceof XmlTag &&
+            ((XmlTag)element).getName().equals("xs:include")
+           ) {
+          tags.add((XmlTag)element);
         }
+        return true;
       },
       true
     );
@@ -973,14 +962,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     XmlUtil.processXmlElements(
       rootTag,
-      new PsiElementProcessor() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          if (element instanceof XmlEntityRef) {
-            refs.add((XmlEntityRef)element);
-          }
-          return true;
+      element -> {
+        if (element instanceof XmlEntityRef) {
+          refs.add((XmlEntityRef)element);
         }
+        return true;
       },
       true
     );
@@ -1259,7 +1245,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   }
 
-  private void doSchemaTestWithManyFilesFromSeparateDir(final String[][] urls, @Nullable Processor<List<VirtualFile>> additionalTestingProcessor) throws Exception {
+  private void doSchemaTestWithManyFilesFromSeparateDir(final String[][] urls, @Nullable Processor<? super List<VirtualFile>> additionalTestingProcessor) throws Exception {
     List<VirtualFile> files = new ArrayList<>(6);
     files.add( getVirtualFile(BASE_PATH + getTestName(false) + ".xml"));
 
@@ -1293,7 +1279,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.METHOD})
+  @Target(ElementType.METHOD)
   @interface HighlightingFlags {
     HighlightingFlag[] value() default {};
   }
@@ -1302,7 +1288,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     Method method;
     try {
       method = testClass.getMethod("test" + testName);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
 
@@ -1512,10 +1499,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   private static Collection<HighlightInfo> filterInfos(final Collection<HighlightInfo> highlightInfos) {
-    for(Iterator<HighlightInfo> i = highlightInfos.iterator(); i.hasNext();) {
-      final HighlightInfo highlightInfo = i.next();
-      if (highlightInfo.getSeverity() == HighlightSeverity.INFORMATION) i.remove();
-    }
+    highlightInfos.removeIf(highlightInfo -> highlightInfo.getSeverity() == HighlightSeverity.INFORMATION);
     return highlightInfos;
   }
 
@@ -1738,7 +1722,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testComplexRedefineFromJar() {
     configureByFiles(null,BASE_PATH + getTestName(false) + ".xml", BASE_PATH + "mylib.jar");
     String path = myFile.getVirtualFile().getParent().getPath() + "/";
-    String[][] urls = new String[][] {
+    String[][] urls = {
       {"http://graphml.graphdrawing.org/xmlns",path + "mylib.jar!/graphml.xsd"},
       {"http://graphml.graphdrawing.org/xmlns/1.0/graphml-structure.xsd",path + "mylib.jar!/graphml-structure.xsd"},
       {"http://www.w3.org/1999/xlink",path + "mylib.jar!/xlink.xsd"}
@@ -1788,7 +1772,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     //if (!parentNs.equals(attrNs)) assertNull(parent.getAttributeValue(xmlAttribute.getLocalName(), parentNs));
   }
 
-  @HighlightingFlags({HighlightingFlag.SkipExternalValidation})
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testHighlightWhenNoNsSchemaLocation() throws Exception {
     final String testName = getTestName(false);
 
@@ -2045,7 +2029,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testBillionLaughs() {
     configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
     XmlFile file = (XmlFile)getFile();
-    int[] count = new int[] {0};
+    int[] count = {0};
     XmlUtil.processXmlElements(file.getRootTag(), element -> {
       count[0]++;
       return true;}, false);
