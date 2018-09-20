@@ -84,12 +84,12 @@ public interface AppUIExecutor {
    * Schedule the given task's execution and return a Promise that allows to get the result when the task is complete,
    * or cancel the task if it's no longer needed.
    */
-  <T> CancellablePromise<T> submit(Callable<T> task);
+  <T> CancellablePromise<T> submit(@NotNull Callable<T> task);
 
   /**
    * Schedule the given task's execution and return a Promise that allows to check if the task is complete,
    * or cancel the task if it's no longer needed.
    */
-  CancellablePromise<?> submit(Runnable task);
+  CancellablePromise<?> submit(@NotNull Runnable task);
   
 }
