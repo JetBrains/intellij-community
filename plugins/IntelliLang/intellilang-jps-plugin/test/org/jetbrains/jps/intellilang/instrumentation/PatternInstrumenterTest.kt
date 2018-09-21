@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.ObjectUtils.assertNotNull
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Pattern
 import org.jetbrains.org.objectweb.asm.ClassWriter
@@ -65,8 +64,8 @@ class PatternInstrumenterTest {
 
   @Test fun enumConstructor() {
     val testClass = loadClass("TestEnum")
-    assertNotNull(testClass.getField("V1"))
-    assertNotNull(testClass.getField("V2"))
+    assertEquals("V1", testClass.getField("V1").get(null).toString())
+    assertEquals("V2", testClass.getField("V2").get(null).toString())
   }
 
   @Test fun staticNestedClass() {

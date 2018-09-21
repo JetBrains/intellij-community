@@ -122,8 +122,7 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnumConstructor() throws Exception {
     Class testClass = prepareTest();
-    Object field = testClass.getField("Value");
-    assertNotNull(field);
+    assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
@@ -143,8 +142,7 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnumConstructorSecondParam() throws Exception {
     Class testClass = prepareTest();
-    Object field = testClass.getField("Value");
-    assertNotNull(field);
+    assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
