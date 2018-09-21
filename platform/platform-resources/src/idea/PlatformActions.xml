@@ -564,6 +564,10 @@
         <separator/>
         <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
         <separator/>
+        <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"
+                text="Activity Monitor..." description="A tool to check which plugins and subsystems consume most resources">
+        </action>
+
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
