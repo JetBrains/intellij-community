@@ -32,7 +32,10 @@ import java.awt.*;
  */
 public interface EditorCustomElementRenderer {
   /**
-   * Defines width of custom element (in pixels)
+   * Renderer implementation should override this to define width of custom element (in pixels). Returned value will define the result of
+   * {@link Inlay#getWidthInPixels()} and the width of {@code targetRegion} parameter passed to renderer's
+   * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method. For block elements the returned value has no other impact currently.
+   * For inline elements it, obviously, impacts the layout of surrounding text, and should always be a positive value.
    *
    * @since 2018.3
    */
@@ -44,11 +47,14 @@ public interface EditorCustomElementRenderer {
    * @deprecated Override/use {@link #calcWidthInPixels(Inlay)} instead. This method will be removed.
    */
   default int calcWidthInPixels(@NotNull Editor editor) {
-    return 0;
+    throw new RuntimeException("Method not implemented");
   }
 
   /**
-   * Defines height of custom element (in pixels). This value is currently not used for 'inline' elements.
+   * Block element's renderer implementation can override this method to defines the height of element (in pixels). If not overridden,
+   * element's height will be equal to editor's line height. Returned value will define the result of {@link Inlay#getWidthInPixels()} and
+   * the height of {@code targetRegion} parameter passed to renderer's {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method.
+   * Returned value is currently not used for inline elements.
    *
    * @since 2018.3
    */
@@ -57,10 +63,12 @@ public interface EditorCustomElementRenderer {
   }
 
   /**
-   * Implements painting for the custom region.
+   * Renderer implementation should override this to define the appearance of custom element.
    * 
-   * @param targetRegion region where painting should be performed
-   * @param textAttributes attributes of surrounding text
+   * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
+   *                     dimensions of the rectangle match element's width and height (provided by {@link #calcWidthInPixels(Inlay)}
+   *                     and {@link #calcHeightInPixels(Inlay)})
+   * @param textAttributes for inline elements - attributes of surrounding text, for block elements - empty attributes
    *
    * @since 2018.3
    */
@@ -72,6 +80,7 @@ public interface EditorCustomElementRenderer {
    * @deprecated Override/use {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} instead. This method will be removed.
    */
   default void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
+    throw new RuntimeException("Method not implemented");
   }
 
   /**
