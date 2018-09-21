@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,7 +58,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myDebugProcess = debugProcess;
 
     // All versions of Dalvik/ART support at least the JDWP spec as of 1.6.
-    myVersionHigher_15 = myVirtualMachine.name().equals("Dalvik") || versionHigher("1.5");
+    myVersionHigher_15 = DebuggerUtils.isAndroidVM(myVirtualMachine) || versionHigher("1.5");
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
     // avoid lazy-init for some properties: the following will pre-calculate values
