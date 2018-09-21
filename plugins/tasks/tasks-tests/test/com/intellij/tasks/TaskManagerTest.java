@@ -187,4 +187,11 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     assertEquals(repository, myTaskManager.getActiveTask().getRepository());
   }
+
+  public void testCopyPresentableName() {
+    LocalTaskImpl task = new LocalTaskImpl("007", "");
+    LocalTaskImpl copy = new LocalTaskImpl(task);
+    copy.setSummary("foo");
+    assertEquals("foo", copy.getPresentableName());
+  }
 }
