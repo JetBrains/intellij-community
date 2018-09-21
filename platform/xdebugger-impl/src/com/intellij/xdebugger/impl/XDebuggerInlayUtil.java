@@ -133,6 +133,11 @@ public class XDebuggerInlayUtil {
     }
 
     @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return 0;
+    }
+
+    @Override
     public void paint(@NotNull Inlay inlay,
                       @NotNull Graphics g,
                       @NotNull Rectangle targetRegion,
