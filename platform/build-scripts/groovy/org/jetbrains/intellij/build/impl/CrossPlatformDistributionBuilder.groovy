@@ -48,6 +48,7 @@ class CrossPlatformDistributionBuilder {
       buildContext.ant.copy(todir: "$zipDir/bin") {
         fileset(dir: "$macDistPath/bin") {
           include(name: "*.jnilib")
+          exclude(name: ".DS_Store")
         }
         mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
       }

@@ -118,7 +118,7 @@ class MacDmgBuilder {
     def suffix = jreArchivePath != null ? "" : "-no-jdk"
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir,
-                                               jreArchivePath != null ? "../jdk/Contents/Home/jre/bin/java" : null)
+                                               jreArchivePath != null ? "../jdk/Contents/Home/${buildContext.options.isBundledJreModular ? '' : 'jre/'}bin/java" : null)
     def installationArchives = [Pair.create(macZipPath, MacDistributionBuilder.getZipRoot(buildContext, customizer))]
     if (jreArchivePath != null) {
       installationArchives.add(Pair.create(jreArchivePath, ""))

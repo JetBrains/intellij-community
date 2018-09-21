@@ -112,4 +112,19 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
+
+  /**
+   * Specifies JRE version to be bundled with distributions.
+   */
+  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+
+  /**
+   * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
+   */
+  String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+
+  /**
+   *  If {@code true} then bundled JRE version is 9+
+   */
+  boolean isBundledJreModular = bundledJreVersion >= 9
 }
