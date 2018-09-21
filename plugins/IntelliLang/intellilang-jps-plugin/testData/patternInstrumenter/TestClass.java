@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.intellij.lang.annotations.Pattern;
 
 public class TestClass {
@@ -47,15 +48,15 @@ public class TestClass {
   }
 
   public static void capturedParam(String s) {
-    new TestClass().capturedParamHelper(s, "-", "-", "-");
+    new TestClass().capturedParamHelper(s, "-", 0, "-");
   }
 
-  private void capturedParamHelper(String s1, String s2, String s3, String s4) {
+  private void capturedParamHelper(String s1, String s2, int i3, String s4) {
     class Local {
       final String f;
 
       Local(@Pattern("\\d+") String s) {
-        f = s + s2 + s3 + s4;
+        f = s + s2 + i3 + s4;
       }
     }
 

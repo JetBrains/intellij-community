@@ -143,7 +143,7 @@ class PatternInstrumenterTest {
       fail("Method invocation should have failed")
     }
     catch (e: InvocationTargetException) {
-      val message = e.cause!!.message!!
+      val message = e.cause?.message
       assertThat(message).endsWith(" does not match pattern \\d+")
     }
   }
