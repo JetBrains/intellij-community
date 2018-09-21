@@ -404,7 +404,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
    * @deprecated do not use
    */
   @Deprecated
-  public final Object getRootImmediately() {
+  public final Node getRootImmediately() {
     if (!root.isValid()) {
       root.set(getValidRoot());
     }
