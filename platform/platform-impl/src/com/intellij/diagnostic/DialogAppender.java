@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ConcurrentList;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -27,17 +29,39 @@ public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
+  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
+  private final ConcurrentList<LoggingEvent> myEarlyEvents = ContainerUtil.createConcurrentList();
+
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
 
   @Override
   protected synchronized void append(@NotNull LoggingEvent event) {
-    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) ||
-        Main.isCommandLine() ||
-        !IdeaApplication.isLoaded()) {
-      return;
+    if (Main.isCommandLine()) return;
+
+    boolean isLoaded = IdeaApplication.isLoaded();
+    if (isLoaded) {
+      queuePendingEarlyEvents();
     }
 
+    if (!event.getLevel().isGreaterOrEqual(Level.ERROR)) return;
+
+    if (isLoaded) {
+      queueAppend(event);
+    } else {
+      if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+        myEarlyEvents.add(event);
+      }
+    }
+  }
+
+  private void queuePendingEarlyEvents() {
+    for (LoggingEvent earlyEvent : myEarlyEvents) {
+      queueAppend(earlyEvent);
+    }
+  }
+
+  private void queueAppend(@NotNull LoggingEvent event) {
     if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
       // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
