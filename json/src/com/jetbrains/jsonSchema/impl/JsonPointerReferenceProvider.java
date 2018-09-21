@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,69 +43,86 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
+
 /**
  * @author Irina.Chernushina on 3/31/2016.
  */
-public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
+public class JsonPointerReferenceProvider extends PsiReferenceProvider {
+  private final boolean myOnlyFilePart;
+
+  public JsonPointerReferenceProvider(boolean onlyFilePart) {
+    myOnlyFilePart = onlyFilePart;
+  }
 
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    if (!(element instanceof JsonStringLiteral)) return PsiReference.EMPTY_ARRAY;
     List<PsiReference> refs = ContainerUtil.newArrayList();
-    if (element instanceof JsonStringLiteral) {
-      String originalText = element.getText();
-      int hash = originalText.indexOf('#');
-      List<Pair<TextRange, String>> fragments = ((JsonStringLiteral)element).getTextFragments();
-      if (fragments.size() == 1) {
-        Pair<TextRange, String> fragment = fragments.get(0);
-        final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(fragment.second);
-        String id = splitter.getSchemaId();
-        if (id != null) {
-          ContainerUtil.addAll(refs, new FileReferenceSet(id, element, 1, null, true,
-                                                          true, new JsonFileType[] {JsonFileType.INSTANCE}) {
-            @Override
-            public boolean isEmptyPathAllowed() {
-              return true;
-            }
 
-            @Override
-            protected boolean isSoft() {
-              return true;
-            }
-
-            @Override
-            public FileReference createFileReference(TextRange range, int index, String text) {
-              if (hash != -1 && range.getStartOffset() >= hash) return null;
-              if (hash != -1 && range.getEndOffset() > hash) {
-                range = new TextRange(range.getStartOffset(), hash);
-                text = text.substring(0, text.indexOf('#'));
-              }
-              return new FileReference(this, range, index, text) {
-                @Override
-                protected Object createLookupItem(PsiElement candidate) {
-                  return FileInfoManager.getFileLookupItem(candidate);
-                }
-              };
-            }
-          }.getAllReferences());
-        }
-        String relativePath = JsonSchemaService.normalizeId(splitter.getRelativePath()).replace('\\', '/');
-        List<String> parts1 = StringUtil.split(relativePath, "/");
-        String[] strings = ContainerUtil.toArray(parts1, String[]::new);
-        List<String> parts2 = StringUtil.split(originalText.substring(hash + 1).replace('\\', '/'), "/");
-        if (strings.length == parts2.size()) {
-          int start = hash + 2;
-          for (int i = 0; i < parts2.size(); i++) {
-            int length = parts2.get(i).length();
-            if (i == parts2.size() - 1) length--;
-            refs.add(new JsonSchemaRefReference((JsonValue)element, new TextRange(start, start + length),
-                                                (id == null ? "" : id) + "#/" + StringUtil.join(strings, 0, i + 1, "/")));
-            start += length + 1;
-          }
+    List<Pair<TextRange, String>> fragments = ((JsonStringLiteral)element).getTextFragments();
+    if (fragments.size() != 1)  return PsiReference.EMPTY_ARRAY;
+    Pair<TextRange, String> fragment = fragments.get(0);
+    String originalText = element.getText();
+    int hash = originalText.indexOf('#');
+    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(fragment.second);
+    String id = splitter.getSchemaId();
+    if (id != null) {
+      addFileOrWebReferences(element, refs, hash, id);
+    }
+    if (!myOnlyFilePart) {
+      String relativePath = JsonSchemaService.normalizeId(splitter.getRelativePath()).replace('\\', '/');
+      List<String> parts1 = StringUtil.split(relativePath, "/");
+      String[] strings = ContainerUtil.toArray(parts1, String[]::new);
+      List<String> parts2 = StringUtil.split(originalText.substring(hash + 1).replace('\\', '/'), "/");
+      if (strings.length == parts2.size()) {
+        int start = hash + 2;
+        for (int i = 0; i < parts2.size(); i++) {
+          int length = parts2.get(i).length();
+          if (i == parts2.size() - 1) length--;
+          refs.add(new JsonSchemaRefReference((JsonValue)element, new TextRange(start, start + length),
+                                              (id == null ? "" : id) + "#/" + StringUtil.join(strings, 0, i + 1, "/")));
+          start += length + 1;
         }
       }
     }
     return refs.size() == 0 ? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(refs, PsiReference[]::new);
+  }
+
+  private void addFileOrWebReferences(@NotNull PsiElement element, List<PsiReference> refs, int hashIndex, String id) {
+    if (isHttpPath(id)) {
+      refs.add(new WebReference(element, new TextRange(1, hashIndex >= 0 ? hashIndex : id.length() + 1), id));
+      return;
+    }
+
+    ContainerUtil.addAll(refs, new FileReferenceSet(id, element, 1, null, true,
+                                                    true, new JsonFileType[]{JsonFileType.INSTANCE}) {
+      @Override
+      public boolean isEmptyPathAllowed() {
+        return true;
+      }
+
+      @Override
+      protected boolean isSoft() {
+        return true;
+      }
+
+      @Override
+      public FileReference createFileReference(TextRange range, int index, String text) {
+        if (hashIndex != -1 && range.getStartOffset() >= hashIndex) return null;
+        if (hashIndex != -1 && range.getEndOffset() > hashIndex) {
+          range = new TextRange(range.getStartOffset(), hashIndex);
+          text = text.substring(0, text.indexOf('#'));
+        }
+        return new FileReference(this, range, index, text) {
+          @Override
+          protected Object createLookupItem(PsiElement candidate) {
+            return FileInfoManager.getFileLookupItem(candidate);
+          }
+        };
+      }
+    }.getAllReferences());
   }
 
   private static class JsonSchemaRefReference extends JsonSchemaBaseReference<JsonValue> {
