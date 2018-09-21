@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -25,8 +26,8 @@ import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
-  public RecentFilesSEContributor(Project project) {
-    super(project);
+  public RecentFilesSEContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
   }
 
   @NotNull

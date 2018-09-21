@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -58,7 +59,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     List<SearchEverywhereContributor> serviceContributors = Arrays.asList(
       new TopHitSEContributor(project, initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
                               s -> mySearchEverywhereUI.getSearchField().setText(s)),
-      new RecentFilesSEContributor(project)
+      new RecentFilesSEContributor(project, GotoActionBase.getPsiContext(initEvent))
     );
 
     List<SearchEverywhereContributor> contributors = new ArrayList<>();
