@@ -114,7 +114,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     static class Reference extends ReferenceBase {
-        public Reference(XPathNodeTest element, ASTNode nameNode) {
+        Reference(XPathNodeTest element, ASTNode nameNode) {
             super(element, nameNode);
         }
 

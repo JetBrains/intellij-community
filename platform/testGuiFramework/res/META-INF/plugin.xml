@@ -9,6 +9,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
+    <extensionPoint qualifiedName="com.intellij.generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
+  </extensionPoints>
 
   <actions>
     <action class="com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction" id="gui.recorder.startStopRecAction"

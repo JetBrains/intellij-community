@@ -6,15 +6,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final CallMatcher PREDICATE_TEST = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterTypes("T");
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -38,7 +41,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         if (parameters.length == 1) {
           PsiParameter parameter = parameters[0];
           if (ExpressionUtils.isReferenceTo(expression, parameter)) {
-            processFunctionIdentity(lambda, (PsiClassType)type);
+            handleFunctionIdentity(lambda, (PsiClassType)type);
           }
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
@@ -48,10 +51,27 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
               handlePatternAsPredicate(lambda, parameter, call);
             }
           }
+          handlePatternNegate(lambda, parameter, expression);
         }
       }
 
-      private void processFunctionIdentity(PsiLambdaExpression lambda, PsiClassType type) {
+      private void handlePatternNegate(PsiLambdaExpression lambda, PsiParameter parameter, PsiExpression expression) {
+        if (!BoolUtils.isNegation(expression)) return;
+        PsiMethodCallExpression negated = ObjectUtils.tryCast(BoolUtils.getNegated(expression), PsiMethodCallExpression.class);
+        if (!PREDICATE_TEST.test(negated)) return;
+        if (!ExpressionUtils.isReferenceTo(negated.getArgumentList().getExpressions()[0], parameter)) return;
+
+        PsiExpression qualifier = negated.getMethodExpression().getQualifierExpression();
+        if (!ExpressionUtils.isSafelyRecomputableExpression(qualifier) || ExpressionUtils.isReferenceTo(qualifier, parameter)) return;
+
+        PsiType lambdaType = ExpectedTypeUtils.findExpectedType(lambda, false);
+        if (lambdaType == null || qualifier.getType() == null || !lambdaType.isAssignableFrom(qualifier.getType())) return;
+
+        registerProblem(lambda, "Pattern.negate()",
+                        ParenthesesUtils.getText(qualifier, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) + ".negate()");
+      }
+
+      private void handleFunctionIdentity(PsiLambdaExpression lambda, PsiClassType type) {
         PsiClass aClass = type.resolve();
         if (aClass == null || !CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) return;
         PsiType[] typeParameters = type.getParameters();
@@ -112,7 +132,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
     private final String myDisplayReplacement;
     private final String myReplacement;
 
-    public ReplaceWithFunctionCallFix(String replacement, String displayReplacement) {
+    ReplaceWithFunctionCallFix(String replacement, String displayReplacement) {
       myReplacement = replacement;
       myDisplayReplacement = displayReplacement;
     }

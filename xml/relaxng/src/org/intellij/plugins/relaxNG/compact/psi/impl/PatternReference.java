@@ -49,7 +49,7 @@ import java.util.Set;
 class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function<Define, ResolveResult>,
                                                                         LocalQuickFixProvider, EmptyResolveMessageProvider {
 
-  public PatternReference(RncRef ref) {
+  PatternReference(RncRef ref) {
     super(ref);
   }
 
@@ -168,7 +168,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   static class CreatePatternFix implements LocalQuickFix {
     private final PatternReference myReference;
 
-    public CreatePatternFix(PatternReference reference) {
+    CreatePatternFix(PatternReference reference) {
       myReference = reference;
     }
 

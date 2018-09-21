@@ -115,7 +115,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     private final String myOriginInfo;
     private final PsiMethod myPrototype;
 
-    public MixinedMethod(@NotNull PsiMethod method, String originInfo) {
+    MixinedMethod(@NotNull PsiMethod method, String originInfo) {
       super(method.getManager(), method, ObjectUtils.assertNotNull(method.getContainingClass()));
       myOriginInfo = originInfo;
       myPrototype = method;

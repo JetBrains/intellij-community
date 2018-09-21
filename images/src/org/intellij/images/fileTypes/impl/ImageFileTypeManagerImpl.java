@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -38,17 +39,17 @@ import java.util.Set;
 final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   private static final String IMAGE_FILE_TYPE_NAME = "Image";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
-  private static final UserFileType imageFileType = new ImageFileType();
+  private static final UserFileType IMAGE_FILE_TYPE = new ImageFileType();
 
   @Override
   public boolean isImage(@NotNull VirtualFile file) {
-    return file.getFileType() == imageFileType || file.getFileType() instanceof SvgFileType;
+    return file.getFileType() == IMAGE_FILE_TYPE || file.getFileType() instanceof SvgFileType;
   }
 
   @Override
   @NotNull
   public FileType getImageFileType() {
-    return imageFileType;
+    return IMAGE_FILE_TYPE;
   }
 
   public static final class ImageFileType extends UserBinaryFileType {
@@ -67,11 +68,11 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
     for (String format : ImageIO.getReaderFormatNames()) {
-      processed.add(format.toLowerCase());
+      processed.add(format.toLowerCase(Locale.ENGLISH));
     }
-    processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
+    processed.add(IfsUtil.ICO_FORMAT.toLowerCase(Locale.ENGLISH));
 
-    consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+    consumer.consume(IMAGE_FILE_TYPE, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
     consumer.consume(SvgFileType.INSTANCE, "svg");
   }
 }

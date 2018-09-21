@@ -13,12 +13,20 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 
 public interface RefManagerExtension<T> {
   @NotNull
   Key<T> getID();
 
+  @NotNull
+  default Collection<Language> getLanguages() {
+    return Collections.singleton(getLanguage());
+  };
+
+  @Deprecated
   @NotNull
   Language getLanguage();
 

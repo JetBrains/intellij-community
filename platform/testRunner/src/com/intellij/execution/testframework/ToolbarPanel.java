@@ -10,7 +10,7 @@ import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.execution.testframework.autotest.AdjustAutotestDelayActionGroup;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
-import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
@@ -134,24 +134,20 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     for (ToggleModelAction action : myActions) {
       action.setModel(model);
     }
-    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, new TestFrameworkPropertyListener<Boolean>() {
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, createComparatorPropertyListener(model), model, true);
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, createComparatorPropertyListener(model), model, true);
+  }
+
+  private static TestFrameworkPropertyListener<Boolean> createComparatorPropertyListener(TestFrameworkRunningModel model) {
+    return new TestFrameworkPropertyListener<Boolean>() {
       @Override
       public void onChanged(Boolean value) {
-        final AbstractTestTreeBuilder builder = model.getTreeBuilder();
+        final AbstractTestTreeBuilderBase builder = model.getTreeBuilder();
         if (builder != null) {
           builder.setTestsComparator(model);
         }
       }
-    }, model, true);
-    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, new TestFrameworkPropertyListener<Boolean>() {
-      @Override
-      public void onChanged(Boolean value) {
-        final AbstractTestTreeBuilder builder = model.getTreeBuilder();
-        if (builder != null) {
-          builder.setTestsComparator(model);
-        }
-      }
-    }, model, true);
+    };
   }
 
   @Override
@@ -198,7 +194,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     private TestFrameworkRunningModel myModel;
 
-    public SortByDurationAction(TestConsoleProperties properties) {
+    SortByDurationAction(TestConsoleProperties properties) {
       super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
             ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
             AllIcons.RunConfigurations.SortbyDuration, properties,

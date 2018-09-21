@@ -79,8 +79,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
 
     add(topPanel, BorderLayout.NORTH);
-    add(myViewerScrollPane, BorderLayout.CENTER);
-
+    add(createCenterPanel(), BorderLayout.CENTER);
 
     myToolBarGroup.addAll(createToolbarActions());
     myPopupMenuGroup.addAll(createPopupMenuActions());
@@ -120,6 +119,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   @Nullable
   protected JComponent createHeaderPanel() {
     return null;
+  }
+
+  @NotNull
+  protected JComponent createCenterPanel() {
+    return myViewerScrollPane;
   }
 
   @NotNull
@@ -223,7 +227,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   private class MyShowDiffAction extends DumbAwareAction {
-    public MyShowDiffAction() {
+    MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
 

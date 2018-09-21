@@ -189,7 +189,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @throws VcsException if there is a problem with running git
    */
   private void unindex(final VirtualFile root, final List<FilePath> files, boolean toUnversioned) throws VcsException {
-    GitFileUtils.delete(myProject, root, files, "--cached", "-f");
+    GitFileUtils.deletePaths(myProject, root, files, "--cached", "-f");
 
     if (toUnversioned) {
       final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);

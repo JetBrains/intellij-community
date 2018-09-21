@@ -85,7 +85,7 @@ public class MergeWindow {
     @NotNull private final MergeRequestProcessor myProcessor;
     @NotNull private final Wrapper mySouthPanel = new Wrapper();
 
-    public MyDialog(@NotNull MergeRequestProcessor processor) {
+    MyDialog(@NotNull MergeRequestProcessor processor) {
       super(processor.getProject(), true);
       myProcessor = processor;
     }
@@ -181,7 +181,7 @@ public class MergeWindow {
   }
 
   private static class MyPanel extends JPanel {
-    public MyPanel(@NotNull JComponent content) {
+    MyPanel(@NotNull JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
     }

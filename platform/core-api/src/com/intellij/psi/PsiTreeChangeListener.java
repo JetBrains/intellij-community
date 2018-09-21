@@ -20,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * Listener for receiving notifications about all changes in the PSI tree of a project.
+ * Listener for receiving notifications about all changes in the PSI tree of a project.<p></p>
+ *
+ * Try to avoid processing PSI events at all cost! See {@link PsiTreeChangeEvent} documentation for more details.
  *
  * @see PsiManager#addPsiTreeChangeListener(PsiTreeChangeListener)
  * @see PsiManager#removePsiTreeChangeListener(PsiTreeChangeListener)

@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
   private static class JsonSchemaRefReference extends JsonSchemaBaseReference<JsonValue> {
     private final String myFullPath;
 
-    public JsonSchemaRefReference(JsonValue element, TextRange textRange, String curPath) {
+    JsonSchemaRefReference(JsonValue element, TextRange textRange, String curPath) {
       super(element, textRange);
       myFullPath = curPath;
     }
@@ -178,22 +179,30 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       int index = text.indexOf(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
       if (index >= 0) {
         String part = text.substring(0, index);
-        text = part.endsWith("#/") ? part : StringUtil.trimEnd(part, '/');
+        text = prepare(part);
+        String prefix = null;
         PsiElement element = resolveForPath(text, true);
+        int indexOfSlash = part.lastIndexOf('/');
+        if (indexOfSlash != -1 && indexOfSlash < text.length() - 1 && indexOfSlash < index) {
+          prefix = text.substring(indexOfSlash + 1);
+          element = resolveForPath(prepare(text.substring(0, indexOfSlash)), true);
+        }
+        String finalPrefix = prefix;
         if (element instanceof JsonObject) {
           return ((JsonObject)element).getPropertyList().stream()
-            .filter(p -> p.getValue() instanceof JsonContainer)
-            .map(p -> LookupElementBuilder.create(p)
+            .filter(p -> p.getValue() instanceof JsonContainer && (finalPrefix == null || p.getName().startsWith(finalPrefix)))
+            .map(p -> LookupElementBuilder.create(p, JsonPointerUtil.escapeForJsonPointer(p.getName()))
             .withIcon(getIcon(p.getValue()))).toArray();
         }
         else if (element instanceof JsonArray) {
           List<JsonValue> list = ((JsonArray)element).getValueList();
-          int max = list.size();
-          Object[] values = new Object[max];
-          for (int i = 0; i < max; i++) {
-            values[i] = LookupElementBuilder.create(String.valueOf(i)).withIcon(getIcon(list.get(i)));
+          List<Object> values = ContainerUtil.newLinkedList();
+          for (int i = 0; i < list.size(); i++) {
+            String stringValue = String.valueOf(i);
+            if (prefix != null && !stringValue.startsWith(prefix)) continue;
+            values.add(LookupElementBuilder.create(stringValue).withIcon(getIcon(list.get(i))));
           }
-          return values;
+          return ContainerUtil.toArray(values, Object[]::new);
         }
       }
 
@@ -209,5 +218,10 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       }
       return AllIcons.Nodes.Property;
     }
+  }
+
+  @NotNull
+  private static String prepare(String part) {
+    return part.endsWith("#/") ? part : StringUtil.trimEnd(part, '/');
   }
 }

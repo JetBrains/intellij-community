@@ -9,7 +9,7 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -132,24 +132,21 @@ fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = fals
 
   val result = AsyncPromise<List<T>>()
   val latch = AtomicInteger(size)
-  // https://stackoverflow.com/a/6060887
-  val list = if (ignoreErrors) ContainerUtil.createConcurrentList<T>() else ContainerUtil.createConcurrentList<T>(Collections.nCopies(size, null))
+  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableSmartList())
 
   fun arrive() {
     if (latch.decrementAndGet() == 0) {
-      result.setResult(list)
+      if (ignoreErrors) {
+        list.removeIf { it == null }
+      }
+      @Suppress("UNCHECKED_CAST")
+      result.setResult(list as List<T>)
     }
   }
 
   for ((i, promise) in this.withIndex()) {
     promise.onSuccess {
-      if (ignoreErrors) {
-        list.add(it)
-      }
-      else {
-        list.set(i, it)
-      }
-
+      list.set(i, it)
       arrive()
     }
     promise.onError {

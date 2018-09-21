@@ -87,7 +87,7 @@ public class DfaOptionalSupport {
     private final String myTargetMethodName;
     private final boolean myClearArguments;
 
-    public ReplaceOptionalCallFix(final String targetMethodName, boolean clearArguments) {
+    ReplaceOptionalCallFix(final String targetMethodName, boolean clearArguments) {
       myTargetMethodName = targetMethodName;
       myClearArguments = clearArguments;
     }

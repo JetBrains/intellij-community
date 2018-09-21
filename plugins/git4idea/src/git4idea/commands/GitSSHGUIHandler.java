@@ -87,12 +87,13 @@ public class GitSSHGUIHandler {
     CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
     if (credentials != null && !resetPassword) {
-      return credentials.getPasswordAsString();
+      String password = credentials.getPasswordAsString();
+      if (password != null && !password.isEmpty()) return password;
     }
     if (ignoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(project, GitBundle.getString("ssh.ask.passphrase.title"),
                                               GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
-                                              newAttributes, resetPassword, lastError);
+                                              newAttributes, true, lastError);
   }
 
   @NotNull
@@ -182,15 +183,16 @@ public class GitSSHGUIHandler {
     CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
     CredentialAttributes newAttributes = passwordCredentialAttributes(username);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
-    if (credentials != null) {
-      return credentials.getPasswordAsString();
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null) return password;
     }
     if (myIgnoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(myProject,
                                               GitBundle.getString("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),
                                               newAttributes,
-                                              resetPassword,
+                                              true,
                                               error);
   }
 
@@ -253,7 +255,7 @@ public class GitSSHGUIHandler {
      */
     private final String myUserName;
 
-    public GitSSHKeyboardInteractiveDialog(String name,
+    GitSSHKeyboardInteractiveDialog(String name,
                                            final int numPrompts,
                                            final String instruction,
                                            final Vector<String> prompt,

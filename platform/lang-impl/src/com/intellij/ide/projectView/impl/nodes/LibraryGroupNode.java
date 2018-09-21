@@ -45,12 +45,8 @@ import java.util.List;
 
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
-  public LibraryGroupNode(Project project, LibraryGroupElement value, ViewSettings viewSettings) {
+  public LibraryGroupNode(Project project, @NotNull LibraryGroupElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public LibraryGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (LibraryGroupElement)value, viewSettings);
   }
 
   @Override

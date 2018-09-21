@@ -125,6 +125,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   fun getModifiedClasses(): List<ModifiedClass> = modifiedClasses
 
   private fun findIconClass(dir: Path): String? {
+    if (!dir.toFile().exists()) return null
     Files.newDirectoryStream(dir).use { stream ->
       for (it in stream) {
         val name = it.fileName.toString()

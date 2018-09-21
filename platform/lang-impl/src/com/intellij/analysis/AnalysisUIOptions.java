@@ -132,7 +132,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   private abstract static class InspectionResultsViewToggleAction extends ToggleAction {
     @NotNull private final InspectionResultsView myView;
 
-    public InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
+    InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
                                              @NotNull String text,
                                              @NotNull String description,
                                              @NotNull Icon icon) {

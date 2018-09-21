@@ -28,6 +28,7 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
@@ -73,6 +74,10 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+  @get:Rule
+  val testRootPath: TemporaryFolder by lazy {
+    TemporaryFolder()
+  }
 
   fun robot() = guiTestRule.robot()
 
@@ -112,10 +117,21 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
+                      needToKeepDialog: Boolean = false,
+                      func: JDialogFixture.() -> Unit) {
+    if (isMac()) dialog(title = "Preferences", func = func)
+    else dialog(title = "Settings", func = func)
+  }
+
   fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
     val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
     func(pluginDialog)
     if (!needToKeepDialog) pluginDialog.waitTillGone()
+  }
+
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+    return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
   /**
@@ -245,6 +261,8 @@ open class GuiTestCase {
   fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
     func(this.editor())
   }
+
+  fun JDialogFixture.editor(func: EditorFixture.() -> Unit) = func(this.editor)
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**

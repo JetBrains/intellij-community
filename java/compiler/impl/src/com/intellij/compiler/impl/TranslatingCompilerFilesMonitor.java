@@ -18,6 +18,7 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -52,6 +54,7 @@ import java.util.List;
  * 2. corresponding source file has been deleted
  */
 public class TranslatingCompilerFilesMonitor implements BulkFileListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   private final BuildManager myBuildManager;
 
   public TranslatingCompilerFilesMonitor(MessageBus bus, BuildManager buildManager) {
@@ -119,7 +122,10 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
     Collection<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
-        collectPaths(event.getFile(), filesDeleted);
+        final VirtualFile file = event.getFile();
+        if (file != null) {
+          collectPaths(file, filesDeleted);
+        }
       }
     }
     notifyFilesDeleted(filesDeleted);
@@ -127,8 +133,8 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    Collection<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-    Collection<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (VFileEvent event : events) {
       if (event instanceof VFilePropertyChangeEvent) {
         handlePropChange((VFilePropertyChangeEvent)event, filesDeleted, filesChanged);
@@ -140,19 +146,29 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
         }
       }
     }
-    notifyFilesChanged(filesChanged);
+
+    // If a file name differs ony in case, on case-insensitive file systems such name still denotes the same file.
+    // In this situation filesDeleted and filesChanged sets will contain paths wchich are different only in case.
+    // Thus the order in which BuildManager is notified, is important:
+    // first deleted paths notification and only then changed paths notification
     notifyFilesDeleted(filesDeleted);
+    notifyFilesChanged(filesChanged);
   }
 
   private static void handlePropChange(@NotNull VFilePropertyChangeEvent event,
                                        @NotNull Collection<? super File> filesDeleted,
                                        @NotNull Collection<? super File> filesChanged) {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      final String oldName = (String)event.getOldValue();
+      final String newName = (String)event.getNewValue();
+      if (Comparing.equal(oldName, newName)) {
+        // Old and new names may actually be the same: sometimes such events are sent by VFS
+        return;
+      }
       final VirtualFile eventFile = event.getFile();
       if (isInContentOfOpenedProject(eventFile)) {
         final VirtualFile parent = eventFile.getParent();
         if (parent != null) {
-          final String oldName = (String)event.getOldValue();
           final String root = parent.getPath() + "/" + oldName;
           if (eventFile.isDirectory()) {
             VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {

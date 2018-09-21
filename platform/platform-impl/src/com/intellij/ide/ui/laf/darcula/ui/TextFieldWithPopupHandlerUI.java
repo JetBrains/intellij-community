@@ -432,7 +432,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   public int viewToModel(JTextComponent tc, Point pt, Position.Bias[] biasReturn) {
-    return getVisibleEditorRect().contains(pt) ? super.viewToModel(tc, pt, biasReturn) : -1;
+    return icons.values().stream().anyMatch(p -> p.bounds.contains(pt)) ? -1 : super.viewToModel(tc, pt, biasReturn);
   }
 
   /**
@@ -659,8 +659,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   public static class MarginAwareCaret extends BasicCaret {
     @Override
     protected void adjustVisibility(Rectangle r) {
-      r.x -= getComponent().getMargin().left;
-      r.width += getComponent().getMargin().left;
+      Insets m = getComponent().getMargin();
+      r.x -= m.left;
+      r.width += m.left;
       super.adjustVisibility(r);
     }
   }
@@ -671,8 +672,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (e.getID() == MouseEvent.MOUSE_DRAGGED && !getComponent().getText().contains("\n")) {
         boolean consumed = e.isConsumed();
         e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | e.getModifiersEx(), e.getX(),
-                           getComponent().getHeight() / 2,
-                           e.getClickCount(), e.isPopupTrigger(), e.getButton());
+                           getComponent().getHeight() / 2, e.getClickCount(), e.isPopupTrigger(), e.getButton());
         if (consumed) e.consume();
       }
       super.mouseDragged(e);

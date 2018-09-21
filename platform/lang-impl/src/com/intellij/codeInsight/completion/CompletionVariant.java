@@ -178,7 +178,7 @@ public class CompletionVariant {
     public Object myCompletion;
     public TailType myTailType;
 
-    public CompletionVariantItem(Object completion, TailType tailtype){
+    CompletionVariantItem(Object completion, TailType tailtype){
       myCompletion = completion;
       myTailType = tailtype;
     }

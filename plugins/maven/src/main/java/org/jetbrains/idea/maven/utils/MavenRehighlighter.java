@@ -116,7 +116,7 @@ public class MavenRehighlighter {
     private final Project myProject;
     private final MavenProject myMavenProject;
 
-    public MyUpdate(Project project, MavenProject mavenProject) {
+    MyUpdate(Project project, MavenProject mavenProject) {
       super(project);
       myProject = project;
       myMavenProject = mavenProject;

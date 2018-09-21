@@ -333,7 +333,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @NotNull Side mySide;
 
-    public MyVisibleAreaListener(@NotNull Side side) {
+    MyVisibleAreaListener(@NotNull Side side) {
       mySide = side;
     }
 

@@ -264,7 +264,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     private final int myNodeId;
     private final int myVisibleRow;
 
-    public RowInfoImpl(int nodeId, int visibleRow) {
+    RowInfoImpl(int nodeId, int visibleRow) {
       myNodeId = nodeId;
       myVisibleRow = visibleRow;
     }

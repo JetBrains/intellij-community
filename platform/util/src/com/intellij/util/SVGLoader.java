@@ -267,7 +267,7 @@ public class SVGLoader {
    * A workaround for https://issues.apache.org/jira/browse/BATIK-1220
    */
   private static class MySAXSVGDocumentFactory extends SAXSVGDocumentFactory {
-    public MySAXSVGDocumentFactory(String parser) {
+    MySAXSVGDocumentFactory(String parser) {
       super(parser);
       implementation = new MySVGDOMImplementation();
     }

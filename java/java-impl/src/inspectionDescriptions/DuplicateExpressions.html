@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports multiple equivalent occurrences of the same expression within a method (or constructor, or class initializer)
+if the result of the expression can be reused.
+<!-- tooltip end -->
+<p>
+  The expression is reported if it's free of side effects and its result is always the same (in terms of <code>Object.equals()</code>).
+  The examples of such expressions are <code>a + b</code>, <code>Math.max(a, b)</code>, <code>a.equals(b)</code>,
+  <code>s.substring(a,b)</code>. To make sure the result is always the same, it's verified that the variables used in the expression don't
+  change their values between the occurrences of the expression.</p>
+<p>
+  Such expressions may contain methods of immutable classes like <code>String</code>, <code>BigDecimal</code>, etc,
+  and of utility classes like <code>Objects</code>, <code>Math</code> (except <code>random()</code>).
+  The well-known methods, such as <code>Object.equals()</code>, <code>Object.hashCode()</code>, <code>Object.toString()</code>,
+  <code>Comparable.compareTo()</code>, and <code>Comparator.compare()</code> are OK as well because they normally don't have
+  any observable side effects.
+</p>
+
+<p><small>New in 2018.3</small></p>
+</body>
+</html>

@@ -1977,12 +1977,16 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();
       waitUntilIndicesAreInitialized();
 
-      ApplicationManager.getApplication().runReadAction(this::processFilesInReadAction);
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        processFilesInReadAction();
+      } else {
+        processFilesInReadActionWithYieldingToWriteAction();
+      }
     }
 
     void ensureUpToDateAsync() {
       if (myVfsEventsMerger.getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
-        myVfsEventsExecutor.submit(this::processFilesInReadActionWithYieldingToWriteAction);
+        myVfsEventsExecutor.submit(this::scheduledEventProcessingInReadActionWithYieldingToWriteAction);
 
         if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
           Runnable startDumbMode = () -> {
@@ -2053,12 +2057,16 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     private void processFilesInReadActionWithYieldingToWriteAction() {
-      try {
-        while (myVfsEventsMerger.hasChanges()) {
-          if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::processFilesInReadAction)) {
-            ProgressIndicatorUtils.yieldToPendingWriteActions();
-          }
+      while (myVfsEventsMerger.hasChanges()) {
+        if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::processFilesInReadAction)) {
+          ProgressIndicatorUtils.yieldToPendingWriteActions();
         }
+      }
+    }
+
+    private void scheduledEventProcessingInReadActionWithYieldingToWriteAction() {
+      try {
+        processFilesInReadActionWithYieldingToWriteAction();
       }
       finally {
         myScheduledVfsEventsWorkers.decrementAndGet();

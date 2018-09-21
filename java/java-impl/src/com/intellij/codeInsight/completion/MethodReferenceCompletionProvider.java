@@ -104,7 +104,7 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
     private final PsiMethod myMethod;
     private final PsiElement myRefPlace;
 
-    public JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace) {
+    JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace) {
       super(method, method.isConstructor() ? "new" : method.getName());
       myMethod = method;
       myRefPlace = refPlace;

@@ -180,7 +180,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   private static class MyStep extends StepAdapter {
     final AbstractMemberSelectionPanel myPanel;
 
-    public MyStep(AbstractMemberSelectionPanel panel) {
+    MyStep(AbstractMemberSelectionPanel panel) {
       myPanel = panel;
     }
 

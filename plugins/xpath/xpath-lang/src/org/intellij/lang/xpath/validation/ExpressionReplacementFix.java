@@ -29,11 +29,11 @@ class ExpressionReplacementFix implements IntentionAction {
   private final String myDisplay;
   private final XPathExpression myExpr;
 
-  public ExpressionReplacementFix(String replacement, XPathExpression expr) {
+  ExpressionReplacementFix(String replacement, XPathExpression expr) {
     this(replacement, replacement, expr);
   }
 
-  public ExpressionReplacementFix(String replacement, String display, XPathExpression expression) {
+  ExpressionReplacementFix(String replacement, String display, XPathExpression expression) {
     myReplacement = replacement;
     myDisplay = display;
     myExpr = expression;

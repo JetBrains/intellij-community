@@ -27,18 +27,20 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  public ComponentTreeStructure(@NotNull final GuiEditor editor){
+  ComponentTreeStructure(@NotNull final GuiEditor editor){
     myRootElement = new ComponentTreeStructureRoot();
     myEditor = editor;
   }
 
+  @NotNull
   @Override
   public Object getRootElement(){
     return myRootElement;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(final Object element){
+  public Object[] getChildElements(@NotNull final Object element){
     if(element==myRootElement){
       ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer=myEditor.getRootContainer();
@@ -90,7 +92,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   }
 
   @Override
-  public Object getParentElement(final Object element){
+  public Object getParentElement(@NotNull final Object element){
     if (element instanceof ComponentTreeStructureRoot) {
       return null;
     }
@@ -121,7 +123,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(final Object element,final NodeDescriptor parentDescriptor){
+  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor){
     if(element==myRootElement){
       return new RootDescriptor(parentDescriptor,myRootElement);
     }

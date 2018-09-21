@@ -21,7 +21,7 @@ class ExternalToolContentExternalizer implements ContentExternalizer {
   private final int myIndex;
   @NonNls public static final String STD_PREFIX = "IJDiff";
 
-  public ExternalToolContentExternalizer(DiffRequest request, int index) {
+  ExternalToolContentExternalizer(DiffRequest request, int index) {
     myRequest = request;
     myIndex = index;
   }

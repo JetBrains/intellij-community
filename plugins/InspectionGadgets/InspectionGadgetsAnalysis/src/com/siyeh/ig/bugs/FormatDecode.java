@@ -306,7 +306,7 @@ class FormatDecode {
 
   private static class AllValidator extends Validator {
 
-    public AllValidator() {
+    AllValidator() {
       super("");
     }
 
@@ -318,7 +318,7 @@ class FormatDecode {
 
   private static class DateValidator extends Validator {
 
-    public DateValidator(String specifier) {
+    DateValidator(String specifier) {
       super(specifier);
     }
 
@@ -335,7 +335,7 @@ class FormatDecode {
 
   private static class CharValidator extends Validator {
 
-    public CharValidator(String specifier) {
+    CharValidator(String specifier) {
       super(specifier);
     }
 
@@ -354,7 +354,7 @@ class FormatDecode {
 
   private static class IntValidator extends Validator {
 
-    public IntValidator(String specifier) {
+    IntValidator(String specifier) {
       super(specifier);
     }
 
@@ -375,7 +375,7 @@ class FormatDecode {
 
   private static class FloatValidator extends Validator {
 
-    public FloatValidator(String specifier) {
+    FloatValidator(String specifier) {
       super(specifier);
     }
 
@@ -392,7 +392,7 @@ class FormatDecode {
 
   private static class FormattableValidator extends Validator {
 
-    public FormattableValidator(String specifier) {
+    FormattableValidator(String specifier) {
       super(specifier);
     }
 
@@ -405,7 +405,7 @@ class FormatDecode {
   private static class MultiValidator extends Validator {
     private final Set<Validator> validators = new HashSet<>(3);
 
-    public MultiValidator(String specifier) {
+    MultiValidator(String specifier) {
       super(specifier);
     }
 
@@ -428,7 +428,7 @@ class FormatDecode {
 
     private final String mySpecifier;
 
-    public Validator(String specifier) {
+    Validator(String specifier) {
       mySpecifier = specifier;
     }
 

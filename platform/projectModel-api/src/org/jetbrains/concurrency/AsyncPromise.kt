@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
@@ -47,7 +48,14 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
     val whenComplete = f.whenComplete { value, exception ->
-      if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) handler.accept(value)
+      if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
+        try {
+          handler.accept(value)
+        }
+        catch (e: Throwable) {
+          logger<AsyncPromise<*>>().error(e)
+        }
+      }
     }
     return AsyncPromise(whenComplete)
   }

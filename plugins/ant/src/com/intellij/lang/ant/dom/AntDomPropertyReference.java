@@ -173,7 +173,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     private final PsiElement myElement;
     private final PropertiesProvider myProvider;
 
-    public MyResolveResult(final PsiElement element, PropertiesProvider provider) {
+    MyResolveResult(final PsiElement element, PropertiesProvider provider) {
       myElement = element;
       myProvider = provider;
     }

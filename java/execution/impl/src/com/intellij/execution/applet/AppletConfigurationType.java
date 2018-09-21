@@ -7,13 +7,13 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.LazyUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
 public final class AppletConfigurationType extends SimpleConfigurationType {
   AppletConfigurationType() {
     super("Applet", ExecutionBundle.message("applet.configuration.name"), ExecutionBundle.message("applet.configuration.description"),
-          LazyUtil.create(() -> AllIcons.RunConfigurations.Applet));
+          NotNullLazyValue.createValue(() -> AllIcons.RunConfigurations.Applet));
   }
 
   @Override
@@ -25,5 +25,10 @@ public final class AppletConfigurationType extends SimpleConfigurationType {
   @Override
   public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new AppletConfiguration(project, this);
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Applet";
   }
 }

@@ -1571,7 +1571,7 @@ public class DiffUtil {
   //
 
   @Nullable
-  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {
+  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NotNull @NonNls String dataId) {
     if (provider != null) {
       Object data = provider.getData(dataId);
       if (data != null) return data;
@@ -1662,7 +1662,7 @@ public class DiffUtil {
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;
 
-    public SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

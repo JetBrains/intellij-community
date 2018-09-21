@@ -34,7 +34,7 @@ private val MACRO_PATTERN = Pattern.compile("(\\$[^$]*\\$)")
  * If componentManager not specified, storage will not add file tracker
  */
 open class StateStorageManagerImpl(private val rootTagName: String,
-                                   override final val macroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                   final override val macroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                    override val componentManager: ComponentManager? = null,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager)) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
@@ -131,7 +131,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   @Suppress("CAST_NEVER_SUCCEEDS")
-  override final fun getStateStorage(storageSpec: Storage): StateStorage = getOrCreateStorage(
+  final override fun getStateStorage(storageSpec: Storage): StateStorage = getOrCreateStorage(
     storageSpec.path,
     storageSpec.roamingType,
     storageSpec.storageClass.java,
@@ -337,7 +337,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun beforeElementLoaded(element: Element) {
   }
 
-  override final fun rename(path: String, newName: String) {
+  final override fun rename(path: String, newName: String) {
     storageLock.write {
       val storage = getOrCreateStorage(collapseMacros(path), RoamingType.DEFAULT) as FileBasedStorage
 
@@ -417,7 +417,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return normalizeFileSpec(result)
   }
 
-  override final fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
+  final override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
     return getOrCreateStorage(oldStorageSpec, RoamingType.DEFAULT)
   }

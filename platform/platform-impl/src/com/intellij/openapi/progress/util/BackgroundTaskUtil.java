@@ -45,6 +45,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
 
+  @NotNull
+  @CalledInAwt
+  public static ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
+                                                    @Nullable Runnable onSlowAction) {
+    return executeAndTryWait(backgroundTask, onSlowAction, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
+  }
+
   /**
     * Executor to perform <i>possibly</i> long operation on pooled thread.
     * If computation was performed within given time frame,

@@ -90,7 +90,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataId) {
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
       for(AbstractTreeNode node: selected) {
@@ -138,7 +138,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   private static class MyDeleteProvider implements DeleteProvider {
     private final PsiElement[] myElements;
 
-    public MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
+    MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
       myElements = collectFormPsiElements(selected);
     }
 

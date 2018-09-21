@@ -114,7 +114,7 @@ public class ReturnNullInspection extends BaseInspection {
 
     private final String myTypeText;
 
-    public ReplaceWithEmptyOptionalFix(String typeText) {
+    ReplaceWithEmptyOptionalFix(String typeText) {
       myTypeText = typeText;
     }
 

@@ -31,23 +31,24 @@ import java.util.Map;
 public interface CreateFromTemplateHandler {
   ExtensionPointName<CreateFromTemplateHandler> EP_NAME = ExtensionPointName.create("com.intellij.createFromTemplateHandler");
 
-  boolean handlesTemplate(FileTemplate template);
+  boolean handlesTemplate(@NotNull FileTemplate template);
 
   @NotNull
-  PsiElement createFromTemplate(Project project,
-                                PsiDirectory directory,
+  PsiElement createFromTemplate(@NotNull Project project,
+                                @NotNull PsiDirectory directory,
                                 String fileName,
-                                FileTemplate template,
-                                String templateText,
+                                @NotNull FileTemplate template,
+                                @NotNull String templateText,
                                 @NotNull Map<String, Object> props) throws IncorrectOperationException;
 
-  boolean canCreate(PsiDirectory[] dirs);
+  boolean canCreate(@NotNull PsiDirectory[] dirs);
 
   boolean isNameRequired();
 
+  @NotNull
   String getErrorMessage();
 
-  void prepareProperties(Map<String, Object> props);
+  void prepareProperties(@NotNull Map<String, Object> props);
 
   @NotNull
   default String commandName(@NotNull FileTemplate template) {

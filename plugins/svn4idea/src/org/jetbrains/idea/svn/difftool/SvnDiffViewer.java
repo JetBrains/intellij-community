@@ -291,7 +291,7 @@ public class SvnDiffViewer implements DiffViewer {
   //
 
   private class ToggleHidePropertiesAction extends ToggleAction implements DumbAware {
-    public ToggleHidePropertiesAction() {
+    ToggleHidePropertiesAction() {
       ActionUtil.copyFrom(this, "Subversion.TogglePropertiesDiff");
     }
 
@@ -337,7 +337,7 @@ public class SvnDiffViewer implements DiffViewer {
   private class MyFocusListener extends FocusAdapter {
     private final boolean myValue;
 
-    public MyFocusListener(boolean value) {
+    MyFocusListener(boolean value) {
       myValue = value;
     }
 
@@ -350,7 +350,7 @@ public class SvnDiffViewer implements DiffViewer {
   private static class MySplitter extends Splitter {
     @NotNull private final String myLabelText;
 
-    public MySplitter(@NotNull String text) {
+    MySplitter(@NotNull String text) {
       super(true);
       myLabelText = text;
     }

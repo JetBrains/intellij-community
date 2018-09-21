@@ -68,7 +68,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   private Document myPatternDocument; // accessed in EDT
   private long myInitialDocumentStamp; // accessed in EDT
 
-  public PreviewDiffPanel(@NotNull ExtractMethodProcessor processor, PreviewTree tree) {
+  PreviewDiffPanel(@NotNull ExtractMethodProcessor processor, PreviewTree tree) {
     myProject = processor.getProject();
     myTree = tree;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
@@ -457,7 +457,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     final PsiElement myBefore;
     final PsiElement myAfter;
 
-    public Bounds(@NotNull PsiElement start, @NotNull PsiElement end) {
+    Bounds(@NotNull PsiElement start, @NotNull PsiElement end) {
       myParent = start.getParent();
       assert myParent != null : "bounds' parent is null";
       myBefore = PsiTreeUtil.skipSiblingsBackward(start, SKIP_TYPES);

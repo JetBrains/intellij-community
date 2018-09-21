@@ -94,7 +94,7 @@ public abstract class ShowChangeMarkerAction extends DumbAwareAction {
     @NotNull private final LineStatusTracker<?> tracker;
     @NotNull private final Editor editor;
 
-    public Data(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
+    Data(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
       this.tracker = tracker;
       this.editor = editor;
     }

@@ -571,7 +571,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
     private final ListCellRenderer<Object> myRenderer;
 
-    public ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
       myRenderer = renderer;
     }
 

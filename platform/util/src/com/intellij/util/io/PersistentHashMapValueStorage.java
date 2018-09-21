@@ -224,12 +224,12 @@ public class PersistentHashMapValueStorage {
   }
 
   void checkAppendsAllowed(int previouslyAccumulatedChunkSize) {
-    assert previouslyAccumulatedChunkSize == 0 || !myOptions.myHasNoChunks;
+    if (previouslyAccumulatedChunkSize != 0 && myOptions.myHasNoChunks) throw new AssertionError();
   }
 
   private long doAppendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
-    assert allowedToCompactChunks();
-    assert prevChunkAddress == 0 || !myOptions.myHasNoChunks;
+    if (!allowedToCompactChunks()) throw new AssertionError();
+    if (prevChunkAddress != 0 && myOptions.myHasNoChunks) throw new AssertionError();
     long result = mySize; // volatile read
     final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null ? null : ourAppendersCache.get(myPath);
 

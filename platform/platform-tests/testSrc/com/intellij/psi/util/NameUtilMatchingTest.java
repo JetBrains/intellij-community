@@ -51,6 +51,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("nt", "NameUtilTest");
     assertMatches("repl map", "ReplacePathToMacroMap");
     assertMatches("replmap", "ReplacePathToMacroMap");
+    assertMatches("CertificateEx", "CertificateEncodingException");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
   }
   

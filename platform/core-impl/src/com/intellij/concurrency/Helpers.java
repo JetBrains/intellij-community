@@ -21,7 +21,10 @@ package com.intellij.concurrency;
  * explained at http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+import javax.annotation.Generated;
 import java.util.Collection;
+
+@Generated("to turn off inspections")
 
 /** Shared implementation code for java.util.concurrent. */
 class Helpers {

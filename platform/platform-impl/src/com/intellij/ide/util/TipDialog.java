@@ -98,7 +98,7 @@ public class TipDialog extends DialogWrapper {
   private class OpenTipsAction extends AbstractAction {
     private static final String LAST_OPENED_TIP_PATH = "last.opened.tip.path";
 
-    public OpenTipsAction() {
+    OpenTipsAction() {
       super(IdeBundle.message("action.open.tip"));
     }
 
@@ -127,7 +127,7 @@ public class TipDialog extends DialogWrapper {
   }
 
   private class PreviousTipAction extends AbstractAction {
-    public PreviousTipAction() {
+    PreviousTipAction() {
       super(IdeBundle.message("action.previous.tip"));
     }
 
@@ -139,7 +139,7 @@ public class TipDialog extends DialogWrapper {
   }
 
   private class NextTipAction extends AbstractAction {
-    public NextTipAction() {
+    NextTipAction() {
       super(IdeBundle.message("action.next.tip"));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
       putValue(DialogWrapper.FOCUSED_ACTION, Boolean.TRUE); // myPreferredFocusedComponent

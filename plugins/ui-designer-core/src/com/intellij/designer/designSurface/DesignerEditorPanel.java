@@ -1077,7 +1077,7 @@ public abstract class DesignerEditorPanel extends JPanel
     private String myTitle;
     private boolean myIsAdded;
 
-    public FixableMessageAction() {
+    FixableMessageAction() {
       myActionPanel.getActionGroup().add(myActionGroup);
 
       Presentation presentation = getTemplatePresentation();

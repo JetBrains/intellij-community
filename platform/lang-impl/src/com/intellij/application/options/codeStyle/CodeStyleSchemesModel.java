@@ -176,7 +176,9 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
-  public void fireSchemeChanged(CodeStyleScheme scheme) {
+  void updateScheme(CodeStyleScheme scheme) {
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    clonedSettings.copyFrom(scheme.getCodeStyleSettings());
     myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 
@@ -276,7 +278,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   private class ProjectScheme extends CodeStyleSchemeImpl {
-    public ProjectScheme() {
+    ProjectScheme() {
       super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
       CodeStyleSettings perProjectSettings = getProjectSettings().getMainProjectCodeStyle();
       if (perProjectSettings != null) setCodeStyleSettings(perProjectSettings);

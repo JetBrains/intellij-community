@@ -379,7 +379,7 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   private static class MyTextAttributesDescription extends TextAttributesDescription {
-    public MyTextAttributesDescription(final String name,
+    MyTextAttributesDescription(final String name,
                                        final String group,
                                        final TextAttributes attributes,
                                        final TextAttributesKey type) {

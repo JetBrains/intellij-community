@@ -143,8 +143,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    IdeMenuBar.installAppMenuIfNeeded(this);
-
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
       protected Component getDefaultComponentImpl(Container focusCycleRoot) {

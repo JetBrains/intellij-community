@@ -402,10 +402,8 @@ public class TreeState implements JDOMExternalizable {
 
     @Override
     public ActionCallback expand(TreePath treePath) {
-      Object userObject = TreeUtil.getUserObject(treePath.getLastPathComponent());
-      if (!(userObject instanceof NodeDescriptor)) return ActionCallback.REJECTED;
-
-      NodeDescriptor desc = (NodeDescriptor)userObject;
+      NodeDescriptor desc = TreeUtil.getLastUserObject(NodeDescriptor.class, treePath);
+      if (desc == null) return ActionCallback.REJECTED;
       Object element = myBuilder.getTreeStructureElement(desc);
       ActionCallback result = new ActionCallback();
       myBuilder.expand(element, result.createSetDoneRunnable());

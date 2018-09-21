@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.idea.Bombed
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import java.util.*
@@ -10,6 +11,7 @@ import java.util.*
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   private val FILE_1 = "file1.txt"
   private val FILE_2 = "file2.txt"
+  private val FILE_3 = "file3.txt"
 
   fun `test partial tracker lifecycle - editor for unchanged file`() {
     createChangelist("Test")
@@ -574,6 +576,59 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       file.tracker!!.assertBaseTextContentIs("a_b_c_d_e2")
     }
   }
+
+  fun `test vcs refresh - duplicated copies`() {
+    createChangelist("Test")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2", FILE_3)
+    refreshCLM()
+    file1.moveAllChangesTo("Test")
+
+    assertEquals(1, clm.allChanges.size)
+    assertEquals(Change.Type.MOVED, clm.getChange(FILE_1.toFilePath)?.type)
+    file1.assertAffectedChangeLists("Test")
+
+    val file2 = addLocalFile(FILE_2, "a_b_c_d_e") // guessChangeListByPaths moves it to "Test" by "before" file path
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_3)
+    refreshCLM()
+
+    assertEquals(2, clm.allChanges.size)
+    assertEquals(Change.Type.NEW, clm.getChange(FILE_1.toFilePath)?.type)
+    assertEquals(Change.Type.MOVED, clm.getChange(FILE_2.toFilePath)?.type)
+    file1.assertAffectedChangeLists("Test")
+    file2.assertAffectedChangeLists("Test")
+  }
+
+  fun `test vcs refresh - duplicated copies with tracker`() {
+    createChangelist("Test")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2", FILE_3)
+    refreshCLM()
+    file1.moveAllChangesTo("Test")
+    file1.assertAffectedChangeLists("Test")
+
+    assertEquals(1, clm.allChanges.size)
+    assertEquals(Change.Type.MOVED, clm.getChange(FILE_1.toFilePath)?.type)
+
+    file1.withOpenedEditor {
+      val file2 = addLocalFile(FILE_2, "a_b_c_d_e") // LST moves it to default changelist
+      setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_3)
+      refreshCLM()
+
+      assertEquals(2, clm.allChanges.size)
+      assertEquals(Change.Type.NEW, clm.getChange(FILE_1.toFilePath)?.type)
+      assertEquals(Change.Type.MOVED, clm.getChange(FILE_2.toFilePath)?.type)
+      file1.assertAffectedChangeLists("Test")
+      file2.assertAffectedChangeLists(DEFAULT)
+    }
+
+    releaseUnneededTrackers()
+    FILE_1.toFilePath.assertAffectedChangeLists("Test")
+    FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
+  }
+
 
   fun `test vcs refresh - tracker released during update (editor closed)`() {
     createChangelist("Test")

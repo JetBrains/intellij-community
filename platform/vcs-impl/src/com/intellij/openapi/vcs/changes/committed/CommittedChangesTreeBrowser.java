@@ -416,7 +416,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key.equals(VcsDataKeys.CHANGES)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[0]));
@@ -530,7 +530,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private class ChangesBrowserTree extends Tree implements TypeSafeDataProvider {
-    public ChangesBrowserTree() {
+    ChangesBrowserTree() {
       super(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
     }
 
@@ -540,7 +540,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
@@ -581,7 +581,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private static class MyRepositoryChangesViewer extends CommittedChangesBrowser {
     private final JComponent myHeaderPanel = new JPanel();
 
-    public MyRepositoryChangesViewer(Project project) {
+    MyRepositoryChangesViewer(Project project) {
       super(project);
     }
 

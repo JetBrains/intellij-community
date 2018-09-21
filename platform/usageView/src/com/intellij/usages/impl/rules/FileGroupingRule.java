@@ -143,7 +143,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (key == CommonDataKeys.VIRTUAL_FILE) {
         sink.put(CommonDataKeys.VIRTUAL_FILE, myFile);

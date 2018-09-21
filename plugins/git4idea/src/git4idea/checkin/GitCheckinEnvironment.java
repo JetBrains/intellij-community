@@ -93,6 +93,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
+import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -270,6 +271,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
 
       getRepositoryManager(myProject).updateRepository(root);
+      if (isSubmodule(repository)) {
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
+      }
     }
     catch (VcsException e) {
       exceptions.add(e);
@@ -390,7 +394,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     LOG.debug(String.format("Updating index for partial changes: changes: %s", partialChanges));
@@ -595,7 +599,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     List<FilePath> pathsToDelete = map(explicitMoves, move -> move.getBefore());
     LOG.debug(String.format("Updating index for explicit movements: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     for (Movement move : explicitMoves) {
@@ -905,7 +909,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean rc = true;
     if (!added.isEmpty()) {
       try {
-        GitFileUtils.addPaths(project, root, added);
+        GitFileUtils.addPathsForce(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -914,7 +918,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitFileUtils.delete(project, root, removed, "--ignore-unmatch", "--cached");
+        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -984,7 +988,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitFileUtils.delete(myProject, root, e.getValue());
+        GitFileUtils.deletePaths(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {
@@ -1214,7 +1218,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
         super(project, manager, panel);
         myAmend.addActionListener(new ActionListener() {
           @Override
@@ -1394,7 +1398,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable public final String changelistId;
     @Nullable public final VirtualFile virtualFile;
 
-    public CommitChange(@NotNull Change change) {
+    CommitChange(@NotNull Change change) {
       this.beforePath = getBeforePath(change);
       this.afterPath = getAfterPath(change);
 
@@ -1418,12 +1422,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath) {
       this(beforePath, afterPath, null, null, null, null);
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath,
                         @Nullable VcsRevisionNumber beforeRevision,
                         @Nullable VcsRevisionNumber afterRevision,

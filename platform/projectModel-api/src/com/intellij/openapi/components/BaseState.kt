@@ -32,7 +32,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     properties.add(p as StoredProperty<Any>)
   }
 
-  fun <T> property(): StoredPropertyBase<T?> {
+  protected fun <T : BaseState> property(): StoredPropertyBase<T?> {
     val result = ObjectStoredProperty<T?>(null)
     addProperty(result)
     return result
@@ -42,7 +42,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Value considered as default only if all properties have default values.
    * Passed instance is not used for `isDefault` check. It is just an initial value.
    */
-  fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
+  protected fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
     val result = StateObjectStoredProperty(initialValue)
     addProperty(result)
     return result
@@ -51,7 +51,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * For non-BaseState classes explicit `isDefault` must be provided, because no other way to check.
    */
-  fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> {
+  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> {
     val result = object : ObjectStoredProperty<T>(initialValue) {
       override fun isEqualToDefault() = isDefault(value)
     }
@@ -64,7 +64,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
+  protected fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
     val result = CollectionStoredProperty(initialValue)
     addProperty(result)
     return result
@@ -73,17 +73,26 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Charset is an immutable, so, it is safe to use it as default value.
    */
-  fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
+  protected fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(initialValue)
     addProperty(result)
     return result
   }
 
-  /**
-   * Enum is an immutable, so, it is safe to use it as default value.
-   */
-  fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
+  // Enum is an immutable, so, it is safe to use it as default value.
+  protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
+    addProperty(result)
+    return result
+  }
+
+  protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
+    return doEnum(defaultValue, T::class.java)
+  }
+
+  @PublishedApi
+  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> {
+    val result = EnumStoredProperty(defaultValue, clazz)
     addProperty(result)
     return result
   }
@@ -91,18 +100,18 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Not-null list. Initialized as SmartList.
    */
-  fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
+  protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
     val result = ListStoredProperty<T>()
     addProperty(result)
     @Suppress("UNCHECKED_CAST")
     return result as StoredPropertyBase<MutableList<T>>
   }
 
-  fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
+  protected fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
     return map(value)
   }
 
-  fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
+  protected fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
     val result = MapStoredProperty(value)
     addProperty(result)
     return result
@@ -111,36 +120,36 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Empty string is always normalized to null.
    */
-  fun property(defaultValue: String?): StoredPropertyBase<String?> = string(defaultValue)
+  protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
    */
-  fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
+  protected fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
     val result = NormalizedStringStoredProperty(defaultValue)
     addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
+  protected fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
     val result = IntStoredProperty(defaultValue, null)
     addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
+  protected fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
     val result = LongStoredProperty(defaultValue, null)
     addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
+  protected fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
     val result = FloatStoredProperty(defaultValue, valueNormalizer)
     addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
+  protected fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
     val result = ObjectStoredProperty(defaultValue)
     addProperty(result)
     return result
@@ -217,26 +226,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     }
   }
 
-  fun getProperties() = properties
-}
-
-// move buildJsonSchema and other such functions from BaseState to exclude from completion
-// internal usage only
-@ApiStatus.Experimental
-fun buildJsonSchema(state: BaseState, builder: StringBuilder) {
-  val properties = state.getProperties()
-  // todo object definition
-  for (property in properties) {
-    builder.jsonEscapedString(property.name!!).append(':').append('{')
-    builder.jsonEscapedString("type").append(':').jsonEscapedString(property.jsonType.jsonName)
-    builder.append('}')
-    if (property !== properties.last()) {
-      builder.append(',')
-    }
-  }
-}
-
-private fun StringBuilder.jsonEscapedString(value: String): StringBuilder {
-  append('"').append(value).append('"')
-  return this
+  // internal usage only
+  @Suppress("FunctionName")
+  @ApiStatus.Experimental
+  fun __getProperties() = properties
 }

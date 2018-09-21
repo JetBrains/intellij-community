@@ -39,7 +39,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
   private final XmlAttribute myAttribute;
   private final ExternalResourceManager myResourceManager = ExternalResourceManager.getInstance();
 
-  public ExternalResourceReference(XmlAttribute attribute) {
+  ExternalResourceReference(XmlAttribute attribute) {
     myAttribute = attribute;
   }
 

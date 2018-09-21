@@ -73,7 +73,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    */
   @Nullable
   default String getHelpTopic() {
-    return "reference.dialogs.rundebug." + getId();
+    return null;
   }
 
   /**

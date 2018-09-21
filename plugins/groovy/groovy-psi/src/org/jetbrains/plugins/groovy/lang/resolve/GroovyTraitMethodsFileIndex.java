@@ -122,7 +122,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   }
 
   private static class GrTraitMethodVisitor extends StubBuildingVisitor<VirtualFile> {
-    public GrTraitMethodVisitor(VirtualFile file, StubElement root) {
+    GrTraitMethodVisitor(VirtualFile file, StubElement root) {
       super(file, null, root, 0, null);
     }
 

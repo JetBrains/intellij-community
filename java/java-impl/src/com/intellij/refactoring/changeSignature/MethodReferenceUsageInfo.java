@@ -28,7 +28,7 @@ class MethodReferenceUsageInfo extends UsageInfo {
   
   private PsiCallExpression myCallExpression;
 
-  public MethodReferenceUsageInfo(PsiElement element, PsiMethod method, boolean isToModifyArgs, boolean isToCatchExceptions) {
+  MethodReferenceUsageInfo(PsiElement element, PsiMethod method, boolean isToModifyArgs, boolean isToCatchExceptions) {
     super(element);
     myIsToModifyArgs = isToModifyArgs;
     myIsToCatchExceptions = isToCatchExceptions;

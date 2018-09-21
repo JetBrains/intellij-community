@@ -28,11 +28,11 @@ class UniqueLCS {
   private final int myCount1;
   private final int myCount2;
 
-  public UniqueLCS(int[] first, int[] second) {
+  UniqueLCS(int[] first, int[] second) {
     this(first, second, 0, first.length, 0, second.length);
   }
 
-  public UniqueLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
+  UniqueLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
     myFirst = first;
     mySecond = second;
     myStart1 = start1;

@@ -323,7 +323,7 @@ public final class PreviewFormAction extends AnAction{
     private final String myTempPath;
     private final String myStatusbarMessage;
 
-    public MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
+    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
       myModule = module;
       myParams = params;
       myTempPath = tempPath;
@@ -364,6 +364,7 @@ public final class PreviewFormAction extends AnAction{
       };
     }
 
+    @NotNull
     @Override
     public String getName() {
       return UIDesignerBundle.message("title.form.preview");

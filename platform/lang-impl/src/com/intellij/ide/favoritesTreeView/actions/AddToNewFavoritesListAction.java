@@ -29,9 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 class AddToNewFavoritesListAction extends AnAction implements DumbAware {
-  public AddToNewFavoritesListAction() {
+  AddToNewFavoritesListAction() {
     super(IdeBundle.message("action.add.to.new.favorites.list"),
-          "Add To New Favorites List", AllIcons.General.AddFavoritesList);
+          "Add To New Favorites List", AllIcons.General.Add);
   }
 
   @Override

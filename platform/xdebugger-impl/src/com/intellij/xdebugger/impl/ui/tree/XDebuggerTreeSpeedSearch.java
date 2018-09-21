@@ -15,23 +15,42 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
+import java.util.Collections;
 
 class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
   public final int SEARCH_DEPTH = Registry.intValue("debugger.variablesView.rss.depth");
 
-  public XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<TreePath, String> toStringConvertor) {
+  XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree, toStringConvertor, true);
+    setComparator(new SpeedSearchComparator(false, false) {
+
+      @Override
+      public int matchingDegree(String pattern, String text) {
+        return matchingFragments(pattern, text) != null ? 1 : 0;
+      }
+
+      @Nullable
+      @Override
+      public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+        int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
+        return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
+      }
+    });
   }
 
   @NotNull

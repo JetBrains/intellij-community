@@ -23,7 +23,7 @@ class DiffSplitter extends Splitter implements DiffSplitterI {
         }
       };
 
-  public DiffSplitter(JComponent component1, JComponent component2, DiffDividerPaint dividerPaint, DiffPanelState data) {
+  DiffSplitter(JComponent component1, JComponent component2, DiffDividerPaint dividerPaint, DiffPanelState data) {
     myPaint = dividerPaint;
     myData = data;
     setDividerWidth(30);

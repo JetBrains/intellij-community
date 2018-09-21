@@ -546,7 +546,7 @@ public class ShelvedChangesViewManager implements Disposable {
       };
     private static final Icon DisabledToDeleteIcon = IconUtil.desaturate(AllIcons.Actions.GC);
 
-    public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
+    ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
@@ -594,7 +594,7 @@ public class ShelvedChangesViewManager implements Disposable {
       String fileName;
       String directory;
       if (pos >= 0) {
-        directory = path.substring(0, pos).replace(File.separatorChar, File.separatorChar);
+        directory = path.substring(0, pos);
         fileName = path.substring(pos+1);
       }
       else {
@@ -776,7 +776,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull private final DiffShelvedChangesActionProvider.PatchesPreloader myPreloader;
     @Nullable private ShelvedWrapper myCurrentShelvedElement;
 
-    public MyShelvedPreviewProcessor(@NotNull Project project) {
+    MyShelvedPreviewProcessor(@NotNull Project project) {
       super(project);
       myPreloader = new DiffShelvedChangesActionProvider.PatchesPreloader(project);
       Disposer.register(project, this);
@@ -873,7 +873,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private static class ShelvedListNode extends DefaultMutableTreeNode {
     @NotNull private final ShelvedChangeList myList;
 
-    public ShelvedListNode(@NotNull ShelvedChangeList list) {
+    ShelvedListNode(@NotNull ShelvedChangeList list) {
       super(list);
       myList = list;
     }
@@ -885,7 +885,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private class MyContentUpdater extends Update {
-    public MyContentUpdater() {
+    MyContentUpdater() {
       super("ShelfContentUpdate");
     }
 

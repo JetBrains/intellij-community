@@ -765,7 +765,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     final String[] columnNames;
     final List<Pair<Object, T>> data = ContainerUtil.newArrayList();
 
-    public MyModel(String... names) {
+    MyModel(String... names) {
       columnNames = names;
     }
 

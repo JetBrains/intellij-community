@@ -202,7 +202,7 @@ public class ContainingBranchesGetter {
     @NotNull private final RefsModel refs;
     @NotNull private final PermanentGraph<Integer> graph;
 
-    public Task(@NotNull VirtualFile root,
+    Task(@NotNull VirtualFile root,
                 @NotNull Hash hash,
                 @NotNull SLRUMap<CommitId, List<String>> cache,
                 @NotNull PermanentGraph<Integer> graph,

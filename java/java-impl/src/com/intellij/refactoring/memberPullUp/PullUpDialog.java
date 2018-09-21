@@ -176,7 +176,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   }
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
-    public MyMemberInfoModel() {
+    MyMemberInfoModel() {
       super(myClass, getSuperClass(), false, myInterfaceContainmentVerifier);
     }
 

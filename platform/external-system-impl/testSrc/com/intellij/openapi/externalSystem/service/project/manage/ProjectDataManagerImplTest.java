@@ -62,7 +62,7 @@ public class ProjectDataManagerImplTest extends PlatformTestCase {
 
     static final Key<MyObject> RUN_AFTER_KEY = Key.create(MyObject.class, TEST_KEY.getProcessingWeight() + 1);
 
-    public RunAfterTestDataService(List<String> trace) {
+    RunAfterTestDataService(List<String> trace) {
       super(trace);
     }
 
@@ -106,7 +106,7 @@ public class ProjectDataManagerImplTest extends PlatformTestCase {
 
     protected final List<String> myTrace;
 
-    public TestDataService(List<String> trace) {
+    TestDataService(List<String> trace) {
       myTrace = trace;
     }
 

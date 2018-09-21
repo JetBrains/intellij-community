@@ -120,7 +120,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
   }
 
   private class MySeverityChooser extends LevelChooserAction {
-    public MySeverityChooser(@NotNull SeverityRegistrar registrar) {
+    MySeverityChooser(@NotNull SeverityRegistrar registrar) {
       super(registrar);
     }
 

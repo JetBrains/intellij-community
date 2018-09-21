@@ -16,6 +16,8 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 
 interface UResolvable {
   /**
@@ -25,6 +27,11 @@ interface UResolvable {
    * @return the resolved element, or null if the reference couldn't be resolved.
    */
   fun resolve(): PsiElement?
+}
+
+@ApiStatus.Experimental
+interface UMultiResolvable {
+  fun multiResolve(): Iterable<ResolveResult>
 }
 
 fun UResolvable.resolveToUElement(): UElement? = resolve().toUElement()

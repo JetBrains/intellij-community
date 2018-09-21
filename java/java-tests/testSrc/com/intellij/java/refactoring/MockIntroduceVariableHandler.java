@@ -39,13 +39,13 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   private final String myExpectedTypeCanonicalName;
   private final boolean myLookForType;
 
-  public MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
+  MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
                                       final boolean declareFinal, final boolean replaceLValues,
                                       @NonNls final String expectedTypeCanonicalName) {
     this(name, replaceAll, declareFinal, replaceLValues, expectedTypeCanonicalName, false);
   }
 
-  public MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
+  MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
                                       final boolean declareFinal, final boolean replaceLValues,
                                       @NonNls final String expectedTypeCanonicalName, boolean lookForType) {
 

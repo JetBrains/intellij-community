@@ -110,7 +110,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
   private static class RegisterClassFix implements LocalQuickFix {
     private final String myClassName;
 
-    public RegisterClassFix(final PsiClass aClass) {
+    RegisterClassFix(final PsiClass aClass) {
       myClassName = aClass.getName();
     }
 

@@ -20,7 +20,7 @@ public class IrreducibleCFGDeobfuscator {
       public final Set<Node> preds = new HashSet<>();
       public final Set<Node> succs = new HashSet<>();
 
-      public Node(Integer id) {
+      Node(Integer id) {
         this.id = id;
       }
     }

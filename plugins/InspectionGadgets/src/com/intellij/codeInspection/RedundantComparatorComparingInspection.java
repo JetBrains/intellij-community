@@ -127,7 +127,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     private final String mySourceMethod;
     private final String myTargetMethod;
 
-    public DeleteComparingCallFix(String sourceMethod, String targetMethod) {
+    DeleteComparingCallFix(String sourceMethod, String targetMethod) {
       mySourceMethod = sourceMethod;
       myTargetMethod = targetMethod;
     }
@@ -163,7 +163,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
   private static class ReplaceMaxMinFix implements LocalQuickFix {
     private final String myReplacement;
 
-    public ReplaceMaxMinFix(String replacement) {
+    ReplaceMaxMinFix(String replacement) {
       myReplacement = replacement;
     }
 

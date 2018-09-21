@@ -143,7 +143,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
   }
 
   private class ApplyAction extends AbstractAction {
-    public ApplyAction() {
+    ApplyAction() {
       super(ExecutionBundle.message("apply.action.name"));
     }
 

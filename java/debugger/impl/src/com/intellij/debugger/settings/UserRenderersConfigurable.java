@@ -201,7 +201,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   private class CopyAction extends AnActionButton {
-    public CopyAction() {
+    CopyAction() {
       super(DebuggerBundle.message("button.copy"), DebuggerBundle.message("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
     }
 
@@ -223,7 +223,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   private class MoveAction implements AnActionButtonRunnable {
     private final boolean myMoveUp;
 
-    public MoveAction(boolean up) {
+    MoveAction(boolean up) {
       //super(up? DebuggerBundle.message("button.move.up") : DebuggerBundle.message("button.move.down"),
       //      up? DebuggerBundle.message("user.renderers.configurable.button.description.move.up") : DebuggerBundle.message("user.renderers.configurable.button.description.move.down"),
       //      up? UP_ICON : DOWN_ICON );

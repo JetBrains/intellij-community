@@ -420,32 +420,32 @@ HEX_CHAR=[0-9a-fA-F]
   ":"               { yybegin(YYINITIAL); return RegExpTT.COLON;  }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
 
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <NAMED_GROUP> {
   {GROUP_NAME}      { return RegExpTT.NAME; }
   ">"               { yybegin(YYINITIAL); return RegExpTT.GT; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <QUOTED_NAMED_GROUP> {
   {GROUP_NAME}      { return RegExpTT.NAME; }
   "'"               { yybegin(YYINITIAL); return RegExpTT.QUOTE; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <PY_NAMED_GROUP_REF> {
   {GROUP_NAME}      { return RegExpTT.NAME;   }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <PY_COND_REF> {
   {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 "^"                   { return RegExpTT.CARET; }

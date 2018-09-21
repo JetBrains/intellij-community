@@ -132,11 +132,11 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   private static class ComboBoxItem extends Pair<String,Icon> {
 
-    public ComboBoxItem(String first, Icon second) {
+    ComboBoxItem(String first, Icon second) {
       super(first, second);
     }
 
-    public ComboBoxItem(Pair<String,Icon> pair) {
+    ComboBoxItem(Pair<String,Icon> pair) {
       super(pair.first, pair.second);
     }
 

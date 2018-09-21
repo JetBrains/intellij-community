@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
@@ -20,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
@@ -30,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR;
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.getAliasedShortNames;
 
 public class GrAnnotationCollector {
 
@@ -192,22 +191,20 @@ public class GrAnnotationCollector {
     return null;
   }
 
-  private static String[] getPossibleShortNames(GrAnnotation annotation) {
-    String shortName = annotation.getShortName();
-    String aliasedImport = GrImportUtil.findAliasedImport(annotation, shortName);
-    return aliasedImport == null ? new String[]{shortName}
-                                 : new String[]{shortName, StringUtil.getShortName(aliasedImport)};
-  }
-
   @Nullable
   public static PsiAnnotation findAnnotationCollector(@NotNull GrAnnotation annotation) {
-    Set<String> allNames = allCollectorNames(annotation.getProject());
-    if (!ContainerUtil.exists(getPossibleShortNames(annotation), allNames::contains)) {
+    if (!mayHaveAnnotationCollector(annotation)) {
       return null;
     }
-
     PsiElement resolved = annotation.getClassReference().resolve();
     return resolved instanceof PsiClass ? findAnnotationCollector((PsiClass)resolved) : null;
+  }
+
+  private static boolean mayHaveAnnotationCollector(@NotNull GrAnnotation annotation) {
+    String shortName = annotation.getShortName();
+    Set<String> allNames = allCollectorNames(annotation.getProject());
+    return allNames.contains(shortName) ||
+           ContainerUtil.exists(getAliasedShortNames(annotation, shortName), allNames::contains);
   }
 
   private static Set<String> allCollectorNames(@NotNull Project project) {

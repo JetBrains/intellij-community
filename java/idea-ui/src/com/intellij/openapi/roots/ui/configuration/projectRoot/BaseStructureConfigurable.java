@@ -196,7 +196,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
 
-    public MyFindUsagesAction(JComponent parentComponent) {
+    MyFindUsagesAction(JComponent parentComponent) {
       super(parentComponent, myProject);
     }
 

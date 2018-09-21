@@ -91,7 +91,7 @@ public class TableRowsTransferHandler extends TransferHandler {
   private static class RowsDragInfo {
     final int[] myRows;
 
-    public RowsDragInfo(int[] rows) {
+    RowsDragInfo(int[] rows) {
       myRows = rows;
     }
   }

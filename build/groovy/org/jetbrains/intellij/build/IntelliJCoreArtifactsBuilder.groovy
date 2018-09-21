@@ -92,7 +92,7 @@ class IntelliJCoreArtifactsBuilder {
         }
 
         [
-          "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons",
+          "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "imgscalr", "batik", "xmlgraphics-commons",
          "OroMatcher", "jna", "Log4J", "StreamEx"
         ].each {
           projectLibrary(it)

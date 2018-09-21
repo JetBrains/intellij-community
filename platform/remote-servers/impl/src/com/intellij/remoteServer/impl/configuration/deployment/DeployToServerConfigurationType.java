@@ -76,6 +76,11 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     return myServerType;
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug." + myServerType.getId() + "-deploy";
+  }
+
   // todo do not extends ConfigurationFactoryEx once Google Cloud Tools plugin will get rid of getFactory() usage
   public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> {
     public DeployToServerConfigurationFactory() {

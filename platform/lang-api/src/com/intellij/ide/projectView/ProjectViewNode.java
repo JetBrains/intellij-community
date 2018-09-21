@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * A node in the project view tree.
  *
- * @see TreeStructureProvider#modify(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection, com.intellij.ide.projectView.ViewSettings)
+ * @see TreeStructureProvider#modify(AbstractTreeNode, Collection, ViewSettings)
  */
 
 public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider, SettingsProvider {
@@ -58,7 +58,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * @param value        the object (for example, a PSI element) represented by the project view node
    * @param viewSettings the settings of the project view.
    */
-  protected ProjectViewNode(Project project, Value value, ViewSettings viewSettings) {
+  protected ProjectViewNode(Project project, @NotNull Value value, ViewSettings viewSettings) {
     super(project, value);
     mySettings = viewSettings;
   }
@@ -108,8 +108,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   public static AbstractTreeNode createTreeNode(Class<? extends AbstractTreeNode> nodeClass,
                                                 Project project,
                                                 Object value,
-                                                ViewSettings settings) throws
-                                                                       InstantiationException {
+                                                ViewSettings settings) throws InstantiationException {
     Object[] parameters = {project, value, settings};
     for (Constructor<? extends AbstractTreeNode> constructor : (Constructor<? extends AbstractTreeNode>[])nodeClass.getConstructors()) {
       if (constructor.getParameterTypes().length != 3) continue;
@@ -167,14 +166,18 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
 
     if (value instanceof RootsProvider) {
       return ((RootsProvider)value).getRoots();
-    } else if (value instanceof PsiFile) {
+    }
+    if (value instanceof PsiFile) {
       PsiFile vFile = ((PsiFile)value).getContainingFile();
       if (vFile != null && vFile.getVirtualFile() != null) {
         return Collections.singleton(vFile.getVirtualFile());
       }
-    } else if (value instanceof VirtualFile) {
-      return Collections.singleton(((VirtualFile)value));
-    } else if (value instanceof PsiFileSystemItem) {
+      return EMPTY_ROOTS;
+    }
+    if (value instanceof VirtualFile) {
+      return Collections.singleton((VirtualFile)value);
+    }
+    if (value instanceof PsiFileSystemItem) {
       return Collections.singleton(((PsiFileSystemItem)value).getVirtualFile());
     }
 

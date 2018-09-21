@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.intellilang.model.InstrumentationException;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.ByteArrayOutputStream;
@@ -52,7 +51,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private RuntimeException myPostponedError;
   boolean myIsNonStaticInnerClass;
 
-  public PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
+  PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
                              InstrumentationType instrumentation,
                              InstrumentationClassFinder classFinder) {
     super(Opcodes.API_VERSION, classvisitor);

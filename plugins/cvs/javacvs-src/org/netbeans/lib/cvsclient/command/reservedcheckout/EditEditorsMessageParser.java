@@ -26,7 +26,7 @@ final class EditEditorsMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public EditEditorsMessageParser(String allowedUser) {
+	EditEditorsMessageParser(String allowedUser) {
 		this.allowedUser = allowedUser;
 	}
 

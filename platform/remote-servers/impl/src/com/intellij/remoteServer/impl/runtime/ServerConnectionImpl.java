@@ -366,7 +366,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     private final Project myProject;
     private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
 
-    public LogManagersForProject(@NotNull Project project) {
+    LogManagersForProject(@NotNull Project project) {
       myProject = project;
     }
 
@@ -409,7 +409,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     private final LoggingHandlerImpl myLoggingHandler;
     private final DeploymentImpl myDeployment;
 
-    public DeploymentOperationCallbackImpl(String deploymentName,
+    DeploymentOperationCallbackImpl(String deploymentName,
                                            DeploymentTaskImpl<D> deploymentTask,
                                            LoggingHandlerImpl handler,
                                            DeploymentImpl deployment) {
@@ -476,7 +476,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     private List<Deployment> myCachedAllDeployments;
     private final Comparator<Deployment> myDeploymentComparator;
 
-    public MyDeployments(Comparator<Deployment> deploymentComparator) {
+    MyDeployments(Comparator<Deployment> deploymentComparator) {
       myDeploymentComparator = deploymentComparator;
     }
 
@@ -618,7 +618,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       private final DeploymentImpl myDeployment;
       private final List<Deployment> mySubDeployments;
 
-      public UndeployTransition(@NotNull DeploymentImpl deployment, @NotNull List<Deployment> subDeployments) {
+      UndeployTransition(@NotNull DeploymentImpl deployment, @NotNull List<Deployment> subDeployments) {
         myDeployment = deployment;
         mySubDeployments = new ArrayList<>(subDeployments);
 
@@ -672,7 +672,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       private final List<Deployment> myCollectedChildren = new LinkedList<>();
       private final DeploymentRuntime myRootRuntime;
 
-      public DeepChildrenCollector(DeploymentRuntime rootRuntime) {
+      DeepChildrenCollector(DeploymentRuntime rootRuntime) {
         myRootRuntime = rootRuntime;
       }
 

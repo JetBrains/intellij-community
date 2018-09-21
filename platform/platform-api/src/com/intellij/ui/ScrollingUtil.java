@@ -625,11 +625,21 @@ public class ScrollingUtil {
       public void actionPerformed(@NotNull AnActionEvent e) {
         moveDown(table, e.getModifiers(), cycleScrolling);
       }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!isMultiline(target));
+      }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         moveUp(table, e.getModifiers(), cycleScrolling);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!isMultiline(target));
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
     new MyScrollingAction(table) {
@@ -646,18 +656,22 @@ public class ScrollingUtil {
     }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
   }
 
+  private static boolean isMultiline(JComponent component) {
+    return component instanceof JTextArea && ((JTextArea)component).getText().contains("\n");
+  }
+
   static class MoveAction extends AbstractAction {
     private final String myId;
     private final JComponent myComponent;
     private final Boolean myCycleScrolling;
 
-    public MoveAction(String id, JComponent component, Boolean cycleScrolling) {
+    MoveAction(String id, JComponent component, Boolean cycleScrolling) {
       myId = id;
       myComponent = component;
       myCycleScrolling = cycleScrolling;
     }
 
-    public MoveAction(String id, JComponent component) {
+    MoveAction(String id, JComponent component) {
       this(id, component, null);
     }
 

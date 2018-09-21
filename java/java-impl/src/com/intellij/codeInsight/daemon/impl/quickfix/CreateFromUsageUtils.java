@@ -518,7 +518,8 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName())) {
+          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) && 
+              methodExpression.resolve() == ((PsiMethodCallExpression)expression).resolveMethod()) {
             result.add(expr.getMethodExpression());
           }
         }
@@ -638,8 +639,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      if (pparent instanceof PsiReferenceExpression ||
-          pparent instanceof PsiVariable ||
+      if (pparent instanceof PsiVariable ||
           pparent instanceof PsiExpression) {
         expectedFieldNames.add(refName);
       }

@@ -21,7 +21,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EventObject;
 
 /**
- * Provides information about a change in the PSI tree of a project.
+ * Provides information about a change in the PSI tree of a project.<p/>
+ *
+ * Try to avoid processing PSI events at all cost! It's very hard to do this correctly and handle all edge cases.
+ * Please use {@link com.intellij.psi.util.CachedValue} with {@link com.intellij.psi.util.PsiModificationTracker#MODIFICATION_COUNT}
+ * or VFS events where possible. Here are just some of the complications with PSI events:
+ * <ul>
+ *   <li>Don't hope that if you replaced just one letter in an identifier, you'll get a "replaced" event about that identifier.
+ *   You might as well get anything, e.g. a "replaced" event for the whole FileElement.</li>
+ *   <li>Or not even that: you might get "propertyChanged" with {@link #PROP_UNLOADED_PSI}, not mentioning your file at all.</li>
+ *   <li>Before-/after-events aren't necessarily paired: you could get several "beforeChildDeletion" and then only "childrenChanged".</li>
+ *   <li>In event handler, you should be very careful to avoid traversing invalid PSI or expanding lazy-parseable elements.</li>
+ *   <li>There's no specification, and the precise events you get can be changed in future
+ *   as the infrastructure algorithms are improved or bugs are fixed.</li>
+ *   <li>To say nothing of the fact that the precise events already depend on file size and the unpredictable activity of garbage collector,
+ *   so events in production might differ from the ones you've seen in test environment.</li>
+ * </ul>
  *
  * @see PsiTreeChangeListener
  */

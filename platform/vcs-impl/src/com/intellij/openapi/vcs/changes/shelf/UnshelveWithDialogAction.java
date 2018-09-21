@@ -111,7 +111,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
 
   private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {
 
-    public MyUnshelveDialog(@NotNull Project project,
+    MyUnshelveDialog(@NotNull Project project,
                             @NotNull VirtualFile patchFile,
                             @NotNull ShelvedChangeList changeList,
                             @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,

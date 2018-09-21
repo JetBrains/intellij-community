@@ -195,8 +195,9 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             panel.add(label, BorderLayout.CENTER);
             if (value instanceof Color) {
               final Color c = (Color)value;
-              label.setText(String.format("[r=%d,g=%d,b=%d] hex=0x%s", c.getRed(), c.getGreen(), c.getBlue(), ColorUtil.toHex(c)));
-              label.setForeground(ColorUtil.isDark(c) ? JBColor.white : JBColor.black);
+              label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
+              Color fg = c.getRed()*0.299 + c.getGreen()*0.587 + c.getBlue()*0.114 < 186 ? Gray.xFF : Gray.x00; // M is for Magic
+              label.setForeground(fg);
               panel.setBackground(c);
               return panel;
             } else if (value instanceof Icon) {
@@ -256,7 +257,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
               int row = myTable.getSelectedRow();
               if (row != -1) {
-                Pair pair = (Pair)data[row][0];
+                Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
                 if (pair.second instanceof Color) {
                   return new TextCopyProvider() {
                     @Override
@@ -428,7 +429,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   private static class IconWrap implements Icon {
     private final Icon myIcon;
 
-    public IconWrap(Icon icon) {
+    IconWrap(Icon icon) {
       myIcon = icon;
     }
 

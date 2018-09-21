@@ -881,7 +881,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final class MyModel extends AbstractTableModel {
     private final String[] myColumnNames;
 
-    public MyModel(){
+    MyModel(){
       myColumnNames=new String[]{
         UIDesignerBundle.message("column.property"),
         UIDesignerBundle.message("column.value")};
@@ -990,7 +990,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     private final Icon myIndentedCollapseIcon;
     private final Icon[] myIndentIcons = new Icon[3];
 
-    public MyCompositeTableCellRenderer(){
+    MyCompositeTableCellRenderer(){
       myPropertyNameRenderer = new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(
@@ -1310,7 +1310,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private class MyExpandCurrentAction extends AbstractAction {
     private final boolean myExpand;
 
-    public MyExpandCurrentAction(final boolean expand) {
+    MyExpandCurrentAction(final boolean expand) {
       myExpand = expand;
     }
 

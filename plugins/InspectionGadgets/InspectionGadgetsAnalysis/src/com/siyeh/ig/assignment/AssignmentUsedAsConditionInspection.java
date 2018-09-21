@@ -17,10 +17,7 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -82,7 +79,10 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
       if (expression.getRExpression() == null || !(expression.getLExpression() instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiElement parent = expression.getParent();
+      if (!PsiType.BOOLEAN.equals(expression.getType())) {
+        return;
+      }
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (!PsiUtil.isCondition(expression, parent)) {
         return;
       }

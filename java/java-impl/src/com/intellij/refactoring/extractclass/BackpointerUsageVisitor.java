@@ -30,12 +30,12 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
   private final boolean myCheckThisExpression;
 
 
-  public BackpointerUsageVisitor(final List<? extends PsiField> fields,
+  BackpointerUsageVisitor(final List<? extends PsiField> fields,
                                  final List<? extends PsiClass> innerClasses, final List<? extends PsiMethod> methods, final PsiClass sourceClass) {
     this(fields, innerClasses, methods, sourceClass, true);
   }
 
-  public BackpointerUsageVisitor(List<? extends PsiField> fields, List<? extends PsiClass> innerClasses, List<? extends PsiMethod> methods, PsiClass sourceClass,
+  BackpointerUsageVisitor(List<? extends PsiField> fields, List<? extends PsiClass> innerClasses, List<? extends PsiMethod> methods, PsiClass sourceClass,
                                  final boolean checkThisExpression) {
     myFields = fields;
     myInnerClasses = innerClasses;

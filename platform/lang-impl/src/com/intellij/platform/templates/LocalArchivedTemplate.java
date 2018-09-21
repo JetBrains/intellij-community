@@ -218,7 +218,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     final String myRelativePath;
     final int myIndex;
 
-    public RootDescription(VirtualFile file, String path, int index) {
+    RootDescription(VirtualFile file, String path, int index) {
       myFile = file;
       myRelativePath = path;
       myIndex = index;

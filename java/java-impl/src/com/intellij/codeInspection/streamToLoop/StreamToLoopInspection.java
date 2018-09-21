@@ -253,7 +253,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
     private final String myMessage;
 
-    public ReplaceStreamWithLoopFix(String message) {
+    ReplaceStreamWithLoopFix(String message) {
       myMessage = message;
     }
 

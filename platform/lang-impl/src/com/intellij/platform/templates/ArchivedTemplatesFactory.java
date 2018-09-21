@@ -104,6 +104,6 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
   @Override
   public Icon getGroupIcon(String group) {
-    return CUSTOM_GROUP.equals(group) ? AllIcons.Modules.Types.UserDefined : super.getGroupIcon(group);
+    return CUSTOM_GROUP.equals(group) ? AllIcons.General.User : super.getGroupIcon(group);
   }
 }

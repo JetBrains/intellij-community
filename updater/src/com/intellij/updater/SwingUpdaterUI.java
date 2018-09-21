@@ -263,7 +263,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     private final List<Item> myItems = new ArrayList<>();
 
-    public MyTableModel(List<? extends ValidationResult> validationResults) {
+    MyTableModel(List<? extends ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
         myItems.add(new Item(each, each.options.get(0)));
       }
@@ -348,7 +348,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private static class MyCellEditor extends DefaultCellEditor {
-    public MyCellEditor() {
+    MyCellEditor() {
       super(new JComboBox());
     }
 

@@ -31,9 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 // Please do not make this class concrete<PsiElement>.
 // This prevents languages with polyadic expressions or sequences
@@ -119,7 +118,7 @@ public abstract class OccurrencesChooser<T> {
       callback.pass(occurrencesMap.keySet().iterator().next());
       return;
     }
-    List<C> model = occurrencesMap.keySet().stream().collect(Collectors.toList());
+    List<C> model = new ArrayList<>(occurrencesMap.keySet());
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)

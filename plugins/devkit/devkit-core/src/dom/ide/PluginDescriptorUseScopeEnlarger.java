@@ -41,7 +41,8 @@ public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
 
     if (element instanceof PsiClass &&
         PsiUtil.isIdeaProject(element.getProject()) &&
-        ((PsiClass)element).hasModifierProperty(PsiModifier.PUBLIC)) {
+        (((PsiClass)element).hasModifierProperty(PsiModifier.PUBLIC) ||
+         ((PsiClass)element).hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
       return createAllPluginDescriptorFilesSearchScope(element);
     }
     return null;

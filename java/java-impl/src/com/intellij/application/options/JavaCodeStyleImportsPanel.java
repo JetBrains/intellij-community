@@ -151,7 +151,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {
-    public MyColumnInfo(final String name) {
+    MyColumnInfo(final String name) {
       super(name);
     }
 
@@ -171,7 +171,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private static class InnerClassItem {
     private String myName;
 
-    public InnerClassItem(String name) {
+    InnerClassItem(String name) {
       myName = name;
     }
 

@@ -51,13 +51,13 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   private static final Logger LOGGER = Logger.getInstance(FavoritesTreeStructure.class);
   private TreeStructureProvider myNonProjectProvider = null;
-  public FavoritesTreeStructure(Project project) {
+  public FavoritesTreeStructure(@NotNull Project project) {
     super(project, FavoritesProjectViewPane.ID);
     myNonProjectProvider = new MyProvider(project);
   }
 
   @Override
-  protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+  protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
     return new FavoritesRootNode(project);
   }
 
@@ -66,8 +66,9 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     if (!(element instanceof AbstractTreeNode)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -135,7 +136,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     AbstractTreeNode parent = null;
     if (element == getRootElement()) {
       return null;
@@ -151,14 +152,14 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);
   }
 
   private static class MyProvider implements TreeStructureProvider {
     private final Project myProject;
 
-    public MyProvider(Project project) {
+    MyProvider(Project project) {
       myProject = project;
     }
 

@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
@@ -363,7 +364,13 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         GeneralCommandLine commandLine = params.toCommandLine();
-        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
+        OSProcessHandler processHandler = new OSProcessHandler(commandLine) {
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.BLOCKING;
+          }
+        };
         processHandler.setShouldDestroyProcessRecursively(false);
         return processHandler;
       }
@@ -729,7 +736,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerProgressIndicator extends MavenRemoteObject implements MavenServerProgressIndicator {
     private final MavenProgressIndicator myProcess;
 
-    public RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
+    RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
       myProcess = process;
     }
 
@@ -762,7 +769,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
     private final MavenConsole myConsole;
 
-    public RemoteMavenServerConsole(MavenConsole console) {
+    RemoteMavenServerConsole(MavenConsole console) {
       myConsole = console;
     }
 

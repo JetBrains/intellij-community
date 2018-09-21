@@ -181,7 +181,7 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
   private static class MethodDefinedInInterfacePatternCondition extends PatternCondition<PsiMethod> {
     private final String myInterfaceName;
 
-    public MethodDefinedInInterfacePatternCondition(@NotNull String interfaceName) {
+    MethodDefinedInInterfacePatternCondition(@NotNull String interfaceName) {
       super("definedInInterface");
       myInterfaceName = interfaceName;
     }

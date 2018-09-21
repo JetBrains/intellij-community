@@ -489,7 +489,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private static class MyUpdate extends Update {
     private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
 
-    public MyUpdate(@NonNls final BreadcrumbsXmlWrapper c) {
+    MyUpdate(@NonNls final BreadcrumbsXmlWrapper c) {
       super(c);
 
       myBreadcrumbsComponent = c;

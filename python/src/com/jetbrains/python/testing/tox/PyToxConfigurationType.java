@@ -21,6 +21,11 @@ public final class PyToxConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{new PyToxConfigurationFactory(this)};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Tox";
+  }
+
   @NotNull
   @Override
   public String getDisplayName() {

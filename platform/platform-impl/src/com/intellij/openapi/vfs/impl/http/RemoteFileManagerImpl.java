@@ -131,7 +131,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   private class MyDownloadingListener extends FileDownloadingAdapter {
     private final HttpVirtualFileImpl myFile;
 
-    public MyDownloadingListener(final HttpVirtualFileImpl file) {
+    MyDownloadingListener(final HttpVirtualFileImpl file) {
       myFile = file;
     }
 

@@ -242,14 +242,14 @@ public class PyConsoleUtil {
     private final DataContext myOriginalDataContext;
     private final PythonConsoleView myConsoleView;
 
-    public ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
+    ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
       myOriginalDataContext = dataContext;
       myConsoleView = consoleView;
     }
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return myConsoleView.getEditor();
       }

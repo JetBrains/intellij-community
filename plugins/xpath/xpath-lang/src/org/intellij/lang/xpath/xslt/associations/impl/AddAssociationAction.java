@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 class AddAssociationAction extends AnAction {
   private final FileAssociationsManager myManager;
 
-    public AddAssociationAction(FileAssociationsManager manager) {
+    AddAssociationAction(FileAssociationsManager manager) {
         super("Add...", "Add File Association", IconUtil.getAddIcon());
         myManager = manager;
     }

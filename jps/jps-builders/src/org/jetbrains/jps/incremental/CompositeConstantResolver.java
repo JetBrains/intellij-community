@@ -19,7 +19,7 @@ import java.util.concurrent.TimeoutException;
 class CompositeConstantResolver implements Callbacks.ConstantAffectionResolver {
   private final Collection<Callbacks.ConstantAffectionResolver> myResolvers;
 
-  public CompositeConstantResolver(@NotNull Collection<Callbacks.ConstantAffectionResolver> resolvers) {
+  CompositeConstantResolver(@NotNull Collection<Callbacks.ConstantAffectionResolver> resolvers) {
     myResolvers = resolvers;
   }
 

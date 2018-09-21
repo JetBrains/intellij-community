@@ -210,9 +210,8 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
-    final Project project = myProject;
     final String id = getId();
-    return new ProjectTreeStructure(project, id) {
+    return new ProjectTreeStructure(myProject, id) {
 
       @Override
       public boolean isHideEmptyMiddlePackages() {
@@ -220,7 +219,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       }
 
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new MvcProjectNode(project, this, myDescriptor);
       }
     };

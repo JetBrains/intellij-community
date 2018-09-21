@@ -1010,7 +1010,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class DropDownAction extends LinkLabel<Void> {
     Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
 
-    public DropDownAction(String text, @Nullable LinkListener<Void> listener) {
+    DropDownAction(String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
@@ -1107,7 +1107,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private JPanel myActionPanel;
     private Component myExpandAction;
 
-    public CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
+    CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
       myText = text;
       myLayoutData = layoutData;
     }
@@ -1288,7 +1288,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private String myTitleTextR;
     private String myTitleTextD;
 
-    public LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
+    LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
       myContent = content;
       myContentTextR = textR;
       myContentTextD = textD;
@@ -1322,7 +1322,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
-    public TextCaret(@NotNull BalloonLayoutData layoutData) {
+    TextCaret(@NotNull BalloonLayoutData layoutData) {
       myLayoutData = layoutData;
     }
 

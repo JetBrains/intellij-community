@@ -241,7 +241,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         private final String myCategory;
         private final String myName;
 
-        public DocElement(PsiManager mgr, PsiElement element, String category, String name) {
+        DocElement(PsiManager mgr, PsiElement element, String category, String name) {
             super(mgr, XsltLanguage.INSTANCE);
             myElement = element;
             myCategory = category;

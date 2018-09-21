@@ -5,7 +5,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 
 const val KOTLIN_PLUGIN_NAME = "Kotlin"
 
-enum class KotlinKind { JVM, JS, Common }
+enum class KotlinKind { JVM, JS, Common, Native }
 enum class ProjectStructure { Java, Kotlin, Gradle, Maven }
 enum class BuildSystem { Gradle, Maven, IDEA }
 
@@ -27,7 +27,8 @@ enum class Projects(val title: String) {
   Kind("kind"),
   JavaProject("javaProject"),
   KotlinProject("kotlinProject"),
-  KotlinMPProject("kotlinMPProject"),
+  KotlinMPProjectLibrary("kotlinMPProjectLibrary"),
+  KotlinMPProjectClientServer("kotlinMPProjectClientServer"),
   GradleGProject("gradleGProject"),
   GradleKProject("gradleKProject"),
   GradleGMPProject("gradleGMPProject"),
@@ -37,11 +38,12 @@ enum class Projects(val title: String) {
   override fun toString() = title
 }
 
-data class KotlinLib(private val map: Map<String, Any?>) {
+data class KotlinLib(val map: Map<String, Any?>) {
   val kind: KotlinKind by map
   val javaProject: ProjectProperties by map
   val kotlinProject: ProjectProperties by map
-  val kotlinMPProject: ProjectProperties by map
+  val kotlinMPProjectLibrary: ProjectProperties by map
+  val kotlinMPProjectClientServer: ProjectProperties by map
   val gradleGProject: ProjectProperties by map
   val gradleKProject: ProjectProperties by map
   val gradleGMPProject: ProjectProperties by map
@@ -62,10 +64,15 @@ private val kotlinJvm = KotlinLib(mapOf(
     libName = "KotlinJavaRuntime",
     jars = kotlinJvmJavaKotlinJars
   ),
-  Projects.KotlinMPProject.title to ProjectProperties(
+  Projects.KotlinMPProjectLibrary.title to ProjectProperties(
     group = NewProjectDialogModel.Groups.Kotlin.toString(),
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
-    jars = kotlinJvmMppKotlin
+    frameworkName = "Kotlin (Multiplatform Library)",
+    jars = kotlinJvmMppGradle
+  ),
+  Projects.KotlinMPProjectClientServer.title to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
+    frameworkName = "Kotlin (JS Client/JVM Server)",
+    jars = kotlinJvmMppGradle
   ),
   Projects.GradleGProject.title to ProjectProperties(
     group = NewProjectDialogModel.Groups.Gradle.toString(),
@@ -103,9 +110,14 @@ private val kotlinJs = KotlinLib(mapOf(
     libName = "KotlinJavaScript",
     jars = kotlinJsJavaKotlinLibs
   ),
-  Projects.KotlinMPProject.title to ProjectProperties(
+  Projects.KotlinMPProjectLibrary.title to ProjectProperties(
     group = NewProjectDialogModel.Groups.Kotlin.toString(),
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
+    frameworkName = "Kotlin (Multiplatform Library)",
+    jars = kotlinJsGradleLibs
+  ),
+  Projects.KotlinMPProjectClientServer.title to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
+    frameworkName = "Kotlin (JS Client/JVM Server)",
     jars = kotlinJsGradleLibs
   ),
   Projects.GradleGProject.title to ProjectProperties(
@@ -132,9 +144,14 @@ private val kotlinJs = KotlinLib(mapOf(
 
 private val kotlinCommon = KotlinLib(mapOf(
   Projects.Kind.title to KotlinKind.Common,
-  Projects.KotlinMPProject.title to ProjectProperties(
+  Projects.KotlinMPProjectLibrary.title to ProjectProperties(
     group = NewProjectDialogModel.Groups.Kotlin.toString(),
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
+    frameworkName = "Kotlin (Multiplatform Library)",
+    jars = kotlinCommonMpp
+  ),
+  Projects.KotlinMPProjectClientServer.title to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
+    frameworkName = "Kotlin (JS Client/JVM Server)",
     jars = kotlinCommonMpp
   ),
   Projects.GradleGMPProject.title to ProjectProperties(
@@ -144,10 +161,25 @@ private val kotlinCommon = KotlinLib(mapOf(
   )
 ))
 
+private val kotlinNative = KotlinLib(mapOf(
+  Projects.Kind.title to KotlinKind.Native,
+  Projects.KotlinMPProjectLibrary.title to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
+    frameworkName = "Kotlin (Multiplatform Library)",
+    jars = kotlinNativeMpp
+  ),
+  Projects.KotlinMPProjectClientServer.title to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin.toString(),
+    frameworkName = "Kotlin (JS Client/JVM Server)",
+    jars = kotlinNativeMpp
+  )
+))
+
 val kotlinLibs = mapOf(
   kotlinJvm.kind to kotlinJvm,
   kotlinJs.kind to kotlinJs,
-  kotlinCommon.kind to kotlinCommon
+  kotlinCommon.kind to kotlinCommon,
+  kotlinNative.kind to kotlinNative
 )
 
 /**
@@ -199,6 +231,11 @@ val defaultFacetSettings = mapOf(
   ),
   TargetPlatform.Common to FacetStructure(
     targetPlatform = TargetPlatform.Common,
+    languageVersion = versionFromArtifact,
+    apiVersion = versionFromArtifact
+  ),
+  TargetPlatform.Native to FacetStructure(
+    targetPlatform = TargetPlatform.Native,
     languageVersion = versionFromArtifact,
     apiVersion = versionFromArtifact
   ),

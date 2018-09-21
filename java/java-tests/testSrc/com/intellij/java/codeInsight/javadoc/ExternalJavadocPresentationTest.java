@@ -82,7 +82,7 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
 
     class JavadocExternalTestFilter extends JavaDocExternalFilter {
 
-      public JavadocExternalTestFilter(Project project) {
+      JavadocExternalTestFilter(Project project) {
         super(project);
       }
 

@@ -117,11 +117,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       info = parseClassDescription(superName, interfaces);
     }
 
-    PsiTypeParameterListStub typeParameterList = new PsiTypeParameterListStubImpl(myResult);
-    for (Pair<String, String[]> parameter : info.typeParameters) {
-      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(typeParameterList, parameter.first);
-      newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
-    }
+    newTypeParameterList(myResult, info.typeParameters);
 
     if (myResult.isInterface()) {
       if (info.interfaceNames != null && myResult.isAnnotationType()) {
@@ -174,6 +170,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     result.superName = superClass != null ? myMapping.fun(superClass) : null;
     result.interfaceNames = superInterfaces == null ? null : ContainerUtil.map(superInterfaces, myMapping);
     return result;
+  }
+
+  private static void newTypeParameterList(StubElement<?> parent, List<Pair<String, String[]>> parameters) {
+    PsiTypeParameterListStub listStub = new PsiTypeParameterListStubImpl(parent);
+    for (Pair<String, String[]> parameter : parameters) {
+      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(listStub, parameter.first);
+      newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
+    }
   }
 
   private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] types) {
@@ -352,11 +356,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
 
-    PsiTypeParameterListStub list = new PsiTypeParameterListStubImpl(stub);
-    for (Pair<String, String[]> parameter : info.typeParameters) {
-      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(list, parameter.first);
-      newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
-    }
+    newTypeParameterList(stub, info.typeParameters);
 
     boolean isEnumConstructor = isEnum && isConstructor;
     boolean isInnerClassConstructor =
@@ -564,7 +564,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static class MethodAnnotationCollectingVisitor extends MethodVisitor {
     private final PsiMethodStub myOwner;
     private final PsiModifierListStub myModList;
-    private final int myIgnoreCount;
+    private final int myLocalVarIgnoreCount;
     private final int myParamIgnoreCount;
     private final int myParamCount;
     private final PsiParameterStubImpl[] myParamStubs;
@@ -576,7 +576,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private MethodAnnotationCollectingVisitor(PsiMethodStub owner,
                                               PsiModifierListStub modList,
-                                              int ignoreCount,
+                                              int localVarIgnoreCount,
                                               int paramIgnoreCount,
                                               int paramCount,
                                               PsiParameterStubImpl[] paramStubs,
@@ -584,7 +584,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       super(ASM_API);
       myOwner = owner;
       myModList = modList;
-      myIgnoreCount = ignoreCount;
+      myLocalVarIgnoreCount = localVarIgnoreCount;
       myParamIgnoreCount = paramIgnoreCount;
       myParamCount = paramCount;
       myParamStubs = paramStubs;
@@ -639,9 +639,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-      if (index >= myIgnoreCount) {
+      if (index >= myLocalVarIgnoreCount) {
         // long and double variables increase the index by 2, not by 1
-        int paramIndex = index - myIgnoreCount == myUsedParamSize ? myUsedParamCount : index - myIgnoreCount;
+        int paramIndex = index - myLocalVarIgnoreCount == myUsedParamSize ? myUsedParamCount : index - myLocalVarIgnoreCount;
         if (paramIndex < myParamCount) {
           setParameterName(name, paramIndex);
           myUsedParamCount = paramIndex + 1;

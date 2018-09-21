@@ -1,6 +1,6 @@
 package com.siyeh.igtest.classmetrics.method_count;
 
-public class MethodCount {
+public class <warning descr="'MethodCount' has too many methods (method count = 6)">MethodCount</warning> {
   public void one() {}
   public void two() {}
   public void three() {}

@@ -11,7 +11,7 @@ import org.intellij.lang.xpath.xslt.util.ArgumentMatcher;
 import org.jetbrains.annotations.NotNull;
 
 abstract class XsltTemplateInvocationBase extends XsltElementImpl implements XsltTemplateInvocation {
-    public XsltTemplateInvocationBase(XmlTag target) {
+    XsltTemplateInvocationBase(XmlTag target) {
         super(target);
     }
 

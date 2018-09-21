@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>StaticVariableInitializationInspection.java</file>
-    <line>11</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static field may not be initialized</problem_class>
-    <description>Static field &lt;code&gt;s_fooBar&lt;/code&gt; may not be initialized during class initialization #loc</description>
-  </problem>
-</problems>

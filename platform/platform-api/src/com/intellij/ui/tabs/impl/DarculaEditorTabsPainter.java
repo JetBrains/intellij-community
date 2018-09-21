@@ -25,7 +25,7 @@ import java.awt.*;
 @SuppressWarnings("UseJBColor")
 class DarculaEditorTabsPainter extends DefaultEditorTabsPainter {
 
-  public DarculaEditorTabsPainter(JBEditorTabs tabs) {
+  DarculaEditorTabsPainter(JBEditorTabs tabs) {
     super(tabs);
   }
 

@@ -38,7 +38,7 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
     private final String myToolId;
     private final String myMsg;
 
-    public SuppressInspectionAction(String toolId, String msg) {
+    SuppressInspectionAction(String toolId, String msg) {
         myToolId = toolId;
         myMsg = msg;
     }

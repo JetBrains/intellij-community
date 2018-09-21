@@ -13,13 +13,13 @@ import java.util.List;
 class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   private final String myTextIfEmpty;
 
-  public TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
     super(accessor, tagAnnotation.value(), null);
 
     myTextIfEmpty = tagAnnotation.textIfEmpty();
   }
 
-  public TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
     super(accessor, suggestedName, null);
 
     myTextIfEmpty = "";

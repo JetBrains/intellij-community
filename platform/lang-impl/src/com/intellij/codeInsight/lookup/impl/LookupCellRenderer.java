@@ -491,7 +491,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private class LookupPanel extends JPanel {
     boolean myUpdateExtender;
-    public LookupPanel() {
+    LookupPanel() {
       super(new BorderLayout());
     }
 

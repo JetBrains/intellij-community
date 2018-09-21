@@ -56,6 +56,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
       c.getMatchOptions().initScope(myProject);
       addHistoryConfiguration(c);
     });
+    Collections.reverse(historyConfigurations);
   }
 
   public void addHistoryConfiguration(@NotNull Configuration configuration) {

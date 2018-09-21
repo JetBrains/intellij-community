@@ -40,7 +40,7 @@ public class BTreeEnumeratorTest extends TestCase {
     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
   static class TestStringEnumerator extends PersistentBTreeEnumerator<String> {
-    public TestStringEnumerator(File file) throws IOException {
+    TestStringEnumerator(File file) throws IOException {
       super(file, new EnumeratorStringDescriptor(), 4096);
     }
   }

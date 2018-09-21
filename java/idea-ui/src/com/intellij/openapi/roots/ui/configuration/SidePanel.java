@@ -195,7 +195,7 @@ public class SidePanel extends JPanel {
     private final Place myPlace;
     private final String myText;
 
-    public SidePanelItem(Place place, String text) {
+    SidePanelItem(Place place, String text) {
       myPlace = place;
       myText = text;
     }

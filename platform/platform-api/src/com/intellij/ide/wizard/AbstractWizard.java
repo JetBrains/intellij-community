@@ -165,15 +165,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       final Collection<Component> buttons = ContainerUtil.newArrayListWithCapacity(5);
       final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
 
-      if (helpAvailable && UIUtil.isUnderGTKLookAndFeel()) {
-        add(hGroup, vGroup, buttons, myHelpButton);
-      }
       add(hGroup, vGroup, null, Box.createHorizontalGlue());
       if (mySteps.size() > 1) {
         add(hGroup, vGroup, buttons, myPreviousButton);
       }
       add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
-      if (helpAvailable && !UIUtil.isUnderGTKLookAndFeel()) {
+      if (helpAvailable) {
         add(hGroup, vGroup, buttons, myHelpButton);
       }
 

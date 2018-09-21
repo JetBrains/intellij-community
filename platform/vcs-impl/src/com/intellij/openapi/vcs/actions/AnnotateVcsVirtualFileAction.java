@@ -141,7 +141,7 @@ public class AnnotateVcsVirtualFileAction {
         }
 
         if (!fileAnnotationRef.isNull()) {
-          AnnotateToggleAction.doAnnotate(editor, project, null, fileAnnotationRef.get(), data.vcs);
+          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), data.vcs);
         }
       }
     };
@@ -187,7 +187,7 @@ public class AnnotateVcsVirtualFileAction {
     @NotNull public final FilePath filePath;
     @NotNull public final VcsRevisionNumber revisionNumber;
 
-    public AnnotationData(@NotNull AbstractVcs vcs,
+    AnnotationData(@NotNull AbstractVcs vcs,
                           @NotNull FilePath filePath,
                           @NotNull VcsRevisionNumber revisionNumber) {
       this.vcs = vcs;

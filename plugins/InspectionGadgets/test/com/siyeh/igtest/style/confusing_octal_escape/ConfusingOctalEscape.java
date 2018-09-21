@@ -3,11 +3,11 @@ package com.siyeh.igtest.style.confusing_octal_escape;
 public class ConfusingOctalEscape {
 
   void foo() {
-    System.out.println("\1234\49");
+    System.out.println("<warning descr="Octal escape sequence '\123' immediately followed by digit">\123</warning>4<warning descr="Octal escape sequence '\4' immediately followed by digit">\4</warning>9");
   }
 
-  public static final String foo =  "asdf\01234";
-  public static final String boo =  "asdf\01834";
+  public static final String foo =  "asdf<warning descr="Octal escape sequence '\012' immediately followed by digit">\012</warning>34";
+  public static final String boo =  "asdf<warning descr="Octal escape sequence '\01' immediately followed by digit">\01</warning>834";
 
   public static String escapeLdapSearchValue(String value) {
     // see RFC 2254
@@ -24,6 +24,6 @@ public class ConfusingOctalEscape {
   }
 
   String twoDigitOctalEscape() {
-    return "\444\344";
+    return "<warning descr="Octal escape sequence '\44' immediately followed by digit">\44</warning>4\344";
   }
 }

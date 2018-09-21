@@ -137,7 +137,7 @@ public class HighlightDisplayLevel {
   }
 
   private static class MyColorIcon extends ColorIcon implements ColoredIcon {
-    public MyColorIcon(int size, @NotNull Color color) {
+    MyColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }
 

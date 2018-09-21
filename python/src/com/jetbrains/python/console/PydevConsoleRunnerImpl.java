@@ -679,7 +679,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
       private static final String CONSOLE_SPLIT_LINE_ACTION_ID = "Console.SplitLine";
 
-      public ConsoleSplitLineAction() {
+      ConsoleSplitLineAction() {
         super(new EditorWriteActionHandler() {
 
           private final SplitLineAction mySplitLineAction = new SplitLineAction();
@@ -819,7 +819,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     private boolean mySelected = false;
     private XDebugSession mySession = null;
 
-    public ConnectDebuggerAction() {
+    ConnectDebuggerAction() {
       super("Attach Debugger", "Enables tracing of code executed in console", AllIcons.Actions.StartDebugger);
     }
 
@@ -860,7 +860,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   private static class NewConsoleAction extends AnAction implements DumbAware {
-    public NewConsoleAction() {
+    NewConsoleAction() {
       super("New Console", "Creates new python console", AllIcons.General.Add);
     }
 

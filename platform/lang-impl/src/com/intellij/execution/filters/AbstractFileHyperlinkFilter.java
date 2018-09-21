@@ -143,7 +143,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     private final int myDocumentColumn;
     private Ref<VirtualFile> myFileRef;
 
-    public MyFileHyperlinkInfo(@NotNull File ioFile, int documentLine, int documentColumn) {
+    MyFileHyperlinkInfo(@NotNull File ioFile, int documentLine, int documentColumn) {
       myIoFile = ioFile;
       myDocumentLine = documentLine;
       myDocumentColumn = documentColumn;

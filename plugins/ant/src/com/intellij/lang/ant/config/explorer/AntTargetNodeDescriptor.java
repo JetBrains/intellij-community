@@ -50,7 +50,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
   private final AntBuildTargetBase myTarget;
   private CompositeAppearance myHighlightedText;
 
-  public AntTargetNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AntBuildTargetBase target) {
+  AntTargetNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AntBuildTargetBase target) {
     super(project, parentDescriptor);
     myTarget = target;
     myHighlightedText = new CompositeAppearance();

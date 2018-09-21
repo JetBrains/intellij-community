@@ -2,6 +2,10 @@
   <name>IntelliJ Configuration Script</name>
   <id>com.intellij.configurationScript</id>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+  <p>IDE configuration using text files (YAML, JSON). Experimental. Further information is not available prior to 2018.3 release.</p>
+  ]]>
+  </description>
 
   <!--<depends>org.jetbrains.kotlin</depends>-->
 
@@ -12,6 +16,9 @@
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.configurationScript.IntellijConfigurationAppInitializer"/>
+    <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
+
+    <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>
+    <updateSettingsProvider implementation="com.intellij.configurationScript.providers.MyUpdateSettingsProvider"/>
   </extensions>
 </idea-plugin>

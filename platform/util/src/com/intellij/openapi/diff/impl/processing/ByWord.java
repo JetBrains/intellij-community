@@ -79,8 +79,7 @@ public class ByWord implements DiffPolicy {
 
   private static int countNotWhitespaces(@NotNull Word[] words) {
     int counter = 0;
-    for (int i = 0; i < words.length; i++) {
-      Word word = words[i];
+    for (Word word : words) {
       if (!word.isWhitespace()) counter++;
     }
     return counter;
@@ -177,7 +176,7 @@ public class ByWord implements DiffPolicy {
     private final DiffCorrection.ChangedSpace CORRECTION;
     private final ComparisonPolicy myComparisonPolicy;
 
-    public FragmentBuilder(@NotNull Word[] words1, @NotNull Word[] words2, @NotNull ComparisonPolicy comparisonPolicy, @NotNull DiffString text1, @NotNull DiffString text2) {
+    FragmentBuilder(@NotNull Word[] words1, @NotNull Word[] words2, @NotNull ComparisonPolicy comparisonPolicy, @NotNull DiffString text1, @NotNull DiffString text2) {
       myVersion1 = new Version(words1, text1, this, true);
       myVersion2 = new Version(words2, text2, this, false);
       BY_CHAR = new ByChar(comparisonPolicy);
@@ -197,8 +196,7 @@ public class ByWord implements DiffPolicy {
     public Version getVersion2() { return myVersion2; }
 
     private void addAll(@NotNull DiffFragment[] fragments) {
-      for (int i = 0; i < fragments.length; i++) {
-        DiffFragment fragment = fragments[i];
+      for (DiffFragment fragment : fragments) {
         add(fragment);
       }
     }

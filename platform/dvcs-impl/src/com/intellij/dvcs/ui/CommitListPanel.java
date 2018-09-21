@@ -99,7 +99,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
   // Make changes available for diff action
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (VcsDataKeys.CHANGES.equals(key)) {
       int[] rows = myTable.getSelectedRows();
       if (rows.length != 1) return;
@@ -205,7 +205,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
     @NotNull private final String myMaxString;
 
-    public CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+    CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
       super(name);
       myMaxString = maxString;
     }

@@ -990,7 +990,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {
-    public MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
+    MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
       super(defaultNotNull, annotationsToRemove);
     }
 

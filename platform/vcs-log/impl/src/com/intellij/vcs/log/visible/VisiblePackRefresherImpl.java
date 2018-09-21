@@ -157,7 +157,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   private class MyTask extends Task.Backgroundable {
 
-    public MyTask(@Nullable Project project, @NotNull String title) {
+    MyTask(@Nullable Project project, @NotNull String title) {
       super(project, title, false);
     }
 
@@ -297,11 +297,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     @NotNull private final VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
-    public State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
+    State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
       this(filters, sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY, true);
     }
 
-    public State(@NotNull VcsLogFilterCollection filters,
+    State(@NotNull VcsLogFilterCollection filters,
                  @NotNull PermanentGraph.SortType sortType,
                  @NotNull CommitCountStage commitCountStage,
                  @NotNull List<MoreCommitsRequest> requests,

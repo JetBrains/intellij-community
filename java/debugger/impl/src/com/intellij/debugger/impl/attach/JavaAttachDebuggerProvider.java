@@ -1,14 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -24,6 +27,7 @@ import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +36,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,7 +49,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     private final Project myProject;
     private final LocalAttachInfo myInfo;
 
-    public JavaLocalAttachDebugger(@NotNull Project project, @NotNull LocalAttachInfo info) {
+    JavaLocalAttachDebugger(@NotNull Project project, @NotNull LocalAttachInfo info) {
       myProject = project;
       myInfo = info;
     }
@@ -79,7 +83,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-      LocalAttachInfo attachInfo = getAttachInfo(info, dataHolder.getUserData(ADDRESS_MAP_KEY));
+      LocalAttachInfo attachInfo = getAttachInfo(project, info, dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
       String res = "";
       String executable = info.getExecutableDisplayName();
@@ -114,27 +118,39 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       addressMap = new HashMap<>();
       contextHolder.putUserData(ADDRESS_MAP_KEY, addressMap);
       final Map<String, LocalAttachInfo> map = addressMap;
+      Set<String> attachedPids = getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
-        LocalAttachInfo address = getProcessAttachInfo(desc.id());
+        String pid = desc.id();
+        LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids);
         if (address != null) {
-          map.put(desc.id(), address);
+          map.put(pid, address);
         }
       });
     }
 
-    LocalAttachInfo info = getAttachInfo(processInfo, addressMap);
+    LocalAttachInfo info = getAttachInfo(project, processInfo, addressMap);
     return info != null ? Collections.singletonList(new JavaLocalAttachDebugger(project, info)) : Collections.emptyList();
   }
 
+  private static Set<String> getAttachedPids(@NotNull Project project) {
+    return StreamEx.of(DebuggerManagerEx.getInstanceEx(project).getSessions())
+      .map(s -> s.getDebugEnvironment().getRemoteConnection())
+      .select(PidRemoteConnection.class)
+      .map(PidRemoteConnection::getPid)
+      .toSet();
+  }
+
   @Nullable
-  private static LocalAttachInfo getAttachInfo(ProcessInfo processInfo, @Nullable Map<String, LocalAttachInfo> addressMap) {
+  private static LocalAttachInfo getAttachInfo(Project project,
+                                               ProcessInfo processInfo,
+                                               @Nullable Map<String, LocalAttachInfo> addressMap) {
     LocalAttachInfo res;
     String pidString = String.valueOf(processInfo.getPid());
     if (addressMap != null) {
       res = addressMap.get(pidString);
     }
     else {
-      res = getProcessAttachInfo(pidString);
+      res = getProcessAttachInfo(pidString, project);
     }
     if (res == null) {
       res = getProcessAttachInfo(ParametersListUtil.parse(processInfo.getCommandLine()), pidString);
@@ -170,20 +186,31 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     return null;
   }
 
-  @Nullable
-  static LocalAttachInfo getProcessAttachInfo(String pid) {
-    CompletableFuture<LocalAttachInfo> future = CompletableFuture.supplyAsync(() -> getProcessAttachInfoInt(pid));
-    try {
-      // attaching ang getting info may hang in some cases
-      return future.get(5, TimeUnit.SECONDS);
-    }
-    catch (Exception e) {
-      LOG.info("Timeout while getting attach info", e);
-    }
-    finally {
-      future.cancel(true);
+  private static LocalAttachInfo getProcessAttachInfo(String pid, @NotNull Set<String> attachedPids) {
+    if (!attachedPids.contains(pid)) {
+      Future<LocalAttachInfo> future = ApplicationManager.getApplication().executeOnPooledThread(() -> getProcessAttachInfoInt(pid));
+      try {
+        // attaching ang getting info may hang in some cases
+        return future.get(5, TimeUnit.SECONDS);
+      }
+      catch (Exception e) {
+        LOG.info("Timeout while getting attach info", e);
+      }
+      finally {
+        future.cancel(true);
+      }
     }
     return null;
+  }
+
+  @Nullable
+  private static LocalAttachInfo getProcessAttachInfo(@NotNull String pid, @NotNull Project project) {
+    return getProcessAttachInfo(pid, getAttachedPids(project));
+  }
+
+  @Nullable
+  static LocalAttachInfo getProcessAttachInfo(@NotNull String pid) {
+    return getProcessAttachInfo(pid, Collections.emptySet());
   }
 
   @Nullable
@@ -205,12 +232,20 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
                                            pid);
       }
 
-      // sa pid attach if sa-jdi.jar is available
-      if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
-        Properties systemProperties = vm.getSystemProperties();
-        File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
-        if (saJdiJar.exists()) {
-          return new LocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+      //do not allow further for idea process
+      if (!pid.equals(OSProcessUtil.getApplicationPid())) {
+        // prefer sa-jdwp attach if available
+        if (SAJDWPRemoteConnection.isAvailable()) {
+          return new LocalAttachInfo(command, pid);
+        }
+
+        // sa pid attach if sa-jdi.jar is available
+        if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
+          Properties systemProperties = vm.getSystemProperties();
+          File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
+          if (saJdiJar.exists()) {
+            return new SAPIDLocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+          }
         }
       }
     }
@@ -235,8 +270,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     final boolean myUseSocket;
     final String myAddress;
 
-    public DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
-      super(aClass, pid, "");
+    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
+      super(aClass, pid);
       myUseSocket = socket;
       myAddress = address;
     }
@@ -252,19 +287,31 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  static class LocalAttachInfo {
-    final String myClass;
-    final String myPid;
+  static class SAPIDLocalAttachInfo extends LocalAttachInfo {
     final String mySAJarPath;
 
-    private LocalAttachInfo(String aClass, String pid, String SAJarPath) {
-      myClass = aClass;
-      myPid = pid;
+    SAPIDLocalAttachInfo(String aClass, String pid, String SAJarPath) {
+      super(aClass, pid);
       mySAJarPath = SAJarPath;
     }
 
+    @Override
     RemoteConnection createConnection() {
       return new SAPidRemoteConnection(myPid, mySAJarPath);
+    }
+  }
+
+  static class LocalAttachInfo {
+    final String myClass;
+    final String myPid;
+
+    LocalAttachInfo(String aClass, String pid) {
+      myClass = aClass;
+      myPid = pid;
+    }
+
+    RemoteConnection createConnection() {
+      return new SAJDWPRemoteConnection(myPid);
     }
 
     String getSessionName() {
@@ -366,6 +413,11 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @Override
     public ConfigurationFactory[] getConfigurationFactories() {
       return new ConfigurationFactory[]{FACTORY};
+    }
+
+    @Override
+    public String getHelpTopic() {
+      return "reference.dialogs.rundebug.ProcessAttachRunConfigurationType";
     }
   }
 

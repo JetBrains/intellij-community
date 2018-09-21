@@ -19,9 +19,6 @@ class ProductModulesLayout {
    */
   String mainJarName
 
-  List<String> platformApiJarModules = []
-  List<String> platformImplJarModules = []
-
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
@@ -54,6 +51,14 @@ class ProductModulesLayout {
    */
   List<String> bundledPluginModules = []
 
+  /**
+   * Names of the main modules of the plugins which need to be bundled in windows distribution of the product.
+   */
+  final Map<OsFamily, List<String>> bundledOsPluginModules = [:]
+
+  Set<String> getAllBundledPluginsModules() {
+    return (bundledOsPluginModules.values().flatten() as Set<String>) + bundledPluginModules
+  }
 
   private LinkedHashMap<String, PluginPublishingSpec> pluginsToPublish = []
 

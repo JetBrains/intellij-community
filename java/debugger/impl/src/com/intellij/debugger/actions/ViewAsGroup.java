@@ -48,7 +48,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static class RendererAction extends ToggleAction {
     private final NodeRenderer myNodeRenderer;
 
-    public RendererAction(NodeRenderer nodeRenderer) {
+    RendererAction(NodeRenderer nodeRenderer) {
       super(nodeRenderer.getName());
       myNodeRenderer = nodeRenderer;
     }

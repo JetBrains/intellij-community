@@ -18,7 +18,6 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
-import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -26,9 +25,7 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -65,6 +62,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myConsoleProperties.getProject(), myResultsViewer.getTestsRootNode(), "SMTestFramework");
     myEventsProcessor.addEventsListener(myResultsViewer);
     myTreeModel = myResultsViewer.getTreeView().getModel();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
   }
 
   @Override
@@ -185,69 +183,39 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(0, myResultsViewer.getFinishedTestCount());
   }
 
-  public void testChangeSelectionAction() {
-    final Marker onSelectedHappend = new Marker();
-    final Ref<SMTestProxy> proxyRef = new Ref<>();
-    final Ref<Boolean> focusRequestedRef = new Ref<>();
-
-    myResultsViewer.setShowStatisticForProxyHandler(new PropagateSelectionHandler() {
-      @Override
-      public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
-                                                  final boolean requestFocus) {
-        onSelectedHappend.set();
-        proxyRef.set(selectedTestProxy);
-        focusRequestedRef.set(requestFocus);
-      }
-    });
-
-    final SMTestProxy suite = createSuiteProxy("suite", myTestsRootNode);
-    final SMTestProxy test = createTestProxy("test", myTestsRootNode);
-    myResultsViewer.onSuiteStarted(suite);
-    myResultsViewer.onTestStarted(test);
-
-    //On test
-    myResultsViewer.selectAndNotify(test);
-    myResultsViewer.showStatisticsForSelectedProxy();
-    assertTrue(onSelectedHappend.isSet());
-    assertEquals(test, proxyRef.get());
-    assertTrue(focusRequestedRef.get());
-
-    //on suite
-    //reset markers
-    onSelectedHappend.reset();
-    proxyRef.set(null);
-    focusRequestedRef.set(null);
-
-    myResultsViewer.selectAndNotify(suite);
-    myResultsViewer.showStatisticsForSelectedProxy();
-    assertTrue(onSelectedHappend.isSet());
-    assertEquals(suite, proxyRef.get());
-    assertTrue(focusRequestedRef.get());
-  }
-
   public void testRuby_1767() {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
 
     myEventsProcessor.onStartTesting();
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     myEventsProcessor.onTestStarted(new TestStartedEvent("test_failed", null));
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
     myEventsProcessor.onTestFailure(new TestFailedEvent("test_failed", "", "", false, null, null));
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
     myEventsProcessor.onTestFinished(new TestFinishedEvent("test_failed", 10l));
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     myEventsProcessor.onTestStarted(new TestStartedEvent("test", null));
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
     assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
 
     myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
     assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
 
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite"));
     myEventsProcessor.onFinishTesting();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     assertEquals(1, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
   }
@@ -278,13 +246,15 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.performUpdate();
     myEventsProcessor.onFinishTesting();
     myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
 
     final DefaultMutableTreeNode suite1Node =
       (DefaultMutableTreeNode)myTreeModel.getChild(myTreeModel.getRoot(), 0);
     final DefaultMutableTreeNode suite2Node =
       (DefaultMutableTreeNode)myTreeModel.getChild(suite1Node, 0);
 
-    assertTrue(myResultsViewer.getTreeView().isExpanded(new TreePath(suite1Node.getPath())));
+    //todo auto expand is disabled
+    assertFalse(myResultsViewer.getTreeView().isExpanded(new TreePath(suite1Node.getPath())));
     assertFalse(myResultsViewer.getTreeView().isExpanded(new TreePath(suite2Node.getPath())));
   }
 
@@ -294,6 +264,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onSuiteTreeStarted("suite1", null, null, "suite1", "0");
     myEventsProcessor.onSuiteTreeNodeAdded("test1", null, null,"test1", "suite1");
     myEventsProcessor.onSuiteTreeEnded("suite1");
+    myEventsProcessor.onBuildTreeEnded();
 
     //start testing
     myEventsProcessor.onStartTesting();

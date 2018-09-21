@@ -7,6 +7,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, null, false, ignrd -> null);
+      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
       collector.awaitFinish();
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
@@ -47,7 +48,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0));
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, null, false, ignrd -> null);
+      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
       collector.awaitFinish();
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
@@ -199,7 +200,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
 
     //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     String scenarioName = "Simple without collisions";
-    Map<SearchEverywhereContributor<?>, Integer> contributors = ContainerUtil.newHashMap(
+    Map<SearchEverywhereContributor<?>, Integer> contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"), 12),
       Pair.create(createTestContributor("test2", 0, "item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", "item2_11", "item2_12"), 10),
       Pair.create(createTestContributor("test3", 0, "item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8"), 10),
@@ -227,7 +228,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     scenarioName = "Simple without MORE items";
-    contributors = ContainerUtil.newHashMap(
+    contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10"), 10),
       Pair.create(createTestContributor("test2", 0, "item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", "item2_11", "item2_12"), 20),
       Pair.create(createTestContributor("test3", 0, "item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8"), 10)
@@ -241,7 +242,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     scenarioName = "Empty results";
-    contributors = ContainerUtil.newHashMap(
+    contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0), 10),
       Pair.create(createTestContributor("test2", 0), 10),
       Pair.create(createTestContributor("test3", 0), 10),
@@ -259,7 +260,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     scenarioName = "One contributor";
-    contributors = ContainerUtil.newHashMap(
+    contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"), 10)
     );
     results = ContainerUtil.newHashMap(
@@ -269,7 +270,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     scenarioName = "One contributor with no MORE item";
-    contributors = ContainerUtil.newHashMap(
+    contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10"), 10)
     );
     results = ContainerUtil.newHashMap(
@@ -285,7 +286,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     scenarioName = "Collisions scenario";
-    contributors = ContainerUtil.newHashMap(
+    contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"), 12),
       Pair.create(createTestContributor("test2", 10, "item2_1", "item2_2", "duplicateItem1", "duplicateItem2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", "item2_11", "item2_12"), 10),
       Pair.create(createTestContributor("test3", 8, "item3_1", "item3_2", "item3_3", "item3_4", "duplicateItem1", "item3_5", "item3_6", "item3_7", "item3_8", "duplicateItem2", "duplicateItem3"), 10),
@@ -299,13 +300,13 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     results = ContainerUtil.newHashMap(
       Pair.create("test1", Arrays.asList("item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", MORE_ITEM)),
       Pair.create("test2", Arrays.asList("item2_1", "item2_2", "duplicateItem1", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", MORE_ITEM)),
-      Pair.create("test3", Arrays.asList("item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8", MORE_ITEM)),
+      Pair.create("test3", Arrays.asList("item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8")),
       Pair.create("test4", Arrays.asList("item4_1", "item4_2", "duplicateItem2", "item4_3", "item4_4", "item4_5", "item4_6", "item4_7", "item4_8")),
       Pair.create("test6", Arrays.asList("item6_1", "item6_2", "item6_3", "item6_4", "duplicateItem3", "item6_5", "item6_6", "item6_7", "item6_8", "item6_9", MORE_ITEM)),
       Pair.create("test7", Arrays.asList("item7_1", "item7_2", "item7_3", "item7_4", "item7_5", "item7_6", "item7_7", "item7_8", "item7_9")),
       Pair.create("test8", Arrays.asList("item8_1", "item8_2", "item8_3", "item8_4", "item8_5", "duplicateItem4")),
       Pair.create("test9", Arrays.asList("item9_1", "item9_2", "item9_3", "item9_4", "duplicateItem5", MORE_ITEM)),
-      Pair.create("test10", Arrays.asList("item10_1", "item10_2", "item10_3", "item10_4", MORE_ITEM))
+      Pair.create("test10", Arrays.asList("item10_1", "item10_2", "item10_3", "item10_4", "duplicateItem6"))
     );
     res.add(new Scenario(contributors, results, scenarioName));
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -344,16 +345,16 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       }
 
       @Override
-      public int getElementPriority(Object element, String searchPattern) {
+      public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
         return fixedPriority;
       }
 
       @Override
-      public void fetchElements(String pattern,
+      public void fetchElements(@NotNull String pattern,
                                 boolean everywhere,
-                                SearchEverywhereContributorFilter<Object> filter,
-                                ProgressIndicator progressIndicator,
-                                Function<Object, Boolean> consumer) {
+                                @Nullable SearchEverywhereContributorFilter<Object> filter,
+                                @NotNull ProgressIndicator progressIndicator,
+                                @NotNull Function<Object, Boolean> consumer) {
         boolean flag = true;
         Iterator<String> iterator = Arrays.asList(items).iterator();
         while (flag && iterator.hasNext()) {
@@ -363,17 +364,18 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       }
 
       @Override
-      public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+      public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
         return false;
       }
 
+      @NotNull
       @Override
-      public ListCellRenderer getElementsRenderer(JList<?> list) {
+      public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
         return null;
       }
 
       @Override
-      public Object getDataForItem(Object element, String dataId) {
+      public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
         return null;
       }
     };
@@ -384,7 +386,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     private final Map<String, List<String>> results;
     private final String description;
 
-    public Scenario(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+    Scenario(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                     Map<String, List<String>> results, String description) {
       this.contributorsAndLimits = contributorsAndLimits;
       this.results = results;

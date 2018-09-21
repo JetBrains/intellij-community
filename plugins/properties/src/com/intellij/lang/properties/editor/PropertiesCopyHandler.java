@@ -291,7 +291,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   private static class ResourceBundleAsFileSystemItem extends SyntheticFileSystemItem {
     private final ResourceBundle myResourceBundle;
 
-    public ResourceBundleAsFileSystemItem(@NotNull ResourceBundle resourceBundle) {
+    ResourceBundleAsFileSystemItem(@NotNull ResourceBundle resourceBundle) {
       super(resourceBundle.getProject());
       myResourceBundle = resourceBundle;
     }

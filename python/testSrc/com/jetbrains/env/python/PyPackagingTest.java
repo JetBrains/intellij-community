@@ -129,7 +129,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           assertNull(pip2);
         }
         catch (ExecutionException e) {
-          new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
+          throw new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
         }
         catch (IOException e) {
           throw new RuntimeException(e);

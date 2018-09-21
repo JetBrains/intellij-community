@@ -68,7 +68,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   private static class MyVirtualFileListener implements VirtualFileListener {
     private final Project myProject;
 
-    public MyVirtualFileListener(@NotNull Project project) {
+    MyVirtualFileListener(@NotNull Project project) {
       myProject = project;
     }
 

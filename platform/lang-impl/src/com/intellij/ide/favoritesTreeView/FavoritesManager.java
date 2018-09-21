@@ -320,7 +320,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return false;
   }
 
-  public void setOrder(String nameToOrder, String anchorName, boolean above) {
+  public void setOrder(@NotNull String nameToOrder, String anchorName, boolean above) {
     if (!canReorder(nameToOrder, anchorName, above)) return;
     int index = myFavoritesRootsOrder.indexOf(anchorName);
     int toRemove = myFavoritesRootsOrder.indexOf(nameToOrder);

@@ -140,7 +140,7 @@ public abstract class TaskStateCombo extends JPanel {
   private static class CustomStateTrinityAdapter extends Trinity<String, Icon, String> {
     final CustomTaskState myState;
 
-    public CustomStateTrinityAdapter(@NotNull CustomTaskState state) {
+    CustomStateTrinityAdapter(@NotNull CustomTaskState state) {
       super(state.getPresentableName(), null, state.getId());
       myState = state;
     }
