@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -27,17 +29,35 @@ public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
+  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
+  private final Queue<LoggingEvent> myEarlyEvents = new ConcurrentLinkedQueue<>();
+
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
 
   @Override
   protected synchronized void append(@NotNull LoggingEvent event) {
-    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) ||
-        Main.isCommandLine() ||
-        !IdeaApplication.isLoaded()) {
-      return;
+    if (Main.isCommandLine()) return;
+
+    boolean isLoaded = IdeaApplication.isLoaded();
+    if (isLoaded) {
+      LoggingEvent eventFromQueue;
+      while ((eventFromQueue = myEarlyEvents.poll()) != null) {
+        queueAppend(eventFromQueue);
+      }
     }
 
+    if (!event.getLevel().isGreaterOrEqual(Level.ERROR)) return;
+
+    if (isLoaded) {
+      queueAppend(event);
+    }
+    else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+      myEarlyEvents.add(event);
+    }
+  }
+
+  private void queueAppend(@NotNull LoggingEvent event) {
     if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
       // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
