@@ -100,6 +100,10 @@ class RemoveChangeListAction : AnAction(), DumbAware {
       return confirmActiveChangeListRemoval(project, lists)
     }
 
+    return confirmChangeListRemoval(project, lists)
+  }
+
+  private fun confirmChangeListRemoval(project: Project, lists: List<LocalChangeList>): Boolean {
     val haveNoChanges = lists.all { it.changes.isEmpty() }
     if (haveNoChanges) return true
 
