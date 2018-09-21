@@ -22,7 +22,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -42,22 +41,14 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
 
   @NotNull
   private final String myID;
-  private final String myProblemLine;
-
-  public RemoveSuppressWarningAction(@NotNull String ID, final String problemLine) {
-    myID = ID;
-    myProblemLine = problemLine;
-  }
 
   public RemoveSuppressWarningAction(@NotNull String id) {
     final int idx = id.indexOf(";");
     if (idx > -1) {
       myID = id.substring(0, idx);
-      myProblemLine = id.substring(idx);
     }
     else {
       myID = id;
-      myProblemLine = null;
     }
   }
 
@@ -72,7 +63,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (element != null) {
-        final PsiJavaDocumentedElement commentOwner = PsiTreeUtil.getParentOfType(element, PsiJavaDocumentedElement.class);
+        final PsiJavaDocumentedElement commentOwner = PsiTreeUtil.getParentOfType(element, PsiJavaDocumentedElement.class, false);
         if (commentOwner != null) {
           final PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
           if (psiElement instanceof PsiAnnotation) {
@@ -113,10 +104,6 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
   }
 
   private void removeFromComment(final PsiComment comment, final boolean checkLine) throws IncorrectOperationException {
-    if (checkLine) {
-      final PsiStatement statement = PsiTreeUtil.getNextSiblingOfType(comment, PsiStatement.class);
-      if (statement != null && !Comparing.strEqual(statement.getText(), myProblemLine)) return;
-    }
     String newText = removeFromElementText(comment);
     if (newText != null) {
       if (newText.isEmpty()) {
