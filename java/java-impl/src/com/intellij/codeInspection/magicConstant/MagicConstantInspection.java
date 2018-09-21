@@ -454,7 +454,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     } else {
       realElement = element;
     }
-    return CachedValuesManager.getCachedValue(element, () ->
+    return CachedValuesManager.getCachedValue(realElement, () ->
       CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
