@@ -51,7 +51,8 @@ class TestingTasksImpl extends TestingTasks {
 
     def compilationTasks = CompilationTasks.create(context)
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
-      JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
     }
     if (runConfigurations != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
