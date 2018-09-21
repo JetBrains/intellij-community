@@ -22,7 +22,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration {
 
   public static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
   public static final Key<Boolean> DEBUG_FLAG_KEY = Key.create("DEBUG_GRADLE_SCRIPT");
-  private boolean isScriptDebugEnabled = false;
+  private boolean isScriptDebugEnabled = true;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
