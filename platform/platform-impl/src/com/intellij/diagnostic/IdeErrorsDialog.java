@@ -444,9 +444,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
-    String date = DateFormatUtil.formatPrettyDateTime(message.getDate());
     int count = cluster.messages.size();
-    info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
+    String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
+    info.append(' ').append(DiagnosticBundle.message("error.list.message.info", StringUtil.decapitalize(date), count));
 
     String url = null;
     if (message.isSubmitted()) {
