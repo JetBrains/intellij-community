@@ -71,7 +71,7 @@ public interface InlayModel {
    */
   default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
     //noinspection unchecked
-    return getInlineElementsInRange(startOffset, endOffset).stream()
+    return (List)getInlineElementsInRange(startOffset, endOffset).stream()
       .filter(i -> type.isInstance(i.getRenderer()))
       .collect(Collectors.toList());
   }
@@ -92,7 +92,7 @@ public interface InlayModel {
    */
   default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
     //noinspection unchecked
-    return getBlockElementsInRange(startOffset, endOffset).stream()
+    return (List)getBlockElementsInRange(startOffset, endOffset).stream()
       .filter(i -> type.isInstance(i.getRenderer()))
       .collect(Collectors.toList());
   }
