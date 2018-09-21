@@ -1334,7 +1334,7 @@ public class PluginManagerConfigurableNew
   }
 
   @Nullable
-  public static String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
     String downloads = ((PluginNode)plugin).getDownloads();
     if (!StringUtil.isEmptyOrSpaces(downloads)) {
       try {
@@ -1342,6 +1342,7 @@ public class PluginManagerConfigurableNew
         if (value > 1000) {
           return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
         }
+        return value.toString();
       }
       catch (NumberFormatException ignore) {
       }
@@ -1351,9 +1352,9 @@ public class PluginManagerConfigurableNew
   }
 
   @Nullable
-  public static String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
     long date = ((PluginNode)plugin).getDate();
-    return date > 0 ? DATE_FORMAT.format(new Date(date)) : null;
+    return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
   }
 
   @Nullable
