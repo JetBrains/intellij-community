@@ -114,7 +114,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAcceptedNotices = ContainerUtil.newLinkedHashSet(StringUtil.split(rawValue, ACCEPTED_NOTICES_SEPARATOR));
 
     updateMessages();
-    selectMessage(defaultMessage);
+
+    if (defaultMessage == null) {
+      selectLastNotSubmittedMessage();
+    } else {
+      selectMessage(defaultMessage);
+    }
+
     updateControls();
 
     messagePool.addListener(this);
@@ -143,6 +149,26 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
         }
       }.queue();
+    }
+  }
+
+  private void selectLastNotSubmittedMessage() {
+    AbstractMessage lastNotSubmittedMessage = null;
+    int clusterToSelect = -1;
+
+    for (int i = 0; i < myMessageClusters.size(); i++) {
+      for (AbstractMessage message : myMessageClusters.get(i).messages) {
+        if (!message.isSubmitted() && !message.isSubmitting()) {
+          if (lastNotSubmittedMessage == null || lastNotSubmittedMessage.getDate().before(message.getDate())) {
+            lastNotSubmittedMessage = message;
+            clusterToSelect = i;
+          }
+        }
+      }
+    }
+
+    if (clusterToSelect >= 0) {
+      myIndex = clusterToSelect;
     }
   }
 
