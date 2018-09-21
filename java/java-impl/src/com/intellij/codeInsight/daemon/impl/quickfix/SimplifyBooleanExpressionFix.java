@@ -244,10 +244,13 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   private static PsiBlockStatement wrapWithCodeBlock(PsiStatement replacement) {
-    PsiBlockStatement newBlock = (PsiBlockStatement)
-      JavaPsiFacade.getElementFactory(replacement.getProject()).createStatementFromText("{}", null);
+    PsiBlockStatement newBlock = createBlockStatement(replacement.getProject());
     newBlock.getCodeBlock().add(replacement);
     return newBlock;
+  }
+
+  private static PsiBlockStatement createBlockStatement(Project project) {
+    return (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
   }
 
   private static void inlineBlockStatements(@NotNull PsiStatement orig, @NotNull PsiBlockStatement statement, PsiElement parent) {
