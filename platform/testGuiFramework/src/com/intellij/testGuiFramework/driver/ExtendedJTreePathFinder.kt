@@ -9,7 +9,6 @@ import com.intellij.ui.LoadingNode
 import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.exception.LocationUnavailableException
 import javax.swing.JTree
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
@@ -134,27 +133,4 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       "There is more than one node with value '$pathString' under \"$parentText\"")
   }
 
-  fun findPathToNode(node: String) = findPathToNodeByPredicate(node, Predicate.equality)
-
-  fun findPathToNodeWithVersion(node: String) = findPathToNodeByPredicate(node, Predicate.withVersion)
-
-  fun findPathToNodeByPredicate(node: String, predicate: FinderPredicate): TreePath {
-    //    expandNodes()
-    //    Pause.pause(1000) //Wait for EDT thread to finish expanding
-    val result: MutableList<String> = mutableListOf()
-    var currentNode = jTree.model.root as DefaultMutableTreeNode
-    val e = currentNode.preorderEnumeration()
-    while (e.hasMoreElements()) {
-      currentNode = e.nextElement() as DefaultMutableTreeNode
-      if (predicate(currentNode.toString(), node)) {
-        break
-      }
-    }
-    result.add(0, currentNode.toString())
-    while (currentNode.parent != null) {
-      currentNode = currentNode.parent as DefaultMutableTreeNode
-      result.add(0, currentNode.toString())
-    }
-    return findMatchingPathByPredicate(predicate, result)
-  }
 }
