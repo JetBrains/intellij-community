@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 class RemoveChangeListAction : AnAction(), DumbAware {
@@ -36,7 +35,7 @@ class RemoveChangeListAction : AnAction(), DumbAware {
 
     presentation.text = ActionsBundle.message("action.ChangesView.RemoveChangeList.text.template", changeLists.size)
     if (hasChanges) {
-      val containsActiveChangelist = ContainerUtil.exists(changeLists) { l -> l is LocalChangeList && l.isDefault }
+      val containsActiveChangelist = changeLists.any { it is LocalChangeList && it.isDefault }
       presentation.description = ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",
                                                        changeLists.size, if (containsActiveChangelist) "another" else "default")
     }
@@ -46,7 +45,7 @@ class RemoveChangeListAction : AnAction(), DumbAware {
   }
 
   private fun canRemoveChangeLists(project: Project?, lists: List<ChangeList>): Boolean {
-    if (project == null || lists.size == 0) return false
+    if (project == null || lists.isEmpty()) return false
 
     val allChangeListsCount = ChangeListManager.getInstance(project).changeListsNumber
     for (changeList in lists) {
@@ -96,16 +95,16 @@ class RemoveChangeListAction : AnAction(), DumbAware {
   }
 
   private fun askIfShouldRemoveChangeLists(project: Project, lists: List<LocalChangeList>): Boolean {
-    val activeChangelistSelected = lists.stream().anyMatch { it.isDefault }
+    val activeChangelistSelected = lists.any { it.isDefault }
     if (activeChangelistSelected) {
       return confirmActiveChangeListRemoval(project, lists)
     }
 
-    val haveNoChanges = lists.stream().allMatch { l -> l.changes.isEmpty() }
+    val haveNoChanges = lists.all { it.changes.isEmpty() }
     if (haveNoChanges) return true
 
     val message = if (lists.size == 1)
-      VcsBundle.message("changes.removechangelist.warning.text", lists[0].name)
+      VcsBundle.message("changes.removechangelist.warning.text", lists.single().name)
     else
       VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.size)
     return Messages.YES == Messages.showYesNoDialog(project, message, VcsBundle.message("changes.removechangelist.warning.title"),
@@ -113,10 +112,10 @@ class RemoveChangeListAction : AnAction(), DumbAware {
   }
 
   private fun confirmActiveChangeListRemoval(project: Project, lists: List<LocalChangeList>): Boolean {
-    val haveNoChanges = lists.stream().allMatch { l -> l.changes.isEmpty() }
+    val manager = ChangeListManager.getInstance(project)
+    val haveNoChanges = lists.all { it.changes.isEmpty() }
 
-    val remainingLists = ChangeListManager.getInstance(project).changeListsCopy
-    remainingLists.removeAll(lists)
+    val remainingLists = manager.changeLists.subtract(lists).toList()
 
     // Can't remove last changelist
     if (remainingLists.isEmpty()) {
@@ -126,7 +125,7 @@ class RemoveChangeListAction : AnAction(), DumbAware {
     // don't ask "Which changelist to make active" if there is only one option anyway
     // unless there are some changes to be moved - give user a chance to cancel deletion
     if (remainingLists.size == 1 && haveNoChanges) {
-      ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists[0])
+      manager.setDefaultChangeList(remainingLists.single())
       return true
     }
 
@@ -138,9 +137,9 @@ class RemoveChangeListAction : AnAction(), DumbAware {
       VcsBundle.message("changes.remove.active.prompt")
     val nameIndex = Messages.showChooseDialog(project, message,
                                               VcsBundle.message("changes.remove.active.title"), Messages.getQuestionIcon(),
-                                              remainingListsNames, remainingListsNames[0])
+                                              remainingListsNames, remainingListsNames.first())
     if (nameIndex < 0) return false
-    ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists[nameIndex])
+    manager.setDefaultChangeList(remainingLists[nameIndex])
     return true
   }
 }
