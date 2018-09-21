@@ -79,6 +79,7 @@ private class DisposableFutureHandle(private val future: Future<*>) : Disposable
     override fun dispose() {
         future.cancel(false)
     }
+
     override fun toString(): String = "DisposableFutureHandle[$future]"
 }
 
