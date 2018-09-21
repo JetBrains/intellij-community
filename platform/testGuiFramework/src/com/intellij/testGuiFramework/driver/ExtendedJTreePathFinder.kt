@@ -124,11 +124,11 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   }
 
   // exception wrappers
-  private fun pathNotFound(path: List<String>): LocationUnavailableException {
+  private fun pathNotFound(path: List<String>): Nothing {
     throw LocationUnavailableException("Unable to find path \"$path\"")
   }
 
-  private fun multipleMatchingNodes(pathString: String, parentText: Any): LocationUnavailableException {
+  private fun multipleMatchingNodes(pathString: String, parentText: Any): Nothing {
     throw LocationUnavailableException(
       "There is more than one node with value '$pathString' under \"$parentText\"")
   }
