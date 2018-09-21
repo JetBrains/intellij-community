@@ -181,7 +181,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     return false;
   }
 
-  private static boolean isStringType(Type type) {
+  static boolean isStringType(Type type) {
     return type.getSort() == Type.OBJECT && type.getDescriptor().equals(JAVA_LANG_STRING);
   }
 

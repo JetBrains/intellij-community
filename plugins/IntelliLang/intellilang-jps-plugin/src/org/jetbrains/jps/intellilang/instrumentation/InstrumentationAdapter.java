@@ -8,6 +8,8 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.isStringType;
+
 class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   @SuppressWarnings("SpellCheckingInspection") private static final String RETURN_VALUE_NAME = "$returnvalue$";
 
@@ -48,7 +50,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
     AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
 
-    if (parameter >= myParamAnnotationOffset && myArgTypes[parameter].getSort() == Type.OBJECT) {
+    if (parameter >= myParamAnnotationOffset && isStringType(myArgTypes[parameter])) {
       String annotationClassName = Type.getType(desc).getClassName();
       String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
       if (pattern != null) {
@@ -68,7 +70,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
     AnnotationVisitor av = mv.visitAnnotation(desc, visible);
 
-    if (myReturnType.getSort() == Type.OBJECT) {
+    if (isStringType(myReturnType)) {
       String annotationClassName = Type.getType(desc).getClassName();
       String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
       if (pattern != null) {
