@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.EventListener;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Provides an ability to introduce custom visual elements into editor's representation.
@@ -71,9 +71,7 @@ public interface InlayModel {
    */
   default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
     //noinspection unchecked
-    return (List)getInlineElementsInRange(startOffset, endOffset).stream()
-      .filter(i -> type.isInstance(i.getRenderer()))
-      .collect(Collectors.toList());
+    return (List)ContainerUtil.filter(getInlineElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
 
   /**
@@ -92,9 +90,7 @@ public interface InlayModel {
    */
   default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
     //noinspection unchecked
-    return (List)getBlockElementsInRange(startOffset, endOffset).stream()
-      .filter(i -> type.isInstance(i.getRenderer()))
-      .collect(Collectors.toList());
+    return (List)ContainerUtil.filter(getBlockElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
 
   /**
