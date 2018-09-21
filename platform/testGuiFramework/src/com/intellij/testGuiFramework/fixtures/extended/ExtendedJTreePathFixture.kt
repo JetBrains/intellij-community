@@ -181,3 +181,27 @@ import javax.swing.tree.TreePath
       cellReader.valueAtExtended(jTree, it, extendedValue)  ?: throw Exception("Unable to read value (value is null) for a tree")
     }.filter { it.isNotEmpty() }.toList()
   }
+
+
+  fun JTree.printModel(parent: Any, indent: Int = 0) {
+    val indentS = "----"
+    for (it in 0 until model.getChildCount(parent)) {
+      val node = model.getChild(parent, it)
+      println("${indentS.repeat(indent)}$node")
+      if(model.isLeaf(node).not())
+        printModel(node, indent + 1)
+    }
+  }
+
+  fun JTree.printModel(): Boolean {
+    if(model == null) {
+      println("*** model is NULL ***")
+      return false
+    }
+    val root = GuiTestUtilKt.computeOnEdt { model.root }
+    if (root != null)
+      GuiTestUtilKt.runOnEdt { printModel(model.root) }
+    else
+      println("*** root is NULL ***")
+    return root != null
+  }
