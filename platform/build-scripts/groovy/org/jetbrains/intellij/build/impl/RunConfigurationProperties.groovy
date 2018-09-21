@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.BuildMessages
 
 
 /**
- * @author hatari
+ * @author Aleksey.Rostovskiy
  */
 @CompileStatic
 abstract class RunConfigurationProperties {
@@ -35,9 +35,6 @@ abstract class RunConfigurationProperties {
 
     return file
   }
-//
-//  @SuppressWarnings("unused")
-//  abstract static RunConfigurationProperties loadRunConfiguration(File file, BuildMessages messages)
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileDynamic
