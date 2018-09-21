@@ -4,5 +4,5 @@ First occurrence: &xxx
     - item2
 Second occurrence: *xxx
 Override anchor: &xxx
-  key: val
+  key<caret>: val
 Reuse anchor: *xxx

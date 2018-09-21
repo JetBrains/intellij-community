@@ -147,58 +147,28 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
       }
     }
 
-    checkIntersection(filesChanged, filesDeleted);
-
-    notifyFilesChanged(filesChanged);
+    // If a file name differs ony in case, on case-insensitive file systems such name still denotes the same file.
+    // In this situation filesDeleted and filesChanged sets will contain paths wchich are different only in case.
+    // Thus the order in which BuildManager is notified, is important:
+    // first deleted paths notification and only then changed paths notification
     notifyFilesDeleted(filesDeleted);
-  }
-
-  // todo: temporary check to verify events correctess
-  private static void checkIntersection(Set<File> changed, Set<File> deleted) {
-    if (intersect(changed, deleted)) {
-      final StringBuilder message = new StringBuilder("Changed and deleted paths in the same even block must not intersect!");
-      message.append("\nChanged paths:");
-      for (File file : changed) {
-        message.append("\n\t").append(file.getPath());
-      }
-      message.append("\nDeleted paths:");
-      for (File file : deleted) {
-        message.append("\n\t").append(file.getPath());
-      }
-      message.append("\n");
-      LOG.error(message.toString());
-    }
-  }
-
-  private static <T> boolean intersect(Set<T> s1, Set<T> s2) {
-    if (!s1.isEmpty() && !s2.isEmpty()) {
-      final Set<T> min, other;
-      if (s1.size() < s2.size()) {
-        min = s1;
-        other = s2;
-      }
-      else {
-        min = s2;
-        other = s1;
-      }
-      for (T e : min) {
-        if (other.contains(e)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    notifyFilesChanged(filesChanged);
   }
 
   private static void handlePropChange(@NotNull VFilePropertyChangeEvent event,
                                        @NotNull Collection<? super File> filesDeleted,
                                        @NotNull Collection<? super File> filesChanged) {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      final String oldName = (String)event.getOldValue();
+      final String newName = (String)event.getNewValue();
+      if (Comparing.equal(oldName, newName)) {
+        // Old and new names may actually be the same: sometimes such events are sent by VFS
+        return;
+      }
       final VirtualFile eventFile = event.getFile();
       if (isInContentOfOpenedProject(eventFile)) {
         final VirtualFile parent = eventFile.getParent();
         if (parent != null) {
-          final String oldName = (String)event.getOldValue();
           final String root = parent.getPath() + "/" + oldName;
           if (eventFile.isDirectory()) {
             VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {

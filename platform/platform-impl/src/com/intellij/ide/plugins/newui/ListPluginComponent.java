@@ -86,7 +86,7 @@ public class ListPluginComponent extends CellPluginComponent {
       showProgress(false);
     }
 
-    setSelection(EventHandler.SelectionType.NONE);
+    updateColors(EventHandler.SelectionType.NONE);
   }
 
   private void createButtons(boolean update) {

@@ -5,6 +5,12 @@ REGEXP_FILE
   PsiErrorElement:Unmatched closing ')'
     <empty list>
   PsiElement(GROUP_END)(')')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(GROUP_BEGIN)('(')
+  RegExpPatternImpl: <(>
+    RegExpBranchImpl: <(>
+      RegExpGroupImpl: <(>
+        PsiElement(GROUP_BEGIN)('(')
+        RegExpPatternImpl: <>
+          RegExpBranchImpl: <>
+            <empty list>
+        PsiErrorElement:Unclosed group
+          <empty list>

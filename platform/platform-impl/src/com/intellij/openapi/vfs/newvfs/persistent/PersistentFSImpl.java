@@ -867,8 +867,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
     int startIndex = 0;
     List<Runnable> applyEvents = new ArrayList<>(events.size());
-    Set<String> files = new THashSet<>(events.size());
-    Set<String> middleDirs = new THashSet<>(events.size());
+    Set<String> files = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> middleDirs = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
     while (startIndex != events.size()) {
       applyEvents.clear();
       List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);

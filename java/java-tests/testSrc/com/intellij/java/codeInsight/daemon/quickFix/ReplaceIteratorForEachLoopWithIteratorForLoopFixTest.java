@@ -22,8 +22,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
  * @author Pavel.Dolgov
  */
 public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

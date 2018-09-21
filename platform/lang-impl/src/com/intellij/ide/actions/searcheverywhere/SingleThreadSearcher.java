@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,27 +68,41 @@ class SingleThreadSearcher implements SESearcher {
                               myNotificationExecutor, myNotificationListener);
   }
 
-  //Pair<elementsToAdd, elementsToRemove>
-  private static <T> Pair<List<ElementInfo>, List<ElementInfo>> calculateUpdates(SearchEverywhereContributor<?> contributor, String pattern, List<T> searchResults, Map<T, ElementInfo> alreadyFound) {
-    List<ElementInfo> toAdd = new ArrayList<>();
-    List<ElementInfo> toRemove = new ArrayList<>();
-    searchResults.forEach(newElement -> {
+  private static class UpdateInfo {
+    private final List<ElementInfo> addedElements = new ArrayList<>();
+    private final List<ElementInfo> removedElements = new ArrayList<>();
+    private boolean hasMore = false;
+  }
+
+  private static <T> UpdateInfo calculateUpdates(SearchEverywhereContributor<T> contributor, String pattern, int limit, boolean everywhere,
+                                                 SearchEverywhereContributorFilter<?> filter, ProgressIndicator progressIndicator,
+                                                 Map<Object, ElementInfo> alreadyFound) {
+    UpdateInfo res = new UpdateInfo();
+
+    contributor.fetchElements(pattern, everywhere, (SearchEverywhereContributorFilter<T>) filter, progressIndicator, newElement -> {
+      if (res.addedElements.size() >= limit) {
+        res.hasMore = true;
+        return false;
+      }
+
       int priority = contributor.getElementPriority(newElement, pattern);
       ElementInfo found = alreadyFound.get(newElement);
       if (found != null) {
         if (found.priority < priority) {
-          toRemove.add(found);
+          res.removedElements.add(found);
           alreadyFound.remove(newElement);
         } else {
-          return;
+          return true;
         }
       }
       ElementInfo newInfo = new ElementInfo(newElement, priority, contributor);
-      toAdd.add(newInfo);
+      res.addedElements.add(newInfo);
       alreadyFound.put(newElement, newInfo);
+
+      return true;
     });
 
-    return Pair.create(toAdd, toRemove);
+    return res;
   }
 
   private static class SearchTask implements Runnable {
@@ -124,20 +137,14 @@ class SingleThreadSearcher implements SESearcher {
         .sorted(Comparator.comparingInt(entry -> entry.getKey().getSortWeight()))
         .forEach(entry -> {
           SearchEverywhereContributor<?> contributor = entry.getKey();
-          int limit = entry.getValue();
-          ContributorSearchResult<Object> results = search(contributor, limit);
-          Pair<List<ElementInfo>, List<ElementInfo>> updates = calculateUpdates(contributor, myPattern, results.getItems(), alreadyFound);
-          notificationExecutor.execute(() -> notificationListener.elementsAdded(updates.first));
-          notificationExecutor.execute(() -> notificationListener.elementsRemoved(updates.second));
-          hasMoreContributors.put(contributor, results.hasMoreItems());
+          UpdateInfo updates = calculateUpdates(contributor, myPattern, entry.getValue(), myUseNonProjectItems,
+                                                myFilterSupplier.apply(contributor), myProgressIndicator, alreadyFound);
+          notificationExecutor.execute(() -> notificationListener.elementsAdded(updates.addedElements));
+          notificationExecutor.execute(() -> notificationListener.elementsRemoved(updates.removedElements));
+          hasMoreContributors.put(contributor, updates.hasMore);
         });
 
       notificationExecutor.execute(() -> notificationListener.searchFinished(hasMoreContributors));
-    }
-
-    private <F> ContributorSearchResult<Object> search(SearchEverywhereContributor<F> contributor, Integer limit) {
-      SearchEverywhereContributorFilter<F> filter = (SearchEverywhereContributorFilter<F>) myFilterSupplier.apply(contributor);
-      return contributor.search(myPattern, myUseNonProjectItems, filter, myProgressIndicator, limit);
     }
   }
 
@@ -170,11 +177,10 @@ class SingleThreadSearcher implements SESearcher {
     @Override
     public void run() {
       Map<Object, ElementInfo> alreadyFoundMap = myAlreadyFound.stream().collect(Collectors.toMap(info -> info.element, Function.identity()));
-      ContributorSearchResult<Object> results = myContributor.search(myPattern, myUseNonProjectItems, myFilter, myProgressIndicator, myLimit);
-      Pair<List<ElementInfo>, List<ElementInfo>> updates = calculateUpdates(myContributor, myPattern, results.getItems(), alreadyFoundMap);
-      notificationExecutor.execute(() -> notificationListener.elementsAdded(updates.first));
-      notificationExecutor.execute(() -> notificationListener.elementsRemoved(updates.second));
-      notificationExecutor.execute(() -> notificationListener.searchFinished(Collections.singletonMap(myContributor, results.hasMoreItems())));
+      UpdateInfo updates = calculateUpdates(myContributor, myPattern, myLimit, myUseNonProjectItems, myFilter, myProgressIndicator, alreadyFoundMap);
+      notificationExecutor.execute(() -> notificationListener.elementsAdded(updates.addedElements));
+      notificationExecutor.execute(() -> notificationListener.elementsRemoved(updates.removedElements));
+      notificationExecutor.execute(() -> notificationListener.searchFinished(Collections.singletonMap(myContributor, updates.hasMore)));
     }
   }
 

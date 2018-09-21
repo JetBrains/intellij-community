@@ -323,7 +323,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
-    myFixture.enableInspections(PluginXmlDomInspection.class)
     myFixture.configureByFile("pluginWithBigNumberInUntilBuild_before.xml")
     myFixture.launchAction(myFixture.findSingleIntention("Change 'until-build'"))
     myFixture.checkResultByFile("pluginWithBigNumberInUntilBuild_after.xml")
@@ -350,7 +349,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testSpecifyJetBrainsAsVendorQuickFix() {
-    myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
     try {
       myFixture.configureByFile("pluginWithoutVendor_before.xml")
@@ -407,7 +405,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void testHighlightingInIdeaProject(String path) {
-    myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
     try {
       myFixture.testHighlighting(path)
@@ -536,5 +533,13 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testPluginWithSinceBuildGreaterThanUntilBuild() {
     myFixture.testHighlighting("pluginWithSinceBuildGreaterThanUntilBuild.xml")
+  }
+
+  void testProductDescriptor() {
+    myFixture.testHighlighting("productDescriptorInvalid.xml")
+  }
+
+  void testProductDescriptorInvalid() {
+    myFixture.testHighlighting("productDescriptorInvalid.xml")
   }
 }

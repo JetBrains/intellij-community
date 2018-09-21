@@ -29,6 +29,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -288,6 +289,8 @@ public class PluginManagerConfigurableNew
     mySearchListener = (_0, query) -> {
       removeDetailsPanel();
       mySearchTextField.setTextIgnoreEvents(query);
+      IdeFocusManager.getGlobalInstance()
+        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
       showSearchPanel(query);
     };
 
@@ -337,6 +340,17 @@ public class PluginManagerConfigurableNew
     });
 
     myCardPanel = new CardLayoutPanel<Object, Object, JComponent>() {
+      @Override
+      public ActionCallback select(Object key, boolean now) {
+        ActionCallback callback = super.select(key, now);
+        callback.doWhenDone(() -> {
+          panel.doLayout();
+          panel.revalidate();
+          panel.repaint();
+        });
+        return callback;
+      }
+
       @Override
       protected Object prepare(Object key) {
         return key;
@@ -394,6 +408,28 @@ public class PluginManagerConfigurableNew
     updateSearchForSelectedTab(selectionTab);
 
     return panel;
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    if (StringUtil.isEmpty(option) && myCurrentSearchPanel.isEmpty()) {
+      return null;
+    }
+
+    return () -> {
+      hideSearchPanel();
+
+      if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
+        myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
+      }
+
+      mySearchTextField.setTextIgnoreEvents(option);
+
+      if (!StringUtil.isEmpty(option)) {
+        showSearchPanel(option);
+      }
+    };
   }
 
   private void updateSearchForSelectedTab(int index) {
@@ -589,10 +625,10 @@ public class PluginManagerConfigurableNew
         Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
         Set<String> excludeDescriptors = new HashSet<>();
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sort_by:featured");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sort_by:updates");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sort_by:downloads");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sort_by:rating");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
           List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
@@ -760,7 +796,7 @@ public class PluginManagerConfigurableNew
         if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
           attributes.add("repository:");
         }
-        attributes.add("sort_by:");
+        attributes.add("sortBy:");
         return attributes;
       }
 
@@ -784,8 +820,8 @@ public class PluginManagerConfigurableNew
             return myAllTagSorted;
           case "repository:":
             return UpdateSettings.getInstance().getPluginHosts();
-          case "sort_by:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updates");
+          case "sortBy:":
+            return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
         }
         return null;
       }
@@ -956,14 +992,13 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       protected List<String> getAttributes() {
-        return ContainerUtil.list("status:");
+        return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
       }
 
       @Nullable
       @Override
       protected List<String> getValues(@NotNull String attribute) {
-        return attribute.equals("status:") ? ContainerUtil
-          .list("disabled", "enabled", "inactive", "installed", "bundled", "invalid", "outdated", "uninstalled") : null;
+        return null;
       }
 
       @Override

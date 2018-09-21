@@ -522,7 +522,7 @@ public class FindInProjectUtil {
     }
 
     @Override
-    public void calcData(DataKey key, DataSink sink) {
+    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
       if (UsageView.USAGE_SCOPE.equals(key)) {
         SearchScope scope = getScopeFromModel(myProject, myFindModel);
         sink.put(UsageView.USAGE_SCOPE, scope);

@@ -81,7 +81,7 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   open val virtualFile: VirtualFile? get() = null
 
-  abstract protected fun Block.toRange(): R
+  protected abstract fun Block.toRange(): R
 
   protected open fun createDocumentTrackerHandler(): DocumentTracker.Handler = MyDocumentTrackerHandler()
 
@@ -399,8 +399,8 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null)
 
-  open protected fun createBlockData(): BlockData = BlockData()
-  open protected val Block.ourData: BlockData get() = getBlockData(this)
+  protected open fun createBlockData(): BlockData = BlockData()
+  protected open val Block.ourData: BlockData get() = getBlockData(this)
   protected fun getBlockData(block: Block): BlockData {
     if (block.data == null) block.data = createBlockData()
     return block.data as BlockData

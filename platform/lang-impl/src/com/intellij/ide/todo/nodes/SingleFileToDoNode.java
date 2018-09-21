@@ -29,10 +29,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
-  private final TodoFileNode myFileNode = new TodoFileNode(getProject(), getValue(), myBuilder, true);
+  private final TodoFileNode myFileNode;
 
-  public SingleFileToDoNode(Project project, PsiFile value, TodoTreeBuilder builder) {
+  public SingleFileToDoNode(Project project, @NotNull PsiFile value, TodoTreeBuilder builder) {
     super(project, value, builder);
+    myFileNode = new TodoFileNode(getProject(), value, myBuilder, true);
   }
 
   @Override

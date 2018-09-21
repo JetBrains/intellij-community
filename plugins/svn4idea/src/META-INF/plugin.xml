@@ -148,6 +148,8 @@
     <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
                         predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
 
+    <vcs.branchStateProvider implementation="org.jetbrains.idea.svn.branchConfig.SvnBranchStateProvider"/>
+
     <openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider
         implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffViewerProvider"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider

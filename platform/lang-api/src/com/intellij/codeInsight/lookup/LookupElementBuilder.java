@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -163,6 +164,13 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withLookupString(@NotNull String another) {
     final THashSet<String> set = new THashSet<>(myAllLookupStrings);
     set.add(another);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation, myPsiElement,
+                                    Collections.unmodifiableSet(set), myCaseSensitive);
+  }
+  @Contract(pure=true)
+  public LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
+    final THashSet<String> set = new THashSet<>(myAllLookupStrings);
+    set.addAll(another);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation, myPsiElement,
                                     Collections.unmodifiableSet(set), myCaseSensitive);
   }

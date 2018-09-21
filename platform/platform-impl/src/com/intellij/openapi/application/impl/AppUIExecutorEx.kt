@@ -1,14 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
-import kotlinx.coroutines.experimental.Runnable
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.withContext
+import com.intellij.openapi.application.impl.AsyncExecutionSupport.Companion.cancelJobOnDisposal
+import kotlinx.coroutines.experimental.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 import kotlin.coroutines.experimental.coroutineContext
 
 /**
@@ -33,7 +34,6 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
   override fun submit(task: Runnable): CancellablePromise<*> {
     return submit<Any> {
       task.run()
-      null
     }
   }
 
@@ -66,6 +66,12 @@ fun AppUIExecutor.inWriteAction() =
 
 
 suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
-  withContext((this as AsyncExecution<*>).createJobContext(coroutineContext)) {
+  withContext(createJobContext(coroutineContext)) {
     block()
   }
+
+fun AppUIExecutor.createJobContext(context: CoroutineContext = EmptyCoroutineContext, parent: Job? = null): CoroutineContext =
+  (this as AsyncExecution<*>).createJobContext(context, parent)
+
+suspend fun <T> CoroutineScope.runUnlessDisposed(disposable: Disposable, block: suspend () -> T): T =
+  coroutineContext[Job]?.let { job -> disposable.cancelJobOnDisposal(job) }.use { block() }

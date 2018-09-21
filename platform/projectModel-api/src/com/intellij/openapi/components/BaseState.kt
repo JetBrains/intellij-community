@@ -32,7 +32,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     properties.add(p as StoredProperty<Any>)
   }
 
-  protected fun <T> property(): StoredPropertyBase<T?> {
+  protected fun <T : BaseState> property(): StoredPropertyBase<T?> {
     val result = ObjectStoredProperty<T?>(null)
     addProperty(result)
     return result
@@ -79,18 +79,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  /**
-   * Enum is an immutable, so, it is safe to use it as default value.
-   */
+  // Enum is an immutable, so, it is safe to use it as default value.
   protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
     addProperty(result)
     return result
   }
 
-  /**
-   * `null` is always normalized to null.
-   */
   protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
     return doEnum(defaultValue, T::class.java)
   }
@@ -125,7 +120,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Empty string is always normalized to null.
    */
-  protected fun property(defaultValue: String?): StoredPropertyBase<String?> = string(defaultValue)
+  protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.

@@ -55,7 +55,7 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
       final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiField) {
-          result.add(new FieldSmartPointerNode(project, element, viewSettings));
+          result.add(new FieldSmartPointerNode(project, (PsiField)element, viewSettings));
         }
       }
       return result.isEmpty() ? null : result;
@@ -66,7 +66,7 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
     if (element instanceof PsiField) {
-      return new FieldSmartPointerNode(project, element, viewSettings);
+      return new FieldSmartPointerNode(project, (PsiField)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
   }
@@ -130,7 +130,7 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.allScope(project);
     final String[] paths = url.split(";");
-    if (paths == null || paths.length != 2) return null;
+    if (paths.length != 2) return null;
     final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(paths[0], scope);
     if (aClass == null) return null;
     final PsiField aField = aClass.findFieldByName(paths[1], false);

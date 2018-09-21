@@ -71,6 +71,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testSimple20() throws IOException { doCodeTest("a{1,2}"); }
   public void testSimple21() throws IOException { doCodeTest("a{1,foo}"); }
   public void testSimple22() throws IOException { doCodeTest("\\;"); }
+  public void testSimple23() throws IOException { doCodeTest(""); }
 
   public void testQuantifiers1() throws IOException { doCodeTest("a?"); }
   public void testQuantifiers2() throws IOException { doCodeTest("a+"); }
@@ -308,6 +309,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testOptions1() throws IOException { doCodeTest("(?iZm)abc"); }
   public void testOptions2() throws IOException { doCodeTest("(?idmsuxU)nice"); }
   public void testOptions3() throws IOException { doCodeTest("(?idm-suxU)one(?suxU-idm)two"); }
+  public void testOptions4() throws IOException { doCodeTest("(?i|abc"); }
 
   public void testTests1() throws IOException { doCodeTest("abc)"); }
   public void testTests2() throws IOException { doCodeTest("(abc"); }

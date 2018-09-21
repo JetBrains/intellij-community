@@ -7,13 +7,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
+public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldRegion {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
 
   private boolean myIsExpanded;
@@ -67,11 +66,6 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Gette
         }
       }
     }
-  }
-
-  @Override
-  public FoldRegionImpl get() {
-    return this;
   }
 
   private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {

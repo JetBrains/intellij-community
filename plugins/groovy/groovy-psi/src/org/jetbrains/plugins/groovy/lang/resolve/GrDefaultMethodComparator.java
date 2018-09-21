@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.*;
@@ -20,11 +18,11 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
                            @NotNull GroovyMethodResult result2,
                            @NotNull Context context) {
     final PsiMethod method1 = result1.getElement();
-    final PsiSubstitutor substitutor1 = result1.getSubstitutor(false);
+    final PsiSubstitutor substitutor1 = result1.getPartialSubstitutor();
     final PsiElement resolveContext1 = result1.getCurrentFileResolveContext();
 
     final PsiMethod method2 = result2.getElement();
-    final PsiSubstitutor substitutor2 = result2.getSubstitutor(false);
+    final PsiSubstitutor substitutor2 = result2.getPartialSubstitutor();
     final PsiElement resolveContext2 = result2.getCurrentFileResolveContext();
 
     final PsiType[] argTypes = context.getArgumentTypes();

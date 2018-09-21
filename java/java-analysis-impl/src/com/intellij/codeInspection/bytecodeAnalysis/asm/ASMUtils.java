@@ -4,12 +4,18 @@ package com.intellij.codeInspection.bytecodeAnalysis.asm;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
+
+import java.util.List;
 
 /**
  * @author lambdamix
  */
 public class ASMUtils {
+  public static final Type THIS_TYPE = Type.getObjectType("this");
   public static final Type THROWABLE_TYPE = Type.getObjectType("java/lang/Throwable");
+  public static final BasicValue THIS_VALUE = new BasicValue(THIS_TYPE);
   public static final BasicValue THROWABLE_VALUE = new BasicValue(THROWABLE_TYPE);
 
   @Contract(pure = true)
@@ -21,6 +27,11 @@ public class ASMUtils {
   @Contract(pure = true)
   public static boolean isBooleanType(Type tp) {
     return Type.BOOLEAN_TYPE.equals(tp);
+  }
+
+  @Contract(pure = true)
+  public static boolean isThisType(Type tp) {
+    return THIS_TYPE.equals(tp);
   }
 
   @Contract(pure = true)
@@ -54,5 +65,15 @@ public class ASMUtils {
       default:
         return false;
     }
+  }
+
+  public static <V extends Value> Frame<V>[] newFrameArray(int size) {
+    @SuppressWarnings("unchecked") Frame<V>[] a = (Frame<V>[])new Frame[size];
+    return a;
+  }
+
+  public static <V> List<V>[] newListArray(int size) {
+    @SuppressWarnings("unchecked") List<V>[] a = (List<V>[])new List[size];
+    return a;
   }
 }

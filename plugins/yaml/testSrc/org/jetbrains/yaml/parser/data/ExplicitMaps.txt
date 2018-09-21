@@ -16,10 +16,10 @@ YAML file
         PsiWhiteSpace(' ')
         YAML scalar list
           PsiElement(scalar list)('|')
-          PsiElement(Eol)('\n')
+          PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar list)('block key')
-          PsiElement(block scalar EOL)('\n')
+        PsiElement(Eol)('\n')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML sequence

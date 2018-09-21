@@ -132,7 +132,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
 
-    UpdateOptionsKt.addPluginRepositories(hosts);
+    UpdateSettingsProviderHelper.addPluginRepositories(hosts);
     return hosts;
   }
 

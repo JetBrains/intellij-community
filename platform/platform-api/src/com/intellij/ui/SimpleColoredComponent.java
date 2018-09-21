@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -796,8 +794,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       boolean secondPass = attributes.isSearchMatch() || attributes.isClickable();
       final Color bgColor = secondPass ? null : attributes.getBgColor();
       if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
-        g.setColor(bgColor);
-        g.fillRect((int)offset, 0, (int)fragmentWidth, height);
+        doPaintFragmentBackground(g, i, bgColor, (int)offset, 0, (int)fragmentWidth, height);
       }
 
       Color color = attributes.getFgColor();
@@ -883,6 +880,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       drawTextAttributes(g, attributes, (int)x1, (int)baseline, fragmentWidth, g.getFontMetrics(), g.getFont());
     }
     return (int)offset;
+  }
+
+  protected void doPaintFragmentBackground(@NotNull Graphics2D g, int index, @NotNull Color bgColor, int x, int y, int width, int height) {
+    g.setColor(bgColor);
+    g.fillRect(x, y, width, height);
   }
 
   private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg) {
@@ -1031,7 +1033,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
-  public CharSequence getCharSequence(boolean mainOnly) {
+  public synchronized CharSequence getCharSequence(boolean mainOnly) {
     List<String> fragments = mainOnly && myMainTextLastIndex > -1 && myMainTextLastIndex + 1 < myFragments.size() ?
                              myFragments.subList(0, myMainTextLastIndex + 1) : myFragments;
     return StringUtil.join(fragments, "");

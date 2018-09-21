@@ -54,44 +54,52 @@ public class AnsiEscapeDecoder {
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     text = prependUnhandledText(text, outputType);
     text = normalizeAsciiControlCharacters(text);
-    int pos = 0;
+    int pos = 0, findEscSeqFromIndex = 0;
     List<Pair<String, Key>> chunks = null;
     int unhandledSuffixLength = 0;
     while (true) {
-      int escSeqBeginInd = findEscSeqBeginIndex(text, pos);
+      int escSeqBeginInd = findEscSeqBeginIndex(text, findEscSeqFromIndex);
       if (escSeqBeginInd < 0) {
         if (escSeqBeginInd < -1) {
           unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqBeginInd);
         }
-        if (pos < text.length() - unhandledSuffixLength) {
-          chunks = processTextChunk(chunks, text.substring(pos, text.length() - unhandledSuffixLength), outputType, textAcceptor);
-        }
         break;
-      }
-      if (pos < escSeqBeginInd) {
-        chunks = processTextChunk(chunks, text.substring(pos, escSeqBeginInd), outputType, textAcceptor);
       }
       int escSeqEndInd = findConsecutiveEscSequencesEndIndex(text, escSeqBeginInd);
       if (escSeqEndInd < 0) {
-        if (escSeqEndInd < -1) {
+        if (escSeqEndInd == -1) {
+          // malformed escape sequence => add ESC[
+          findEscSeqFromIndex = escSeqBeginInd + CSI.length();
+        }
+        else {
           unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqEndInd);
-        }
-        break;
-      }
-      if (text.charAt(escSeqEndInd) == 'm') {
-        String escSeq = text.substring(escSeqBeginInd, escSeqEndInd + 1);
-        // this is a simple fix for RUBY-8996:
-        // we replace several consecutive escape sequences with one which contains all these sequences
-        String colorAttribute = StringUtil.replace(escSeq, M_CSI, ";");
-        ProcessOutputType resultType = myColoredOutputTypeRegistry.getOutputType(colorAttribute, outputType);
-        if (resultType.isStdout()) {
-          myCurrentStdoutOutputType = resultType;
-        }
-        else if (resultType.isStderr()) {
-          myCurrentStderrOutputType = resultType;
+          break;
         }
       }
-      pos = escSeqEndInd + 1;
+      else {
+        assert escSeqBeginInd <= escSeqEndInd;
+        if (pos < escSeqBeginInd) {
+          chunks = processTextChunk(chunks, text.substring(pos, escSeqBeginInd), outputType, textAcceptor);
+        }
+        pos = escSeqEndInd + 1;
+        findEscSeqFromIndex = pos;
+        if (text.charAt(escSeqEndInd) == 'm') {
+          String escSeq = text.substring(escSeqBeginInd, escSeqEndInd + 1);
+          // this is a simple fix for RUBY-8996:
+          // we replace several consecutive escape sequences with one which contains all these sequences
+          String colorAttribute = StringUtil.replace(escSeq, M_CSI, ";");
+          ProcessOutputType resultType = myColoredOutputTypeRegistry.getOutputType(colorAttribute, outputType);
+          if (resultType.isStdout()) {
+            myCurrentStdoutOutputType = resultType;
+          }
+          else if (resultType.isStderr()) {
+            myCurrentStderrOutputType = resultType;
+          }
+        }
+      }
+    }
+    if (pos < text.length() - unhandledSuffixLength) {
+      chunks = processTextChunk(chunks, text.substring(pos, text.length() - unhandledSuffixLength), outputType, textAcceptor);
     }
     updateUnhandledSuffix(text, outputType, unhandledSuffixLength);
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
@@ -190,7 +198,7 @@ public class AnsiEscapeDecoder {
    * If the return value is -1, no string suffix should be kept => a malformed escape sequence has been encountered.
    * If the return value is less than -1, no actual handing of the incomplete escape sequence should be performed,
    * the string suffix length should be decoded with {@code #decodeUnhandledSuffixLength(the return value)} and the suffix
-   * should be preserved until the next output chunks is available.
+   * should be preserved until the next output chunk is available.
    */
   private static int findConsecutiveEscSequencesEndIndex(@NotNull String text, int firstEscSeqBeginInd) {
     int escSeqBeginInd = firstEscSeqBeginInd;

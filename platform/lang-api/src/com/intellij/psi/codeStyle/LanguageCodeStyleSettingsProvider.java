@@ -193,7 +193,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @Nullable
   public static LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguage().equals(language)) {
+      if (language.isKindOf(provider.getLanguage())) {
         return provider;
       }
     }

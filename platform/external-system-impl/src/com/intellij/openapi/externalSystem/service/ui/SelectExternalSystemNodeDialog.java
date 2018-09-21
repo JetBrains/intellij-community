@@ -89,6 +89,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
           return nodeClasses;
         }
 
+        @NotNull
         @Override
         public Object getRootElement() {
           Object rootElement = super.getRootElement();

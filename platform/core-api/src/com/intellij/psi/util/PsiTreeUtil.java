@@ -1028,6 +1028,7 @@ public class PsiTreeUtil {
 
   @Nullable
   public static PsiElement prevLeaf(@NotNull PsiElement current) {
+    if (current instanceof PsiFileSystemItem) return null;
     final PsiElement prevSibling = current.getPrevSibling();
     if (prevSibling != null) return lastChild(prevSibling);
     final PsiElement parent = current.getParent();
@@ -1037,6 +1038,7 @@ public class PsiTreeUtil {
 
   @Nullable
   public static PsiElement nextLeaf(@NotNull PsiElement current) {
+    if (current instanceof PsiFileSystemItem) return null;
     final PsiElement nextSibling = current.getNextSibling();
     if (nextSibling != null) return firstChild(nextSibling);
     final PsiElement parent = current.getParent();

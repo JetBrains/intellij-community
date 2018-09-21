@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IdeaTestApplication extends CommandLineApplication implements Disposable {
@@ -38,7 +39,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
 
   @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }
 

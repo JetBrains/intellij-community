@@ -34,7 +34,7 @@ public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
       Couple<DirDiffElementImpl> target = getSelectedSourceAndTarget(model);
       if (target != null) {
         e.getPresentation().setEnabled(true);
-        e.getPresentation().setDescription("Compare '" + target.first.getSourceName() + "' with '" + target.second.getTargetName() + "'");
+        e.getPresentation().setDescription("Compare '" + target.first.getSourcePresentableName() + "' with '" + target.second.getTargetPresentableName() + "'");
         return;
       }
     }

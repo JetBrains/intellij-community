@@ -15,11 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,38 +24,24 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.*;
-import one.util.streamex.IntStreamEx;
+import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * This inspection finds instances of null checks followed by an instanceof check
- * on the same variable. For instance:
- * <pre>{@code
- * if (x != null && x instanceof String) { ... }
- * }</pre>
- * The instanceof operator returns false when passed a null, so the null check is pointless.
- *
- * @author Lars Fischer
- * @author Etienne Studer
- * @author Hamlet D'Arcy
- */
 public class PointlessNullCheckInspection extends BaseInspection {
-  private static final String REPORT_CALLS_OPTION = "REPORT_CALLS";
-
-  public boolean REPORT_CALLS = true;
-
   @Nls
   @NotNull
   @Override
@@ -67,89 +49,28 @@ public class PointlessNullCheckInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("pointless.nullcheck.display.name");
   }
 
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("pointless.nullcheck.option.report.calls"), this, "REPORT_CALLS");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    PsiExpression parent = PsiTreeUtil.getParentOfType((PsiElement)infos[1], PsiInstanceOfExpression.class, PsiMethodCallExpression.class);
-    if (parent instanceof PsiMethodCallExpression) {
-      return InspectionGadgetsBundle.message("pointless.nullcheck.problem.descriptor.call",
-                                             ((PsiMethodCallExpression)parent).getMethodExpression().getReferenceName());
-    }
-    return InspectionGadgetsBundle.message("pointless.nullcheck.problem.descriptor.instanceof");
+    PsiMethodCallExpression parent =
+      Objects.requireNonNull(PsiTreeUtil.getParentOfType((PsiElement)infos[1], PsiMethodCallExpression.class));
+    return InspectionGadgetsBundle.message("pointless.nullcheck.problem.descriptor.call",
+                                           parent.getMethodExpression().getReferenceName());
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new PointlessNullCheckVisitor(REPORT_CALLS);
+    return new PointlessNullCheckVisitor();
   }
 
-  @NotNull
+  @Nullable
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
-    PsiExpression parent = PsiTreeUtil.getParentOfType((PsiElement)infos[1], PsiInstanceOfExpression.class, PsiMethodCallExpression.class);
-    PointlessNullCheckFix removeNullCheckFix = new PointlessNullCheckFix(expression.getText());
-    if (parent instanceof PsiMethodCallExpression) {
-      SetInspectionOptionFix disableOnCallsFix = new SetInspectionOptionFix(this, REPORT_CALLS_OPTION, InspectionGadgetsBundle
-        .message("pointless.nullcheck.option.report.calls.off"), false);
-      return new InspectionGadgetsFix[]{removeNullCheckFix, new DelegatingFix(disableOnCallsFix)};
-    }
-    else {
-      return new InspectionGadgetsFix[]{removeNullCheckFix};
-    }
-  }
-
-  private static class PointlessNullCheckFix extends InspectionGadgetsFix {
-
-    private final String myExpressionText;
-
-    PointlessNullCheckFix(String expressionText) {
-      myExpressionText = expressionText;
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", myExpressionText);
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Simplify";
-    }
-
-    @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiPolyadicExpression polyadicExpression = PsiTreeUtil.getParentOfType(element, PsiPolyadicExpression.class);
-      if (polyadicExpression == null) return;
-      PsiElement[] children = polyadicExpression.getChildren();
-
-      // We know that at least one operand is present after current, so we just remove everything till the next operand
-      int start = IntStreamEx.ofIndices(children, child -> PsiTreeUtil.isAncestor(child, element, false)).findFirst().orElse(-1);
-      if (start == -1) return;
-      int end = IntStreamEx.range(start + 1, children.length).findFirst(idx -> children[idx] instanceof PsiExpression).orElse(-1);
-      if (end == -1) return;
-      CommentTracker ct = new CommentTracker();
-      String replacement = IntStreamEx.range(0, start).append(IntStreamEx.range(end, children.length)).elements(children)
-        .map(ct::text).joining();
-      ct.replaceAndRestoreComments(polyadicExpression, replacement);
-    }
+    return new RemoveRedundantPolyadicOperandFix(expression.getText());
   }
 
   private static class PointlessNullCheckVisitor extends BaseInspectionVisitor {
-    private final boolean myReportCalls;
-
-    private PointlessNullCheckVisitor(boolean reportCalls) {
-      myReportCalls = reportCalls;
-    }
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -226,21 +147,11 @@ public class PointlessNullCheckInspection extends BaseInspection {
     @Nullable
     private PsiReferenceExpression getReferenceFromImplicitNullCheckExpression(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      PsiReferenceExpression checked = getReferenceFromInstanceofExpression(expression);
-      if (checked == null && myReportCalls) {
-        checked = getReferenceFromBooleanCall(expression);
-      }
+      PsiReferenceExpression checked = getReferenceFromBooleanCall(expression);
       if (checked == null) {
         checked = getReferenceFromOrChain(expression);
       }
       return checked;
-    }
-
-    @Nullable
-    private static PsiReferenceExpression getReferenceFromInstanceofExpression(PsiExpression expression) {
-      if (!(expression instanceof PsiInstanceOfExpression)) return null;
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiInstanceOfExpression)expression).getOperand());
-      return tryCast(operand, PsiReferenceExpression.class);
     }
 
     @Nullable

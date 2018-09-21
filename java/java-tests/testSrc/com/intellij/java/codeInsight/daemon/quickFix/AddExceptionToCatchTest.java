@@ -18,9 +18,6 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
 public class AddExceptionToCatchTest extends LightQuickFixParameterizedTestCase {
-  public void test() {
-    doAllTests();
-  }
 
   @Override
   protected String getBasePath() {

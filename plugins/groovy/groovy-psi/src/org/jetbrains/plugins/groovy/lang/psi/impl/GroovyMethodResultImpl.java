@@ -67,8 +67,8 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
 
   @NotNull
   @Override
-  public PsiSubstitutor getSubstitutor(boolean infer) {
-    return infer ? mySubstitutorComputer.compute() : super.getSubstitutor();
+  public PsiSubstitutor getPartialSubstitutor() {
+    return super.getSubstitutor();
   }
 
   @Override

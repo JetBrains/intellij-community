@@ -20,9 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.AbstractFileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -97,10 +95,7 @@ public abstract class Identikit {
     public PsiElement findInside(@NotNull PsiElement element, int startOffset, int endOffset) {
       PsiElement anchor = AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
       if (anchor == null && startOffset == element.getTextLength()) {
-        PsiElement lastChild = element.getLastChild();
-        if (lastChild != null) {
-          anchor = PsiTreeUtil.getDeepestLast(lastChild);
-        }
+        anchor = PsiTreeUtil.getDeepestLast(element);
       }
       if (anchor == null) return null;
 
@@ -124,7 +119,7 @@ public abstract class Identikit {
       if (range.getStartOffset() != startOffset) return null;
       while (range.getEndOffset() < endOffset) {
         anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) {
+        if (anchor == null || anchor instanceof PsiDirectory) {
           return null;
         }
         range = anchor.getTextRange();
@@ -135,7 +130,7 @@ public abstract class Identikit {
           return anchor;
         }
         anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) break;
+        if (anchor == null || anchor instanceof PsiDirectory) break;
         range = anchor.getTextRange();
       }
 

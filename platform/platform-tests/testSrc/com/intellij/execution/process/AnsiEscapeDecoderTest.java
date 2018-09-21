@@ -69,6 +69,36 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     );
   }
 
+  public void testMalformedSequence() {
+    check(false, Collections.singletonList(new ColoredText("\u001B[32mGreen\u001B[\1World\n", ProcessOutputTypes.STDOUT)
+            .addExpected("Green\u001B[\1World\n", "\u001B[32m")
+    ));
+    check(false, Collections.singletonList(new ColoredText("\u001B\n", ProcessOutputTypes.STDOUT)
+            .addExpected("\u001B\n", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, Collections.singletonList(new ColoredText("\u001B[\n", ProcessOutputTypes.STDOUT)
+            .addExpected("\u001B[\n", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001B\nHello,", ProcessOutputTypes.STDOUT)
+        .addExpected("\u001B\nHello,", ProcessOutputTypes.STDOUT.toString()),
+      new ColoredText("\u001B[31mWorld", ProcessOutputTypes.STDOUT)
+        .addExpected("World", "\u001B[31m")
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
+        .addExpected("\u001BHello,", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
+        .addExpected("ello,", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
+        .addExpected("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT.toString())
+    ));
+  }
+
   public void testIncompleteEscapeSequences() {
     check(true, ContainerUtil.newArrayList(
       new ColoredText("\u001B", ProcessOutputTypes.STDOUT),

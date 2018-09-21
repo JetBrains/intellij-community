@@ -23,12 +23,14 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
 
 import java.util.List;
 
@@ -64,7 +66,10 @@ public class ExceptionPackageInspection extends BaseGlobalInspection {
         continue;
       }
       classSeen = true;
-      if (!InheritanceUtil.isInheritor(refClass.getElement(), CommonClassNames.JAVA_LANG_THROWABLE)) {
+      UClass uClass = refClass.getUastElement();
+      if (uClass == null) return null;
+      PsiClass psiClass = uClass.getJavaPsi();
+      if (!InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return null;
       }
     }

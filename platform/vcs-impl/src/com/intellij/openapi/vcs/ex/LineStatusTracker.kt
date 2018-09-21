@@ -49,7 +49,7 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
 
   private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
-  override abstract val renderer: LocalLineStatusMarkerRenderer
+  abstract override val renderer: LocalLineStatusMarkerRenderer
 
   var mode: Mode = mode
     set(value) {

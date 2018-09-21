@@ -269,7 +269,7 @@ class StateMerger {
 
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
-          myState.removeEquivalenceRelations(var);
+          myState.removeEquivalenceForVariableAndWrappers(var);
           myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
@@ -285,7 +285,7 @@ class StateMerger {
       DfaVariableState variableState = state.getVariableState(var);
       LongRangeSet range = variableState.getFact(RANGE);
       if (range == null) {
-        range = LongRangeSet.fromType(var.getVariableType());
+        range = LongRangeSet.fromType(var.getType());
         if (range == null) return null;
       }
       merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::union);
@@ -523,7 +523,7 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      state.removeEquivalenceRelations(myVar);
+      state.removeEquivalenceForVariableAndWrappers(myVar);
     }
   }
 

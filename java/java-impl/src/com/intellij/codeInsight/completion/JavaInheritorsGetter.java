@@ -134,7 +134,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   @Nullable
   private LookupElement addExpectedType(final PsiType type,
                                         final CompletionParameters parameters) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type, parameters.getPosition())) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.getName() == null) return null;

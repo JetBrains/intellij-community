@@ -31,7 +31,9 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
                       (configuration instanceof SearchConfiguration ? " search" : " replace") + " template)", true)
         .withCaseSensitivity(false)
         .withPresentableText(configurationName)
-        .withInsertHandler((InsertionContext context, LookupElement item) -> dialog.setSearchPattern((Configuration)item.getObject()));
+        .withInsertHandler((InsertionContext context, LookupElement item) -> context.setLaterRunnable(
+          () -> dialog.setSearchPattern((Configuration)item.getObject())
+        ));
       insensitive.addElement(element);
     }
   }

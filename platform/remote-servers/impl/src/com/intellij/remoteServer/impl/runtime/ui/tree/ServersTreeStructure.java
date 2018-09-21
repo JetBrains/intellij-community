@@ -110,6 +110,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     return myProject;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;

@@ -204,8 +204,7 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
-      if (cause instanceof PersistentEnumerator.CorruptedException ||
-          cause instanceof MappingFailedException ||
+      if (cause instanceof MappingFailedException ||
           cause instanceof IOException ||
           cause instanceof BuildDataCorruptedException ||
           (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {

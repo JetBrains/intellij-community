@@ -4,14 +4,11 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.xdebugger.memory.component.InstancesTracker;
-import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
@@ -49,7 +46,10 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
@@ -182,6 +182,9 @@ public class JavaDebugProcess extends XDebugProcess {
         }
       }
     });
+    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
+      ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
+    }
   }
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
@@ -204,17 +207,8 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private void saveNodeHistory(final StackFrameProxyImpl frameProxy) {
-    myJavaSession.getProcess().getManagerThread().invoke(new DebuggerCommandImpl() {
-      @Override
-      protected void action() {
-        myNodeManager.setHistoryByContext(frameProxy);
-      }
-
-      @Override
-      public Priority getPriority() {
-        return Priority.NORMAL;
-      }
-    });
+    myJavaSession.getProcess().getManagerThread().invoke(PrioritizedTask.Priority.NORMAL,
+                                                         () -> myNodeManager.setHistoryByContext(frameProxy));
   }
 
   private DebuggerStateManager getDebuggerStateManager() {
