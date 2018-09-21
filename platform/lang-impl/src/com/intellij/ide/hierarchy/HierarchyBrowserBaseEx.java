@@ -521,6 +521,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         sheet.myAsyncTreeModel = null;
         sheet.myStructureTreeModel = null;
       }
+      if (sheet.myStructureTreeModel != null) {
+        Disposer.dispose(sheet.myStructureTreeModel);
+        sheet.myStructureTreeModel = null;
+      }
     }
   }
 
