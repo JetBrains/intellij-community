@@ -2,6 +2,7 @@
 package com.intellij.testGuiFramework.driver
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.LoadingNode
@@ -26,17 +27,18 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   // this is ex-XPath version
   fun findMatchingPathByPredicate(predicate: FinderPredicate, pathStrings: List<String>): TreePath {
     val model = jTree.model
+    val root = GuiTestUtilKt.computeOnEdt { model.root } ?: IllegalStateException("root is null")
     if (jTree.isRootVisible) {
-      val childValue = jTree.value(model.root) ?: ""
+      val childValue = jTree.value(root) ?: ""
       if (predicate(pathStrings[0], childValue)) {
-        if (pathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
-        return traverseChildren(jTree, model.root, TreePath(model.root), predicate, pathStrings.drop(1)) ?: throw pathNotFound(pathStrings)
+        if (pathStrings.size == 1) return TreePath(arrayOf(root))
+        return traverseChildren(jTree, root, TreePath(root), predicate, pathStrings.drop(1)) ?: throw pathNotFound(pathStrings)
       }
       else {
         pathNotFound(pathStrings)
       }
     }
-    return traverseChildren(jTree, model.root, TreePath(model.root), predicate, pathStrings) ?: throw pathNotFound(pathStrings)
+    return traverseChildren(jTree, root, TreePath(root), predicate, pathStrings) ?: throw pathNotFound(pathStrings)
   }
 
   fun exists(pathStrings: List<String>) =
@@ -63,14 +65,14 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
                        pathTree: TreePath,
                        predicate: FinderPredicate,
                        pathStrings: List<String>): TreePath? {
-    val childCount = jTree.model.getChildCount(node)
+    val childCount = GuiTestUtilKt.computeOnEdt { jTree.model.getChildCount(node) } ?: 0
 
     val order = pathStrings[0].getOrder() ?: 0
     val original = pathStrings[0].getWithoutOrder()
     var currentOrder = 0
 
     for (childIndex in 0 until childCount) {
-      val child = jTree.model.getChild(node, childIndex)
+      val child = GuiTestUtilKt.computeOnEdt { jTree.model.getChild(node, childIndex) }!!
       if (child is LoadingNode)
         throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = jTree.getPathToNode(node))
       val childValue = jTree.value(child) ?: continue
@@ -94,7 +96,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
 
   private fun JTree.getPathToNode(node: Any): TreePath {
     val treeModel = model as DefaultTreeModel
-    var path = treeModel.getPathToRoot(node as TreeNode)
+    var path = GuiTestUtilKt.computeOnEdt { treeModel.getPathToRoot(node as TreeNode) }!!
     if (!isRootVisible) path = path.sliceArray(1 until path.size)
     return TreePath(path)
   }
