@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
@@ -32,6 +33,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposable {
+  private static final Logger LOG = Logger.getInstance(ToolbarPanel.class);
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
@@ -142,9 +144,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     return new TestFrameworkPropertyListener<Boolean>() {
       @Override
       public void onChanged(Boolean value) {
-        final AbstractTestTreeBuilderBase builder = model.getTreeBuilder();
-        if (builder != null) {
-          builder.setTestsComparator(model);
+        try {
+          //todo reflection to avoid binary incompatibility with substeps plugin
+          final AbstractTestTreeBuilderBase builder = (AbstractTestTreeBuilderBase)model.getClass().getMethod("getTreeBuilder").invoke(model);
+          if (builder != null) {
+            builder.setTestsComparator(model);
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     };
