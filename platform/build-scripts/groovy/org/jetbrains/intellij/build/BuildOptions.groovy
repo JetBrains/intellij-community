@@ -79,6 +79,11 @@ class BuildOptions {
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
 
   /**
+   * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   */
+  String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
+
+  /**
    * If {@code true} the project modules will be compiled incrementally
    */
   boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)

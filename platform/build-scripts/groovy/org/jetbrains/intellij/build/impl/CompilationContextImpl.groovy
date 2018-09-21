@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
+import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
@@ -23,6 +26,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 /**
@@ -181,7 +185,11 @@ class CompilationContextImpl implements CompilationContext {
     def projectArtifactsDirName = "project-artifacts"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
-    if (options.pathToCompiledClassesArchive != null) {
+    if (options.pathToCompiledClassesArchivesMetadata != null) {
+      fetchAndUnpackCompiledClasses(messages, ant, classesOutput, options)
+      outputDirectoriesToKeep.add(classesDirName)
+    }
+    else if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
@@ -249,13 +257,74 @@ class CompilationContextImpl implements CompilationContext {
     }
   }
 
-
   @CompileDynamic
   private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
     messages.block("Unpack compiled classes archive") {
       FileUtil.delete(new File(classesOutput))
       ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
     }
+  }
+
+  @CompileStatic
+  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
+    Map<String, File> all = new LinkedHashMap<>()
+
+    messages.block("Fetch compiled classes archives") {
+      def metadata = new JsonSlurper().parse(new File(options.pathToCompiledClassesArchivesMetadata), CharsetToolkit.UTF8) as Map
+
+      String persistentCache = System.getProperty("agent.persistent.cache") ?: new File(classesOutput).parentFile.getAbsolutePath()
+      File tempDownloadsStorage = new File(persistentCache, 'idea-compile-parts')
+
+      Deque<Pair<String, File>> toDownload = new ConcurrentLinkedDeque<>()
+
+      Map<String, String> files = new LinkedHashMap<>(metadata['files'] as Map<String, String>)
+      files.each { path, hash ->
+        def file = new File(tempDownloadsStorage, "$path/${hash}.zip")
+        def moduleTempDir = file.parentFile
+        moduleTempDir.mkdirs()
+        // Remove other files for same module
+        moduleTempDir.eachFile { f -> if (f.name != file.name) FileUtil.delete(f) }
+        // Download if needed
+        if (!file.exists()) {
+          toDownload.add(Pair.create(path, file))
+        }
+        all.put(path, file)
+      }
+
+      String prefix = metadata['prefix'] as String
+      String serverUrl = metadata['server-url'] as String
+
+      // todo: make parallel
+      toDownload.each { pair ->
+        antGet(ant, pair, serverUrl, prefix)
+      }
+    }
+
+    messages.block("Unpack compiled classes archives") {
+      // Unpack everything to ensure correct classes are in classesOutput
+      FileUtil.delete(new File(classesOutput))
+      // todo: make parallel
+      all.each { entry ->
+        unpack(messages, ant, classesOutput, entry)
+      }
+    }
+  }
+
+  @CompileDynamic
+  private static void unpack(BuildMessages messages, AntBuilder ant, String classesOutput, Map.Entry<String, File> entry) {
+    messages.block("Unpacking $entry.key") {
+      def dst = "$classesOutput/$entry.key"
+      ant.mkdir(dir: dst)
+      ant.unzip(src: entry.value.getAbsolutePath(), dest: dst)
+    }
+  }
+
+  @CompileDynamic
+  private static void antGet(AntBuilder ant, Pair<String, File> pair, String serverUrl, String prefix) {
+    ant.get(src: "$serverUrl/$prefix/${pair.first}/${pair.second.name}",
+            dest: pair.second.getAbsolutePath(),
+            useragent: 'Parts Downloader',
+            quiet: true)
   }
 
   private void checkCompilationOptions() {
@@ -270,6 +339,14 @@ class CompilationContextImpl implements CompilationContext {
     if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with compiled project output won't be used")
       options.pathToCompiledClassesArchive = null
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
+      messages.warning("Paths to the compiled project output metadata is specified, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
+      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with the compiled project output metadata won't be used to fetch compile output")
+      options.pathToCompiledClassesArchivesMetadata = null
     }
     if (options.incrementalCompilation && "false" == System.getProperty("teamcity.build.branch.is_default")) {
       messages.warning("Incremental builds for feature branches have no sense because JPS caches are out of date, so 'incremental compilation' option will be ignored")
