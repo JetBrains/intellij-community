@@ -1033,7 +1033,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
-  public CharSequence getCharSequence(boolean mainOnly) {
+  public synchronized CharSequence getCharSequence(boolean mainOnly) {
     List<String> fragments = mainOnly && myMainTextLastIndex > -1 && myMainTextLastIndex + 1 < myFragments.size() ?
                              myFragments.subList(0, myMainTextLastIndex + 1) : myFragments;
     return StringUtil.join(fragments, "");
