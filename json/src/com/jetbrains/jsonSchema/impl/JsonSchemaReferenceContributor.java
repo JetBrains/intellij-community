@@ -36,13 +36,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
   public static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref");
-  public static final PsiElementPattern.Capture<JsonStringLiteral> PROPERTY_NAME_PATTERN = createPropertyNamePattern();
   public static final PsiElementPattern.Capture<JsonStringLiteral> REQUIRED_PROP_PATTERN = createRequiredPropPattern();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(REF_PATTERN, new JsonSchemaRefReferenceProvider());
-    registrar.registerReferenceProvider(PROPERTY_NAME_PATTERN, new JsonPropertyName2SchemaDefinitionReferenceProvider());
     registrar.registerReferenceProvider(REQUIRED_PROP_PATTERN, new JsonRequiredPropsReferenceProvider());
   }
 
@@ -59,24 +57,6 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
           if (value.getParent() instanceof JsonProperty && ((JsonProperty)value.getParent()).getValue() == element) {
             return propertyName.equals(((JsonProperty)value.getParent()).getName());
           }
-        }
-        return false;
-      }
-
-      @Override
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    }));
-  }
-
-  private static PsiElementPattern.Capture<JsonStringLiteral> createPropertyNamePattern() {
-    return PlatformPatterns.psiElement(JsonStringLiteral.class).and(new FilterPattern(new ElementFilter() {
-      @Override
-      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-        if (element instanceof JsonStringLiteral) {
-          final PsiElement parent = ((JsonStringLiteral)element).getParent();
-          return parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == element;
         }
         return false;
       }
