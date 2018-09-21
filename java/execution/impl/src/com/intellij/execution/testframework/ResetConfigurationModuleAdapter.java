@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.HashSet;
@@ -87,17 +88,17 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
         final String moduleName = module1.getName();
         return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
       };
-      String message = "Tests were not found in module \"" + module.getName() + "\".\n" +
-                       "Use ";
+      StringBuilder message = new StringBuilder("Tests were not found in module \"").append(module.getName()).append( "\".\nUse ");
       if (modulesWithPackage.size() == 1) {
-        message += "module \"" + moduleNameRef.fun(modulesWithPackage.iterator().next()) + "\" ";
+        message.append("module \"").append(moduleNameRef.fun(modulesWithPackage.iterator().next())).append("\" ");
       }
       else {
-        message += "one of\n" + StringUtil.join(modulesWithPackage, moduleNameRef, "\n") + "\n";
+        message.append("one of\n").append(StringUtil.join(modulesWithPackage, moduleNameRef, "\n")).append("\n");
       }
-      message += "instead";
-      toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
-                                        new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId));
+      message.append("instead");
+      UIUtil.invokeLaterIfNeeded(() ->
+                                   toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message.toString(), null, 
+                                                                     new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId)));
       return true;
     }
     return false;
