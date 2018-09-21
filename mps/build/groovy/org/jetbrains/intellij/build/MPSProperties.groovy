@@ -39,8 +39,35 @@ class MPSProperties extends ProductProperties {
         productLayout.additionalPlatformJars.
                 putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
 
+        // Copied from BaseIdeaProperties
+        def JAVA_API_JAR = "java-api.jar"
+        def JAVA_IMPL_JAR = "java-impl.jar"
+        productLayout.additionalPlatformJars.putAll(JAVA_API_JAR, [])
+        productLayout.additionalPlatformJars.putAll(JAVA_IMPL_JAR, [])
+
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
             layout.customize {
+
+                // Copied from BaseIdeaProperties
+                def JAVA_RESOURCES_JAR = "java_resources_en.jar"
+                withModule("intellij.java.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.jvm.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java.indexing", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java.psi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.jsp.base", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.jsp", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.platform.uast", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+
+                withModule("intellij.java.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.jvm.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java.indexing.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java.psi.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.jsp.spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                withModule("intellij.java.uast", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+                // end of copy from BaseIdeaProperties
+
                 withModule("intellij.java.rt", "idea_rt.jar", null)
                 withProjectLibrary("Eclipse")
 //                withProjectLibrary("jgoodies-common")
