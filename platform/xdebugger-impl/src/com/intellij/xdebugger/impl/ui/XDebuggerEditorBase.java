@@ -425,6 +425,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
     myExpandedPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
+      .setMayBeParent(true)
       .setFocusable(true)
       .setResizable(true)
       .setRequestFocus(true)
