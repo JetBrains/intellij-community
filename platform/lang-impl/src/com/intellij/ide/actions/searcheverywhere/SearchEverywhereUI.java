@@ -45,6 +45,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -906,9 +907,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       stopSearching();
 
       Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
-      contributors = contributors.stream()
-                                 .filter(SearchEverywhereContributor::showInFindResults)
-                                 .collect(Collectors.toList());
+      contributors = ContainerUtil.filter(contributors, SearchEverywhereContributor::showInFindResults);
 
       if (contributors.isEmpty()) {
         return;
@@ -938,9 +937,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       fillUsages(cached, usages, targets);
 
       Collection<SearchEverywhereContributor> contributorsForAdditionalSearch;
-      contributorsForAdditionalSearch = contributors.stream()
-                                                    .filter(contributor -> myListModel.hasMoreElements(contributor))
-                                                    .collect(Collectors.toList());
+      contributorsForAdditionalSearch = ContainerUtil.filter(contributors, contributor -> myListModel.hasMoreElements(contributor));
 
       searchFinishedHandler.run();
       if (!contributorsForAdditionalSearch.isEmpty()) {

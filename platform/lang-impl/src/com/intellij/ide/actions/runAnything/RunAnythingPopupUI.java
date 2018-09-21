@@ -1022,8 +1022,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @NotNull
     private List<RunAnythingGroup> getVisibleGroups() {
       Collection<RunAnythingGroup> groups = RunAnythingCompletionGroup.MAIN_GROUPS;
-      return groups.stream().filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle()))
-        .collect(Collectors.toList());
+      return ContainerUtil.filter(groups, group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle()));
     }
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -82,7 +83,7 @@ public class ProblemPreviewEditorPresentation {
   }
 
   private static void highlightProblems(EditorEx editor, Container editorContainer, List<? extends UsageInfo> usages, @NotNull Project project) {
-    List<UsageInfo> validUsages = usages.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    List<UsageInfo> validUsages = ContainerUtil.filter(usages, Objects::nonNull);
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (!editor.isDisposed()) {
         editorContainer.invalidate();

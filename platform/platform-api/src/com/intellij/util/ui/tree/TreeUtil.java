@@ -17,6 +17,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
@@ -1273,7 +1274,7 @@ public final class TreeUtil {
       .onSuccess(paths -> {
         if (promise.isCancelled()) return;
         if (paths != null && !paths.isEmpty()) {
-          paths = paths.stream().filter(tree::isVisible).collect(toList());
+          paths = ContainerUtil.filter(paths, tree::isVisible);
         }
         if (paths != null && !paths.isEmpty()) {
           promise.setResult(paths);

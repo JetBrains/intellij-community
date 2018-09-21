@@ -35,7 +35,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -112,8 +111,8 @@ public class CommitPanel extends JBPanel {
 
   public void setRefs(@NotNull Collection<VcsRef> refs) {
     List<VcsRef> references = sortRefs(refs);
-    myBranchesPanel.setReferences(references.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList()));
-    myTagsPanel.setReferences(references.stream().filter(ref -> !ref.getType().isBranch()).collect(Collectors.toList()));
+    myBranchesPanel.setReferences(ContainerUtil.filter(references, ref -> ref.getType().isBranch()));
+    myTagsPanel.setReferences(ContainerUtil.filter(references, ref -> !ref.getType().isBranch()));
     if (myTagsPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
       myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));

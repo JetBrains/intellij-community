@@ -57,9 +57,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
@@ -270,9 +269,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentActionGroup.addSeparator();
 
     if (actions != null) {
-      myContentActionGroup.addAll(actions.stream()
-                                    .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
-                                    .collect(Collectors.toList()));
+      myContentActionGroup.addAll(
+        ContainerUtil.filter(actions, action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction)));
     }
   }
 
@@ -435,7 +433,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     treeGroup.addSeparator();
     List<RunDashboardGrouper> groupers =
-      myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).collect(Collectors.toList());
+      ContainerUtil.filter(myGroupers, grouper -> !grouper.getRule().isAlwaysEnabled());
     if (!groupers.isEmpty()) {
       treeGroup.add(new GroupByActionGroup(groupers));
     }

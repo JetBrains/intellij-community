@@ -22,7 +22,6 @@ import javax.swing.table.AbstractTableModel;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class GraphTableModel extends AbstractTableModel {
   public static final int ROOT_COLUMN = 0;
@@ -204,7 +203,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public List<VcsRef> getBranchesAtRow(int row) {
-    return getRefsAtRow(row).stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
+    return ContainerUtil.filter(getRefsAtRow(row), ref -> ref.getType().isBranch());
   }
 
   @NotNull

@@ -28,6 +28,7 @@ import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.ui.tree.MapBasedTree.UpdateResult;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -319,7 +320,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     }
 
     private static List<VirtualFile> getRoots(FileChooserDescriptor descriptor) {
-      List<VirtualFile> list = descriptor.getRoots().stream().filter(State::isValid).collect(toList());
+      List<VirtualFile> list = ContainerUtil.filter(descriptor.getRoots(), State::isValid);
       return list.isEmpty() && descriptor.isShowFileSystemRoots() ? null : list;
     }
 

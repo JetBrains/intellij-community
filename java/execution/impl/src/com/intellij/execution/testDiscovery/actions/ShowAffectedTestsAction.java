@@ -412,7 +412,7 @@ public class ShowAffectedTestsAction extends AnAction {
       .collect(Collectors.toList());
 
     getRunConfigurationProducers(project).stream()
-      .map(producer -> pair(producer, testMethods.stream().filter(producer::isApplicable).collect(Collectors.toList())))
+      .map(producer -> pair(producer, ContainerUtil.filter(testMethods, producer::isApplicable)))
       .max(Comparator.comparingInt(p -> p.second.size()))
       .map(p -> {
         @SuppressWarnings("unchecked") Location<PsiMethod>[] locations = p.second.toArray(new Location[0]);
