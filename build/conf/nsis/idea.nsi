@@ -904,6 +904,33 @@ createRegistration:
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
+
+; add "Open with PRODUCT" action for folders to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
 FunctionEnd
 
 Function ProductAssociation
@@ -1548,6 +1575,14 @@ desktop_shortcut_launcher64:
     Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
+; add "Open with PRODUCT" action for folders to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
   StrCpy $5 "Software\${MANUFACTURER}"
   StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
   push "${ASSOCIATION}"
