@@ -281,6 +281,26 @@ public class NSDefaults {
     }
   }
 
+  public static int getAccentColor() {
+    if (!SystemInfo.isMac || !SystemInfo.isOsVersionAtLeast("10.14"))
+      return -1;
+
+    final String nodeName = "AppleAccentColor";
+    final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    try {
+      final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      if (defaults == null || defaults.equals(ID.NIL))
+        return -1;
+      final ID domObj = Foundation.invoke(defaults, "persistentDomainForName:", Foundation.nsString("Apple Global Domain"));
+      if (domObj == null || domObj.equals(ID.NIL))
+        return -1;
+
+      return Foundation.invoke(domObj, "integerForKey:", Foundation.nsString(nodeName)).intValue();
+    } finally {
+      pool.drain();
+    }
+  }
+
   // for debug
   private List<String> _listAllKeys() {
     List<String> res = new ArrayList<String>(100);
