@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 /**
@@ -270,6 +271,7 @@ class CompilationContextImpl implements CompilationContext {
     Map<String, File> all = new LinkedHashMap<>()
 
     messages.block("Fetch compiled classes archives") {
+      long start = System.nanoTime()
       def metadata = new JsonSlurper().parse(new File(options.pathToCompiledClassesArchivesMetadata), CharsetToolkit.UTF8) as Map
 
       String persistentCache = System.getProperty('agent.persistent.cache')
@@ -301,15 +303,30 @@ class CompilationContextImpl implements CompilationContext {
       toDownload.each { pair ->
         antGet(ant, pair, serverUrl, prefix)
       }
+      messages.reportStatisticValue('compile-parts:download:time',
+                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+
+      long downloadedBytes = toDownload.collect { it.second.size() }.sum() as long
+      long totalBytes = all.collect { it.value.size() }.sum() as long
+
+      messages.reportStatisticValue('compile-parts:total:bytes', totalBytes.toString())
+      messages.reportStatisticValue('compile-parts:total:count', all.size().toString())
+      messages.reportStatisticValue('compile-parts:downloaded:bytes', downloadedBytes.toString())
+      messages.reportStatisticValue('compile-parts:downloaded:count', toDownload.size().toString())
+      messages.reportStatisticValue('compile-parts:reused:bytes', (totalBytes - downloadedBytes).toString())
+      messages.reportStatisticValue('compile-parts:reused:count', (all.size() - toDownload.size()).toString())
     }
 
     messages.block("Unpack compiled classes archives") {
+      long start = System.nanoTime()
       // Unpack everything to ensure correct classes are in classesOutput
       FileUtil.delete(new File(classesOutput))
       // todo: make parallel
       all.each { entry ->
         unpack(messages, ant, classesOutput, entry)
       }
+      messages.reportStatisticValue('compile-parts:unpack:time',
+                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
     }
   }
 
