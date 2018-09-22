@@ -50,6 +50,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     getOptions().resetModificationCount();
   }
 
+  @NotNull
   @Override
   protected ModuleBasedConfigurationOptions getOptions() {
     //noinspection unchecked
@@ -114,6 +115,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return super.getState();
   }
 
+  @Override
   public void loadState(@NotNull T state) {
     super.loadState(state);
     

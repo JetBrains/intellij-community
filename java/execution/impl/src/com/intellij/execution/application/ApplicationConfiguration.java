@@ -70,6 +70,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   /**
    * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
    */
+  @NotNull
   @Override
   protected JvmMainMethodRunConfigurationOptions getOptions() {
     return (JvmMainMethodRunConfigurationOptions)super.getOptions();

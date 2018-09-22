@@ -37,6 +37,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     super(new JavaRunConfigurationModule(project, false), factory);
   }
 
+  @NotNull
   @Override
   public AppletConfigurationOptions getOptions() {
     return (AppletConfigurationOptions)super.getOptions();

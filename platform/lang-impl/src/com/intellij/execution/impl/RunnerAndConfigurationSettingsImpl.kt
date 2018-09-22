@@ -506,14 +506,7 @@ fun serializeConfigurationInto(configuration: RunConfiguration, element: Element
 
 fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, factory: ConfigurationFactory) {
   if (configuration is PersistentStateComponent<*>) {
-    val optionsClass = factory.optionsClass
-    if (optionsClass == null) {
-      deserializeAndLoadState(configuration, element)
-    }
-    else {
-      @Suppress("UNCHECKED_CAST")
-      deserializeAndLoadState(configuration as PersistentStateComponent<Any>, element, optionsClass as Class<Any>)
-    }
+    deserializeAndLoadState(configuration, element)
   }
   else {
     configuration.readExternal(element)

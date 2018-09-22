@@ -57,6 +57,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return ReflectionUtil.newInstance(getOptionsClass());
   }
 
+  @NotNull
   protected RunConfigurationOptions getOptions() {
     return myOptions;
   }
