@@ -306,8 +306,8 @@ class CompilationContextImpl implements CompilationContext {
       messages.reportStatisticValue('compile-parts:download:time',
                                     TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
-      long downloadedBytes = toDownload.collect { it.second.size() }.sum() as long
-      long totalBytes = all.collect { it.value.size() }.sum() as long
+      long downloadedBytes = toDownload.collect { it.second.size() }.sum(0l) as long
+      long totalBytes = all.collect { it.value.size() }.sum(0l) as long
 
       messages.reportStatisticValue('compile-parts:total:bytes', totalBytes.toString())
       messages.reportStatisticValue('compile-parts:total:count', all.size().toString())
