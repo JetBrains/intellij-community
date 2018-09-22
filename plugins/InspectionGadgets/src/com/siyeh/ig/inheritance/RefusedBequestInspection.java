@@ -67,14 +67,15 @@ public class RefusedBequestInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) {
-    defaultWriteSettings(node, "onlyReportWhenAnnotated", "annotations");
+    defaultWriteSettings(node, "onlyReportWhenAnnotated", "annotations", "ignoreDefaultSuperMethods");
     writeBooleanOption(node, "onlyReportWhenAnnotated", false);
+    writeBooleanOption(node, "ignoreDefaultSuperMethods", false);
     annotations.writeSettings(node, "annotations");
   }
 
   @Override
   public void readSettings(@NotNull Element node) {
-    onlyReportWhenAnnotated = false;
+    onlyReportWhenAnnotated = false; // should be false when not present, used to be false by default in the past.
     super.readSettings(node);
   }
 
