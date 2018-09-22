@@ -272,8 +272,9 @@ class CompilationContextImpl implements CompilationContext {
     messages.block("Fetch compiled classes archives") {
       def metadata = new JsonSlurper().parse(new File(options.pathToCompiledClassesArchivesMetadata), CharsetToolkit.UTF8) as Map
 
-      String persistentCache = System.getProperty("agent.persistent.cache") ?: new File(classesOutput).parentFile.getAbsolutePath()
-      File tempDownloadsStorage = new File(persistentCache, 'idea-compile-parts')
+      String persistentCache = System.getProperty('agent.persistent.cache')
+      String cache = persistentCache ?: new File(classesOutput).parentFile.getAbsolutePath()
+      File tempDownloadsStorage = new File(cache, 'idea-compile-parts')
 
       Deque<Pair<String, File>> toDownload = new ConcurrentLinkedDeque<>()
 
@@ -282,8 +283,10 @@ class CompilationContextImpl implements CompilationContext {
         def file = new File(tempDownloadsStorage, "$path/${hash}.jar")
         def moduleTempDir = file.parentFile
         moduleTempDir.mkdirs()
-        // Remove other files for same module
-        moduleTempDir.eachFile { f -> if (f.name != file.name) FileUtil.delete(f) }
+        // Remove other files for same module if cache is not managed by TeamCity
+        if (persistentCache == null) {
+          moduleTempDir.eachFile { f -> if (f.name != file.name) FileUtil.delete(f) }
+        }
         // Download if needed
         if (!file.exists()) {
           toDownload.add(Pair.create(path, file))
