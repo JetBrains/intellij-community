@@ -13,6 +13,7 @@ import com.intellij.testGuiFramework.util.Predicate
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
 import javax.swing.JTree
@@ -175,10 +176,13 @@ import javax.swing.tree.TreePath
    * @param extendedValue if true return full text for each path item
    * */
   fun TreePath.getPathStrings(jTree: JTree, extendedValue: Boolean = false): List<String> {
+    if(jTree.hasValidModel().not())
+      throw ComponentLookupException("Model or root of a tree is null")
+
     val cellReader = ExtendedJTreeCellReader()
     val pathStrings = if (path.first()?.toString()?.isEmpty() != false || !jTree.isRootVisible) path.drop(1) else path.asList()
     return pathStrings.asSequence().map {
-      cellReader.valueAtExtended(jTree, it, extendedValue)  ?: throw Exception("Unable to read value (value is null) for a tree")
+      cellReader.valueAtExtended(jTree, it, extendedValue)  ?: throw ComponentLookupException("Unable to read value (value is null) for a tree")
     }.filter { it.isNotEmpty() }.toList()
   }
 
@@ -193,15 +197,11 @@ import javax.swing.tree.TreePath
     }
   }
 
-  fun JTree.printModel(): Boolean {
-    if(model == null) {
-      println("*** model is NULL ***")
-      return false
-    }
-    val root = GuiTestUtilKt.computeOnEdt { model.root }
-    if (root != null)
+  fun JTree.printModel() {
+    if (hasValidModel()) {
       GuiTestUtilKt.runOnEdt { printModel(model.root) }
-    else
-      println("*** root is NULL ***")
-    return root != null
+    }
+    else println("*** model or root is NULL ***")
   }
+
+  fun JTree.hasValidModel(): Boolean = GuiTestUtilKt.computeOnEdt { model?.root != null } == true
