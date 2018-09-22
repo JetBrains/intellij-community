@@ -1191,10 +1191,10 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be expanded
    * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on done
+   * @param consumer a path consumer called if path is found and expanded
    */
   public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseExpand(tree, visitor).onProcessed(consumer);
+    promiseExpand(tree, visitor).onSuccess(consumer);
   }
 
   /**
@@ -1202,6 +1202,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be expanded
    * @param visitor a visitor that controls expanding of tree nodes
+   * @return a promise that will be succeed only if path is found and expanded
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1224,10 +1225,10 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be made visible
    * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on done
+   * @param consumer a path consumer called if path is found and made visible
    */
   public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseMakeVisible(tree, visitor).onProcessed(consumer);
+    promiseMakeVisible(tree, visitor).onSuccess(consumer);
   }
 
   /**
@@ -1235,6 +1236,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be made visible
    * @param visitor a visitor that controls expanding of tree nodes
+   * @return a promise that will be succeed only if path is found and made visible
    */
   @NotNull
   public static Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1308,10 +1310,10 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be selected
    * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on done
+   * @param consumer a path consumer called if path is found and selected
    */
   public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseSelect(tree, visitor).onProcessed(consumer);
+    promiseSelect(tree, visitor).onSuccess(consumer);
   }
 
   /**
@@ -1319,6 +1321,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be selected
    * @param visitor a visitor that controls expanding of tree nodes
+   * @return a promise that will be succeed only if path is found and selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
