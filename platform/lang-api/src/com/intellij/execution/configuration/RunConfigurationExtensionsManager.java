@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionException;
@@ -25,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 /**
  * @author traff
@@ -37,7 +34,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
 
   private final ExtensionPointName<T> myExtensionPointName;
 
-  public RunConfigurationExtensionsManager(ExtensionPointName<T> extensionPointName) {
+  public RunConfigurationExtensionsManager(@NotNull ExtensionPointName<T> extensionPointName) {
     myExtensionPointName = extensionPointName;
   }
 
@@ -65,7 +62,10 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
       }
     }
     if (hasUnknownExtension) {
-      List<Element> copy = children.stream().map(JDOMUtil::internElement).collect(Collectors.toList());
+      List<Element> copy = new SmartList<>();
+      for (Element child : children) {
+        copy.add(JDOMUtil.internElement(child));
+      }
       configuration.putCopyableUserData(RUN_EXTENSIONS, copy);
     }
   }

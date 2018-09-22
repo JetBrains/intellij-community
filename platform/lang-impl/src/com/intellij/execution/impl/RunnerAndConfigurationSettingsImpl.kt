@@ -198,7 +198,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     uniqueId = null
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {
         configuration.configurationModule.findModule(moduleName)?.let {
@@ -269,7 +269,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       configuration.configurationModule.module?.let {
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
@@ -299,7 +299,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
     configuration.checkConfiguration()
-    if (configuration !is RunConfigurationBase) {
+    if (configuration !is RunConfigurationBase<*>) {
       return
     }
 

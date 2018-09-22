@@ -967,7 +967,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     val suggestedName = suggestName(configuration)
     val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
     configuration.name = name
-    (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
+    (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
     return createNewConfiguration(settings, node, selectedNode)
   }
@@ -1178,7 +1178,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val factory = settings.factory
         @Suppress("UNCHECKED_CAST", "DEPRECATION")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
-        (settings.configuration as? RunConfigurationBase)?.onConfigurationCopied()
+        (settings.configuration as? ConfigurationCreationListener)?.onConfigurationCopied()
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)

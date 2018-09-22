@@ -23,12 +23,13 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.util.PathsList;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public abstract class ApplicationCommandLineState<T extends
-  ModuleBasedConfiguration<JavaRunConfigurationModule> &
+  ModuleBasedConfiguration<JavaRunConfigurationModule, Element> &
   CommonJavaRunConfigurationParameters &
   ConfigurationWithCommandLineShortener> extends BaseJavaApplicationCommandLineState<T> {
 

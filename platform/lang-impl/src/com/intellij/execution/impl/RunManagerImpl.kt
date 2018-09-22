@@ -1085,7 +1085,7 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
-  (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+  (configuration as? ConfigurationCreationListener)?.onNewConfigurationCreated()
 }
 
 private fun getFactoryKey(factory: ConfigurationFactory): String {
