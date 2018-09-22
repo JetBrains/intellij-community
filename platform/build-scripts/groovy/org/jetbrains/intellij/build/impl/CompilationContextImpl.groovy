@@ -279,7 +279,7 @@ class CompilationContextImpl implements CompilationContext {
 
       Map<String, String> files = new LinkedHashMap<>(metadata['files'] as Map<String, String>)
       files.each { path, hash ->
-        def file = new File(tempDownloadsStorage, "$path/${hash}.zip")
+        def file = new File(tempDownloadsStorage, "$path/${hash}.jar")
         def moduleTempDir = file.parentFile
         moduleTempDir.mkdirs()
         // Remove other files for same module
