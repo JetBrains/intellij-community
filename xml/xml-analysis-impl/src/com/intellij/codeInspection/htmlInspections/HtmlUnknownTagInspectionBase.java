@@ -53,7 +53,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   }
 
   public HtmlUnknownTagInspectionBase() {
-    this("nobr,noembed,comment,noscript,embed,script");
+    this("nobr,noembed,comment,noscript,embed,script,i,b");
   }
 
   private static boolean isAbstractDescriptor(XmlElementDescriptor descriptor) {
