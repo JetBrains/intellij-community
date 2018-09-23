@@ -45,5 +45,6 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:XStream",
         "//tools/idea/.idea/libraries:lz4-java",
+        "//tools/idea/.idea/libraries:KotlinTest[test]",
     ],
 )
