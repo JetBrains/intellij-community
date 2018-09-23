@@ -141,9 +141,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   @NotNull
-  public static VirtualFile[] getLibraryRoots(@NotNull LibraryOrderEntry orderEntry) {
-    Library library = orderEntry.getLibrary();
-    if (library == null) return VirtualFile.EMPTY_ARRAY;
+  public static VirtualFile[] getLibraryRoots(@NotNull Library library) {
     OrderRootType[] rootTypes = LibraryType.DEFAULT_EXTERNAL_ROOT_TYPES;
     if (library instanceof LibraryEx) {
       if (((LibraryEx)library).isDisposed()) return VirtualFile.EMPTY_ARRAY;
@@ -157,5 +155,12 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
       files.addAll(Arrays.asList(library.getFiles(rootType)));
     }
     return VfsUtilCore.toVirtualFileArray(files);
+  }
+
+  @NotNull
+  public static VirtualFile[] getLibraryRoots(@NotNull LibraryOrderEntry orderEntry) {
+    Library library = orderEntry.getLibrary();
+    if (library == null) return VirtualFile.EMPTY_ARRAY;
+    return getLibraryRoots(library);
   }
 }
