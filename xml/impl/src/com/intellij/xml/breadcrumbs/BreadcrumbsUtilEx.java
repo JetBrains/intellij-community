@@ -38,7 +38,7 @@ public class BreadcrumbsUtilEx {
   }
 
   @Nullable
-  static BreadcrumbsProvider findProvider(boolean checkSettings, @NotNull FileViewProvider viewProvider) {
+  public static BreadcrumbsProvider findProvider(boolean checkSettings, @NotNull FileViewProvider viewProvider) {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (checkSettings && !settings.isBreadcrumbsShown()) return null;
 

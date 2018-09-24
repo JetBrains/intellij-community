@@ -96,7 +96,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     BreadcrumbsProvider defaultInfoProvider = BreadcrumbsUtilEx.findProvider(editor, file);
 
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
-      getLineElements(offset, file, myProject, defaultInfoProvider);
+      getLineElements(offset, file, myProject, defaultInfoProvider, true);
 
     if (pairs == null) return null;
 
@@ -129,13 +129,14 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   private static Collection<Pair<PsiElement, BreadcrumbsProvider>> getLineElements(int offset,
                                                                                    VirtualFile file,
                                                                                    Project project,
-                                                                                   BreadcrumbsProvider defaultInfoProvider) {
-    PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider);
+                                                                                   BreadcrumbsProvider defaultInfoProvider,
+                                                                                   boolean checkSettings) {
+    PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider, checkSettings);
     if (element == null) return null;
 
     LinkedList<Pair<PsiElement, BreadcrumbsProvider>> result = new LinkedList<>();
     while (element != null) {
-      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider);
+      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
 
       if (provider != null && provider.acceptElement(element)) {
         result.addFirst(Pair.create(element, provider));
@@ -150,7 +151,8 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   private static PsiElement findFirstBreadcrumbedElement(final int offset,
                                                          final VirtualFile file,
                                                          final Project project,
-                                                         final BreadcrumbsProvider defaultInfoProvider) {
+                                                         final BreadcrumbsProvider defaultInfoProvider,
+                                                         boolean checkSettings) {
     if (file == null || !file.isValid() || file.isDirectory()) return null;
 
     PriorityQueue<PsiElement> leafs =
@@ -177,7 +179,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
       final PsiElement element = leafs.remove();
       if (!element.isValid()) continue;
 
-      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider);
+      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
       if (provider != null && provider.acceptElement(element)) {
         return element;
       }
@@ -194,9 +196,9 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Nullable
-  private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider) {
+  private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider, boolean checkSettings) {
     Language language = element.getLanguage();
-    if (!EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.getID())) return defaultProvider;
+    if (checkSettings && !EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.getID())) return defaultProvider;
     BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
     return provider == null ? defaultProvider : provider;
   }
@@ -212,7 +214,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
 
   @Nullable
   public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsProvider infoProvider) {
-    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(offset, file, project, infoProvider);
+    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(offset, file, project, infoProvider, false);
     return pairs == null ? null : toPsiElementArray(pairs);
   }
 }

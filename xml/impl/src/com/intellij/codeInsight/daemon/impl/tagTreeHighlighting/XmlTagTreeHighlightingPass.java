@@ -61,7 +61,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     myFile = file;
     myEditor = editor;
     final FileViewProvider viewProvider = file.getManager().findViewProvider(file.getVirtualFile());
-    myInfoProvider = BreadcrumbsUtilEx.findProvider(editor, viewProvider);
+    myInfoProvider = BreadcrumbsUtilEx.findProvider(false, viewProvider);
   }
 
   @Override
