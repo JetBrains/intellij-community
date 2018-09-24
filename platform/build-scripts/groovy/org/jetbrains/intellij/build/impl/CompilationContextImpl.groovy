@@ -336,7 +336,7 @@ class CompilationContextImpl implements CompilationContext {
           return Trinity.create(file, expected, computed)
         }
         return null
-      }
+      }.findAll {it != null}
       messages.reportStatisticValue('compile-parts:verify:time',
                                     TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
       if (!failed.isEmpty()) {
