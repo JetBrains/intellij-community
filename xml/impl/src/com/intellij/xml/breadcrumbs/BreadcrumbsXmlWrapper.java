@@ -369,17 +369,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  static FileViewProvider findViewProvider(Editor editor) {
-    if (editor == null) return null;
-
-    Project project = editor.getProject();
-    if (project == null) return null;
-
-    VirtualFile file = getVirtualFile(editor);
-    return findViewProvider(file, project);
-  }
-
-  @Nullable
   static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, VirtualFile file) {
     Project project = editor.getProject();
     return project == null ? null : findInfoProvider(editor, findViewProvider(file, project));
