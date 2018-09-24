@@ -6,8 +6,6 @@ import com.intellij.openapi.application.impl.AsyncExecution.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
 import kotlinx.coroutines.experimental.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -150,55 +148,30 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
                                                constraint: ExpirableContextConstraint) : ChainedConstraintDispatcher(delegate, constraint) {
     override val constraint get() = super.constraint as ExpirableContextConstraint
-
-    private val myInvokeOnDisposal = object : THashSet<Runnable>(ContainerUtil.identityStrategy()) {
-      var isDisposed: Boolean = false
-        get() = synchronized(this) { field }
-        private set(value) = synchronized(this) {
-          field = value
-        }
-
-      fun disposeAndGet(): Set<Runnable> = synchronized(this) {
-        isDisposed = true
-        ContainerUtil.newIdentityTroveSet<Runnable>(this).also {
-          this.clear()
-        }
-      }
-
-      fun register(runnable: Runnable): Boolean = synchronized(this) {
-        !isDisposed && this.add(runnable)
-      }
-
-      fun unregister(runnable: Runnable): Boolean = synchronized(this) {
-        this.remove(runnable)
-      }
-    }
+    private val expirable: Disposable get() = constraint.expirable
 
     override fun initializeJob(job: Job) {
       super.initializeJob(job)
-      constraint.expirable.cancelJobOnDisposal(job) {
-        myInvokeOnDisposal.disposeAndGet().forEach(Runnable::run)
-      }
+      expirable.cancelJobOnDisposal(job)
     }
 
-    override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(myInvokeOnDisposal.isDisposed || constraint.isCorrectContext)
+    override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(expirable.isDisposed || constraint.isCorrectContext)
 
     override fun doSchedule(context: CoroutineContext, retryDispatchRunnable: Runnable) {
       val runOnce = RunOnce()
 
-      val unscheduledRunnable = runOnce.runnable {
-        LOG.assertTrue(myInvokeOnDisposal.isDisposed, "Must only be called on disposal of ${constraint.expirable}")
-        LOG.assertTrue(context[Job]!!.isCancelled, "Job should have been cancelled through initializeJob()")
-        // Although it is tempting to invoke the retryDispatchRunnable directly,
-        // it is better to avoid executing arbitrary code from inside the disposal handler.
-        fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
+      val jobDisposableCloseable = expirable.registerOrInvokeDisposable {
+        runOnce {
+          LOG.assertTrue(expirable.isDisposing || expirable.isDisposed, "Must only be called on disposal of $expirable")
+          context.cancel(DisposedException(expirable))
+          // Although it is tempting to invoke the retryDispatchRunnable directly,
+          // it is better to avoid executing arbitrary code from inside the disposal handler.
+          fallbackDispatch(context, retryDispatchRunnable)  // invokeLater, basically
+        }
       }
-      if (!myInvokeOnDisposal.register(unscheduledRunnable)) {
-        unscheduledRunnable.run()
-      }
-      else {
+      if (runOnce.isActive) {
         constraint.scheduleExpirable(runOnce.runnable {
-          myInvokeOnDisposal.unregister(unscheduledRunnable)
+          jobDisposableCloseable.close()
           retryDispatchRunnable.run()
         })
       }
@@ -267,6 +240,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
 
     internal class RunOnce : (() -> Unit) -> Unit {
+      val isActive get() = hasNotRunYet.get()  // inherently race-prone
       private val hasNotRunYet = AtomicBoolean(true)
       override operator fun invoke(block: () -> Unit) {
         if (hasNotRunYet.compareAndSet(true, false)) block()
@@ -305,9 +279,14 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       }
     }
 
+    internal val Disposable.isDisposed: Boolean
+      get() = Disposer.isDisposed(this)
+    internal val Disposable.isDisposing: Boolean
+      get() = Disposer.isDisposing(this)
+
     private fun tryRegisterDisposable(parent: Disposable, child: Disposable): Boolean {
-      if (!Disposer.isDisposing(parent) &&
-          !Disposer.isDisposed(parent)) {
+      if (!parent.isDisposing &&
+          !parent.isDisposed) {
         try {
           Disposer.register(parent, child)
           return true
@@ -318,7 +297,8 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       return false
     }
 
-    private fun Disposable.registerOrInvokeJobDisposable(job: Job, disposableBlock: () -> Unit): AutoCloseable {
+    internal fun Disposable.registerOrInvokeDisposable(job: Job? = null,
+                                                       disposableBlock: () -> Unit): AutoCloseable {
       val runOnce = RunOnce()
       val child = Disposable {
         runOnce {
@@ -335,25 +315,23 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
             Disposer.dispose(child)  // unregisters only, does not run disposableBlock()
           }
         }
-        val jobCompletionUnregisteringHandle = job.invokeOnCompletion(completionHandler)
+        val jobCompletionUnregisteringHandle = job?.invokeOnCompletion(completionHandler)
         return AutoCloseable {
-          jobCompletionUnregisteringHandle.dispose()
+          jobCompletionUnregisteringHandle?.dispose()
           completionHandler(null)
         }
       }
     }
 
-    internal fun Disposable.cancelJobOnDisposal(job: Job, onceCancelledBlock: () -> Unit = {}): AutoCloseable {
+    internal fun Disposable.cancelJobOnDisposal(job: Job): AutoCloseable {
       val debugTraceThrowable = Throwable()
-      return registerOrInvokeJobDisposable(job) {
+      return registerOrInvokeDisposable(job) {
         if (!job.isCancelled && !job.isCompleted) {
           job.cancel(DisposedException(this).apply {
             addSuppressed(debugTraceThrowable)
           })
         }
-        onceCancelledBlock()
       }
     }
   }
-
 }
