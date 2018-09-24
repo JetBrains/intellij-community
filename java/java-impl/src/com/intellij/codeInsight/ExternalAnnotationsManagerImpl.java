@@ -168,25 +168,29 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project))));
 
     WriteCommandAction.writeCommandAction(project).run(() -> {
-      for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
-        XmlFile annotationsFile = entry.getKey().orElse(null);
-        List<ExternalAnnotation> fileAnnotations = entry.getValue();
-        annotateExternally(annotationsFile, fileAnnotations);
+      try {
+        for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
+          XmlFile annotationsFile = entry.getKey().orElse(null);
+          List<ExternalAnnotation> fileAnnotations = entry.getValue();
+          annotateExternally(annotationsFile, fileAnnotations);
+        }
+
+        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+          @Override
+          public void undo() {
+            dropCache();
+            notifyChangedExternally();
+          }
+
+          @Override
+          public void redo() {
+            dropCache();
+            notifyChangedExternally();
+          }
+        });
+      } finally {
+        dropCache();
       }
-
-      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
-        @Override
-        public void undo() {
-          dropCache();
-          notifyChangedExternally();
-        }
-
-        @Override
-        public void redo() {
-          dropCache();
-          notifyChangedExternally();
-        }
-      });
     });
   }
 
@@ -385,7 +389,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       throw new IncorrectOperationException("Failed to add annotation " + annotation + " after " + anchor);
     }
 
-    return (XmlTag)addedElement;
+    return itemTag;
   }
 
   @Nullable
