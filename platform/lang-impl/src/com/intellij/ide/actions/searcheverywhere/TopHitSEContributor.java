@@ -119,7 +119,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   private boolean fill(String pattern, Function<Object, Boolean> consumer) {
-    if (pattern.startsWith("#") && !pattern.contains(" ")) {
+    if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
       return fillOptionProviders(pattern, consumer);
     } else {
       if (fillActions(pattern, consumer)) {
@@ -290,7 +290,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
           append(text, attrs);
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId());
         }
         else {
           ItemPresentation presentation = null;
