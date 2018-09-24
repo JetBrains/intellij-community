@@ -25,7 +25,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
@@ -119,8 +118,14 @@ class StateQueue {
   }                                                                      
 
   private static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
-    return states.stream().filter(left -> states.stream().noneMatch(right -> right != left && right.isSuperStateOf(left)))
-      .collect(Collectors.toList());
+    List<DfaMemoryStateImpl> result = new ArrayList<>(states);
+    for (Iterator<DfaMemoryStateImpl> iterator = result.iterator(); iterator.hasNext(); ) {
+      DfaMemoryStateImpl left = iterator.next();
+      if (result.stream().anyMatch(right -> right != left && right.isSuperStateOf(left))) {
+        iterator.remove();
+      }
+    }
+    return result;
   }
 
   static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
