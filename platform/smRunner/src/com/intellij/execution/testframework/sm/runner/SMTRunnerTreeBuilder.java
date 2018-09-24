@@ -21,7 +21,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   private final AbstractTreeStructure myTreeStructure;
   private boolean myDisposed;
   private StructureTreeModel myTreeModel;
-  private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   public SMTRunnerTreeBuilder(final JTree tree, final SMTRunnerTreeStructure structure) {
     myTree = tree;
