@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -192,14 +191,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myQueue.queue(myUpdate);
   }
 
-  private void moveEditorCaretTo(int offset) {
-    if (offset >= 0) {
-      myUserCaretChange = false;
-      myEditor.getCaretModel().moveToOffset(offset);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    }
-  }
-
   @Deprecated
   public JComponent getComponent() {
     return this;
@@ -208,18 +199,8 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private void itemSelected(Crumb crumb, InputEvent event) {
     if (event == null || !(crumb instanceof NavigatableCrumb)) return;
     NavigatableCrumb navigatableCrumb = (NavigatableCrumb) crumb;
-
-    int offset = navigatableCrumb.getNavigationOffset();
-    if (offset < 0) return;
-
-    moveEditorCaretTo(offset);
-
-    if (event.isShiftDown() || event.isMetaDown()) {
-      final TextRange range = navigatableCrumb.getHighlightRange();
-      if (range != null) {
-        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
-    }
+    myUserCaretChange = false;
+    navigatableCrumb.navigate(myEditor, event.isShiftDown() || event.isMetaDown());
   }
 
   private void itemHovered(Crumb crumb, @SuppressWarnings("unused") InputEvent event) {
