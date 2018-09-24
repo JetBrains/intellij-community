@@ -786,6 +786,19 @@
       <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
 
+    <action id="SmartExecuteInPyConsoleAction"
+            class="com.jetbrains.python.actions.PySmartExecuteSelectionAction"
+            text="Smart execute selection in console"
+            description="Smart executes selected code fragment in Python/Django console">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ExecuteInPyConsoleAction"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift A"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift A" />
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift A" />
+      <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt A" replace-all="true"/>
+      <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt A" replace-all="true"/>
+    </action>
+
     <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
     </action>

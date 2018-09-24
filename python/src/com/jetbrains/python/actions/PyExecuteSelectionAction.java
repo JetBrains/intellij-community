@@ -17,20 +17,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.console.*;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,106 +41,6 @@ public class PyExecuteSelectionAction extends AnAction {
     super(EXECUTE_SELECTION_IN_CONSOLE);
   }
 
-
-  private static String getNLinesAfterCaret(Editor editor, int N) {
-    VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
-
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, caretPos, caretPos);
-
-    LogicalPosition lineStart = lines.first;
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = DocumentUtil.getLineTextRange(editor.getDocument(), caretPos.getLine() + N).getEndOffset();
-    return editor.getDocument().getCharsSequence().subSequence(start, end).toString();
-  }
-
-  /*
-   returns true if PsiElement not an evaluable Python statement
-   */
-  private static boolean isPartialStatement(PsiElement psiElement) {
-    return psiElement instanceof PyElsePart ||
-           psiElement instanceof PyIfPartElifImpl ||
-           psiElement instanceof PyIfPart ||
-           psiElement instanceof PyWhilePart ||
-           psiElement instanceof PyExceptPart ||
-           psiElement instanceof PyFinallyPart ||
-           psiElement instanceof PyStatementPart ||
-           psiElement instanceof PyStatementList;
-  }
-
-  /*
-  closest parent that is evaluable
-   */
-  private static PsiElement getEvaluableParent(PsiElement psiElement) {
-    if (psiElement.getNode().getElementType() == PyTokenTypes.ELSE_KEYWORD ||
-        psiElement.getNode().getElementType() == PyTokenTypes.ELIF_KEYWORD ||
-        psiElement.getNode().getElementType() == PyTokenTypes.EXCEPT_KEYWORD ||
-        psiElement.getNode().getElementType() == PyTokenTypes.FINALLY_KEYWORD) {
-      psiElement = psiElement.getParent();
-    }
-    return isPartialStatement(psiElement) ? psiElement.getParent() : psiElement;
-  }
-
-  private static void syntaxErrorAction(final AnActionEvent e) {
-    showConsoleAndExecuteCode(e, "# syntax error");
-  }
-
-  private static void smartExecuteCode(final AnActionEvent e, final Editor editor) {
-    final Document document = editor.getDocument();
-    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(e.getProject());
-    psiDocumentManager.commitDocument(document);
-    final PsiFile psiFile = psiDocumentManager.getPsiFile(document);
-
-    final VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
-    final int line = caretPos.getLine();
-
-    final int offset = DocumentUtil.getFirstNonSpaceCharOffset(document, line);
-    final PsiElement psiElement = psiFile.findElementAt(offset);
-    int numLinesToSubmit = document.getLineCount() - line;
-    PsiElement lastCommonParent = null;
-    for (int i = 0; line + i < document.getLineCount(); ++i) {
-      final int lineStartOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, line + i);
-      final PsiElement pe = psiFile.findElementAt(lineStartOffset);
-      final PsiElement commonParentRaw = pe == null ? pe.getContainingFile() : PsiTreeUtil.findCommonParent(psiElement, pe);
-      final PsiElement commonParent = getEvaluableParent(commonParentRaw);
-      if (commonParent.getTextOffset() < offset ||
-          commonParent instanceof PyFile) { // at new statement
-        numLinesToSubmit = i;
-        break;
-      }
-      lastCommonParent = commonParent;
-    }
-    if (lastCommonParent == null) {
-      if (psiElement instanceof PsiWhiteSpace) { // if we are at a blank line
-        moveCaretDown(editor);
-        return;
-      }
-      syntaxErrorAction(e);
-      return;
-    }
-
-    String codeToSend =
-      numLinesToSubmit == 0 ? "" :
-      getNLinesAfterCaret(editor, numLinesToSubmit - 1);
-    if (PsiTreeUtil.hasErrorElements(lastCommonParent) ||
-        psiElement.getTextOffset() < offset) {
-      codeToSend = null;
-    }
-    codeToSend = codeToSend == null ? null : codeToSend.trim();
-
-    if (codeToSend != null && !codeToSend.isEmpty()) {
-      showConsoleAndExecuteCode(e, codeToSend);
-    }
-    if (codeToSend != null) {
-      for (int i = 0; i < numLinesToSubmit; ++i) {
-        moveCaretDown(editor);
-      }
-    }
-    else {
-      syntaxErrorAction(e);
-      return;
-    }
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -156,12 +50,16 @@ public class PyExecuteSelectionAction extends AnAction {
         showConsoleAndExecuteCode(e, selectionText);
       }
       else {
-        smartExecuteCode(e, editor);
+        String line = getLineUnderCaret(editor);
+        if (line != null) {
+          showConsoleAndExecuteCode(e, line.trim());
+          moveCaretDown(editor);
+        }
       }
     }
   }
 
-  private static void moveCaretDown(Editor editor) {
+  static void moveCaretDown(Editor editor) {
     VisualPosition pos = editor.getCaretModel().getVisualPosition();
     Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, pos, pos);
     int offset = editor.getCaretModel().getOffset();
@@ -233,7 +131,7 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   @Nullable
-  private static String getSelectionText(@NotNull Editor editor) {
+  static String getSelectionText(@NotNull Editor editor) {
     if (editor.getSelectionModel().hasSelection()) {
       SelectionModel model = editor.getSelectionModel();
 
