@@ -247,7 +247,7 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
 
       val propertyBindingIndex = findBindingIndex(property.name!!)
       if (propertyBindingIndex < 0) {
-        logger<BaseState>().error("cannot find binding for property ${property.name}")
+        logger<BaseState>().debug("cannot find binding for property ${property.name}")
         continue
       }
 
