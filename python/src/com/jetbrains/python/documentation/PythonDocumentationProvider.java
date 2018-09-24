@@ -98,7 +98,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
-        result.addItem("\n").addItem(docStringSummary);
+        result.addItem("\n").addItem(escaped(docStringSummary));
       }
 
       return result.toString();
@@ -113,13 +113,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       final String docStringSummary = getDocStringSummary(cls);
       if (docStringSummary != null) {
-        result.addItem("\n").addItem(docStringSummary);
+        result.addItem("\n").addItem(escaped(docStringSummary));
       }
       else {
         Optional
           .ofNullable(cls.findInitOrNew(false, context))
           .map(PythonDocumentationProvider::getDocStringSummary)
-          .ifPresent(summary -> result.addItem("\n").addItem(summary));
+          .ifPresent(summary -> result.addItem("\n").addItem(escaped(summary)));
       }
 
       return result.toString();
