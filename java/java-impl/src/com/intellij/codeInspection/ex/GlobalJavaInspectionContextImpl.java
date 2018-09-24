@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -15,6 +15,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -43,10 +44,8 @@ import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
@@ -56,6 +55,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private Map<SmartPsiElementPointer, List<UsagesProcessor>> myMethodUsagesRequests;
   private Map<SmartPsiElementPointer, List<UsagesProcessor>> myFieldUsagesRequests;
   private Map<SmartPsiElementPointer, List<UsagesProcessor>> myClassUsagesRequests;
+  private Map<SmartPsiElementPointer, List<Runnable>> myQNameUsagesRequests;
 
 
   @Override
@@ -87,6 +87,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
     if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
+  }
+
+  @Override
+  public void enqueueQualifiedNameOccurrencesProcessor(RefClass refClass, Runnable c) {
+    if (myQNameUsagesRequests == null) myQNameUsagesRequests = new THashMap<>();
+    enqueueRequestImpl(refClass, myQNameUsagesRequests, c);
   }
 
   @Override
@@ -162,7 +168,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return anyModuleUsesProjectSdk && !anyModuleAcceptsSdk;
   }
 
-  private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
+  private static <T> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
     List<T> requests = requestMap.computeIfAbsent(refElement.getPointer(), __ -> new ArrayList<>());
     requests.add(processor);
   }
@@ -288,6 +294,41 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       }
 
       myMethodUsagesRequests = null;
+    }
+
+    if (myQNameUsagesRequests != null) {
+      PsiSearchHelper helper = PsiSearchHelper.getInstance(refManager.getProject());
+      RefJavaManager javaManager = refManager.getExtension(RefJavaManager.MANAGER);
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myQNameUsagesRequests);
+      for (SmartPsiElementPointer id : sortedIDs) {
+        final UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(id), UClass.class));
+        String qualifiedName = uClass != null ? uClass.getQualifiedName() : null;
+        if (qualifiedName != null) {
+          List<Runnable> callbacks = myQNameUsagesRequests.get(id);
+          final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(context.getProject());
+          final PsiNonJavaFileReferenceProcessor processor = (file, startOffset, endOffset) -> {
+            for (Runnable callback : callbacks) {
+              callback.run();
+            }
+            return false;
+          };
+
+          final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
+            Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
+            boolean ignoreExpectedXml = ApplicationManager.getApplication().isUnitTestMode();
+
+            @Override
+            public boolean contains(@NotNull VirtualFile file) {
+              return !fileTypes.contains(file.getFileType()) && (!ignoreExpectedXml || !file.getName().equals("expected.xml")) && super.contains(file);
+            }
+          };
+
+          helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope);
+        }
+      }
+
+
+      myQNameUsagesRequests = null;
     }
   }
 
