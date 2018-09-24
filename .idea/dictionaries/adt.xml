@@ -2,6 +2,7 @@
   <dictionary name="adt">
     <words>
       <w>&amp;amp</w>
+      <w>JVMTI</w>
       <w>aapt</w>
       <w>aarrggbb</w>
       <w>aars</w>
@@ -58,6 +59,8 @@
       <w>clipart</w>
       <w>closeables</w>
       <w>codenames</w>
+      <w>coldswap</w>
+      <w>coldswaps</w>
       <w>combineaccessrules</w>
       <w>compat</w>
       <w>configurables</w>
@@ -74,6 +77,7 @@
       <w>densityless</w>
       <w>designtime</w>
       <w>dest</w>
+      <w>desugaring</w>
       <w>dexdump</w>
       <w>digester</w>
       <w>dimen</w>
@@ -124,6 +128,7 @@
       <w>hdpi</w>
       <w>holo</w>
       <w>horiz</w>
+      <w>hotswap</w>
       <w>httpclient</w>
       <w>hvga</w>
       <w>iaload</w>
@@ -184,6 +189,7 @@
       <w>licensor</w>
       <w>linenumber</w>
       <w>ljava</w>
+      <w>logcat</w>
       <w>loggable</w>
       <w>lombok</w>
       <w>lookups</w>
@@ -209,6 +215,8 @@
       <w>multimap</w>
       <w>multipart</w>
       <w>multitouch</w>
+      <w>namespaced</w>
+      <w>namespacing</w>
       <w>nano</w>
       <w>nativelib</w>
       <w>navexposed</w>
@@ -288,6 +296,7 @@
       <w>storepass</w>
       <w>storetype</w>
       <w>styleable</w>
+      <w>styleables</w>
       <w>subclassed</w>
       <w>subclassing</w>
       <w>subfolder</w>
