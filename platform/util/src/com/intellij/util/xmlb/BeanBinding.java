@@ -77,20 +77,21 @@ public class BeanBinding extends NotNullDeserializeBinding {
         continue;
       }
 
-      element = serializePropertyInto(binding, o, element, filter);
+      element = serializePropertyInto(binding, o, element, filter, true);
     }
     return element;
   }
 
   @Nullable
   protected final Element serializePropertyInto(@NotNull Binding binding,
-                                       @NotNull Object o,
-                                       @Nullable Element element,
-                                       @Nullable SerializationFilter filter) {
+                                                @NotNull Object o,
+                                                @Nullable Element element,
+                                                @Nullable SerializationFilter filter,
+                                                boolean isFilterPropertyItself) {
     Accessor accessor = binding.getAccessor();
     Property property = accessor.getAnnotation(Property.class);
     if (property == null || !property.alwaysWrite()) {
-      if (filter != null) {
+      if (filter != null && isFilterPropertyItself) {
         if (filter instanceof SkipDefaultsSerializationFilter) {
           if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
             return element;

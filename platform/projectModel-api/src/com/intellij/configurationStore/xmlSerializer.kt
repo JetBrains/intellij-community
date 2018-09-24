@@ -86,6 +86,7 @@ fun <T> Element.deserialize(clazz: Class<T>): T {
 
 fun <T> deserialize(url: URL, aClass: Class<T>): T {
   try {
+    @Suppress("DEPRECATION")
     var document = JDOMUtil.loadDocument(URLUtil.openStream(url))
     document = JDOMXIncluder.resolve(document, url.toExternalForm())
     return document.rootElement.deserialize(aClass)
@@ -186,6 +187,7 @@ private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
     }
   }
 
+  @Suppress("unused")
   fun clearBindingCache() {
     cacheLock.write {
       bindingCache?.clear()
@@ -228,15 +230,13 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
   }
 
   override fun serializeInto(o: Any, element: Element?, filter: SerializationFilter?): Element? {
-    if (o is BaseState) {
-      return serializeBaseStateInto(o, element)
-    }
-    else {
-      return super.serializeInto(o, element, filter)
+    return when (o) {
+      is BaseState -> serializeBaseStateInto(o, element, filter)
+      else -> super.serializeInto(o, element, filter)
     }
   }
 
-  private fun serializeBaseStateInto(o: BaseState, _element: Element?): Element? {
+  private fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?): Element? {
     var element = _element
     // order of bindings must be used, not order of properties
     var bindingIndices: IntArrayList? = null
@@ -260,7 +260,7 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     if (bindingIndices != null) {
       bindingIndices.sort()
       for (i in 0 until bindingIndices.size()) {
-        element = serializePropertyInto(myBindings[bindingIndices.getQuick(i)], o, element, null)
+        element = serializePropertyInto(myBindings[bindingIndices.getQuick(i)], o, element, filter, false)
       }
     }
     return element
