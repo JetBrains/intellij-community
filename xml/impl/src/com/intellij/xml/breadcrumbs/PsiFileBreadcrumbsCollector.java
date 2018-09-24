@@ -104,11 +104,11 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
     int index = 0;
     for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
-      PsiCrumb crumb = new PsiCrumb(pair.first, pair.second);
+      CrumbPresentation presentation = null;
       if (presentations != null && 0 <= index && index < presentations.length) {
-        crumb.presentation = presentations[index++];
+        presentation = presentations[index++];
       }
-      result.add(crumb);
+      result.add(new PsiCrumb(pair.first, pair.second, presentation));
     }
 
     return result;

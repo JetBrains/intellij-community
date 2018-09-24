@@ -17,12 +17,13 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   private final PsiAnchor anchor;
   private BreadcrumbsProvider provider;
   private String tooltip;
-  CrumbPresentation presentation;
+  final CrumbPresentation presentation;
 
-  PsiCrumb(PsiElement element, BreadcrumbsProvider provider) {
+  PsiCrumb(PsiElement element, BreadcrumbsProvider provider, CrumbPresentation presentation) {
     super(provider.getElementIcon(element), provider.getElementInfo(element), null, provider.getContextActions(element));
     anchor = PsiAnchor.create(element);
     this.provider = provider;
+    this.presentation = presentation;
   }
 
   @Override
