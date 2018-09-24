@@ -230,4 +230,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testReferenceParameterList() {
     doTest();
   }
+
+  public void testEnumConstructor() {
+    doTest();
+  }
 }

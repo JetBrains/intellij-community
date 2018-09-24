@@ -41,6 +41,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       if (element == null) continue;
       element.accept(new AbstractUastVisitor() {
                        @Override
+                       public boolean visitEnumConstant(@NotNull UEnumConstant node) {
+                         processNewLikeConstruct(node.resolve(), node.getValueArguments());
+                         return false;
+                       }
+
+                       @Override
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
