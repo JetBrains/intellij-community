@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental.messages;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
@@ -24,10 +26,18 @@ public class BuilderStatisticsMessage extends BuildMessage {
   private final long myElapsedTimeMs;
 
   public BuilderStatisticsMessage(String builderName, int numberOfProcessedSources, long elapsedTimeMs) {
-    super("", Kind.INFO);
+    super(createText(builderName, numberOfProcessedSources, elapsedTimeMs), Kind.INFO);
     myBuilderName = builderName;
     myNumberOfProcessedSources = numberOfProcessedSources;
     myElapsedTimeMs = elapsedTimeMs;
+  }
+
+  @NotNull
+  private static String createText(String builderName, int srcCount, long time) {
+    return "Build duration: '" + builderName +
+           "' builder took " + time + " ms, " +
+           srcCount + " sources processed" + 
+           (srcCount == 0 ? "" : " (" + time / srcCount + "ms per file)");
   }
 
   public String getBuilderName() {
