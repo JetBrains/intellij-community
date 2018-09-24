@@ -905,6 +905,25 @@ createRegistration:
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
 
+; add "Open with PRODUCT" action for files to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Edit with ${MUI_PRODUCT}"
+  call OMWriteRegStr
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
 ; add "Open with PRODUCT" action for folders to Windows context menu
   StrCpy $0 "HKCU"
   StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
@@ -1575,7 +1594,10 @@ desktop_shortcut_launcher64:
     Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
-; add "Open with PRODUCT" action for folders to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
   StrCpy $0 "HKCU"
   StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
   call un.OMDeleteRegKey
