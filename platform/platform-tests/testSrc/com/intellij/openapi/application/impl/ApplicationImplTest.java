@@ -608,7 +608,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testHasWriteActionWorksInOtherThreads() {
-    Class<?> actionClass = WriteAction.class;
+    Class<?> actionClass = getClass();
 
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     assertFalse(app.hasWriteAction(actionClass));
