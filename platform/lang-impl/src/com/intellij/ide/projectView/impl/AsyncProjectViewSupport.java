@@ -5,6 +5,7 @@ import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
+import com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper.SelectionDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -172,7 +173,7 @@ class AsyncProjectViewSupport {
         myAsyncTreeModel
           .accept(visitor)
           .onProcessed(path -> {
-            if (selectPaths(tree, pathsToSelect) ||
+            if (selectPaths(tree, new SelectionDescriptor(element, file, pathsToSelect)) ||
                 element == null ||
                 file == null ||
                 Registry.is("async.project.view.support.extra.select.disabled")) {
@@ -185,7 +186,7 @@ class AsyncProjectViewSupport {
               myAsyncTreeModel
                 .accept(AbstractProjectViewPane.createVisitor(null, file, collectingPredicate))
                 .onProcessed(path2 -> {
-                  selectPaths(tree, pathsToSelect);
+                  selectPaths(tree, new SelectionDescriptor(null, file, pathsToSelect));
                   promise.setResult(null);
                 });
             }
@@ -194,12 +195,13 @@ class AsyncProjectViewSupport {
     }
   }
 
-  private static boolean selectPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
-    if (paths.isEmpty()) {
+  private static boolean selectPaths(@NotNull JTree tree, @NotNull SelectionDescriptor selectionDescriptor) {
+    if (selectionDescriptor.originalTreePaths.isEmpty()) {
       return false;
     }
-    paths.forEach(it -> tree.expandPath(it));
-    TreeUtil.selectPaths(tree, paths);
+    List<? extends TreePath> adjustedPaths = ProjectViewPaneSelectionHelper.getAdjustedPaths(selectionDescriptor);
+    adjustedPaths.forEach(it -> tree.expandPath(it));
+    TreeUtil.selectPaths(tree, adjustedPaths);
     return true;
   }
 
