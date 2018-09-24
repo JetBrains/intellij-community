@@ -25,6 +25,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
 
   override fun withConstraint(constraint: ContextConstraint): E {
+    val disposables = if (constraint is ExpirableContextConstraint) disposables + constraint.expirable else disposables
     return cloneWith(disposables, constraint.toCoroutineDispatcher(dispatcher))
   }
 
@@ -57,12 +58,9 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       disposables.forEach { disposable ->
         disposable.cancelJobOnDisposal(job)
       }
-      dispatchers.forEach { dispatcher ->
-        dispatcher.initializeJob(job)
-      }
     }
 
-  protected open fun createCoroutineDispatcher(): FallbackDispatcherSupport =
+  protected open fun createCoroutineDispatcher(): CoroutineDispatcher =
     RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
   // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
@@ -79,22 +77,12 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   }
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
-  internal abstract class FallbackDispatcherSupport : CoroutineDispatcher() {
-    abstract val isChainFallback: Boolean
-
-    open fun initializeJob(job: Job) = Unit
-  }
-
-  /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
-  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : FallbackDispatcherSupport() {
+  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext) = true  // because of the need to check the delegate
   }
 
   /** A DelegateDispatcher backed by a ContextConstraint. */
   internal abstract class ChainedDispatcher(delegate: CoroutineDispatcher) : DelegateDispatcher(delegate) {
-    override val isChainFallback: Boolean
-      get() = false  // TODO[eldar] any ContextConstraint-backed dispatcher is considered unreliable to be a chain fallback
-
     // This optimization eliminates the need to recurse through each link of the chain
     // down to the outermost delegate dispatcher and back, which is quite hard to debug usually.
     private val myChain: Array<ChainedDispatcher> = run {
@@ -149,11 +137,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
                                                constraint: ExpirableContextConstraint) : ChainedConstraintDispatcher(delegate, constraint) {
     override val constraint get() = super.constraint as ExpirableContextConstraint
     private val expirable: Disposable get() = constraint.expirable
-
-    override fun initializeJob(job: Job) {
-      super.initializeJob(job)
-      expirable.cancelJobOnDisposal(job)
-    }
 
     override fun isScheduleNeeded(context: CoroutineContext): Boolean = !(expirable.isDisposed || constraint.isCorrectContext)
 
@@ -253,7 +236,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       get() = (this as? DelegateDispatcher)?.chainFallbackDispatcher ?: this
 
     private val DelegateDispatcher.chainFallbackDispatcher: CoroutineDispatcher
-      get() = if (isChainFallback) this else delegate.chainFallbackDispatcher
+      get() = delegate.chainFallbackDispatcher
 
     internal inline fun CoroutineDispatcher.dispatchIfNeededOrInvoke(context: CoroutineContext,
                                                                      crossinline block: () -> Unit) {
