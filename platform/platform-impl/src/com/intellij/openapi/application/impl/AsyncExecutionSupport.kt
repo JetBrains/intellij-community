@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.experimental.*
+import java.lang.ref.PhantomReference
+import java.lang.ref.ReferenceQueue
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
@@ -47,9 +49,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   }
 
   private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
-    val expirableJob = Job().also { job ->
-      initializeExpirableJob(job, disposables)
-    }
+    val expirableJob = Job()
     val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
     return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
@@ -58,6 +58,8 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
         expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
         return wrappedDispatcher.interceptContinuation(continuation)
       }
+    }.also { interceptor ->
+      initializeExpirableJob(expirableJob, disposables, interceptor)
     }
   }
 
@@ -71,10 +73,21 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    * Introducing the expirable job has performance considerations (single lock-free Job.invokeOnCompletion vs.
    * multiple synchronized Disposer.register calls per each launched coroutine).
    */
-  private fun initializeExpirableJob(job: Job, disposables: Set<Disposable>) {
-    disposables.forEach { disposable ->
-      disposable.cancelJobOnDisposal(job)
+  private fun initializeExpirableJob(job: Job, disposables: Set<Disposable>, referent: Any) {
+    if (disposables.isNotEmpty()) {
+      // Technically, this creates a leak through the Disposer tree...
+      disposables.forEach { disposable ->
+        disposable.cancelJobOnDisposal(job)
+      }
+      // ... which is mitigated by creating a PhantomReference to the interceptor instance,
+      // which unregisters the job from the tree once the corresponding instance is GC'ed.
+      val reference = RunnableReference(referent) {
+        job.cancel()  // unregister from the Disposer tree
+      }
+      job.invokeOnCompletion { reference.clear() }  // essentially to hold a hard ref to the Reference instance
     }
+
+    RunnableReference.reapCollectedRefs()
   }
 
   // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
@@ -266,7 +279,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       val primaryDispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
       val fallbackDispatcher = primaryDispatcher?.chainFallbackDispatcher ?: this.chainFallbackDispatcher
 
-//      fallbackDispatcher.dispatchIfNeededOrInvoke(context, block)
+      //      fallbackDispatcher.dispatchIfNeededOrInvoke(context, block)
       if (fallbackDispatcher !== Unconfined) {
         // Invoke later unconditionally to avoid running arbitrary code from inside dispose() handler.
         fallbackDispatcher.dispatch(context, block)
@@ -336,6 +349,19 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
         job.cancel(cause)
       }.also { handle ->
         job.disposeOnCompletion(handle)
+      }
+    }
+
+    internal class RunnableReference(referent: Any, private val finalizer: () -> Unit) : PhantomReference<Any>(referent, myRefQueue) {
+      companion object {
+        private val myRefQueue = ReferenceQueue<Any>()
+
+        fun reapCollectedRefs() {
+          while (true) {
+            val ref = myRefQueue.poll() as? RunnableReference ?: return
+            ref.finalizer()
+          }
+        }
       }
     }
   }
