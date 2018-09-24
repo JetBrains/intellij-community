@@ -35,12 +35,6 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private volatile AbstractTreeStructure structure;
   private volatile Comparator<? super Node> comparator;
 
-  public StructureTreeModel(boolean background) {
-    invoker = background
-              ? new Invoker.BackgroundThread(this)
-              : new Invoker.EDT(this);
-  }
-
   public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
     this.structure = structure;
     invoker = new Invoker.BackgroundThread(this);
