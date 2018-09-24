@@ -38,6 +38,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private boolean myEnum;
   private boolean myInner;
   private boolean myEnclosed;
+  private boolean myHasAssertions;
   private boolean myHasStaticInitializer;
   private boolean myInstrumented;
   private RuntimeException myPostponedError;
@@ -86,6 +87,14 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   }
 
   @Override
+  public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    if (name.equals(ASSERTIONS_DISABLED_NAME)) {
+      myHasAssertions = true;
+    }
+    return super.visitField(access, name, desc, signature, value);
+  }
+
+  @Override
   public void visitEnd() {
     if (myInstrumented) {
       for (String pattern : myPatterns) {
@@ -98,7 +107,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
 
       addField(PATTERN_CACHE_NAME, ACC_PRIVATE | ACC_FINAL | ACC_STATIC | ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
 
-      if (myDoAssert) {
+      if (myDoAssert && !myHasAssertions) {
         addField(ASSERTIONS_DISABLED_NAME, ACC_FINAL | ACC_STATIC | ACC_SYNTHETIC, "Z");
       }
 
@@ -122,7 +131,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   }
 
   private void patchStaticInitializer(MethodVisitor mv) {
-    if (myDoAssert) {
+    if (myDoAssert && !myHasAssertions) {
       mv.visitLdcInsn(Type.getType("L" + myClassName + ";"));
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z", false);
       Label l0 = new Label();
