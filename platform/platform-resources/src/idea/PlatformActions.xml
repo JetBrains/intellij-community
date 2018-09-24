@@ -194,8 +194,8 @@
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" use-shortcut-of="$Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
 
-      <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction" text="Focus &amp;Gutter (a11y)"/>
-      <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction" text="Show Gutter Icon &amp;Tooltip (a11y)"/>
+      <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction"/>
+      <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>

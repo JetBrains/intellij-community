@@ -2028,7 +2028,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myAccessibleGutterLine;
   }
 
-  void escapeCurrentAccessibleLine(boolean requestFocusToEditor) {
+  void escapeCurrentAccessibleLine() {
     if (myAccessibleGutterLine != null) {
       myAccessibleGutterLine.escape(true);
     }

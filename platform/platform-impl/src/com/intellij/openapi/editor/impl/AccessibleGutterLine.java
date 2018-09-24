@@ -77,7 +77,7 @@ class AccessibleGutterLine extends JPanel {
     gutter.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        gutter.escapeCurrentAccessibleLine(true);
+        gutter.escapeCurrentAccessibleLine();
       }
     });
   }

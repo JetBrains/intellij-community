@@ -26,7 +26,7 @@ public class FocusGutterAction extends EditorAction {
       }
       @Override
       protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-        return ScreenReader.isActive() && super.isEnabledForCaret(editor, caret, dataContext);
+        return ScreenReader.isActive();
       }
     });
   }

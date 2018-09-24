@@ -420,12 +420,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             getGutterComponentEx().getCurrentAccessibleLine() != null &&
             AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
         {
-          int startVisLine = offsetToVisualLine(start);
-          int endVisLine = offsetToVisualLine(end);
-          int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
-          if (startVisLine <= line && endVisLine >= line) {
-            getGutterComponentEx().escapeCurrentAccessibleLine(true);
-          }
+          escapeGutterAccessibleLine(start, end);
         }
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
@@ -1566,12 +1561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
     if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
-      int startVisLine = offsetToVisualLine(e.getOffset());
-      int endVisLine = offsetToVisualLine(e.getOffset() + e.getNewLength());
-      int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
-      if (startVisLine <= line && endVisLine >= line) {
-        getGutterComponentEx().escapeCurrentAccessibleLine(true);
-      }
+      escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
     }
 
     validateSize();
@@ -1601,6 +1591,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
+    }
+  }
+
+  private void escapeGutterAccessibleLine(int offsetStart, int offsetEnd) {
+    int startVisLine = offsetToVisualLine(offsetStart);
+    int endVisLine = offsetToVisualLine(offsetEnd);
+    int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
+    if (startVisLine <= line && endVisLine >= line) {
+      getGutterComponentEx().escapeCurrentAccessibleLine();
     }
   }
 
