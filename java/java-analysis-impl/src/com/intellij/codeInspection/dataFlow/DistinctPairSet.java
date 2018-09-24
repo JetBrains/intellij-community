@@ -229,9 +229,17 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myList.get(myFirst);
     }
 
+    public int getFirstIndex() {
+      return myFirst;
+    }
+
     @NotNull
     public EqClass getSecond() {
       return myList.get(mySecond);
+    }
+
+    public int getSecondIndex() {
+      return mySecond;
     }
 
     public void check() {

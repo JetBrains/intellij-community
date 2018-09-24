@@ -309,23 +309,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (int i = 0; i < myStack.size(); i++) {
       if (!isSuperValue(myStack.get(i), that.myStack.get(i))) return false;
     }
-    Set<EqClass> thisClasses = this.getNonTrivialEqClasses();
-    Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
-    if(!thisClasses.equals(thatClasses)) {
-      // If any two values are equivalent in this, they also must be equivalent in that
-      for (EqClass thisClass: thisClasses) {
-        if (thatClasses.stream().noneMatch(thatClass -> thisClass.forEach(thatClass::contains))) {
-          return false;
-        }
-      }
-    }
+    int[] thisToThat = getClassesMap(that);
+    if (thisToThat == null) return false;
     for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
-      // As we already compared eqClasses, we are sure that all values from any our EqClass belong
-      // to the same EqClass in `that`, thus we can just check any value from the corresponding classes
-      DfaValue firstValue = myFactory.getValue(pair.getFirst().get(0));
-      DfaValue secondValue = myFactory.getValue(pair.getSecond().get(0));
-      RelationType relation = that.getRelation(firstValue, secondValue);
-      if (relation == null || relation == RelationType.EQ || pair.isOrdered() && relation != RelationType.LT) return false;
+      int firstIndex = thisToThat[pair.getFirstIndex()];
+      int secondIndex = thisToThat[pair.getSecondIndex()];
+      if (firstIndex == -1 || secondIndex == -1 || firstIndex == secondIndex) return false;
+      RelationType relation = that.myDistinctClasses.getRelation(firstIndex, secondIndex);
+      if (relation == null || pair.isOrdered() && relation != RelationType.LT) return false;
     }
     Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
     values.addAll(that.myVariableStates.keySet());
@@ -338,6 +329,42 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if(!thisState.isSuperStateOf(thatState)) return false;
     }
     return true;
+  }
+
+  /**
+   * Returns an int array which maps this state class indices to that state class indices.
+   *
+   * @param that other state to map class indices
+   * @return an int array which values are indices of the corresponding that state class which contains
+   * all the values from this state class or -1 if there's no corresponding that state class.
+   * Null is returned if at least one of this state classes contains values which do not belong to the same
+   * class in that state
+   */
+  @Nullable
+  private int[] getClassesMap(DfaMemoryStateImpl that) {
+    List<EqClass> thisClasses = this.myEqClasses;
+    List<EqClass> thatClasses = that.myEqClasses;
+    int thisSize = thisClasses.size();
+    int thatSize = thatClasses.size();
+    int[] thisToThat = new int[thisSize];
+    // If any two values are equivalent in this, they also must be equivalent in that
+    for (int thisIdx = 0; thisIdx < thisSize; thisIdx++) {
+      EqClass thisClass = thisClasses.get(thisIdx);
+      thisToThat[thisIdx] = -1;
+      if (thisClass != null) {
+        boolean found = false;
+        for (int thatIdx = 0; thatIdx < thatSize; thatIdx++) {
+          EqClass thatClass = thatClasses.get(thatIdx);
+          if (thatClass != null && thatClass.containsAll(thisClass)) {
+            thisToThat[thisIdx] = thatIdx;
+            found = true;
+            break;
+          }
+        }
+        if (!found && thisClass.size() > 1) return null;
+      }
+    }
+    return thisToThat;
   }
 
   private static boolean isSuperValue(DfaValue superValue, DfaValue subValue) {
