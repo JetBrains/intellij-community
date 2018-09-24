@@ -315,11 +315,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
           final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
             Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
-            boolean ignoreExpectedXml = ApplicationManager.getApplication().isUnitTestMode();
 
             @Override
             public boolean contains(@NotNull VirtualFile file) {
-              return !fileTypes.contains(file.getFileType()) && (!ignoreExpectedXml || !file.getName().equals("expected.xml")) && super.contains(file);
+              return !fileTypes.contains(file.getFileType()) && super.contains(file);
             }
           };
 
