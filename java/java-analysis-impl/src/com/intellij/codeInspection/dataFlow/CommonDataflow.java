@@ -97,7 +97,9 @@ public class CommonDataflow {
      * the dataflow implementation details.
      */
     public boolean expressionWasAnalyzed(PsiExpression expression) {
-      assert !(expression instanceof PsiParenthesizedExpression);
+      if (expression instanceof PsiParenthesizedExpression) {
+        throw new IllegalArgumentException("Should not pass parenthesized expression");
+      }
       return myFacts.containsKey(expression);
     }
 
@@ -121,7 +123,9 @@ public class CommonDataflow {
      * @param expression an expression to get its value
      * @return a value or null if not known
      */
-    public Object getExpressionValue(PsiExpression expression) {
+    @Nullable
+    @Contract("null -> null")
+    public Object getExpressionValue(@Nullable PsiExpression expression) {
       return this.myValues.get(expression);
     }
 
@@ -139,7 +143,7 @@ public class CommonDataflow {
      * @return a set of values; empty set if nothing is known or this expression was not tracked.
      */
     @NotNull
-    public Set<Object> getValuesNotEqualToExpression(PsiExpression expression) {
+    public Set<Object> getValuesNotEqualToExpression(@Nullable PsiExpression expression) {
       return myNotValues.getOrDefault(expression, Collections.emptySet());
     }
 
