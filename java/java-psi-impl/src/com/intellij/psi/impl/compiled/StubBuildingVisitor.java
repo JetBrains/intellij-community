@@ -57,11 +57,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final int myAccess;
   private final String myShortName;
   private final Function<String, String> myMapping;
+  private final boolean myAnonymousInner;
+  private final boolean myLocalClassInner;
   private String myInternalName;
   private PsiClassStub<?> myResult;
   private PsiModifierListStub myModList;
-  private final boolean myAnonymousInner;
-  private final boolean myLocalClassInner;
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName) {
     this(classSource, innersStrategy, parent, access, shortName, false, false);
@@ -387,7 +387,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
 
-    int localVarIgnoreCount = isStatic ? 0 : isEnumConstructor ? 3 : 1;
+    int localVarIgnoreCount = isEnumConstructor ? 3 : isStatic ? 0 : 1;
     int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     return new MethodAnnotationCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs, myMapping);
   }
@@ -640,7 +640,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
       if (index >= myLocalVarIgnoreCount) {
-        // long and double variables increase the index by 2, not by 1
         int paramIndex = index - myLocalVarIgnoreCount == myUsedParamSize ? myUsedParamCount : index - myLocalVarIgnoreCount;
         if (paramIndex < myParamCount) {
           setParameterName(name, paramIndex);
