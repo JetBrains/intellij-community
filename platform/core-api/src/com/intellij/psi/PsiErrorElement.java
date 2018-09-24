@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a syntax error (for example, invalid token) in Java or custom language code.
  */
@@ -24,5 +26,6 @@ public interface PsiErrorElement extends PsiElement {
    *
    * @return the error description.
    */
+  @NotNull
   String getErrorDescription();
 }

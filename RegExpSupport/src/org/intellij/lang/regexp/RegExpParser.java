@@ -542,7 +542,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     builder.advanceLexer();
   }
 
-  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
+  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
       return true;
