@@ -197,7 +197,7 @@ public class ActionsTreeUtil {
   }
 
   public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<AnAction> filtered) {
-    return createGroup(actionGroup, getName(actionGroup), null, null, ignore, filtered);
+    return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), null, ignore, filtered);
   }
 
   private static String getName(AnAction action) {
