@@ -313,7 +313,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   public void initComponent() {
     long started = System.nanoTime();
     List<FileBasedIndexExtension> extensions = IndexInfrastructure.hasIndices() ?
-                                           FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList() : Collections.emptyList();
+                                               FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList() : Collections.emptyList();
     LOG.info("Index exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.size());
     started = System.nanoTime();
 
@@ -2353,9 +2353,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private boolean currentVersionCorrupted;
     private SerializationManagerEx mySerializationManagerEx;
 
-    FileIndexDataInitialization(List<FileBasedIndexExtension> extensions) {
+    FileIndexDataInitialization(@NotNull List<FileBasedIndexExtension> extensions) {
       // init contentless indices first
-      extensions.sort(Comparator.comparingInt(o -> o.dependsOnFileContent() ? 1 : 0));
+      if (!extensions.isEmpty()) {
+        extensions = ContainerUtil.copyList(extensions);
+        extensions.sort(Comparator.comparingInt(o -> o.dependsOnFileContent() ? 1 : 0));
+      }
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
         ID<?, ?> name = extension.getName();
         RebuildStatus.registerIndex(name);
