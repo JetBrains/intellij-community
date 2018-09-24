@@ -15,6 +15,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandl
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -35,6 +36,7 @@ import java.util.List;
  */
 public class SMTestRunnerConnectionUtil {
   private static final String TEST_RUNNER_DEBUG_MODE_PROPERTY = "idea.smrunner.debug";
+  private static final Logger LOG = Logger.getInstance(SMTestRunnerConnectionUtil.class);
 
   private SMTestRunnerConnectionUtil() { }
 
@@ -191,6 +193,16 @@ public class SMTestRunnerConnectionUtil {
       }
       // subscribes result viewer on event processor
       eventsProcessor.addEventsListener(resultsViewer);
+
+      if (ApplicationManager.getApplication().isOnAir()) {
+        try {
+          Class onAirSMTRunnerEventsListener = Class.forName("com.jetbrains.onair.OnAirSMTRunnerEventsListener");
+          eventsProcessor.addEventsListener((SMTRunnerEventsListener)onAirSMTRunnerEventsListener.newInstance());
+        }
+        catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+          LOG.warn("OnAirSMTRunnerEventsListener not found");
+        }
+      }
 
       // subscribes event processor on output consumer events
       outputConsumer.setProcessor(eventsProcessor);

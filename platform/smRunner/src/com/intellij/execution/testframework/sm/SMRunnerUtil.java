@@ -40,7 +40,7 @@ public class SMRunnerUtil {
    */
   public static void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
+    if (application.isHeadlessEnvironment() && !application.isUnitTestMode() && !application.isOnAir()) {
       runnable.run();
     } else {
       UIUtil.invokeLaterIfNeeded(runnable);

@@ -315,7 +315,8 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
         }
       });
     }
-    else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
+    else if ((application.isHeadlessEnvironment() && !application.isOnAir())
+             || SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
