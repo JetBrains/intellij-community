@@ -143,6 +143,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
       }
 
       element = getParent(element, provider);
+      if (element instanceof PsiDirectory) break;
     }
     return result;
   }
