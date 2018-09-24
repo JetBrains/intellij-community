@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -165,7 +166,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       return result;
     }
 
-    private void error(String message) throws ParsingException {
+    private void error(@NotNull String message) throws ParsingException {
       throw new ParsingException(
         AnalysisScopeBundle.message("error.package.set.position.parsing.error", message, (myLexer.getTokenStart() + 1)));
     }
