@@ -119,12 +119,6 @@ class StateQueue {
   }                                                                      
 
   private static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
-    // Sometimes a.isSuperStateOf(b) && b.isSuperStateOf(a) does not imply a.equals(b) which is unpleasant hole in the abstraction
-    // and requires special care here: we leave only one of such states in this case
-    for (int i = 0; i < states.size(); i++) {
-      DfaMemoryStateImpl left = states.get(i);
-      states.subList(i + 1, states.size()).removeIf(right -> left.isSuperStateOf(right) && right.isSuperStateOf(left));
-    }
     return states.stream().filter(left -> states.stream().noneMatch(right -> right != left && right.isSuperStateOf(left)))
       .collect(Collectors.toList());
   }
@@ -148,7 +142,7 @@ class StateQueue {
     if (states.size() < FORCE_MERGE_THRESHOLD) return states;
     myWasForciblyMerged = true;
     Collection<List<DfaMemoryStateImpl>> groups = StreamEx.of(states).groupingBy(DfaMemoryStateImpl::getMergeabilityKey).values();
-    return StreamEx.of(groups).peek(group -> group.sort(Comparator.comparing(Object::toString)))
+    return StreamEx.of(groups)
       .flatMap(group -> StreamEx.ofSubLists(group, 2)
       .map(pair -> {
         if (pair.size() == 2) {

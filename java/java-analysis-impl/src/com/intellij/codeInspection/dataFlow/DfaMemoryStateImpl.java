@@ -491,14 +491,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         DfaVariableState fromState = myVariableStates.remove(var);
         if (fromState != null) {
           DfaVariableState toState = myVariableStates.get(target);
-          if (toState != null) {
-            DfaVariableState resultState = fromState.intersectMap(toState.myFactMap);
-            if (resultState == null) return false;
-            myVariableStates.put(target, resultState);
+          if (toState == null) {
+            toState = fromState;
           }
           else {
-            myVariableStates.put(target, fromState);
+            toState = fromState.intersectMap(toState.myFactMap);
+            if (toState == null) return false;
           }
+          setVariableState(target, toState);
         }
       }
     }
@@ -685,7 +685,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void dropFact(@NotNull DfaValue value, @NotNull DfaFactType<?> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
-      DfaVariableState state = findVariableState(var);
+      DfaVariableState state = getExistingVariableState(var);
       if (state != null) {
         state = state.withoutFact(factType);
         setVariableState(var, state);
@@ -1129,7 +1129,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
-      DfaVariableState state = findVariableState(var);
+      DfaVariableState state = getExistingVariableState(var);
       if (state != null) {
         T fact = state.getFact(factType);
         if (fact != null) {
@@ -1160,7 +1160,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   DfaFactMap getFactMap(@NotNull DfaValue value) {
     if (value instanceof DfaVariableValue) {
-      DfaVariableState state = findVariableState((DfaVariableValue)value);
+      DfaVariableState state = getExistingVariableState((DfaVariableValue)value);
       if (state != null) {
         return state.myFactMap;
       }
@@ -1171,7 +1171,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
     dfaVar = canonicalize(dfaVar);
-    if (state.equals(myDefaultVariableStates.get(dfaVar))) {
+    if (state.equals(getDefaultState(dfaVar))) {
       myVariableStates.remove(dfaVar);
     } else {
       myVariableStates.put(dfaVar, state);
@@ -1217,7 +1217,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return var;
   }
 
-  private DfaVariableState findVariableState(DfaVariableValue var) {
+  private DfaVariableState getExistingVariableState(DfaVariableValue var) {
     DfaVariableState state = myVariableStates.get(var);
     if (state != null) {
       return state;
@@ -1228,22 +1228,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @NotNull
   DfaVariableState getVariableState(DfaVariableValue dfaVar) {
-    DfaVariableState state = findVariableState(dfaVar);
+    DfaVariableState state = getExistingVariableState(dfaVar);
+    return state != null ? state : getDefaultState(dfaVar);
+  }
 
-    if (state == null) {
-      state = myDefaultVariableStates.get(dfaVar);
-      if (state == null) {
-        state = createVariableState(dfaVar);
-        DfaPsiType initialType = dfaVar.getDfaType();
-        if (initialType != null) {
-          state = state.withInstanceofValue(initialType);
-          assert state != null;
-        }
-        myDefaultVariableStates.put(dfaVar, state);
-      }
-    }
-
-    return state;
+  @NotNull
+  private DfaVariableState getDefaultState(DfaVariableValue dfaVar) {
+    return myDefaultVariableStates.computeIfAbsent(dfaVar, this::createVariableState);
   }
 
   void forVariableStates(BiConsumer<? super DfaVariableValue, ? super DfaVariableState> consumer) {

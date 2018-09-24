@@ -208,6 +208,13 @@ public abstract class DfaFactType<T> extends Key<T> {
       return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));
     }
 
+    @Nullable
+    @Override
+    TypeConstraint calcFromVariable(@NotNull DfaVariableValue value) {
+      DfaPsiType type = value.getDfaType();
+      return type == null ? null : TypeConstraint.empty().withInstanceofValue(type);
+    }
+
     @Override
     boolean isUnknown(@NotNull TypeConstraint fact) {
       return fact.isEmpty();
