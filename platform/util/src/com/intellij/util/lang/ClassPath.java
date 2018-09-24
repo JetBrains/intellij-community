@@ -147,7 +147,6 @@ public class ClassPath {
   @Nullable
   private synchronized Loader getLoader(int i) {
     while (myLoaders.size() < i + 1) {
-      boolean lastOne;
       URL url;
       synchronized (myUrls) {
         if (myUrls.empty()) {
@@ -158,13 +157,12 @@ public class ClassPath {
           return null;
         }
         url = myUrls.pop();
-        lastOne = myUrls.isEmpty();
       }
 
       if (myLoadersMap.containsKey(url)) continue;
 
       try {
-        initLoaders(url, lastOne, myLoaders.size());
+        initLoaders(url, myLoaders.size());
       }
       catch (IOException e) {
         Logger.getInstance(ClassPath.class).info("url: " + url, e);
@@ -182,7 +180,7 @@ public class ClassPath {
     return result;
   }
 
-  private void initLoaders(final URL url, boolean lastOne, int index) throws IOException {
+  private void initLoaders(final URL url, int index) throws IOException {
     String path;
 
     if (myAcceptUnescapedUrls) {
