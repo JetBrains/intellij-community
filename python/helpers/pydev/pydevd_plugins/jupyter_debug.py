@@ -36,6 +36,8 @@ def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, f
 def _init_plugin_breaks(pydb):
     pydb.jupyter_exception_break = {}
     pydb.jupyter_breakpoints = {}
+    pydb.jupyter_cell_name_to_id = {}
+    pydb.jupyter_cell_id_to_name = {}
 
 
 def add_exception_breakpoint(plugin, pydb, type, exception):
