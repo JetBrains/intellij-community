@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.GlobalMenuLinux;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -351,7 +352,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac || IdeMenuBar.isLinuxGlobalMenuAvailable();
+      final boolean setMenuOnFrame = SystemInfo.isMac || GlobalMenuLinux.isAvailable();
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));

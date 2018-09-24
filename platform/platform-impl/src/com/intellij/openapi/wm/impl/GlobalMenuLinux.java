@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
@@ -350,12 +351,23 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public static boolean isAvailable() { return ourLib != null; }
 
+  private static boolean _isLinuxEnvSupportsGlobalMenu() {
+    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
+      return false;
+
+    if (!Registry.is("linux.native.menu.debug.check.desktop"))
+      return true;
+
+    final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return desktop != null && (desktop.startsWith("Unity") || desktop.startsWith("ubuntu"));
+  }
+
   private static GlobalMenuLib _loadLibrary() {
     if (!SystemInfo.isLinux)
       return null;
 
-    if (!"Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
-      LOG.info("skip loading of dbusmenu wrapper because not-unity desktop used");
+    if (!_isLinuxEnvSupportsGlobalMenu()) {
+      LOG.info("skip loading of dbusmenu wrapper because not-supported desktop used: " + String.valueOf(System.getenv("XDG_CURRENT_DESKTOP")));
       return null;
     }
 

@@ -543,16 +543,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  public static boolean isLinuxGlobalMenuAvailable() {
-    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
-      return false;
-
-    final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-    return desktop != null && (desktop.startsWith("Unity") || desktop.startsWith("ubuntu"));
-  }
-
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
-    if (!isLinuxGlobalMenuAvailable())
+    if (!GlobalMenuLinux.isAvailable())
       return;
 
     // NOTE: must be called when frame is visible (otherwise frame.getPeer() == null)
@@ -566,7 +558,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         frameMenuBar.myGlobalMenuLinux = gml;
         Disposer.register(frameMenuBar.myDisposable, gml);
         frameMenuBar.updateMenuActions(true);
-        frameMenuBar.setVisible(false);
+        if (!Registry.is("linux.native.menu.debug.show.frame.menu"))
+          frameMenuBar.setVisible(false);
       }
     } else if (frame.getJMenuBar() != null)
       LOG.info("The menubar '" + frame.getJMenuBar() + "' of frame '" + frame + "' isn't instance of IdeMenuBar");
