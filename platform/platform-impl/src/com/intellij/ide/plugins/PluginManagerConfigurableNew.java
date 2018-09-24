@@ -396,7 +396,7 @@ public class PluginManagerConfigurableNew
       }
     });
 
-    myTabHeaderComponent.addTab("Trending");
+    myTabHeaderComponent.addTab("Marketplace");
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
@@ -437,7 +437,7 @@ public class PluginManagerConfigurableNew
     String historyPropertyName;
     SearchResultPanel searchPanel;
     if (index == TRENDING_TAB) {
-      text = "Search trending plugins";
+      text = "Search plugins in marketplace";
       if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
         text += " and custom repositories";
       }
@@ -613,7 +613,7 @@ public class PluginManagerConfigurableNew
     PluginsGroupComponentWithProgress panel =
       new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
                                             descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
-    panel.getEmptyText().setText("Trending plugins are not loaded.")
+    panel.getEmptyText().setText("Marketplace plugins are not loaded.")
       .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
