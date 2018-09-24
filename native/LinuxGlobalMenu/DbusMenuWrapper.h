@@ -19,6 +19,11 @@
 #define ITEM_CHECK 2
 #define ITEM_RADIO 3
 
+#define JMOD_SHIFT  1
+#define JMOD_CTRL   (1 << 1)
+#define JMOD_ALT    (1 << 2)
+#define JMOD_META   (1 << 3)
+
 typedef void (*jeventcallback)(int/*uid*/, int/*ev-type*/);
 typedef void (*jlogger)(int/*level*/, const char*);
 typedef void (*jrunnable)(void);
@@ -49,6 +54,7 @@ DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid);
 void setItemLabel(DbusmenuMenuitem* item, const char * label);
 void setItemEnabled(DbusmenuMenuitem* item, bool isEnabled);
 void setItemIcon(DbusmenuMenuitem* item, const char * iconBytesPng, int iconBytesCount);
+void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode);
 
 #ifdef __cplusplus
 }
