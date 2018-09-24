@@ -81,7 +81,7 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     if cmd == CMD_ADD_EXCEPTION_BREAK:
         # send exception name as message
         if message:
-            message = str(message)
+            message = "jinja2-%s" % str(message)
         thread.additional_info.pydev_message = message
 
     return frame

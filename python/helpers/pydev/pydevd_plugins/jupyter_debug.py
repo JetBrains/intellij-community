@@ -1,9 +1,9 @@
 
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
-from _pydevd_bundle.pydevd_constants import dict_iter_items, get_thread_id, JUPYTER_SUSPEND
-from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK
+from _pydevd_bundle.pydevd_constants import dict_iter_items, get_thread_id, JUPYTER_SUSPEND, dict_keys
+from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_frame_utils import FCode
+from _pydevd_bundle.pydevd_frame_utils import FCode, add_exception_to_frame
 
 import os
 
@@ -41,11 +41,23 @@ def _init_plugin_breaks(pydb):
 
 
 def add_exception_breakpoint(plugin, pydb, type, exception):
+    if type == 'jupyter':
+        if not hasattr(pydb, 'jupyter_exception_break'):
+            _init_plugin_breaks(pydb)
+        pydb.jupyter_exception_break[exception] = True
+        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
+        return True
     return False
 
 
 def remove_exception_breakpoint(plugin, pydb, type, exception):
-    return False
+    if type == 'jupyter':
+        try:
+            del pydb.jupyter_exception_break[exception]
+            return True
+        except:
+            pass
+            return False
 
 
 def get_breakpoints(plugin, pydb, type):
@@ -166,10 +178,15 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     return False
 
 
-def suspend_jupyter(pydb, thread, frame, cmd=CMD_SET_BREAK):
+def suspend_jupyter(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     frame = JupyterFrame(frame, pydb)
     pydb.set_suspend(thread, cmd)
     thread.additional_info.suspend_type = JUPYTER_SUSPEND
+    if cmd == CMD_ADD_EXCEPTION_BREAK:
+        # send exception name as message
+        if message:
+            message = str(message)
+        thread.additional_info.pydev_message = message
     pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
     return frame
 
@@ -191,6 +208,16 @@ def suspend(plugin, pydb, thread, frame, bp_type):
 
 
 def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
+    if pydb.jupyter_exception_break and _is_inside_jupyter_cell(frame):
+        thread = args[3]
+        exception, value, trace = arg
+        exception_type = dict_keys(pydb.jupyter_exception_break)[0]
+        suspend_frame = suspend_jupyter(pydb, thread, frame, CMD_ADD_EXCEPTION_BREAK, message="jupyter-%s" % exception_type)
+        if suspend_frame:
+            add_exception_to_frame(suspend_frame, (exception, value, trace))
+            flag = True
+            suspend_frame.f_back = frame
+            return flag, suspend_frame
     return None
 
 

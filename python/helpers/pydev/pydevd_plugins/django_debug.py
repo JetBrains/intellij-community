@@ -435,7 +435,7 @@ def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
             if suspend_frame:
                 add_exception_to_frame(suspend_frame, (exception, value, trace))
                 flag = True
-                thread.additional_info.pydev_message = 'VariableDoesNotExist'
+                thread.additional_info.pydev_message = 'django-VariableDoesNotExist'
                 suspend_frame.f_back = frame
                 frame = suspend_frame
                 return (flag, frame)
