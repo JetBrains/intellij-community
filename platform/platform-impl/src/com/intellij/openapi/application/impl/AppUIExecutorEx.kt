@@ -8,9 +8,8 @@ import kotlinx.coroutines.experimental.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.EmptyCoroutineContext
-import kotlin.coroutines.experimental.coroutineContext
 
 /**
  * @author eldar
@@ -26,7 +25,7 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
     //   - errors thrown within launch() are not caught, and usually result in an error
     //     message with a stack trace to be logged on the corresponding thread.
     //
-    launch(createJobContext()) {
+    launch(coroutineDispatchingContext()) {
       command.run()
     }
   }
@@ -38,7 +37,7 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
   }
 
   override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
-    val deferred = async(createJobContext()) {
+    val deferred = async(coroutineDispatchingContext()) {
       task.call()
     }
     return AsyncPromise<T>().apply {
@@ -64,14 +63,13 @@ fun AppUIExecutor.inUndoTransparentAction() =
 fun AppUIExecutor.inWriteAction() =
   (this as AppUIExecutorEx).inWriteAction()
 
+/**
+ * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
+ * Contains: [ContinuationInterceptor] + [CoroutineExceptionHandler] + [CoroutineName].
+ */
+fun AppUIExecutor.coroutineDispatchingContext(): CoroutineContext =
+  (this as AsyncExecution<*>).coroutineDispatchingContext()
 
-suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
-  withContext(createJobContext(coroutineContext)) {
-    block()
-  }
-
-fun AppUIExecutor.createJobContext(context: CoroutineContext = EmptyCoroutineContext, parent: Job? = null): CoroutineContext =
-  (this as AsyncExecution<*>).createJobContext(context, parent)
 
 suspend fun <T> CoroutineScope.runUnlessDisposed(disposable: Disposable, block: suspend () -> T): T =
   coroutineContext[Job]?.let { job -> disposable.cancelJobOnDisposal(job) }.use { block() }

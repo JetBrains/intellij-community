@@ -9,6 +9,8 @@ import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.experimental.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -21,6 +23,15 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
   protected abstract val disposables: Set<Disposable>
   protected abstract val dispatcher: CoroutineDispatcher
+
+  private val myCoroutineDispatchingContext: CoroutineContext by lazy {
+    val exceptionHandler = CoroutineExceptionHandler(::handleUncaughtException)
+    val delegateDispatcherChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }
+    val coroutineName = CoroutineName("${javaClass.simpleName}(${delegateDispatcherChain.asIterable().reversed().joinToString("::")})")
+    exceptionHandler + coroutineName + createExpirableJobContinuationInterceptor()
+  }
+
+  override fun coroutineDispatchingContext(): CoroutineContext = myCoroutineDispatchingContext
 
   protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
 
@@ -35,33 +46,36 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     return if (disposables == this.disposables) this as E else cloneWith(disposables, dispatcher)
   }
 
-  /**
-   * Creates a new [CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
-   *
-   * The context inherits from the specified [one][context], and contains a child [Job] [initialized][createChildJob]
-   * so that it is cancelled whenever any of the [disposables] is expired, and a custom [dispatcher] for the installed context constraints
-   * (possibly wrapped using the [createCoroutineDispatcher] method), which takes care to establish the necessary execution context.
-   */
-  override fun createJobContext(context: CoroutineContext, parent: Job?): CoroutineContext {
-    val exceptionHandler = context[CoroutineExceptionHandler] ?: CoroutineExceptionHandler(::handleUncaughtException)
+  private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
+    val expirableJob = Job().also { job ->
+      initializeExpirableJob(job, disposables)
+    }
+    val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
-    val dispatcher = createCoroutineDispatcher()
-    val delegateChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }.toList().asReversed()
-
-    val job = createChildJob(parent ?: context[Job], delegateChain)
-
-    return newCoroutineContext(context, job) + dispatcher + exceptionHandler
-  }
-
-  protected open fun createChildJob(parent: Job?, dispatchers: List<DelegateDispatcher>): Job =
-    Job(parent).also { job ->
-      disposables.forEach { disposable ->
-        disposable.cancelJobOnDisposal(job)
+    return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+      /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
+      override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+        expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
+        return wrappedDispatcher.interceptContinuation(continuation)
       }
     }
+  }
 
-  protected open fun createCoroutineDispatcher(): CoroutineDispatcher =
-    RescheduleAttemptLimitAwareDispatcher(dispatcher)
+  /**
+   * The expirable job serves as a proxy between the set of disposables and each individual coroutine job
+   * that must be cancelled once any of the disposables is expired.
+   * The expirable job does not have children or a parent. Unlike the regular parent-children job relation,
+   * having coroutine jobs attached to the expirable job doesn't imply waiting of any kind, neither does
+   * coroutine cancellation affect the expirable job state.
+   *
+   * Introducing the expirable job has performance considerations (single lock-free Job.invokeOnCompletion vs.
+   * multiple synchronized Disposer.register calls per each launched coroutine).
+   */
+  private fun initializeExpirableJob(job: Job, disposables: Set<Disposable>) {
+    disposables.forEach { disposable ->
+      disposable.cancelJobOnDisposal(job)
+    }
+  }
 
   // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
   // #562 "Exceptions thrown by CoroutineExceptionHandler must be caught by handleCoroutineException()"
@@ -314,6 +328,14 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
             addSuppressed(debugTraceThrowable)
           })
         }
+      }
+    }
+
+    internal fun Job.cancelJobOnCompletion(job: Job) {
+      invokeOnCompletion { cause ->
+        job.cancel(cause)
+      }.also { handle ->
+        job.disposeOnCompletion(handle)
       }
     }
   }
