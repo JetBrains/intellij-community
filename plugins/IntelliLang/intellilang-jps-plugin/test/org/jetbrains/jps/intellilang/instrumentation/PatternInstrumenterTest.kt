@@ -114,7 +114,13 @@ class PatternInstrumenterTest {
     assertFails(method)
   }
 
-  private fun loadClass(name: String = "TestClass"): Class<*> {
+  @Test fun assertedClass() {
+    val testClass = loadClass("TestAssert", InstrumentationType.ASSERT)
+    val method = testClass.getMethod("simpleReturn")
+    assertFails(method)
+  }
+
+  private fun loadClass(name: String = "TestClass", type: InstrumentationType = InstrumentationType.EXCEPTION): Class<*> {
     val testDir = File(PluginPathManager.getPluginHomePath("IntelliLang") + "/intellilang-jps-plugin/testData/patternInstrumenter")
 
     val paths = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations")
@@ -126,7 +132,7 @@ class PatternInstrumenterTest {
     testDir.listFiles().filter { it.name.endsWith(".class") }.sorted().forEach {
       val reader = FailSafeClassReader(it.readBytes())
       val writer = InstrumenterClassWriter(reader, ClassWriter.COMPUTE_FRAMES, finder)
-      PatternValidatorBuilder.processClassFile(reader, writer, finder, Pattern::class.java.name, InstrumentationType.EXCEPTION)
+      PatternValidatorBuilder.processClassFile(reader, writer, finder, Pattern::class.java.name, type)
       loader.createClass(it.nameWithoutExtension, writer.toByteArray())
     }
     return Class.forName(name, false, loader)
@@ -145,8 +151,7 @@ class PatternInstrumenterTest {
       fail("Method invocation should have failed")
     }
     catch (e: InvocationTargetException) {
-      val message = e.cause?.message
-      assertThat(message).endsWith(" does not match pattern \\d+")
+      assertThat(e.cause?.message).endsWith(" does not match pattern \\d+")
     }
   }
 
