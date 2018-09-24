@@ -32,9 +32,11 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
@@ -161,23 +163,29 @@ class AsyncProjectViewSupport {
     }
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     LOG.debug("select object: ", object, " in file: ", file);
-    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
+    List<TreePath> pathsToSelect = new ArrayList<>();
+    Predicate<TreePath> collectingPredicate = it -> !pathsToSelect.add(it);
+    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file, collectingPredicate);
     if (visitor != null) {
       //noinspection CodeBlock2Expr
       expand(tree, promise -> {
         myAsyncTreeModel
           .accept(visitor)
           .onProcessed(path -> {
-            if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
+            if (selectPaths(tree, pathsToSelect) ||
+                element == null ||
+                file == null ||
+                Registry.is("async.project.view.support.extra.select.disabled")) {
               promise.setResult(null);
             }
             else {
               // try to search the specified file instead of element,
               // because Kotlin files cannot represent containing functions
+              pathsToSelect.clear();
               myAsyncTreeModel
-                .accept(AbstractProjectViewPane.createVisitor(file))
+                .accept(AbstractProjectViewPane.createVisitor(null, file, collectingPredicate))
                 .onProcessed(path2 -> {
-                  selectPath(tree, path2);
+                  selectPaths(tree, pathsToSelect);
                   promise.setResult(null);
                 });
             }
@@ -186,10 +194,12 @@ class AsyncProjectViewSupport {
     }
   }
 
-  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
-    if (path == null) return false;
-    tree.expandPath(path); // request to expand found path
-    TreeUtil.selectPath(tree, path); // select and scroll to center
+  private static boolean selectPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
+    if (paths.isEmpty()) {
+      return false;
+    }
+    paths.forEach(it -> tree.expandPath(it));
+    TreeUtil.selectPaths(tree, paths);
     return true;
   }
 
