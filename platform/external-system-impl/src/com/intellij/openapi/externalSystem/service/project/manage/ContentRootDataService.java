@@ -308,7 +308,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         properties.setForGeneratedSources(true);
       }
     }
-    if(createEmptyContentRootDirectories) {
+    if(createEmptyContentRootDirectories && !FileUtil.exists(root.getPath())) {
       ExternalSystemApiUtil.doWriteAction(() -> {
         try {
           VfsUtil.createDirectoryIfMissing(root.getPath());
