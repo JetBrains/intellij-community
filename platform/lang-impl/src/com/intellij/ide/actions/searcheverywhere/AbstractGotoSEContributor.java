@@ -83,10 +83,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     if (filter != null) {
       model.setFilterItems(filter.getSelectedElements());
     }
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, psiContext);
-    try {
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+
+    ProgressIndicatorUtils.yieldToPendingWriteActions();
+    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, psiContext);
+      try {
         popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
@@ -95,10 +96,10 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
           }
           return consumer.apply(element);
         });
-      }, progressIndicator);
-    } finally {
-      Disposer.dispose(popup);
-    }
+      } finally {
+        Disposer.dispose(popup);
+      }
+    }, progressIndicator);
   }
 
   //todo param is unnecessary #UX-1
