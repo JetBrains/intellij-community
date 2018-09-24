@@ -188,7 +188,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 @NotNull AlignmentStrategy alignmentStrategy,
                                 int startOffset,
                                 @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings), settings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -232,7 +232,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new ExtendsListBlock(child, wrap, alignmentStrategy, settings, javaSettings, formattingMode);
     }
     if (elementType == JavaElementType.CODE_BLOCK) {
-      return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings, formattingMode);
+      Indent codeBlockIndent = myNode.getElementType() == JavaElementType.LAMBDA_EXPRESSION &&
+                               settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+                               settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+                               ? getIndentForCodeBlock(child, 1)
+                               : actualIndent;
+      return new CodeBlockBlock(child, wrap, alignment, codeBlockIndent, settings, javaSettings, formattingMode);
     }
     if (elementType == JavaElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent, settings, javaSettings, formattingMode);
@@ -251,7 +256,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                    @NotNull CommonCodeStyleSettings settings,
                                    @NotNull JavaCodeStyleSettings javaSettings,
                                    @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, getJavaIndentOptions(settings));
+    final Indent indent = getDefaultSubtreeIndent(child, getJavaIndentOptions(settings), settings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -302,7 +307,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
 
   @Nullable
-  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child,
+                                                @NotNull CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                CommonCodeStyleSettings settings) {
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
     if (childNodeType == JavaElementType.ANNOTATION) {
@@ -1089,6 +1096,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (psiNode instanceof PsiMethod
              || psiNode instanceof PsiCodeBlock && psiNode.getParent() != null && psiNode.getParent() instanceof PsiMethod) {
       return mySettings.METHOD_BRACE_STYLE;
+    }
+    if (psiNode instanceof PsiLambdaExpression && ((PsiLambdaExpression)psiNode).getBody() instanceof PsiCodeBlock) {
+      return mySettings.LAMBDA_BRACE_STYLE;
     }
     return mySettings.BRACE_STYLE;
   }

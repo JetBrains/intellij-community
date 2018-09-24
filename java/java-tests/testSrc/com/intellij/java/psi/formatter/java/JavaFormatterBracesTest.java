@@ -383,6 +383,17 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "};"
     );
   }
+
+  public void testLambdaBraceShifted() {
+    getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    doMethodTest(
+      "Runnable r = () -> {\n" +
+      "};",
+      "Runnable r = () ->\n" +
+      "    {\n" +
+      "    };"
+    );
+  }
   
   public void testLambdaBraceMoveToPrevLine() {
     getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
