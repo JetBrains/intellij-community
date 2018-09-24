@@ -53,3 +53,6 @@ def attach_to_debugger(debugger_port):
 def set_latest_cell_id(latest_cell_id):
     ipython_shell = get_ipython()
     ipython_shell.debugger.latest_cell_id = latest_cell_id
+    if not hasattr(ipython_shell.debugger, 'jupyter_cell_id_to_name'):
+        ipython_shell.debugger.jupyter_cell_name_to_id = {}
+        ipython_shell.debugger.jupyter_cell_id_to_name = {}
