@@ -281,21 +281,47 @@ public class NSDefaults {
     }
   }
 
-  public static int getAccentColor() {
+  public static String getAccentColor() {
     if (!SystemInfo.isMac || !SystemInfo.isOsVersionAtLeast("10.14"))
-      return -1;
+      return null;
+    // Blue : default (key doesn't exist)
+    // Purple : 5
+    // Pink : 6
+    // Red : 0
+    // Orange : 1
+    // Yellow : 2
+    // Green : 3
+    // Graphite: -1
+    final int nval = _getAccentColor();
+    switch (nval) {
+      case 5:   return "purple";
+      case 6:   return "pink";
+      case 0:   return "red";
+      case 1:   return "orange";
+      case 2:   return "yellow";
+      case 3:   return "green";
+      case -1:  return "graphite";
+      default:  return "blue";
+    }
+  }
 
+  private static int _getAccentColor() {
     final String nodeName = "AppleAccentColor";
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
       final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
       if (defaults == null || defaults.equals(ID.NIL))
-        return -1;
+        return Integer.MIN_VALUE;
       final ID domObj = Foundation.invoke(defaults, "persistentDomainForName:", Foundation.nsString("Apple Global Domain"));
       if (domObj == null || domObj.equals(ID.NIL))
-        return -1;
+        return Integer.MIN_VALUE;
 
-      return Foundation.invoke(domObj, "integerForKey:", Foundation.nsString(nodeName)).intValue();
+      final ID nskey = Foundation.nsString(nodeName);
+      final ID resObj = Foundation.invoke(domObj, "objectForKey:", nskey);
+      if (resObj == null || resObj.equals(ID.NIL))
+        return Integer.MIN_VALUE; // key doesn't exist
+
+      return Foundation.invoke(domObj, "integerForKey:", nskey).intValue();
     } finally {
       pool.drain();
     }
