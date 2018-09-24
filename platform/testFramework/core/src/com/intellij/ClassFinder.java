@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij;
 
@@ -11,10 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ClassFinder {
   private final List<String> classNameList = new ArrayList<>();
@@ -30,14 +32,19 @@ public class ClassFinder {
 
   @Nullable
   private String computeClassName(final File file) {
-    String absPath = file.getAbsolutePath();
+    String relativePath = file.getAbsolutePath().substring(startPackageName);
+    return computeClassName(relativePath, file.getName());
+  }
+
+  @Nullable
+  private String computeClassName(String relativePath, String name) {
     if (!includeUnconventionallyNamedTests) {
-      if (absPath.endsWith("Test.class")) {
-        return StringUtil.trimEnd(absPath.substring(startPackageName), ".class").replace(File.separatorChar, '.');
+      if (relativePath.endsWith("Test.class")) {
+        return StringUtil.trimEnd(relativePath, ".class").replace(File.separatorChar, '.');
       }
     }
     else {
-      String className = file.getName();
+      String className = name;
       if (className.endsWith(".class")) {
         int dollar = className.lastIndexOf("$");
         if (dollar != -1) {
@@ -51,7 +58,7 @@ public class ClassFinder {
         List<String> words = Arrays.asList(NameUtil.nameToWords(className));
 
         if (words.contains("Test") || words.contains("Tests") || words.contains("Suite")) {
-          String fqn = StringUtil.trimEnd(absPath.substring(startPackageName), ".class").replace(File.separatorChar, '.');
+          String fqn = StringUtil.trimEnd(relativePath, ".class").replace(File.separatorChar, '.');
           if (!Arrays.asList("com.intellij.tests.BootstrapTests", "com.intellij.AllTests").contains(fqn)) {
             return fqn;
           }
@@ -62,7 +69,10 @@ public class ClassFinder {
   }
 
   private void findAndStoreTestClasses(@NotNull File current) {
-    if (current.isDirectory()) {
+    if (current.getName().endsWith(".jar")) {
+      collectClassesFromJar(current);
+    }
+    else if (current.isDirectory()) {
       File[] files = current.listFiles();
       if (files != null) {
         for (File file : files) {
@@ -72,6 +82,20 @@ public class ClassFinder {
     }
     else {
       ContainerUtil.addIfNotNull(classNameList, computeClassName(current));
+    }
+  }
+
+  private void collectClassesFromJar(@NotNull File jar) {
+    try (ZipInputStream zip = new ZipInputStream(new FileInputStream(jar))) {
+      for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+        if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+          ContainerUtil.addIfNotNull(classNameList, computeClassName(entry.getName(), new File(entry.getName()).getName()));
+        }
+      }
+    }
+    catch (IOException e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
     }
   }
 

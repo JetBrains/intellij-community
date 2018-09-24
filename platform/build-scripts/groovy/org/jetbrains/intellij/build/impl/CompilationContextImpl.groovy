@@ -10,6 +10,7 @@ import com.intellij.util.SystemProperties
 import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
@@ -174,6 +176,12 @@ class CompilationContextImpl implements CompilationContext {
     }
   }
 
+  private static String classesDirName = "classes"
+
+  private String classesOutput() {
+    return "$paths.buildOutputRoot/$classesDirName"
+  }
+
   void prepareForBuild() {
     checkCompilationOptions()
     def dataDirName = ".jps-build-data"
@@ -182,9 +190,8 @@ class CompilationContextImpl implements CompilationContext {
     compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
-    def classesDirName = "classes"
     def projectArtifactsDirName = "project-artifacts"
-    def classesOutput = "$paths.buildOutputRoot/$classesDirName"
+    def classesOutput = classesOutput()
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchivesMetadata != null) {
       fetchAndUnpackCompiledClasses(messages, ant, classesOutput, options)
@@ -320,7 +327,7 @@ class CompilationContextImpl implements CompilationContext {
     messages.block("Unpack compiled classes archives") {
       long start = System.nanoTime()
       // Unpack everything to ensure correct classes are in classesOutput
-      FileUtil.delete(new File(classesOutput))
+//      FileUtil.delete(new File(classesOutput))
       // todo: make parallel
       all.each { entry ->
         unpack(messages, ant, classesOutput, entry)
@@ -332,6 +339,8 @@ class CompilationContextImpl implements CompilationContext {
 
   @CompileDynamic
   private static void unpack(BuildMessages messages, AntBuilder ant, String classesOutput, Map.Entry<String, File> entry) {
+    return // todo: remove
+
     messages.block("Unpacking $entry.key") {
       def dst = "$classesOutput/$entry.key"
       ant.mkdir(dir: dst)
@@ -427,8 +436,35 @@ class CompilationContextImpl implements CompilationContext {
 
   @Override
   List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests))
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().
+      includedIn(JpsJavaClasspathKind.runtime(forTests))
+
+    if (options.pathToCompiledClassesArchivesMetadata != null) {
+      return constructRuntimeClasspathWithJars(enumerator)
+    }
     return enumerator.classes().roots.collect { it.absolutePath }
+  }
+
+  @NotNull
+  private List<String> constructRuntimeClasspathWithJars(@NotNull JpsJavaDependenciesEnumerator enumerator) {
+    String persistentCache = System.getProperty("agent.persistent.cache") // todo: create a cache storage if needed
+    File tempDownloadsStorage = new File(persistentCache, 'idea-compile-parts')
+
+    def metadata = new JsonSlurper().parse(new File(options.pathToCompiledClassesArchivesMetadata), CharsetToolkit.UTF8) as Map
+    Map<String, String> files = new LinkedHashMap<>(metadata['files'] as Map<String, String>)
+
+    def classesOutput = classesOutput() + "/"
+    return enumerator.classes().roots.collect {
+      def path = it.absolutePath
+      if (path.startsWith(classesOutput)) {
+        def key = path.replaceFirst(classesOutput, "")
+        def hash = files.get(key)
+        if (hash != null) {
+          return new File(tempDownloadsStorage, key + "/" + hash + ".jar").absolutePath
+        }
+      }
+      return path
+    }
   }
 
   private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()

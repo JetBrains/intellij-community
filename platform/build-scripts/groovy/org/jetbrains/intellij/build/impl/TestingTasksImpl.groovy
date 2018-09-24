@@ -311,6 +311,7 @@ class TestingTasksImpl extends TestingTasks {
       "teamcity.build.tempDir"                 : tempDir,
       "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
       "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
+      "agent.persistent.cache"                 : System.getProperty("agent.persistent.cache"),
       "jna.nosys"                              : "true",
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",
@@ -418,7 +419,7 @@ class TestingTasksImpl extends TestingTasks {
         classpath {
           pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("intellij.platform.buildScripts")))
         }
-        formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
+//        formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
       }
 
       //test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar

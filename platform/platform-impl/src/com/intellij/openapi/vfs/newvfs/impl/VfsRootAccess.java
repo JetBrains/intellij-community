@@ -118,6 +118,8 @@ public class VfsRootAccess {
     allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
     allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
     allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
+    String cache = System.getProperty("agent.persistent.cache");
+    ContainerUtil.addAllNotNull(allowed, cache == null ? null : FileUtil.toSystemIndependentName(cache));
     ContainerUtil.addAllNotNull(allowed, findInUserHome(".m2"));
     ContainerUtil.addAllNotNull(allowed, findInUserHome(".gradle"));
 
