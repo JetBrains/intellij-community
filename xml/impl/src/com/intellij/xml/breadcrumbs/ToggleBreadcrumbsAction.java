@@ -43,7 +43,7 @@ abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware
     PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);
     if (psiFile == null) return true;
     FileViewProvider provider = psiFile.getViewProvider();
-    return BreadcrumbsXmlWrapper.findInfoProvider(false, provider) != null;
+    return BreadcrumbsUtilEx.findProvider(false, provider) != null;
   }
 
   @Override
