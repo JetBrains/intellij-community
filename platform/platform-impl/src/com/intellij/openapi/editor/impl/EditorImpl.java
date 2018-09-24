@@ -450,6 +450,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
+    myInlayModel.addListener(myFoldingModel, myCaretModel);
     myInlayModel.addListener(myCaretModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
