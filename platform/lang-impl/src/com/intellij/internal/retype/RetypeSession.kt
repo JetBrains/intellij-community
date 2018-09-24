@@ -23,7 +23,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -171,8 +170,7 @@ class RetypeSession(
   }
 
   private fun LookupElement.shouldAccept(lookupStartOffset: Int): Boolean {
-    for (retypeFileAssistant in Extensions.getExtensions(
-      RetypeFileAssistant.EP_NAME)) {
+    for (retypeFileAssistant in RetypeFileAssistant.EP_NAME.extensionList) {
       if (!retypeFileAssistant.acceptLookupElement(this)) {
         return false
       }

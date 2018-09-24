@@ -2,7 +2,6 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.registry.Registry;
 
 /**
@@ -21,8 +20,7 @@ public interface VcsLogIndexService {
   static boolean isPathsForwardIndexRequired() {
     if (Registry.is("vcs.log.index.paths.forward.index.on")) return true;
 
-    VcsLogIndexService[] extensions = Extensions.getExtensions(VCS_LOG_INDEX_SERVICE_EP);
-    for (VcsLogIndexService indexService : extensions) {
+    for (VcsLogIndexService indexService : VCS_LOG_INDEX_SERVICE_EP.getExtensionList()) {
       if (indexService.requiresPathsForwardIndex()) return true;
     }
     return false;

@@ -41,7 +41,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -399,7 +398,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NotNull
   private static List<ClassFilter> getActiveFilters() {
     DebuggerSettings settings = DebuggerSettings.getInstance();
-    StreamEx<ClassFilter> stream = StreamEx.of(Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME))
+    StreamEx<ClassFilter> stream = StreamEx.of(DebuggerClassFilterProvider.EP_NAME.getExtensionList())
       .flatCollection(DebuggerClassFilterProvider::getFilters);
     if (settings.TRACING_FILTERS_ENABLED) {
       stream = stream.prepend(settings.getSteppingFilters());

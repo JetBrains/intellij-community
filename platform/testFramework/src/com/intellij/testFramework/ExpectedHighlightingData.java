@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -126,7 +125,7 @@ public class ExpectedHighlightingData {
     registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, false));
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, false));
     registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
         HighlightSeverity severity = type.getSeverity(null);
         registerHighlightingType(severity.getName(), new ExpectedHighlightingSet(severity, false, true));

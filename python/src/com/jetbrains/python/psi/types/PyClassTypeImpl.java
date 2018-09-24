@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -208,7 +207,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (classMember != null) {
       final ResolveResultList list = new ResolveResultList();
       int rate = RatedResolveResult.RATE_NORMAL;
-      for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+      for (PyResolveResultRater rater : PyResolveResultRater.EP_NAME.getExtensionList()) {
         rate += rater.getMemberRate(classMember, this, context);
       }
       list.poke(classMember, rate);
@@ -466,7 +465,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                       String name,
                                                       @Nullable PsiElement location,
                                                       @NotNull PyResolveContext resolveContext) {
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+    for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
       final PsiElement resolveResult = provider.resolveMember(aClass, name, location, resolveContext);
       if (resolveResult != null) return resolveResult;
     }
@@ -479,7 +478,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                 String name,
                                                                 @Nullable PsiElement location,
                                                                 @NotNull PyResolveContext resolveContext) {
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+    for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof PyOverridingClassMembersProvider) {
         final PsiElement resolveResult = provider.resolveMember(aClass, name, location, resolveContext);
         if (resolveResult != null) return resolveResult;
@@ -494,7 +493,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                          String name,
                                                                          @Nullable PyExpression location,
                                                                          @NotNull PyResolveContext resolveContext) {
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+    for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
         final PsiElement resolveResult = provider.resolveMember(type, name, location, resolveContext);
         if (resolveResult != null) return resolveResult;
@@ -706,7 +705,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private void processProvidedMembers(@NotNull Processor<PyCustomMember> processor,
                                       @Nullable PsiElement location,
                                       @NotNull TypeEvalContext context) {
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+    for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
       for (PyCustomMember member : provider.getMembers(this, location, context)) {
         if (!processor.process(member)) return;
       }

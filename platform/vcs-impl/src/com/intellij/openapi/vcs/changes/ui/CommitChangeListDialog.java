@@ -730,8 +730,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Nullable
   private String getCommentFromChangelist(@NotNull LocalChangeList list) {
-    CommitMessageProvider[] providers = Extensions.getExtensions(CommitMessageProvider.EXTENSION_POINT_NAME);
-    for (CommitMessageProvider provider : providers) {
+    for (CommitMessageProvider provider : CommitMessageProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String message = provider.getCommitMessage(list, getProject());
       if (message != null) return message;
     }

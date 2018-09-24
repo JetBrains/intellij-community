@@ -2,7 +2,6 @@
 package com.intellij.testGuiFramework.recorder
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 
 
 interface GeneratedCodeReceiver {
@@ -19,7 +18,7 @@ interface GeneratedCodeReceiver {
     val EP_NAME = ExtensionPointName.create<GeneratedCodeReceiver>("com.intellij.generatedCodeReceiver")
 
     internal fun sendCode(code: String) {
-      for (receiver in Extensions.getExtensions(EP_NAME)) {
+      for (receiver in EP_NAME.extensionList) {
         receiver.receiveCode(code, Writer.indent * ContextChecker.getContextDepth())
       }
     }

@@ -22,7 +22,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -363,9 +362,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @NotNull
   public String getFileTooltipText(@NotNull VirtualFile file) {
-    EditorTabTitleProvider[] allExtensions = Extensions.getExtensions(EditorTabTitleProvider.EP_NAME);
-    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(allExtensions);
-
+    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(EditorTabTitleProvider.EP_NAME.getExtensionList());
     for (EditorTabTitleProvider provider : availableProviders) {
       String text = provider.getEditorTabTooltipText(myProject, file);
       if (text != null) {
@@ -727,7 +724,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorWindow[] windows = splitters.getWindows();
 
     if (file != null && windows.length == 2) {
-      for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+      for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
         VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, file);
 
         if (associatedFile != null) {
@@ -1556,7 +1553,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
       if (oldData.first != null && newData.first != null) {
-        for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+        for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
           VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
 
           if (Comparing.equal(associatedFile, newData.first)) {
@@ -1829,7 +1826,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void handleRootChange() {
-      EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
+      List<EditorFileSwapper> swappers = EditorFileSwapper.EP_NAME.getExtensionList();
 
       for (EditorWindow eachWindow : getWindows()) {
         EditorWithProviderComposite selected = eachWindow.getSelectedEditor();

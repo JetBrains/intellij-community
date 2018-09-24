@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pass;
@@ -45,7 +44,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   public boolean IGNORE_UNCHECKED_OVERRIDING;
 
   @NotNull
-  
+
   protected LocalQuickFix[] createFixes() {
     return new LocalQuickFix[]{new GenerifyFileFix()};
   }
@@ -111,7 +110,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     LOG.assertTrue(parameter.isValid());
     final List<LocalQuickFix> result = new ArrayList<>();
     if (itemType != null) {
-      for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
+      for (ChangeVariableTypeQuickFixProvider fixProvider : ChangeVariableTypeQuickFixProvider.EP_NAME.getExtensionList()) {
         for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
           if (action instanceof LocalQuickFix) {
             result.add((LocalQuickFix)action);

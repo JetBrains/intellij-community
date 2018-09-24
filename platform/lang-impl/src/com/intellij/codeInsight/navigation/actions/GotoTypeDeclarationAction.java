@@ -10,7 +10,6 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -41,7 +40,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
-    if (Extensions.getExtensions(TypeDeclarationProvider.EP_NAME).length == 0) {
+    if (TypeDeclarationProvider.EP_NAME.getExtensionList().size() == 0) {
       event.getPresentation().setVisible(false);
     }
     else {
@@ -133,7 +132,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
 
   @Nullable
   private static PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
-    for(TypeDeclarationProvider provider: Extensions.getExtensions(TypeDeclarationProvider.EP_NAME)) {
+    for(TypeDeclarationProvider provider: TypeDeclarationProvider.EP_NAME.getExtensionList()) {
       PsiElement[] result;
       if (provider instanceof TypeDeclarationPlaceAwareProvider) {
         result = ((TypeDeclarationPlaceAwareProvider)provider).getSymbolTypeDeclarations(targetElement, editor, offset);

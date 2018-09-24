@@ -16,7 +16,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -1000,7 +999,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @NotNull
     protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
-      for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+      for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
           public void actionPerformed(@NotNull final AnActionEvent e) {

@@ -574,7 +574,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (url != null) {
       return url;
     }
-    for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
+    for (PythonDocumentationLinkProvider provider : PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
         return providerUrl;
