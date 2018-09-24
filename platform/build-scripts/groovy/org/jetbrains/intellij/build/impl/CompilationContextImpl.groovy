@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -269,6 +271,7 @@ class CompilationContextImpl implements CompilationContext {
   @CompileStatic
   private static void fetchAndUnpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
     Map<String, File> all = new LinkedHashMap<>()
+    Map<String, String> pathToHashMap
 
     messages.block("Fetch compiled classes archives") {
       long start = System.nanoTime()
@@ -280,14 +283,18 @@ class CompilationContextImpl implements CompilationContext {
 
       Deque<Pair<String, File>> toDownload = new ConcurrentLinkedDeque<>()
 
-      Map<String, String> files = new LinkedHashMap<>(metadata['files'] as Map<String, String>)
-      files.each { path, hash ->
+      pathToHashMap = new LinkedHashMap<>(metadata['files'] as Map<String, String>)
+      pathToHashMap.each { path, hash ->
         def file = new File(tempDownloadsStorage, "$path/${hash}.jar")
         def moduleTempDir = file.parentFile
         moduleTempDir.mkdirs()
         // Remove other files for same module if cache is not managed by TeamCity
         if (persistentCache == null) {
           moduleTempDir.eachFile { f -> if (f.name != file.name) FileUtil.delete(f) }
+        }
+        if (file.exists() && hash != computeHash(file)) {
+          messages.info("File $file has unexpected hash, will refetch")
+          file.delete()
         }
         // Download if needed
         if (!file.exists()) {
@@ -317,6 +324,29 @@ class CompilationContextImpl implements CompilationContext {
       messages.reportStatisticValue('compile-parts:reused:count', (all.size() - toDownload.size()).toString())
     }
 
+    messages.block("Verify archives consistency") {
+      long start = System.nanoTime()
+      // todo: make parallel, retry download
+      List<Trinity<File, String, String>> failed = all.collect { entry ->
+        def file = entry.value
+        def computed = computeHash(file)
+        def expected = pathToHashMap[entry.key]
+        if (expected != computed) {
+          messages.warning("Downloaded file '$file' hash mismatch, expected '$expected', got $computed")
+          return Trinity.create(file, expected, computed)
+        }
+        return null
+      }
+      messages.reportStatisticValue('compile-parts:verify:time',
+                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+      if (!failed.isEmpty()) {
+        failed.each { trinity ->
+          messages.warning("Downloaded file '$trinity.first' hash mismatch, expected '$trinity.second', got $trinity.third")
+        }
+        messages.error("Hash mismatch for ${failed.size()} downloaded files, see details above")
+      }
+    }
+
     messages.block("Unpack compiled classes archives") {
       long start = System.nanoTime()
       // Unpack everything to ensure correct classes are in classesOutput
@@ -327,6 +357,26 @@ class CompilationContextImpl implements CompilationContext {
       }
       messages.reportStatisticValue('compile-parts:unpack:time',
                                     TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+    }
+  }
+
+  private static String computeHash(final File file) {
+    if (!file.exists()) return null;
+    def md = MessageDigest.getInstance("SHA-256")
+    def fis = new FileInputStream(file)
+    try {
+      final byte[] buffer = FileUtil.getThreadLocalBuffer()
+      while (true) {
+        int read = fis.read(buffer)
+        if (read < 0) break
+        md.update(buffer, 0, read)
+      }
+      def digest = md.digest()
+      def hex = StringUtil.toHexString(digest)
+      return hex
+    }
+    finally {
+      fis.close()
     }
   }
 
