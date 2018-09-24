@@ -60,8 +60,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
   private static <V extends XSmartStepIntoVariant> void doSmartStepInto(final XSmartStepIntoHandler<V> handler,
                                                                         XSourcePosition position,
                                                                         final XDebugSession session,
-                                                                        Editor editor) {
+                                                                        @NotNull Editor editor) {
     List<V> variants = handler.computeSmartStepVariants(position);
+
     if (variants.isEmpty()) {
       session.stepInto();
       return;
@@ -71,24 +72,30 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       return;
     }
 
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
-      @Override
-      public Icon getIconFor(V aValue) {
-        return aValue.getIcon();
-      }
+    final String popupTitle = handler.getPopupTitle(position);
 
-      @NotNull
-      @Override
-      public String getTextFor(V value) {
-        return value.getText();
-      }
+    ListPopup popup = handler.getPopup(popupTitle, variants, editor);
+    if (popup == null) {
+      popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<V>(popupTitle, variants) {
+        @Override
+        public Icon getIconFor(V aValue) {
+          return aValue.getIcon();
+        }
 
-      @Override
-      public PopupStep onChosen(V selectedValue, boolean finalChoice) {
-        session.smartStepInto(handler, selectedValue);
-        return FINAL_CHOICE;
-      }
-    });
+        @NotNull
+        @Override
+        public String getTextFor(V value) {
+          return value.getText();
+        }
+
+        @Override
+        public PopupStep onChosen(V selectedValue, boolean finalChoice) {
+          session.smartStepInto(handler, selectedValue);
+          return FINAL_CHOICE;
+        }
+      });
+    }
+
     DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
   }
 }

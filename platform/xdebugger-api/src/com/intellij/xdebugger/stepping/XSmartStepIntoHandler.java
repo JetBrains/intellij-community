@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.stepping;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
@@ -54,5 +56,15 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * @return title for popup which will be shown to select method/function
    * @param position current position
    */
+  @NotNull
   public abstract String getPopupTitle(@NotNull XSourcePosition position);
+
+  /**
+   * creates a custom smart step into popup (for custom highlighting e.t.c)
+   *
+   * @param variants smart step into variants (size > 1)
+   */
+  public ListPopup getPopup(@NotNull String title, @NotNull List<Variant> variants, @NotNull Editor editor) {
+    return null;
+  }
 }
