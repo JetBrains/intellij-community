@@ -26,7 +26,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   // this is ex-XPath version
   fun findMatchingPathByPredicate(predicate: FinderPredicate, pathStrings: List<String>): TreePath {
     val model = jTree.model
-    val root = GuiTestUtilKt.computeOnEdt { model.root } ?: IllegalStateException("root is null")
+    val root = GuiTestUtilKt.computeOnEdt { model.root } ?: throw IllegalStateException("root is null")
     if (jTree.isRootVisible) {
       val childValue = jTree.value(root) ?: ""
       if (predicate(pathStrings[0], childValue)) {

@@ -253,7 +253,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
       return null
     }
 
-    val root = GuiTestUtilKt.computeOnEdt { tree.model.root } ?: IllegalStateException("root is null")
+    val root = GuiTestUtilKt.computeOnEdt { tree.model.root } ?: throw IllegalStateException("root is null")
     return tree.iterateChildren(root, node, TreePath(root), predicate)
            ?: throw LocationUnavailableException("Node `$node` not found")
   }
