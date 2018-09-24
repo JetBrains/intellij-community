@@ -20,7 +20,7 @@ fun checkRunConfigurationSerialization(configuration: RunConfiguration, expected
 
   if (factory != null) {
     val c2 = factory.createTemplateConfiguration(project)
-    deserializeConfigurationFrom(c2, loadElement(expected), c2.factory!!)
+    deserializeConfigurationFrom(c2, loadElement(expected))
     checkRunConfigurationSerialization(c2, expected, null, project)
   }
 }

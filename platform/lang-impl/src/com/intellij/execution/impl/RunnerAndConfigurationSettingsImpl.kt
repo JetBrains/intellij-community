@@ -52,6 +52,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
+  @Suppress("UNUSED_PARAMETER")
+  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
+
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
@@ -207,14 +211,14 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    deserializeConfigurationFrom(configuration, element, factory)
+    deserializeConfigurationFrom(configuration, element)
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
 
     manager.readBeforeRunTasks(element.getChild(METHOD), this, configuration)
   }
-  
+
   // do not call directly
   // cannot be private - used externally
   fun writeExternal(element: Element) {
@@ -289,7 +293,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
     PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
-  
+
   override fun writeScheme(): Element {
     val element = Element("configuration")
     writeExternal(element)
@@ -504,7 +508,7 @@ fun serializeConfigurationInto(configuration: RunConfiguration, element: Element
   }
 }
 
-fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, factory: ConfigurationFactory) {
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element) {
   if (configuration is PersistentStateComponent<*>) {
     deserializeAndLoadState(configuration, element)
   }
