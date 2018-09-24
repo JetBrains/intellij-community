@@ -96,6 +96,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myBranchFrom.setVisible(false);
     }
     else {
+      String branchName = getBranchName(task);
       for (VcsTaskHandler handler : handlers) {
         VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
         if (tasks.length > 0) {
@@ -104,7 +105,15 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
           //noinspection unchecked
           myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
           myBranchFrom.setEnabled(true);
+
           myUseBranchCombo.setModel(new DefaultComboBoxModel<>(tasks));
+          for (VcsTaskHandler.TaskInfo info : tasks) {
+            if (branchName.equals(info.getName())) {
+              myUseBranchCombo.setSelectedItem(info);
+              myUseBranch.setSelected(true);
+              break;
+            }
+          }
           final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
           VcsTaskHandler.TaskInfo info = null;
           if (startFrom != null) {
@@ -127,13 +136,17 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
           break;
         }
       }
-      myCreateBranch.setSelected(myTaskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
-      myUseBranch.setSelected(myTaskManager.getState().useBranch && myUseBranchCombo.getItemCount() > 0);
+      if (!myUseBranch.isSelected()) {
+        myCreateBranch.setSelected(myTaskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
+        myUseBranch.setSelected(myTaskManager.getState().useBranch && myUseBranchCombo.getItemCount() > 0);
+      }
       myBranchFrom.setRenderer(new TaskInfoCellRenderer(myBranchFrom));
       myUseBranchCombo.setRenderer(new TaskInfoCellRenderer(myUseBranchCombo));
+
+      myBranchName.setText(branchName);
+      myChangelistName.setText(getChangelistName(task));
     }
-    myBranchName.setText(getBranchName(task));
-    myChangelistName.setText(getChangelistName(task));
+
     updateFields(true);
   }
 
