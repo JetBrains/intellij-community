@@ -95,8 +95,10 @@ class PatternInstrumenterTest {
 
   @Test fun enclosingClass() {
     val testClass = loadClass()
-    val obj = testClass.getMethod("enclosingClass").invoke(null)
-    assertEquals(testClass, obj::class.java.enclosingClass)
+    val obj1 = testClass.getMethod("enclosingStatic").invoke(null)
+    assertEquals(testClass, obj1::class.java.enclosingClass)
+    val obj2 = testClass.getMethod("enclosingInstance").invoke(testClass.newInstance())
+    assertEquals(testClass, obj2::class.java.enclosingClass)
   }
 
   @Test fun capturedParam() {
