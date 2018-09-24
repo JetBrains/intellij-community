@@ -93,7 +93,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     assert project != null;
     myProject = project;
 
-    myFile = getVirtualFile(myEditor);
+    myFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
 
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
@@ -225,7 +225,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void moveEditorCaretTo(@NotNull final PsiElement element) {
     if (element.isValid()) {
-      setUserCaretChange(false);
+      myUserCaretChange = false;
       myEditor.getCaretModel().moveToOffset(element.getTextOffset());
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
@@ -257,10 +257,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       }
     }
     return null;
-  }
-
-  private void setUserCaretChange(final boolean userCaretChange) {
-    myUserCaretChange = userCaretChange;
   }
 
   @Nullable
@@ -320,7 +316,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
                                                          final VirtualFile file,
                                                          final Project project,
                                                          final BreadcrumbsProvider defaultInfoProvider) {
-    if (file == null || !file.isValid()) return null;
+    if (file == null || !file.isValid() || file.isDirectory()) return null;
 
     PriorityQueue<PsiElement> leafs =
       new PriorityQueue<>(3, (o1, o2) -> {
@@ -372,10 +368,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, VirtualFile file) {
     Project project = editor.getProject();
     return project == null ? null : findInfoProvider(editor, findViewProvider(file, project));
-  }
-
-  private static VirtualFile getVirtualFile(@NotNull Editor editor) {
-    return FileDocumentManager.getInstance().getFile(editor.getDocument());
   }
 
   private void updateCrumbs(final LogicalPosition position) {
@@ -436,7 +428,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
   }
 
-  private void itemHovered(Crumb crumb, InputEvent event) {
+  private void itemHovered(Crumb crumb, @SuppressWarnings("unused") InputEvent event) {
     if (!Registry.is("editor.breadcrumbs.highlight.on.hover")) {
       return;
     }
