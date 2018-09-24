@@ -175,28 +175,11 @@ public class UrlClassLoader extends ClassLoader {
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
   @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(build().urls(acquireURLsFromClassLoader(parent)).parent(parent.getParent()).allowLock().useCache()
+    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
            .useLazyClassloadingCaches(SystemProperties.getBooleanProperty("idea.lazy.classloading.caches", false)));
   }
 
-  protected static URL[] acquireURLsFromClassLoader(@NotNull ClassLoader parent) {
-    if (parent instanceof URLClassLoader) {
-      URL[] urls = ((URLClassLoader)parent).getURLs();
-      // URLs in URLClassLoader are stored in Stack, implemented on the top of ArrayList
-      // last element is stack top, in the same time this element is first one in terms of classpath order
-      // reverse urls to get natural order
-      for(int i = 0, mid = urls.length >> 1, last = urls.length - 1; i < mid; ++i, --last) {
-        URL temp = urls[last];
-        urls[last] = urls[i];
-        urls[i] = temp;
-      }
-      return urls;
-    } else {
-      return new URL[0];
-    }
-  }
-  
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
     myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {

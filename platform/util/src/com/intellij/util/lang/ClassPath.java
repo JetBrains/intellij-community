@@ -197,7 +197,8 @@ public class ClassPath {
     }
 
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      Loader loader = createLoader(url, index, new File(path), lastOne);
+      File file = new File(path);
+      Loader loader = createLoader(url, index, file, file.getName().startsWith("classpath"));
       if (loader != null) {
         initLoader(url, loader);
       }
@@ -421,7 +422,7 @@ public class ClassPath {
     System.out.println(ourOrderSize);
   }
 
-  static final boolean ourLogTiming = Boolean.getBoolean("idea.print.classpath.timing");
+  static final boolean ourLogTiming = true || Boolean.getBoolean("idea.print.classpath.timing");
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
 
@@ -436,9 +437,9 @@ public class ClassPath {
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);
     int totalRequests = ourTotalRequests.incrementAndGet();
-    if (time > 10000000L) {
-      System.out.println(time / 1000000 + " ms for " + msg);
-    }
+    //if (time > 10000000L) {
+    //  System.out.println(time / 1000000 + " ms for " + msg);
+    //}
     if (totalRequests % 10000 == 0) {
       System.out.println(path + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
     }
