@@ -102,8 +102,6 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     });
     highlightTarget(popupStep, firstTarget);
     DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
-
-    DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
   }
 
   private static void highlightTarget(@NotNull final SmartStepMethodListPopupStep popupStep, @NotNull final XSmartStepIntoVariant target) {
