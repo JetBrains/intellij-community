@@ -35,7 +35,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +64,19 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final VirtualFile myFile;
   private boolean myUserCaretChange = true;
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
-  private final Update myUpdate = new MyUpdate(this);
+
+  private final Update myUpdate = new Update(this) {
+    @Override
+    public void run() {
+      updateCrumbs();
+    }
+
+    @Override
+    public boolean canEat(final Update update) {
+      return true;
+    }
+  };
+
   private ProgressIndicator myAsyncUpdateProgress = null;
   private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
@@ -243,26 +254,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
     myEditor = null;
     breadcrumbs.setCrumbs(null);
-  }
-
-  private static class MyUpdate extends Update {
-    private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
-
-    MyUpdate(@NonNls final BreadcrumbsXmlWrapper c) {
-      super(c);
-
-      myBreadcrumbsComponent = c;
-    }
-
-    @Override
-    public void run() {
-      myBreadcrumbsComponent.updateCrumbs();
-    }
-
-    @Override
-    public boolean canEat(final Update update) {
-      return true;
-    }
   }
 
   private void updateEditorFont(PropertyChangeEvent event) {
