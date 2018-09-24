@@ -28,6 +28,7 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 
@@ -197,9 +198,10 @@ public class SMTestRunnerConnectionUtil {
       if (ApplicationManager.getApplication().isOnAir()) {
         try {
           Class onAirSMTRunnerEventsListener = Class.forName("com.jetbrains.onair.OnAirSMTRunnerEventsListener");
-          eventsProcessor.addEventsListener((SMTRunnerEventsListener)onAirSMTRunnerEventsListener.newInstance());
+          Project project = consoleProperties.getProject();
+          eventsProcessor.addEventsListener((SMTRunnerEventsListener)onAirSMTRunnerEventsListener.getConstructors()[0].newInstance(project));
         }
-        catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
           LOG.warn("OnAirSMTRunnerEventsListener not found");
         }
       }
