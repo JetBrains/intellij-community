@@ -223,10 +223,10 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myQueue.queue(myUpdate);
   }
 
-  private void moveEditorCaretTo(@NotNull final PsiElement element) {
-    if (element.isValid()) {
+  private void moveEditorCaretTo(int offset) {
+    if (offset >= 0) {
       myUserCaretChange = false;
-      myEditor.getCaretModel().moveToOffset(element.getTextOffset());
+      myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
   }
@@ -260,7 +260,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  private static Iterable<PsiCrumb> getPresentableLineElements(@NotNull final LogicalPosition position,
+  private static Iterable<Crumb> getPresentableLineElements(@NotNull final LogicalPosition position,
                                                                final VirtualFile file,
                                                                final Editor editor,
                                                                final Project project,
@@ -270,7 +270,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     if (pairs == null) return null;
 
-    ArrayList<PsiCrumb> result = new ArrayList<>(pairs.size());
+    ArrayList<Crumb> result = new ArrayList<>(pairs.size());
     CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
     int index = 0;
     for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
@@ -415,16 +415,19 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private void itemSelected(Crumb crumb, InputEvent event) {
-    if (event == null) return;
+    if (event == null || !(crumb instanceof NavigatableCrumb)) return;
+    NavigatableCrumb navigatableCrumb = (NavigatableCrumb) crumb;
 
-    PsiElement psiElement = PsiCrumb.getElement(crumb);
-    if (psiElement == null) return;
+    int offset = navigatableCrumb.getNavigationOffset();
+    if (offset < 0) return;
 
-    moveEditorCaretTo(psiElement);
+    moveEditorCaretTo(offset);
 
     if (event.isShiftDown() || event.isMetaDown()) {
-      final TextRange range = psiElement.getTextRange();
-      myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      final TextRange range = navigatableCrumb.getHighlightRange();
+      if (range != null) {
+        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
     }
   }
 
@@ -440,9 +443,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       }
       myHighlighed = null;
     }
-    PsiElement psiElement = PsiCrumb.getElement(crumb);
-    if (psiElement != null) {
-      final TextRange range = psiElement.getTextRange();
+    if (crumb instanceof NavigatableCrumb) {
+      final TextRange range = ((NavigatableCrumb) crumb).getHighlightRange();
+      if (range == null) return;
       final TextAttributes attributes = new TextAttributes();
       final CrumbPresentation p = PsiCrumb.getPresentation(crumb);
       Color color = p == null ? null : p.getBackgroundColor(false, false, false);

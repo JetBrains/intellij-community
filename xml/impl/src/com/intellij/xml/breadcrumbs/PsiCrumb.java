@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Sergey.Malenkov
  */
-final class PsiCrumb extends Crumb.Impl {
+final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   private final PsiAnchor anchor;
   private BreadcrumbsProvider provider;
   private String tooltip;
@@ -30,6 +31,18 @@ final class PsiCrumb extends Crumb.Impl {
       provider = null; // do not try recalculate tooltip
     }
     return tooltip;
+  }
+
+  @Override
+  public int getNavigationOffset() {
+    PsiElement element = anchor.retrieve();
+    return element != null ? element.getTextOffset() : -1;
+  }
+
+  @Override
+  public TextRange getHighlightRange() {
+    PsiElement element = anchor.retrieve();
+    return element != null ? element.getTextRange() : null;
   }
 
   @Nullable
