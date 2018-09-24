@@ -100,7 +100,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     }
 
     if (selected instanceof OptionsTopHitProvider) {
-      setSearchString("#" + ((OptionsTopHitProvider) selected).getId() + " ");
+      setSearchString(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider) selected).getId() + " ");
       return false;
     }
 
