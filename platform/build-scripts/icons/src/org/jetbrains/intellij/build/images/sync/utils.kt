@@ -10,7 +10,7 @@ internal fun log(msg: String) = logger.accept(msg)
 
 internal fun String.splitWithSpace(): List<String> = this.splitNotBlank(" ")
 
-internal fun String.splitNotBlank(delimiter : String): List<String> = this.split(delimiter).filter { it.isNotBlank() }
+internal fun String.splitNotBlank(delimiter: String): List<String> = this.split(delimiter).filter { it.isNotBlank() }
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
@@ -22,7 +22,11 @@ internal fun List<String>.execute(workingDir: File?, silent: Boolean = false): S
       .redirectError(ProcessBuilder.Redirect.PIPE)
       .start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
+    val error = process.errorStream.bufferedReader().use { it.readText() }
     process.waitFor()
+    if (process.exitValue() != 0) {
+      error("Command ${this} failed with ${process.exitValue()} : $error")
+    }
     output
   }
   return if (silent) {

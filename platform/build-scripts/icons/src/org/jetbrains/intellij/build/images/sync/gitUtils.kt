@@ -33,7 +33,13 @@ private fun listGitTree(
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
-  listOf(GIT, "pull", "--rebase").execute(repo)
+  try {
+    listOf(GIT, "pull", "--rebase").execute(repo)
+  }
+  catch (e: Exception) {
+    listOf(GIT, "rebase", "--abort").execute(repo)
+    throw e
+  }
   return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .execute(repo).trim().lineSequence()
     .filter { it.isNotBlank() }.map { line ->
