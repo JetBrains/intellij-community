@@ -620,7 +620,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         JPanel tabPanel = findTabbedPaneChild(component);
         if (tabPanel != null) {
           JTabbedPane tabbedPane = (JTabbedPane)tabPanel.getParent();
-          tabbedPane.setSelectedComponent(tabPanel);
+          int index = tabbedPane.indexOfComponent(tabPanel);
+          if (index >= 0) {
+            tabbedPane.setSelectedIndex(index);
+          }
         }
       }
     }
