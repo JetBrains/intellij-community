@@ -58,24 +58,11 @@ public abstract class FormatterEx{
                               CommonCodeStyleSettings.IndentOptions indentOptions,
                               FormatTextRanges affectedRanges) throws IncorrectOperationException;
 
-  public abstract void format(FormattingModel model,
-                              CodeStyleSettings settings,
-                              CommonCodeStyleSettings.IndentOptions indentOptions,
-                              CommonCodeStyleSettings.IndentOptions javaIndentOptions,
-                              FormatTextRanges affectedRanges) throws IncorrectOperationException;
-
   public abstract void format(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final FormatTextRanges affectedRanges,
                               final boolean formatContextAroundRanges) throws IncorrectOperationException;
-
-
-  public abstract IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel psiBasedFormattingModel,
-                                                 final Block block,
-                                                 final CodeStyleSettings settings,
-                                                 final CommonCodeStyleSettings.IndentOptions indentOptions,
-                                                 final TextRange textRange, final boolean mayChangeLineFeeds);
 
   public abstract int adjustLineIndent(final FormattingModel psiBasedFormattingModel,
                                        final CodeStyleSettings settings,
@@ -90,20 +77,6 @@ public abstract class FormatterEx{
                                        final int offset,
                                        final TextRange affectedRange);
 
-  public abstract void adjustTextRange(final FormattingModel documentModel,
-                                       final CodeStyleSettings settings,
-                                       final CommonCodeStyleSettings.IndentOptions indentOptions,
-                                       final TextRange textRange,
-                                       final boolean keepBlankLines,
-                                       final boolean keepLineBreaks,
-                                       final boolean changeWSBeforeFirstElement,
-                                       final boolean changeLineFeedsBeforeFirstElement, final IndentInfoStorage indentInfoStorage);
-
-  public abstract void saveIndents(final FormattingModel model, final TextRange affectedRange,
-                                   IndentInfoStorage storage,
-                                   final CodeStyleSettings settings,
-                                   final CommonCodeStyleSettings.IndentOptions indentOptions);
-
   public abstract boolean isDisabled();
 
 
@@ -117,11 +90,6 @@ public abstract class FormatterEx{
                                          final CodeStyleSettings settings,
                                          final PsiFile file,
                                          final TextRange textRange);
-
-  public abstract void adjustTextRange(FormattingModel model,
-                                       CodeStyleSettings settings,
-                                       CommonCodeStyleSettings.IndentOptions indentOptions,
-                                       TextRange affectedRange);
 
   public abstract void setProgressTask(@NotNull FormattingProgressTask progressIndicator);
 
@@ -140,11 +108,6 @@ public abstract class FormatterEx{
    */
   public abstract int getMinLineFeedsBeforeBlockAtOffset(FormattingModel model, int offset);
 
-  public interface IndentInfoStorage {
-    void saveIndentInfo(@Nullable IndentInfo info, int startOffset);
-
-    IndentInfo getIndentInfo(int startOffset);
-  }
 
   public static FormatterEx getInstanceEx() {
     return getInstance();
