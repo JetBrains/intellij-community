@@ -80,6 +80,7 @@ class BuildOptions {
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.CompilationPartsMetadata} serialized into json format
    */
   String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
