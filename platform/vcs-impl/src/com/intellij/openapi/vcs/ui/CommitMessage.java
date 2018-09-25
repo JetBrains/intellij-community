@@ -143,7 +143,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    features.add(MonospaceEditorCustomization.getInstance());
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));
@@ -152,7 +151,12 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     }
 
-    return EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+    EditorTextField editorField =
+      EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+
+    // Global editor color scheme is set by EditorTextField logic. We also need to use font from it and not from the current LaF.
+    editorField.setFontInheritedFromLAF(false);
+    return editorField;
   }
 
   public static boolean isCommitMessage(@NotNull PsiElement element) {
