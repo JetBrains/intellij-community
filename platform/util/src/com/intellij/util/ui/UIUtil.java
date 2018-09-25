@@ -122,6 +122,17 @@ public class UIUtil {
     return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
   }
 
+  // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
+  public static void markAsPossibleOwner(Dialog dialog) {
+    if (dialog instanceof RootPaneContainer) {
+      ((RootPaneContainer)dialog).getRootPane().putClientProperty("PossibleOwner", Boolean.TRUE);
+    }
+  }
+
+  public static boolean isPossibleOwner(Dialog dialog) {
+    return (dialog instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)dialog).getRootPane(), "PossibleOwner"));
+  }
+
   private static void blockATKWrapper() {
     /*
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
