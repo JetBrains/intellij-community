@@ -94,6 +94,10 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
       conditionFilter = key -> key.endsWith(tail);
       mapFunction = key -> key.substring(presentNamePart.length() - 1); // + 1 for dot, - 2 for '*.'
     }
+    else if (presentNamePart.isEmpty()) {
+      conditionFilter = s -> true;
+      mapFunction = s -> s;
+    }
     else {
       conditionFilter = key -> key.startsWith(presentNamePart);
       mapFunction = key -> key.substring(presentNamePart.length() + 1); // + 1 for dot
