@@ -17,7 +17,6 @@ package com.intellij.javascript.debugger
 
 import com.google.common.base.CharMatcher
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -40,8 +39,11 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   // PsiNamedElement, JSVariable for example
   // returns generated name
-  @JvmOverloads
-  open fun map(identifierOrNamedElement: PsiElement, forceMapBySourceCode: Boolean = false): String? {
+  open fun map(identifierOrNamedElement: PsiElement): String? {
+    return doMap(identifierOrNamedElement, false)
+  }
+
+  protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean): String? {
     val offset = identifierOrNamedElement.textOffset
     val line = document.getLineNumber(offset)
 
@@ -70,7 +72,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     }
 
     var sourceName = sourceEntry.name
-    if (sourceName == null || forceMapBySourceCode || Registry.`is`("js.debugger.name.mappings.by.source.code", false)) {
+    if (sourceName == null || mapBySourceCode) {
       sourceName = (identifierOrNamedElement as? PsiNamedElement)?.name ?: identifierOrNamedElement.text ?: sourceName ?: return null
     }
 
