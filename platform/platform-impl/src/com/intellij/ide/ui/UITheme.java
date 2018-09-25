@@ -67,7 +67,7 @@ public class UITheme {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
     theme.providerClassLoader = provider;
-    if (!theme.icons.isEmpty()) {
+    if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
         @Override
