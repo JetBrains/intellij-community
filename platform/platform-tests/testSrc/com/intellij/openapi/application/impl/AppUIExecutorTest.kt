@@ -38,7 +38,11 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     object : Runnable {
       override fun run() {
         if (isCompleted) {
-          getCompleted()
+          try {
+            getCompleted()
+          }
+          catch (ignored: CancellationException) {
+          }
         }
         else {
           if (countDown-- <= 0) fail("Too many EDT reschedules")
@@ -50,7 +54,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   fun `test coroutine onUiThread`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
-    async(executor.coroutineDispatchingContext()) {
+    GlobalScope.async(executor.coroutineDispatchingContext()) {
       ApplicationManager.getApplication().assertIsDispatchThread()
     }.joinNonBlocking()
   }
@@ -64,10 +68,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
       .expireWith(disposable)
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       queue.add("start")
 
-      launch(coroutineContext + executor.coroutineDispatchingContext()) {
+      launch(executor.coroutineDispatchingContext()) {
         ApplicationManager.getApplication().assertIsDispatchThread()
 
         queue.add("coroutine start")
@@ -111,10 +115,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       .inTransaction(getProject())
       .inWriteAction()
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       val pdm = PsiDocumentManager.getInstance(getProject())
       val commitChannel = Channel<Unit>()
-      val job = launch(coroutineContext + executor.coroutineDispatchingContext()) {
+      val job = launch(executor.coroutineDispatchingContext()) {
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
 
@@ -135,7 +139,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         commitChannel.close()
       }
-      launch(coroutineContext + transactionExecutor.coroutineDispatchingContext() + job) {
+      launch(transactionExecutor.coroutineDispatchingContext() + job) {
         while (true) {
           pdm.commitAllDocuments()
           commitChannel.send(Unit)
@@ -164,7 +168,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test"
       })
 
-    async(executor.coroutineDispatchingContext()) {
+    GlobalScope.async(executor.coroutineDispatchingContext()) {
       assertTrue(scheduled)
       yield()
       assertTrue(scheduled)
@@ -202,7 +206,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     queue.add("start")
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       launch(executor.coroutineDispatchingContext()) {
         queue.add("coroutine start")
         assertTrue(scheduled)
@@ -251,7 +255,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.also { Disposer.register(testRootDisposable, it) }
 
     val uiExecutor = AppUIExecutor.onUiThread()
-    val executor = (uiExecutor as AppUIExecutorEx)
+    val executor = uiExecutor
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
         override val expirable = disposable
 
@@ -271,11 +275,11 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test"
       })
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       queue.add("start")
 
       val channel = Channel<Unit>()
-      val job = launch(coroutineContext + executor.coroutineDispatchingContext()) {
+      val job = launch(executor.coroutineDispatchingContext()) {
         queue.add("coroutine start")
         assertTrue(scheduled)
         channel.receive()
@@ -294,7 +298,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         channel.close()
       }
-      launch(coroutineContext + uiExecutor.coroutineDispatchingContext() + job) {
+      launch(uiExecutor.coroutineDispatchingContext() + job) {
         try {
           while (true) {
             if (shouldDisposeBeforeSend) {
@@ -383,11 +387,11 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test inner"
       })
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       emit("start")
 
       val channel = Channel<Unit>()
-      val job = launch(coroutineContext + executor.coroutineDispatchingContext()) {
+      val job = launch(executor.coroutineDispatchingContext()) {
         emit("coroutine start")
         assertTrue(outerScheduled)
         channel.receive()
@@ -408,7 +412,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         channel.close()
       }
-      launch(coroutineContext + uiExecutor.coroutineDispatchingContext() + job) {
+      launch(uiExecutor.coroutineDispatchingContext() + job) {
         try {
           while (true) {
             channel.send(Unit)

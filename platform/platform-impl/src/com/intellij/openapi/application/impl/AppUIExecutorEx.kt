@@ -25,7 +25,7 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
     //   - errors thrown within launch() are not caught, and usually result in an error
     //     message with a stack trace to be logged on the corresponding thread.
     //
-    launch(coroutineDispatchingContext()) {
+    GlobalScope.launch(coroutineDispatchingContext()) {
       command.run()
     }
   }
@@ -37,7 +37,7 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
   }
 
   override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
-    val deferred = async(coroutineDispatchingContext()) {
+    val deferred = GlobalScope.async(coroutineDispatchingContext()) {
       task.call()
     }
     return AsyncPromise<T>().apply {
@@ -62,6 +62,8 @@ fun AppUIExecutor.inUndoTransparentAction() =
   (this as AppUIExecutorEx).inUndoTransparentAction()
 fun AppUIExecutor.inWriteAction() =
   (this as AppUIExecutorEx).inWriteAction()
+fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ContextConstraint): AppUIExecutor =
+  (this as AppUIExecutorEx).withConstraint(constraint)
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
