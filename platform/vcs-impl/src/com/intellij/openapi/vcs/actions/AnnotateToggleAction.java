@@ -185,7 +185,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
 
     final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, upToDateLineNumbers, switcher, disposable);
-    presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs));
+    presentation.addAction(new ShowDiffFromAnnotation(project, fileAnnotation));
     presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
     presentation.addAction(Separator.getInstance());
 
