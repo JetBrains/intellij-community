@@ -24,7 +24,7 @@ import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
-import com.intellij.testGuiFramework.remote.IdeProcessControlManager
+import com.intellij.testGuiFramework.remote.IdeControl
 import org.apache.log4j.Logger
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
@@ -80,7 +80,7 @@ object GuiTestLocalLauncher {
   fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
                     port: Int = 0,
                     testClassNames: List<String> = emptyList(),
-                    additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+                    additionalJvmOptions: List<Pair<String, String>> = emptyList()) {
     val args = createArgs(ide = ide, port = port, testClassNames = testClassNames, additionalJvmOptions = additionalJvmOptions)
     return startIde(ide = ide, ideaStartTest = ProcessBuilder().inheritIO().command(args))
   }
@@ -88,7 +88,7 @@ object GuiTestLocalLauncher {
   fun runIdeWithDTraceLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
                               port: Int = 0,
                               testClassName: String = "",
-                              additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+                              additionalJvmOptions: List<Pair<String, String>> = emptyList()) {
 
     val args = createArgs(ide = ide, port = port, testClassNames = listOf(testClassName), additionalJvmOptions = additionalJvmOptions)
 
@@ -148,32 +148,32 @@ object GuiTestLocalLauncher {
     val conditionalTimeout = if (GuiTestOptions.isDebug) 0 else timeOut
     val startLatch = CountDownLatch(1)
     thread(start = true, name = "IdeaThread") {
-      IdeProcessControlManager.submitIdeProcess(ideaStartTest.start())
+      IdeControl.submitIdeProcess(ideaStartTest.start())
       startLatch.countDown()
     }
     if (needToWait) {
       startLatch.await()
       if (conditionalTimeout != 0L)
-        IdeProcessControlManager.waitForCurrentProcess(conditionalTimeout, timeOutUnit)
+        IdeControl.waitForCurrentProcess(conditionalTimeout, timeOutUnit)
       else
-        IdeProcessControlManager.waitForCurrentProcess()
+        IdeControl.waitForCurrentProcess()
       try {
-        if (IdeProcessControlManager.exitValue() == 0) {
-          println("${ide.ideType} process completed successfully")
-          LOG.info("${ide.ideType} process completed successfully")
+        if (IdeControl.exitValue() == 0) {
+          println("${ide.ideType} processStdIn completed successfully")
+          LOG.info("${ide.ideType} processStdIn completed successfully")
         }
         else {
-          System.err.println("${ide.ideType} process execution error:")
-          val collectedError = BufferedReader(InputStreamReader(IdeProcessControlManager.getErrorStream())).lines().collect(
+          System.err.println("${ide.ideType} processStdIn execution error:")
+          val collectedError = BufferedReader(InputStreamReader(IdeControl.getErrorStream())).lines().collect(
             Collectors.joining("\n"))
           System.err.println(collectedError)
-          LOG.error("${ide.ideType} process execution error:")
+          LOG.error("${ide.ideType} processStdIn execution error:")
           LOG.error(collectedError)
           fail("Starting ${ide.ideType} failed.")
         }
       }
       catch (e: IllegalThreadStateException) {
-        IdeProcessControlManager.killIdeProcess()
+        IdeControl.closeIde()
         throw e
       }
     }
@@ -192,7 +192,7 @@ object GuiTestLocalLauncher {
                          mainClass: String = "com.intellij.idea.Main",
                          port: Int = 0,
                          testClassNames: List<String>,
-                         additionalJvmOptions: Array<Pair<String, String>> = emptyArray()):
+                         additionalJvmOptions: List<Pair<String, String>> = emptyList()):
     List<String> = createArgsBase(ide = ide,
                                   mainClass = mainClass,
                                   commandName = GuiTestStarter.COMMAND_NAME,
@@ -221,7 +221,7 @@ object GuiTestLocalLauncher {
                              firstStartClassName: String = "undefined",
                              port: Int,
                              testClassNames: List<String>,
-                             additionalJvmOptions: Array<Pair<String, String>> = emptyArray()): List<String> {
+                             additionalJvmOptions: List<Pair<String, String>> = emptyList()): List<String> {
     val customVmOptions = getCustomPassedOptions()
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())

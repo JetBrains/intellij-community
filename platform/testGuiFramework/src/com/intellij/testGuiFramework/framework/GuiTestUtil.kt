@@ -153,7 +153,7 @@ object GuiTestUtil {
     return !fatalErrors.isEmpty()
   }
 
-  // Called by IdeTestApplication via reflection.
+  // Called by GuiTestPaths via reflection.
   fun setUpDefaultGeneralSettings() {
 
   }
@@ -182,7 +182,7 @@ object GuiTestUtil {
     RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(projectsFolder.path)
   }
 
-  // Called by IdeTestApplication via reflection.
+  // Called by GuiTestPaths via reflection.
   fun waitForIdeToStart() {
     val firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START)
     val isFirstStart = firstStart != null && firstStart.toLowerCase() == "true"

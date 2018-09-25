@@ -9,7 +9,7 @@ import com.intellij.testGuiFramework.fixtures.extended.RowFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
+import com.intellij.testGuiFramework.framework.GuiTestPaths.testScreenshotDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
@@ -74,6 +74,11 @@ open class GuiTestCase {
   @Rule
   @JvmField
   val guiTestRule = GuiTestRule(projectsFolder.root.canonicalFile)
+
+  @get:Rule
+  val testRootPath: TemporaryFolder by lazy {
+    TemporaryFolder()
+  }
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -265,8 +270,6 @@ open class GuiTestCase {
     func(this.editor())
   }
 
-  fun JDialogFixture.editor(func: EditorFixture.() -> Unit) = func(this.editor)
-
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
@@ -306,7 +309,7 @@ open class GuiTestCase {
   fun screenshot(component: Component, screenshotName: String) {
 
     val extension = "${getScaleSuffix()}.jpg"
-    val pathWithTestFolder = getTestScreenshotDirPath().path + slash + this.guiTestRule.getTestName()
+    val pathWithTestFolder = testScreenshotDirPath.path + slash + this.guiTestRule.getTestName()
     val fileWithTestFolder = File(pathWithTestFolder)
     FileUtil.ensureExists(fileWithTestFolder)
     var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
