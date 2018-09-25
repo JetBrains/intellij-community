@@ -34,7 +34,6 @@ import java.util.Objects;
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
              RefactoringListenerProvider, InputRedirectAware {
-
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String MAIN_CLASS_NAME;

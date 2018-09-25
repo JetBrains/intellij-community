@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -53,7 +52,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         usages.add(StatisticsUtilKt.getBooleanUsage("textFilter.regex", properties.get(TEXT_FILTER_REGEX)));
         usages.add(StatisticsUtilKt.getBooleanUsage("textFilter.matchCase", properties.get(TEXT_FILTER_MATCH_CASE)));
 
-        for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
+        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
           if (factory.showMenuItem()) {
             VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(factory.getId());
             usages.add(StatisticsUtilKt.getBooleanUsage("highlighter." + UsageDescriptorKeyValidator.ensureProperKey(factory.getId()),

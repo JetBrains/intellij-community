@@ -341,14 +341,14 @@ public class PyCharmEduInitialConfigurator {
 
     ExtensionsArea projectArea = Extensions.getArea(project);
 
-    for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
+    for (SelectInTarget target : SelectInTarget.EP_NAME.getExtensions(project)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId()) ||
           ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
         projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
       }
     }
 
-    for (AbstractProjectViewPane pane : Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, project)) {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensions(project)) {
       if (pane.getId().equals(ScopeViewPane.ID)) {
         Disposer.dispose(pane);
         projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);

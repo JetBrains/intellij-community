@@ -7,7 +7,6 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -51,7 +50,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
     myCachedAnnotators = cachedAnnotators;
-    myErrorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, project);
+    myErrorFilters = HighlightErrorFilter.EP_NAME.getExtensions(project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
   }

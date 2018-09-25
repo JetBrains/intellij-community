@@ -24,7 +24,6 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -349,7 +348,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         .map(factory -> factory.fun(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
-      Stream.of(Extensions.getExtensions(PositionManagerFactory.EP_NAME, getProject()))
+      Stream.of(PositionManagerFactory.EP_NAME.getExtensions(getProject()))
         .map(factory -> factory.createPositionManager(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);

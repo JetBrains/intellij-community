@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -58,7 +57,7 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ServiceReferenceTagInfo("uses"));
     myInfos.add(new ValueDocTagInfo());
 
-    Collections.addAll(myInfos, Extensions.getExtensions(JavadocTagInfo.EP_NAME, project));
+    Collections.addAll(myInfos, JavadocTagInfo.EP_NAME.getExtensions(project));
 
     for (CustomJavadocTagProvider extension : CustomJavadocTagProvider.EP_NAME.getExtensionList()) {
       myInfos.addAll(extension.getSupportedTags());
