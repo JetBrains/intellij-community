@@ -77,6 +77,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
 
       Disposer.dispose(requestExecutorHolder)
     })
+    changes.diffAction.registerCustomShortcutSet(wrapper, wrapper)
     return wrapper
   }
 
