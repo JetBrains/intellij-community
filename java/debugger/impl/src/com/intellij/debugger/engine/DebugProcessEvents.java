@@ -467,9 +467,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
     else {
       showStatusText("");
-      if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.disable();
-      }
+      stopWatchingMethodReturn();
       getSuspendManager().voteSuspend(suspendContext);
       if (hint != null) {
         final MethodFilter methodFilter = hint.getMethodFilter();
@@ -573,9 +571,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           suspendManager.voteResume(suspendContext);
         }
         else {
-          if (myReturnValueWatcher != null) {
-            myReturnValueWatcher.disable();
-          }
+          stopWatchingMethodReturn();
           //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
           //  // there could be explicit resume as a result of call to voteSuspend()
           //  // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_

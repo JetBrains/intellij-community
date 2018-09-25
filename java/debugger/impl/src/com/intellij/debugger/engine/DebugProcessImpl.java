@@ -1541,10 +1541,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
       hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(thread);
-      final MethodReturnValueWatcher rvWatcher = myReturnValueWatcher;
-      if (rvWatcher != null) {
-        rvWatcher.enable(thread.getThreadReference());
-      }
+      startWatchingMethodReturn(thread);
       doStep(suspendContext, thread, myStepSize, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
@@ -1639,10 +1636,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       applyThreadFilter(stepThread);
 
-      final MethodReturnValueWatcher rvWatcher = myReturnValueWatcher;
-      if (rvWatcher != null) {
-        rvWatcher.enable(stepThread.getThreadReference());
-      }
+      startWatchingMethodReturn(stepThread);
 
       doStep(suspendContext, stepThread, myStepSize, getStepSize(), hint);
 
@@ -2256,5 +2250,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public boolean isEvaluationPossible() {
     return getSuspendManager().getPausedContext() != null;
+  }
+
+  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.enable(thread.getThreadReference());
+    }
+  }
+
+  void stopWatchingMethodReturn() {
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.disable();
+    }
   }
 }
