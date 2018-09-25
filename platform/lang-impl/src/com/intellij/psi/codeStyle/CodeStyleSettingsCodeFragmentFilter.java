@@ -117,15 +117,26 @@ public class CodeStyleSettingsCodeFragmentFilter {
   @Nullable
   private static CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
                                                            CodeStyleSettings tempSettings) {
+    CustomCodeStyleSettings fromLanguageProvider = getCustomSettingsFromProvider(languageProvider, tempSettings);
+    if (fromLanguageProvider != null) {
+      return fromLanguageProvider;
+    }
     for (CodeStyleSettingsProvider codeStyleSettingsProvider : EXTENSION_POINT_NAME.getExtensionList()) {
       if (languageProvider.getLanguage().equals(codeStyleSettingsProvider.getLanguage())) {
-        CustomCodeStyleSettings modelSettings = codeStyleSettingsProvider.createCustomSettings(tempSettings);
-        if (modelSettings != null) {
-          return tempSettings.getCustomSettings(modelSettings.getClass());
+        CustomCodeStyleSettings settings = getCustomSettingsFromProvider(codeStyleSettingsProvider, tempSettings);
+        if (settings != null) {
+          return null;
         }
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
+                                                                       CodeStyleSettings tempSettings) {
+    CustomCodeStyleSettings modelSettings = languageProvider.createCustomSettings(tempSettings);
+    return modelSettings != null ? tempSettings.getCustomSettings(modelSettings.getClass()) : null;
   }
 
   private boolean formattingChangedFragment() {
