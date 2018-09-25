@@ -27,6 +27,7 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
@@ -64,9 +65,15 @@ import javax.swing.JPanel
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
+  companion object {
+    @ClassRule
+    @JvmField
+    val projectsFolder: TemporaryFolder = TemporaryFolder()
+  }
+
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule()
+  val guiTestRule = GuiTestRule(projectsFolder.root.canonicalFile)
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -74,10 +81,6 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
-  @get:Rule
-  val testRootPath: TemporaryFolder by lazy {
-    TemporaryFolder()
-  }
 
   fun robot() = guiTestRule.robot()
 

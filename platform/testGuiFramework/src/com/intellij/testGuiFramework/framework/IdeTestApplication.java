@@ -89,45 +89,6 @@ public class IdeTestApplication {
     return rootDirPath;
   }
 
-
-  @NotNull
-  public static synchronized IdeTestApplication getInstance() throws Exception {
-    String customConfigPath = GuiTestUtil.INSTANCE.getSystemPropertyOrEnvironmentVariable(CUSTOM_CONFIG_PATH);
-    String customSystemPath = GuiTestUtil.INSTANCE.getSystemPropertyOrEnvironmentVariable(CUSTOM_SYSTEM_PATH);
-    File configDirPath = null;
-    boolean isDefaultConfig = true;
-    if (StringUtil.isEmpty(customConfigPath)) {
-      configDirPath = getConfigDirPath();
-      System.setProperty(PROPERTY_CONFIG_PATH, configDirPath.getPath());
-    } else {
-      isDefaultConfig = false;
-      File customConfigFile = new File(customConfigPath);
-      System.setProperty(PROPERTY_CONFIG_PATH, customConfigFile.getPath());
-    }
-
-    if (! StringUtil.isEmpty(customSystemPath)) System.setProperty(PROPERTY_SYSTEM_PATH, Paths.get(customSystemPath).toFile().getPath());
-
-    //Force Swing FileChooser on Mac (instead of native one) to be able to use FEST to drive it.
-    System.setProperty("native.mac.file.chooser.enabled", "false");
-
-    //We are using this property to skip testProjectLeak in _LastSuiteTests
-    System.setProperty("idea.test.guimode", "true");
-
-    if (!isLoaded()) {
-      ourInstance = new IdeTestApplication();
-      if (isDefaultConfig) recreateDirectory(configDirPath);
-
-      File newProjectsRootDirPath = GuiTestOptions.INSTANCE.getProjectDirPath();
-      recreateDirectory(newProjectsRootDirPath);
-
-      ClassLoader ideClassLoader = ourInstance.getIdeClassLoader();
-      Class<?> clazz = ideClassLoader.loadClass(GuiTestUtil.class.getCanonicalName());
-      method("waitForIdeToStart").in(clazz).invoke();
-    }
-
-    return ourInstance;
-  }
-
   @NotNull
   private static File getConfigDirPath() throws IOException {
     File dirPath = new File(getGuiTestRootDirPath(), "config");

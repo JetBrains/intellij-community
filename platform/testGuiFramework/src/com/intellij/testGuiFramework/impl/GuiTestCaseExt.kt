@@ -16,7 +16,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ErrorCollector
-import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
 
 open class GuiTestCaseExt : GuiTestCase() {
@@ -34,7 +33,7 @@ open class GuiTestCaseExt : GuiTestCase() {
   val logActionsDuringTest = LogActionsDuringTest()
 
   val projectFolder: String by lazy {
-    testRootPath.newFolder(testMethod.methodName).canonicalPath
+    projectsFolder.newFolder(testMethod.methodName).canonicalPath
   }
 
 //  @Rule

@@ -67,13 +67,6 @@ object GuiTestOptions {
     }
   }
 
-  val tempDirPath: File by lazy { File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))) }
-  val projectDirPath: File by lazy {
-    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
-    // EditorFixture seems to require a canonical path when opening the file.
-    File(tempDirPath, "guiTest").canonicalFile
-  }
-
   private inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {
     val value = System.getProperty(key) ?: return defaultValue
     return when (defaultValue) {
