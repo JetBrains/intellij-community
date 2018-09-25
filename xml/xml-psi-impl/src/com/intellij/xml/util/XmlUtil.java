@@ -917,6 +917,15 @@ public class XmlUtil {
       else if (localName.equals("union")) {
         exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
+        XmlAttribute attribute = tag.getAttribute("memberTypes");
+        if (attribute != null && attribute.getValueElement() != null) {
+          for (PsiReference reference : attribute.getValueElement().getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof XmlTag) {
+              processEnumerationValues((XmlTag)resolve, tagProcessor);
+            }
+          }
+        }
       }
       else if (localName.equals("extension")) {
         XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
