@@ -916,7 +916,6 @@ class JsonSchemaAnnotatorChecker {
   private JsonSchemaObject processOneOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> oneOf) {
     final List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers = ContainerUtil.newArrayList();
     final List<JsonSchemaObject> candidateErroneousSchemas = ContainerUtil.newArrayList();
-    boolean wasTypeError = false;
     final List<JsonSchemaObject> correct = new SmartList<>();
     for (JsonSchemaObject object : oneOf) {
       // skip it if something JS awaited, we do not process it currently
@@ -930,10 +929,9 @@ class JsonSchemaAnnotatorChecker {
         candidateErroneousSchemas.clear();
         correct.add(object);
       }
-      else if (!wasTypeError || !checker.isHadTypeError()) {
+      else {
         candidateErroneousCheckers.add(checker);
         candidateErroneousSchemas.add(object);
-        wasTypeError = checker.isHadTypeError();
       }
     }
     if (correct.size() == 1) return correct.get(0);
@@ -1110,6 +1108,18 @@ class JsonSchemaAnnotatorChecker {
                                      isOneOf ? JsonValidationError.FixableIssueKind.MissingOneOfProperty : JsonValidationError.FixableIssueKind.MissingAnyOfProperty,
                                      new JsonValidationError.MissingOneOfPropsIssueData(errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData()).collect(
                                        Collectors.toList())), errors.iterator().next().getPriority());
+    }
+
+    if (commonIssueKind == JsonValidationError.FixableIssueKind.ProhibitedType) {
+      final Set<JsonSchemaType> allTypes = errors.stream().map(e -> (JsonValidationError.TypeMismatchIssueData)e.getIssueData())
+        .flatMap(d -> Arrays.stream(d.expectedTypes)).collect(Collectors.toSet());
+
+      if (allTypes.size() == 1) return errors.iterator().next();
+
+      String commonTypeMessage = "Type is not allowed. Expected one of: " + allTypes.stream().map(t -> t.getDescription()).sorted().collect(Collectors.joining(", ")) + ".";
+      return new JsonValidationError(commonTypeMessage, JsonValidationError.FixableIssueKind.TypeMismatch,
+                                     new JsonValidationError.TypeMismatchIssueData(ContainerUtil.toArray(allTypes, JsonSchemaType[]::new)),
+                                     errors.iterator().next().getPriority());
     }
 
     return null;

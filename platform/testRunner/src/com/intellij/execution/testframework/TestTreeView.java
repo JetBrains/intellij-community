@@ -192,7 +192,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     new TreeSpeedSearch(this, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
-      return testProxy.getName();
+      return getPresentableName(testProxy);
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
@@ -208,6 +208,10 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       }
       return null;
     });
+  }
+
+  protected String getPresentableName(AbstractTestProxy testProxy) {
+    return testProxy.getName();
   }
 
   public boolean isExpandableHandlerVisibleForCurrentRow(int row) {

@@ -26,6 +26,8 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   static final String JAVA_UTIL_REGEX_PATTERN = "[Ljava/util/regex/Pattern;";
   static final String NULL_PATTERN = "((((";
 
+  @SuppressWarnings("ConstantConditions") static final boolean NEW_ASM = Opcodes.API_VERSION > Opcodes.ASM6;
+
   private final String myPatternAnnotationClassName;
   private final boolean myDoAssert;
   private final InstrumentationClassFinder myClassFinder;
@@ -33,8 +35,10 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private final LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
 
   private String myClassName;
-  private boolean myStatic;
-  private boolean myNested;
+  private boolean myEnum;
+  private boolean myInner;
+  private boolean myEnclosed;
+  private boolean myHasAssertions;
   private boolean myHasStaticInitializer;
   private boolean myInstrumented;
   private RuntimeException myPostponedError;
@@ -65,13 +69,29 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
-    myStatic = (access & ACC_STATIC) != 0;
+    myEnum = (access & ACC_ENUM) != 0;
+  }
+
+  @Override
+  public void visitInnerClass(String name, String outerName, String innerName, int access) {
+    super.visitInnerClass(name, outerName, innerName, access);
+    if (myClassName.equals(name)) {
+      myInner = (access & ACC_STATIC) == 0;
+    }
   }
 
   @Override
   public void visitOuterClass(String owner, String name, String desc) {
     super.visitOuterClass(owner, name, desc);
-    myNested = true;
+    myEnclosed = true;
+  }
+
+  @Override
+  public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    if (name.equals(ASSERTIONS_DISABLED_NAME)) {
+      myHasAssertions = true;
+    }
+    return super.visitField(access, name, desc, signature, value);
   }
 
   @Override
@@ -87,7 +107,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
 
       addField(PATTERN_CACHE_NAME, ACC_PRIVATE | ACC_FINAL | ACC_STATIC | ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
 
-      if (myDoAssert) {
+      if (myDoAssert && !myHasAssertions) {
         addField(ASSERTIONS_DISABLED_NAME, ACC_FINAL | ACC_STATIC | ACC_SYNTHETIC, "Z");
       }
 
@@ -111,7 +131,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   }
 
   private void patchStaticInitializer(MethodVisitor mv) {
-    if (myDoAssert) {
+    if (myDoAssert && !myHasAssertions) {
       mv.visitLdcInsn(Type.getType("L" + myClassName + ";"));
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z", false);
       Label l0 = new Label();
@@ -159,9 +179,9 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       Type[] argTypes = Type.getArgumentTypes(desc);
       Type returnType = Type.getReturnType(desc);
       if (isCandidate(argTypes, returnType)) {
-        boolean innerInit = myNested && !myStatic && "<init>".equals(name);
-        int parameters = countSignatureParameters(signature);
-        int offset = innerInit && parameters >= 0 ? Math.max(0, argTypes.length - parameters - 1) : 0;
+        int offset = !"<init>".equals(name) ? 0 : NEW_ASM
+          ? (myEnum ? -2 : myInner ? -1 : 0)
+          : (myEnclosed && myInner && signature != null ? Math.max(0, argTypes.length - countSignatureParameters(signature) - 1) : 0);
         return new InstrumentationAdapter(this, methodvisitor, argTypes, returnType, myClassName, name, myDoAssert, isStatic, offset);
       }
     }
@@ -186,9 +206,8 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   }
 
   private static int countSignatureParameters(String signature) {
-    int[] count = {-1};
+    int[] count = {0};
     if (signature != null) {
-      count[0] = 0;
       new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.API_VERSION) {
         @Override
         public SignatureVisitor visitParameterType() {

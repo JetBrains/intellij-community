@@ -26,15 +26,14 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
 
 public class RootIndex {
@@ -175,7 +174,7 @@ public class RootIndex {
       }
     }
 
-    for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary descriptor : libraries) {
         for (VirtualFile sourceRoot : descriptor.getSourceRoots()) {
@@ -869,11 +868,11 @@ public class RootIndex {
     Condition<VirtualFile> libraryExclusionPredicate = getLibraryExclusionPredicate(librarySourceRootInfo);
 
     DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExclusionPredicate != null
-                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, sourceFolder, 
+                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, sourceFolder,
                                                                          libraryClassRoot, inModuleSources, inLibrarySource, !inProject,
                                                                          contentExcludePatterns, libraryExclusionPredicate, unloadedModuleName)
-                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, sourceFolder, 
-                                                          libraryClassRoot, inModuleSources, inLibrarySource, 
+                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, sourceFolder,
+                                                          libraryClassRoot, inModuleSources, inLibrarySource,
                                                           !inProject, unloadedModuleName);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);

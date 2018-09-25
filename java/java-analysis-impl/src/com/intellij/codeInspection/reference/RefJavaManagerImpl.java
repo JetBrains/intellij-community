@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -442,6 +441,11 @@ public class RefJavaManagerImpl extends RefJavaManager {
       .flatMap(c -> Arrays.stream(c.getSuperTypes()))
       .map(PsiClassType::resolve)
       .filter(Objects::nonNull);
+  }
+
+  @Override
+  public void markExternalReferencesProcessed(@NotNull RefElement file) {
+    getEntryPointsManager().addEntryPoint(file, false);
   }
 
   @Override

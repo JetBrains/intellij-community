@@ -8,6 +8,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.NEW_ASM;
 import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.isStringType;
 
 class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
@@ -50,7 +51,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
     AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
 
-    if (parameter >= myParamAnnotationOffset && isStringType(myArgTypes[parameter])) {
+    if (NEW_ASM ? isStringType(myArgTypes[parameter - myParamAnnotationOffset]) : parameter >= myParamAnnotationOffset && isStringType(myArgTypes[parameter])) {
       String annotationClassName = Type.getType(desc).getClassName();
       String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
       if (pattern != null) {

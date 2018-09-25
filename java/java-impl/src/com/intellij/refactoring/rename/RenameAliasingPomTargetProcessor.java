@@ -2,7 +2,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
@@ -32,7 +31,7 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
     }
 
     if (target != null) {
-      for (AliasingPsiTargetMapper mapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
+      for (AliasingPsiTargetMapper mapper : AliasingPsiTargetMapper.EP_NAME.getExtensionList()) {
         for (AliasingPsiTarget psiTarget : mapper.getTargets(target)) {
           PsiElement psiElement = PomService.convertToPsi(psiTarget);
           String name = psiTarget.getNameAlias(newName);

@@ -7,7 +7,6 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -114,7 +113,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         IndexPatternBuilder builderForFile = null;
-        for (IndexPatternBuilder builder : Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
+        for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
           Lexer lexerFromBuilder = builder.getIndexingLexer(file);
           if (lexerFromBuilder != null) {
             lexer = lexerFromBuilder;

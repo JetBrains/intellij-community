@@ -82,8 +82,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
-      final PyExpression expression = node.getContainedExpression();
       if (node.textContains('\n')) return;
+      final PyExpression expression = node.getContainedExpression();
+      if (expression == null) return;
       final PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
       if (yieldExpression != null) return;
       if (expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {

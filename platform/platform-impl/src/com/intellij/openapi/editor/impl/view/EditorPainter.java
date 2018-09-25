@@ -155,13 +155,15 @@ public class EditorPainter implements TextDrawingCallback {
     }
     else {
       int lineHeight = myView.getLineHeight();
-      int displayedLinesCount = endVisualLine - startVisualLine + 1;
+      int displayedLinesCount = marginWidths.x.length - 1;
       for(int i = 0; i <= displayedLinesCount; i++) {
         int y = marginWidths.y[i];
+        int yStart = i == 0 ? 0 : y;
+        int yEnd = i == displayedLinesCount ? clip.y + clip.height : y + lineHeight;
         float width = marginWidths.x[i];
         if (width == 0) width = baseMarginWidth;
         int x = myCorrector.marginX(width);
-        g.fillRect(x, i == 0 ? 0 : y, 1,  i == displayedLinesCount ? clip.height - y : y + lineHeight);
+        g.fillRect(x, yStart, 1,  yEnd - yStart);
         if (i < displayedLinesCount) {
           float nextWidth = marginWidths.x[i + 1];
           if (nextWidth == 0) nextWidth = baseMarginWidth;
@@ -196,11 +198,12 @@ public class EditorPainter implements TextDrawingCallback {
 
   private MarginPositions paintBackground(Graphics2D g, Rectangle clip, int yShift, int startVisualLine, int endVisualLine,
                                           IterationState.CaretData caretData, TIntObjectHashMap<List<LineExtensionData>> extensionData) {
-    boolean calculateMarginWidths = Registry.is("editor.adjust.right.margin") && isMarginShown();
-    MarginPositions marginWidths = calculateMarginWidths ? new MarginPositions(endVisualLine - startVisualLine + 2) : null;
-    int maxVisualLine = endVisualLine + (calculateMarginWidths ? 1 : 0);
     int lineCount = myEditor.getVisibleLineCount();
-    
+    boolean calculateMarginWidths = Registry.is("editor.adjust.right.margin") && isMarginShown() && startVisualLine < lineCount;
+    MarginPositions marginWidths = calculateMarginWidths ? new MarginPositions(Math.min(endVisualLine, lineCount - 1) - startVisualLine + 2)
+                                                         : null;
+    int maxVisualLine = endVisualLine + (calculateMarginWidths ? 1 : 0);
+
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
     final VisualPosition primarySelectionStart = myEditor.getSelectionModel().getSelectionStartPosition();
     final VisualPosition primarySelectionEnd = myEditor.getSelectionModel().getSelectionEndPosition();
@@ -214,7 +217,7 @@ public class EditorPainter implements TextDrawingCallback {
     VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
-      if (visualLine > maxVisualLine || visualLine >= lineCount) break;
+      if (visualLine > maxVisualLine) break;
       int y = visLinesIterator.getY() + yShift;
       if (calculateMarginWidths) marginWidths.y[visualLine - startVisualLine] = y;
       boolean dryRun = visualLine > endVisualLine;
@@ -259,6 +262,9 @@ public class EditorPainter implements TextDrawingCallback {
       }, calculateMarginWidths && !visLinesIterator.endsWithSoftWrap() && !visLinesIterator.startsWithSoftWrap()
          ? width -> marginWidths.x[visualLine - startVisualLine] = width : null);
       visLinesIterator.advance();
+    }
+    if (calculateMarginWidths && endVisualLine >= lineCount - 1) {
+      marginWidths.y[marginWidths.y.length - 1] = marginWidths.y[marginWidths.y.length - 2] + myView.getLineHeight();
     }
     return marginWidths;
   }

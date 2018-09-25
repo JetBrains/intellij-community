@@ -25,14 +25,17 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   @SuppressWarnings("SSBasedInspection") private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
+  @SuppressWarnings("ConstantConditions") private static final boolean NEW_ASM = Opcodes.API_VERSION > Opcodes.ASM6;
+
   private final Map<String, Map<Integer, String>> myMethodParamNames;
   private String myClassName;
   private boolean myIsModification = false;
   private RuntimeException myPostponedError;
   private final AuxiliaryMethodGenerator myAuxGenerator;
   private final Set<String> myNotNullAnnotations = new HashSet<String>();
-  private boolean myStatic;
+  private boolean myEnum;
   private boolean myInner;
+  private boolean myEnclosed;
 
   private NotNullVerifyingInstrumenter(ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
     super(Opcodes.API_VERSION, classVisitor);
@@ -95,13 +98,21 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
-    myStatic = isStatic(access);
+    myEnum = (access & ACC_ENUM) != 0;
+  }
+
+  @Override
+  public void visitInnerClass(String name, String outerName, String innerName, int access) {
+    super.visitInnerClass(name, outerName, innerName, access);
+    if (myClassName.equals(name)) {
+      myInner = (access & ACC_STATIC) == 0;
+    }
   }
 
   @Override
   public void visitOuterClass(String owner, String name, String desc) {
     super.visitOuterClass(owner, name, desc);
-    myInner = true;
+    myEnclosed = true;
   }
 
   private static class NotNullState {
@@ -141,11 +152,13 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
     final boolean isStatic = isStatic(access);
     final Type[] args = Type.getArgumentTypes(desc);
-    boolean hasOuterClassParameter = myInner && !myStatic && "<init>".equals(name);
+    boolean hasOuterClassParameter = myEnclosed && myInner && "<init>".equals(name);
     // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
     final int syntheticCount = signature == null ? 0 : hasOuterClassParameter ? 1 : Math.max(0, args.length - getSignatureParameterCount(signature));
     // workaround for ASM workaround for javac bug: http://forge.ow2.org/tracker/?func=detail&aid=317788&group_id=23&atid=100023
-    final int paramAnnotationOffset = signature == null ? 0 : hasOuterClassParameter ? Math.max(0, args.length - getSignatureParameterCount(signature) - 1) : 0;
+    final int paramAnnotationOffset = !"<init>".equals(name) ? 0 : NEW_ASM
+      ? (myEnum ? -2 : myInner ? -1 : 0)
+      : signature != null && hasOuterClassParameter ? Math.max(0, args.length - getSignatureParameterCount(signature) - 1) : 0;
 
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
@@ -188,7 +201,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       @Override
       public AnnotationVisitor visitParameterAnnotation(int parameter, String anno, boolean visible) {
         AnnotationVisitor base = mv.visitParameterAnnotation(parameter, anno, visible);
-        if (parameter < paramAnnotationOffset) return base;
+        if (!NEW_ASM && parameter < paramAnnotationOffset) return base;
         return checkNotNullParameter(parameter - paramAnnotationOffset, anno, base);
       }
 

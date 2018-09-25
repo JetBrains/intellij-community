@@ -6,7 +6,6 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ImplicitNamespaceDescriptorProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,8 +24,8 @@ import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -234,8 +233,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @NotNull
-  protected Collection<PsiReference> createPrefixReferences(@NotNull ASTNode startTagName, 
-                                                            @NotNull String prefix, 
+  protected Collection<PsiReference> createPrefixReferences(@NotNull ASTNode startTagName,
+                                                            @NotNull String prefix,
                                                             @NotNull TagNameReference tagRef) {
     return Collections.singleton(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
                                      tagRef));
@@ -440,7 +439,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (file == null) return null;
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
-      for (ImplicitNamespaceDescriptorProvider provider : Extensions.getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
+      for (ImplicitNamespaceDescriptorProvider provider : ImplicitNamespaceDescriptorProvider.EP_NAME.getExtensionList()) {
         XmlNSDescriptor nsDescriptor = provider.getNamespaceDescriptor(module, ns, file);
         if (nsDescriptor != null) return nsDescriptor;
       }
@@ -499,7 +498,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Nullable
   protected XmlElementDescriptor computeElementDescriptor() {
-    for (XmlElementDescriptorProvider provider : Extensions.getExtensions(XmlElementDescriptorProvider.EP_NAME)) {
+    for (XmlElementDescriptorProvider provider : XmlElementDescriptorProvider.EP_NAME.getExtensionList()) {
       XmlElementDescriptor elementDescriptor = provider.getDescriptor(this);
       if (elementDescriptor != null) {
         return elementDescriptor;
@@ -788,7 +787,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   public String getNamespacePrefix() {
     return getNamespacePrefix(getName());
   }
-  
+
   @NotNull
   protected String getNamespacePrefix(@NotNull String name) {
     return XmlUtil.findPrefixByQualifiedName(name);
@@ -1159,8 +1158,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       if (treePrev != null &&
           treeNext != null &&
           treePrev.getElementType() == XmlElementType.XML_TEXT &&
-          treeNext.getElementType() == XmlElementType.XML_TEXT && 
-          !TreeUtil.containsOuterLanguageElements(treePrev) && 
+          treeNext.getElementType() == XmlElementType.XML_TEXT &&
+          !TreeUtil.containsOuterLanguageElements(treePrev) &&
           !TreeUtil.containsOuterLanguageElements(treeNext)) {
         final XmlText prevText = (XmlText)treePrev.getPsi();
         final XmlText nextText = (XmlText)treeNext.getPsi();

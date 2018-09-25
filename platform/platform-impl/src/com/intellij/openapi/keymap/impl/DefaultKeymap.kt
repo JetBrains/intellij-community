@@ -5,7 +5,6 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.SystemInfo
@@ -22,7 +21,7 @@ open class DefaultKeymap {
   private val nameToScheme = THashMap<String, Keymap>()
 
   protected open val providers: Array<BundledKeymapProvider>
-    get() = Extensions.getExtensions(BundledKeymapProvider.EP_NAME)
+    get() = BundledKeymapProvider.EP_NAME.extensions
 
   init {
     for (provider in providers) {

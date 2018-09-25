@@ -135,17 +135,14 @@ public class TestClassCollector {
   }
 
   @Nullable
-  public static Path getRootPath(Module module, final boolean chooseSingleModule) {
+  public static VirtualFile[] getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
-      VirtualFile[] roots = OrderEnumerator.orderEntries(module)
+      return OrderEnumerator.orderEntries(module)
         .withoutSdk()
         .withoutLibraries()
         .withoutDepModules()
         .classes()
         .getRoots();
-      if (roots.length > 0) {
-        return Paths.get(VfsUtilCore.virtualToIoFile(roots[0]).toURI());
-      }
     }
     return null;
   }

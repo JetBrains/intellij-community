@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.bool;
 
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 public class DemorgansIntentionTest extends IPPTestCase {
@@ -27,7 +27,7 @@ public class DemorgansIntentionTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("demorgans.intention.name2");
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "||", "&&");
   }
 
   @Override

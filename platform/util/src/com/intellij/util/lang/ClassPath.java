@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 
+import static com.intellij.execution.CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX;
+
 public class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
@@ -145,7 +147,6 @@ public class ClassPath {
   @Nullable
   private synchronized Loader getLoader(int i) {
     while (myLoaders.size() < i + 1) {
-      boolean lastOne;
       URL url;
       synchronized (myUrls) {
         if (myUrls.empty()) {
@@ -156,13 +157,12 @@ public class ClassPath {
           return null;
         }
         url = myUrls.pop();
-        lastOne = myUrls.isEmpty();
       }
 
       if (myLoadersMap.containsKey(url)) continue;
 
       try {
-        initLoaders(url, lastOne, myLoaders.size());
+        initLoaders(url, myLoaders.size());
       }
       catch (IOException e) {
         Logger.getInstance(ClassPath.class).info("url: " + url, e);
@@ -180,7 +180,7 @@ public class ClassPath {
     return result;
   }
 
-  private void initLoaders(final URL url, boolean lastOne, int index) throws IOException {
+  private void initLoaders(final URL url, int index) throws IOException {
     String path;
 
     if (myAcceptUnescapedUrls) {
@@ -197,7 +197,8 @@ public class ClassPath {
     }
 
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      Loader loader = createLoader(url, index, new File(path), lastOne);
+      File file = new File(path);
+      Loader loader = createLoader(url, index, file, file.getName().startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX));
       if (loader != null) {
         initLoader(url, loader);
       }

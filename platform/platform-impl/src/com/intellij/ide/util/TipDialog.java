@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,7 @@ public class TipDialog extends DialogWrapper {
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel();
-    myTipPanel.setTips(ContainerUtil.newArrayList(Extensions.getExtensions(TipAndTrickBean.EP_NAME)));
+    myTipPanel.setTips(ContainerUtil.newArrayList(TipAndTrickBean.EP_NAME.getExtensionList()));
     myTipPanel.nextTip();
     setDoNotAskOption(myTipPanel);
     setHorizontalStretch(1.33f);

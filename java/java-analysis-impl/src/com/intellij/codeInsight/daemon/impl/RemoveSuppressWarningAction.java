@@ -29,6 +29,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +167,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     text = StringUtil.trimEnd(text, "\"");
     if (myID.equals(text)) {
       if (removeParent) {
-        parent.delete();
+        new CommentTracker().deleteAndRestoreComments(parent);
       }
       else {
         value.delete();

@@ -161,7 +161,7 @@ public class ActionUtil {
 
     String description = presentation.getText() + " action update (" + action.getClass() + ")";
     if (insidePerformDumbAwareUpdate++ == 0) {
-      ActionPauses.STAT.started(description);
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {

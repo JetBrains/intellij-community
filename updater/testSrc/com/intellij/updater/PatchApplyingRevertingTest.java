@@ -2,6 +2,7 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
+@RunFirst
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
   private PatchSpec myPatchSpec;

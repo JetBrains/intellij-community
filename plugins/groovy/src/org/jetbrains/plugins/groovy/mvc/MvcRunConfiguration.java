@@ -6,7 +6,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -278,7 +277,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     @Override
     protected final JavaParameters createJavaParameters() throws ExecutionException {
       JavaParameters javaParameters = createJavaParametersMVC();
-      for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      for(RunConfigurationExtension ext: RunConfigurationExtension.EP_NAME.getExtensionList()) {
         ext.updateJavaParameters(MvcRunConfiguration.this, javaParameters, getRunnerSettings());
       }
 

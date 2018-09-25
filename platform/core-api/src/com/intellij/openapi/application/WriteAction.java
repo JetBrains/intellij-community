@@ -81,7 +81,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   public static AccessToken start() {
     // get useful information about the write action
-    return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
+    return start(4);
+  }
+
+  @NotNull
+  private static AccessToken start(int stackDepthToMeaningfulFrame) {
+    Class callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(stackDepthToMeaningfulFrame), WriteAction.class);
+    return start(callerClass);
   }
 
   /**
@@ -100,7 +106,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * Must be called from the EDT.
    */
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
-    AccessToken token = start();
+    AccessToken token = start(4);
     try {
       action.run();
     }
@@ -114,7 +120,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * Must be called from the EDT.
    */
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
-    AccessToken token = start();
+    AccessToken token = start(4);
     try {
       return action.compute();
     }

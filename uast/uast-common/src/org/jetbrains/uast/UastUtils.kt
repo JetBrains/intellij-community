@@ -126,7 +126,7 @@ fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   return null
 }
 
-fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
+fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
   tailrec fun isChildOf(current: UElement?, probablyParent: UElement): Boolean {
     return when (current) {
       null -> false
@@ -138,6 +138,9 @@ fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false): Bool
   if (probablyParent == null) return false
   return isChildOf(if (strict) uastParent else this, probablyParent)
 }
+
+@Deprecated("contains a bug in negation of `strict` parameter", replaceWith = ReplaceWith("isUastChildOf(probablyElement, strict)"))
+fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false) = isUastChildOf(probablyParent, !strict)
 
 /**
  * Resolves the receiver element if it implements [UResolvable].

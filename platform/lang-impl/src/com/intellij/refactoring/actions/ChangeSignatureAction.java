@@ -46,7 +46,11 @@ public class ChangeSignatureAction extends BasePlatformRefactoringAction {
 
   @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    return elements.length == 1 && findTargetMember(elements[0]) != null;
+    if (elements.length == 1) {
+      PsiElement member = findTargetMember(elements[0]);
+      return member != null && getChangeSignatureHandler(member.getLanguage()) != null;
+    }
+    return false;
   }
 
   @Override

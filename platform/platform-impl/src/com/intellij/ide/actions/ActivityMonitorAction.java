@@ -107,6 +107,8 @@ class ActivityMonitorAction extends DumbAwareAction {
 
       private String getCommonThreadName(ThreadInfo info) {
         String name = info.getThreadName();
+        if (name.startsWith("AWT-EventQueue")) return "UI thread";
+
         int numberStart = CharArrayUtil.shiftBackward(name, name.length() - 1, "0123456789/ ") + 1;
         if (numberStart > 0) return name.substring(0, numberStart);
         return name;
@@ -139,6 +141,7 @@ class ActivityMonitorAction extends DumbAwareAction {
                className.startsWith("com.intellij.util.") ||
                className.startsWith("com.intellij.concurrency.") ||
                className.startsWith("com.intellij.psi.stubs.") ||
+               className.startsWith("com.intellij.ide.IdeEventQueue") ||
                className.startsWith("com.intellij.openapi.fileTypes.") ||
                className.startsWith("com.intellij.openapi.vfs.newvfs.persistent.PersistentFS") ||
                className.startsWith("com.intellij.openapi.vfs.newvfs.persistent.FSRecords") ||

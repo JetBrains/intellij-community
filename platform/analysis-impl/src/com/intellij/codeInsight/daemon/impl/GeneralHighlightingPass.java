@@ -440,7 +440,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private boolean forceHighlightParents() {
     boolean forceHighlightParents = false;
-    for(HighlightRangeExtension extension: Extensions.getExtensions(HighlightRangeExtension.EP_NAME)) {
+    for(HighlightRangeExtension extension: HighlightRangeExtension.EP_NAME.getExtensionList()) {
       if (extension.isForceHighlightParents(getFile())) {
         forceHighlightParents = true;
         break;

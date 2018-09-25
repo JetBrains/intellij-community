@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.JDOMUtil;
@@ -80,7 +79,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     return EXTENSION_ROOT_ATTR;
   }
 
-  public void writeExternal(@NotNull U configuration, @NotNull Element parentNode) {
+  public final void writeExternal(@NotNull U configuration, @NotNull Element parentNode) {
     Map<String, Element> map = new TreeMap<>();
     final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
@@ -120,8 +119,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     }
   }
 
-  public void validateConfiguration(@NotNull final U configuration,
-                                    final boolean isExecution) throws Exception {
+  public void validateConfiguration(@NotNull final U configuration, final boolean isExecution) throws Exception {
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration, null)) {
       extension.validateConfiguration(configuration, isExecution);
@@ -163,7 +161,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   @NotNull
   protected List<T> getApplicableExtensions(@NotNull U configuration) {
     List<T> extensions = new SmartList<>();
-    for (T extension : Extensions.getExtensions(myExtensionPointName)) {
+    for (T extension : myExtensionPointName.getExtensionList()) {
       if (extension.isApplicableFor(configuration)) {
         extensions.add(extension);
       }
@@ -174,7 +172,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   @NotNull
   protected List<T> getEnabledExtensions(@NotNull U configuration, @Nullable RunnerSettings runnerSettings) {
     List<T> extensions = new SmartList<>();
-    for (T extension : Extensions.getExtensions(myExtensionPointName)) {
+    for (T extension : myExtensionPointName.getExtensionList()) {
       if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
         extensions.add(extension);
       }
