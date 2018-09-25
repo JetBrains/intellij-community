@@ -45,8 +45,8 @@ public class FileHistoryUtil {
   }
 
   @NotNull
-  static List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details,
-                                             @NotNull Condition<? super Change> isRelevant) {
+  public static List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details,
+                                                    @NotNull Condition<? super Change> isRelevant) {
     List<Change> changes = filter(details.getChanges(), isRelevant);
     if (!changes.isEmpty()) return changes;
     if (details.getParents().size() > 1) {
@@ -64,7 +64,7 @@ public class FileHistoryUtil {
     return file.equals(revision.getFile());
   }
 
-  static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
+  public static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
     FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
     return VfsUtilCore.isAncestor(directory.getIOFile(), file.getIOFile(), false);
   }

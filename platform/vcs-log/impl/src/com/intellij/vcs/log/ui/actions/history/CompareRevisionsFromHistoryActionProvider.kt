@@ -19,12 +19,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.util.ObjectUtils.notNull
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLog
+import com.intellij.vcs.log.history.FileHistoryUtil
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import java.awt.event.KeyEvent
@@ -77,8 +79,7 @@ class CompareRevisionsFromHistoryActionProvider : AnActionExtensionProvider {
 
       val newestId = commits[0]
       val olderId = commits[1]
-      notNull(handler).showDiff(olderId.root, ui.getPathInCommit(olderId.hash), olderId.hash,
-                                ui.getPathInCommit(newestId.hash), newestId.hash)
+      notNull(handler).showDiff(olderId.root, filePath, olderId.hash, filePath, newestId.hash)
       return
     }
 
@@ -87,7 +88,8 @@ class CompareRevisionsFromHistoryActionProvider : AnActionExtensionProvider {
     val commitIds = ContainerUtil.map(commits) { c -> ui.logData.getCommitIndex(c.hash, c.root) }
     ui.logData.commitDetailsGetter.loadCommitsData(commitIds, { details ->
       val detail = notNull(ContainerUtil.getFirstItem(details))
-      val changes = ui.collectRelevantChanges(detail)
+      val changes = FileHistoryUtil.collectRelevantChanges(detail,
+                                                           Condition { change -> FileHistoryUtil.affectsDirectory(change, filePath) })
       VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.id.toShortString() + " for " + filePath.name,
                                     ContainerUtil.newArrayList(changes))
     }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message, MessageType.ERROR) },

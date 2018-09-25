@@ -43,8 +43,6 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
   @NotNull private final FilePath myPath;
@@ -150,7 +148,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @NotNull
-  public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
+  List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     FilePath filePath = getPathInCommit(details.getId());
     if (filePath == null) return ContainerUtil.emptyList();
     return FileHistoryUtil.collectRelevantChanges(details,
