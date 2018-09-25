@@ -27,16 +27,13 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogDiffHandler;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -93,11 +90,6 @@ public class CompareRevisionsFromHistoryActionProvider implements AnActionExtens
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-
-    if (e.getInputEvent() instanceof MouseEvent && ui.getTable().isResizingColumns()) {
-      // disable action during columns resize
-      return;
-    }
 
     VcsLogUsageTriggerCollector.triggerUsage(e);
 
