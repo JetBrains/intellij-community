@@ -234,4 +234,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testEnumConstructor() {
     doTest();
   }
+
+  public void testTypeParameterUsed() {
+    doTest();
+  }
 }

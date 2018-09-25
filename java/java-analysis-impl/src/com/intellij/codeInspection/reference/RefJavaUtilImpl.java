@@ -85,6 +85,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Override
+                       public boolean visitVariable(@NotNull UVariable node) {
+                         visitTypeRefs(node.getType());
+                         return false;
+                       }
+
+                       @Override
                        public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
                          final PsiElement target = node.resolve();
 
