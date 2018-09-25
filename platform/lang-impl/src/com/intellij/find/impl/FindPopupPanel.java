@@ -270,6 +270,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
       root.setWindowDecorationStyle(JRootPane.NONE);
+      UIUtil.markAsPossibleOwner((Dialog)w);
       w.setBackground(UIUtil.getPanelBackground());
       w.setMinimumSize(panelSize);
       if (prev == null) {
