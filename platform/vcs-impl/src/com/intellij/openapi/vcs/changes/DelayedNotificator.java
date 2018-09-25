@@ -70,6 +70,11 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
+  public void changeListDataChanged(ChangeList list) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListDataChanged(list));
+  }
+
+  @Override
   public void changeListCommentChanged(final ChangeList list, final String oldComment) {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment));
   }
