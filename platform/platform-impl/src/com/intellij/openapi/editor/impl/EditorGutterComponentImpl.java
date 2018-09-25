@@ -1063,6 +1063,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
+  @NotNull
+  @Override
+  public List<TextAnnotationGutterProvider> getTextAnnotations() {
+    return new ArrayList<>(myTextAnnotationGutters);
+  }
+
   private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     final double width = getFoldingAnchorWidth2D();
 

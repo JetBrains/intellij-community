@@ -19,7 +19,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -30,10 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
-import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -239,6 +238,26 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
         editor.getGutter().registerTextAnnotation(proxy);
       }
     }
+  }
+
+  @Nullable
+  static AnnotationFieldGutter getAnnotationFieldGutter(@NotNull Editor editor) {
+    List<TextAnnotationGutterProvider> annotations = ((EditorGutterComponentEx)editor.getGutter()).getTextAnnotations();
+    for (TextAnnotationGutterProvider annotation : annotations) {
+      if (annotation instanceof AnnotationGutterLineConvertorProxy) {
+        annotation = ((AnnotationGutterLineConvertorProxy)annotation).getDelegate();
+      }
+      if (annotation instanceof AnnotationFieldGutter) {
+        return ((AnnotationFieldGutter)annotation);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
+    AnnotationFieldGutter gutter = getAnnotationFieldGutter(editor);
+    return gutter != null ? gutter.getPresentation() : null;
   }
 
   private static void addActionsFromExtensions(@NotNull AnnotationPresentation presentation, @NotNull FileAnnotation fileAnnotation) {
