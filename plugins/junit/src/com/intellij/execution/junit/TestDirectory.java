@@ -47,10 +47,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 class TestDirectory extends TestPackage {
   TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -93,7 +93,7 @@ class TestDirectory extends TestPackage {
 
   @Nullable
   @Override
-  protected Path getRootPath() {
+  protected VirtualFile[] getRootPaths() {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(getConfiguration().getPersistentData().getDirName()));
     if (file == null) return null;
     Module dirModule = ModuleUtilCore.findModuleForFile(file, getConfiguration().getProject());
@@ -162,11 +162,11 @@ class TestDirectory extends TestPackage {
         protected void onFound() throws ExecutionException {
           String packageName = TestDirectory.super.getPackageName(getConfiguration().getPersistentData());
           try {
-            Path rootPath = getRootPath();
-            LOG.assertTrue(rootPath != null);
+            VirtualFile[] rootPaths = getRootPaths();
+            LOG.assertTrue(rootPaths != null);
             JUnitStarter
-              .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "",
-                                classes.isEmpty() ? packageName + "\\..*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
+              .printClassesList(Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "",
+                                classes.isEmpty() ? packageName + "\\..*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"),
                                 myTempFile);
           }
           catch (IOException e) {

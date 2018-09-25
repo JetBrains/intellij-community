@@ -32,10 +32,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
@@ -49,11 +49,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class TestPackage extends TestObject {
 
@@ -98,9 +98,19 @@ public class TestPackage extends TestObject {
       protected void onFound() {
 
         try {
-          addClassesListToJavaParameters(myClassNames, Function.ID, getPackageName(data), createTempFiles(), getJavaParameters());
+          String packageName = getPackageName(data);
+          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && 
+              myClassNames.isEmpty() && getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
+            VirtualFile[] rootPaths = getRootPaths();
+            LOG.assertTrue(rootPaths != null);
+            JUnitStarter.printClassesList(
+              Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "", packageName.isEmpty() ? ".*" : packageName + "\\..*", myTempFile);
+          }
+          else {
+            addClassesListToJavaParameters(myClassNames, Function.ID, packageName, createTempFiles(), getJavaParameters());
+          }
         }
-        catch (ExecutionException ignored) {}
+        catch (Exception ignored) {}
       }
     };
   }
@@ -112,31 +122,19 @@ public class TestPackage extends TestObject {
        return;
      }
     Set<PsiClass> classes = new THashSet<>();
-    if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
-      String packageName = getPackageName(getConfiguration().getPersistentData());
-      String[] classNames =
-        TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
-      PsiManager manager = PsiManager.getInstance(getConfiguration().getProject());
-      Arrays.stream(classNames)
-            .filter(className -> acceptClassName(className)) //check patterns
-            .filter(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())) != null)
-            .forEach(className -> names.add(className));
+    if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
+      Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
+      collectClassesRecursively(classFilter, acceptClassCondition, classes);
     }
     else {
-      if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-        Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
-        collectClassesRecursively(classFilter, acceptClassCondition, classes);
-      }
-      else {
-        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
-      }
-
-      classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
+      ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
     }
+
+    classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
   }
   
   @Nullable
-  protected Path getRootPath() {
+  protected VirtualFile[] getRootPaths() {
     Module module = getConfiguration().getConfigurationModule().getModule();
     boolean chooseSingleModule = getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
     return TestClassCollector.getRootPath(module, chooseSingleModule);
