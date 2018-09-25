@@ -167,7 +167,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private FileBreadcrumbsCollector findBreadcrumbsCollector() {
-    for (FileBreadcrumbsCollector extension : Extensions.getExtensions(FileBreadcrumbsCollector.EP_NAME)) {
+    for (FileBreadcrumbsCollector extension : Extensions.getExtensions(FileBreadcrumbsCollector.EP_NAME, myProject)) {
       if (extension.handlesFile(myFile)) {
         return extension;
       }
