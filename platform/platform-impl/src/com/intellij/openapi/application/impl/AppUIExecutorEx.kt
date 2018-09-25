@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.AsyncExecutionSupport.Companion.cancelJobOnDisposal
+import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.experimental.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
@@ -73,5 +74,14 @@ fun AppUIExecutor.coroutineDispatchingContext(): CoroutineContext =
   (this as AsyncExecution<*>).coroutineDispatchingContext()
 
 
-suspend fun <T> CoroutineScope.runUnlessDisposed(disposable: Disposable, block: suspend () -> T): T =
-  coroutineContext[Job]?.let { job -> disposable.cancelJobOnDisposal(job) }.use { block() }
+@Throws(CancellationException::class)
+suspend fun <T> CoroutineScope.runUnlessDisposed(disposable: Disposable, block: suspend () -> T): T {
+  if (Disposer.isDisposed(disposable)) throw AsyncExecutionSupport.DisposedException(disposable)
+  val context = this.coroutineContext
+  val childJob = Job(context[Job])
+  return disposable.cancelJobOnDisposal(childJob).use {
+    withContext(context + childJob) {
+      block()
+    }
+  }
+}
