@@ -13,114 +13,103 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.actions.history;
+package com.intellij.vcs.log.ui.actions.history
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.history.VcsDiffUtil;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDiffHandler;
-import com.intellij.vcs.log.history.FileHistoryUi;
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.history.VcsDiffUtil
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.util.ObjectUtils.notNull
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.VcsLog
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
+import java.awt.event.KeyEvent
 
-import java.awt.event.KeyEvent;
-import java.util.List;
+class CompareRevisionsFromHistoryActionProvider : AnActionExtensionProvider {
 
-import static com.intellij.util.ObjectUtils.notNull;
-
-public class CompareRevisionsFromHistoryActionProvider implements AnActionExtensionProvider {
-  private static final String COMPARE_TEXT = "Compare";
-  private static final String COMPARE_DESCRIPTION = "Compare selected versions";
-  private static final String DIFF_TEXT = "Show Diff";
-  private static final String DIFF_DESCRIPTION = "Show diff with previous version";
-
-  @Override
-  public boolean isActive(@NotNull AnActionEvent e) {
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null && filePath != null && filePath.isDirectory();
+  override fun isActive(e: AnActionEvent): Boolean {
+    val filePath = e.getData(VcsDataKeys.FILE_PATH)
+    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null && filePath != null && filePath.isDirectory
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    FileHistoryUi ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    val ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI)
+    val filePath = e.getData(VcsDataKeys.FILE_PATH)
     if (project == null || ui == null || filePath == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+      e.presentation.isEnabledAndVisible = false
+      return
     }
-    e.getPresentation().setVisible(true);
+    e.presentation.isVisible = true
 
-    VcsLog log = ui.getVcsLog();
-    updateActionText(e, log);
+    val log = ui.vcsLog
+    updateActionText(e, log)
 
-    if (e.getInputEvent() instanceof KeyEvent) {
-      e.getPresentation().setEnabled(true);
-      return;
+    if (e.inputEvent is KeyEvent) {
+      e.presentation.isEnabled = true
+      return
     }
 
-    List<CommitId> commits = log.getSelectedCommits();
-    if (commits.size() == 2) {
-      e.getPresentation().setEnabled(e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null);
+    val commits = log.selectedCommits
+    if (commits.size == 2) {
+      e.presentation.isEnabled = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null
     }
     else {
-      e.getPresentation().setEnabled(commits.size() == 1);
+      e.presentation.isEnabled = commits.size == 1
     }
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI)
+    val filePath = e.getRequiredData(VcsDataKeys.FILE_PATH)
 
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e)
 
-    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
-    if (commits.size() == 2) {
-      VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    val commits = ui.vcsLog.selectedCommits
+    if (commits.size == 2) {
+      val handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) ?: return
       // this check is needed here since we may come on key event without performing proper checks
-      if (handler == null) return;
 
-      CommitId newestId = commits.get(0);
-      CommitId olderId = commits.get(1);
-      notNull(handler).showDiff(olderId.getRoot(), ui.getPathInCommit(olderId.getHash()), olderId.getHash(),
-                                ui.getPathInCommit(newestId.getHash()), newestId.getHash());
-      return;
+      val newestId = commits[0]
+      val olderId = commits[1]
+      notNull(handler).showDiff(olderId.root, ui.getPathInCommit(olderId.hash), olderId.hash,
+                                ui.getPathInCommit(newestId.hash), newestId.hash)
+      return
     }
 
-    if (commits.size() != 1) return;
+    if (commits.size != 1) return
 
-    List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
-    ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
-      VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
-      List<Change> changes = ui.collectRelevantChanges(detail);
-      VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.getId().toShortString() + " for " + filePath.getName(),
-                                    ContainerUtil.newArrayList(changes));
-    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
-                                                          MessageType.ERROR), null);
+    val commitIds = ContainerUtil.map(commits) { c -> ui.logData.getCommitIndex(c.hash, c.root) }
+    ui.logData.commitDetailsGetter.loadCommitsData(commitIds, { details ->
+      val detail = notNull(ContainerUtil.getFirstItem(details))
+      val changes = ui.collectRelevantChanges(detail)
+      VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.id.toShortString() + " for " + filePath.name,
+                                    ContainerUtil.newArrayList(changes))
+    }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message, MessageType.ERROR) },
+                                                   null)
   }
 
-  public static void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {
-    if (log.getSelectedCommits().size() >= 2) {
-      e.getPresentation().setText(COMPARE_TEXT);
-      e.getPresentation().setDescription(COMPARE_DESCRIPTION);
-    }
-    else {
-      e.getPresentation().setText(DIFF_TEXT);
-      e.getPresentation().setDescription(DIFF_DESCRIPTION);
+  companion object {
+    private const val COMPARE_TEXT = "Compare"
+    private const val COMPARE_DESCRIPTION = "Compare selected versions"
+    private const val DIFF_TEXT = "Show Diff"
+    private const val DIFF_DESCRIPTION = "Show diff with previous version"
+
+    @JvmStatic
+    fun updateActionText(e: AnActionEvent, log: VcsLog) {
+      if (log.selectedCommits.size >= 2) {
+        e.presentation.text = COMPARE_TEXT
+        e.presentation.description = COMPARE_DESCRIPTION
+      }
+      else {
+        e.presentation.text = DIFF_TEXT
+        e.presentation.description = DIFF_DESCRIPTION
+      }
     }
   }
 }
