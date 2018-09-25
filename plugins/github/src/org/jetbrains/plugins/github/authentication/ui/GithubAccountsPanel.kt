@@ -32,10 +32,12 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -45,7 +47,8 @@ private const val LINK_TAG = "EDIT_LINK"
 
 internal class GithubAccountsPanel(private val project: Project,
                                    private val executorFactory: GithubApiRequestExecutor.Factory,
-                                   private val avatarLoader: CachingGithubUserAvatarLoader) : BorderLayoutPanel(), Disposable {
+                                   private val avatarLoader: CachingGithubUserAvatarLoader,
+                                   private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
@@ -220,13 +223,21 @@ internal class GithubAccountsPanel(private val project: Project,
       })
       return
     }
+    val pictureSize = JBUI.scale(ACCOUNT_PICTURE_SIZE)
+    // compute when parent frame is known, otherwise it will always be the default monitor scale
+    val scaleContext = JBUI.ScaleContext.create(accountList)
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
       lateinit var data: Pair<GithubUserDetailed, Image?>
 
       override fun run(indicator: ProgressIndicator) {
         val executor = executorFactory.create(token)
         val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
-        val image = avatarLoader.requestAvatar(executor, details).get()
+        val image = avatarLoader.requestAvatar(executor, details)
+          .thenCompose<Image?> {
+            if (it != null) imageResizer.requestImageResize(it, pictureSize, scaleContext)
+            else CompletableFuture.completedFuture(null)
+          }
+          .join()
         data = details to image
       }
 
