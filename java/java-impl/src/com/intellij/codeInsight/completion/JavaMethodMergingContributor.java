@@ -32,7 +32,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author peter
  */
 public class JavaMethodMergingContributor extends CompletionContributor {
-  public static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
+  static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
 
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
