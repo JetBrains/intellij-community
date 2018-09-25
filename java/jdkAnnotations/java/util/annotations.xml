@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.util.AbstractCollection T[] toArray(T[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.AbstractCollection T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection java.lang.Object[] toArray()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
