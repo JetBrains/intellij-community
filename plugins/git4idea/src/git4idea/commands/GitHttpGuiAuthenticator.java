@@ -334,6 +334,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
       AuthData authData = new AuthData(dialog.getUsername(), dialog.getPassword());
       myPasswordSafeDelegate.setData(authData);
+      myPasswordSafeDelegate.savePassword(url);
       return authData;
     }
 
@@ -401,12 +402,6 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void onAuthSuccess(@NotNull String url) {
-      if (myData == null || myData.getPassword() == null) return;
-      myRememberedInputs.addUrl(url, myData.getLogin());
-      if (!mySavePassword) return;
-      String key = makeKey(url, myData.getLogin());
-      Credentials credentials = new Credentials(key, myData.getPassword());
-      myPasswordSafe.set(credentialAttributes(key), credentials);
     }
 
     @Override
@@ -429,6 +424,15 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     public boolean isRememberPasswordByDefault() {
       return myPasswordSafe.isRememberPasswordByDefault();
+    }
+
+    public void savePassword(@NotNull String url) {
+      if (myData == null || myData.getPassword() == null) return;
+      myRememberedInputs.addUrl(url, myData.getLogin());
+      if (!mySavePassword) return;
+      String key = makeKey(url, myData.getLogin());
+      Credentials credentials = new Credentials(key, myData.getPassword());
+      myPasswordSafe.set(credentialAttributes(key), credentials);
     }
 
     @NotNull
