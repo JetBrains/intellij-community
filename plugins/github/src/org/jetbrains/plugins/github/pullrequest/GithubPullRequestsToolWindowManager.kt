@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory
 import org.jetbrains.plugins.github.util.GithubUrlUtil
+import javax.swing.JComponent
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
 
@@ -38,41 +39,60 @@ class GithubPullRequestsToolWindowManager internal constructor(private val proje
                                                                private val componentFactory: GithubPullRequestsComponentFactory) {
 
   fun showPullRequestsTab(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount) {
-    val toolWindow = getCurrentOrRegisterNewToolWindow()
-    val contentManager = toolWindow.contentManager
+    var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
+    val contentManager: ContentManager
+    val content: Content
 
-    var content = contentManager.findContentByRemoteUrlInContent(remoteUrl)
-    if (content == null) {
+    if (toolWindow == null) {
       val component = componentFactory.createComponent(repository, remote, remoteUrl, account) ?: return
-      content = contentManager.factory.createContent(component, null, false)
-        .apply {
-          setPreferredFocusedComponent { component }
-          isCloseable = true
-          displayName = GithubUrlUtil.removeProtocolPrefix(remoteUrl)
 
-          putUserData(REPOSITORY_KEY, repository)
-          putUserData(REMOTE_KEY, remote)
-          putUserData(REMOTE_URL_KEY, remoteUrl)
-          putUserData(ACCOUNT_KEY, account)
+      toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
+        .apply {
+          icon = GithubIcons.PullRequestsToolWindow
         }
+
+      contentManager = toolWindow.contentManager
+      contentManager.addContentManagerListener(object : ContentManagerAdapter() {
+        override fun contentRemoved(event: ContentManagerEvent) {
+          if (contentManager.contentCount == 0) unregisterToolWindow()
+        }
+      })
+
+      content = createContent(contentManager, component, repository, remote, remoteUrl, account)
       contentManager.addContent(content)
+    }
+    else {
+      contentManager = toolWindow.contentManager
+      val existingContent = contentManager.findContentByRemoteUrlInContent(remoteUrl)
+
+      content = if (existingContent != null) existingContent
+      else {
+        val component = componentFactory.createComponent(repository, remote, remoteUrl, account) ?: return
+        createContent(contentManager, component, repository, remote, remoteUrl, account)
+      }
     }
 
     contentManager.setSelectedContent(content, true)
     toolWindow.show { }
   }
 
-  private fun getCurrentOrRegisterNewToolWindow(): ToolWindow {
-    return toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
-           ?: toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
-             .apply {
-               icon = GithubIcons.PullRequestsToolWindow
-               contentManager.addContentManagerListener(object : ContentManagerAdapter() {
-                 override fun contentRemoved(event: ContentManagerEvent) {
-                   if (contentManager.contentCount == 0) unregisterToolWindow()
-                 }
-               })
-             }
+  private fun createContent(contentManager: ContentManager,
+                            component: JComponent,
+                            repository: GitRepository,
+                            remote: GitRemote,
+                            remoteUrl: String,
+                            account: GithubAccount): Content {
+    return contentManager.factory.createContent(component, null, false)
+      .apply {
+        setPreferredFocusedComponent { component }
+        isCloseable = true
+        displayName = GithubUrlUtil.removeProtocolPrefix(remoteUrl)
+
+        putUserData(REPOSITORY_KEY, repository)
+        putUserData(REMOTE_KEY, remote)
+        putUserData(REMOTE_URL_KEY, remoteUrl)
+        putUserData(ACCOUNT_KEY, account)
+      }
   }
 
   private fun unregisterToolWindow() = toolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID)
