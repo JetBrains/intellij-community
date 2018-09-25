@@ -54,7 +54,10 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
 
-    val preview = GithubPullRequestPreviewComponent(project, detailsLoader, changesLoader, actionManager, uiSettings)
+    val changes = GithubPullRequestChangesComponent(project, changesLoader, actionManager)
+    val details = GithubPullRequestDetailsComponent(project, detailsLoader)
+
+    val preview = GithubPullRequestPreviewComponent(uiSettings, changes, details)
     list.setToolbarHeightReferent(preview.toolbarComponent)
 
     val splitter = OnePixelSplitter("Github.PullRequests.Component", 0.6f)
