@@ -7,6 +7,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import com.jetbrains.python.console.PyDebugConsoleBuilder
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.run.PythonCommandLineState
@@ -23,12 +24,15 @@ class IpnbDebugRunner : PyDebugRunner() {
       return XDebuggerManager.getInstance(project).startSessionAndShowTab(
         "Jupyter Notebook Debugger", PythonIcons.Python.Python, null, false, object : XDebugProcessStarter() {
         override fun start(session: XDebugSession): XDebugProcess {
-          val debugConsoleView = PythonDebugLanguageConsoleView(project, null)
+          val debugConsoleView = PyDebugConsoleBuilder(project, null).console
           val ipnbDebugProcessHandler = IpnbDebugProcessHandler()
 
           val ipnbDebugProcess = IpnbDebugProcess(session, serverSocket, debugConsoleView,
                                                   ipnbDebugProcessHandler)
-
+//          debugConsoleView.attachToProcess(ipnbDebugProcessHandler)
+//          Temporarily disable Debug Console util the problem with grabbing output isn't solved
+          PyDebugRunner.initDebugConsoleView(project, ipnbDebugProcess, debugConsoleView as PythonDebugLanguageConsoleView,
+                                             ipnbDebugProcessHandler, session)
           ipnbDebugProcess.connect(connectionId, codePanel)
 
           return ipnbDebugProcess
