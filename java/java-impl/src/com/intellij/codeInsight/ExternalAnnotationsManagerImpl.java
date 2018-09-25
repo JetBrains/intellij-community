@@ -293,7 +293,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       }
 
       prevItem = curItem;
-      curItem = PsiTreeUtil.getNextSiblingOfType(startTag, XmlTag.class);
+      curItem = PsiTreeUtil.getNextSiblingOfType(curItem, XmlTag.class);
     }
 
     return addItemTag(rootTag, prevItem, ownerName, annotation);
