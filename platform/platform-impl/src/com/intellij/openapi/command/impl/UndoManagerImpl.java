@@ -85,6 +85,10 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
+  public UndoManagerImpl() {
+    this(null);
+  }
+
   public UndoManagerImpl(@Nullable ProjectEx project) {
     myProject = project;
 
