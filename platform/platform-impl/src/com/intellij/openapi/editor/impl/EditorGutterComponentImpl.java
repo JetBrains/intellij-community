@@ -72,8 +72,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -545,6 +545,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
               g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+            } else {
+              g.setColor(color);
+            }
+
+            //todo[kb] move to editor scheme when have colors for Default and Darcula
+            if (Registry.is("editor.highlight.current.line.number") && myEditor.getCaretModel().getLogicalPosition().line == logLine) {
+              g.setColor(Registry.getColor("editor.highlight.current.line.color", color));
             }
 
             String s = String.valueOf(logLine + 1);
