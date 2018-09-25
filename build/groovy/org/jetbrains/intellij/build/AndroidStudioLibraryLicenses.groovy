@@ -28,7 +28,7 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Android Studio Analytics Protos", libraryName: "studio-analytics-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
-    new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api-1.0", license: "Apache 2.0"),
+    new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api-1.5", license: "Apache 2.0"),
     // for bouncycastle module library in android.sdktools.sdk-common
     new LibraryLicense(name: "bouncycastle", version: "1.56", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
