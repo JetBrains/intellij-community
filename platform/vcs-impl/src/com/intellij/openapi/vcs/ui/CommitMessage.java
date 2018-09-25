@@ -143,6 +143,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
+    features.add(editor -> editor.setBackgroundColor(null)); // use background from set color scheme
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));
