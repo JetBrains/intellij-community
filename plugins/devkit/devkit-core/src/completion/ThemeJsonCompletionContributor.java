@@ -25,12 +25,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-//TODO surround property names with quotes on completion
+//TODO insert ': ' after completed property key
 
 /**
  * Completion in IntelliJ theme files.
  */
 public class ThemeJsonCompletionContributor extends CompletionContributor {
+
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!isThemeJsonFile(parameters.getOriginalFile())) return;
@@ -111,7 +112,11 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
     return UiDefaultsHardcodedKeys.UI_DEFAULTS_KEYS.stream()
       .filter(conditionFilter)
       .map(mapFunction)
-      .map(key -> LookupElementBuilder.create(key))
+      .map(ThemeJsonCompletionContributor::createLookupElement)
       .collect(Collectors.toSet());
+  }
+
+  private static LookupElement createLookupElement(@NotNull String key) {
+    return LookupElementBuilder.create("\"" + key + "\"");
   }
 }
