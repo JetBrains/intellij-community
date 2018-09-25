@@ -881,7 +881,6 @@ public class AllIcons {
     public static final Icon SeparatorH = IconLoader.getIcon("/general/separatorH.png"); // 17x11
     public static final Icon Settings = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
-    public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
     public static final Icon ShowWarning = IconLoader.getIcon("/general/showWarning.svg"); // 16x16
     public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png"); // 6x17
     public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
@@ -1294,6 +1293,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon SecondaryGroup = AllIcons.General.GearPlain;
 
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png");
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1411,17 +1415,17 @@ public class AllIcons {
   }
 
   public static class Gutter {
-    public static final Icon Colors = IconLoader.getIcon("/gutter/colors.png"); // 12x12
-    public static final Icon ExtAnnotation = IconLoader.getIcon("/gutter/extAnnotation.png"); // 12x12
+    public static final Icon Colors = IconLoader.getIcon("/gutter/colors.svg"); // 12x12
+    public static final Icon ExtAnnotation = IconLoader.getIcon("/gutter/extAnnotation.svg"); // 12x12
     public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.png"); // 12x12
     public static final Icon ImplementingFunctionalInterface = IconLoader.getIcon("/gutter/implementingFunctionalInterface.png"); // 12x12
     public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.png"); // 12x12
-    public static final Icon Java9Service = IconLoader.getIcon("/gutter/java9Service.png"); // 12x12
+    public static final Icon Java9Service = IconLoader.getIcon("/gutter/java9Service.svg"); // 12x12
     public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.png"); // 12x12
     public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.png"); // 12x12
-    public static final Icon RecursiveMethod = IconLoader.getIcon("/gutter/recursiveMethod.png"); // 12x12
+    public static final Icon RecursiveMethod = IconLoader.getIcon("/gutter/recursiveMethod.svg"); // 12x12
     public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/gutter/siblingInheritedMethod.png"); // 12x12
-    public static final Icon Unique = IconLoader.getIcon("/gutter/unique.png"); // 8x8
+    public static final Icon Unique = IconLoader.getIcon("/gutter/unique.svg"); // 8x8
 
   }
 
