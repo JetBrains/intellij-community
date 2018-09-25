@@ -135,8 +135,9 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range)
-        .descriptionAndTooltip(errorDescription).create();
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range);
+      builder.descriptionAndTooltip(errorDescription);
+      final HighlightInfo info = builder.create();
       if (info != null) {
         for(ErrorQuickFixProvider provider: ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
           provider.registerErrorQuickFix(element, info);
@@ -152,8 +153,9 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1).descriptionAndTooltip(errorDescription)
-        .create();
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1);
+      builder.descriptionAndTooltip(errorDescription);
+      info = builder.create();
     }
     else {
       int start;
@@ -166,8 +168,10 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         start = offset;
         end = offset < fileLength ? offset + 1 : offset;
       }
-      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end).descriptionAndTooltip(errorDescription)
-        .endOfLine().create();
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
+      builder.descriptionAndTooltip(errorDescription);
+      builder.endOfLine();
+      info = builder.create();
     }
     return info;
   }

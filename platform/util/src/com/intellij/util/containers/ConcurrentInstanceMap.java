@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -24,6 +25,10 @@ import java.util.Map;
  * @author peter
  */
 public class ConcurrentInstanceMap {
+  private ConcurrentInstanceMap() {
+  }
+
+  @NotNull
   public static <T> Map<Class<? extends T>,T> create() {
     return ConcurrentFactoryMap.createMap(new Function<Class<? extends T>, T>() {
       @Override
@@ -33,7 +38,8 @@ public class ConcurrentInstanceMap {
     });
   }
 
-  public static <T> T calculate(Class<? extends T> key) {
+  @NotNull
+  public static <T> T calculate(@NotNull Class<? extends T> key) {
     try {
       return key.newInstance();
     }
