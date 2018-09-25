@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -102,13 +103,11 @@ public class Extensions {
 
   @NotNull
   public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
-    for (T t : extensionPointName.getExtensionList()) {
-      if (extClass.isInstance(t)) {
-        //noinspection unchecked
-        return (U) t;
-      }
+    U result = extensionPointName.findExtension(extClass);
+    if (result == null) {
+      throw new IllegalArgumentException("could not find extension implementation " + extClass);
     }
-    throw new IllegalArgumentException("could not find extension implementation " + extClass);
+    return result;
   }
 
   @NotNull
@@ -141,8 +140,8 @@ public class Extensions {
   }
 
   @NotNull
-  private static AreaListener[] getAreaListeners() {
-    return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensions();
+  private static List<AreaListener> getAreaListeners() {
+    return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensionList();
   }
 
   public static void registerAreaClass(@NonNls @NotNull String areaClass, @Nullable @NonNls String parentAreaClass) {
