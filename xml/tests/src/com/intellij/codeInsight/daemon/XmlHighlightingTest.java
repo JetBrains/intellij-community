@@ -1996,6 +1996,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testEnumeratedExtension() {
+    configureByFiles(null, BASE_PATH + "enumerations.xml", BASE_PATH + "enumerations.xsd");
+    doDoTest(true, false);
+  }
+
   public void testCustomBoolean() {
     configureByFiles(null, BASE_PATH + "CustomBoolean.xml", BASE_PATH + "CustomBoolean.xsd");
     doDoTest(true, false);

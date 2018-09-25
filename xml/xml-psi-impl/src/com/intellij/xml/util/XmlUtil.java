@@ -918,6 +918,12 @@ public class XmlUtil {
         exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
       }
+      else if (localName.equals("extension")) {
+        XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
+        if (base != null) {
+          return processEnumerationValues(base, tagProcessor);
+        }
+      }
       else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
         exhaustiveEnum &= processEnumerationValues(tag, tagProcessor);
