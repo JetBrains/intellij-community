@@ -2,10 +2,7 @@
 package org.jetbrains.idea.devkit.completion;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.json.psi.JsonFile;
@@ -25,7 +22,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-//TODO insert ': ' after completed property key
+//TODO support named colors
 
 /**
  * Completion in IntelliJ theme files.
@@ -71,7 +68,8 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
       .map(p -> p.getName())
       .collect(Collectors.joining("."));
 
-    Iterable<LookupElement> lookupElements = getLookupElements(presentNamePart);
+    boolean shouldSurroundWithQuotes = !element.getText().startsWith("\"");
+    Iterable<LookupElement> lookupElements = getLookupElements(presentNamePart, shouldSurroundWithQuotes);
     result.addAllElements(lookupElements);
   }
 
@@ -92,7 +90,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
     return true;
   }
 
-  private static Iterable<LookupElement> getLookupElements(@NotNull String presentNamePart) {
+  private static Iterable<LookupElement> getLookupElements(@NotNull String presentNamePart, boolean shouldSurroundWithQuotes) {
     Predicate<String> conditionFilter;
     Function<String, String> mapFunction;
     if (presentNamePart.startsWith("*")) {
@@ -112,11 +110,30 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
     return UiDefaultsHardcodedKeys.UI_DEFAULTS_KEYS.stream()
       .filter(conditionFilter)
       .map(mapFunction)
-      .map(ThemeJsonCompletionContributor::createLookupElement)
+      .map(key -> createLookupElement(key, shouldSurroundWithQuotes))
       .collect(Collectors.toSet());
   }
 
-  private static LookupElement createLookupElement(@NotNull String key) {
-    return LookupElementBuilder.create("\"" + key + "\"");
+  private static LookupElement createLookupElement(@NotNull String key, boolean shouldSurroundWithQuotes) {
+    return LookupElementBuilder.create(key)
+      .withPresentableText("\"" + key + "\"").withInsertHandler(new MyInsertHandler(shouldSurroundWithQuotes));
+  }
+
+
+  //TODO insert ': ' if necessary
+  private static class MyInsertHandler implements InsertHandler<LookupElement> {
+    private final boolean mySurroundWithQuotes;
+
+    private MyInsertHandler(boolean surroundWithQuotes) {
+      mySurroundWithQuotes = surroundWithQuotes;
+    }
+
+    @Override
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+      if (mySurroundWithQuotes) {
+        String quoted = "\"" + item.getLookupString() + "\"";
+        context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), quoted);
+      }
+    }
   }
 }
