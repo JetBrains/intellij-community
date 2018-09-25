@@ -292,7 +292,6 @@ object GuiTestLocalLauncher {
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug},address=${GuiTestOptions.debugPort}")
       .plus("-Duse.linux.keychain=false")
       .plus("-Didea.suppress.statistics.report")
-      .plus("-Djava.io.tmpdir=${GuiTestOptions.tempDirPath}")
   }
 
   private fun getCurrentJavaExec(): String {
