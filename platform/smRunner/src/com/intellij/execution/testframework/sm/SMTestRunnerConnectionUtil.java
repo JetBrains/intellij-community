@@ -198,10 +198,9 @@ public class SMTestRunnerConnectionUtil {
       if (ApplicationManager.getApplication().isOnAir()) {
         try {
           Class onAirSMTRunnerEventsListener = Class.forName("com.jetbrains.onair.OnAirSMTRunnerEventsListener");
-          Project project = consoleProperties.getProject();
-          eventsProcessor.addEventsListener((SMTRunnerEventsListener)onAirSMTRunnerEventsListener.getConstructors()[0].newInstance(project));
+          eventsProcessor.addEventsListener((SMTRunnerEventsListener)onAirSMTRunnerEventsListener.newInstance());
         }
-        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
           LOG.warn("OnAirSMTRunnerEventsListener not found");
         }
       }
