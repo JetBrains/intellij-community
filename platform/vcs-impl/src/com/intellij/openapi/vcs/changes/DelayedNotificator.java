@@ -85,6 +85,11 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
+  public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
+    defaultListChanged(oldDefaultList, newDefaultList, false);
+  }
+
+  @Override
   public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList, boolean automatic) {
     myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList, automatic));
   }
