@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -10,6 +11,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
@@ -57,7 +59,7 @@ public class TabHeaderComponent extends JComponent {
       public void mouseExited(MouseEvent e) {
         if (myHoverTab != -1) {
           myHoverTab = -1;
-          repaint();
+          fullRepaint();
         }
       }
 
@@ -66,7 +68,7 @@ public class TabHeaderComponent extends JComponent {
         int tab = findTab(event);
         if (tab != -1 && tab != myHoverTab) {
           myHoverTab = tab;
-          repaint();
+          fullRepaint();
         }
       }
     };
@@ -141,8 +143,14 @@ public class TabHeaderComponent extends JComponent {
 
   public void update() {
     mySizeInfo = null;
-    revalidate();
-    repaint();
+    fullRepaint();
+  }
+
+  private void fullRepaint() {
+    Container parent = ObjectUtils.notNull(getParent(), this);
+    parent.doLayout();
+    parent.revalidate();
+    parent.repaint();
   }
 
   public int getSelectionTab() {
@@ -163,13 +171,13 @@ public class TabHeaderComponent extends JComponent {
     else {
       mySelectionTab = index;
     }
-    repaint();
+    fullRepaint();
   }
 
   public void setSelectionWithEvents(int index) {
     mySelectionTab = index;
     myListener.selectionChanged(index);
-    repaint();
+    fullRepaint();
   }
 
   @TestOnly
@@ -204,12 +212,9 @@ public class TabHeaderComponent extends JComponent {
 
   @Override
   protected void paintComponent(Graphics g) {
+    UISettings.setupAntialiasing(g);
+    g.setFont(getFont());
     super.paintComponent(g);
-
-    if (g instanceof Graphics2D) {
-      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    }
-
     calculateSize();
 
     FontMetrics fm = getFontMetrics(getFont());
