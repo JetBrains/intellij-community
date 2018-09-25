@@ -3,9 +3,9 @@ package com.intellij.debugger.impl.attach;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
-import com.jetbrains.sa.SAJDWPAttachingConnector;
+import com.jetbrains.sa.SAJDWPListeningConnector;
 import com.jetbrains.sa.SaJdwp;
-import com.sun.jdi.connect.AttachingConnector;
+import com.sun.jdi.connect.Connector;
 
 import java.util.List;
 
@@ -13,8 +13,6 @@ import java.util.List;
  * @author egor
  */
 public class SAJDWPRemoteConnection extends PidRemoteConnection {
-  private static final SAJDWPAttachingConnector CONNECTOR = new SAJDWPAttachingConnector();
-
   static {
     SaJdwp.setSudoCommandCreator(new SaJdwp.SudoCommandCreator() {
       @Override
@@ -27,12 +25,13 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
   }
 
   public SAJDWPRemoteConnection(String pid) {
-    super(pid);
+    super(pid, true);
+    setAddress("0");
   }
 
   @Override
-  public AttachingConnector getConnector() {
-    return CONNECTOR;
+  public Connector getConnector() {
+    return new SAJDWPListeningConnector();
   }
 
   public static boolean isAvailable() {

@@ -454,7 +454,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (myConnection instanceof PidRemoteConnection) {
         PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
-        AttachingConnector connector = pidRemoteConnection.getConnector();
+        Connector connector = pidRemoteConnection.getConnector();
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));
@@ -464,12 +464,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (pidArg != null) {
           pidArg.setValue(pid);
         }
-        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
-        try {
-          return connector.attach(myArguments);
+        if (connector instanceof AttachingConnector) {
+          return attachConnector((AttachingConnector)connector);
         }
-        catch (IllegalArgumentException e) {
-          throw new CantRunException(e.getLocalizedMessage());
+        else {
+          return connectorListen(address, (ListeningConnector)connector);
         }
       }
       else if (myConnection.isServerMode()) {
@@ -478,52 +477,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (myArguments == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
-
-        if (address == null) {
-          throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
-        }
-        // zero port number means the caller leaves to debugger to decide at which port to listen
-        //noinspection HardCodedStringLiteral
-        final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
-        if (portArg != null) {
-          portArg.setValue(address);
-
-          // to allow connector to listen on several auto generated addresses
-          if (address.length() == 0 || address.equals("0")) {
-            EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
-            myArguments.put(uniqueArg.name(), uniqueArg);
-          }
-        }
-        //noinspection HardCodedStringLiteral
-        final Connector.Argument timeoutArg = myArguments.get("timeout");
-        if (timeoutArg != null) {
-          timeoutArg.setValue("0"); // wait forever
-        }
-        try {
-          String listeningAddress = connector.startListening(myArguments);
-          String port = StringUtil.substringAfterLast(listeningAddress, ":");
-          if (port != null) {
-            listeningAddress = port;
-          }
-          myConnection.setAddress(listeningAddress);
-
-          myDebugProcessDispatcher.getMulticaster().connectorIsReady();
-
-          return connector.accept(myArguments);
-        }
-        catch (IllegalArgumentException e) {
-          throw new CantRunException(e.getLocalizedMessage());
-        }
-        finally {
-          if(myArguments != null) {
-            try {
-              connector.stopListening(myArguments);
-            }
-            catch (IllegalArgumentException | IllegalConnectorArgumentsException ignored) {
-              // ignored
-            }
-          }
-        }
+        return connectorListen(address, connector);
       }
       else { // is client mode, should attach to already running process
         AttachingConnector connector = (AttachingConnector)findConnector(myConnection.isUseSockets(), false);
@@ -559,13 +513,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           timeoutArg.setValue("0"); // wait forever
         }
 
-        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
-        try {
-          return connector.attach(myArguments);
-        }
-        catch (IllegalArgumentException e) {
-          throw new CantRunException(e.getLocalizedMessage());
-        }
+        return attachConnector(connector);
       }
     }
     catch (IOException e) {
@@ -576,6 +524,66 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     finally {
       myArguments = null;
+    }
+  }
+
+  private VirtualMachine connectorListen(String address, ListeningConnector connector)
+    throws CantRunException, IOException, IllegalConnectorArgumentsException {
+    if (address == null) {
+      throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
+    }
+    // zero port number means the caller leaves to debugger to decide at which port to listen
+    //noinspection HardCodedStringLiteral
+    final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
+    if (portArg != null) {
+      portArg.setValue(address);
+
+      // to allow connector to listen on several auto generated addresses
+      if (address.length() == 0 || address.equals("0")) {
+        EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
+        myArguments.put(uniqueArg.name(), uniqueArg);
+      }
+    }
+    //noinspection HardCodedStringLiteral
+    final Connector.Argument timeoutArg = myArguments.get("timeout");
+    if (timeoutArg != null) {
+      timeoutArg.setValue("0"); // wait forever
+    }
+    try {
+      String listeningAddress = connector.startListening(myArguments);
+      String port = StringUtil.substringAfterLast(listeningAddress, ":");
+      if (port != null) {
+        listeningAddress = port;
+      }
+      myConnection.setAddress(listeningAddress);
+
+      myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+
+      return connector.accept(myArguments);
+    }
+    catch (IllegalArgumentException e) {
+      throw new CantRunException(e.getLocalizedMessage());
+    }
+    finally {
+      if(myArguments != null) {
+        try {
+          connector.stopListening(myArguments);
+        }
+        catch (IllegalArgumentException | IllegalConnectorArgumentsException ignored) {
+          // ignored
+        }
+      }
+    }
+  }
+
+  private VirtualMachine attachConnector(AttachingConnector connector)
+    throws IOException, IllegalConnectorArgumentsException, CantRunException {
+    myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+    try {
+      return connector.attach(myArguments);
+    }
+    catch (IllegalArgumentException e) {
+      throw new CantRunException(e.getLocalizedMessage());
     }
   }
 

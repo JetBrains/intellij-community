@@ -4,7 +4,7 @@ package com.intellij.debugger.impl.attach;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.sun.jdi.connect.AttachingConnector;
+import com.sun.jdi.connect.Connector;
 
 /**
  * @author egor
@@ -13,7 +13,11 @@ public class PidRemoteConnection extends RemoteConnection {
   private final String myPid;
 
   public PidRemoteConnection(String pid) {
-    super(false, null, null, false);
+    this(pid, false);
+  }
+
+  PidRemoteConnection(String pid, boolean serverMode) {
+    super(false, null, null, serverMode);
     myPid = pid;
   }
 
@@ -21,7 +25,7 @@ public class PidRemoteConnection extends RemoteConnection {
     return myPid;
   }
 
-  public AttachingConnector getConnector() throws ExecutionException {
-    return (AttachingConnector)DebugProcessImpl.findConnector("com.sun.jdi.ProcessAttach");
+  public Connector getConnector() throws ExecutionException {
+    return DebugProcessImpl.findConnector("com.sun.jdi.ProcessAttach");
   }
 }
