@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
-public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
+public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
 
   private volatile String myText;
@@ -265,7 +265,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return isModal();
   }
 
-  @Override
   public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
     myRunning = indicator.isRunning();
     myCanceled = indicator.isCanceled();
@@ -277,8 +276,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
     myFraction = indicator.getFraction();
 
-    if (indicator instanceof ProgressIndicatorStacked) {
-      ProgressIndicatorStacked stacked = (ProgressIndicatorStacked)indicator;
+    if (indicator instanceof AbstractProgressIndicatorBase) {
+      AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
 
       myTextStack = new Stack<>(stacked.getTextStack());
 
@@ -289,23 +288,20 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myShouldStartActivity = false;
   }
 
-  @Override
   @NotNull
-  public synchronized Stack<String> getTextStack() {
+  private synchronized Stack<String> getTextStack() {
     if (myTextStack == null) myTextStack = new Stack<>(2);
     return myTextStack;
   }
 
-  @Override
   @NotNull
-  public synchronized DoubleArrayList getFractionStack() {
+  private synchronized DoubleArrayList getFractionStack() {
     if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
     return myFractionStack;
   }
 
-  @Override
   @NotNull
-  public synchronized Stack<String> getText2Stack() {
+  private synchronized Stack<String> getText2Stack() {
     if (myText2Stack == null) myText2Stack = new Stack<>(2);
     return myText2Stack;
   }
