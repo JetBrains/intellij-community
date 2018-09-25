@@ -52,14 +52,12 @@ class SwitchPredicate implements PsiElementPredicate {
     if (ErrorUtil.containsError(switchStatement)) {
       return false;
     }
-    boolean hasLabel = false;
     final PsiStatement[] statements = body.getStatements();
     for (PsiStatement statement : statements) {
-      if (statement instanceof PsiSwitchLabelStatement) {
-        hasLabel = true;
-        break;
+      if (statement instanceof PsiSwitchLabelStatement && !((PsiSwitchLabelStatement)statement).isDefaultCase()) {
+        return true;
       }
     }
-    return hasLabel;
+    return false;
   }
 }
