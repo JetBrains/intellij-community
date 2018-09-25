@@ -19,8 +19,8 @@ class B {
   }
 
   void concurrent() {
-    Set<A> set = new ConcurrentSkipListSet<>();
-    Map<A, String> map = new ConcurrentSkipListMap<>();
+    Set<A> set = <warning descr="Construction of sorted collection with non-comparable elements">new ConcurrentSkipListSet<>()</warning>;
+    Map<A, String> map = <warning descr="Construction of sorted collection with non-comparable elements">new ConcurrentSkipListMap<>()</warning>;
     Map<String, A> map2 = new ConcurrentSkipListMap<>();
   }
 

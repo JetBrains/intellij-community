@@ -18,7 +18,7 @@ import java.util.Set;
 public class SortedCollectionWithNonComparableKeysInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> COLLECTIONS =
     ContainerUtil.immutableSet("java.util.TreeSet", "java.util.TreeMap",
-                               "java.util.ConcurrentSkipListSet", "java.util.ConcurrentSkipListMap");
+                               "java.util.concurrent.ConcurrentSkipListSet", "java.util.concurrent.ConcurrentSkipListMap");
 
   public boolean IGNORE_TYPE_PARAMETERS;
 
