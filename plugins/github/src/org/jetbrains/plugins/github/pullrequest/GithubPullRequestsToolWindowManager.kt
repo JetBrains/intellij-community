@@ -22,7 +22,6 @@ import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedL
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory
-import org.jetbrains.plugins.github.util.GithubUrlUtil
 import javax.swing.JComponent
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
@@ -86,7 +85,7 @@ class GithubPullRequestsToolWindowManager internal constructor(private val proje
       .apply {
         setPreferredFocusedComponent { component }
         isCloseable = true
-        displayName = GithubUrlUtil.removeProtocolPrefix(remoteUrl)
+        displayName = remote.name
 
         putUserData(REPOSITORY_KEY, repository)
         putUserData(REMOTE_KEY, remote)
