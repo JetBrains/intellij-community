@@ -81,10 +81,7 @@ public class ProjectViewTestUtil {
         boolean actual = eachNode.contains(eachFile);
         boolean expected = map.get(eachFile).contains(eachNode);
         if (actual != expected) {
-          boolean actual1 = eachNode.contains(eachFile);
-          boolean expected1 = map.get(eachFile).contains(eachNode);
-
-          Assert.assertTrue("file=" + eachFile + " node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
+          Assert.assertTrue("file=" + eachFile + "\n node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
         }
       }
     }
