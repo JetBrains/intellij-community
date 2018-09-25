@@ -1902,12 +1902,14 @@ public class UsageViewImpl implements UsageViewEx {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
       else if (key == LangDataKeys.PSI_ELEMENT_ARRAY) {
-        sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
-          .stream()
-          .filter(u -> u instanceof PsiElementUsage)
-          .map(u -> ((PsiElementUsage)u).getElement())
-          .filter(Objects::nonNull)
-          .toArray(PsiElement.ARRAY_FACTORY::create));
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
+            .stream()
+            .filter(u -> u instanceof PsiElementUsage)
+            .map(u -> ((PsiElementUsage)u).getElement())
+            .filter(Objects::nonNull)
+            .toArray(PsiElement.ARRAY_FACTORY::create));
+        }
       }
       else {
         // can arrive here outside EDT from usage view preview.
