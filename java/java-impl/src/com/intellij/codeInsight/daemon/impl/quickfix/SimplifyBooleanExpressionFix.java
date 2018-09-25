@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,12 +73,14 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   public static String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiIfStatement) {
-      return constantValue ? "Unwrap 'if' statement" : "Remove 'if' statement";
+      return constantValue ?
+             CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.IF) :
+             CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.IF);
     }
     if (!constantValue) {
-      if (parent instanceof PsiWhileStatement) return "Remove 'while' statement";
-      if (parent instanceof PsiDoWhileStatement) return "Unwrap 'do-while' statement";
-      if (parent instanceof PsiForStatement) return "Remove 'for' statement";
+      if (parent instanceof PsiWhileStatement) return CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.WHILE);
+      if (parent instanceof PsiDoWhileStatement) return CommonQuickFixBundle.message("fix.unwrap.statement", "do-while");
+      if (parent instanceof PsiForStatement) return CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.FOR);
     }
     return QuickFixBundle.message("simplify.boolean.expression.text", PsiExpressionTrimRenderer.render(expression), constantValue);
   }
