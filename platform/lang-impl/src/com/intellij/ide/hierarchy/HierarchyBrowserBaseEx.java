@@ -473,7 +473,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @Override
   StructureTreeModel getCurrentBuilder() {
     String viewType = getCurrentViewType();
-    return viewType == null ? null : getTreeModel(viewType);
+    if (viewType == null) {
+      return null;
+    }
+    Sheet sheet = myType2Sheet.get(viewType);
+    return sheet == null ? null : sheet.myStructureTreeModel;
   }
 
   final boolean isValidBase() {
@@ -510,21 +514,24 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @Override
   public void dispose() {
-    disposeBuilders();
+    disposeAllSheets();
     super.dispose();
   }
 
-  private void disposeBuilders() {
+  private void disposeAllSheets() {
     for (final Sheet sheet : myType2Sheet.values()) {
-      if (sheet.myAsyncTreeModel != null) {
-        Disposer.dispose(sheet.myAsyncTreeModel);
-        sheet.myAsyncTreeModel = null;
-        sheet.myStructureTreeModel = null;
-      }
-      if (sheet.myStructureTreeModel != null) {
-        Disposer.dispose(sheet.myStructureTreeModel);
-        sheet.myStructureTreeModel = null;
-      }
+      disposeSheet(sheet);
+    }
+  }
+
+  private static void disposeSheet(@NotNull Sheet sheet) {
+    if (sheet.myAsyncTreeModel != null) {
+      Disposer.dispose(sheet.myAsyncTreeModel);
+      sheet.myAsyncTreeModel = null;
+    }
+    if (sheet.myStructureTreeModel != null) {
+      Disposer.dispose(sheet.myStructureTreeModel);
+      sheet.myStructureTreeModel = null;
     }
   }
 
@@ -550,12 +557,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     if (currentBuilderOnly) {
       Sheet sheet = myType2Sheet.get(currentViewType);
-      Disposer.dispose(sheet.myAsyncTreeModel);
-      sheet.myAsyncTreeModel = null;
-      sheet.myStructureTreeModel = null;
+      disposeSheet(sheet);
     }
     else {
-      disposeBuilders();
+      disposeAllSheets();
     }
     setHierarchyBase(element);
     validate();
