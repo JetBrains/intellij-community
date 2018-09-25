@@ -838,8 +838,12 @@ public final class TreeUtil {
 
   /**
    * Promises to expand all nodes in the specified tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which nodes should be expanded
+   * @return a promise that will be succeed when all nodes are expanded
    */
   @NotNull
   public static Promise<?> promiseExpandAll(@NotNull JTree tree) {
@@ -874,6 +878,7 @@ public final class TreeUtil {
    *
    * @param tree  a tree, which nodes should be expanded
    * @param depth a depth starting from the root node
+   * @return a promise that will be succeed when all needed nodes are expanded
    */
   @NotNull
   public static Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
@@ -1426,8 +1431,12 @@ public final class TreeUtil {
 
   /**
    * Promises to select the first node in the specified tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which node should be selected
+   * @return a promise that will be succeed when first visible node is selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirst(@NotNull JTree tree) {
@@ -1449,9 +1458,13 @@ public final class TreeUtil {
 
   /**
    * Promises to process nodes in the specified tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
    *
    * @param tree    a tree, which nodes should be processed
    * @param visitor a visitor that controls processing of tree nodes
+   * @return a promise that will be succeed when visiting is finished
    */
   @NotNull
   public static Promise<TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
