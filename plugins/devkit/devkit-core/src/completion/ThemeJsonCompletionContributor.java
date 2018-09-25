@@ -25,6 +25,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+//TODO surround property names with quotes on completion
+
 /**
  * Completion in IntelliJ theme files.
  */
@@ -57,11 +59,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
                                          @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return;
     if (!isInsideUiProperty(property)) return;
-
-    PsiElement sibling;
-    while ((sibling = element.getPrevSibling()) != null) {
-      if (":".equals(sibling.getText())) return; // no completion for values
-    }
+    if (!isPropertyKey(element)) return;
 
     List<JsonProperty> parentProperties = PsiTreeUtil.collectParents(property, JsonProperty.class, false, e -> {
       //TODO check that it is TOP-LEVEL 'ui'  property
@@ -83,6 +81,14 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
       if ("ui".equals(((JsonProperty)parent).getName())) return true;
     }
     return false;
+  }
+
+  private static boolean isPropertyKey(@NotNull PsiElement element) {
+    PsiElement sibling = element.getParent(); // element is leaf, parent is reference expression
+    while ((sibling = sibling.getPrevSibling()) != null) {
+      if (":".equals(sibling.getText())) return false; // no completion for values
+    }
+    return true;
   }
 
   private static Iterable<LookupElement> getLookupElements(@NotNull String presentNamePart) {
