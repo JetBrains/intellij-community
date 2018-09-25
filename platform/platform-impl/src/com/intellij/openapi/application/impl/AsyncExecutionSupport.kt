@@ -26,6 +26,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   protected abstract val disposables: Set<Disposable>
   protected abstract val dispatcher: CoroutineDispatcher
 
+  private val myExpirableJob = Job()  // initialized once in createExpirableJobContinuationInterceptor()
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
     val exceptionHandler = CoroutineExceptionHandler(::handleUncaughtException)
     val delegateDispatcherChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }
@@ -34,6 +35,10 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   }
 
   override fun coroutineDispatchingContext(): CoroutineContext = myCoroutineDispatchingContext
+
+  override fun shutdown(cause: Throwable?) {
+    myExpirableJob.cancel(cause)
+  }
 
   protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
 
@@ -49,7 +54,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   }
 
   private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
-    val expirableJob = Job()
+    val expirableJob = myExpirableJob
     val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
     return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
@@ -74,7 +79,7 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    * multiple synchronized Disposer.register calls per each launched coroutine).
    */
   private fun initializeExpirableJob(job: Job, disposables: Set<Disposable>, referent: Any) {
-    if (disposables.isNotEmpty()) {
+    if (disposables.isNotEmpty() && job.isActive) {
       // Technically, this creates a leak through the Disposer tree...
       disposables.forEach { disposable ->
         disposable.cancelJobOnDisposal(job)

@@ -16,6 +16,8 @@ interface AsyncExecution<E : AsyncExecution<E>> {
    */
   fun coroutineDispatchingContext(): CoroutineContext
 
+  fun shutdown(cause: Throwable? = null)
+
   fun withConstraint(constraint: ContextConstraint): E
   fun expireWith(parentDisposable: Disposable): E
 
