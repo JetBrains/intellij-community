@@ -62,7 +62,6 @@
             class="com.intellij.ui.ExpandableActions$Expand"/>
 
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
-    <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
     <action id="ShowColorPicker" class="com.intellij.ui.ShowColorPickerAction" text="Show Color Picker" icon="AllIcons.Ide.Pipette"/>
 
