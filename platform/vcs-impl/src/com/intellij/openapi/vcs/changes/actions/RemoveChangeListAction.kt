@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeList
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThreeState
@@ -50,11 +51,9 @@ class RemoveChangeListAction : AnAction(), DumbAware {
   private fun canRemoveChangeLists(project: Project?, lists: List<ChangeList>): Boolean {
     if (project == null || lists.isEmpty()) return false
 
-    val allChangeListsCount = ChangeListManager.getInstance(project).changeListsNumber
     for (changeList in lists) {
       if (changeList !is LocalChangeList) return false
       if (changeList.isReadOnly) return false
-      if (changeList.isDefault && allChangeListsCount <= lists.size) return false
     }
     return true
   }
@@ -68,7 +67,7 @@ class RemoveChangeListAction : AnAction(), DumbAware {
   }
 
   private fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {
-    val manager = ChangeListManager.getInstance(project)
+    val manager = ChangeListManager.getInstance(project) as ChangeListManagerEx
 
     val toRemove = mutableListOf<LocalChangeList>()
     val toAsk = mutableListOf<LocalChangeList>()
@@ -87,12 +86,31 @@ class RemoveChangeListAction : AnAction(), DumbAware {
 
     if (activeChangelistSelected) {
       val remainingLists = manager.changeLists.subtract(pendingLists).toList()
-      val newDefault = askNewDefaultChangeList(project, toAsk, remainingLists) ?: return
 
-      manager.setDefaultChangeList(newDefault)
+      if (remainingLists.isEmpty()) {
+        if (!confirmAllChangeListsRemoval(project, pendingLists, toAsk)) return
 
-      toRemove.addAll(toAsk)
-      if (toRemove.remove(newDefault)) LOG.error("New default changelist should be selected among remaining")
+        var defaultList = manager.getChangeList(LocalChangeList.DEFAULT_NAME)
+        if (defaultList == null) {
+          defaultList = manager.addChangeList(LocalChangeList.DEFAULT_NAME, null)
+        }
+        else {
+          manager.editComment(defaultList.name, null)
+          manager.editChangeListData(defaultList.name, null)
+        }
+
+        manager.setDefaultChangeList(defaultList!!)
+
+        toRemove.addAll(toAsk)
+        toRemove.remove(defaultList)
+      }
+      else {
+        val newDefault = askNewDefaultChangeList(project, toAsk, remainingLists) ?: return
+        manager.setDefaultChangeList(newDefault)
+
+        toRemove.addAll(toAsk)
+        if (toRemove.remove(newDefault)) LOG.error("New default changelist should be selected among remaining")
+      }
     }
     else {
       if (confirmChangeListRemoval(project, toAsk)) {
@@ -117,15 +135,23 @@ class RemoveChangeListAction : AnAction(), DumbAware {
                                                     Messages.getQuestionIcon())
   }
 
+  private fun confirmAllChangeListsRemoval(project: Project, pendingLists: List<LocalChangeList>, toAsk: List<LocalChangeList>): Boolean {
+    if (pendingLists.size == 1) return true
+    if (toAsk.isEmpty()) return true
+
+    val haveNoChanges = pendingLists.all { it.changes.isEmpty() }
+    if (haveNoChanges) return true
+
+    val message = VcsBundle.message("changes.removechangelist.all.lists.warning.text", pendingLists.size)
+    return Messages.YES == Messages.showYesNoDialog(project, message, VcsBundle.message("changes.removechangelist.warning.title"),
+                                                    Messages.getQuestionIcon())
+  }
+
   private fun askNewDefaultChangeList(project: Project,
                                       lists: List<LocalChangeList>,
                                       remainingLists: List<LocalChangeList>): LocalChangeList? {
+    assert(remainingLists.isNotEmpty())
     val haveNoChanges = lists.all { it.changes.isEmpty() }
-
-    // Can't remove last changelist
-    if (remainingLists.isEmpty()) {
-      return null
-    }
 
     // don't ask "Which changelist to make active" if there is only one option anyway
     // unless there are some changes to be moved - give user a chance to cancel deletion
