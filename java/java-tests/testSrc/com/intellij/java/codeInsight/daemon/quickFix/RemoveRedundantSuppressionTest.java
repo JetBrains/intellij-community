@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
+import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -30,7 +31,8 @@ public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTe
     enableInspectionTools(new RedundantSuppressInspection(), 
                           new PossibleHeapPollutionVarargsInspection(),
                           new UncheckedWarningLocalInspection(),
-                          new UnusedDeclarationInspection(true));
+                          new UnusedDeclarationInspection(true),
+                          new RedundantLambdaCodeBlockInspection());
   }
 
   @Override
