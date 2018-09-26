@@ -140,8 +140,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
-  private boolean myForceLeftFreePaintersAreaShown;
-  private boolean myForceRightFreePaintersAreaShown;
+  boolean myForceLeftFreePaintersAreaShown;
+  boolean myForceRightFreePaintersAreaShown;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
 
@@ -1962,7 +1962,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @NotNull
-  private static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
+  static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
     if (renderer instanceof LineMarkerRendererEx) {
       return ((LineMarkerRendererEx)renderer).getPosition();
     }

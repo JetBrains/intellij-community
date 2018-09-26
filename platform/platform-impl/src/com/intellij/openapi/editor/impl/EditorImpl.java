@@ -36,10 +36,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
-import com.intellij.openapi.editor.markup.GutterDraggableObject;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -377,65 +374,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myMarkupModelListener = new MarkupModelListener() {
-      private boolean areRenderersInvolved(@NotNull RangeHighlighterEx highlighter) {
-        return highlighter.getCustomRenderer() != null ||
-               highlighter.getGutterIconRenderer() != null ||
-               highlighter.getLineMarkerRenderer() != null ||
-               highlighter.getLineSeparatorRenderer() != null;
-      }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter),
-                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+        onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
+                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter),
-                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+        onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
+                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
-        if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
-
-        if (renderersChanged) {
-          updateGutterSize();
-        }
-
-        boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
-        if (myDocumentChangeInProgress) {
-          // postpone repaint request, as folding model can be in inconsistent state and so coordinate
-          // conversions might give incorrect results
-          myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
-          return;
-        }
-
-        int textLength = myDocument.getTextLength();
-
-        int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
-        int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
-
-        int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
-        int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-        if (start != end && fontStyleOrColorChanged) {
-          myView.invalidateRange(start, end);
-        }
-        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
-          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        }
-
-        // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-        if (errorStripeNeedsRepaint) {
-          if (myFoldingModel.isInBatchFoldingOperation()) {
-            myErrorStripeNeedsRepaint = true;
-          }
-          else {
-            myMarkupModel.repaint(start, end);
-          }
-        }
-
-        updateCaretCursor();
+        onHighlighterChanged(highlighter, renderersChanged, fontStyleOrColorChanged);
       }
     };
 
@@ -587,6 +540,57 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+  }
+
+  private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
+    if (highlighter.getGutterIconRenderer() != null) return true;
+    LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+    if (lineMarkerRenderer == null) return false;
+    LineMarkerRendererEx.Position position = EditorGutterComponentImpl.getLineMarkerPosition(lineMarkerRenderer);
+    return position == LineMarkerRendererEx.Position.LEFT && !myGutterComponent.myForceLeftFreePaintersAreaShown ||
+           position == LineMarkerRendererEx.Position.RIGHT && !myGutterComponent.myForceRightFreePaintersAreaShown;
+  }
+
+  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter, boolean canImpactGutterSize, boolean fontStyleOrColorChanged) {
+    if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
+
+    if (canImpactGutterSize) {
+      updateGutterSize();
+    }
+
+    boolean errorStripeNeedsRepaint = highlighter.getErrorStripeMarkColor() != null;
+    if (myDocumentChangeInProgress) {
+      // postpone repaint request, as folding model can be in inconsistent state and so coordinate
+      // conversions might give incorrect results
+      myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
+      return;
+    }
+
+    int textLength = myDocument.getTextLength();
+
+    int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
+    int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
+
+    int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
+    int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
+    if (start != end && fontStyleOrColorChanged) {
+      myView.invalidateRange(start, end);
+    }
+    if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+      repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+    }
+
+    // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
+    if (errorStripeNeedsRepaint) {
+      if (myFoldingModel.isInBatchFoldingOperation()) {
+        myErrorStripeNeedsRepaint = true;
+      }
+      else {
+        myMarkupModel.repaint(start, end);
+      }
+    }
+
+    updateCaretCursor();
   }
 
   private void onInlayUpdated(@NotNull Inlay inlay) {
