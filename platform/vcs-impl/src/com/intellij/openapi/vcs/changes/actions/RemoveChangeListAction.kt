@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -20,6 +21,8 @@ import com.intellij.util.ThreeState
 import java.util.*
 
 class RemoveChangeListAction : AnAction(), DumbAware {
+  private val LOG = logger<RemoveChangeListAction>()
+
   override fun update(e: AnActionEvent) {
     val changeListsArray = e.getData(VcsDataKeys.CHANGE_LISTS)
     val changeLists = changeListsArray?.asList() ?: emptyList()
@@ -79,28 +82,27 @@ class RemoveChangeListAction : AnAction(), DumbAware {
       }
     }
 
-    if (toAsk.isNotEmpty() && askIfShouldRemoveChangeLists(project, toAsk)) {
-      toRemove.addAll(toAsk)
-    }
+    val pendingLists = toAsk + toRemove
+    val activeChangelistSelected = pendingLists.any { it.isDefault }
 
-    // default changelist might have been changed in `askIfShouldRemoveChangeLists()`
-    val defaultList = manager.defaultChangeList
-    val shouldRemoveDefault = toRemove.remove(defaultList)
-
-    toRemove.forEach { manager.removeChangeList(it.name) }
-
-    if (shouldRemoveDefault && confirmActiveChangeListRemoval(project, listOf(defaultList))) {
-      manager.removeChangeList(defaultList.name)
-    }
-  }
-
-  private fun askIfShouldRemoveChangeLists(project: Project, lists: List<LocalChangeList>): Boolean {
-    val activeChangelistSelected = lists.any { it.isDefault }
     if (activeChangelistSelected) {
-      return confirmActiveChangeListRemoval(project, lists)
+      val remainingLists = manager.changeLists.subtract(pendingLists).toList()
+      val newDefault = askNewDefaultChangeList(project, toAsk, remainingLists) ?: return
+
+      manager.setDefaultChangeList(newDefault)
+
+      toRemove.addAll(toAsk)
+      if (toRemove.remove(newDefault)) LOG.error("New default changelist should be selected among remaining")
+    }
+    else {
+      if (confirmChangeListRemoval(project, toAsk)) {
+        toRemove.addAll(toAsk)
+      }
     }
 
-    return confirmChangeListRemoval(project, lists)
+    toRemove.forEach {
+      manager.removeChangeList(it.name)
+    }
   }
 
   private fun confirmChangeListRemoval(project: Project, lists: List<LocalChangeList>): Boolean {
@@ -115,35 +117,34 @@ class RemoveChangeListAction : AnAction(), DumbAware {
                                                     Messages.getQuestionIcon())
   }
 
-  private fun confirmActiveChangeListRemoval(project: Project, lists: List<LocalChangeList>): Boolean {
-    val manager = ChangeListManager.getInstance(project)
+  private fun askNewDefaultChangeList(project: Project,
+                                      lists: List<LocalChangeList>,
+                                      remainingLists: List<LocalChangeList>): LocalChangeList? {
     val haveNoChanges = lists.all { it.changes.isEmpty() }
-
-    val remainingLists = manager.changeLists.subtract(lists).toList()
 
     // Can't remove last changelist
     if (remainingLists.isEmpty()) {
-      return false
+      return null
     }
 
     // don't ask "Which changelist to make active" if there is only one option anyway
     // unless there are some changes to be moved - give user a chance to cancel deletion
     if (remainingLists.size == 1 && haveNoChanges) {
-      manager.setDefaultChangeList(remainingLists.single())
-      return true
+      return remainingLists.single()
     }
+    else {
+      val remainingListsNames = remainingLists.map { it.name }.toTypedArray()
 
-    val remainingListsNames = remainingLists.map { it.name }.toTypedArray()
+      val message = if (haveNoChanges)
+        VcsBundle.message("changes.remove.active.empty.prompt")
+      else
+        VcsBundle.message("changes.remove.active.prompt")
+      val nameIndex = Messages.showChooseDialog(project, message,
+                                                VcsBundle.message("changes.remove.active.title"), Messages.getQuestionIcon(),
+                                                remainingListsNames, remainingListsNames.first())
+      if (nameIndex < 0) return null
 
-    val message = if (haveNoChanges)
-      VcsBundle.message("changes.remove.active.empty.prompt")
-    else
-      VcsBundle.message("changes.remove.active.prompt")
-    val nameIndex = Messages.showChooseDialog(project, message,
-                                              VcsBundle.message("changes.remove.active.title"), Messages.getQuestionIcon(),
-                                              remainingListsNames, remainingListsNames.first())
-    if (nameIndex < 0) return false
-    manager.setDefaultChangeList(remainingLists[nameIndex])
-    return true
+      return remainingLists[nameIndex]
+    }
   }
 }
