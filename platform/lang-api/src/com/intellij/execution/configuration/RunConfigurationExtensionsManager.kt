@@ -21,7 +21,7 @@ private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
 private const val EXT_ID_ATTR = "ID"
 private const val EXTENSION_ROOT_ATTR = "EXTENSION"
 
-open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : RunConfigurationExtensionBase<U>>(@property:PublishedApi internal val extensionPoint: ExtensionPointName<T>) {
+open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : RunConfigurationExtensionBase<U>>(val extensionPoint: ExtensionPointName<T>) {
   protected open val idAttrName = EXT_ID_ATTR
 
   protected open val extensionRootAttr = EXTENSION_ROOT_ATTR
