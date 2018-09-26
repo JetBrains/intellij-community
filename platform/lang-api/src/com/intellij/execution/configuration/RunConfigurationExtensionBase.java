@@ -76,7 +76,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @return True if extension in general applicable to given run configuration - just to attach settings tab, etc. But extension may be
    *         turned off in its settings. E.g. RCov in general available for given run configuration, but may be turned off.
    */
-  protected abstract boolean isApplicableFor(@NotNull final T configuration);
+  public abstract boolean isApplicableFor(@NotNull final T configuration);
 
   /**
    *
@@ -84,7 +84,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @return True if extension is turned on in configuration extension settings.
    *         E.g. RCov is turned on for given run configuration.
    */
-  protected abstract boolean isEnabledFor(@NotNull final T applicableConfiguration, @Nullable RunnerSettings runnerSettings);
+  public abstract boolean isEnabledFor(@NotNull final T applicableConfiguration, @Nullable RunnerSettings runnerSettings);
 
   /**
    * Patches the command line of the process about to be started by the underlying run configuration.

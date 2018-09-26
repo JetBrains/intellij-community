@@ -27,7 +27,7 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
                                   @NotNull String runnerId)  throws ExecutionException {}
 
   @Override
-  protected boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
+  public boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
     return true;
   }
 
