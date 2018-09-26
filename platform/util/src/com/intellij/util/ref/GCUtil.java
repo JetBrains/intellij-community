@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ref;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.diagnostic.ThreadDumper;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.Introspector;
@@ -34,30 +34,40 @@ public class GCUtil {
     //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
-    ArrayList<SoftReference<?>> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
+    ArrayList<SoftReference<?>> list = new ArrayList<SoftReference<?>>(100 + useReference(ref));
 
     System.gc();
     final long freeMemory = Runtime.getRuntime().freeMemory();
 
-    int i = 0;
-    while (q.poll() == null) {
-      // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
-      int bytes = Math.min((int)(freeMemory * 0.05), Integer.MAX_VALUE / 2);
-      list.add(new SoftReference<Object>(new byte[bytes]));
-      i++;
-      if (i > 1000) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up");
-        break;
+    try {
+      int i = 0;
+      while (q.poll() == null) {
+        // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
+        int bytes = Math.min((int)(freeMemory * 0.05), Integer.MAX_VALUE / 2);
+        list.add(new SoftReference<Object>(new byte[bytes]));
+        i++;
+        if (i > 1000) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up");
+          break;
+        }
       }
+
+      // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
+      // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
+      list.ensureCapacity(list.size() + useReference(ref));
+
+      // do not leave a chance for our created SoftReference's content to lie around until next full GC's
+      for(SoftReference createdReference:list) createdReference.clear();
     }
-
-    // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
-    // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
-    list.ensureCapacity(list.size() + useReference(ref));
-
-    // do not leave a chance for our created SoftReference's content to lie around until next full GC's
-    for(SoftReference createdReference:list) createdReference.clear();
+    catch (OutOfMemoryError e) {
+      int size = list.size();
+      list.clear();
+      e.printStackTrace();
+      System.err.println("Free memory before: " + freeMemory + "; .freeMemory() now: " + Runtime.getRuntime().freeMemory()+"; list.size(): "+size);
+      System.err.println(ThreadDumper.dumpThreadsToString());
+      throw e;
+    }
     //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
