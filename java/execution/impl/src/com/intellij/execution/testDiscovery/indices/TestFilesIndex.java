@@ -5,19 +5,17 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
-import com.intellij.util.indexing.impl.MapIndexStorage;
-import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
-  protected DiscoveredTestsIndex(@NotNull File file) throws IOException {
+public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
+  protected TestFilesIndex(@NotNull File file) throws IOException {
     super(INDEX_EXTENSION, new MyIndexStorage(file), new MyForwardIndex() {
       @NotNull
       @Override
@@ -38,13 +36,14 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     //TODO index corrupted
   }
 
-  public boolean containsDataFrom(int testId) throws IOException {
+  @Nullable
+  Collection<Integer> getTestDataFor(int testId) throws IOException {
     return ((MyForwardIndex)myForwardIndex).containsDataFrom(testId);
   }
 
-  private static class MyIndexStorage extends MapIndexStorage<Integer, TIntArrayList> {
+  private static class MyIndexStorage extends MapIndexStorage<Integer, Void> {
     protected MyIndexStorage(@NotNull File storageFile) throws IOException {
-      super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, IntArrayExternalizer.INSTANCE, 4 * 1024, false);
+      super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, VoidDataExternalizer.INSTANCE, 4 * 1024, false);
     }
 
     @Override
@@ -53,16 +52,16 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     }
   }
 
-  private static final IndexExtension<Integer, TIntArrayList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, TIntArrayList, UsedSources>() {
+  private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, Void, UsedSources>() {
     @NotNull
     @Override
-    public IndexId<Integer, TIntArrayList> getName() {
-      return IndexId.create("jvm.discovered.tests");
+    public IndexId<Integer, Void> getName() {
+      return IndexId.create("jvm.discovered.test.files");
     }
 
     @NotNull
     @Override
-    public DataIndexer<Integer, TIntArrayList, UsedSources> getIndexer() {return inputData -> inputData.myUsedMethods;}
+    public DataIndexer<Integer, Void, UsedSources> getIndexer() {return inputData -> inputData.myUsedFiles;}
 
     @NotNull
     @Override
@@ -72,8 +71,8 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
 
     @NotNull
     @Override
-    public DataExternalizer<TIntArrayList> getValueExternalizer() {
-      return IntArrayExternalizer.INSTANCE;
+    public DataExternalizer<Void> getValueExternalizer() {
+      return VoidDataExternalizer.INSTANCE;
     }
 
     @Override
@@ -83,13 +82,14 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
   };
 
 
-  private abstract static class MyForwardIndex extends KeyCollectionBasedForwardIndex<Integer, TIntArrayList> {
+  private abstract static class MyForwardIndex extends KeyCollectionBasedForwardIndex<Integer, Void> {
     protected MyForwardIndex() throws IOException {
       super(INDEX_EXTENSION);
     }
 
-    public boolean containsDataFrom(int testId) throws IOException {
-      return getInput(testId) != null;
+    @Nullable
+    public Collection<Integer> containsDataFrom(int testId) throws IOException {
+      return getInput(testId);
     }
   }
 }
