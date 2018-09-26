@@ -213,13 +213,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
-    PythonRunConfigurationExtensionsManager.getInstance()
+    PythonRunConfigurationExtensionsManager.Companion.getInstance()
       .patchCommandLine(myConfig, getRunnerSettings(), commandLine, getEnvironment().getRunner().getRunnerId());
 
     ProcessHandler processHandler = processStarter.start(myConfig, commandLine);
 
     // attach extensions
-    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
     return processHandler;
   }
