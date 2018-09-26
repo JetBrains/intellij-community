@@ -181,7 +181,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     if (className != "AllIcons") {
       answer.append(" final")
     }
-    answer.append(" class ").append(className).append(" {")
+    answer.append(" class ").append(className).append(" {\n")
     if (customLoad) {
       append(answer, "private static Icon load(String path) {", 1)
       append(answer, "return IconLoader.getIcon(path, ${className}.class);", 2)

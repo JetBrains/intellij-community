@@ -10,6 +10,7 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class AllIcons {
+
   public final static class Actions {
     public static final Icon AddMulticaret = IconLoader.getIcon("/actions/AddMulticaret.svg"); // 16x16
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.svg"); // 16x16
