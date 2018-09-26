@@ -22,9 +22,9 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
 
 object ChangeListRemoveConfirmation {
-  private fun checkCanDeleteChangelist(project: Project,
-                                       list: LocalChangeList,
-                                       explicitly: Boolean): ThreeState {
+  fun checkCanDeleteChangelist(project: Project,
+                               list: LocalChangeList,
+                               explicitly: Boolean): ThreeState {
     val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
     var confirmationAsked = false
@@ -49,37 +49,6 @@ object ChangeListRemoveConfirmation {
     }
     else {
       return ThreeState.YES
-    }
-  }
-
-  @JvmStatic
-  fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {
-    val manager = ChangeListManager.getInstance(project)
-
-    val toRemove = mutableListOf<LocalChangeList>()
-    val toAsk = mutableListOf<LocalChangeList>()
-
-    for (list in lists.mapNotNull { manager.getChangeList(it.id) }) {
-      when (checkCanDeleteChangelist(project, list, explicitly = true)) {
-        ThreeState.UNSURE -> toAsk.add(list)
-        ThreeState.YES -> toRemove.add(list)
-        ThreeState.NO -> {
-        }
-      }
-    }
-
-    if (toAsk.isNotEmpty() && RemoveChangeListAction.askIfShouldRemoveChangeLists(project, toAsk)) {
-      toRemove.addAll(toAsk)
-    }
-
-    // default changelist might have been changed in `askIfShouldRemoveChangeLists()`
-    val defaultList = manager.defaultChangeList
-    val shouldRemoveDefault = toRemove.remove(defaultList)
-
-    toRemove.forEach { manager.removeChangeList(it.name) }
-
-    if (shouldRemoveDefault && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(defaultList))) {
-      manager.removeChangeList(defaultList.name)
     }
   }
 
