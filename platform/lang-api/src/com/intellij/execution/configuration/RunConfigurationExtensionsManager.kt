@@ -130,13 +130,13 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
-  @Deprecated("Use processApplicableExtensions")
-  protected fun getApplicableExtensions(configuration: U): List<T> {
+  /**
+   * Consider to use processApplicableExtensions.
+   */
+  protected fun getApplicableExtensions(configuration: U): MutableList<T> {
     val extensions = SmartList<T>()
-    for (extension in extensionPoint.extensionList) {
-      if (extension.isApplicableFor(configuration)) {
-        extensions.add(extension)
-      }
+    processApplicableExtensions(configuration) {
+      extensions.add(it)
     }
     return extensions
   }
