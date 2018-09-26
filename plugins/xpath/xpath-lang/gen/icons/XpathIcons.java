@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -18,7 +19,6 @@ public class XpathIcons {
   public static final Icon Function = load("/icons/function.png"); // 18x18
   public static final Icon Namespace = load("/icons/namespace.png"); // 21x21
   public static final Icon Template = load("/icons/template.png"); // 18x18
-  public static final Icon Xml = load("/icons/xml.png"); // 16x16
   public static final Icon Xpath = load("/icons/xpath.png"); // 12x16
   public static final Icon Xslt_filetype_overlay = load("/icons/xslt-filetype-overlay.png"); // 11x16
   public static final Icon Xslt = load("/icons/xslt.png"); // 16x16
