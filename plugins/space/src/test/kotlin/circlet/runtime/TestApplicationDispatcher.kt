@@ -18,14 +18,14 @@ class TestApplicationDispatcher : TestCase() {
     }
 
     fun testCoroutineDispatched() = runBlocking {
-        val job = GlobalScope.async(dispatcher.coroutineContext) {
+        val job = async(dispatcher.coroutineContext) {
             application.assertIsDispatchThread()
         }
         job.await()
     }
 
     fun testCoroutineDelay() = runBlocking {
-        val job = GlobalScope.async(dispatcher.coroutineContext) {
+        val job = async(dispatcher.coroutineContext) {
             delay(10)
             application.assertIsDispatchThread()
         }
