@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Replace 'switch' with 'if'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
   }
 
   @NotNull

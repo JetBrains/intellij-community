@@ -53,7 +53,7 @@ public class SwitchStatementWithSingleDefaultInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Unwrap 'switch' statement";
+      return CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.SWITCH);
     }
 
     @Override
