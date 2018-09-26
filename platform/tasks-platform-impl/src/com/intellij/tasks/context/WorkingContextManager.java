@@ -235,6 +235,7 @@ public class WorkingContextManager {
         for (int i = array.length - 1; i >= max; i--) {
           archive.eraseEntry(array[i]);
         }
+        archive.gc();
       }
     }
     catch (IOException e) {
