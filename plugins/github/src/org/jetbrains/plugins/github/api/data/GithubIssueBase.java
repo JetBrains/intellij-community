@@ -103,7 +103,7 @@ public abstract class GithubIssueBase {
   private String url;
   private String repositoryUrl;
   private String labelsUrl;
-  private String commentsUrl;
+  @Mandatory private String commentsUrl;
   private String eventsUrl;
   @Mandatory private String htmlUrl;
   private Long id;
@@ -123,6 +123,11 @@ public abstract class GithubIssueBase {
   private Date closedAt;
   private String authorAssociation;
   private String body;
+
+  @NotNull
+  public String getCommentsUrl() {
+    return commentsUrl;
+  }
 
   @NotNull
   public String getHtmlUrl() {
