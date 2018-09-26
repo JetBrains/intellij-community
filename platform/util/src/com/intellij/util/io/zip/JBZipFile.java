@@ -424,10 +424,26 @@ public class JBZipFile implements Closeable {
     }
   }
 
+  /**
+   * Removes entry from the directory list.<br/>
+   * NB: it will NOT remove entry content from the stream, please call {@link JBZipFile#gc()} manually when you've finished modifying the
+   * archive.<br/>
+   * {@link JBZipFile#gc()} is not called on {@link JBZipFile#close()} due to potential performance impact of removing small entry from a
+   * big archive.
+   */
   public void eraseEntry(JBZipEntry entry) throws IOException {
     getOutputStream(); // Ensure OutputStream created, so we'll print out central directory at the end;
     entries.remove(entry);
     nameMap.remove(entry.getName());
+  }
+
+  public void gc() throws IOException {
+    if (myOutputStream != null) {
+      myOutputStream.finish();
+      myOutputStream = null;
+      currentCfdOffset = 0;
+    }
+    getOutputStream().finish();
   }
 
   JBZipOutputStream getOutputStream() throws IOException {
