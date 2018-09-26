@@ -114,7 +114,7 @@ public class GithubRepository extends BaseRepositoryImpl {
       return getIssues(query, offset + limit, withClosed);
     }
     catch (GithubRateLimitExceededException e) {
-      return new Task[0];
+      return Task.EMPTY_ARRAY;
     }
     catch (GithubAuthenticationException | GithubStatusCodeException e) {
       throw new Exception(e.getMessage(), e); // Wrap to show error message
