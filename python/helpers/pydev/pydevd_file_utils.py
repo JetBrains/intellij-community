@@ -391,7 +391,7 @@ setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
 
 
 def is_real_file(filename):
-    # Use for Jupyter Cell ids
+    # Check for Jupyter cells
     return not filename.isdigit() and not filename.startswith("<ipython-input")
 
 # For given file f returns tuple of its absolute path, real path and base name

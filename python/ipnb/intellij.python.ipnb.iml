@@ -38,5 +38,6 @@
     <orderEntry type="library" name="markdown4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.python.pydev" />
+    <orderEntry type="module" module-name="intellij.python" />
   </component>
 </module>

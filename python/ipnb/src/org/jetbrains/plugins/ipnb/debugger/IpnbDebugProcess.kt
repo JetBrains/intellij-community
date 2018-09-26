@@ -7,6 +7,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.console.PyConsoleDebugProcess
 import com.jetbrains.python.debugger.PyDebugProcess
+import com.jetbrains.python.helpersPro.PyHelpersProLocator
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel
 import java.lang.StringBuilder
@@ -31,8 +32,11 @@ class IpnbDebugProcess(session: XDebugSession,
     command.append("sys.path.append('")
     command.append(StringUtil.escapeCharCharacters(PythonHelpersLocator.getHelpersRoot().path + "/pydev"))
     command.append("')\n")
-    command.append("from pydev_jupyter import pydev_debug_jupyter\n")
-    command.append("pydev_debug_jupyter.attach_to_debugger(")
+    command.append("sys.path.append('")
+    command.append(StringUtil.escapeCharCharacters(PyHelpersProLocator.getHelpersProRoot().path + "/jupyter_debug"))
+    command.append("')\n")
+    command.append("import pydev_jupyter_utils\n")
+    command.append("pydev_jupyter_utils.attach_to_debugger(")
     command.append(portToConnect)
     command.append(")\n")
 
@@ -52,8 +56,8 @@ class IpnbDebugProcess(session: XDebugSession,
 
   private fun setLatestCellId(cellId: Int): String {
     val command = StringBuilder()
-    command.append("from pydev_jupyter import pydev_debug_jupyter\n")
-    command.append("pydev_debug_jupyter.set_latest_cell_id('$cellId')\n")
+    command.append("import pydev_jupyter_utils\n")
+    command.append("pydev_jupyter_utils.set_latest_cell_id('$cellId')\n")
     return command.toString()
   }
 
