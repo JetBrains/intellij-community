@@ -136,7 +136,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
+  private volatile boolean myInitialized;
 
   private Future<IndexConfiguration> myStateFuture;
   private volatile IndexConfiguration myState;
@@ -274,15 +274,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
   }
 
-  boolean processChangedFiles(@NotNull Project project, Processor<VirtualFile> processor) {
-    Set<VirtualFile> changed = new THashSet<>();
-
-    Stream<VirtualFile> stream = Stream.concat(
-      myChangedFilesCollector.myVfsEventsMerger.getChangedFiles(), // avoid missing files when events are processed concurrently
-      myChangedFilesCollector.myFilesToUpdate.values().stream()
-    ).filter(filesToBeIndexedForProjectCondition(project)).filter(changed::add);
-
-    return ContainerUtil.process(stream::iterator, processor);
+  boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
+    // avoid missing files when events are processed concurrently
+    return Stream.concat(myChangedFilesCollector.myVfsEventsMerger.getChangedFiles(),
+                         myChangedFilesCollector.myFilesToUpdate.values().stream())
+      .filter(filesToBeIndexedForProjectCondition(project))
+      .distinct()
+      .mapToInt(f -> processor.process(f) ? 1 : 0)
+      .allMatch(success -> success == 1);
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
