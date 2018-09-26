@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.fixes.migration;
 
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.StringBufferReplaceableByStringBuilderInspection;
 
@@ -25,7 +25,7 @@ public class StringBufferReplaceableByStringBuilderFixTest extends IGQuickFixesT
     super.setUp();
     myFixture.enableInspections(new StringBufferReplaceableByStringBuilderInspection());
     myRelativePath = "stringBuffer_stringBuilder";
-    myDefaultHint = InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "StringBuilder");
   }
 
   public void testCallChain() {

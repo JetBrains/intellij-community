@@ -3,19 +3,19 @@
  */
 package com.siyeh.ig.fixes.bugs;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.bugs.NumberEqualityInspection;
 import com.siyeh.ig.bugs.ObjectEqualityInspection;
+import com.siyeh.ig.fixes.EqualityToEqualsFix;
 
 /**
  * @author Bas Leijdekkers
  */
 public class EqualityToEqualsFixTest extends IGQuickFixesTestCase {
 
-  public void testSimple() { doTest(InspectionGadgetsBundle.message("equality.to.equals.quickfix")); }
-  public void testPrecedence() { doTest(InspectionGadgetsBundle.message("equality.to.equals.quickfix")); }
-  public void testNegated() { doTest(InspectionGadgetsBundle.message("inequality.to.not.equals.quickfix")); }
+  public void testSimple() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testPrecedence() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testNegated() { doTest(EqualityToEqualsFix.getFixName(true)); }
 
   @Override
   protected void setUp() throws Exception {

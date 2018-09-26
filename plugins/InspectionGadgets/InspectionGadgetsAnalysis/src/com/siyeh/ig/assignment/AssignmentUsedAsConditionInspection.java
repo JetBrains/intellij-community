@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -51,7 +52,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "==");
     }
 
     @Override

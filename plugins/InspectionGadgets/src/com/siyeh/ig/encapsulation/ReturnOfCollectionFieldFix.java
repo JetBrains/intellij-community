@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -62,8 +63,7 @@ class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message(
-      "return.of.collection.field.quickfix", myReplacementText);
+    return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementText);
   }
 
   @Override

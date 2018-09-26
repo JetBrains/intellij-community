@@ -61,7 +61,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.with", myReplacement);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
     }
 
     @Override
