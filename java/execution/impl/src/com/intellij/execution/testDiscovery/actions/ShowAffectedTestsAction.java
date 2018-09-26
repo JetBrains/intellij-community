@@ -216,7 +216,7 @@ public class ShowAffectedTestsAction extends AnAction {
 
   @Nullable
   private static PsiClass findClassAtCaret(@NotNull AnActionEvent e) {
-    UClass uClass = UastUtils.findContainingUClass(findElementAtCaret(e));
+    UClass uClass = UastUtils.findContaining(findElementAtCaret(e), UClass.class);
     return uClass == null ? null : ObjectUtils.tryCast(uClass.getJavaPsi(), PsiClass.class);
   }
 
