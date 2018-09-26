@@ -4,6 +4,7 @@ package com.intellij.execution
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 
@@ -14,6 +15,10 @@ class JavaRunConfigurationExtensionManager : RunConfigurationExtensionsManager<R
     @JvmStatic
     val instance: JavaRunConfigurationExtensionManager
       get() = service()
+
+    @JvmStatic
+    val instanceOrNull: JavaRunConfigurationExtensionManager?
+      get() = serviceOrNull()
 
     @JvmStatic
     fun checkConfigurationIsValid(configuration: RunConfigurationBase<*>) {
