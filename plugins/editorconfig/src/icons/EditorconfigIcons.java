@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -13,5 +14,5 @@ public class EditorconfigIcons {
     return IconLoader.getIcon(path, EditorconfigIcons.class);
   }
 
-  public static final Icon Editorconfig = load("/org/editorconfig/icons/editorconfig.png"); // 16x16
+  public static final Icon Editorconfig = load("/icons/editorconfig.png"); // 16x16
 }
