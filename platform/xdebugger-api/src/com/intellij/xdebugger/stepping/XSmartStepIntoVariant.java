@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.stepping;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,4 +31,8 @@ public abstract class XSmartStepIntoVariant {
 
   public abstract String getText();
 
+  @Nullable
+  public PsiElement getHighlightElement() {
+    return null;
+  }
 }

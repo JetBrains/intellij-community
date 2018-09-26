@@ -20,12 +20,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -33,6 +34,10 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.event.KeyEvent;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,7 +64,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
   private static <V extends XSmartStepIntoVariant> void doSmartStepInto(final XSmartStepIntoHandler<V> handler,
                                                                         XSourcePosition position,
-                                                                        final XDebugSession session,
+                                                                        @NotNull final XDebugSession session,
                                                                         Editor editor) {
     List<V> variants = handler.computeSmartStepVariants(position);
     if (variants.isEmpty()) {
@@ -71,24 +76,38 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       return;
     }
 
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
-      @Override
-      public Icon getIconFor(V aValue) {
-        return aValue.getIcon();
-      }
+    V firstTarget = variants.get(0);
+    SmartStepMethodListPopupStep popupStep =
+      new SmartStepMethodListPopupStep<>(handler.getPopupTitle(position), editor, variants, session, handler);
 
-      @NotNull
-      @Override
-      public String getTextFor(V value) {
-        return value.getText();
-      }
+    ListPopupImpl popup = new ListPopupImpl(popupStep);
+    DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
+    popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
 
+    UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
+                        "selectNextRow",
+                        KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
+
+    popup.addListSelectionListener(new ListSelectionListener() {
       @Override
-      public PopupStep onChosen(V selectedValue, boolean finalChoice) {
-        session.smartStepInto(handler, selectedValue);
-        return FINAL_CHOICE;
+      public void valueChanged(ListSelectionEvent e) {
+        popupStep.getScopeHighlighter().dropHighlight();
+        if (!e.getValueIsAdjusting()) {
+          final XSmartStepIntoVariant selectedTarget = (XSmartStepIntoVariant)((JBList)e.getSource()).getSelectedValue();
+          if (selectedTarget != null) {
+            highlightTarget(popupStep, selectedTarget);
+          }
+        }
       }
     });
+    highlightTarget(popupStep, firstTarget);
     DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
+  }
+
+  private static void highlightTarget(@NotNull final SmartStepMethodListPopupStep popupStep, @NotNull final XSmartStepIntoVariant target) {
+    final PsiElement highlightElement = target.getHighlightElement();
+    if (highlightElement != null) {
+      popupStep.getScopeHighlighter().highlight(highlightElement, Collections.singletonList(highlightElement));
+    }
   }
 }

@@ -54,5 +54,6 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * @return title for popup which will be shown to select method/function
    * @param position current position
    */
+  @NotNull
   public abstract String getPopupTitle(@NotNull XSourcePosition position);
 }
