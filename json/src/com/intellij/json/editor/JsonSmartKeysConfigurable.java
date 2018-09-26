@@ -21,6 +21,9 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
     checkBox("Escape text on paste in string literals",
              () -> settings.ESCAPE_PASTED_TEXT,
              v -> settings.ESCAPE_PASTED_TEXT = v);
+    checkBox("Automatically add quotes to property names when typing ':'",
+             () -> settings.AUTO_QUOTE_PROP_NAME,
+             v -> settings.AUTO_QUOTE_PROP_NAME = v);
   }
 
   @Override
