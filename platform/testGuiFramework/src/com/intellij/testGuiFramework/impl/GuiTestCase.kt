@@ -95,8 +95,8 @@ open class GuiTestCase {
    * Context function: finds IDE frame and creates IdeFrameFixture instance as receiver object. Code block after it call methods on the
    * receiver object (IdeFrameFixture instance).
    */
-  fun ideFrame(func: IdeFrameFixture.() -> Unit) {
-    func(guiTestRule.findIdeFrame())
+  fun ideFrame(timeout: Timeout = Timeouts.defaultTimeout, func: IdeFrameFixture.() -> Unit) {
+    func(guiTestRule.findIdeFrame(timeout))
   }
 
   /**

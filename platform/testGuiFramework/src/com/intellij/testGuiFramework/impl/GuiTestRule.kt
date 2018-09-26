@@ -181,7 +181,7 @@ class GuiTestRule : TestRule {
       }
       else {
         try {
-          val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, 2)
+          val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, Timeouts.seconds02)
           if (ideFrameFixture.target().isShowing)
               ideFrameFixture.closeProject()
         }
@@ -474,13 +474,13 @@ class GuiTestRule : TestRule {
     }
   }
 
-  fun findIdeFrame(projectPath: File): IdeFrameFixture {
-    return IdeFrameFixture.find(robot(), projectPath, null)
+  fun findIdeFrame(projectPath: File, timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+    return IdeFrameFixture.find(robot(), projectPath, null, timeout)
   }
 
 
-  fun findIdeFrame(): IdeFrameFixture {
-    return IdeFrameFixture.find(robot(), null, null)
+  fun findIdeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+    return IdeFrameFixture.find(robot(), null, null, timeout)
   }
 
   fun getTestName(): String {
