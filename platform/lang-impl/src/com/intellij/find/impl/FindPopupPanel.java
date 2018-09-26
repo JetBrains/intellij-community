@@ -282,7 +282,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         @Override
         public void windowLostFocus(WindowEvent e) {
           Window oppositeWindow = e.getOppositeWindow();
-          if (oppositeWindow != null && oppositeWindow.getOwner() == w) {
+          if (oppositeWindow == w || oppositeWindow != null && oppositeWindow.getOwner() == w) {
             return;
           }
           if (canBeClosed()) {
