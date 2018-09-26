@@ -18,15 +18,19 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 
 
-public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixParameterizedTestCase {
+public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new RedundantSuppressInspection(), new PossibleHeapPollutionVarargsInspection(), new UncheckedWarningLocalInspection());
+    enableInspectionTools(new RedundantSuppressInspection(), 
+                          new PossibleHeapPollutionVarargsInspection(),
+                          new UncheckedWarningLocalInspection(),
+                          new UnusedDeclarationInspection(true));
   }
 
   @Override

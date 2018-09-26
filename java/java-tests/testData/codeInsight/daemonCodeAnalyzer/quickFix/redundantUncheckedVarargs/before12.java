@@ -9,7 +9,7 @@ public class SampleSafeVarargs {
         return null;
     }
 
-    @SuppressWarnings({"unc<caret>hecked"})
+    @SuppressWarnings({"unu<caret>sed"})
     void foo() {
         asList(new ArrayList<String>());
         List<Object> l ;

@@ -241,7 +241,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionToolWrapper toolWrapper = inspectionProfile.getToolById(RedundantSuppressInspection.SHORT_NAME, getFile());
       InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
       if (suppressor instanceof RedundantSuppressionDetector) {
-        Set<String> activeTools = toolWrappers.stream().map(tool -> tool.getID()).collect(Collectors.toSet());
+        Set<String> activeTools = toolWrappers.stream().filter(tool -> !tool.isUnfair()).map(tool -> tool.getID()).collect(Collectors.toSet());
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
         ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), true);
