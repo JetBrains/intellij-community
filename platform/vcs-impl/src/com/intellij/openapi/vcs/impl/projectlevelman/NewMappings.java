@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -373,28 +359,23 @@ public class NewMappings {
   // todo area for optimization
   private void removeRedundantMappings() {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final AllVcsesI allVcses = AllVcses.getInstance(myProject);
 
     for (Iterator<String> iterator = myVcsToPaths.keySet().iterator(); iterator.hasNext(); ) {
       final String vcsName = iterator.next();
       final Collection<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
 
       List<Pair<VirtualFile, VcsDirectoryMapping>> objects = mapNotNull(mappings, dm -> {
-        VirtualFile vf = lfs.findFileByPath(dm.getDirectory());
-        if (vf == null) {
-          vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
-        }
+        VirtualFile vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
         return vf == null ? null : Pair.create(vf, dm);
       });
 
       final List<Pair<VirtualFile, VcsDirectoryMapping>> filteredFiles;
-      // todo static
       Function<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor = pair -> pair.getFirst();
       if (StringUtil.isEmptyOrSpaces(vcsName)) {
         filteredFiles = AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor);
       }
       else {
-        final AbstractVcs<?> vcs = allVcses.getByName(vcsName);
+        final AbstractVcs<?> vcs = myVcsManager.findVcsByName(vcsName);
         if (vcs == null) {
           VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'", MessageType.ERROR);
           continue;
@@ -403,9 +384,6 @@ public class NewMappings {
       }
 
       List<VcsDirectoryMapping> filteredMappings = map(filteredFiles, Functions.pairSecond());
-      // to calculate what had been removed
-      mappings.removeAll(filteredMappings);
-
       if (filteredMappings.isEmpty()) {
         iterator.remove();
       }
