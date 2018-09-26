@@ -1,12 +1,12 @@
 // "Replace 'switch' with 'if'" "true"
 class X {
   void m(String s, boolean r) {
-      if ("a".equals(s)) {
+    if (r)
+      swi<caret>tch (s) {
+        case "a":
           System.out.println("a");
-          if (r) {
-              return;
-          }
+        default:
+          System.out.println("d");
       }
-      System.out.println("d");
   }
 }

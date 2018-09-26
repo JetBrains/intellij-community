@@ -3,14 +3,14 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.redundancy.SwitchStatementWithSingleDefaultInspection;
+import com.siyeh.ig.controlflow.SwitchStatementWithTooFewBranchesInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class UnwrapSwitchStatementFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new SwitchStatementWithSingleDefaultInspection()};
+    return new LocalInspectionTool[] {new SwitchStatementWithTooFewBranchesInspection()};
   }
 
   @Override
