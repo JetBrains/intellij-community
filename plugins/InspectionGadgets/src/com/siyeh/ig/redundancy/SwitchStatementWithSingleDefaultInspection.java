@@ -64,7 +64,7 @@ public class SwitchStatementWithSingleDefaultInspection extends AbstractBaseJava
       if (body == null) return;
       BreakConverter breakConverter = BreakConverter.from(statement);
       if (breakConverter == null) return;
-      breakConverter.process(true);
+      breakConverter.process();
       PsiSwitchLabelStatement defaultCase = PsiTreeUtil.getChildOfType(body, PsiSwitchLabelStatement.class);
       if (defaultCase == null || !defaultCase.isDefaultCase()) return;
       defaultCase.delete();

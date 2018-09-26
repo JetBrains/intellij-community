@@ -7,14 +7,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.psiutils.BreakConverter;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +47,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiCodeBlock body = mySwitchExpression.getBody();
-    return body != null && !body.isEmpty();
+    return body != null && !body.isEmpty() && BreakConverter.from(mySwitchExpression) != null;
   }
 
   @Override
@@ -110,6 +112,14 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     if (body == null) {
       return;
     }
+    Set<PsiSwitchLabelStatement> fallThroughTargets =
+      StreamEx.of(body.getStatements())
+        .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement && ControlFlowUtils.statementMayCompleteNormally(s1)
+                             ? (PsiSwitchLabelStatement)s2 : null)
+        .nonNull().toSet();
+    BreakConverter converter = BreakConverter.from(switchStatement);
+    if (converter == null) return;
+    converter.process();
     final List<SwitchStatementBranch> openBranches = new ArrayList<>();
     final Set<PsiLocalVariable> declaredVariables = new HashSet<>();
     final List<SwitchStatementBranch> allBranches = new ArrayList<>();
@@ -119,7 +129,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       final PsiElement statement = children[i];
       if (statement instanceof PsiSwitchLabelStatement) {
         final PsiSwitchLabelStatement label = (PsiSwitchLabelStatement)statement;
-        if (currentBranch == null) {
+        if (currentBranch == null || !fallThroughTargets.contains(statement)) {
           openBranches.clear();
           currentBranch = new SwitchStatementBranch();
           currentBranch.addPendingVariableDeclarations(declaredVariables);
@@ -152,18 +162,6 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           }
           for (SwitchStatementBranch branch : openBranches) {
             branch.addStatement(statement);
-          }
-          try {
-            ControlFlow controlFlow =
-              ControlFlowFactory.getInstance(project).getControlFlow(statement, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-            int startOffset = controlFlow.getStartOffset(statement);
-            int endOffset = controlFlow.getEndOffset(statement);
-            if (startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
-              currentBranch = null;
-            }
-          }
-          catch (AnalysisCanceledException e) {
-            currentBranch = null;
           }
         }
         else {
@@ -280,35 +278,18 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       }
     }
 
-    boolean addLineBreak = true;
     for (PsiElement bodyStatement : bodyStatements) {
       if (bodyStatement instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)bodyStatement;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         for (PsiStatement statement : codeBlock.getStatements()) {
-          appendElement(statement, out, commentTracker);
+          out.append(commentTracker.text(statement));
         }
       }
       else {
-        addLineBreak = appendElement(bodyStatement, out, commentTracker);
+        out.append(commentTracker.text(bodyStatement));
       }
     }
-    if (addLineBreak) {
-      out.append("\n");
-    }
-    out.append("}");
-  }
-
-  private static boolean appendElement(PsiElement element, @NonNls StringBuilder out, CommentTracker commentTracker) {
-    if (element instanceof PsiBreakStatement) {
-      final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
-      final PsiIdentifier identifier = breakStatement.getLabelIdentifier();
-      if (identifier == null) {
-        return false;
-      }
-    }
-    out.append(commentTracker.text(element));
-
-    return true;
+    out.append("\n").append("}");
   }
 }
