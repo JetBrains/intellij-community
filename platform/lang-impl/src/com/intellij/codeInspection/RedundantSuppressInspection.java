@@ -334,6 +334,11 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
   }
 
   @Override
+  public boolean worksInBatchModeOnly() {
+    return false;
+  }
+
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
