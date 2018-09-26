@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,7 +131,9 @@ public class InvokeCompletion extends ActionOnFile {
 
     List<LookupElement> items = lookup.getItems();
     if (expectedVariant != null) {
-      LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(expectedVariant));
+      LookupElement sameItem = ContainerUtil.find(items, e ->
+        e.getAllLookupStrings().stream().anyMatch(
+          s -> Comparing.equal(s, expectedVariant, e.isCaseSensitive())));
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
     }
 
