@@ -135,11 +135,8 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range);
-      if (errorDescription != null) {
-        builder.descriptionAndTooltip(errorDescription);
-      }
-      final HighlightInfo info = builder.create();
+      final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range)
+        .descriptionAndTooltip(errorDescription).create();
       if (info != null) {
         for(ErrorQuickFixProvider provider: ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
           provider.registerErrorQuickFix(element, info);
@@ -155,11 +152,8 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1);
-      if (errorDescription != null) {
-        builder.descriptionAndTooltip(errorDescription);
-      }
-      info = builder.create();
+      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1).descriptionAndTooltip(errorDescription)
+        .create();
     }
     else {
       int start;
@@ -172,12 +166,8 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         start = offset;
         end = offset < fileLength ? offset + 1 : offset;
       }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
-      if (errorDescription != null) {
-        builder.descriptionAndTooltip(errorDescription);
-      }
-      builder.endOfLine();
-      info = builder.create();
+      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end).descriptionAndTooltip(errorDescription)
+        .endOfLine().create();
     }
     return info;
   }

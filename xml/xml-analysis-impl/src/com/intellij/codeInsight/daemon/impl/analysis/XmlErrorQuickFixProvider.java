@@ -39,8 +39,7 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
   }
 
   private static void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
-    final String text = element.getErrorDescription();
-    if (text != null && text.startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
+    if (element.getErrorDescription().startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
         @Override
         @NotNull
