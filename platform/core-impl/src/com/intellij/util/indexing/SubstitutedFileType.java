@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -41,7 +42,7 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @NotNull
-  public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, Project project) {
+  public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, @Nullable Project project) {
     if (project == null) {
       return fileType;
     }
