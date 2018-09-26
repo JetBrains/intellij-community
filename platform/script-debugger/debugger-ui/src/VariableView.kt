@@ -325,7 +325,7 @@ class VariableView(override val variableName: String, private val variable: Vari
               navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                 object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
-                    return PsiVisitors.visit(myPosition, project) { position, element, positionOffset, document ->
+                    return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
                       // element will be "open paren", but we should navigate to function name,
                       // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
                       var referenceCandidate: PsiElement? = element
@@ -488,4 +488,4 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
   }
 }
 
-private val PROTOTYPE_PROP = "__proto__"
+private const val PROTOTYPE_PROP = "__proto__"
