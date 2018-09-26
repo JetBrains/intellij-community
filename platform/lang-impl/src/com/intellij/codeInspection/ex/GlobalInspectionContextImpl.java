@@ -75,6 +75,8 @@ import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
@@ -903,17 +905,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                           @NotNull final InspectionProfile profile,
                           @Nullable final String commandName,
                           @Nullable final Runnable postRunnable,
-                          final boolean modal) {
+                          final boolean modal, Predicate<ProblemDescriptor> shouldApplyFix) {
     String title = "Inspect Code...";
     Task task = modal ? new Task.Modal(getProject(), title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, postRunnable, commandName);
+        cleanup(scope, profile, postRunnable, commandName, shouldApplyFix);
       }
     } : new Task.Backgroundable(getProject(), title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, postRunnable, commandName);
+        cleanup(scope, profile, postRunnable, commandName, shouldApplyFix);
       }
     };
     ProgressManager.getInstance().run(task);
@@ -922,7 +924,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private void cleanup(@NotNull final AnalysisScope scope,
                        @NotNull InspectionProfile profile,
                        @Nullable final Runnable postRunnable,
-                       @Nullable final String commandName) {
+                       @Nullable final String commandName,
+                       @NotNull Predicate<ProblemDescriptor> shouldApplyFix) {
     setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -997,7 +1000,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                 }
               }
               if (!localDescriptors.isEmpty()) {
-                descriptors.addAll(localDescriptors);
+                for (ProblemDescriptor descriptor : localDescriptors) {
+                  if (shouldApplyFix.test(descriptor)) {
+                    descriptors.add(descriptor);
+                  }
+                }
                 files.add(file);
               }
             }
