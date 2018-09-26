@@ -195,12 +195,15 @@ public class HardcodedContracts {
              className.equals("org.hamcrest.MatcherAssert")) {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
-    else if (TypeUtils.isOptional(owner)) {
+    else if (TypeUtils.isOptional(owner) && paramCount == 0) {
       if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
         return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
       }
       else if ("isPresent".equals(methodName)) {
         return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));
+      }
+      else if ("isEmpty".equals(methodName)) {
+        return Arrays.asList(optionalAbsentContract(returnTrue()), trivialContract(returnFalse()));
       }
     }
     else if (MethodUtils.isEquals(method)) {
