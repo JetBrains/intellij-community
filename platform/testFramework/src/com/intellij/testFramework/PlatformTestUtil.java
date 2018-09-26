@@ -835,10 +835,6 @@ public class PlatformTestUtil {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
   }
 
-  public static void tryGcSoftlyReachableObjects() {
-    GCUtil.tryGcSoftlyReachableObjects();
-  }
-
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
     try {
       Charset oldCharset = Charset.defaultCharset();

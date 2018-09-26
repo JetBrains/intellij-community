@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.util.ref.GCUtil;
 
@@ -55,7 +54,7 @@ public class CodeFragmentsTest extends PsiTestCase{
     });
 
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertEquals("ab", PsiDocumentManager.getInstance(myProject).getDocument(fragment).getText());
   }
 
