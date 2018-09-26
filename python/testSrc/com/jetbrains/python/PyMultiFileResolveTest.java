@@ -496,8 +496,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-                                              .filter(e -> e instanceof PyFile)
-                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+        .filter(e -> e instanceof PyFile)
+        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
   }
@@ -587,14 +587,5 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // EA-121262
   public void testIncompleteFromImport() {
     assertUnresolved();
-  }
-
-  public void testCreateClassByQNameDoesntDependOnExistingImports() {
-    prepareTestDirectory();
-    runWithSourceRoots(Collections.singletonList(myFixture.findFileInTempDir("src")), () -> {
-      myFixture.configureByFile("src/" + getTestName(false) + ".py");
-      final PyPsiFacade facade = PyPsiFacade.getInstance(myFixture.getProject());
-      assertNotNull(facade.createClassByQName("foo.bar.MyClass", myFixture.getFile()));
-    });
   }
 }

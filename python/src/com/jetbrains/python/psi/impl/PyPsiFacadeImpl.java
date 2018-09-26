@@ -91,12 +91,18 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @Nullable
   @Override
   public final PyClass createClassByQName(@NotNull final String qName, @NotNull final PsiElement anchor) {
+    final QualifiedName qualifiedName = QualifiedName.fromDottedString(qName);
+    // Only built-in classes can be found by their unqualified names.
+    if (qualifiedName.getComponentCount() == 1) {
+      return PyBuiltinCache.getInstance(anchor).getClass(qName);
+    }
+
     final Module module = ModuleUtilCore.findModuleForPsiElement(ObjectUtils.notNull(anchor.getContainingFile(), anchor));
     if (module == null) return null;
     // Don't use PyResolveImportUtil.fromFoothold here as setting foothold file is going to affect resolve results
     // particularly if the anchor element happens to be in the same file as the target class.
     final PyQualifiedNameResolveContext resolveContext = PyResolveImportUtil.fromModule(module).copyWithMembers();
-    return StreamEx.of(resolveQualifiedName(QualifiedName.fromDottedString(qName), resolveContext))
+    return StreamEx.of(resolveQualifiedName(qualifiedName, resolveContext))
       .select(PyClass.class)
       .findFirst()
       .orElse(null);
