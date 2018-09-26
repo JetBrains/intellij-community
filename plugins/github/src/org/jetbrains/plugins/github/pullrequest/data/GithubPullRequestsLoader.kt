@@ -18,10 +18,10 @@ import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQu
 import java.util.*
 
 class GithubPullRequestsLoader(progressManager: ProgressManager,
-                               private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder,
+                               private val requestExecutor: GithubApiRequestExecutor,
                                private val serverPath: GithubServerPath,
                                private val repoPath: GithubFullPath)
-  : SingleWorkerProcessExecutor(progressManager, "GitHub PR loading breaker"), GithubApiRequestExecutorManager.ExecutorChangeListener {
+  : SingleWorkerProcessExecutor(progressManager, "GitHub PR loading breaker"), GithubApiRequestExecutor.AuthDataChangeListener {
 
   private var query: String = buildQuery(null)
   private var nextPageRequest: GithubApiRequest<GithubResponsePage<GithubSearchedIssue>>? = createInitialRequest()
@@ -29,7 +29,7 @@ class GithubPullRequestsLoader(progressManager: ProgressManager,
   private val stateEventDispatcher = EventDispatcher.create(PullRequestsLoadingListener::class.java)
 
   init {
-    requestExecutorHolder.addListener(this, this)
+    requestExecutor.addListener(this, this)
   }
 
   private fun createInitialRequest() = GithubApiRequests.Search.Issues.get(serverPath, query)
@@ -49,7 +49,6 @@ class GithubPullRequestsLoader(progressManager: ProgressManager,
 
   @CalledInAwt
   fun requestLoadMore() {
-    val requestExecutor = requestExecutorHolder.executor
     submit { indicator -> loadMore(requestExecutor, indicator) }
   }
 
@@ -77,7 +76,7 @@ class GithubPullRequestsLoader(progressManager: ProgressManager,
     }
   }
 
-  override fun executorChanged() {
+  override fun authDataChanged() {
     reset()
   }
 

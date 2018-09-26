@@ -9,7 +9,6 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
@@ -19,7 +18,7 @@ import java.util.concurrent.Future
 import kotlin.properties.Delegates
 
 class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
-                                      private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder,
+                                      private val requestExecutor: GithubApiRequestExecutor,
                                       private val selectionModel: GithubPullRequestsListSelectionModel)
   : SingleWorkerProcessExecutor(progressManager, "GitHub PR info loading breaker"),
     GithubPullRequestsListSelectionModel.SelectionChangedListener {
@@ -46,7 +45,6 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
       loadingEventDispatcher.multicaster.loaderCleared()
     }
     else {
-      val requestExecutor = requestExecutorHolder.executor
       request = submit { indicator -> loadDetails(indicator, requestExecutor, selection) }
     }
   }

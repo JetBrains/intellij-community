@@ -41,16 +41,16 @@ class GithubPullRequestsComponentFactory(private val project: Project,
 
   fun createComponent(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount): JComponent? {
 
-    val requestExecutorHolder = requestExecutorManager.getManagedHolder(account, project) ?: return null
+    val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return null
     val repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!
-    val listLoader = GithubPullRequestsLoader(progressManager, requestExecutorHolder,
+    val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor,
                                               account.server, repoPath)
     val selectionModel = GithubPullRequestsListSelectionModel()
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
                                                selectionModel, listLoader,
-                                               CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutorHolder))
+                                               CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor))
 
-    val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, selectionModel)
+    val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutor, selectionModel)
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
 
@@ -74,8 +74,6 @@ class GithubPullRequestsComponentFactory(private val project: Project,
       Disposer.dispose(changesLoader)
       Disposer.dispose(branchFetcher)
       Disposer.dispose(detailsLoader)
-
-      Disposer.dispose(requestExecutorHolder)
     })
     changes.diffAction.registerCustomShortcutSet(wrapper, wrapper)
     return wrapper

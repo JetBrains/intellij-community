@@ -31,14 +31,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
 
   @CalledInAwt
   @JvmOverloads
-  internal fun getOrRequestTokenForAccount(account: GithubAccount,
-                                           project: Project?,
-                                           parentComponent: Component? = null): String? {
-    return getTokenForAccount(account) ?: requestNewToken(account, project, parentComponent)
-  }
-
-  @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
+  internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
     val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
