@@ -89,10 +89,14 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   public void setPrinter(final Printer printer) {
+    //myPrinter = printer;
+    //for (AbstractTestProxy testProxy : getChildren()) {
+    //  testProxy.setPrinter(printer);
+    //}
+  }
+
+  public void sudoSetPrinter(final Printer printer) {
     myPrinter = printer;
-    for (AbstractTestProxy testProxy : getChildren()) {
-      testProxy.setPrinter(printer);
-    }
   }
 
   /**

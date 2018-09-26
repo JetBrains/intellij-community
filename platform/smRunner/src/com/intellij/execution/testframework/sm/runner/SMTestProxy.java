@@ -235,6 +235,10 @@ public class SMTestProxy extends AbstractTestProxy {
     super.setPrinter(getRightPrinter(printer));
   }
 
+  public void sudoSetPrinter(Printer printer) {
+    super.sudoSetPrinter(printer);
+  }
+
   public String getName() {
     return myName;
   }
