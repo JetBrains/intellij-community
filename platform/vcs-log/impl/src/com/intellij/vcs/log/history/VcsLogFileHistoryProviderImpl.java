@@ -76,14 +76,15 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
 
   @NotNull
   private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
-    if (revisionNumber == null) {
-      path = VcsUtil.getLastCommitPath(project, path);
-    }
-    
     VirtualFile root = assertNotNull(VcsLogUtil.getActualRoot(project, path));
     if (!root.equals(VcsUtil.getVcsRootFor(project, path)) && path.isDirectory()) {
-      return VcsUtil.getFilePath(path.getPath(), false);
+      path = VcsUtil.getFilePath(path.getPath(), false);
     }
+
+    if (revisionNumber == null) {
+      return VcsUtil.getLastCommitPath(project, path);
+    }
+
     return path;
   }
 }
