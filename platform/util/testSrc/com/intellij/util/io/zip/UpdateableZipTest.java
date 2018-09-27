@@ -117,6 +117,10 @@ public class UpdateableZipTest extends TestCase {
       jbZip.gc();
     }
 
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+    }
+
     try (ZipFile utilZip = new ZipFile(zipFile)) {
       ZipEntry presentEntry = utilZip.getEntry("/first");
       assertNotNull(presentEntry);
