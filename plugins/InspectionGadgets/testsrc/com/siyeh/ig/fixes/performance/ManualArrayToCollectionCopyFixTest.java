@@ -16,7 +16,6 @@
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.ManualArrayToCollectionCopyInspection;
 
@@ -30,7 +29,7 @@ public class ManualArrayToCollectionCopyFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new ManualArrayToCollectionCopyInspection());
     myRelativePath = "performance/replace_with_add_all";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "Collections.addAll(...,...)");;
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "Collections.addAll(...,...)");
   }
 
   public void testSimpleFor() { doTest(); }

@@ -165,7 +165,6 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
       if (annotationsManager.deannotate(listOwner, qualifiedName) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
         UndoUtil.markPsiFileForUndo(file);
       }
-      ;
     });
   }
 

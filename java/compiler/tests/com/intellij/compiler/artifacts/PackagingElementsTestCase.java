@@ -90,7 +90,6 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
       if (module != null) {
         ModuleRootModificationUtil.addDependency(module, library, scope, false);
       }
-      ;
       return library;
     });
   }

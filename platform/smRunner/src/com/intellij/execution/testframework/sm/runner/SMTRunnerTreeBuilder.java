@@ -104,7 +104,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   @NotNull
   private static TreeVisitor visitor(@NotNull AbstractTestProxy proxy) {
     return path -> {
-      BaseTestProxyNodeDescriptor descriptor = TreeUtil.getLastUserObject(BaseTestProxyNodeDescriptor.class, path);;
+      BaseTestProxyNodeDescriptor descriptor = TreeUtil.getLastUserObject(BaseTestProxyNodeDescriptor.class, path);
       assert descriptor != null;
       AbstractTestProxy currentProxy = descriptor.getElement();
       if (currentProxy == proxy) return TreeVisitor.Action.INTERRUPT;

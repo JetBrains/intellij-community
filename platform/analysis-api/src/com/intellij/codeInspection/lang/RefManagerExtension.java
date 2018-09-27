@@ -3,7 +3,9 @@
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -24,7 +26,7 @@ public interface RefManagerExtension<T> {
   @NotNull
   default Collection<Language> getLanguages() {
     return Collections.singleton(getLanguage());
-  };
+  }
 
   @Deprecated
   @NotNull

@@ -73,7 +73,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return null;
-  };
+  }
 
   @Nullable
   @Override

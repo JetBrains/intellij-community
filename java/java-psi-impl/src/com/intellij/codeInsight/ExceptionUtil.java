@@ -744,7 +744,7 @@ public class ExceptionUtil {
 
     static HandlePlace fromBoolean(boolean isHandled) {
       return isHandled ? UNKNOWN : UNHANDLED;
-    };
+    }
   }
 
   @NotNull

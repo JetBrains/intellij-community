@@ -323,7 +323,7 @@ public class GrClosureSignatureUtil {
   }
 
   public enum ApplicabilityResult {
-    applicable, inapplicable, canBeApplicable, ambiguous;
+    applicable, inapplicable, canBeApplicable, ambiguous
   }
 
   @Nullable

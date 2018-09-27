@@ -63,7 +63,7 @@ public abstract class TestFrameworks {
     }
 
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      if (frameworks.contains(framework)) continue;;
+      if (frameworks.contains(framework)) continue;
       if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
         frameworks.add(framework);
       }

@@ -611,7 +611,7 @@ public class ExpectedHighlightingData {
     assert start != null: "textLength = " + text.length() + ", startOffset = " + startOffset;
 
     LineColumn end = StringUtil.offsetToLineColumn(text, endOffset);
-    assert end != null : "textLength = " + text.length() + ", endOffset = " + endOffset;;
+    assert end != null : "textLength = " + text.length() + ", endOffset = " + endOffset;
 
     if (start.line == end.line) {
       return String.format("(%d:%d/%d)", start.line + 1, start.column + 1, end.column - start.column);

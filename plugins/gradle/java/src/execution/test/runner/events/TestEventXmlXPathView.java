@@ -53,7 +53,7 @@ public class TestEventXmlXPathView implements TestEventXmlView {
     }
     catch (Exception ex) {
       throw new XmlParserException(ex);
-    };
+    }
   }
 
   @NotNull
