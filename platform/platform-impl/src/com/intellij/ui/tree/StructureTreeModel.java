@@ -10,16 +10,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.enumeration;
@@ -162,33 +166,55 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
    * @param element   an element of the internal tree structure
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
+   * @return a promise that will be succeed if path to invalidate is found
    * @see #invalidate(TreePath, boolean)
    */
-  public final void invalidate(@NotNull Object element, boolean structure) {
-    forElement(element, stack -> {
+  public final Promise<TreePath> invalidate(@NotNull Object element, boolean structure) {
+    return forElement(element, stack -> {
       Node node = root.get();
-      if (node == null || !node.matches(stack.pop())) return;
+      if (node == null || !node.matches(stack.pop())) return null;
       while (!stack.isEmpty()) {
         node = node.findChild(stack.pop());
-        if (node == null) return;
+        if (node == null) return null;
       }
-      invalidate(TreePathUtil.pathToTreeNode(node), structure);
+      TreePath path = TreePathUtil.pathToTreeNode(node);
+      invalidate(path, structure);
+      return path;
     });
   }
 
-  private void forElement(@NotNull Object element, @NotNull Consumer<Deque<Object>> consumer) {
+  /**
+   * Promises to create default visitor to find the specified element.
+   *
+   * @param element an element of the internal tree structure
+   * @return a promise that will be succeed if visitor is created
+   * @see TreeUtil#promiseExpand(JTree, TreeVisitor)
+   * @see TreeUtil#promiseSelect(JTree, TreeVisitor)
+   */
+  public final Promise<TreeVisitor> promiseVisitor(@NotNull Object element) {
+    return forElement(element, stack -> new TreeVisitor.ByTreePath<>(
+      TreePathUtil.convertCollectionToTreePath(stack),
+      node -> node instanceof Node ? ((Node)node).getElement() : null));
+  }
+
+  private <T> Promise<T> forElement(@NotNull Object element, @NotNull Function<Deque<Object>, T> function) {
+    AsyncPromise<T> promise = new AsyncPromise<>();
     invoker.runOrInvokeLater(() -> {
+      T result = null;
       AbstractTreeStructure structure = this.structure;
-      if (structure == null) return;
-
-      if (disposed) return;
-
-      Deque<Object> stack = new ArrayDeque<>();
-      for (Object e = element; e != null; e = structure.getParentElement(e)) {
-        stack.push(e);
+      if (!disposed && structure != null) {
+        Deque<Object> stack = new ArrayDeque<>();
+        for (Object e = element; e != null; e = structure.getParentElement(e)) stack.push(e);
+        result = function.apply(stack); // convert nodes chain to default tree visitor
       }
-      consumer.accept(stack);
-    });
+      if (result != null) {
+        promise.setResult(result);
+      }
+      else {
+        promise.cancel();
+      }
+    }).onError(promise::setError);
+    return promise;
   }
 
   @Override
