@@ -32,7 +32,7 @@ import java.util.Collection;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
- * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
+ * Stores paths to Git service files that are used by IDEA, and provides test-methods to check if a file
  * matches once of them.
  */
 public class GitRepositoryFiles {
