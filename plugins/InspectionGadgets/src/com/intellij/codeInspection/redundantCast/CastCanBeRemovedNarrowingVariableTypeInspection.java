@@ -145,7 +145,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           PsiTypeCastExpression castOccurrence =
             tryCast(PsiUtil.skipParenthesizedExprUp(((PsiReferenceExpression)reference).getParent()), PsiTypeCastExpression.class);
           if (castOccurrence != null && RedundantCastUtil.isCastRedundant(castOccurrence)) {
-            RedundantCastUtil.removeCast(castOccurrence);
+            RemoveRedundantCastUtil.removeCast(castOccurrence);
           }
         }
       }

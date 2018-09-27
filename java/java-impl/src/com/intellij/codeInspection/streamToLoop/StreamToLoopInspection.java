@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -334,7 +335,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private static PsiElement normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
-      RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
+      RedundantCastUtil.getRedundantCastsInside(element).forEach(RemoveRedundantCastUtil::removeCast);
       return element;
     }
 

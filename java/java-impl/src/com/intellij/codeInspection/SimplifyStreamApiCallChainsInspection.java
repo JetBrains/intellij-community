@@ -7,6 +7,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -560,7 +561,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
               factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
             PsiElement cast = expression.replace(castExpression);
             if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
-              RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
+              RemoveRedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
             }
           }
         }
