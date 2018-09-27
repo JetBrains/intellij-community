@@ -20,80 +20,80 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.util.ObjectUtils.notNull
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLog
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.history.FileHistoryUtil
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction
 import java.awt.event.KeyEvent
 
-class CompareRevisionsFromHistoryActionProvider : AnActionExtensionProvider {
+class CompareRevisionsFromFolderHistoryActionProvider : CompareRevisionsFromLogAction(), AnActionExtensionProvider {
+
+  override fun getFilePath(e: AnActionEvent): FilePath? {
+    return e.getData(VcsDataKeys.FILE_PATH)
+  }
 
   override fun isActive(e: AnActionEvent): Boolean {
-    val filePath = e.getData(VcsDataKeys.FILE_PATH)
-    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null && filePath != null && filePath.isDirectory
+    if (e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) == null) return false
+    val filePath = getFilePath(e)
+    return filePath != null && filePath.isDirectory
   }
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI)
-    val filePath = e.getData(VcsDataKeys.FILE_PATH)
-    if (project == null || ui == null || filePath == null) {
+    val logData = e.getData(VcsLogInternalDataKeys.LOG_DATA)
+    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+    val filePath = getFilePath(e)
+    if (log == null || project == null || logData == null || filePath == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.isVisible = true
 
-    val log = ui.vcsLog
     updateActionText(e, log)
+
+    e.presentation.isVisible = true
 
     if (e.inputEvent is KeyEvent) {
       e.presentation.isEnabled = true
       return
     }
 
-    val commits = log.selectedCommits
-    if (commits.size == 2) {
-      e.presentation.isEnabled = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null
+    if (log.selectedCommits.size >= 2) {
+      super.update(e)
     }
     else {
-      e.presentation.isEnabled = commits.size == 1
+      e.presentation.isEnabled = log.selectedCommits.isNotEmpty()
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI)
-    val filePath = e.getRequiredData(VcsDataKeys.FILE_PATH)
+    val logData = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
+    val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
+    val filePath = getFilePath(e)!!
 
-    VcsLogUsageTriggerCollector.triggerUsage(e)
-
-    val commits = ui.vcsLog.selectedCommits
-    if (commits.size == 2) {
-      val handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) ?: return
-      // this check is needed here since we may come on key event without performing proper checks
-
-      val newestId = commits[0]
-      val olderId = commits[1]
-      notNull(handler).showDiff(olderId.root, filePath, olderId.hash, filePath, newestId.hash)
+    val commits = log.selectedCommits
+    if (commits.size >= 2) {
+      super.actionPerformed(e)
       return
     }
 
-    if (commits.size != 1) return
-
-    val commitIds = ContainerUtil.map(commits) { c -> ui.logData.getCommitIndex(c.hash, c.root) }
-    ui.logData.commitDetailsGetter.loadCommitsData(commitIds, { details ->
+    val commitIds = ContainerUtil.map(commits) { c -> logData.getCommitIndex(c.hash, c.root) }
+    logData.commitDetailsGetter.loadCommitsData(commitIds, { details ->
       val detail = notNull(ContainerUtil.getFirstItem(details))
       val changes = FileHistoryUtil.collectRelevantChanges(detail,
                                                            Condition { change -> FileHistoryUtil.affectsDirectory(change, filePath) })
       VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.id.toShortString() + " for " + filePath.name,
                                     ContainerUtil.newArrayList(changes))
     }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message, MessageType.ERROR) },
-                                                   null)
+                                                null)
   }
 
   companion object {

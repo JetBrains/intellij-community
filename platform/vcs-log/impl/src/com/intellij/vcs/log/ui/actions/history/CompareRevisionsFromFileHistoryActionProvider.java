@@ -35,7 +35,7 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       return;
     }
 
-    CompareRevisionsFromHistoryActionProvider.updateActionText(e, log);
+    CompareRevisionsFromFolderHistoryActionProvider.updateActionText(e, log);
     e.getPresentation().setVisible(true);
 
     if (e.getInputEvent() instanceof KeyEvent) {
