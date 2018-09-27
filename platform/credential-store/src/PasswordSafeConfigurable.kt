@@ -133,6 +133,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       settings.state.keepassDb = null
     }
     passwordSafe.currentProvider = newProvider
+
+    keePassMasterPassword.text = null
+    keePassMasterPassword.setPasswordIsStored(true)
   }
 
   fun getCurrentDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
