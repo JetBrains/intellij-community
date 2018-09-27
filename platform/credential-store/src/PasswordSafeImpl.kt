@@ -159,7 +159,11 @@ internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? =
 }
 
 @TestOnly
-internal fun createKeePassStore(file: String): PasswordSafe =
-  PasswordSafeImpl(
-    PasswordSafeSettings().apply { loadState(PasswordSafeSettings.State().apply { providerType = ProviderType.KEEPASS; keepassDb = file }) },
-    KeePassCredentialStore(dbFile = Paths.get(file)))
+internal fun createKeePassStore(file: String): PasswordSafe {
+  val settings = PasswordSafeSettings()
+  settings.loadState(PasswordSafeSettings.PasswordSafeOptions().apply {
+    provider = ProviderType.KEEPASS
+    keepassDb = file
+  })
+  return PasswordSafeImpl(settings, KeePassCredentialStore(dbFile = Paths.get(file)))
+}
