@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
@@ -20,6 +19,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
@@ -52,7 +52,7 @@ public class GitHistoryUtils {
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
                                                      @Nullable String branch) throws VcsException {
-    filePath = getLastCommitName(project, filePath);
+    filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
@@ -75,7 +75,7 @@ public class GitHistoryUtils {
   @Nullable
   public static VcsRevisionDescription getCurrentRevisionDescription(@NotNull Project project, @NotNull FilePath filePath)
     throws VcsException {
-    filePath = getLastCommitName(project, filePath);
+    filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
@@ -116,7 +116,7 @@ public class GitHistoryUtils {
     if (t == null) {
       return new ItemLatestState(getCurrentRevision(project, filePath, null), true, false);
     }
-    filePath = getLastCommitName(project, filePath);
+    filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setSilent(true);
@@ -196,7 +196,7 @@ public class GitHistoryUtils {
                                                             String... parameters)
     throws VcsException {
     // adjust path using change manager
-    path = getLastCommitName(project, path);
+    path = VcsUtil.getLastCommitPath(project, path);
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
     h.setStdoutSuppressed(true);
@@ -251,7 +251,7 @@ public class GitHistoryUtils {
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {
     // adjust path using change manager
-    path = getLastCommitName(project, path);
+    path = VcsUtil.getLastCommitPath(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, AUTHOR_TIME);
@@ -274,14 +274,7 @@ public class GitHistoryUtils {
    */
   @NotNull
   public static FilePath getLastCommitName(@NotNull Project project, @NotNull FilePath path) {
-    if (project.isDefault()) return path;
-
-    Change change = ChangeListManager.getInstance(project).getChange(path);
-    if (change == null || change.getType() != Change.Type.MOVED || change.getBeforeRevision() == null) {
-      return path;
-    }
-
-    return change.getBeforeRevision().getFile();
+    return VcsUtil.getLastCommitPath(project, path);
   }
 
   @Nullable
