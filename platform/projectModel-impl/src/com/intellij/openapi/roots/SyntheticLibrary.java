@@ -41,7 +41,6 @@ import java.util.Set;
  * </ul>
  * @see AdditionalLibraryRootsProvider
  */
-@SuppressWarnings("JavadocReference")
 @ApiStatus.Experimental
 public abstract class SyntheticLibrary {
 

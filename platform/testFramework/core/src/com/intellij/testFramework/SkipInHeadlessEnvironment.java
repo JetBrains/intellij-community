@@ -25,7 +25,6 @@ import java.lang.annotation.Target;
  *
  * @author nik
  */
-@SuppressWarnings("JavadocReference")
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SkipInHeadlessEnvironment {
