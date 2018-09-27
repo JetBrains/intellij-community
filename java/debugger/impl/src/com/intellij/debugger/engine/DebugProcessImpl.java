@@ -454,7 +454,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (myConnection instanceof PidRemoteConnection) {
         PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
-        Connector connector = pidRemoteConnection.getConnector();
+        Connector connector = pidRemoteConnection.getConnector(this);
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));

@@ -25,7 +25,7 @@ public class PidRemoteConnection extends RemoteConnection {
     return myPid;
   }
 
-  public Connector getConnector() throws ExecutionException {
+  public Connector getConnector(DebugProcessImpl debugProcess) throws ExecutionException {
     return DebugProcessImpl.findConnector("com.sun.jdi.ProcessAttach");
   }
 }
