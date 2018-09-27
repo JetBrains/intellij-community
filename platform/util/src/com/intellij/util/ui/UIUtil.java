@@ -1091,7 +1091,7 @@ public class UIUtil {
   }
 
   public static Color getContextHelpForeground() {
-    return Gray.x78;
+    return JBColor.namedColor("Label.grayForeground", Gray.x78);
   }
 
   @NotNull
