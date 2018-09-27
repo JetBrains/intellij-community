@@ -136,6 +136,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private String myUsagesCount;
   private String myFilesCount;
   private UsageViewPresentation myUsageViewPresentation;
+  private ComponentValidator myComponentValidator;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -143,6 +144,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myDisposable = Disposer.newDisposable();
     myPreviewUpdater = new Alarm(myDisposable);
     myScopeUI = FindPopupScopeUIProvider.getInstance().create(this);
+    myComponentValidator = new ComponentValidator(myDisposable);
 
     Disposer.register(myDisposable, () -> {
       finishPreviousPreviewSearch();
@@ -763,6 +765,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
         if (e.getDocument() == myReplaceComponent.getDocument()) {
           applyTo(myHelper.getModel());
+          if (myHelper.getModel().isRegularExpressions()) {
+            myComponentValidator.updateInfo(getValidationInfo(myHelper.getModel()));
+          }
           ApplicationManager.getApplication().invokeLater(updatePreviewRunnable);
         }
       }
@@ -1099,6 +1104,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     findModel.copyFrom(myHelper.getModel());
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
+    myComponentValidator.updateInfo(result);
 
     final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase() {
       @Override
