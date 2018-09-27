@@ -162,11 +162,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static Color getMainBackground() {
-    return new JBColor(0xf7f7f7, 0x45474a);
+    return JBColor.namedColor("WelcomeScreen.background", new JBColor(0xf7f7f7, 0x45474a));
   }
 
   public static Color getProjectsBackground() {
-    return new JBColor(Gray.xFF, Gray.x39);
+    return JBColor.namedColor("WelcomeScreen.Projects.background", new JBColor(Gray.xFF, Gray.x39));
   }
 
   public static Color getLinkNormalColor() {
@@ -174,7 +174,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static Color getListSelectionColor(boolean hasFocus) {
-    return hasFocus ? new JBColor(0x3875d6, 0x4b6eaf) : new JBColor(Gray.xDD, Gray.x45);
+    return hasFocus ? JBColor.namedColor("WelcomeScreen.Projects.selectionBackground", new JBColor(0x3875d6, 0x4b6eaf))
+                    : JBColor.namedColor("WelcomeScreen.Projects.selectionInactiveBackground", new JBColor(Gray.xDD, Gray.x45));
   }
 
   public static Color getActionLinkSelectionColor() {
@@ -182,7 +183,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static JBColor getSeparatorColor() {
-    return new JBColor(Gray.xEC, new Color(72, 75, 78));
+    return JBColor.namedColor("WelcomeScreen.Separator.color", new JBColor(Gray.xEC, new Color(72, 75, 78)));
   }
 
   @Override
