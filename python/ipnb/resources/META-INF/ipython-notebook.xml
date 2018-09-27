@@ -17,12 +17,20 @@
     <stubElementTypeHolder class="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenTypes"/>
     <referencesSearch implementation="org.jetbrains.plugins.ipnb.psi.IpnbSearchExecutor"/>
     <configurationType implementation="org.jetbrains.plugins.ipnb.run.IpnbRunConfigurationType"/>
+
+    <xdebugger.breakpointType implementation="org.jetbrains.plugins.ipnb.debugger.IpnbLineBreakpointType"/>
+    <xdebugger.breakpointType implementation="org.jetbrains.plugins.ipnb.debugger.IpnbExceptionBreakpointType"/>
+    <projectService serviceInterface="org.jetbrains.plugins.ipnb.debugger.IpnbCellIdManagerImpl"
+                    serviceImplementation="org.jetbrains.plugins.ipnb.debugger.IpnbCellIdManagerImpl"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
     <visitorFilter language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.IpnbVisitorFilter"/>
     <pep8ProblemSuppressor implementation="org.jetbrains.plugins.ipnb.IpnbPep8ProblemSuppressor"/>
     <unresolvedReferenceSkipper implementation="org.jetbrains.plugins.ipnb.psi.IpnbUnresolvedReferenceSkipper"/>
+
+    <breakpointHandler implementation="org.jetbrains.plugins.ipnb.debugger.IpnbLineBreakpointHandlerFactory"/>
+    <breakpointHandler implementation="org.jetbrains.plugins.ipnb.debugger.IpnbExceptionBreakpointHandlerFactory"/>
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunAllCellsAction" id="IpnbRunAllCellsAction" text="Run All Cells"
