@@ -438,12 +438,12 @@ public class JBZipFile implements Closeable {
   }
 
   public void gc() throws IOException {
-    if (myOutputStream != null) {
-      myOutputStream.finish();
-      myOutputStream = null;
-      currentCfdOffset = 0;
-    }
-    getOutputStream().finish();
+    //if (myOutputStream != null) {
+    //  myOutputStream.finish();
+    //  myOutputStream = null;
+      //currentCfdOffset = 0;
+    //}
+    //getOutputStream().finish();
   }
 
   JBZipOutputStream getOutputStream() throws IOException {
