@@ -134,7 +134,11 @@ public class ChangesViewContentManager implements ChangesViewContentI {
   private void updateToolWindowAvailability() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
     if (toolWindow != null) {
-      toolWindow.setAvailable(isAvailable(), null);
+      boolean available = isAvailable();
+      if (available && !toolWindow.isAvailable()) {
+        toolWindow.setShowStripeButton(true);
+      }
+      toolWindow.setAvailable(available, null);
     }
   }
 
