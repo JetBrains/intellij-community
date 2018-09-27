@@ -14,13 +14,15 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - align: {horizontal: false, unit: -1, value: 0.0}
+  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
+  - align: *id003
+  count: 2
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id003 {horizontal: true, value: 8.0}
-      min: *id003
-      preferred: *id003
+      max: &id004 {horizontal: true, value: 8.0}
+      min: *id004
+      preferred: *id004
   - {}
   count: 2
 componentConstrains:
