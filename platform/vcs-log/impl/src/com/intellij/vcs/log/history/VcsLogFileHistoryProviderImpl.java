@@ -53,7 +53,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
 
   @Override
   public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
-    FilePath correctedPath = getCorrectedPath(project, path);
+    FilePath correctedPath = getCorrectedPath(project, path, revisionNumber);
 
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
     FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
@@ -76,7 +76,11 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   }
 
   @NotNull
-  private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path) {
+  private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
+    if (revisionNumber == null) {
+      path = VcsUtil.getLastCommitPath(project, path);
+    }
+    
     VirtualFile root = assertNotNull(VcsLogUtil.getActualRoot(project, path));
     if (!root.equals(VcsUtil.getVcsRootFor(project, path)) && path.isDirectory()) {
       return VcsUtil.getFilePath(path.getPath(), false);
