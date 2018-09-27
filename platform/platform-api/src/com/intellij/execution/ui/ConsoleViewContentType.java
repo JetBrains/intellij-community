@@ -91,6 +91,10 @@ public class ConsoleViewContentType {
     return myTextAttributes;
   }
 
+  public TextAttributesKey getAttributesKey() {
+    return myTextAttributesKey;
+  }
+
   public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key key, @NotNull TextAttributesKey attributesKey) {
     ConsoleViewContentType type = new ConsoleViewContentType(key.toString(), attributesKey);
     registerNewConsoleViewType(key, type);
