@@ -19,9 +19,15 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.util.*
+
+fun getProjectId(project: Project): String {
+  return project.getProjectCacheFileName(false, ".").hashCode().toString()
+}
 
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManager.getPlugin(pluginId)
