@@ -25,6 +25,7 @@ import gnu.trove.THashMap
 import java.awt.Component
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import javax.swing.JPanel
@@ -179,26 +180,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
               object : AnAction("Import") {
                 override fun actionPerformed(event: AnActionEvent) {
                   chooseFile(fileChooserDescriptor, event) {
-                    val wantedDbFile = Paths.get(normalizeSelectedFile(it))
-                    val dbFile = getCurrentDbFile()
-                    if (dbFile != wantedDbFile) {
-                      val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-                      Messages.showInputDialog(
-                        contextComponent, "Master Password:", "Specify Master Password", null)?.trim().nullize()?.let { masterPassword ->
-                        try {
-                          Files.copy(wantedDbFile, dbFile, StandardCopyOption.REPLACE_EXISTING)
-                          passwordSafe.currentProvider = KeePassCredentialStore(existingMasterPassword = masterPassword.toByteArray(),
-                                                                                dbFile = getCurrentDbFile())
-                        }
-                        catch (e: Exception) {
-                          LOG.error(e)
-                          if (e.message == "Inconsistent stream bytes") {
-                            Messages.showMessageDialog(contextComponent, if (e.message == "Inconsistent stream bytes") "Password is not correct" else "Internal error", "Cannot Import", Messages.getErrorIcon())
-                          }
-                        }
-                        keePassMasterPassword.text = ""
-                      }
-                    }
+                    importKeepassFile(Paths.get(normalizeSelectedFile(it)), event, passwordSafe)
                   }
                 }
               }
@@ -221,6 +203,31 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
   }
 
+  private fun importKeepassFile(file: Path, event: AnActionEvent, passwordSafe: PasswordSafeImpl) {
+    val dbFile = getCurrentDbFile()
+    if (dbFile == file) {
+      return
+    }
+
+    val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
+    val masterPassword = Messages.showInputDialog(contextComponent, "Master Password:", "Specify Master Password", null)?.trim().nullize() ?: return
+    try {
+      Files.copy(file, dbFile, StandardCopyOption.REPLACE_EXISTING)
+      passwordSafe.currentProvider = KeePassCredentialStore(existingMasterPassword = masterPassword.toByteArray(), dbFile = getCurrentDbFile())
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      if (e.message == "Inconsistent stream bytes") {
+        val message = when {
+          e.message == "Inconsistent stream bytes" -> "Password is not correct"
+          else -> "Internal error"
+        }
+        Messages.showMessageDialog(contextComponent, message, "Cannot Import", Messages.getErrorIcon())
+      }
+    }
+    keePassMasterPassword.text = ""
+  }
+
   private fun getProviderType(): ProviderType {
     return when {
       rememberPasswordsUntilClosing.isSelected -> ProviderType.MEMORY_ONLY
@@ -231,11 +238,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 }
 
 private fun normalizeSelectedFile(file: VirtualFile): String {
-  if (file.isDirectory) {
-    return file.path + File.separator + DB_FILE_NAME
-  }
-  else {
-    return file.path
+  return when {
+    file.isDirectory -> file.path + File.separator + DB_FILE_NAME
+    else -> file.path
   }
 }
 
@@ -245,4 +250,3 @@ enum class ProviderType {
   // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
   @Deprecated("")
   DO_NOT_STORE
-}
