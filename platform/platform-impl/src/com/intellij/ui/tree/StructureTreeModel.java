@@ -312,14 +312,16 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private static final class Node extends DefaultMutableTreeNode {
     private final Reference<List<Node>> children = new Reference<>();
     private final LeafState leafState;
+    private final int hashCode;
 
     private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor parent) {
-      this(structure.createDescriptor(element, parent), structure.getLeafState(element));
+      this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
-    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState) {
+    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
       super(descriptor, leafState != LeafState.ALWAYS);
       this.leafState = leafState;
+      this.hashCode = hashCode;
       if (leafState == LeafState.ALWAYS) children.set(null); // validate children for leaf node
       update(); // an exception may be thrown while updating
     }
@@ -331,7 +333,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private boolean canReuse(@NotNull Node node, Object element) {
-      if (leafState != node.leafState) return false;
+      if (leafState != node.leafState || hashCode != node.hashCode) return false;
       if (element != null && !matches(element)) return false;
       userObject = node.userObject; // replace old descriptor
       return true;
@@ -351,18 +353,25 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private boolean matches(@NotNull Object element) {
-      return element.equals(getElement());
+      return matches(element, element.hashCode());
+    }
+
+    private boolean matches(@NotNull Object element, int hashCode) {
+      return this.hashCode == hashCode && element.equals(getElement());
     }
 
     private Node findChild(@NotNull Object element) {
       List<Node> list = children.get();
       if (list != null) {
-        Optional<Node> result = list.stream().filter(node -> node.matches(element)).findFirst();
-        if (result.isPresent()) return result.get(); // found child node that matches given element
-        if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no loaded children");
+        if (!list.isEmpty()) {
+          int hashCode = element.hashCode();
+          Optional<Node> result = list.stream().filter(node -> node.matches(element, hashCode)).findFirst();
+          if (result.isPresent()) return result.get(); // found child node that matches given element
+        }
+        if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no child: ", element);
       }
       else {
-        if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no child: ", element);
+        if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no loaded children");
       }
       return null;
     }
