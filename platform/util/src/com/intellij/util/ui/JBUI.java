@@ -1707,11 +1707,11 @@ public class JBUI {
       }
 
       public static Color separatorColor() {
-        return JBColor.namedColor("Popup.Separator.color", new JBColor(Color.gray.brighter(), Gray.x51));
+        return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
       }
 
       public static Color separatorTextColor() {
-        return JBColor.namedColor("Popup.Separator.foreground", Color.gray);
+        return JBColor.namedColor("Popup.separator.foreground", Color.gray);
       }
     }
 
