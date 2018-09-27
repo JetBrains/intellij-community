@@ -129,6 +129,7 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.CompareRevisions"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
