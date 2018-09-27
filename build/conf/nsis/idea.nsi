@@ -505,6 +505,11 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 
+Function .onInstSuccess
+  SetErrorLevel 0
+FunctionEnd
+
+
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
@@ -1237,6 +1242,11 @@ uninstaller_relocated:
     MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
     Abort
 Done:
+FunctionEnd
+
+
+Function un.onUninstSuccess
+  SetErrorLevel 0
 FunctionEnd
 
 
