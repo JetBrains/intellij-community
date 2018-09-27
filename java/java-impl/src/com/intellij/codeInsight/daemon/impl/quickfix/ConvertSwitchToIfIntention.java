@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -45,8 +46,23 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiCodeBlock body = mySwitchExpression.getBody();
-    return body != null && !body.isEmpty() && BreakConverter.from(mySwitchExpression) != null;
+    return isAvailable(mySwitchExpression);
+  }
+
+  public static boolean isAvailable(PsiSwitchStatement switchStatement) {
+    final PsiCodeBlock body = switchStatement.getBody();
+    return body != null && !body.isEmpty() && BreakConverter.from(switchStatement) != null && !mayFallThroughNonTerminalDefaultCase(body);
+  }
+
+  private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {
+    List<PsiSwitchLabelStatement> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class);
+    return StreamEx.of(labels).pairMap((prev, next) -> {
+        if (prev.isDefaultCase()) {
+          Set<PsiSwitchLabelStatement> targets = getFallThroughTargets(body);
+          return targets.contains(prev) || targets.contains(next);
+        }
+        return false;
+      }).has(true);
   }
 
   @Override
@@ -147,24 +163,25 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       ifStatementText = ";";
     }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    if (hadSideEffects) {
-      final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
-      switchStatement.getParent().addBefore(declarationStatement, switchStatement);
-    }
-    final PsiStatement ifStatement = factory.createStatementFromText(ifStatementText, switchStatement);
-    if (unwrapDefault) {
-      StringBuilder sb = new StringBuilder();
-      dumpBody(defaultBranch, sb, commentTracker);
-      PsiBlockStatement defaultBody = (PsiBlockStatement)factory.createStatementFromText(sb.toString(), switchStatement);
-      PsiCodeBlock parent = ObjectUtils.tryCast(switchStatement.getParent(), PsiCodeBlock.class);
+    PsiCodeBlock parent = ObjectUtils.tryCast(switchStatement.getParent(), PsiCodeBlock.class);
+    if (unwrapDefault || hadSideEffects) {
       if (parent == null) {
         commentTracker.grabComments(switchStatement);
         switchStatement = BlockUtils.expandSingleStatementToBlockStatement(switchStatement);
         parent = (PsiCodeBlock)(switchStatement.getParent());
-        body = Objects.requireNonNull(switchStatement.getBody());
       }
+    }
+    if (hadSideEffects) {
+      final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
+      parent.addBefore(declarationStatement, switchStatement);
+    }
+    final PsiStatement ifStatement = factory.createStatementFromText(ifStatementText, switchStatement);
+    if (unwrapDefault) {
       PsiElement addedIf = parent.addBefore(ifStatement, switchStatement);
-      if (!BlockUtils.containsConflictingDeclarations(body, parent)) {
+      StringBuilder sb = new StringBuilder();
+      dumpBody(defaultBranch, sb, commentTracker);
+      PsiBlockStatement defaultBody = (PsiBlockStatement)factory.createStatementFromText(sb.toString(), switchStatement);
+      if (!BlockUtils.containsConflictingDeclarations(Objects.requireNonNull(switchStatement.getBody()), parent)) {
         BlockUtils.inlineCodeBlock(switchStatement, defaultBody.getCodeBlock());
       }
       else {

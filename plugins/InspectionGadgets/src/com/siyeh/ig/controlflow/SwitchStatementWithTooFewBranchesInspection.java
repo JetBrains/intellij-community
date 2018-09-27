@@ -29,7 +29,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.BreakConverter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
         // Empty switch is reported by another inspection
         return;
       }
-      registerStatementError(statement, Integer.valueOf(branches), BreakConverter.from(statement) != null);
+      registerStatementError(statement, Integer.valueOf(branches), ConvertSwitchToIfIntention.isAvailable(statement));
     }
   }
 
