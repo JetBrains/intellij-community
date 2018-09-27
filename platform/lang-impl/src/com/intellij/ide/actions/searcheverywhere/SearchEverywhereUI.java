@@ -617,7 +617,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void onMouseClicked(@NotNull MouseEvent e) {
-    boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
+    boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
     if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
       e.consume();
       final int i = myResultsList.locationToIndex(e.getPoint());
