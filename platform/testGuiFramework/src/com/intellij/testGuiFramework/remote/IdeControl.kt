@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.remote
 
+import com.intellij.openapi.util.Pair.pair
+import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
+import com.intellij.testGuiFramework.launcher.GuiTestOptions.RESUME_LABEL
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.remote.server.JUnitServer
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
@@ -8,6 +11,7 @@ import com.intellij.testGuiFramework.remote.transport.JUnitTestContainer
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.apache.log4j.Logger
+import org.junit.runner.RunWith
 import org.junit.runners.model.FrameworkMethod
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
@@ -65,9 +69,7 @@ object IdeControl {
    * By default set as an empty array – no additional JVM options
    */
 
-  fun runTest(method: FrameworkMethod,
-              testName: String) {
-    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, testName)
+  fun runTest( jUnitTestContainer: JUnitTestContainer) {
     myServer.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
   }
 
@@ -79,7 +81,7 @@ object IdeControl {
   }
 
   fun resumeTest(method: FrameworkMethod, resumeTestLabel: String) {
-    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name, additionalInfo = resumeTestLabel)
+    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name, additionalInfo = mapOf<String, Any>(Pair(RESUME_LABEL, resumeTestLabel)))
     myServer.send(TransportMessage(MessageType.RESUME_TEST, jUnitTestContainer))
   }
 

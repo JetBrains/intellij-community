@@ -17,6 +17,8 @@ package com.intellij.testGuiFramework.framework
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
+import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
+import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam.Companion.PARAMETERS
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.impl.GuiTestThread
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
@@ -83,8 +85,9 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
     try {
       ensureIdeIsRunning(localIde, systemProperties ?: emptyList(), ::runIde)
-      runTest(method, testName)
-    } catch (e: Exception) {
+      sendRunTestCommand(method, testName)
+    }
+    catch (e: Exception) {
       SERVER_LOG.error(e)
       notifier.fireTestIgnored(description)
       Assert.fail(e.message)
@@ -98,7 +101,7 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         }
         if (message.type == MessageType.RESTART_IDE) {
           restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
-          runTest(method, testName)
+          sendRunTestCommand(method, testName)
         }
         if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
           if (message.content !is RestartIdeAndResumeContainer) throw Exception(
@@ -116,7 +119,8 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
             }
           }
         }
-      } catch (se: SocketException) {
+      }
+      catch (se: SocketException) {
         //let's fail this test and move to the next one test
         SERVER_LOG.warn("Server client connection is dead. Going to kill IDE processStdIn.")
         closeIde()
@@ -125,6 +129,14 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         testIsRunning = false
       }
     }
+  }
+
+  private fun sendRunTestCommand(method: FrameworkMethod, testName: String) {
+    val jUnitTestContainer = if (runner is GuiTestLocalRunnerParam)
+      JUnitTestContainer(method.declaringClass, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
+    else
+      JUnitTestContainer(method.declaringClass, testName)
+    runTest(jUnitTestContainer)
   }
 
   protected fun processJUnitEvent(content: JUnitInfo,
@@ -160,7 +172,8 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
   protected open fun runIde(ide: Ide, additionalJvmOptions: List<Pair<String, String>> = emptyList()) {
     if (GuiTestOptions.isGradleRunner) {
       GradleLauncher.runIde(JUnitServerHolder.getServer().getPort())
-    } else {
+    }
+    else {
       val testClassNames = runner.getTestClassesNames()
       if (testClassNames.isEmpty()) throw Exception("Test classes are not declared.")
       GuiTestLocalLauncher.runIdeLocally(ide, JUnitServerHolder.getServer().getPort())
@@ -211,14 +224,16 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         val restartIdeMessage = TransportMessage(MessageType.RESTART_IDE,
                                                  "IDE has fatal errors from previous test, let's start a new instance")
         GuiTestThread.client?.send(restartIdeMessage) ?: throw Exception("JUnitClient is accidentally null")
-      } else {
+      }
+      else {
         if (!GuiTestStarter.isGuiTestThread())
           TODO("Investigate this case")
         else {
           runner.doRunChild(method, notifier)
         }
       }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       LOG.error(e)
       throw e
     }

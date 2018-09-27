@@ -20,7 +20,6 @@ internal interface GuiTestRunnerInterface {
   fun getTestClassesNames(): List<String>
 }
 
-
 fun getIdeFromAnnotation(testClass: Class<*>): Ide {
   val annotation = testClass.annotations.filterIsInstance<RunWithIde>().firstOrNull()?.value
   val ideType = if (annotation != null) (annotation as KClass<out IdeType>).java.newInstance() else CommunityIde()

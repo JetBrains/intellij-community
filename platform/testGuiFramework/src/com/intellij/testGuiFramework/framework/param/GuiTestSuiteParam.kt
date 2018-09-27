@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.testGuiFramework.framework
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.testGuiFramework.framework.param
 
+import com.intellij.testGuiFramework.framework.FirstStartWith
+import com.intellij.testGuiFramework.framework.getIdeFromAnnotation
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import org.apache.log4j.Logger
+import org.junit.runner.RunWith
 import org.junit.runner.Runner
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
@@ -25,7 +14,9 @@ import org.junit.runners.Parameterized
 import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters
 import org.junit.runners.parameterized.TestWithParameters
 
-class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass) {
+@RunWith(GuiTestSuiteParamRunner::class)
+@Parameterized.UseParametersRunnerFactory(GuiTestsParametersRunnerFactory::class)
+open class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass) {
 
   //IDE type to run suite tests with
   val myIde: Ide = getIdeFromAnnotation(klass)
@@ -36,7 +27,7 @@ class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass) {
     val value = annotation?.value
     if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
   }
-  val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteParam")!!
+  val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam")!!
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {

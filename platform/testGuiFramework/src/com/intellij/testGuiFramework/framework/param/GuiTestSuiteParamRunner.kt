@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.testGuiFramework.framework
+package com.intellij.testGuiFramework.framework.param
 
-import com.intellij.testGuiFramework.framework.param.CustomRunnerBuilder
+import com.intellij.testGuiFramework.framework.FirstStartWith
+import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
+import com.intellij.testGuiFramework.framework.getIdeFromAnnotation
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.ide.Ide
@@ -12,10 +14,10 @@ import org.junit.runner.manipulation.Filter
 import org.junit.runner.manipulation.NoTestsRemainException
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
-import org.junit.runners.Suite
-import org.junit.runners.model.RunnerBuilder
+import org.junit.runners.Parameterized
 
-open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val builder: RunnerBuilder, val optionalName: String? = null) : Suite(suiteClass, builder) {
+
+open class GuiTestSuiteParamRunner(private val suiteClass: Class<*>) : Parameterized(suiteClass) {
 
   //IDE type to run suite tests with
   var isFirstStart: Boolean = true
@@ -57,32 +59,13 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val buil
     }
   }
 
-  protected open fun createGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
-    return GuiTestLocalRunner(testClass, suiteClass, myIde)
-  }
-
-  override fun getName(): String {
-    if (optionalName == null) {
-      return super.getName()
-    } else {
-      return optionalName
-    }
-  }
-
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
-    if (builder is CustomRunnerBuilder) super.runChild(runner, notifier)
-    else {
-      try {
-        //let's start IDE to complete installation, import configs and etc before running tests
-        if (isFirstStart) firstStart()
-        val testClass = runner.description.testClass
-        val guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
-        super.runChild(guiTestLocalRunner, notifier)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-        notifier?.fireTestFailure(Failure(runner.description, e))
-      }
+    try {
+      super.runChild(runner, notifier)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      notifier?.fireTestFailure(Failure(runner.description, e))
     }
   }
 
