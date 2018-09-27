@@ -148,7 +148,13 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        @Override
                        public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
                          visitReferenceExpression(node);
-                         return false;
+                         node.getAnnotations().forEach(annotation -> annotation.accept(this));
+                         UExpression receiver = node.getReceiver();
+                         receiver.accept(this);
+                         if (!(receiver instanceof UInstanceExpression)) {
+                           node.getSelector().accept(this);
+                         }
+                         return true;
                        }
 
                        @Override
