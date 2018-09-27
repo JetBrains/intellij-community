@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -54,10 +53,8 @@ public class ImportCollector {
       }
 
       // .. all inner classes for the current class ..
-      if (currentClass.hasAttribute(StructInnerClassesAttribute.ATTRIBUTE_INNER_CLASSES)) {
-        StructInnerClassesAttribute attribute =
-                            (StructInnerClassesAttribute)currentClass.getAttribute(StructInnerClassesAttribute.ATTRIBUTE_INNER_CLASSES);
-
+      StructInnerClassesAttribute attribute = currentClass.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
+      if (attribute != null) {
         for (StructInnerClassesAttribute.Entry entry : attribute.getEntries()) {
           if (entry.enclosingName != null && entry.enclosingName.equals(currentClass.qualifiedName)) {
             setInnerClassNames.add(entry.simpleName);
