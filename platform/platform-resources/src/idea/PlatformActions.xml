@@ -929,5 +929,6 @@
     <action id="GoToTab8" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab8Action"/>
     <action id="GoToTab9" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab9Action"/>
     <action id="GoToLastTab" class="com.intellij.ide.actions.TabNavigationActionBase$GoToLastTabAction"/>
+    <group id="ToolWindowContextMenu"/>
   </actions>
 </idea-plugin>
