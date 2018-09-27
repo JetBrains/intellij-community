@@ -32,13 +32,18 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private static final Logger LOG = Logger.getInstance(StructureTreeModel.class);
   private final Reference<Node> root = new Reference<>();
   private final Invoker invoker;
-  @NotNull
-  private final AbstractTreeStructure structure;
+  private volatile AbstractTreeStructure structure;
   private volatile Comparator<? super Node> comparator;
 
+  private StructureTreeModel(boolean background) {
+    invoker = background
+              ? new Invoker.BackgroundThread(this)
+              : new Invoker.EDT(this);
+  }
+
   public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
+    this(true);
     this.structure = structure;
-    invoker = new Invoker.BackgroundThread(this);
   }
 
   public StructureTreeModel(@NotNull AbstractTreeStructure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
@@ -66,10 +71,20 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
   }
 
+  /**
+   * @param structure a structure to build tree model or {@code null} to clear its content
+   */
+  public void setStructure(@Nullable AbstractTreeStructure structure) {
+    if (disposed) return;
+    this.structure = structure;
+    invalidate();
+  }
+
   @Override
   public void dispose() {
     super.dispose();
     comparator = null;
+    structure = null;
     Node node = root.set(null);
     if (node != null) node.dispose();
   }
@@ -199,6 +214,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   private boolean isValid(Object element) {
+    AbstractTreeStructure structure = this.structure;
+    if (structure == null) return false;
+
     if (element == null) return false;
     if (element instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)element;
@@ -213,6 +231,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   private Node getValidRoot() {
     AbstractTreeStructure structure = this.structure;
+    if (structure == null) return null;
 
     Object element = structure.getRootElement();
     if (!isValid(element)) return null;
@@ -228,6 +247,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
     AbstractTreeStructure structure = this.structure;
+    if (structure == null) return null;
 
     NodeDescriptor descriptor = node.getDescriptor();
     if (descriptor == null) return null;
