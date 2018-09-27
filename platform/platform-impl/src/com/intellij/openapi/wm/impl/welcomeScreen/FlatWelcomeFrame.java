@@ -133,6 +133,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
     Disposer.register(ApplicationManager.getApplication(), this);
+
+    UIUtil.decorateWindowHeader(getRootPane());
   }
 
   @Override
