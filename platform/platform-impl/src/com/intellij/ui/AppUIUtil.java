@@ -11,6 +11,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -203,7 +204,8 @@ public class AppUIUtil {
   private static final int MIN_ICON_SIZE = 32;
 
   @Nullable
-  public static String findIcon(@NotNull String iconsPath) {
+  public static String findIcon() {
+    String iconsPath = PathManager.getBinPath();
     String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtil.EMPTY_STRING_ARRAY);
 
     // 1. look for .svg icon
@@ -211,6 +213,11 @@ public class AppUIUtil {
       if (child.endsWith(".svg")) {
         return iconsPath + '/' + child;
       }
+    }
+
+    File svgFile = ApplicationInfoEx.getInstanceEx().getSvgIconFile();
+    if (svgFile != null) {
+      return svgFile.getAbsolutePath();
     }
 
     // 2. look for .png icon of max size

@@ -16,6 +16,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl;
+  private String mySvgIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
 
@@ -385,6 +387,18 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Nullable
   public String getBigIconUrl() {
     return myBigIconUrl;
+  }
+
+  @Nullable
+  @Override
+  public File getSvgIconFile() {
+    if (mySvgIconUrl == null) return null;
+
+    URL url = getClass().getResource(mySvgIconUrl);
+    if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+      return URLUtil.urlToFile(url);
+    }
+    return null;
   }
 
   @Override
@@ -737,6 +751,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
+      mySvgIconUrl = iconElement.getAttributeValue("svg");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
