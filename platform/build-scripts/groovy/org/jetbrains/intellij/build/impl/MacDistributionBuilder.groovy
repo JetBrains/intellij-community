@@ -339,7 +339,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
     String executable = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", null,
+    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", "../bin", null,
                                                                "../MacOS/${executable}", javaExecutablePath,
                                                                "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
