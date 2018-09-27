@@ -909,7 +909,7 @@
     </group>
 
     <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"
-            text="Annotation Operations">
+            text="Annotated Line Operations">
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </action>
 
@@ -934,7 +934,7 @@
         <reference id="Vcs.Checkout"/>
       </group>
       <separator/>
-      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotation" popup="true"/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true"/>
       <separator text="Local History"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>

@@ -26,9 +26,10 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     List<AnAction> actions = getActions(e.getDataContext());
     if (actions == null) return;
 
+    String title = getTemplatePresentation().getText();
     DefaultActionGroup group = new DefaultActionGroup(actions);
     ListPopup popup = JBPopupFactory.getInstance().
-      createActionGroupPopup("Annotation Operations", group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);
+      createActionGroupPopup(title, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);
     popup.showInBestPositionFor(e.getDataContext());
   }
 
