@@ -613,56 +613,55 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public void projectOpened() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
 
-      servers:
-      for (TaskProjectConfiguration.SharedServer server : projectConfiguration.servers) {
-        if (server.type == null || server.url == null) {
-          continue;
-        }
-        for (TaskRepositoryType<?> repositoryType : TaskRepositoryType.getRepositoryTypes()) {
-          if (repositoryType.getName().equals(server.type)) {
-            for (TaskRepository repository : myRepositories) {
-              if (!repositoryType.equals(repository.getRepositoryType())) {
-                continue;
-              }
-              if (server.url.equals(repository.getUrl())) {
-                continue servers;
-              }
+    TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
+
+    servers:
+    for (TaskProjectConfiguration.SharedServer server : projectConfiguration.servers) {
+      if (server.type == null || server.url == null) {
+        continue;
+      }
+      for (TaskRepositoryType<?> repositoryType : TaskRepositoryType.getRepositoryTypes()) {
+        if (repositoryType.getName().equals(server.type)) {
+          for (TaskRepository repository : myRepositories) {
+            if (!repositoryType.equals(repository.getRepositoryType())) {
+              continue;
             }
-            TaskRepository repository = repositoryType.createRepository();
-            repository.setUrl(server.url);
-            repository.setShared(true);
-            myRepositories.add(repository);
+            if (server.url.equals(repository.getUrl())) {
+              continue servers;
+            }
           }
+          TaskRepository repository = repositoryType.createRepository();
+          repository.setUrl(server.url);
+          repository.setShared(true);
+          myRepositories.add(repository);
         }
       }
+    }
 
-      myContextManager.pack(200, 50);
+    // make sure the task is associated with default changelist
+    LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
+    LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    if (defaultList != null && defaultTask != null) {
+      ChangeListInfo listInfo = new ChangeListInfo(defaultList);
+      if (!defaultTask.getChangeLists().contains(listInfo)) {
+        defaultTask.addChangelist(listInfo);
+      }
+    }
 
-      // make sure the task is associated with default changelist
-      LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
-      LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
-      if (defaultList != null && defaultTask != null) {
-        ChangeListInfo listInfo = new ChangeListInfo(defaultList);
-        if (!defaultTask.getChangeLists().contains(listInfo)) {
-          defaultTask.addChangelist(listInfo);
+    // remove already not existing changelists from tasks changelists
+    for (LocalTask localTask : getLocalTasks()) {
+      for (Iterator<ChangeListInfo> iterator = localTask.getChangeLists().iterator(); iterator.hasNext(); ) {
+        final ChangeListInfo changeListInfo = iterator.next();
+        if (myChangeListManager.getChangeList(changeListInfo.id) == null) {
+          iterator.remove();
         }
       }
+    }
 
-      // remove already not existing changelists from tasks changelists
-      for (LocalTask localTask : getLocalTasks()) {
-        for (Iterator<ChangeListInfo> iterator = localTask.getChangeLists().iterator(); iterator.hasNext(); ) {
-          final ChangeListInfo changeListInfo = iterator.next();
-          if (myChangeListManager.getChangeList(changeListInfo.id) == null) {
-            iterator.remove();
-          }
-        }
-      }
+    myChangeListManager.addChangeListListener(myChangeListListener);
 
-      myChangeListManager.addChangeListListener(myChangeListListener);
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myContextManager.pack(200, 50));
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
