@@ -68,7 +68,7 @@ class MockRunManager : RunManagerEx() {
     return emptyList()
   }
 
-  override fun setBeforeRunTasks(runConfiguration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {}
+  override fun setBeforeRunTasks(runConfiguration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {}
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
     return null
