@@ -17,54 +17,67 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.ComponentWithEmptyText
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
-import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
+import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
 class GithubPullRequestChangesComponent(project: Project,
-                                        loader: GithubPullRequestsChangesLoader,
+                                        private val selectionModel: GithubPullRequestsListSelectionModel,
+                                        private val dataLoader: GithubPullRequestsDataLoader,
                                         actionManager: ActionManager)
-  : Wrapper(), Disposable, GithubPullRequestsChangesLoader.ChangesLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener {
-
+  : Wrapper(), Disposable, GithubPullRequestsListSelectionModel.SelectionChangedListener {
   private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
+
   val toolbarComponent: JComponent = changesBrowser.toolbar.component
   val diffAction = changesBrowser.diffAction
   private val changesLoadingPanel = JBLoadingPanel(BorderLayout(), this,
                                                    ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
+  private var updateFuture: CompletableFuture<Unit>? = null
+
   init {
-    loader.addProcessListener(this, this)
-    loader.addLoadingListener(this, this)
+    selectionModel.addChangesListener(this, this)
+
     changesLoadingPanel.add(changesBrowser, BorderLayout.CENTER)
     setContent(changesLoadingPanel)
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
   }
 
-  override fun processStarted() {
-    changesLoadingPanel.startLoading()
-    changesBrowser.emptyText.clear()
-    changesBrowser.changes = emptyList()
+  override fun selectionChanged() {
+    reset()
+    updateFuture = updateChanges(selectionModel.current)
   }
 
-  override fun processFinished() {
-    changesLoadingPanel.stopLoading()
-  }
+  private fun updateChanges(item: GithubSearchedIssue?) =
+    item?.let { selection ->
+      changesBrowser.emptyText.clear()
+      changesLoadingPanel.startLoading()
 
-  override fun changesLoaded(changes: List<Change>) {
-    changesBrowser.emptyText.text = "Pull request does not contain any changes"
-    changesBrowser.changes = changes
-  }
+      dataLoader.getDataProvider(selection).changesRequest
+        .handleOnEdt { changes, error ->
+          when {
+            error != null && !GithubAsyncUtil.isCancellation(error) -> {
+              changesBrowser.emptyText
+                .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
+                .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+            }
+            changes != null -> {
+              changesBrowser.emptyText.text = "Pull request does not contain any changes"
+              changesBrowser.changes = changes
+            }
+          }
+          changesLoadingPanel.stopLoading()
+        }
+    }
 
-  override fun errorOccurred(error: Throwable) {
-    changesBrowser.emptyText
-      .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
-      .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-  }
-
-  override fun loaderCleared() {
+  private fun reset() {
+    updateFuture?.cancel(true)
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     changesBrowser.changes = emptyList()
   }

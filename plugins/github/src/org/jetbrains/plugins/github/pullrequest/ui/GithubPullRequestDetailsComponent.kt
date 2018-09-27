@@ -7,50 +7,60 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.panels.Wrapper
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
-import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
+import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
+import java.util.concurrent.CompletableFuture
 
-class GithubPullRequestDetailsComponent(project: Project, loader: GithubPullRequestsDetailsLoader)
-  : Wrapper(), Disposable,
-    SingleWorkerProcessExecutor.ProcessStateListener,
-    GithubPullRequestsDetailsLoader.LoadingListener {
+class GithubPullRequestDetailsComponent(project: Project,
+                                        private val selectionModel: GithubPullRequestsListSelectionModel,
+                                        private val dataLoader: GithubPullRequestsDataLoader)
+  : Wrapper(), Disposable, GithubPullRequestsListSelectionModel.SelectionChangedListener {
+
   private val detailsPanel = GithubPullRequestDetailsPanel(project)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
+  private var updateFuture: CompletableFuture<Unit>? = null
+
   init {
-    loader.addProcessListener(this, this)
-    loader.addLoadingListener(this, this)
+    selectionModel.addChangesListener(this, this)
 
     loadingPanel.add(detailsPanel)
     setContent(loadingPanel)
   }
 
-  override fun processStarted() {
-    loadingPanel.startLoading()
-    detailsPanel.details = null
+  override fun selectionChanged() {
+    reset()
+    updateFuture = updateDetails(selectionModel.current)
+  }
+
+  private fun updateDetails(item: GithubSearchedIssue?) =
+    item?.let { selection ->
+      loadingPanel.startLoading()
+
+      dataLoader.getDataProvider(selection).detailsRequest
+        .handleOnEdt { details, error ->
+          when {
+            error != null && !GithubAsyncUtil.isCancellation(error) -> {
+              detailsPanel.emptyText
+                .appendText("Cannot load details", SimpleTextAttributes.ERROR_ATTRIBUTES)
+                .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+            }
+            details != null -> {
+              detailsPanel.details = details
+            }
+          }
+          loadingPanel.stopLoading()
+        }
+    }
+
+  private fun reset() {
+    updateFuture?.cancel(true)
     detailsPanel.emptyText.clear()
-  }
-
-  override fun processFinished() {
-    loadingPanel.stopLoading()
-  }
-
-  override fun detailsLoaded(details: GithubPullRequestDetailedWithHtml) {
-    detailsPanel.details = details
-  }
-
-  override fun errorOccurred(error: Throwable) {
     detailsPanel.details = null
-    detailsPanel.emptyText.appendText("Cannot load details", SimpleTextAttributes.ERROR_ATTRIBUTES)
-      .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-  }
-
-  override fun loaderCleared() {
-    detailsPanel.details = null
-    detailsPanel.emptyText.clear()
   }
 
   override fun dispose() {}

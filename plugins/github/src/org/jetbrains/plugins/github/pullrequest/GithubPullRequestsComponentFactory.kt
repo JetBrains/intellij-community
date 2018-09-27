@@ -49,12 +49,10 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                                CachingGithubAvatarIconsProvider.Factory(
                                                  avatarLoader, imageResizer, requestExecutor))
 
-    val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutor, selectionModel)
-    val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
-    val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
+    val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
 
-    val changes = GithubPullRequestChangesComponent(project, changesLoader, actionManager)
-    val details = GithubPullRequestDetailsComponent(project, detailsLoader)
+    val changes = GithubPullRequestChangesComponent(project, selectionModel, dataLoader, actionManager)
+    val details = GithubPullRequestDetailsComponent(project, selectionModel, dataLoader)
 
     val preview = GithubPullRequestPreviewComponent(uiSettings, changes, details)
     list.setToolbarHeightReferent(preview.toolbarComponent)
@@ -65,19 +63,15 @@ class GithubPullRequestsComponentFactory(private val project: Project,
 
     // disposed by content manager when tab is closed
     val wrapper = WrappingComponent(splitter,
-                                    repository,
-                                    remote, repoPath,
-                                    account,
-                                    listLoader,
-                                    detailsLoader, branchFetcher)
+                                    repository, remote, repoPath, account,
+                                    selectionModel, listLoader,
+                                    dataLoader)
     Disposer.register(wrapper, Disposable {
       Disposer.dispose(list)
       Disposer.dispose(preview)
 
       Disposer.dispose(listLoader)
-      Disposer.dispose(changesLoader)
-      Disposer.dispose(branchFetcher)
-      Disposer.dispose(detailsLoader)
+      Disposer.dispose(dataLoader)
     })
     changes.diffAction.registerCustomShortcutSet(wrapper, wrapper)
     return wrapper
@@ -89,9 +83,9 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                     private val remote: GitRemote,
                                     private val repoPath: GithubFullPath,
                                     private val account: GithubAccount,
+                                    private val selectionModel: GithubPullRequestsListSelectionModel,
                                     private val listLoader: GithubPullRequestsLoader,
-                                    private val detailsLoader: GithubPullRequestsDetailsLoader,
-                                    private val branchesFetcher: GithubPullRequestsBranchesFetcher)
+                                    private val dataLoader: GithubPullRequestsDataLoader)
       : Wrapper(wrapped), Disposable, DataProvider {
       init {
         isFocusCycleRoot = true
@@ -104,8 +98,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
           GithubPullRequestKeys.FULL_PATH.`is`(dataId) -> repoPath
           GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
           GithubPullRequestKeys.PULL_REQUESTS_LOADER.`is`(dataId) -> listLoader
-          GithubPullRequestKeys.PULL_REQUESTS_DETAILS_LOADER.`is`(dataId) -> detailsLoader
-          GithubPullRequestKeys.PULL_REQUESTS_BRANCHES_FETCHER.`is`(dataId) -> branchesFetcher
+          GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> selectionModel.current?.let(dataLoader::getDataProvider)
           else -> null
         }
       }
