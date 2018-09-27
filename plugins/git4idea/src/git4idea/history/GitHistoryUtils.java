@@ -272,16 +272,16 @@ public class GitHistoryUtils {
    * @param path    the path to check
    * @return the name of file in the last commit or argument
    */
-  public static FilePath getLastCommitName(@NotNull Project project, FilePath path) {
+  @NotNull
+  public static FilePath getLastCommitName(@NotNull Project project, @NotNull FilePath path) {
     if (project.isDefault()) return path;
-    final ChangeListManager changeManager = ChangeListManager.getInstance(project);
-    final Change change = changeManager.getChange(path);
-    if (change != null && change.getType() == Change.Type.MOVED) {
-      // GitContentRevision r = (GitContentRevision)change.getBeforeRevision();
-      assert change.getBeforeRevision() != null : "Move change always have beforeRevision";
-      path = change.getBeforeRevision().getFile();
+
+    Change change = ChangeListManager.getInstance(project).getChange(path);
+    if (change == null || change.getType() != Change.Type.MOVED || change.getBeforeRevision() == null) {
+      return path;
     }
-    return path;
+
+    return change.getBeforeRevision().getFile();
   }
 
   @Nullable
