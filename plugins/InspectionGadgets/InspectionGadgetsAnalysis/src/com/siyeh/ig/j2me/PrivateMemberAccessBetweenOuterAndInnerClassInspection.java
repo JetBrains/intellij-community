@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -176,7 +177,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       // disable for jsp files IDEADEV-12957
       return false;
     }
-    return true;
+    return !PsiUtil.isLanguageLevel11OrHigher(file);
   }
 
   @Override
