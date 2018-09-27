@@ -18,8 +18,6 @@ import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.text.JTextComponent
 
 
 class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
@@ -27,7 +25,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                                                    rememberPassword: Boolean = true,
                                                    username: String? = null,
                                                    editableUsername: Boolean = true) : DialogWrapper(project, true) {
-  private val usernameField: JComponent = if (editableUsername) JBTextField(username).apply { isEditable = true } else JLabel(username)
+  private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
   private val rememberCheckbox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), rememberPassword)
   private val additionalProvidersButton = JBOptionButton(null, null).apply { isVisible = false }
@@ -75,10 +73,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
               this@GitHttpLoginDialog.close(0, true)
             }
             else {
-              when (usernameField) {
-                is JLabel -> usernameField.text = authData.login
-                else -> (usernameField as JTextComponent).text = authData.login
-              }
+              usernameField.text = authData.login
             }
           }
         }
@@ -91,7 +86,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     additionalProvidersButton.isVisible = true
   }
 
-  val username: String get() = if (usernameField is JLabel) usernameField.text else (usernameField as JTextComponent).text
+  val username: String get() = usernameField.text
   val password: String get() = String(passwordField.password!!)
   val rememberPassword: Boolean get() = rememberCheckbox.isSelected
 }
