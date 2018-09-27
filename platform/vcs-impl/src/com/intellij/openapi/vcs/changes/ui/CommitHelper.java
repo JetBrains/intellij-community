@@ -357,9 +357,13 @@ public class CommitHelper {
     private void updateChangelistAfterRefresh() {
       if (!(myChangeList instanceof LocalChangeList)) return;
 
-      ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-      LocalChangeList localList = clManager.findChangeList(myChangeList.getName());
+      ChangeListManagerEx clManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+      String listName = myChangeList.getName();
+
+      LocalChangeList localList = clManager.findChangeList(listName);
       if (localList == null) return;
+
+      clManager.editChangeListData(listName, null);
 
       if (!localList.isDefault()) {
         clManager.scheduleAutomaticEmptyChangeListDeletion(localList);
