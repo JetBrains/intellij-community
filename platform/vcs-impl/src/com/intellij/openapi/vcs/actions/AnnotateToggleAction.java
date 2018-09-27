@@ -241,7 +241,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   }
 
   @Nullable
-  static AnnotationFieldGutter getAnnotationFieldGutter(@NotNull Editor editor) {
+  private static AnnotationFieldGutter getAnnotationFieldGutter(@NotNull Editor editor) {
     List<TextAnnotationGutterProvider> annotations = ((EditorGutterComponentEx)editor.getGutter()).getTextAnnotations();
     for (TextAnnotationGutterProvider annotation : annotations) {
       if (annotation instanceof AnnotationGutterLineConvertorProxy) {
@@ -258,6 +258,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
     AnnotationFieldGutter gutter = getAnnotationFieldGutter(editor);
     return gutter != null ? gutter.getPresentation() : null;
+  }
+
+  @Nullable
+  static FileAnnotation getFileAnnotation(@NotNull Editor editor) {
+    TextAnnotationPresentation presentation = getAnnotationPresentation(editor);
+    if (presentation instanceof AnnotationPresentation) return ((AnnotationPresentation)presentation).getFileAnnotation();
+    return null;
   }
 
   private static void addActionsFromExtensions(@NotNull AnnotationPresentation presentation, @NotNull FileAnnotation fileAnnotation) {
