@@ -18,7 +18,6 @@ package com.intellij.vcs.log.history;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
@@ -42,7 +41,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   public boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path) {
     if (!Registry.is("vcs.new.history")) return false;
 
-    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
+    VirtualFile root = VcsLogUtil.getActualRoot(project, path);
     if (root == null) return false;
 
     VcsLogData dataManager = VcsProjectLog.getInstance(project).getDataManager();
