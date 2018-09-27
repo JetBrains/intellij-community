@@ -1380,20 +1380,18 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:tests-common-1.2.60-tests",
-        "//prebuilts/tools/common/lint-psi/kotlin-compiler",
+        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:tests-common-1.2.70-tests",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.60-tests",
-        "//prebuilts/tools/common/android-kotlin:tests-common-1.2.60-tests",
-        "//prebuilts/tools/common/lint-psi/kotlin-compiler",
+        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:tests-common-1.2.70-tests",
     ],
 )
