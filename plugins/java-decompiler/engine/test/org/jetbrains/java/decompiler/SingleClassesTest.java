@@ -70,7 +70,8 @@ public class SingleClassesTest {
   @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
   @Test public void testLocalsSignature() { doTest("pkg/TestLocalsSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
-  @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
+  @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow",
+           "pkg/TestShadowingSuperClass"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
