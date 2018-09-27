@@ -457,7 +457,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/android-extensions-jps/intellij.android.kotlin.extensions.jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/android-extensions-jps/intellij.android.kotlin.extensions.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/intellij.android.kotlin.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/intellij.android.kotlin.tests.iml" group="intellij/android/kotlin" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/intellij.android.kotlin.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/intellij.android.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/intellij.android.lang.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/intellij.android.lang.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/intellij.android.lang.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/intellij.android.lang.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" />
