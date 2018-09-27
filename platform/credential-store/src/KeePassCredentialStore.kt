@@ -19,7 +19,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-private const val GROUP_NAME = SERVICE_NAME_PREFIX
+private const val ROOT_GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal const val DB_FILE_NAME = "c.kdbx"
 
@@ -41,11 +41,24 @@ private fun loadOrNewOnError(dbFile: Path, masterPassword: ByteArray): KeePassDa
   }
 }
 
-internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
-                                      baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
+@Suppress("FunctionName")
+internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials>): KeePassCredentialStore {
+  val keepassDb = KeePassDatabase()
+  val group = keepassDb.rootGroup.getOrCreateGroup(ROOT_GROUP_NAME)
+  for ((attributes, credentials) in newDb) {
+    val entry = keepassDb.createEntry(attributes.serviceName)
+    entry.userName = credentials.userName
+    entry.password = credentials.password?.let(::SecureString)
+    group.addEntry(entry)
+  }
+  return KeePassCredentialStore(preloadedDb = keepassDb)
+}
+
+internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
                                       var memoryOnly: Boolean = false,
                                       dbFile: Path? = null,
-                                      existingMasterPassword: ByteArray? = null) : PasswordStorage, CredentialStore {
+                                      existingMasterPassword: ByteArray? = null,
+                                      preloadedDb: KeePassDatabase? = null) : PasswordStorage, CredentialStore {
   internal var dbFile: Path = dbFile ?: baseDirectory.resolve(DB_FILE_NAME)
     set(path) {
       if (field == path) {
@@ -64,7 +77,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
   private val needToSave: AtomicBoolean
 
   init {
-    if (keyToValue == null) {
+    if (preloadedDb == null) {
       needToSave = AtomicBoolean(false)
 
       if (memoryOnly) {
@@ -92,14 +105,9 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     }
     else {
       needToSave = AtomicBoolean(!memoryOnly)
-
-      db = KeePassDatabase()
-      val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
-      for ((attributes, credentials) in keyToValue) {
-        val entry = db.createEntry(attributes.serviceName)
-        entry.userName = credentials.userName
-        entry.password = credentials.password?.let(::SecureString)
-        group.addEntry(entry)
+      db = preloadedDb
+      if (existingMasterPassword != null) {
+        masterKeyStorage.set(existingMasterPassword)
       }
     }
   }
@@ -140,14 +148,14 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
   }
 
   fun clear() {
-    db.rootGroup.removeGroup(GROUP_NAME)
+    db.rootGroup.removeGroup(ROOT_GROUP_NAME)
     needToSave.set(db.isDirty)
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val requestor = attributes.requestor
     val userName = attributes.userName
-    val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName)
+    val entry = db.rootGroup.getGroup(ROOT_GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName)
     if (entry != null) {
       return Credentials(attributes.userName ?: entry.userName, entry.password?.get())
     }
@@ -158,7 +166,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
 
     // try old key - as hash
     val oldAttributes = toOldKey(requestor, userName)
-    db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName)?.let {
+    db.rootGroup.getGroup(ROOT_GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName)?.let {
       fun createCredentials() = Credentials(userName, it.password?.get())
       set(CredentialAttributes(requestor, userName), createCredentials())
       return createCredentials()
@@ -169,10 +177,10 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     if (credentials == null) {
-      db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
+      db.rootGroup.getGroup(ROOT_GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
     }
     else {
-      val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
+      val group = db.rootGroup.getOrCreateGroup(ROOT_GROUP_NAME)
       // should be the only credentials per service name - find without user name
       val userName = attributes.userName ?: credentials.userName
       var entry = group.getEntry(attributes.serviceName, if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null)
@@ -189,7 +197,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
   }
 
   fun copyTo(store: PasswordStorage) {
-    val group = db.rootGroup.getGroup(GROUP_NAME) ?: return
+    val group = db.rootGroup.getGroup(ROOT_GROUP_NAME) ?: return
     for (entry in group.entries) {
       val title = entry.title
       if (title != null) {

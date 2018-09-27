@@ -50,7 +50,10 @@ internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<Cr
         null
       }
     }?.let {
-      checkPassAndConvertOldDb(it, db)?.let { return it }
+      checkPassAndConvertOldDb(it, db)?.let {
+        @Suppress("NestedLambdaShadowedImplicitParameter")
+        return it
+      }
     }
   }
 
