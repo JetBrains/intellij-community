@@ -144,6 +144,33 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
   }
 
+  public final void invalidate(@NotNull Object element, boolean structure) {
+    forElement(element, stack -> {
+      Node node = root.get();
+      if (node == null || !node.matches(stack.pop())) return;
+      while (!stack.isEmpty()) {
+        node = node.findChild(stack.pop());
+        if (node == null) return;
+      }
+      invalidate(TreePathUtil.pathToTreeNode(node), structure);
+    });
+  }
+
+  private void forElement(@NotNull Object element, @NotNull Consumer<Deque<Object>> consumer) {
+    invoker.runOrInvokeLater(() -> {
+      AbstractTreeStructure structure = this.structure;
+      if (structure == null) return;
+
+      if (disposed) return;
+
+      Deque<Object> stack = new ArrayDeque<>();
+      for (Object e = element; e != null; e = structure.getParentElement(e)) {
+        stack.push(e);
+      }
+      consumer.accept(stack);
+    });
+  }
+
   @Override
   public final TreeNode getRoot() {
     if (disposed || !isValidThread()) return null;
@@ -305,7 +332,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     private boolean canReuse(@NotNull Node node, Object element) {
       if (leafState != node.leafState) return false;
-      if (element != null && !element.equals(getElement())) return false;
+      if (element != null && !matches(element)) return false;
       userObject = node.userObject; // replace old descriptor
       return true;
     }
@@ -321,6 +348,23 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
         LOG.debug("node invalidated: ", this);
         getChildren().forEach(Node::invalidate);
       }
+    }
+
+    private boolean matches(@NotNull Object element) {
+      return element.equals(getElement());
+    }
+
+    private Node findChild(@NotNull Object element) {
+      List<Node> list = children.get();
+      if (list != null) {
+        Optional<Node> result = list.stream().filter(node -> node.matches(element)).findFirst();
+        if (result.isPresent()) return result.get(); // found child node that matches given element
+        if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no loaded children");
+      }
+      else {
+        if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no child: ", element);
+      }
+      return null;
     }
 
     @NotNull

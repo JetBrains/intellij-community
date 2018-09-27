@@ -48,12 +48,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   public void updateTestsSubtree(final SMTestProxy parentTestProxy) {
-    TreeUtil.promiseVisit(getTree(), visitor(parentTestProxy))
-      .onSuccess(path -> {
-        if (path != null) {
-          getTreeModel().invalidate(path, true);
-        }
-      });
+    getTreeModel().invalidate(parentTestProxy, true);
   }
   
   public JTree getTree() {
