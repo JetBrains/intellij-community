@@ -204,6 +204,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     remove(group.ui.panel);
 
     for (CellPluginComponent plugin : group.ui.plugins) {
+      plugin.close();
       remove(plugin);
       myEventHandler.removeCell(plugin);
     }
@@ -215,6 +216,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
     assert index != -1;
     CellPluginComponent component = group.ui.plugins.remove(index);
+    component.close();
     remove(component);
     myEventHandler.removeCell(component);
     group.descriptors.remove(descriptor);
@@ -231,6 +233,12 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void clear() {
+    for (UIPluginGroup group : myGroups) {
+      for (CellPluginComponent plugin : group.plugins) {
+        plugin.close();
+      }
+    }
+
     myGroups.clear();
     myEventHandler.clear();
     removeAll();
