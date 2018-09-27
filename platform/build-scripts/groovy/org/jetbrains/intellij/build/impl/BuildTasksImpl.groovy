@@ -224,8 +224,22 @@ idea.fatal.error.notification=disabled
         }
       }
 
+      if (buildContext.applicationInfo.svgRelativePath != null) {
+        buildContext.ant.copy(file: findBrandingResource(buildContext.applicationInfo.svgRelativePath), tofile: "$buildContext.paths.distAll/bin/${buildContext.productProperties.baseFileName}.svg")
+      }
+
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  private File findBrandingResource(String relativePath) {
+    def inModule = buildContext.findFileInModuleSources(buildContext.productProperties.applicationInfoModule, relativePath)
+    if (inModule != null) return inModule
+    def inResources = buildContext.productProperties.brandingResourcePaths.collect { new File(it, relativePath) }.find { it.exists() }
+    if (inResources == null) {
+      buildContext.messages.error("Cannot find '$relativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+    }
+    return inResources
   }
 
   private void copyLogXml() {
