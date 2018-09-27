@@ -101,6 +101,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return false;
   }
 
+  /**
+   * Invalidates all nodes and notifies Swing model that a whole tree hierarchy is changed.
+   */
   @NotNull
   public final Promise<?> invalidate() {
     return invoker.runOrInvokeLater(() -> {
@@ -113,6 +116,14 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     });
   }
 
+  /**
+   * Invalidates specified nodes and notifies Swing model that these nodes are changed.
+   *
+   * @param path      a path to the node to invalidate
+   * @param structure {@code true} means that all child nodes must be invalidated;
+   *                  {@code false} means that only the node specified by {@code path} must be updated
+   * @see #invalidate(Object, boolean)
+   */
   public final void invalidate(@NotNull TreePath path, boolean structure) {
     Object component = path.getLastPathComponent();
     if (component instanceof Node) {
@@ -144,6 +155,15 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
   }
 
+  /**
+   * Invalidates specified nodes and notifies Swing model that these nodes are changed.
+   * This method does not bother Swing model if the corresponding nodes have not yet been loaded.
+   *
+   * @param element   an element of the internal tree structure
+   * @param structure {@code true} means that all child nodes must be invalidated;
+   *                  {@code false} means that only the node specified by {@code path} must be updated
+   * @see #invalidate(TreePath, boolean)
+   */
   public final void invalidate(@NotNull Object element, boolean structure) {
     forElement(element, stack -> {
       Node node = root.get();
