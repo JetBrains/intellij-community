@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.kdbx.KdbxPassword
+import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
@@ -13,6 +15,7 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
@@ -203,29 +206,37 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
   }
 
-  private fun importKeepassFile(file: Path, event: AnActionEvent, passwordSafe: PasswordSafeImpl) {
-    val dbFile = getCurrentDbFile()
-    if (dbFile == file) {
+  private fun importKeepassFile(dbFile: Path, event: AnActionEvent, passwordSafe: PasswordSafeImpl) {
+    val currentDbFile = getCurrentDbFile()
+    if (currentDbFile == dbFile) {
       return
     }
 
     val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-    val masterPassword = Messages.showInputDialog(contextComponent, "Master Password:", "Specify Master Password", null)?.trim().nullize() ?: return
-    try {
-      Files.copy(file, dbFile, StandardCopyOption.REPLACE_EXISTING)
-      passwordSafe.currentProvider = KeePassCredentialStore(existingMasterPassword = masterPassword.toByteArray(), dbFile = getCurrentDbFile())
+    val masterPassword = MessagesService.getInstance().showPasswordDialog(contextComponent, "Master Password:", "Specify Master Password", null, null)?.trim().nullize()?.toByteArray() ?: return
+    val database = try {
+      loadKdbx(dbFile, KdbxPassword(masterPassword))
     }
     catch (e: Exception) {
-      LOG.error(e)
-      if (e.message == "Inconsistent stream bytes") {
-        val message = when {
-          e.message == "Inconsistent stream bytes" -> "Password is not correct"
-          else -> "Internal error"
+      val message: String
+      when {
+        e.message == "Inconsistent stream bytes" -> {
+          message = "Password is not correct"
+          LOG.debug(e)
         }
-        Messages.showMessageDialog(contextComponent, message, "Cannot Import", Messages.getErrorIcon())
+        else -> {
+          message = "Internal error"
+          LOG.error(e)
+        }
       }
+      Messages.showMessageDialog(contextComponent, message, "Cannot Import", Messages.getErrorIcon())
+      return
     }
-    keePassMasterPassword.text = ""
+
+    Files.copy(dbFile, currentDbFile, StandardCopyOption.REPLACE_EXISTING)
+    passwordSafe.currentProvider = KeePassCredentialStore(preloadedDb = database, existingMasterPassword = masterPassword, dbFile = currentDbFile)
+
+    keePassMasterPassword.text = null
   }
 
   private fun getProviderType(): ProviderType {
@@ -250,3 +261,4 @@ enum class ProviderType {
   // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
   @Deprecated("")
   DO_NOT_STORE
+}

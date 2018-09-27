@@ -4,6 +4,7 @@
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.credentialStore.*
+import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -44,7 +45,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
+  private val memoryHelperProvider = lazy { KeePassCredentialStore(preloadedDb = KeePassDatabase(), memoryOnly = true) }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
