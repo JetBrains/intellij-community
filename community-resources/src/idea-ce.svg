@@ -1,29 +1,49 @@
-<!DOCTYPE html> <html xmlns:og="http://ogp.me/ns#" lang="en"> <head> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> <meta name="robots" content="notranslate"> <meta name="description" content="Upsource is a repository browser and code review tool with IntelliJ IDEA at its core."> <meta name="format-detection" content="telephone=no"> <meta name="apple-mobile-web-app-capable" content="yes"> <meta name="gwt:property" content="baseUrl=/~530de5f014bd2cb01e41544bcbaf5c11/frontend/"> <link rel="search" type="application/opensearchdescription+xml" title="Upsource" href="/~530de5f014bd2cb01e41544bcbaf5c11/search.xml"> <script> (function() {
-      document.documentElement.className = 'js';
-
-      var ua = navigator.userAgent;
-      var isAppleTablet = ua.indexOf("iPad") > -1;
-      var isAndroidTablet = ua.indexOf("Android") > -1 && ua.indexOf("Mobile") === -1;
-      if (isAndroidTablet || isAppleTablet) {
-        document.write('<meta name="viewport" content="user-scalable=no">');
-      }
-    })(); </script> <link rel="shortcut icon" href="/~530de5f014bd2cb01e41544bcbaf5c11/favicon.ico" type="image/x-icon" sizes="16x16 32x32"> <link rel="apple-touch-icon" sizes="57x57" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-57x57.png"> <link rel="apple-touch-icon" sizes="60x60" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-60x60.png"> <link rel="apple-touch-icon" sizes="72x72" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-72x72.png"> <link rel="apple-touch-icon" sizes="76x76" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-76x76.png"> <link rel="apple-touch-icon" sizes="114x114" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-114x114.png"> <link rel="apple-touch-icon" sizes="120x120" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-120x120.png"> <link rel="apple-touch-icon" sizes="144x144" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-144x144.png"> <link rel="apple-touch-icon" sizes="152x152" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-152x152.png"> <link rel="apple-touch-icon" sizes="180x180" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-touch-icon-180x180.png"> <link rel="mask-icon" href="/~530de5f014bd2cb01e41544bcbaf5c11/apple-mask-icon.svg" color="black"> <meta name="msapplication-TileColor" content="#000000"> <meta name="msapplication-TileImage" content="/~530de5f014bd2cb01e41544bcbaf5c11/mstile-144x144.png"> <meta name="msapplication-square70x70logo" content="/~530de5f014bd2cb01e41544bcbaf5c11/mstile-70x70.png"> <meta name="msapplication-square150x150logo" content="/~530de5f014bd2cb01e41544bcbaf5c11/mstile-150x150.png"> <meta name="msapplication-wide310x150logo" content="/~530de5f014bd2cb01e41544bcbaf5c11/mstile-310x150.png"> <meta name="msapplication-square310x310logo" content="/~530de5f014bd2cb01e41544bcbaf5c11/mstile-310x310.png"> <meta property="og:title" content="Upsource"> <meta property="og:type" content="website"> <meta property="og:url" content="/"> <meta property="og:image" content="/~530de5f014bd2cb01e41544bcbaf5c11/og-image-1200x630.png"> <title>Upsource</title> <style type="text/css"> /* Use !important because GWT loves using inline styles internally */
-    .hidden {
-      display: none !important;
-    }
-
-    .invisible {
-      visibility: hidden !important;
-    } </style> <link rel="stylesheet" type="text/css" href="/~530de5f014bd2cb01e41544bcbaf5c11/assets/application.52ab2fc5fb3bffa29773.css"> <style type="text/css" id="upsource-dynamic-css"></style> <style type="text/css" id="upsource-highlight-css"></style> </head> <body> <iframe src="javascript:''" id="__gwt_historyFrame" tabindex="-1" style="position:absolute;width:0;height:0;border:0" aria-hidden="true"></iframe> <noscript> <div class="index-failure"> <div class="index-failure__content"> <i class="fa fa-exclamation-triangle"></i> Your browser must have JavaScript enabled in order for this application to display correctly. </div> </div> </noscript> <div id="spinner" class="index-spinner"></div> <div class="index-failure index-failure_cookies hidden"> <div class="index-failure__content"> <i class="fa fa-exclamation-triangle"></i> Your browser must have cookies enabled in order for this application to display correctly. </div> </div> <div class="index-failure index-failure_history hidden"> <div class="index-failure__content"> <i class="fa fa-exclamation-triangle"></i> Your browser must support HTML5 History API in order for this application to display correctly. </div> </div> <div id="outdated-browser" class="system-indicator system-indicator_warning hidden" title="We recommend using the latest released versions of Google Chrome, Mozilla Firefox, Internet Explorer, or Opera"> <div class="system-indicator__content">You are using an outdated browser, Upsource may not be working correctly. Please upgrade.</div> </div> <i class="fa fa-caret-down" data-fa-symbol="caret-down"></i> <i class="fa fa-caret-right" data-fa-symbol="caret-right"></i> <i class="far fa-check-circle" data-fa-symbol="far-check-circle"></i> <i class="far fa-circle" data-fa-symbol="far-circle"></i> <div id="alert-container"></div> <script src="/~530de5f014bd2cb01e41544bcbaf5c11/settings.js"></script> <script src="/~530de5f014bd2cb01e41544bcbaf5c11/assets/application.ce7b11dc0250a2cec6bf.js"></script> <script type="text/javascript"> (function() {
-    bootstrap('/~530de5f014bd2cb01e41544bcbaf5c11/', '/~530de5f014bd2cb01e41544bcbaf5c11/assets/');
-  })(); </script> <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-WD7DHT" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){
-  var h = w.location.hostname;
-  if (h.indexOf('upsource.jetbrains.com') === -1) {
-    return;
-  }
-
-  w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-WD7DHT');</script> </body> </html> 
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="linear-gradient" x1="6" y1="34.27997" x2="58" y2="34.27997" gradientTransform="matrix(1, 0, 0, -1, 0, 66.27997)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fe315d"/>
+      <stop offset="0.0784" stop-color="#cb417e"/>
+      <stop offset="0.1601" stop-color="#9e4e9b"/>
+      <stop offset="0.2474" stop-color="#755bb4"/>
+      <stop offset="0.3392" stop-color="#5365ca"/>
+      <stop offset="0.4365" stop-color="#386ddb"/>
+      <stop offset="0.5414" stop-color="#2374e9"/>
+      <stop offset="0.6576" stop-color="#1478f3"/>
+      <stop offset="0.794" stop-color="#0b7bf8"/>
+      <stop offset="1" stop-color="#087cfa"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-2" x1="6.06768" y1="25.27997" x2="30.56276" y2="25.27997" gradientTransform="matrix(1, 0, 0, -1, 0, 66.27997)" gradientUnits="userSpaceOnUse">
+      <stop offset="0.2581" stop-color="#f97a12"/>
+      <stop offset="0.4591" stop-color="#b07b58"/>
+      <stop offset="0.7241" stop-color="#577bae"/>
+      <stop offset="0.9105" stop-color="#1e7ce5"/>
+      <stop offset="1" stop-color="#087cfa"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-3" x1="44.93399" y1="27.07229" x2="47.93399" y2="63.82229" xlink:href="#linear-gradient"/>
+    <linearGradient id="linear-gradient-4" x1="17.86183" y1="62.07627" x2="38.45983" y2="-22.44269" gradientTransform="matrix(1, 0, 0, -1, 0, 66.27997)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fe315d"/>
+      <stop offset="0.04023" stop-color="#f63462"/>
+      <stop offset="0.1037" stop-color="#df3a71"/>
+      <stop offset="0.1667" stop-color="#c24383"/>
+      <stop offset="0.2912" stop-color="#ad4a91"/>
+      <stop offset="0.5498" stop-color="#755bb4"/>
+      <stop offset="0.9175" stop-color="#1d76ed"/>
+      <stop offset="1" stop-color="#087cfa"/>
+    </linearGradient>
+  </defs>
+  <title>IntelliJIDEA_comm_64</title>
+  <g>
+    <rect x="6" y="6" width="52" height="52" fill="url(#linear-gradient)"/>
+    <g>
+      <polygon points="6 24 6 58 30.6 32 6 24" fill="url(#linear-gradient-2)"/>
+      <polygon points="40.734 6 35.4 12.4 43.8 39.6 58 22.748 58 14.732 47.316 6 40.734 6" fill="url(#linear-gradient-3)"/>
+      <polygon points="6 58 13.89 58 30.8 51.8 48 25.4 30.98 6 6 6 6 14.73 6 27.152 15.6 30.4 6 58" fill="url(#linear-gradient-4)"/>
+    </g>
+    <g>
+      <rect x="12" y="12" width="40" height="40"/>
+      <rect x="15.79998" y="44.40002" width="15" height="2.59998" fill="#fff"/>
+      <polygon points="26.6 20.2 26.6 17.2 18.2 17.2 18.2 20.2 20.6 20.2 20.6 30.8 18.2 30.8 18.2 33.8 26.6 33.8 26.6 30.8 24.2 30.8 24.2 20.2 26.6 20.2" fill="#fff"/>
+      <path d="M34.4,34a5.45244,5.45244,0,0,1-3.2-.8A6.25265,6.25265,0,0,1,29,31.4l2.2-2.6a3.8015,3.8015,0,0,0,3,1.6,2.27106,2.27106,0,0,0,1.6-.6,2.98585,2.98585,0,0,0,.6-2V17.2h3.8V28a10.13229,10.13229,0,0,1-.4,2.6,2.9123,2.9123,0,0,1-1.2,1.8,9.39415,9.39415,0,0,1-1.8,1.2,4.33035,4.33035,0,0,1-2.4.4" fill="#fff"/>
+    </g>
+  </g>
+</svg>
