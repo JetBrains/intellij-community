@@ -21,7 +21,6 @@ import icons.GithubIcons
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory
 import javax.swing.JComponent
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"

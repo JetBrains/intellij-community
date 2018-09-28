@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui
+package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
@@ -19,10 +19,8 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBranchesFetcher
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.*
+import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUrlUtil
@@ -48,7 +46,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val selectionModel = GithubPullRequestsListSelectionModel()
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
                                                selectionModel, listLoader,
-                                               CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor))
+                                               CachingGithubAvatarIconsProvider.Factory(
+                                                 avatarLoader, imageResizer, requestExecutor))
 
     val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutor, selectionModel)
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
@@ -65,7 +64,12 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     splitter.secondComponent = preview
 
     // disposed by content manager when tab is closed
-    val wrapper = WrappingComponent(splitter, repository, remote, repoPath, account, listLoader, detailsLoader, branchFetcher)
+    val wrapper = WrappingComponent(splitter,
+                                    repository,
+                                    remote, repoPath,
+                                    account,
+                                    listLoader,
+                                    detailsLoader, branchFetcher)
     Disposer.register(wrapper, Disposable {
       Disposer.dispose(list)
       Disposer.dispose(preview)
