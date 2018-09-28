@@ -133,7 +133,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     for (ArtifactPopupItem item : items) {
       artifacts.addAll(item.getArtifacts(project));
     }
-    return ContainerUtil.toArray(artifacts, new Artifact[artifacts.size()]);
+    return artifacts.toArray(new Artifact[0]);
   }
 
   private static class BuildArtifactItem extends ArtifactActionItem {

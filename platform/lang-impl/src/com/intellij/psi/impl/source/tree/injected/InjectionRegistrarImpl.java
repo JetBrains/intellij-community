@@ -141,6 +141,9 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       clear();
       throw new IllegalStateException("Seems you haven't called startInjecting()");
     }
+    if (!host.isValidHost()) {
+      throw new IllegalArgumentException(host + ".isValidHost() in " + host.getClass() + " returned false so you mustn't inject here.");
+    }
     PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(host);
     assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile, myLanguage,
                                                               myHostPsiFile, myHostVirtualFile, myHostDocument, placeInfos, myDocumentManagerBase);
@@ -238,7 +241,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     for (PlaceInfo info : placeInfos) {
       isAncestor |= PsiTreeUtil.isAncestor(contextElement, info.host, false);
     }
-    assert isAncestor : exceptionContext("Context element " + contextElement.getTextRange() + ": '" + contextElement + "'; " +
+    assert isAncestor : exceptionContext("Context element " + contextElement.getTextRange() + ": '" + contextElement + "' (" + contextElement.getClass() + "); " +
                                          " must be the parent of at least one of injection hosts", language,
                                          hostPsiFile, hostVirtualFile, hostDocument, placeInfos, documentManager);
   }

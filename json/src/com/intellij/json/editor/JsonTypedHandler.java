@@ -3,9 +3,12 @@ package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -22,9 +25,36 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
+  @NotNull
+  @Override
+  public Result beforeCharTyped(char c,
+                                @NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile file,
+                                @NotNull FileType fileType) {
+    if (file instanceof JsonFile) {
+      addPropertyNameQuotesIfNeeded(c, editor, file);
+    }
+    return Result.CONTINUE;
+  }
+
+  private static void addPropertyNameQuotesIfNeeded(char c,
+                                                    @NotNull Editor editor,
+                                                    @NotNull PsiFile file) {
+    if (c != ':' || !JsonDialectUtil.isStandardJson(file) || !JsonEditorOptions.getInstance().AUTO_QUOTE_PROP_NAME) return;
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(offset));
+    if (!(element instanceof JsonProperty)) return;
+    final JsonValue nameElement = ((JsonProperty)element).getNameElement();
+    if (nameElement instanceof JsonReferenceExpression) {
+      ((JsonProperty)element).setName(nameElement.getText());
+      PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    }
+  }
+
   public static void processPairedBracesComma(char c,
-                                               @NotNull Editor editor,
-                                               @NotNull PsiFile file) {
+                                              @NotNull Editor editor,
+                                              @NotNull PsiFile file) {
     if (!JsonEditorOptions.getInstance().COMMA_ON_MATCHING_BRACES) return;
     if (c != '[' && c != '{' && c != '"') return;
     SmartEnterProcessor.commitDocument(editor);

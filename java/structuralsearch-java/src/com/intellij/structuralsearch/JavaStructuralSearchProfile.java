@@ -363,6 +363,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       // might be generic method
       return true;
     }
+    else if (firstElement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)firstElement).isDefaultCase() &&
+             PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement && secondElement instanceof PsiDeclarationStatement) {
+      // possible default method
+      return true;
+    }
     else if (firstElement instanceof PsiExpressionStatement && firstElement.getFirstChild() instanceof PsiMethodCallExpression &&
       firstElement.getLastChild() instanceof PsiErrorElement && lastElement instanceof PsiBlockStatement) {
       // might be constructor

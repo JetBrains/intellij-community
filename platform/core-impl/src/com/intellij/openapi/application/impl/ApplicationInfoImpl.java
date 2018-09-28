@@ -16,6 +16,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +61,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl;
+  private String mySvgIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
 
@@ -383,8 +384,20 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   @Nullable
-  public String getBigIconUrl() {
-    return myBigIconUrl;
+  public String getApplicationSvgIconUrl() {
+    return mySvgIconUrl;
+  }
+
+  @Nullable
+  @Override
+  public File getSvgIconFile() {
+    if (mySvgIconUrl == null) return null;
+
+    URL url = getClass().getResource(mySvgIconUrl);
+    if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+      return URLUtil.urlToFile(url);
+    }
+    return null;
   }
 
   @Override
@@ -732,11 +745,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
-      myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
+      mySvgIconUrl = iconElement.getAttributeValue("svg");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);

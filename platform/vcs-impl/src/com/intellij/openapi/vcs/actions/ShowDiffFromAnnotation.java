@@ -24,16 +24,17 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -58,16 +59,17 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
   private static final Logger LOG = getInstance(ShowDiffFromAnnotation.class);
 
+  @NotNull private final Project myProject;
   private final FileAnnotation myFileAnnotation;
-  private final AbstractVcs myVcs;
   private final RevisionChangesProvider myChangesProvider;
   private int currentLine = -1;
 
-  ShowDiffFromAnnotation(@NotNull FileAnnotation fileAnnotation,
-                         @NotNull AbstractVcs vcs) {
+  ShowDiffFromAnnotation(@NotNull Project project,
+                         @NotNull FileAnnotation fileAnnotation) {
     ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    setShortcutSet(CustomShortcutSet.EMPTY);
+    myProject = project;
     myFileAnnotation = fileAnnotation;
-    myVcs = vcs;
     myChangesProvider = fileAnnotation.getRevisionsChangesProvider();
   }
 
@@ -92,7 +94,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     if (revisionNumber == null) return;
 
     MyLoadingRequestChain requestChain = new MyLoadingRequestChain(myFileAnnotation, myChangesProvider, actualNumber);
-    DiffManager.getInstance().showDiff(myVcs.getProject(), requestChain, DiffDialogHints.FRAME);
+    DiffManager.getInstance().showDiff(myProject, requestChain, DiffDialogHints.FRAME);
   }
 
   private static class MyLoadingRequestChain extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {

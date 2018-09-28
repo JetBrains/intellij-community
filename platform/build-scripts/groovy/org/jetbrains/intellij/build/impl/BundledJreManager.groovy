@@ -109,12 +109,13 @@ class BundledJreManager {
     def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
-    String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
+    String prefix = buildContext.options.isBundledJreModular ? vendor.modularJreNamePrefix :
+                    buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     def jreArchive = new File(jreDir, "$prefix$suffix")
 
     if (!jreArchive.file || !jreArchive.exists()) {
       def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found (${jreDir.listFiles()})"
-      if (buildContext.options.isInDevelopmentMode) {
+      if (buildContext.options.isInDevelopmentMode || buildContext.options.isBundledJreModular && arch == JvmArchitecture.x32) {
         buildContext.messages.warning(errorMessage)
       }
       else {
@@ -140,18 +141,20 @@ class BundledJreManager {
         stream.close()
       }
     }
-    return dependencyVersions.get("jreBuild_${osName}" as String, dependencyVersions.get("jdkBuild", ""))
+    return dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8"), JetBrains("jbre8", "jbrex8")
+    Oracle("jre8", "jdk8", "jre9"), JetBrains("jbre8", "jbrex8", "jbre9")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix
+    final String modularJreNamePrefix
 
-    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix) {
+    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix, String modularJreNamePrefix) {
       this.jreNamePrefix = jreNamePrefix
       this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
+      this.modularJreNamePrefix = modularJreNamePrefix
     }
   }
 }

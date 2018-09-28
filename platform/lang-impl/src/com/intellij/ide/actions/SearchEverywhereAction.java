@@ -465,7 +465,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     if (value instanceof OptionsTopHitProvider) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> getField().setText("#" + ((OptionsTopHitProvider)value).getId() + " "));
+      SwingUtilities.invokeLater(() -> getField().setText(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId() + " "));
       return;
     }
     Runnable onDone =
@@ -1241,7 +1241,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId());
         }
         else {
           ItemPresentation presentation = null;
@@ -1370,7 +1370,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         checkModelsUpToDate();              check();
         buildTopHit(pattern);               check();
 
-        if (!pattern.startsWith("#")) {
+        if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) {
           buildRecentFiles(pattern);
           check();
           runReadAction(() -> buildStructure(pattern), true);
@@ -1890,7 +1890,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       };
 
-      if (pattern.startsWith("#") && !pattern.contains(" ")) {
+      if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
         String id = pattern.substring(1);
         final HashSet<String> ids = new HashSet<>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {

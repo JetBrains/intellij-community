@@ -87,6 +87,17 @@ public class CodeInsightTestUtil {
     return null;
   }
 
+  @Nullable
+  public static IntentionAction findIntentionByPartialText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
+    for (IntentionAction action : actions) {
+      final String s = action.getText();
+      if (s.contains(text)) {
+        return action;
+      }
+    }
+    return null;
+  }
+
   @TestOnly
   public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) {
     String extension = FileUtilRt.getExtension(file);

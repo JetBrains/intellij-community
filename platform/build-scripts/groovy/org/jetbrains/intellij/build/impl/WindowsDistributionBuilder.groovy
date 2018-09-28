@@ -253,6 +253,6 @@ IDS_VM_OPTIONS=$vmOptions
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
     def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
+      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

@@ -30,7 +30,7 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     "\nexpected: (.*)\n\\s*got: (.*)",
     "expected same:<(.*)> was not:<(.*)>",
     "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "expected: (.*)\\s*but: was (.*)",
+    "expected: (.*)\n\\s*but: was (.*)",
     "expected: (.*)\\s*but was: (.*)",
     "expecting:\\s*<(.*)> to be equal to:\\s*<(.*)>\\s*but was not"
   };

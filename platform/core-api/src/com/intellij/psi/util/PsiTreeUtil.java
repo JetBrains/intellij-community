@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -18,10 +19,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -123,8 +121,17 @@ public class PsiTreeUtil {
   public static PsiElement findCommonParent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     // optimization
     if (element1 == element2) return element1;
-    final PsiFile containingFile = element1.getContainingFile();
-    final PsiElement topLevel = containingFile == element2.getContainingFile() ? containingFile : null;
+    PsiFile file1 = element1.getContainingFile();
+    PsiFile file2 = element2.getContainingFile();
+    if (file1 != null && file2 != null) {
+      InjectedLanguageManager ilm = InjectedLanguageManager.getInstance(file1.getProject());
+      if (ilm.isInjectedFragment(file1) != ilm.isInjectedFragment(file2)) {
+        // injected and non-injected files have no common ancestor
+        return null;
+      }
+    }
+
+    PsiElement topLevel = file1 == file2 ? file1 : null;
 
     int depth1 = getDepth(element1, topLevel);
     int depth2 = getDepth(element2, topLevel);

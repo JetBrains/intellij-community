@@ -114,7 +114,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     EditorEventListener listener = new EditorEventListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         final VirtualFile file = getFileDocumentManager().getFile(document);
         if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {

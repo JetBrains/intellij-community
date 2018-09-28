@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -196,24 +197,31 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
+      if (dfaRunner.wasForciblyMerged() && Registry.is("ide.dfa.report.imprecise")) {
+        reportAnalysisQualityProblem(holder, scope, "dataflow.not.precise");
+      }
       createDescription(dfaRunner, holder, visitor, scope);
       dfaRunner.forNestedClosures((closure, states) -> analyzeDfaWithNestedClosures(closure, holder, dfaRunner, states));
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
-      PsiIdentifier name = null;
-      String message = null;
-      if(scope.getParent() instanceof PsiMethod) {
-        name = ((PsiMethod)scope.getParent()).getNameIdentifier();
-        message = InspectionsBundle.message("dataflow.too.complex");
-      } else if(scope instanceof PsiClass) {
-        name = ((PsiClass)scope).getNameIdentifier();
-        message = InspectionsBundle.message("dataflow.too.complex.class");
-      }
-      if (name != null) { // Might be null for synthetic methods like JSP page.
-        holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
-      }
+      reportAnalysisQualityProblem(holder, scope, "dataflow.too.complex");
     }
     return visitor;
+  }
+
+  private static void reportAnalysisQualityProblem(ProblemsHolder holder, PsiElement scope, String problemKey) {
+    PsiIdentifier name = null;
+    String message = null;
+    if(scope.getParent() instanceof PsiMethod) {
+      name = ((PsiMethod)scope.getParent()).getNameIdentifier();
+      message = InspectionsBundle.message(problemKey, "Method <code>#ref</code>");
+    } else if(scope instanceof PsiClass) {
+      name = ((PsiClass)scope).getNameIdentifier();
+      message = InspectionsBundle.message(problemKey, "Class initializer");
+    }
+    if (name != null) { // Might be null for synthetic methods like JSP page.
+      holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
+    }
   }
 
   @NotNull

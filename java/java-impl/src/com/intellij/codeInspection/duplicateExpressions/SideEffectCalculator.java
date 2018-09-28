@@ -5,7 +5,6 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -164,5 +163,13 @@ class SideEffectCalculator {
       return "random".equals(method.getName()); // it's the only exception
     }
     return true;
+  }
+
+  /**
+   * Quick check to filter out the obvious things early
+   */
+  static boolean isDefinitelyWithSideEffect(@Nullable PsiExpression expression) {
+    return expression instanceof PsiAssignmentExpression ||
+           PsiUtil.isIncrementDecrementOperation(expression);
   }
 }

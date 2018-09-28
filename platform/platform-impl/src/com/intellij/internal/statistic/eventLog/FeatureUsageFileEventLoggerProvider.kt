@@ -13,7 +13,7 @@ class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   override fun createLogger(): FeatureUsageEventLogger {
     val sessionId = UUID.randomUUID().toString().shortedUUID()
     val build = ApplicationInfo.getInstance().build.asBuildNumber()
-    val logger = FeatureUsageFileEventLogger(sessionId, build, "-1", "4", FeatureUsageLogEventWriter())
+    val logger = FeatureUsageFileEventLogger(sessionId, build, "-1", "5", FeatureUsageLogEventWriter())
 
     ApplicationManager.getApplication().addApplicationListener(object : ApplicationAdapter() {
       override fun applicationExiting() {

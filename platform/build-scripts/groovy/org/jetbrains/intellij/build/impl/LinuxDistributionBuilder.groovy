@@ -187,7 +187,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void generateProductJson(String targetDir, String javaExecutablePath) {
     def scriptName = buildContext.productProperties.baseFileName
     new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
+      .generateProductJson(targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
   }
 
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {

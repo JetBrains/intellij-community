@@ -902,6 +902,16 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="SortedCollectionWithNonComparableKeys"
+                     key="inspection.sorted.collection.with.non.comparable.keys.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.SortedCollectionWithNonComparableKeysInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="JoinDeclarationAndAssignmentJava"
+                     key="inspection.join.declaration.and.assignment.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFO"
+                     implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
@@ -1038,10 +1048,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.JoinDeclarationAndAssignmentAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>

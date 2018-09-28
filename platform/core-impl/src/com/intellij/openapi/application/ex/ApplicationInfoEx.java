@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
@@ -44,7 +45,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSmallIconUrl();
 
-  public abstract String getBigIconUrl();
+  @Nullable
+  public abstract String getApplicationSvgIconUrl();
+
+  @Nullable
+  public abstract File getSvgIconFile();
 
   public abstract String getToolWindowIconUrl();
 

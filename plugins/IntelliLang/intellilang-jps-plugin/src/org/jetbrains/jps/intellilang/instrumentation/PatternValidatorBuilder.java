@@ -20,7 +20,7 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 /**
  * @author Eugene Zhuravlev
  */
-public class PatternValidatorBuilder extends BaseInstrumentingBuilder{
+public class PatternValidatorBuilder extends BaseInstrumentingBuilder {
   public PatternValidatorBuilder() { }
 
   @NotNull
@@ -50,10 +50,9 @@ public class PatternValidatorBuilder extends BaseInstrumentingBuilder{
                                      InstrumentationClassFinder finder) {
     JpsGlobal project = context.getProjectDescriptor().getModel().getGlobal();
     JpsIntelliLangConfiguration config = JpsIntelliLangExtensionService.getInstance().getConfiguration(project);
-    PatternInstrumenter instrumenter = new PatternInstrumenter(config.getPatternAnnotationClass(), writer, config.getInstrumentationType(), finder);
     try {
-      reader.accept(instrumenter, 0);
-      if (instrumenter.instrumented()) {
+      boolean instrumented = processClassFile(reader, writer, finder, config.getPatternAnnotationClass(), config.getInstrumentationType());
+      if (instrumented) {
         return new BinaryContent(writer.toByteArray());
       }
     }
@@ -66,5 +65,15 @@ public class PatternValidatorBuilder extends BaseInstrumentingBuilder{
   @Override
   protected String getProgressMessage() {
     return "Adding pattern assertions...";
+  }
+
+  public static boolean processClassFile(ClassReader reader,
+                                         ClassWriter writer,
+                                         InstrumentationClassFinder finder,
+                                         String annotationClassName,
+                                         InstrumentationType type) {
+    PatternInstrumenter instrumenter = new PatternInstrumenter(annotationClassName, writer, type, finder);
+    reader.accept(instrumenter, 0);
+    return instrumenter.instrumented();
   }
 }

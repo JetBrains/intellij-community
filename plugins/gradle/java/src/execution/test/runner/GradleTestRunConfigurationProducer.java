@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
@@ -62,7 +63,10 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
                                                   Ref<PsiElement> sourceElement) {
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
     if (GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == PLATFORM_TEST_RUNNER) return false;
-
+    if (configuration instanceof GradleRunConfiguration) {
+      final GradleRunConfiguration gradleRunConfiguration = (GradleRunConfiguration)configuration;
+      gradleRunConfiguration.setScriptDebugEnabled(false);
+    }
     return doSetupConfigurationFromContext(configuration, context, sourceElement);
   }
 

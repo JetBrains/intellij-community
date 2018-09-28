@@ -1542,7 +1542,7 @@ public class JBUI {
     public static class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
-        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+        return JBColor.namedColor("Separator.foreground", new JBColor(0xcdcdcd, 0x515151));
       }
 
       @NotNull
@@ -1704,6 +1704,14 @@ public class JBUI {
 
       public static int toolbarHeight() {
         return scale(28);
+      }
+
+      public static Color separatorColor() {
+        return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
+      }
+
+      public static Color separatorTextColor() {
+        return JBColor.namedColor("Popup.separator.foreground", Color.gray);
       }
     }
 

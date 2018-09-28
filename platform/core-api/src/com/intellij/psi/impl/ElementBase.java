@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -114,7 +113,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
     Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
-    // to prevent blinking, base icon should be created with the layers  
+    // to prevent blinking, base icon should be created with the layers
     if (this instanceof PsiElement) {
       PsiFile file = ((PsiElement)this).getContainingFile();
       if (file != null) {
@@ -232,7 +231,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   @NotNull
   public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<>();
-    for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
+    for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {
       final Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
       if (layerIcon != null) {
         layersFromProviders.add(layerIcon);

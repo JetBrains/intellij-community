@@ -152,8 +152,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     if (frame == null) {
       frame = new WelcomeFrame();
     }
-    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ((JFrame)frame).setVisible(true);
+    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ourInstance = frame;
     ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
   }

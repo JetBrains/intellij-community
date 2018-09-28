@@ -16,6 +16,7 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -64,15 +65,13 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "replace.reference.with.expression.quickfix",
-        myText);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myText);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override

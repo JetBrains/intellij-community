@@ -1,6 +1,7 @@
 // "Remove redundant cast(s)" "true"
 class Test {
   {
-    String s = "" + (1 + 2);
+      //c1
+      String s = "" + (1 + 2);
   }
 }

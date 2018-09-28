@@ -589,7 +589,10 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     assertEquals(Change.Type.MOVED, clm.getChange(FILE_1.toFilePath)?.type)
     file1.assertAffectedChangeLists("Test")
 
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e") // guessChangeListByPaths moves it to "Test" by "before" file path
+    // FILE_2 is moved to "Test", because 'guessChangeListByPaths' finds FILE_3 (for FILE_1 change) is in this changelist.
+    // Probably, we should detect such cases and leave change in default changelist
+    // see `test vcs refresh - duplicated copies with tracker`
+    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
     setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_3)
     refreshCLM()
 
@@ -613,7 +616,9 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     assertEquals(Change.Type.MOVED, clm.getChange(FILE_1.toFilePath)?.type)
 
     file1.withOpenedEditor {
-      val file2 = addLocalFile(FILE_2, "a_b_c_d_e") // LST moves it to default changelist
+      // FILE_2 is NOT moved to "Test", because FILE_1 has an assigned tracker and is not used for 'guessChangeListByPaths' detection
+      // (see `test vcs refresh - duplicated copies`)
+      val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
       setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_3)
       refreshCLM()
 

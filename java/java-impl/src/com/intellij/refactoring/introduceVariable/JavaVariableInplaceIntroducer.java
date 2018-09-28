@@ -248,7 +248,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
             if (variable != null) {
               finalListener.perform(myCanBeFinalCb.isSelected(), variable);
             }
-            ;
           });
         }
       });

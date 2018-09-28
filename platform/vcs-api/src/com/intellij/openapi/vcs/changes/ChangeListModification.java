@@ -36,5 +36,5 @@ public interface ChangeListModification {
 
   boolean editName(@NotNull String fromName, @NotNull String toName);
   @Nullable
-  String editComment(@NotNull String fromName, final String newComment);
+  String editComment(@NotNull String name, final String newComment);
 }

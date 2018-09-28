@@ -15,4 +15,6 @@ public interface JsonStringLiteral extends JsonLiteral {
   @NotNull
   String getValue();
 
+  boolean isPropertyName();
+
 }

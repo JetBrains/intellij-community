@@ -222,19 +222,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       listsToBeDeleted.clear();
     }
 
-    ChangeListRemoveConfirmation.processLists(myProject, false, listsToBeDeletedSilently, new ChangeListRemoveConfirmation() {
-      @Override
-      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return true;
-      }
-    });
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
 
-    ChangeListRemoveConfirmation.processLists(myProject, false, listsToBeDeleted, new ChangeListRemoveConfirmation() {
-      @Override
-      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
-               showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
-      }
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted, toAsk -> {
+      return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
+             showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
     });
   }
 
@@ -1031,12 +1023,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public String editComment(@NotNull String fromName, String newComment) {
+  public String editComment(@NotNull String name, String newComment) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        final String oldComment = myModifier.editComment(fromName, StringUtil.notNullize(newComment));
+        final String oldComment = myModifier.editComment(name, StringUtil.notNullize(newComment));
         myChangesViewManager.scheduleRefresh();
         return oldComment;
+      }
+    });
+  }
+
+  @Override
+  public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        final boolean result = myModifier.editData(name, newData);
+        myChangesViewManager.scheduleRefresh();
+        return result;
       }
     });
   }

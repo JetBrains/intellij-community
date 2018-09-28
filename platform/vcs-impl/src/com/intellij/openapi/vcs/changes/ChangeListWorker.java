@@ -480,6 +480,15 @@ public class ChangeListWorker {
     return oldComment;
   }
 
+  public boolean editData(@NotNull String name, @Nullable ChangeListData newData) {
+    final ListData list = getDataByName(name);
+    if (list == null) return false;
+
+    list.data = newData;
+
+    return true;
+  }
+
 
   @NotNull
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String description, @Nullable String id,

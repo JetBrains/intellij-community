@@ -5,7 +5,6 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmField;
 import com.intellij.lang.jvm.JvmMetaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
@@ -274,9 +273,9 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @NotNull
   @Override
   public String getQualifiedName() {
-    final JvmClass jvmClass = getUastElement();
-    if (jvmClass == null) return super.getQualifiedName();
-    final String qName = jvmClass.getQualifiedName();
+    final UClass uClass = getUastElement();
+    if (uClass == null) return super.getQualifiedName();
+    final String qName = uClass.getQualifiedName();
     if (qName == null) return super.getQualifiedName();
     return qName;
   }

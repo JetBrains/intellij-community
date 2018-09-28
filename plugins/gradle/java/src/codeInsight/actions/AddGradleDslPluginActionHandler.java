@@ -88,7 +88,6 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
                           if (document != null) {
                             documentManager.commitDocument(document);
                           }
-                          ;
                         });
     };
 

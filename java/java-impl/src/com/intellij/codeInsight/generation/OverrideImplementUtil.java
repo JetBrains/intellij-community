@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,7 +25,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -62,8 +61,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private OverrideImplementUtil() { }
 
   @NotNull
-  protected static MethodImplementor[] getImplementors() {
-    return Extensions.getExtensions(MethodImplementor.EXTENSION_POINT_NAME);
+  protected static List<MethodImplementor> getImplementors() {
+    return MethodImplementor.EXTENSION_POINT_NAME.getExtensionList();
   }
 
   /**

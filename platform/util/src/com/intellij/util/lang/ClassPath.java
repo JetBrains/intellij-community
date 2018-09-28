@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 
+import static com.intellij.execution.CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX;
+
 public class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
@@ -145,7 +147,6 @@ public class ClassPath {
   @Nullable
   private synchronized Loader getLoader(int i) {
     while (myLoaders.size() < i + 1) {
-      boolean lastOne;
       URL url;
       synchronized (myUrls) {
         if (myUrls.empty()) {
@@ -156,13 +157,12 @@ public class ClassPath {
           return null;
         }
         url = myUrls.pop();
-        lastOne = myUrls.isEmpty();
       }
 
       if (myLoadersMap.containsKey(url)) continue;
 
       try {
-        initLoaders(url, lastOne, myLoaders.size());
+        initLoaders(url, myLoaders.size());
       }
       catch (IOException e) {
         Logger.getInstance(ClassPath.class).info("url: " + url, e);
@@ -180,7 +180,7 @@ public class ClassPath {
     return result;
   }
 
-  private void initLoaders(final URL url, boolean lastOne, int index) throws IOException {
+  private void initLoaders(final URL url, int index) throws IOException {
     String path;
 
     if (myAcceptUnescapedUrls) {
@@ -197,9 +197,10 @@ public class ClassPath {
     }
 
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      Loader loader = createLoader(url, index, new File(path), index == 0);
+      File file = new File(path);
+      Loader loader = createLoader(url, index, file, file.getName().startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX));
       if (loader != null) {
-        initLoader(url, lastOne, loader);
+        initLoader(url, loader);
       }
     }
   }
@@ -214,20 +215,16 @@ public class ClassPath {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
           long s2 = ourLogTiming ? System.nanoTime() : 0;
-          for (String referencedJar : referencedJars) {
+          List<URL> urls = new ArrayList<URL>(referencedJars.length);
+          for (String referencedJar:referencedJars) {
             try {
-              URI uri = new URI(referencedJar);
-              File referencedFile = new File(uri);
-              URL referencedUrl = uri.toURL();
-              Loader referencedLoader = createLoader(referencedUrl, index++, referencedFile, false);
-              if (referencedLoader != null) {
-                initLoader(referencedUrl, false, referencedLoader);
-              }
+              urls.add(new URI(referencedJar).toURL());
             }
             catch (Exception e) {
               Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
             }
           }
+          push(urls);
           if (ourLogTiming) {
             System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
           }
@@ -238,7 +235,7 @@ public class ClassPath {
     return null;
   }
 
-  private void initLoader(URL url, boolean lastOne, Loader loader) throws IOException {
+  private void initLoader(URL url, Loader loader) throws IOException {
     if (myCanUseCache) {
       ClasspathCache.LoaderData data = myCachePool == null ? null : myCachePool.getCachedData(url);
       if (data == null) {
@@ -249,6 +246,11 @@ public class ClassPath {
       }
       myCache.applyLoaderData(data, loader);
 
+      boolean lastOne;
+      synchronized (myUrls) {
+        lastOne = myUrls.isEmpty();
+      }
+      
       if (lastOne) {
         myCache.nameSymbolsLoaded();
         myAllUrlsWereProcessed = true;

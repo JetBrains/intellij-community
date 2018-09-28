@@ -39,7 +39,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -179,8 +178,7 @@ public class ExternalSystemUtil {
       if (window != null) {
         return;
       }
-      ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-      for (final ToolWindowEP bean : beans) {
+      for (final ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
         if (id.equals(bean.id)) {
           managerEx.initToolWindow(bean);
         }

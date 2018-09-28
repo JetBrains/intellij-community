@@ -1038,7 +1038,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
       }
 
-      g.setColor(UIUtil.getSeparatorColor());
+      g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
       if (myOrientation == SwingConstants.HORIZONTAL) {
         int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
         LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);

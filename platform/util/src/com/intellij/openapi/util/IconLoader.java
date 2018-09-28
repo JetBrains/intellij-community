@@ -11,6 +11,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
@@ -28,8 +29,10 @@ import java.awt.image.RGBImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
@@ -717,12 +720,7 @@ public final class IconLoader {
     private class MyScaledIconsCache {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
-      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Couple<Double>, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
-        @Override
-        public boolean removeEldestEntry(Map.Entry<Couple<Double>, SoftReference<ImageIcon>> entry) {
-          return size() > SCALED_ICONS_CACHE_LIMIT;
-        }
-      });
+      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new FixedHashMap<Couple<Double>, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT));
 
       private Couple<Double> key(@NotNull ScaleContext ctx) {
         return new Couple<Double>(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE), ctx.getScale(SYS_SCALE));

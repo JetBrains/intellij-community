@@ -60,7 +60,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class LossyEncodingInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LossyEncodingInspection");
@@ -137,7 +136,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                           @NotNull Charset wrongCharset) {
     Set<Charset> suspects = ContainerUtil.newHashSet(CharsetToolkit.getDefaultSystemCharset(), CharsetToolkit.getPlatformCharset());
     suspects.remove(wrongCharset);
-    List<Charset> goodCharsets = suspects.stream().filter(c -> isGoodCharset(virtualFile, c)).collect(Collectors.toList());
+    List<Charset> goodCharsets = ContainerUtil.filter(suspects, c -> isGoodCharset(virtualFile, c));
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (!goodCharsets.isEmpty()) {
       Charset goodCharset = goodCharsets.get(0);

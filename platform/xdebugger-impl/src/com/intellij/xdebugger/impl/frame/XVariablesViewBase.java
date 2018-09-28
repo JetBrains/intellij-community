@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -39,7 +40,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author nik
@@ -50,12 +54,7 @@ public abstract class XVariablesViewBase extends XDebugView {
 
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
-  private final Map<Object, XDebuggerTreeState> myTreeStates = new LinkedHashMap<Object, XDebuggerTreeState>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<Object, XDebuggerTreeState> eldest) {
-      return size() > Registry.get("debugger.tree.states.depth").asInteger();
-    }
-  };
+  private final Map<Object, XDebuggerTreeState> myTreeStates = new FixedHashMap<>(Registry.get("debugger.tree.states.depth").asInteger());
 
   protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
     myTreePanel = new XDebuggerTreePanel(

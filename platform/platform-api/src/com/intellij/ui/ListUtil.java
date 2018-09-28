@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -211,6 +213,32 @@ public class ListUtil {
         }
       };
     return model;
+  }
+
+  public static boolean isPointOnSelection(@NotNull JList list, int x, int y) {
+    int row = list.locationToIndex(new Point(x, y));
+    if (row < 0) return false;
+    return list.isSelectedIndex(row);
+  }
+
+  @Nullable
+  public static <E> Component getDeepestRendererChildComponentAt(@NotNull JList<E> list, @NotNull Point point) {
+    int idx = list.locationToIndex(point);
+    if (idx < 0) return null;
+
+    Rectangle cellBounds = list.getCellBounds(idx, idx);
+    if (!cellBounds.contains(point)) return null;
+
+    E value = list.getModel().getElementAt(idx);
+    if (value == null) return null;
+
+    Component rendererComponent = list.getCellRenderer().getListCellRendererComponent(list, value, idx, true, true);
+    rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height);
+    UIUtil.layoutRecursively(rendererComponent);
+
+    int rendererRelativeX = point.x - cellBounds.x;
+    int rendererRelativeY = point.y - cellBounds.y;
+    return UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativeX, rendererRelativeY);
   }
 
   public static boolean canMoveSelectedItemsDown(JList list) {

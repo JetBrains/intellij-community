@@ -83,6 +83,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Fix doc comment") || //change formatting settings
            actionText.startsWith("Add Javadoc") ||
+           actionText.equals("Collapse 'catch' blocks") || // IDEA-195991
            super.shouldSkipIntention(actionText);
   }
 

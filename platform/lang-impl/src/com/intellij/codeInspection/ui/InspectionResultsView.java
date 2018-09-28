@@ -30,6 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -628,10 +630,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myInspectionProfile;
   }
 
-  @ReviseWhenPortedToJDK("9")
   void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    // redundant cast to fix compilation under jdk9
-    myTreeUpdater.submit((Runnable)() -> ReadAction.run(() -> {
+    updateTree(() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (myTreeStructureUpdateLock) {
@@ -684,7 +684,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (app.isUnitTestMode()) {
       buildAction.run();
     } else {
-      myTreeUpdater.execute(buildAction);
+      updateTree(buildAction);
     }
   }
 
@@ -721,7 +721,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public void addTools(Collection<? extends Tools> tools) {
-    myTreeUpdater.submit(() -> addToolsSynchronously(tools));
+    updateTree(() -> addToolsSynchronously(tools));
   }
 
   private void addToolsSynchronously(Collection<? extends Tools> tools) {
@@ -975,6 +975,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
     }
   }
+
+  private void updateTree(@NotNull Runnable action) {
+    myTreeUpdater.execute(() -> ProgressManager.getInstance().runProcess(action, new EmptyProgressIndicator()));
+  }
+
 
   @TestOnly
   public void dispatchTreeUpdate() throws Exception {

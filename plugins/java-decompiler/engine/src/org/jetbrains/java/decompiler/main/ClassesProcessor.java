@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -18,6 +16,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -59,7 +58,7 @@ public class ClassesProcessor {
     for (StructClass cl : context.getClasses().values()) {
       if (cl.isOwn() && !mapRootClasses.containsKey(cl.qualifiedName)) {
         if (bDecompileInner) {
-          StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttribute("InnerClasses");
+          StructInnerClassesAttribute inner = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
 
           if (inner != null) {
             for (StructInnerClassesAttribute.Entry entry : inner.getEntries()) {
@@ -136,7 +135,7 @@ public class ClassesProcessor {
             Set<String> setNestedClasses = mapNestedClassReferences.get(superClass);
             if (setNestedClasses != null) {
               StructClass scl = superNode.classStruct;
-              StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttribute("InnerClasses");
+              StructInnerClassesAttribute inner = scl.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
 
               if (inner == null || inner.getEntries().isEmpty()) {
                 DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);

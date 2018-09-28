@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -17,10 +16,12 @@ import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
+import static java.util.Arrays.asList;
 
 public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   @NotNull
@@ -51,13 +52,16 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         usages.add(StatisticsUtilKt.getBooleanUsage("textFilter.regex", properties.get(TEXT_FILTER_REGEX)));
         usages.add(StatisticsUtilKt.getBooleanUsage("textFilter.matchCase", properties.get(TEXT_FILTER_MATCH_CASE)));
 
-        for (VcsLogHighlighterFactory factory: Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
+        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
           if (factory.showMenuItem()) {
             VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(factory.getId());
             usages.add(StatisticsUtilKt.getBooleanUsage("highlighter." + UsageDescriptorKeyValidator.ensureProperKey(factory.getId()),
                                                         properties.exists(property) && properties.get(property)));
           }
         }
+
+        List<String> tabs = projectLog.getTabsManager().getTabs();
+        usages.add(StatisticsUtilKt.getCountingUsage("additionalTabs.count", tabs.size(), asList(0, 1, 2, 3, 4, 8)));
 
         return usages;
       }

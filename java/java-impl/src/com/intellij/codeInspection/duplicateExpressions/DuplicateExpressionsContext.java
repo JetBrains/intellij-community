@@ -44,8 +44,8 @@ class DuplicateExpressionsContext {
   }
 
   @Nullable
-  static DuplicateExpressionsContext getOrCreateContext(PsiExpression expression, @NotNull UserDataHolder session) {
-    PsiCodeBlock nearestBody = ObjectUtils.tryCast(ControlFlowUtil.findCodeFragment(expression), PsiCodeBlock.class);
+  static DuplicateExpressionsContext getOrCreateContext(@NotNull PsiExpression expression, @NotNull UserDataHolder session) {
+    PsiCodeBlock nearestBody = findNearestBody(expression);
     if (nearestBody != null) {
       Map<PsiCodeBlock, DuplicateExpressionsContext> contexts = session.getUserData(CONTEXTS_KEY);
       if (contexts == null) {
@@ -60,5 +60,9 @@ class DuplicateExpressionsContext {
   static DuplicateExpressionsContext getContext(@Nullable PsiCodeBlock body, @NotNull UserDataHolder session) {
     Map<PsiCodeBlock, DuplicateExpressionsContext> contexts = session.getUserData(CONTEXTS_KEY);
     return contexts != null ? contexts.get(body) : null;
+  }
+
+  static PsiCodeBlock findNearestBody(@NotNull PsiExpression expression) {
+    return ObjectUtils.tryCast(ControlFlowUtil.findCodeFragment(expression), PsiCodeBlock.class);
   }
 }

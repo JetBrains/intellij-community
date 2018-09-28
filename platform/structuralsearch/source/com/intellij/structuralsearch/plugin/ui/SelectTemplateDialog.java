@@ -278,7 +278,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     else {
       TreePath[] paths = existingTemplatesComponent.getPatternTree().getSelectionModel().getSelectionPaths();
       if (paths == null) {
-        return new Configuration[0];
+        return Configuration.EMPTY_ARRAY;
       }
       Collection<Configuration> configurations = new ArrayList<>();
       for (TreePath path : paths) {
@@ -289,7 +289,7 @@ public class SelectTemplateDialog extends DialogWrapper {
           configurations.add((Configuration)userObject);
         }
       }
-      return configurations.toArray(new Configuration[0]);
+      return configurations.toArray(Configuration.EMPTY_ARRAY);
     }
   }
 

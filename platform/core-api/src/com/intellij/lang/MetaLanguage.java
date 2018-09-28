@@ -2,12 +2,11 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -24,14 +23,14 @@ public abstract class MetaLanguage extends Language {
   }
 
   @NotNull
-  public static MetaLanguage[] all() {
-    return Extensions.getExtensions(EP_NAME);
+  public static List<MetaLanguage> all() {
+    return EP_NAME.getExtensionList();
   }
 
   @NotNull
   public static Stream<MetaLanguage> getAllMatchingMetaLanguages(@NotNull Language language) {
     if (language instanceof MetaLanguage) return Stream.empty();
-    return Arrays.stream(all()).filter(l -> l.matchesLanguage(language));
+    return all().stream().filter(l -> l.matchesLanguage(language));
   }
 
   /**
@@ -44,9 +43,6 @@ public abstract class MetaLanguage extends Language {
    */
   @NotNull
   public Collection<Language> getMatchingLanguages() {
-    return Language.getRegisteredLanguages()
-      .stream()
-      .filter(language -> matchesLanguage(language))
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(Language.getRegisteredLanguages(), language -> matchesLanguage(language));
   }
 }

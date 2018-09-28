@@ -4,6 +4,7 @@
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.credentialStore.*
+import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -16,7 +17,7 @@ import java.nio.file.Paths
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return KeePassCredentialStore(memoryOnly = true)
+    return KeePassCredentialStore(isMemoryOnly = true)
   }
   else if (settings.providerType == ProviderType.KEEPASS) {
     val dbFile = settings.state.keepassDb?.let { LOG.runAndLogException { Paths.get(it) } }
@@ -44,7 +45,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
+  private val memoryHelperProvider = lazy { KeePassCredentialStore(preloadedDb = KeePassDatabase(), isMemoryOnly = true) }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
@@ -152,14 +153,18 @@ internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? =
   }
 
   existing?.let {
-    it.memoryOnly = false
+    it.isMemoryOnly = false
     return it
   }
   return KeePassCredentialStore()
 }
 
 @TestOnly
-internal fun createKeePassStore(file: String): PasswordSafe =
-  PasswordSafeImpl(
-    PasswordSafeSettings().apply { loadState(PasswordSafeSettings.State().apply { providerType = ProviderType.KEEPASS; keepassDb = file }) },
-    KeePassCredentialStore(dbFile = Paths.get(file)))
+internal fun createKeePassStore(file: String): PasswordSafe {
+  val settings = PasswordSafeSettings()
+  settings.loadState(PasswordSafeSettings.PasswordSafeOptions().apply {
+    provider = ProviderType.KEEPASS
+    keepassDb = file
+  })
+  return PasswordSafeImpl(settings, KeePassCredentialStore(dbFile = Paths.get(file)))
+}

@@ -105,7 +105,7 @@ internal fun isConfigurationFile(file: VirtualFile): Boolean {
  * not-null doesn't mean that you should not expect NoSuchFileException
  */
 private fun findConfigurationFile(project: Project): Path? {
-  val projectIdeaDir = Paths.get(project.basePath)
+  val projectIdeaDir = Paths.get(project.basePath ?: return null)
   var file = projectIdeaDir.resolve("intellij.yaml")
   if (!file.exists()) {
     // do not check file exists - on read we in any case should check NoSuchFileException

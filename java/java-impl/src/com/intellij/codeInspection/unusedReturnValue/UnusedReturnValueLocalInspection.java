@@ -71,7 +71,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
              PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
     })) {
       if (atLeastOneUsageExists[0]) {
-        return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false)};
+        return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false, isOnTheFly)};
       }
     }
     return null;

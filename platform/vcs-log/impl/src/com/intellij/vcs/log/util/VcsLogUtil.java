@@ -10,7 +10,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -33,6 +35,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
 import static java.util.Collections.singletonList;
 
 public class VcsLogUtil {
@@ -287,5 +290,15 @@ public class VcsLogUtil {
     }
 
     return CommittedChangesTreeBrowser.zipChanges(changes);
+  }
+
+  @Nullable
+  public static VirtualFile getActualRoot(@NotNull Project project, @NotNull FilePath path) {
+    VcsRoot rootObject = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(path);
+    if (rootObject == null) return null;
+    Map<VirtualFile, VcsLogProvider> providers = findLogProviders(singletonList(rootObject), project);
+    if (providers.isEmpty()) return null;
+    VcsLogProvider provider = notNull(getFirstItem(providers.values()));
+    return provider.getVcsRoot(project, path);
   }
 }

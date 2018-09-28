@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -467,8 +466,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
-    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-    for (ToolWindowEP bean : beans) {
+    for (ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
       list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
         @Override
         public void run() {

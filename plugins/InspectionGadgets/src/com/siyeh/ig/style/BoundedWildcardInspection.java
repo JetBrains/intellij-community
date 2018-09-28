@@ -9,7 +9,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -390,7 +389,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
 
   private static boolean errorChecks(@NotNull PsiElement method, @NotNull List<PsiElement> elementsToIgnore) {
-    HighlightVisitor visitor = ContainerUtil.find(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();
+    HighlightVisitor visitor = ContainerUtil.find(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();
     HighlightInfoHolder holder = new HighlightInfoHolder(method.getContainingFile());
     visitor.analyze(method.getContainingFile(), false, holder, ()->{
       method.accept(new PsiRecursiveElementWalkingVisitor() {

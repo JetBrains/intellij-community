@@ -1127,6 +1127,10 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
     cmdLine.addParameter("-D" + GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + config.REBUILD_ON_DEPENDENCY_CHANGE);
 
+    if (Registry.is("compiler.build.report.statistics")) {
+      cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
+    }
+
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
     }
@@ -1310,7 +1314,7 @@ public class BuildManager implements Disposable {
   }
 
   @NotNull
-  private File getBuildLogDirectory() {
+  public static File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
   }
 

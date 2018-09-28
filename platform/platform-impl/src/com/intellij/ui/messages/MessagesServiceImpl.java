@@ -133,6 +133,17 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  public String showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestInputImplementation().show(message, validator);
+    }
+
+    final InputDialog dialog = new PasswordInputDialog(parentComponent, message, title, icon, validator);
+    dialog.show();
+    return dialog.getInputString();
+  }
+
+  @Override
   public String showInputDialog(@Nullable Project project,
                                 Component parentComponent, String message,
                                 String title,
@@ -166,7 +177,7 @@ public class MessagesServiceImpl implements MessagesService {
                                          String title,
                                          String initialValue,
                                          Icon icon,
-                                         InputValidator validator) {
+                                         @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return getTestInputImplementation().show(message, validator);
     }

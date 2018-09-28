@@ -16,6 +16,9 @@ public class JsonTypingHandlingTest extends JsonTestCase {
   private void doTestQuote(@NotNull final String before, @NotNull final String expected) {
     doTypingTest('"', before, expected, "json");
   }
+  private void doTestColon(@NotNull final String before, @NotNull final String expected) {
+    doTypingTest(':', before, expected, "json");
+  }
 
   @SuppressWarnings("SameParameterValue")
   private void doTypingTest(char c,
@@ -62,5 +65,16 @@ public class JsonTypingHandlingTest extends JsonTestCase {
   }
   public void testAutoCommaAfterQuoteInObject() {
     doTestQuote("{ \"x\": <caret> \"y\": {\"a\": 5} }", "{ \"x\": \"\", \"y\": {\"a\": 5} }");
+  }
+  public void testAutoQuotesForPropName() {
+    doTestColon( "{ x<caret>}", "{\n" +
+                                "  \"x\":\n" +
+                                "}");
+  }
+  public void testAutoQuotesForPropNameFalse1() {
+    doTestColon( "{ \"x\"<caret>}", "{ \"x\":<caret>}");
+  }
+  public void testAutoQuotesForPropNameFalse2() {
+    doTestColon( "{ \"x<caret>\"}", "{ \"x:<caret>\"}");
   }
 }

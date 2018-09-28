@@ -579,7 +579,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<IntentionAction> filterAvailableIntentions(@NotNull String hint) {
-    return getAvailableIntentions().stream().filter(action -> action.getText().startsWith(hint)).collect(Collectors.toList());
+    return ContainerUtil.filter(getAvailableIntentions(), action -> action.getText().startsWith(hint));
   }
 
   @NotNull

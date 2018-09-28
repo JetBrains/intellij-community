@@ -7,11 +7,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class FSSession {
   public String id;
@@ -54,7 +51,7 @@ public class FSSession {
 
   public void removeEmptyData() {
     if (groups != null) {
-       groups = groups.stream().filter(group -> !group.getMetrics().isEmpty()).collect(Collectors.toList());
+      groups = ContainerUtil.filter(groups, group -> !group.getMetrics().isEmpty());
     }
   }
 

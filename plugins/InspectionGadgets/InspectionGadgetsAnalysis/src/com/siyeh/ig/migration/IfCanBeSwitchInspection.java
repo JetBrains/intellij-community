@@ -16,12 +16,11 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -52,8 +51,6 @@ import java.util.List;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
-  @NonNls private static final String ONLY_SAFE = "onlySuggestNullSafe";
-
   @SuppressWarnings("PublicField")
   public int minimumBranches = 3;
 
@@ -63,7 +60,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean suggestEnumSwitches = false;
 
-  protected boolean onlySuggestNullSafe = true;
+  @SuppressWarnings("PublicField")
+  public boolean onlySuggestNullSafe = true;
 
   @Override
   public boolean isEnabledByDefault() {
@@ -152,7 +150,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("if.can.be.switch.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
     }
 
     @Override
@@ -483,27 +481,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    if (!onlySuggestNullSafe) {
-      final Element e = new Element("option");
-      e.setAttribute("name", ONLY_SAFE);
-      e.setAttribute("value", Boolean.toString(onlySuggestNullSafe));
-      node.addContent(e);
-    }
-  }
-
-  @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
-    for (Element child : node.getChildren("option")) {
-      if (Comparing.strEqual(child.getAttributeValue("name"), ONLY_SAFE)) {
-        final String value = child.getAttributeValue("value");
-        if (value != null) {
-          onlySuggestNullSafe = Boolean.parseBoolean(value);
-        }
-        break;
-      }
-    }
+    defaultWriteSettings(node, "onlySuggestNullSafe");
+    writeBooleanOption(node, "onlySuggestNullSafe", true);
   }
 
   private class IfCanBeSwitchVisitor extends BaseInspectionVisitor {

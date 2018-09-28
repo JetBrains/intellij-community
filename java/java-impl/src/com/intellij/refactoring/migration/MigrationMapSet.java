@@ -1,25 +1,10 @@
 
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileFilters;
@@ -38,7 +23,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
@@ -105,7 +93,7 @@ public class MigrationMapSet {
   }
 
   private static boolean isPredefined(String name) {
-    for (PredefinedMigrationProvider provider : Extensions.getExtensions(PredefinedMigrationProvider.EP_NAME)) {
+    for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = FileUtil.getNameWithoutExtension(new File(migrationMap.getFile()));
       if (fileName.equals(name)) return true;
@@ -133,7 +121,7 @@ public class MigrationMapSet {
   private static File getMapDirectory() {
     File dir = new File(PathManager.getConfigPath() + File.separator + "migration");
 
-    if (!dir.exists() && !dir.mkdir()) {
+    if (!dir.exists() && !dir.mkdirs()) {
       LOG.error("cannot create directory: " + dir.getAbsolutePath());
       return null;
     }
@@ -152,7 +140,7 @@ public class MigrationMapSet {
       }
     }
 
-    for (PredefinedMigrationProvider provider : Extensions.getExtensions(PredefinedMigrationProvider.EP_NAME)) {
+    for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = new File(migrationMap.getFile()).getName();
       if (myDeletedMaps.contains(FileUtil.getNameWithoutExtension(fileName))) continue;

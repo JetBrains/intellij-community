@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -341,7 +340,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     VirtualFile sourcesRoot = fileIndex.getSourceRootForFile(virtualFile);
     if (sourcesRoot != null) {
       List<SyntheticLibrary> list = new ArrayList<>();
-      for (AdditionalLibraryRootsProvider e : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
           if (library.getSourceRoots().contains(sourcesRoot)) {
             Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();

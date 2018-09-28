@@ -15,9 +15,11 @@
  */
 package com.intellij.vcs.log.impl
 
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcsUtil.VcsUtil
 
 abstract class VcsStatusMerger<S> {
   fun merge(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
@@ -42,7 +44,7 @@ abstract class VcsStatusMerger<S> {
     return result
   }
 
-  private fun merge(path: String, statuses: List<S>): S {
+  fun merge(path: String, statuses: List<S>): S {
     val types = statuses.map { getType(it) }.distinct()
 
     if (types.size == 1) {
@@ -115,4 +117,37 @@ class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo>() {
   override fun getSecondPath(info: VcsFileStatusInfo): String? = info.secondPath
 
   override fun getType(info: VcsFileStatusInfo): Change.Type = info.type
+}
+
+abstract class VcsChangesMerger : VcsStatusMerger<Change>() {
+  override fun createStatus(type: Change.Type, path: String, secondPath: String?): Change {
+    when (type) {
+      Change.Type.NEW -> return createChange(type, null, VcsUtil.getFilePath(path))
+      Change.Type.DELETED -> return createChange(type, VcsUtil.getFilePath(path), null)
+      Change.Type.MOVED -> return createChange(type, VcsUtil.getFilePath(path), VcsUtil.getFilePath(secondPath))
+      Change.Type.MODIFICATION -> return createChange(type, VcsUtil.getFilePath(path), VcsUtil.getFilePath(path))
+    }
+  }
+
+  protected abstract fun createChange(type: Change.Type, beforePath: FilePath?, afterPath: FilePath?): Change
+
+  fun merge(path: FilePath, changesToParents: List<Change>): Change {
+    return MergedChange.SimpleMergedChange(merge(path.path, changesToParents), changesToParents)
+  }
+
+  override fun getFirstPath(info: Change): String {
+    when (info.type!!) {
+      Change.Type.MODIFICATION, Change.Type.NEW -> return info.afterRevision!!.file.path
+      Change.Type.DELETED, Change.Type.MOVED -> return info.beforeRevision!!.file.path
+    }
+  }
+
+  override fun getSecondPath(info: Change): String? {
+    when (info.type!!) {
+      Change.Type.MOVED -> return info.afterRevision!!.file.path
+      else -> return null
+    }
+  }
+
+  override fun getType(info: Change): Change.Type = info.type
 }

@@ -22,7 +22,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReferenceInjector;
@@ -56,7 +55,7 @@ class AntReferenceInjector implements DomReferenceInjector {
       final List<PsiReference> refs = new ArrayList<>();
       addPropertyReferences(context, xmlAttributeValue, refs);
       addMacrodefParameterRefs(xmlAttributeValue, refs);
-      return refs.isEmpty() ? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
+      return refs.toArray(PsiReference.EMPTY_ARRAY);
     }
     return PsiReference.EMPTY_ARRAY;
   }

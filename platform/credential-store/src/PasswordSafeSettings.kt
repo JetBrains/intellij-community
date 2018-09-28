@@ -1,0 +1,62 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.credentialStore
+
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.messages.Topic
+import com.intellij.util.text.nullize
+import com.intellij.util.xmlb.annotations.OptionTag
+
+@State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)])
+class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeSettings.PasswordSafeOptions> {
+  companion object {
+    @JvmField
+    val TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
+
+    private val defaultProviderType: ProviderType
+      get() = if (SystemInfo.isWindows) ProviderType.KEEPASS else ProviderType.KEYCHAIN
+  }
+
+  private var state = PasswordSafeOptions()
+
+  @Suppress("DEPRECATION")
+  var providerType: ProviderType
+    get() = if (SystemInfo.isWindows && state.provider === ProviderType.KEYCHAIN) ProviderType.KEEPASS else state.provider!!
+    set(value) {
+      var newValue = value
+      if (newValue === ProviderType.DO_NOT_STORE) {
+        newValue = ProviderType.MEMORY_ONLY
+      }
+
+      val oldValue = state.provider!!
+      if (newValue !== oldValue) {
+        state.provider = newValue
+        ApplicationManager.getApplication()?.messageBus?.syncPublisher(TOPIC)?.typeChanged(oldValue, newValue)
+      }
+    }
+
+  override fun getState(): PasswordSafeOptions {
+    val state = state
+    if (state.keepassDb != null && state.keepassDb == getDefaultKeePassDbFilePath()) {
+      state.keepassDb = null
+    }
+    return state
+  }
+
+  override fun loadState(state: PasswordSafeOptions) {
+    this.state = state
+    providerType = state.provider ?: defaultProviderType
+    state.keepassDb = state.keepassDb.nullize(nullizeSpaces = true)
+  }
+
+  override fun getStateModificationCount() = state.modificationCount
+
+  class PasswordSafeOptions : BaseState() {
+    @get:OptionTag("PROVIDER")
+    var provider by enum(defaultProviderType)
+
+    var keepassDb by string()
+    var isRememberPasswordByDefault by property(true)
+  }
+}

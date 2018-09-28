@@ -127,6 +127,10 @@ public class TroveUtil {
     });
   }
 
+  public static void addAll(@NotNull TIntHashSet where, @NotNull Collection<Integer> what) {
+    what.forEach(value -> where.add(value));
+  }
+
   public static <V> void putAll(@NotNull TIntObjectHashMap<V> where, @NotNull TIntObjectHashMap<V> what) {
     what.forEachEntry((index, value) -> {
       where.put(index, value);

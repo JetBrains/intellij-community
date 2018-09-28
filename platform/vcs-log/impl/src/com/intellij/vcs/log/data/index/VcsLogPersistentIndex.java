@@ -63,7 +63,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 8;
+  private static final int VERSION = 9;
   private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -134,7 +134,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler, @NotNull String logId) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myUserRegistry, myRoots, fatalErrorHandler, this),
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myStorage, myUserRegistry, myRoots, fatalErrorHandler, this),
                                            () -> IndexStorage.cleanup(logId));
     }
     catch (IOException e) {
@@ -311,6 +311,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private volatile boolean myIsFresh;
 
     IndexStorage(@NotNull String logId,
+                        @NotNull VcsLogStorage storage,
                         @NotNull VcsUserRegistryImpl userRegistry,
                         @NotNull Set<VirtualFile> roots,
                         @NotNull FatalErrorHandler fatalErrorHandler,
@@ -335,7 +336,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, roots, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, roots, storage, fatalErrorHandler, this);
 
         File parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,

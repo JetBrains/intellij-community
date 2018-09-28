@@ -54,6 +54,15 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
   }
 
   @Override
+  public boolean remove(Object o) {
+    if (o instanceof DistinctPair) {
+      DistinctPair dp = (DistinctPair)o;
+      return myData.remove(createPair(dp.myFirst, dp.mySecond, dp.myOrdered));
+    }
+    return false;
+  }
+
+  @Override
   public boolean contains(Object o) {
     if (!(o instanceof DistinctPair)) return false;
     DistinctPair dp = (DistinctPair)o;
@@ -138,6 +147,25 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     return true;
   }
 
+  public void splitClass(int index, int[] splitIndices) {
+    TLongArrayList toAdd = new TLongArrayList();
+    for(TLongIterator iterator = myData.iterator(); iterator.hasNext(); ) {
+      DistinctPair pair = decode(iterator.next());
+      if (pair.myFirst == index) {
+        for (int splitIndex : splitIndices) {
+          toAdd.add(createPair(splitIndex, pair.mySecond, pair.isOrdered()));
+        }
+        iterator.remove();
+      } else if (pair.mySecond == index) {
+        for (int splitIndex : splitIndices) {
+          toAdd.add(createPair(pair.myFirst, splitIndex, pair.isOrdered()));
+        }
+        iterator.remove();
+      }
+    }
+    myData.addAll(toAdd.toNativeArray());
+  }
+
   public boolean areDistinctUnordered(int c1Index, int c2Index) {
     return myData.contains(createPair(c1Index, c2Index, false));
   }
@@ -160,6 +188,12 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     boolean ordered = encoded < 0;
     encoded = Math.abs(encoded);
     return new DistinctPair(low(encoded), high(encoded), ordered, myState.getEqClasses());
+  }
+
+  public void dropOrder(DistinctPair pair) {
+    if (remove(pair)) {
+      addUnordered(pair.myFirst, pair.mySecond);
+    }
   }
 
   private static long createPair(int low, int high, boolean ordered) {
@@ -195,9 +229,17 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myList.get(myFirst);
     }
 
+    public int getFirstIndex() {
+      return myFirst;
+    }
+
     @NotNull
     public EqClass getSecond() {
       return myList.get(mySecond);
+    }
+
+    public int getSecondIndex() {
+      return mySecond;
     }
 
     public void check() {

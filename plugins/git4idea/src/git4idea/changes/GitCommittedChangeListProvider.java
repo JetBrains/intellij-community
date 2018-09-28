@@ -165,7 +165,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     FilePath filePath = VcsUtil.getFilePath(file);
 
     GitRepository repository =
-      GitRepositoryManager.getInstance(myProject).getRepositoryForFile(GitHistoryUtils.getLastCommitName(myProject, filePath));
+      GitRepositoryManager.getInstance(myProject).getRepositoryForFile(VcsUtil.getLastCommitPath(myProject, filePath));
     if (repository == null) {
       return null;
     }

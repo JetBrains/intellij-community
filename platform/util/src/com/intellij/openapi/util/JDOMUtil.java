@@ -270,6 +270,7 @@ public class JDOMUtil {
    * <p>
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
+  @Deprecated
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     return loadDocumentUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
@@ -303,6 +304,7 @@ public class JDOMUtil {
    *
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public static Document loadDocument(@NotNull URL url) throws JDOMException, IOException {

@@ -38,7 +38,11 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     object : Runnable {
       override fun run() {
         if (isCompleted) {
-          getCompleted()
+          try {
+            getCompleted()
+          }
+          catch (ignored: CancellationException) {
+          }
         }
         else {
           if (countDown-- <= 0) fail("Too many EDT reschedules")
@@ -50,7 +54,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   fun `test coroutine onUiThread`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
-    async((executor as AppUIExecutorEx).createJobContext()) {
+    GlobalScope.async(executor.coroutineDispatchingContext()) {
       ApplicationManager.getApplication().assertIsDispatchThread()
     }.joinNonBlocking()
   }
@@ -64,10 +68,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
       .expireWith(disposable)
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       queue.add("start")
 
-      launch((executor as AppUIExecutorEx).createJobContext(coroutineContext)) {
+      launch(executor.coroutineDispatchingContext()) {
         ApplicationManager.getApplication().assertIsDispatchThread()
 
         queue.add("coroutine start")
@@ -92,7 +96,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "coroutine start",
                           "disposed",
                           "coroutine before yield",
-                          "coroutine yield caught JobCancellationException because of DisposedException",
+                          "coroutine yield caught DisposedException because of null",
                           "end")
     }.joinNonBlocking()
   }
@@ -111,10 +115,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       .inTransaction(getProject())
       .inWriteAction()
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       val pdm = PsiDocumentManager.getInstance(getProject())
       val commitChannel = Channel<Unit>()
-      val job = launch((executor as AppUIExecutorEx).createJobContext(coroutineContext)) {
+      val job = launch(executor.coroutineDispatchingContext()) {
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
 
@@ -135,7 +139,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         commitChannel.close()
       }
-      launch((transactionExecutor as AppUIExecutorEx).createJobContext(coroutineContext, job)) {
+      launch(transactionExecutor.coroutineDispatchingContext() + job) {
         while (true) {
           pdm.commitAllDocuments()
           commitChannel.send(Unit)
@@ -149,7 +153,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
   fun `test custom simple constraints`() {
     var scheduled = false
 
-    val executor = (AppUIExecutor.onUiThread() as AppUIExecutorEx)
+    val executor = AppUIExecutor.onUiThread()
       .withConstraint(object : AsyncExecution.SimpleContextConstraint {
 
         override val isCorrectContext: Boolean
@@ -164,7 +168,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test"
       })
 
-    async(executor.createJobContext()) {
+    GlobalScope.async(executor.coroutineDispatchingContext()) {
       assertTrue(scheduled)
       yield()
       assertTrue(scheduled)
@@ -180,7 +184,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       queue.add("disposable.dispose()")
     }.also { Disposer.register(testRootDisposable, it) }
 
-    val executor = (AppUIExecutor.onUiThread() as AppUIExecutorEx)
+    val executor = AppUIExecutor.onUiThread()
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
         override val expirable = disposable
 
@@ -202,8 +206,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     queue.add("start")
 
-    async(SwingDispatcher) {
-      launch(executor.createJobContext()) {
+    GlobalScope.async(SwingDispatcher) {
+      launch(executor.coroutineDispatchingContext()) {
         queue.add("coroutine start")
         assertTrue(scheduled)
         yield()
@@ -229,7 +233,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "disposing",
                           "disposable.dispose()",
                           "before yield disposed",
-                          "coroutine yield caught JobCancellationException because of DisposedException",
+                          "coroutine yield caught DisposedException because of null",
                           "end")
     }.joinNonBlocking()
   }
@@ -251,7 +255,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.also { Disposer.register(testRootDisposable, it) }
 
     val uiExecutor = AppUIExecutor.onUiThread()
-    val executor = (uiExecutor as AppUIExecutorEx)
+    val executor = uiExecutor
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
         override val expirable = disposable
 
@@ -271,11 +275,11 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test"
       })
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       queue.add("start")
 
       val channel = Channel<Unit>()
-      val job = launch(executor.createJobContext(coroutineContext)) {
+      val job = launch(executor.coroutineDispatchingContext()) {
         queue.add("coroutine start")
         assertTrue(scheduled)
         channel.receive()
@@ -294,7 +298,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         channel.close()
       }
-      launch(uiExecutor.createJobContext(coroutineContext, parent = job)) {
+      launch(uiExecutor.coroutineDispatchingContext() + job) {
         try {
           while (true) {
             if (shouldDisposeBeforeSend) {
@@ -317,8 +321,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "before yield",
                           "disposing",
                           "disposable.beforeTreeDispose()",
-                          "coroutine yield caught JobCancellationException because of DisposedException",
                           "disposable.dispose()",
+                          "coroutine yield caught DisposedException because of null",
                           "end")
     }.joinNonBlocking()
   }
@@ -347,7 +351,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.also { Disposer.register(testRootDisposable, it) }
 
     val uiExecutor = AppUIExecutor.onUiThread()
-    val executor = (uiExecutor as AppUIExecutorEx)
+    val executor = uiExecutor
       .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
         override val expirable = disposable
 
@@ -383,11 +387,11 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test inner"
       })
 
-    async(SwingDispatcher) {
+    GlobalScope.async(SwingDispatcher) {
       emit("start")
 
       val channel = Channel<Unit>()
-      val job = launch(executor.createJobContext(coroutineContext)) {
+      val job = launch(executor.coroutineDispatchingContext()) {
         emit("coroutine start")
         assertTrue(outerScheduled)
         channel.receive()
@@ -408,7 +412,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         channel.close()
       }
-      launch(uiExecutor.createJobContext(coroutineContext, parent = job)) {
+      launch(uiExecutor.coroutineDispatchingContext() + job) {
         try {
           while (true) {
             channel.send(Unit)
@@ -430,7 +434,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "disposable.dispose()",
                           "refuse to run already disposed",
                           "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
-                          "[context: !outer + inner] coroutine yield caught JobCancellationException because of DisposedException",
+                          "[context: !outer + inner] coroutine yield caught DisposedException because of null",
                           "[context: !outer + !inner] end")
     }.joinNonBlocking()
   }

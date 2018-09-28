@@ -25,6 +25,7 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -42,15 +43,25 @@ public class VisiblePack implements VcsLogDataPack {
   @NotNull private final VisibleGraph<Integer> myVisibleGraph;
   private final boolean myCanRequestMore;
   @NotNull private final VcsLogFilterCollection myFilters;
+  @Nullable private final Object myAdditionalData;
 
   public VisiblePack(@NotNull DataPackBase dataPack,
                      @NotNull VisibleGraph<Integer> graph,
                      boolean canRequestMore,
                      @NotNull VcsLogFilterCollection filters) {
+    this(dataPack, graph, canRequestMore, filters, null);
+  }
+
+  public VisiblePack(@NotNull DataPackBase dataPack,
+                     @NotNull VisibleGraph<Integer> graph,
+                     boolean canRequestMore,
+                     @NotNull VcsLogFilterCollection filters,
+                     @Nullable Object data) {
     myDataPack = dataPack;
     myVisibleGraph = graph;
     myCanRequestMore = canRequestMore;
     myFilters = filters;
+    myAdditionalData = data;
   }
 
   @NotNull
@@ -97,6 +108,10 @@ public class VisiblePack implements VcsLogDataPack {
   public VirtualFile getRoot(int row) {
     int head = myVisibleGraph.getRowInfo(row).getOneOfHeads();
     return myDataPack.getRefsModel().rootAtHead(head);
+  }
+
+  public <T> T getAdditionalData() {
+    return (T)myAdditionalData;
   }
 
   @Override

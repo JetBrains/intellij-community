@@ -35,7 +35,7 @@ public class UnreferencedFilter extends RefUnreachableFilter {
     if (!(refElement instanceof RefMethod || refElement instanceof RefClass || refElement instanceof RefField)) return 0;
     if (!((GlobalInspectionContextBase)myContext).isToCheckMember(refElement, myTool)) return 0;
 
-    if (refElement instanceof RefField) {
+    if (refElement instanceof RefField && !isExternallyReferenced(refElement)) {
       RefField refField = (RefField) refElement;
       if (refField.isUsedForReading() && !refField.isUsedForWriting()) return 1;
       if (refField.isUsedForWriting() && !refField.isUsedForReading()) return 1;
@@ -43,5 +43,9 @@ public class UnreferencedFilter extends RefUnreachableFilter {
 
     if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) return 0;
     return -1;
+  }
+
+  protected static boolean isExternallyReferenced(RefElement element) {
+    return element.getInReferences().stream().anyMatch(reference -> reference instanceof RefFile);
   }
 }

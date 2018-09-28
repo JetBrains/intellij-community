@@ -156,6 +156,7 @@
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <separator/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowDiffPreview"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
       <separator/>
@@ -195,6 +196,9 @@
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowDiffPreview"/>
+      <reference id="Vcs.FileHistory.ContextMenu"/>
+      <reference id="Vcs.FileHistory.Toolbar"/>
       <reference id="VcsHistoryActionsGroup"/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
 

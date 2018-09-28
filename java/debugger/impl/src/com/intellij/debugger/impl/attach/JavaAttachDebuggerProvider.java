@@ -3,6 +3,7 @@ package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.RemoteStateState;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -172,7 +173,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           if (param.startsWith("address")) {
             try {
               address = param.split("=")[1];
-              return new DebuggerLocalAttachInfo(socket, address, null, pid);
+              return new DebuggerLocalAttachInfo(socket, address, null, pid, false);
             }
             catch (Exception e) {
               LOG.error(e);
@@ -222,14 +223,23 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       String command = agentProperties.getProperty("sun.java.command");
       if (!StringUtil.isEmpty(command)) {
         command = StringUtil.replace(command, AppMainV2.class.getName(), "").trim();
-        command = StringUtil.substringBefore(command, " ");
+        command = StringUtil.notNullize(StringUtil.substringBefore(command, " "), command);
       }
       String property = agentProperties.getProperty("sun.jdwp.listenerAddress");
       if (property != null && property.indexOf(':') != -1) {
+        boolean autoAddress = false;
+        String args = agentProperties.getProperty("sun.jvm.args");
+        if (!StringUtil.isEmpty(args)) {
+          for (String arg : args.split(" ")) {
+            if (arg.startsWith("-agentlib:jdwp")) {
+              autoAddress = !arg.contains("address=");
+              break;
+            }
+          }
+        }
         return new DebuggerLocalAttachInfo(!"dt_shmem".equals(StringUtil.substringBefore(property, ":")),
                                            StringUtil.substringAfter(property, ":"),
-                                           command,
-                                           pid);
+                                           command, pid, autoAddress);
       }
 
       //do not allow further for idea process
@@ -267,18 +277,27 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   private static class DebuggerLocalAttachInfo extends LocalAttachInfo {
-    final boolean myUseSocket;
-    final String myAddress;
+    private final boolean myUseSocket;
+    private final String myAddress;
+    private final boolean myAutoAddress;
 
-    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
+    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid, boolean autoAddress) {
       super(aClass, pid);
       myUseSocket = socket;
       myAddress = address;
+      myAutoAddress = autoAddress;
     }
 
     @Override
     RemoteConnection createConnection() {
-      return new PidRemoteConnection(myPid);
+      return myAutoAddress
+             ? new PidRemoteConnection(myPid)
+             : new PidRemoteConnection(myPid, myUseSocket, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, myAddress, false);
+    }
+
+    @Override
+    String getSessionName() {
+      return myAutoAddress ? super.getSessionName() : "localhost:" + myAddress;
     }
 
     @Override

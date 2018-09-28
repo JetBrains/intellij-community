@@ -6,10 +6,10 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection;
 import com.intellij.util.containers.OrderedSet;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection;
 
 import java.util.Collections;
 
@@ -34,7 +34,7 @@ public class TypeMayBeWeakenedFixTest extends IGQuickFixesTestCase {
     inspection.myStopClassSet = new OrderedSet<>(Collections.singletonList("com.siyeh.igfixes.abstraction.type_may_be_weakened.Stop"));
     myFixture.enableInspections(inspection);
     myRelativePath = "abstraction/type_may_be_weakened";
-    Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    ImplicitUsageProvider.EP_NAME.getExtensionList();
     Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -134,15 +135,13 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
       else if ("||".equals(signText)) {
         signText = "|";
       }
-      m_name = InspectionGadgetsBundle.message(
-        "assignment.replaceable.with.operator.replace.quickfix",
-        signText);
+      m_name = CommonQuickFixBundle.message("fix.replace.x.with.y", "=", signText+"=");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override

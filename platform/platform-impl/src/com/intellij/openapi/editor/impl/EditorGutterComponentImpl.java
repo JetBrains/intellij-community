@@ -72,8 +72,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -140,8 +140,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
-  private boolean myForceLeftFreePaintersAreaShown;
-  private boolean myForceRightFreePaintersAreaShown;
+  boolean myForceLeftFreePaintersAreaShown;
+  boolean myForceRightFreePaintersAreaShown;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
 
@@ -545,6 +545,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
               g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+            } else {
+              g.setColor(color);
+            }
+
+            //todo[kb] move to editor scheme when have colors for Default and Darcula
+            if (Registry.is("editor.highlight.current.line.number") && myEditor.getCaretModel().getLogicalPosition().line == logLine) {
+              g.setColor(Registry.getColor("editor.highlight.current.line.color", color));
             }
 
             String s = String.valueOf(logLine + 1);
@@ -1054,6 +1061,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myProviderToListener.put(provider, action);
     myTextAnnotationGutterSizes.add(0);
     updateSize();
+  }
+
+  @NotNull
+  @Override
+  public List<TextAnnotationGutterProvider> getTextAnnotations() {
+    return new ArrayList<>(myTextAnnotationGutters);
   }
 
   private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
@@ -1955,7 +1968,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @NotNull
-  private static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
+  static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
     if (renderer instanceof LineMarkerRendererEx) {
       return ((LineMarkerRendererEx)renderer).getPosition();
     }

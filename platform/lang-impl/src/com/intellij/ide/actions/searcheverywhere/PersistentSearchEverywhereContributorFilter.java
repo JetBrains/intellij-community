@@ -2,12 +2,12 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.util.gotoByName.ChooseByNameFilterConfiguration;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class PersistentSearchEverywhereContributorFilter<T> implements SearchEverywhereContributorFilter<T> {
 
@@ -33,9 +33,7 @@ public class PersistentSearchEverywhereContributorFilter<T> implements SearchEve
 
   @Override
   public List<T> getSelectedElements() {
-    return myElements.stream()
-      .filter(myPersistentConfiguration::isFileTypeVisible)
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(myElements, myPersistentConfiguration::isFileTypeVisible);
   }
 
   @Override

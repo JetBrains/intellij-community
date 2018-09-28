@@ -16,14 +16,16 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
 
 public interface VcsIndexableDetails extends VcsFullCommitDetails {
   @NotNull
-  Collection<String> getModifiedPaths(int parent);
+  Map<String, Change.Type> getModifiedPaths(int parent);
 
   @NotNull
   Collection<Couple<String>> getRenamedPaths(int parent);

@@ -7,7 +7,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -145,8 +144,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   public static <T extends RuntimeConfigurationProducer> T getInstance(final Class<T> aClass) {
-    final RuntimeConfigurationProducer[] configurationProducers = Extensions.getExtensions(RUNTIME_CONFIGURATION_PRODUCER);
-    for (RuntimeConfigurationProducer configurationProducer : configurationProducers) {
+    for (RuntimeConfigurationProducer configurationProducer : RUNTIME_CONFIGURATION_PRODUCER.getExtensionList()) {
       if (configurationProducer.getClass() == aClass) {
         //noinspection unchecked
         return (T) configurationProducer;

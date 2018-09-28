@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -43,7 +42,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -425,7 +424,7 @@ public final class NavigationUtil {
           final SeparatorWithText sep = new SeparatorWithText() {
             @Override
             protected void paintComponent(Graphics g) {
-              g.setColor(new JBColor(Color.WHITE, UIUtil.getSeparatorColor()));
+              g.setColor(new JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
               g.fillRect(0,0,getWidth(), getHeight());
               super.paintComponent(g);
             }
@@ -476,7 +475,7 @@ public final class NavigationUtil {
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = ContainerUtil.newLinkedHashSet();
-    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
+    for (GotoRelatedProvider provider : GotoRelatedProvider.EP_NAME.getExtensionList()) {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
         items.addAll(provider.getItems(dataContext));
