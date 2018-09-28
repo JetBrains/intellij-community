@@ -18,6 +18,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -56,6 +57,7 @@ public class ClassesProcessor implements CodeConstants {
     Map<String, String> mapNewSimpleNames = new HashMap<>();
 
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
+    boolean verifyAnonymousClasses = DecompilerContext.getOption(IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES);
 
     // create class nodes
     for (StructClass cl : context.getClasses().values()) {
@@ -171,27 +173,22 @@ public class ClassesProcessor implements CodeConstants {
                 nestedNode.type = rec.type;
                 nestedNode.access = rec.accessFlags;
 
+                // sanity checks of the class supposed to be anonymous
+                if (verifyAnonymousClasses && nestedNode.type == ClassNode.CLASS_ANONYMOUS && !isAnonymous(nestedNode.classStruct, scl)) {
+                  nestedNode.type = ClassNode.CLASS_LOCAL;
+                }
+
                 if (nestedNode.type == ClassNode.CLASS_ANONYMOUS) {
                   StructClass cl = nestedNode.classStruct;
+                  // remove static if anonymous class (a common compiler bug)
+                  nestedNode.access &= ~CodeConstants.ACC_STATIC;
 
                   int[] interfaces = cl.getInterfaces();
-
-                  // sanity checks of the class supposed to be anonymous
-                  boolean isAnonymousChecked = checkClassAnonymous(cl, scl);
-                  
-                  if(isAnonymousChecked) {
-                    // remove static if anonymous class (a common compiler bug)
-                    nestedNode.access &= ~CodeConstants.ACC_STATIC;
-                    
-                    if (interfaces.length > 0) {
-                      nestedNode.anonymousClassType = new VarType(cl.getInterface(0), true);
-                    }
-                    else {
-                      nestedNode.anonymousClassType = new VarType(cl.superClass.getString(), true);
-                    }
-                  } else { // change it to a local class
-                    nestedNode.type = ClassNode.CLASS_LOCAL;
-                    nestedNode.access &= (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_FINAL);
+                  if (interfaces.length > 0) {
+                    nestedNode.anonymousClassType = new VarType(cl.getInterface(0), true);
+                  }
+                  else {
+                    nestedNode.anonymousClassType = new VarType(cl.superClass.getString(), true);
                   }
                 }
                 else if (nestedNode.type == ClassNode.CLASS_LOCAL) {
@@ -212,85 +209,90 @@ public class ClassesProcessor implements CodeConstants {
       }
     }
   }
-  
-  private boolean checkClassAnonymous(StructClass cl, StructClass enclosing_cl) {
-    
-    int[] interfaces = cl.getInterfaces();
-    boolean hasNonTrivialSuperClass = cl.superClass != null && !VarType.VARTYPE_OBJECT.equals(new VarType(cl.superClass.getString(), true));
-    
+
+  private static boolean isAnonymous(StructClass cl, StructClass enclosingCl) {
     // checking super class and interfaces
-    if(interfaces.length > 0) { 
-      if(hasNonTrivialSuperClass || interfaces.length > 1) { // can't have multiple 'sources'
-        String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName+"'. Multiple interfaces and/or super class defined.";
+    int[] interfaces = cl.getInterfaces();
+    if (interfaces.length > 0) {
+      boolean hasNonTrivialSuperClass = cl.superClass != null && !VarType.VARTYPE_OBJECT.equals(new VarType(cl.superClass.getString(), true));
+      if (hasNonTrivialSuperClass || interfaces.length > 1) { // can't have multiple 'sources'
+        String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName + "'. Multiple interfaces and/or super class defined.";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         return false;
       }
-    } else if(cl.superClass == null) { // neither interface nor super class defined
-      String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName+"'. Neither interface nor super class defined.";
+    }
+    else if (cl.superClass == null) { // neither interface nor super class defined
+      String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName + "'. Neither interface nor super class defined.";
       DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
       return false;
     }
-    
+
     // FIXME: check constructors
     // FIXME: check enclosing class/method
-    
-    ConstantPool pool = enclosing_cl.getPool();
-    
-    int ref_counter = 0;
-    boolean ref_not_new = false;
-    
-    // checking references in the enclosing class (TODO: limit to the enclosing method?)
-    for (StructMethod mt : enclosing_cl.getMethods()) {
+
+    ConstantPool pool = enclosingCl.getPool();
+
+    int refCounter = 0;
+    boolean refNotNew = false;
+
+    StructEnclosingMethodAttribute attribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
+    String enclosingMethod = attribute != null ? attribute.getMethodName() : null;
+
+    // checking references in the enclosing class
+    for (StructMethod mt : enclosingCl.getMethods()) {
+      if (enclosingMethod != null && !enclosingMethod.equals(mt.getName())) {
+        continue;
+      }
+
       try {
         mt.expandData();
+
         InstructionSequence seq = mt.getInstructionSequence();
-  
-        if(seq != null) {
-          
+        if (seq != null) {
           int len = seq.length();
           for (int i = 0; i < len; i++) {
             Instruction instr = seq.getInstr(i);
-  
-            switch(instr.opcode) {
-            case opc_checkcast:
-            case opc_instanceof:
-              if(cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
-                ref_counter++;
-                ref_not_new = true;
-              }
-              break;
-            case opc_new:
-            case opc_anewarray:
-            case opc_multianewarray:
-              if(cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
-                ref_counter++;
-              }
-              break;
-            case opc_getstatic:
-            case opc_putstatic:
-              if(cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
-                ref_counter++;
-                ref_not_new = true;
-              }
+            switch (instr.opcode) {
+              case opc_checkcast:
+              case opc_instanceof:
+                if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
+                  refCounter++;
+                  refNotNew = true;
+                }
+                break;
+              case opc_new:
+              case opc_anewarray:
+              case opc_multianewarray:
+                if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
+                  refCounter++;
+                }
+                break;
+              case opc_getstatic:
+              case opc_putstatic:
+                if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
+                  refCounter++;
+                  refNotNew = true;
+                }
             }
           }
         }
 
         mt.releaseResources();
-      } catch(IOException ex) {
-        String message = "Could not read method while checking anonymous class definition: '"+enclosing_cl.qualifiedName+"', '"+
-                         InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor())+"'";
+      }
+      catch (IOException ex) {
+        String message = "Could not read method while checking anonymous class definition: '" + enclosingCl.qualifiedName + "', '" +
+                         InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()) + "'";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         return false;
       }
-      
-      if(ref_counter > 1 || ref_not_new) {
-        String message = "Inconsistent references to the class '"+cl.qualifiedName+"' which is supposed to be anonymous";
+
+      if (refCounter > 1 || refNotNew) {
+        String message = "Inconsistent references to the class '" + cl.qualifiedName + "' which is supposed to be anonymous";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         return false;
       }
     }
-    
+
     return true;
   }
 
