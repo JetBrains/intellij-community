@@ -4,14 +4,18 @@ package com.intellij.json.editor;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.json.JsonDialectUtil;
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +25,7 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof JsonFile) {
       processPairedBracesComma(c, editor, file);
+      addWhiteSpaceAfterColonIfNeeded(c, editor, file);
     }
     return Result.CONTINUE;
   }
@@ -36,6 +41,26 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
       addPropertyNameQuotesIfNeeded(c, editor, file);
     }
     return Result.CONTINUE;
+  }
+
+  private static void addWhiteSpaceAfterColonIfNeeded(char c,
+                                                      @NotNull Editor editor,
+                                                      @NotNull PsiFile file) {
+    if (c != ':' || !JsonEditorOptions.getInstance().AUTO_WHITESPACE_AFTER_COLON) return;
+    int offset = editor.getCaretModel().getOffset();
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    PsiElement element = PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(offset));
+    if (!(element instanceof JsonProperty)) return;
+    final ASTNode[] children = element.getNode().getChildren(TokenSet.create(JsonElementTypes.COLON));
+    if (children.length == 0) return;
+    final ASTNode colon = children[0];
+    final ASTNode next = colon.getTreeNext();
+    final String text = next.getText();
+    if (text.length() == 0 || !StringUtil.isEmptyOrSpaces(text)) {
+      final int insOffset = colon.getStartOffset() + 1;
+      editor.getDocument().insertString(insOffset, " ");
+      editor.getCaretModel().moveToOffset(insOffset + 1);
+    }
   }
 
   private static void addPropertyNameQuotesIfNeeded(char c,
