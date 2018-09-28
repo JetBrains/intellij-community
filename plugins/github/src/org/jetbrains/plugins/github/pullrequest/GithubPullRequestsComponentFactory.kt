@@ -13,8 +13,8 @@ import com.intellij.ui.components.panels.Wrapper
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -24,13 +24,11 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.GithubUrlUtil
 import javax.swing.JComponent
 
 
 class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val progressManager: ProgressManager,
-                                         private val requestExecutorManager: GithubApiRequestExecutorManager,
                                          private val git: Git,
                                          private val uiSettings: GithubPullRequestsUISettings,
                                          private val avatarLoader: CachingGithubUserAvatarLoader,
@@ -38,12 +36,13 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val actionManager: ActionManager,
                                          private val autoPopupController: AutoPopupController) {
 
-  fun createComponent(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount): JComponent? {
+  fun createComponent(requestExecutor: GithubApiRequestExecutor,
+                      repository: GitRepository, remote: GitRemote,
+                      repoDetails: GithubRepoDetailed,
+                      account: GithubAccount): JComponent? {
 
-    val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return null
-    val repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!
     val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor,
-                                              account.server, repoPath)
+                                              account.server, repoDetails.fullPath)
     val selectionModel = GithubPullRequestsListSelectionModel()
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
                                                selectionModel, listLoader,
@@ -64,8 +63,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
 
     // disposed by content manager when tab is closed
     val wrapper = WrappingComponent(splitter,
-                                    repository, remote, repoPath, account,
-                                    list, selectionModel, dataLoader)
+                                    repository, remote, repoDetails, account,
+                                    list,selectionModel, dataLoader)
     Disposer.register(wrapper, Disposable {
       Disposer.dispose(list)
       Disposer.dispose(preview)
@@ -81,7 +80,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     private class WrappingComponent(wrapped: JComponent,
                                     private val repository: GitRepository,
                                     private val remote: GitRemote,
-                                    private val repoPath: GithubFullPath,
+                                    private val repoDetails: GithubRepoDetailed,
                                     private val account: GithubAccount,
                                     private val list: GithubPullRequestsListComponent,
                                     private val selectionModel: GithubPullRequestsListSelectionModel,
@@ -95,7 +94,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
         return when {
           GithubPullRequestKeys.REPOSITORY.`is`(dataId) -> repository
           GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
-          GithubPullRequestKeys.FULL_PATH.`is`(dataId) -> repoPath
+          GithubPullRequestKeys.REPO_DETAILS.`is`(dataId) -> repoDetails
           GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
           GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
           GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> selectionModel.current?.let(dataLoader::getDataProvider)
