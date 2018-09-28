@@ -132,7 +132,7 @@ public class JarRepositoryManager {
                                                             EnumSet<ArtifactKind> kinds,
                                                             boolean includeTransitiveDependencies,
                                                             String copyTo,
-                                                            List<RemoteRepositoryDescription> repositories) {
+                                                            Collection<RemoteRepositoryDescription> repositories) {
     RepositoryLibraryProperties props = new RepositoryLibraryProperties(coord, includeTransitiveDependencies);
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
     final Collection<OrderRoot> roots = ContainerUtil.newArrayList();
@@ -155,16 +155,8 @@ public class JarRepositoryManager {
                                                             boolean includeTransitiveDependencies,
                                                             String copyTo,
                                                             Collection<RemoteRepositoryDescription> repositories) {
-    RepositoryLibraryProperties props = new RepositoryLibraryProperties(coord, includeTransitiveDependencies);
-    final Collection<OrderRoot> roots = loadDependenciesModal(
-      project, props, attachSources, attachJavaDoc, copyTo, repositories
-    );
-
-    if (roots != null && !roots.isEmpty()) {
-      notifyArtifactsDownloaded(project, roots);
-      return createNewLibraryConfiguration(props, roots);
-    }
-    return null;
+    return resolveAndDownload(project, coord, kindsOf(attachSources, attachJavaDoc),
+                              includeTransitiveDependencies, copyTo, repositories);
   }
 
   @NotNull
