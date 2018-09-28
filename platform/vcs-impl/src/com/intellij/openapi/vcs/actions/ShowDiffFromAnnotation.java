@@ -24,6 +24,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,6 +67,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   ShowDiffFromAnnotation(@NotNull Project project,
                          @NotNull FileAnnotation fileAnnotation) {
     ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    setShortcutSet(CustomShortcutSet.EMPTY);
     myProject = project;
     myFileAnnotation = fileAnnotation;
     myChangesProvider = fileAnnotation.getRevisionsChangesProvider();
