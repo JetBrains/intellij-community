@@ -11,6 +11,7 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.RepositoriesModel
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.util.*
 
 
 class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
@@ -29,8 +30,8 @@ class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
     super.populateModuleExtraModels(gradleModule, ideModule)
   }
 
-  override fun getExtraProjectModelClasses(): MutableSet<Class<*>> {
-    return mutableSetOf(RepositoriesModel::class.java)
+  override fun getExtraProjectModelClasses(): Set<Class<*>> {
+    return Collections.singleton(RepositoriesModel::class.java)
   }
 
   private fun addRepositoriesToProject(ideProject: DataNode<ProjectData>,
@@ -42,9 +43,9 @@ class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
         .toSet()
 
       repositories.all.asSequence()
-        .map { it -> MavenRepositoryData(GradleConstants.SYSTEM_ID, it.name, it.url) }
-        .filter { it -> !knownRepositories.contains(it) }
-        .forEach { it -> ideProject.addChild(DataNode(MavenRepositoryData.KEY, it, ideProject)) }
+        .map { MavenRepositoryData(GradleConstants.SYSTEM_ID, it.name, it.url) }
+        .filter { !knownRepositories.contains(it) }
+        .forEach { ideProject.addChild(DataNode(MavenRepositoryData.KEY, it, ideProject)) }
     }
   }
 }

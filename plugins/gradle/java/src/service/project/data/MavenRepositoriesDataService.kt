@@ -21,14 +21,11 @@ class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryDa
 
     val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 
-    val repositories = hashSetOf<RemoteRepositoryDescription>().apply {
+    val repositories = linkedSetOf<RemoteRepositoryDescription>().apply {
       addAll(repositoriesConfiguration.repositories)
     }
 
-    imported
-      .map { it.data }
-      .map { RemoteRepositoryDescription(it.name, it.name, it.url) }
-      .forEach { repositories.add(it) }
+    imported.mapTo(repositories) { RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url) }
 
     repositoriesConfiguration.repositories = repositories.toList()
 
