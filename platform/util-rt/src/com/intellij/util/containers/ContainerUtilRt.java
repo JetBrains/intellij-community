@@ -453,15 +453,16 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated use simply collection.toArray(array)
+   * @deprecated use {@link List#toArray(Object[])} instead
    */
+  @Deprecated
   @NotNull
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     return collection.toArray(array);
   }
 
   /**
-   * @deprecated use simply c.toArray(sample)
+   * @deprecated use {@link Collection#toArray(Object[])} instead
    */
   @Deprecated
   @NotNull

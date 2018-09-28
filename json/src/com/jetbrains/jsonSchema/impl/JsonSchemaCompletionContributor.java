@@ -639,7 +639,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    if (!walker.invokeEnterBeforeObjectAndArray()) {
+    if (!walker.invokeEnterBeforeObjectAndArray() && !stringToInsert.equals(": ")) {
       formatInsertedString(context, stringToInsert.length());
     }
 

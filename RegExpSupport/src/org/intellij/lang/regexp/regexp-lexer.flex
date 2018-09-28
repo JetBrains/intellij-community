@@ -44,6 +44,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowMysqlBracketExpressions;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
+    private boolean whitespaceInClass;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -75,6 +76,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       }
       this.allowExtendedUnicodeCharacter = capabilities.contains(EXTENDED_UNICODE_CHARACTER);
       this.allowOneHexCharEscape = capabilities.contains(ONE_HEX_CHAR_ESCAPE);
+      this.whitespaceInClass = capabilities.contains(WHITESPACE_IN_CLASS);
     }
 
     private void yypushstate(int state) {
@@ -253,7 +255,6 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE}  "N"                  { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER; }
 {ESCAPE}  {TRANSFORMATION}     { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
-{ESCAPE}  [\n\b\t\r\f ]        { return commentMode ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
 <CLASS2> {
   {ESCAPE}  {RBRACKET}        { return RegExpTT.ESC_CHARACTER; }
@@ -261,18 +262,14 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <YYINITIAL> {
+  {ESCAPE}  [\n\b\t\r\f ]        { return commentMode ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  "k<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
   {ESCAPE}  "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
   {ESCAPE}  "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
   {ESCAPE}  "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL; }
   {ESCAPE}  "R"                  { return RegExpTT.CHAR_CLASS; }
-  {ESCAPE}  {BOUNDARY}          { return RegExpTT.BOUNDARY; }
+  {ESCAPE}  {BOUNDARY}           { return RegExpTT.BOUNDARY; }
 }
-
-{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
-{ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
-
-{ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <PROP> {
   {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
@@ -332,7 +329,7 @@ HEX_CHAR=[0-9a-fA-F]
   {LBRACKET} / [.=]          { yybegin(CLASS2); if (allowMysqlBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
   {LBRACKET} / "^"           { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
   {LBRACKET}                 { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
-  [\n\b\t\r\f ]              { if (commentMode) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2); }
+  [\n\b\t\r\f ]              { if (commentMode && whitespaceInClass) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2); }
   {ANY}                      { yypushback(1); yybegin(CLASS2); }
 }
 
@@ -357,10 +354,16 @@ HEX_CHAR=[0-9a-fA-F]
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   "-"                   { return RegExpTT.MINUS; }
-  " "                   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
-  [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
-  {ANY}                 { return RegExpTT.CHARACTER; }
+  " "                   { return (commentMode && whitespaceInClass) ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
+  [\n\b\t\r\f]          { return (commentMode && whitespaceInClass) ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
+  "#"                   { if (commentMode && whitespaceInClass) yypushstate(COMMENT); else return RegExpTT.CHARACTER; }
+  "^"                   { return RegExpTT.CHARACTER; }
+  {ESCAPE}[\n\b\t\r\f ] { return (commentMode && whitespaceInClass) ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 }
+
+{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <BRACKET_EXPRESSION> {
   "^"                                     { return RegExpTT.CARET; }
@@ -455,9 +458,9 @@ HEX_CHAR=[0-9a-fA-F]
 <YYINITIAL> {RBRACKET}    { return allowDanglingMetacharacters == Boolean.FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER; }
 
 
-"#"           { if (commentMode) { yypushstate(COMMENT); return RegExpTT.COMMENT; } else return RegExpTT.CHARACTER; }
+"#"           { if (commentMode) { yypushstate(COMMENT); } else return RegExpTT.CHARACTER; }
 <COMMENT> {
-  [^\r\n]*[\r\n]?  { yypopstate(); return RegExpTT.COMMENT; }
+  [^\r\n]*  { yypopstate(); return RegExpTT.COMMENT; }
 }
 
 " "            { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }

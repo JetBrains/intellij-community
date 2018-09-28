@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.Pair.pair;
 
 /**
- * NB: external annotations are not considered.
+ * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
  *
  * @since 2016.3
  */
@@ -80,7 +80,8 @@ public class MetaAnnotationUtil {
   }
 
   public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
+        null) {
       return Collections.emptySet();
     }
 
@@ -128,7 +129,8 @@ public class MetaAnnotationUtil {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScope.allScope(project);
       Set<VirtualFile> allAnnotationFiles = new HashSet<>();
-      for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope)) {
+      for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
+        .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope)) {
         DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
           ProgressManager.checkCanceled();
           ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
@@ -221,7 +223,8 @@ public class MetaAnnotationUtil {
   }
 
   @NotNull
-  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
+  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull Collection<String> annotations) {
     Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
 
     Stream<PsiClass> lazyResolvedAnnotations =

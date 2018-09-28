@@ -65,8 +65,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         assert length > 0;
 
         boolean escaped = false;
-        for (int idx = 0; idx < length; idx++) {
-            final char ch = s.charAt(idx);
+        int idx = 0;
+        while (idx < length) {
+            final int ch = s.codePointAt(idx);
             if (!escaped) {
                 if (ch == '\\') {
                     escaped = true;
@@ -133,6 +134,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                         return ch;
                 }
             }
+            idx = Character.charCount(ch);
         }
 
         return -1;

@@ -45,7 +45,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSmallIconUrl();
 
-  public abstract String getBigIconUrl();
+  @Nullable
+  public abstract String getApplicationSvgIconUrl();
 
   @Nullable
   public abstract File getSvgIconFile();

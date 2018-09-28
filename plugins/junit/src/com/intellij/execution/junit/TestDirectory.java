@@ -44,6 +44,7 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -166,7 +167,8 @@ class TestDirectory extends TestPackage {
             LOG.assertTrue(rootPaths != null);
             JUnitStarter
               .printClassesList(Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "",
-                                classes.isEmpty() ? packageName + "\\..*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"),
+                                classes.isEmpty() ? (packageName.isEmpty() ? ".*" : packageName + "\\..*") 
+                                                  : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"),
                                 myTempFile);
           }
           catch (IOException e) {
@@ -179,6 +181,7 @@ class TestDirectory extends TestPackage {
     return super.createSearchingForTestsTask();
   }
 
+  @NotNull
   @Override
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     return "";

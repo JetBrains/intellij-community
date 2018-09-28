@@ -37,6 +37,7 @@ public class ColorIconCache {
   /**
    * @deprecated use com.intellij.util.ui.ColorIcon instead
    */
+  @Deprecated
   public static class ColorIcon extends EmptyIcon {
     private Color myColor;
     private Color[] myColours;

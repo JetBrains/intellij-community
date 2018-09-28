@@ -33,12 +33,14 @@ private fun listGitTree(
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
-  try {
+  if (BUILD_SERVER == null) try {
     listOf(GIT, "pull", "--rebase").execute(repo)
   }
   catch (e: Exception) {
-    listOf(GIT, "rebase", "--abort").execute(repo)
-    throw e
+    callSafely {
+      listOf(GIT, "rebase", "--abort").execute(repo)
+    }
+    log("Unable to pull changes for $repo")
   }
   return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .execute(repo).trim().lineSequence()

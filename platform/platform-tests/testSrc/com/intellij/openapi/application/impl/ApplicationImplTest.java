@@ -30,10 +30,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -560,12 +557,21 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     });
   }
 
-  private static void safeWrite(Runnable r) {
-    ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(r::run));
+  private static void safeWrite(ThrowableRunnable<RuntimeException> r) throws Throwable {
+    Ref<Throwable> e = new Ref<>();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        WriteAction.run(r);
+      }
+      catch (Throwable e1) {
+        e.set(e1);
+      }
+    });
     UIUtil.dispatchAllInvocationEvents();
+    if (e.get() != null) throw e.get();
   }
 
-  public void testSuspendWriteActionDelaysForeignReadActions() {
+  public void testSuspendWriteActionDelaysForeignReadActions() throws Throwable {
     Semaphore mayStartForeignRead = new Semaphore();
     mayStartForeignRead.down();
 
@@ -607,21 +613,25 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
-  public void testHasWriteActionWorksInOtherThreads() {
-    Class<?> actionClass = getClass();
-
+  public void testHasWriteActionWorksInOtherThreads() throws Throwable {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    assertFalse(app.hasWriteAction(actionClass));
-    safeWrite(() -> {
-      assertTrue(app.hasWriteAction(actionClass));
-      app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
+    ThrowableRunnable<RuntimeException> runnable = new ThrowableRunnable<RuntimeException>() {
+      @Override
+      public void run() throws RuntimeException {
+        Class<? extends ThrowableRunnable<RuntimeException>> actionClass = getClass();
         assertTrue(app.hasWriteAction(actionClass));
-        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
-      }));
-    });
+        app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
+          assertTrue(app.hasWriteAction(actionClass));
+          waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
+        }));
+      }
+    };
+
+    assertFalse(app.hasWriteAction(runnable.getClass()));
+    safeWrite(runnable);
   }
 
-  public void testPooledThreadsThatHappenInSuspendedWriteActionStayInSuspendedWriteAction() {
+  public void testPooledThreadsThatHappenInSuspendedWriteActionStayInSuspendedWriteAction() throws Throwable {
     LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
 
     Ref<Future> future = Ref.create();
@@ -646,7 +656,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     waitForFuture(future.get());
   }
 
-  public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() {
+  public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() throws Throwable {
     for (int i = 0; i < 1000; i++) {
       safeWrite(ApplicationImplTest::checkPooledThreadsDontGetWrongPrivileges);
     }

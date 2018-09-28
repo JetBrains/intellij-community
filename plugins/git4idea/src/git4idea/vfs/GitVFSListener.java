@@ -72,8 +72,8 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected boolean isEventIgnored(@NotNull VirtualFileEvent event, boolean putInDirty) {
-    return super.isEventIgnored(event, putInDirty) || myEventsSuppressLevel.get() != 0;
+  protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
+    return super.isEventIgnored(event) || myEventsSuppressLevel.get() != 0;
   }
 
   @NotNull

@@ -43,6 +43,7 @@ public abstract class CodeStyleSettingsProvider {
    * @deprecated use {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)} or
    * {@link LanguageCodeStyleSettingsProvider#createConfigurable(CodeStyleSettings, CodeStyleSettings)} for language settings.
    */
+  @Deprecated
   @NotNull
   public Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings modelSettings) {
     //noinspection ConstantConditions

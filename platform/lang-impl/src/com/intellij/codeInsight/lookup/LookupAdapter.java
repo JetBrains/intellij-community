@@ -3,7 +3,8 @@
 package com.intellij.codeInsight.lookup;
 
 /**
- * @deprecated Use LookupListener directly
+ * @deprecated Use {@link LookupListener} instead
  */
+@Deprecated
 public abstract class LookupAdapter implements LookupListener {
 }

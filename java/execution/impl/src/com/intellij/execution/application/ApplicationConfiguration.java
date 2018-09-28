@@ -307,8 +307,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void setState(@NotNull BaseState state) {
-    super.setState(state);
+  public void setOptionsFromConfigurationFile(@NotNull BaseState state) {
+    super.setOptionsFromConfigurationFile(state);
     syncOldStateFields();
   }
 

@@ -29,7 +29,8 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
   private static final Logger LOG = Logger.getInstance(SAJDWPRemoteConnection.class);
 
   public SAJDWPRemoteConnection(String pid) {
-    super(pid, true);
+    super(pid);
+    setServerMode(true);
     setAddress("0");
   }
 

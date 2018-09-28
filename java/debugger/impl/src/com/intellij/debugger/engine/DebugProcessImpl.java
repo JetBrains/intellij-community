@@ -452,7 +452,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof PidRemoteConnection) {
+      if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
         PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
         Connector connector = pidRemoteConnection.getConnector(this);
         String pid = pidRemoteConnection.getPid();

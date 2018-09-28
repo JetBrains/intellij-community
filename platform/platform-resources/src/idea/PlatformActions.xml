@@ -851,6 +851,7 @@
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction" text="Find Image Duplicates"/>
       <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions" text="Show Non Retina Images"/>
       <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.internal.ShowUpdateInfoDialogAction" text="Show Update Dialog"/>
+      <action id="AssertOnFileTreeLoad" internal="true" class="com.intellij.internal.AssertOnFileTreeLoadAction" text="Assert On File Tree Load"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
 

@@ -10,6 +10,7 @@
         <xs:element type="logoType" name="logo"/>
         <xs:element type="aboutType" name="about"/>
         <xs:element type="iconType" name="icon"/>
+        <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
         <xs:element type="packageType" name="package" minOccurs="0"/>
         <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
@@ -318,6 +319,15 @@
       <xs:annotation>
         <xs:documentation>
           Path to an svg file with the product icon.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="iconEapType">
+    <xs:attribute type="xs:string" name="svg" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to an svg file which contains the product icon for EAP version of the product.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

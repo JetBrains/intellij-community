@@ -8,11 +8,9 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
@@ -80,10 +78,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       if (oldJdk != null) {
         ProjectJdkTable.getInstance().removeJdk(oldJdk);
       }
-      Sdk jdk = JavaSdk.getInstance().createJdk(GRADLE_JDK_NAME, IdeaTestUtil.requireRealJdkHome(), false);
+      VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+      JavaSdk javaSdk = JavaSdk.getInstance();
+      SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
+      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
+      assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
       ProjectJdkTable.getInstance().addJdk(jdk);
-      ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
-
     });
     myProjectSettings = new GradleProjectSettings();
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
@@ -106,7 +106,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       return;
     }
     Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-    if(jdk != null) {
+    if (jdk != null) {
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
     }
 
@@ -179,12 +179,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
     config = "allprojects {\n" +
-              "  repositories {\n" +
-              "    maven {\n" +
-              "        url 'http://maven.labs.intellij.net/repo1'\n" +
-              "    }\n" +
-              "  }" +
-              "}\n" + config;
+             "  repositories {\n" +
+             "    maven {\n" +
+             "        url 'http://maven.labs.intellij.net/repo1'\n" +
+             "    }\n" +
+             "  }" +
+             "}\n" + config;
     return config;
   }
 

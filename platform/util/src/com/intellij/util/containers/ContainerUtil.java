@@ -2697,7 +2697,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated use simply collection.toArray(array)
+   * @deprecated use {@link List#toArray(Object[])} instead
    */
   @Deprecated
   @NotNull
@@ -2707,7 +2707,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated use simply c.toArray(sample)
+   * @deprecated use {@link Collection#toArray(Object[])} instead
    */
   @Deprecated
   @NotNull

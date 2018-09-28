@@ -49,6 +49,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  * @author yole
  */
 public class AppUIUtil {
+  private static final Logger LOG = Logger.getInstance(AppUIUtil.class);
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
   private static boolean ourMacDocIconSet = false;
@@ -78,11 +80,17 @@ public class AppUIUtil {
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
     if (SystemInfo.isUnix) {
-      String bigIconUrl = appInfo.getBigIconUrl();
-      if (bigIconUrl != null) {
-        Image bigIcon = ImageLoader.loadFromResource(bigIconUrl);
-        if (bigIcon != null) {
-          images.add(bigIcon);
+      String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      if (svgIconUrl != null) {
+        URL url = AppUIUtil.class.getResource(svgIconUrl);
+        try {
+          Image svgIcon = SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(window) * 128, JBUI.pixScale(window) * 128);
+          if (svgIcon != null) {
+            images.add(svgIcon);
+          }
+        }
+        catch (IOException e) {
+          LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
         }
       }
     }
