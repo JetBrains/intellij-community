@@ -28,10 +28,23 @@ import org.jetbrains.annotations.Nullable;
 public interface TypeDeclarationProvider {
   ExtensionPointName<TypeDeclarationProvider> EP_NAME = ExtensionPointName.create("com.intellij.typeDeclarationProvider");
 
+  /**
+   * Provides an array of declarations of type of given {@code symbol}.
+   *
+   * @param symbol input PSI element
+   * @return all target declarations as an array of {@code PsiElement} or null if none were found
+   */
   @Nullable
   PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol);
 
-  default String getActionText(DataContext context) {
+  /**
+   * Provides the custom action text.
+   *
+   * @param context the action data context
+   * @return the custom text or null to use the default text
+   */
+  @Nullable
+  default String getActionText(@NotNull DataContext context) {
     return null;
   }
 }
