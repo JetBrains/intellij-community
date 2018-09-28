@@ -61,6 +61,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
+  private String myBigIconUrl;
   private String mySvgIconUrl;
   private String mySvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
@@ -381,6 +382,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getSmallIconUrl() {
     return mySmallIconUrl;
+  }
+
+  @Override
+  @Nullable
+  public String getBigIconUrl() {
+    return myBigIconUrl;
   }
 
   @Override
@@ -746,6 +753,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
+      myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;

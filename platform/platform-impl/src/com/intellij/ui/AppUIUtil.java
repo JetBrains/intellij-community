@@ -80,18 +80,9 @@ public class AppUIUtil {
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
     if (SystemInfo.isUnix) {
-      String svgIconUrl = appInfo.getApplicationSvgIconUrl();
-      if (svgIconUrl != null) {
-        URL url = AppUIUtil.class.getResource(svgIconUrl);
-        try {
-          Image svgIcon = SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(window) * 128, JBUI.pixScale(window) * 128);
-          if (svgIcon != null) {
-            images.add(svgIcon);
-          }
-        }
-        catch (IOException e) {
-          LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
-        }
+      Image svgIcon = loadApplicationIcon(window, 128, appInfo.getBigIconUrl());
+      if (svgIcon != null) {
+        images.add(svgIcon);
       }
     }
 
@@ -114,6 +105,29 @@ public class AppUIUtil {
         ourMacDocIconSet = true;
       }
     }
+  }
+
+  @Nullable
+  private static Image loadApplicationIcon(@NotNull Window window, int size, @Nullable String fallbackImageResourcePath) {
+    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
+    if (svgIconUrl != null) {
+      URL url = AppUIUtil.class.getResource(svgIconUrl);
+      try {
+        return
+          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(window) * size, JBUI.pixScale(window) * size);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
+      }
+    }
+    else if (fallbackImageResourcePath != null) {
+      Image image = ImageLoader.loadFromResource(fallbackImageResourcePath);
+      if (image instanceof JBHiDPIScaledImage) {
+        return ((JBHiDPIScaledImage)image).getDelegate();
+      }
+      return image;
+    }
+    return null;
   }
 
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
