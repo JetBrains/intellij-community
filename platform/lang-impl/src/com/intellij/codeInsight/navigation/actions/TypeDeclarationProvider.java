@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -29,4 +30,8 @@ public interface TypeDeclarationProvider {
 
   @Nullable
   PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol);
+
+  default String getActionText(DataContext context) {
+    return null;
+  }
 }
