@@ -78,11 +78,11 @@ public class AppUIUtil {
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
     if (SystemInfo.isUnix) {
-      String bigIconUrl = appInfo.getBigIconUrl();
-      if (bigIconUrl != null) {
-        Image bigIcon = ImageLoader.loadFromResource(bigIconUrl);
-        if (bigIcon != null) {
-          images.add(bigIcon);
+      String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      if (svgIconUrl != null) {
+        Image svgIcon = ImageLoader.loadFromResource(svgIconUrl);
+        if (svgIcon != null) {
+          images.add(svgIcon);
         }
       }
     }
