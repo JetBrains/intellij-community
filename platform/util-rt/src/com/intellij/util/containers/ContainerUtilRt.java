@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -23,8 +23,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class ContainerUtilRt {
-  private static final int ARRAY_COPY_THRESHOLD = 20;
-
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <K, V> HashMap<K, V> newHashMap() {
@@ -454,33 +452,20 @@ public class ContainerUtilRt {
     return set;
   }
 
+  /**
+   * @deprecated use simply collection.toArray(array)
+   */
   @NotNull
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
-    final int length = array.length;
-    if (length < ARRAY_COPY_THRESHOLD && array.length >= collection.size()) {
-      for (int i = 0; i < collection.size(); i++) {
-        array[i] = collection.get(i);
-      }
-      return array;
-    }
     return collection.toArray(array);
   }
 
   /**
-   * This is a replacement for {@link Collection#toArray(T[])}. For small collections it is faster to stay at java level and refrain
-   * from calling JNI {@link System#arraycopy(Object, int, Object, int, int)}
+   * @deprecated use simply c.toArray(sample)
    */
+  @Deprecated
   @NotNull
   public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
-    final int size = c.size();
-    if (size == sample.length && size < ARRAY_COPY_THRESHOLD) {
-      int i = 0;
-      for (T t : c) {
-        sample[i++] = t;
-      }
-      return sample;
-    }
-
     return c.toArray(sample);
   }
 

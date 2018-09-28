@@ -2696,16 +2696,24 @@ public class ContainerUtil extends ContainerUtilRt {
     return set.isEmpty() ? Collections.<V>emptySet() : set;
   }
 
+  /**
+   * @deprecated use simply collection.toArray(array)
+   */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
-    return ContainerUtilRt.toArray(collection, array);
+    return collection.toArray(array);
   }
 
+  /**
+   * @deprecated use simply c.toArray(sample)
+   */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
-    return ContainerUtilRt.toArray(c, sample);
+    return c.toArray(sample);
   }
 
   @NotNull
