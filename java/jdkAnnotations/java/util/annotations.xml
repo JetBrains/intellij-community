@@ -1817,6 +1817,9 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Properties void store(java.io.OutputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.util.Queue E element()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
