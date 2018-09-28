@@ -212,9 +212,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
 
-  static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
-                                                   @Nullable Editor hostEditor,
-                                                   @NotNull IntentionAction action) {
+  @Nullable
+  public static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
+                                                          @Nullable Editor hostEditor,
+                                                          @NotNull IntentionAction action) {
     return hostEditor == null ? Pair.create(hostFile, null) :
            chooseBetweenHostAndInjected(hostFile, hostEditor, (psiFile, editor) -> availableFor(psiFile, editor, action));
   }
