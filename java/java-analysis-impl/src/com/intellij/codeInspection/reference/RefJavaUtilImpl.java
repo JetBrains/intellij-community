@@ -302,7 +302,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                                           final UDeclaration from,
                                                           boolean defaultConstructorOnly) {
                          if (psiClass != null) {
-                           RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass.getNavigationElement());
+                           RefClassImpl refClass = ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;
