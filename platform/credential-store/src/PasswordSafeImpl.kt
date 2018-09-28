@@ -20,7 +20,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     return KeePassCredentialStore(isMemoryOnly = true)
   }
   else if (settings.providerType == ProviderType.KEEPASS) {
-    val dbFile = settings.state.keepassDb?.let { LOG.runAndLogException { Paths.get(it) } }
+    val dbFile = settings.keepassDb?.let { LOG.runAndLogException { Paths.get(it) } }
     return KeePassCredentialStore(dbFile = dbFile)
   }
   else {

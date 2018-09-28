@@ -20,6 +20,22 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
 
   private var state = PasswordSafeOptions()
 
+  var keepassDb: String?
+    get() {
+      val result = state.keepassDb
+      return when {
+        result == null && providerType === ProviderType.KEEPASS -> getDefaultKeePassDbFilePath()
+        else -> result
+      }
+    }
+    set(value) {
+      var v = value.nullize(nullizeSpaces = true)
+      if (v != null && v == getDefaultKeePassDbFilePath()) {
+        v = null
+      }
+      state.keepassDb = v
+    }
+
   @Suppress("DEPRECATION")
   var providerType: ProviderType
     get() = if (SystemInfo.isWindows && state.provider === ProviderType.KEYCHAIN) ProviderType.KEEPASS else state.provider!!
@@ -36,13 +52,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       }
     }
 
-  override fun getState(): PasswordSafeOptions {
-    val state = state
-    if (state.keepassDb != null && state.keepassDb == getDefaultKeePassDbFilePath()) {
-      state.keepassDb = null
-    }
-    return state
-  }
+  override fun getState() = state
 
   override fun loadState(state: PasswordSafeOptions) {
     this.state = state
@@ -53,9 +63,11 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
   override fun getStateModificationCount() = state.modificationCount
 
   class PasswordSafeOptions : BaseState() {
+    // do not use it directly
     @get:OptionTag("PROVIDER")
     var provider by enum(defaultProviderType)
 
+    // do not use it directly
     var keepassDb by string()
     var isRememberPasswordByDefault by property(true)
   }

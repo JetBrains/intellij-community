@@ -6,13 +6,13 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
@@ -59,30 +59,17 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       else -> throw IllegalStateException("Unknown provider type: ${settings.providerType}")
     }
 
-    val currentProvider = (PasswordSafe.instance as PasswordSafeImpl).currentProvider
     @Suppress("IfThenToElvis")
-    keePassDbFile.text = settings.state.keepassDb ?: if (currentProvider is KeePassCredentialStore) currentProvider.dbFile.toString() else getDefaultKeePassDbFilePath()
+    keePassDbFile.text = settings.keepassDb ?: getDefaultKeePassDbFilePath()
     updateEnabledState()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
-    if (getProviderType() != settings.providerType) {
-      return true
-    }
-
-    if (getProviderType() == ProviderType.KEEPASS) {
-      getNewDbFile()?.let {
-        val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
-        if ((passwordSafe.currentProvider as KeePassCredentialStore).dbFile != it) {
-          return true
-        }
-      }
-    }
-    return false
+    return getNewProviderType() != settings.providerType || (getNewProviderType() == ProviderType.KEEPASS && getNewDbFileAsString() != settings.keepassDb)
   }
 
   override fun apply(settings: PasswordSafeSettings) {
-    val providerType = getProviderType()
+    val providerType = getNewProviderType()
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     var provider = passwordSafe.currentProvider
 
@@ -118,19 +105,19 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     settings.providerType = providerType
-    if (newProvider is KeePassCredentialStore) {
-      settings.state.keepassDb = newProvider.dbFile.toString()
-    }
-    else {
-      settings.state.keepassDb = null
+    settings.keepassDb = when (newProvider) {
+      is KeePassCredentialStore -> newProvider.dbFile.toString()
+      else -> null
     }
     passwordSafe.currentProvider = newProvider
   }
 
-  private fun getNewDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
+  private fun getNewDbFile() = getNewDbFileAsString()?.let { Paths.get(it) }
+
+  private fun getNewDbFileAsString() = keePassDbFile.text.trim().nullize()
 
   private fun updateEnabledState() {
-    modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getProviderType() == ProviderType.KEEPASS
+    modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getNewProviderType() == ProviderType.KEEPASS
   }
 
   override fun getComponent(): JPanel {
@@ -156,21 +143,21 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                                                       fileChosen = ::normalizeSelectedFile,
                                                       comment = if (SystemInfo.isWindows) null else "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
             gearButton(
-              object : AnAction("Clear") {
+              object : DumbAwareAction("Clear") {
                 override fun actionPerformed(event: AnActionEvent) {
                   if (MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
                     passwordSafe.clearPasswords()
                   }
                 }
               },
-              object : AnAction("Import") {
+              object : DumbAwareAction("Import") {
                 override fun actionPerformed(event: AnActionEvent) {
                   chooseFile(fileChooserDescriptor, event) {
                     importKeepassFile(Paths.get(normalizeSelectedFile(it)), event, passwordSafe)
                   }
                 }
               },
-              object : AnAction("Set Master Password") {
+              object : DumbAwareAction("Set Master Password") {
                 override fun actionPerformed(event: AnActionEvent) {
                   val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
                   val masterPassword = requestMasterPassword(contextComponent, "Set New Master Password") ?: return
@@ -189,10 +176,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         row {
-          var comment: String? = null
-          val currentProvider = passwordSafe.currentProvider
-          if (currentProvider is KeePassCredentialStore && !currentProvider.isMemoryOnly) {
-            comment = "Existing KeePass file will be removed."
+          val comment = when {
+            passwordSafe.settings.providerType == ProviderType.KEEPASS -> "Existing KeePass file will be removed."
+            else -> null
           }
           rememberPasswordsUntilClosing(comment = comment)
         }
@@ -231,7 +217,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     passwordSafe.currentProvider = KeePassCredentialStore(preloadedDb = database, existingMasterPassword = masterPassword, dbFile = currentDbFile)
   }
 
-  private fun getProviderType(): ProviderType {
+  private fun getNewProviderType(): ProviderType {
     return when {
       rememberPasswordsUntilClosing.isSelected -> ProviderType.MEMORY_ONLY
       inKeePass.isSelected -> ProviderType.KEEPASS
