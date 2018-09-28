@@ -109,10 +109,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     return myAcceptableKinds.contains(GroovyResolveKind.PROPERTY);
   }
 
-  public static Iterable<? extends PsiScopeProcessor> allProcessors(PsiScopeProcessor processor) {
-    return MultiProcessor.allProcessors(processor);
-  }
-
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (!(element instanceof PsiNamedElement)) return true;
