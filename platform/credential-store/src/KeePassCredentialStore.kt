@@ -121,7 +121,7 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
     try {
       var masterKey = masterKeyStorage.get()
       if (masterKey == null) {
-        val bytes = ByteArray(32)
+        val bytes = ByteArray(512)
         SecureRandom().nextBytes(bytes)
         masterKey = Base64.getEncoder().withoutPadding().encode(bytes)
         masterKeyStorage.set(masterKey)
