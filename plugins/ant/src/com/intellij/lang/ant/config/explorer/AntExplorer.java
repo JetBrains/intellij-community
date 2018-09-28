@@ -41,7 +41,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
@@ -128,19 +127,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
       @Override
       public void buildFileChanged(AntBuildFile buildFile) {
-        TreeUtil.visit(myTree, path -> {
-          final AntNodeDescriptor descriptor = TreeUtil.getLastUserObject(AntNodeDescriptor.class, path);
-          if (descriptor != null) {
-            final Object element = descriptor.getElement();
-            if (element instanceof AntBuildFile) {
-              return buildFile.equals(element) ? TreeVisitor.Action.INTERRUPT : TreeVisitor.Action.SKIP_CHILDREN;
-            }
-            if (element instanceof AntBuildTarget) {
-              return TreeVisitor.Action.SKIP_SIBLINGS;
-            }
-          }
-          return TreeVisitor.Action.CONTINUE;
-        }, path -> treeModel.invalidate(path, true));
+        treeModel.invalidate(buildFile, true);
       }
 
       @Override
@@ -437,10 +424,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   @Nullable
   private AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
-    if (myTree == null) {
+    final Tree tree = myTree;
+    if (tree == null) {
       return null;
     }
-    final TreePath path = myTree.getSelectionPath();
+    final TreePath path = tree.getSelectionPath();
     if (path == null) {
       return null;
     }
@@ -815,12 +803,14 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
-      final List<String> targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
-      final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
-      final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, AntConfigurationBase.getInstance(myProject), buildFile);
-      dialog.setTitle(e.getPresentation().getText());
-      if (dialog.showAndGet()) {
-        myTreeModel.invalidate();
+      if (buildFile != null) {
+        final List<String> targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
+        final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
+        final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, AntConfigurationBase.getInstance(myProject), buildFile);
+        dialog.setTitle(e.getPresentation().getText());
+        if (dialog.showAndGet()) {
+          myTreeModel.invalidate(buildFile, true);
+        }
       }
     }
 
