@@ -212,11 +212,11 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         return arrayType.getComponentType().accept(this);
       }
 
-      @NotNull
+      @Nullable
       @Override
       public Boolean visitWildcardType(PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
-        return bound != null && bound.accept(this);
+        return bound == null ? null : bound.accept(this);
       }
     }) == Boolean.TRUE;
   }
