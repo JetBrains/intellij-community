@@ -30,9 +30,9 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.refactoring.rename.BindablePsiReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ArrayListSet;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
@@ -134,7 +134,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
       return EMPTY_ARRAY;
     }
     final Map<String, AntDomTarget> variants = result.getVariants();
-    final List resVariants = new ArrayList();
+    final List<Object> resVariants = new ArrayList<>();
     final Set<String> existing = getExistingNames();
     for (String s : variants.keySet()) {
       if (existing.contains(s)){
@@ -144,7 +144,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
       final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
       resVariants.add(element);
     }
-    return ContainerUtil.toArray(resVariants, new Object[resVariants.size()]);
+    return ArrayUtil.toObjectArray(resVariants);
   }
 
   @Nullable

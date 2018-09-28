@@ -21,10 +21,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +44,7 @@ public class AnimatorTestAction extends AnAction {
           init();
         }
 
-        @Nullable
+        @NotNull
         @Override
         protected JComponent createCenterPanel() {
           int cycles = 20;
@@ -66,7 +64,7 @@ public class AnimatorTestAction extends AnAction {
           for (int i = 0; i < cycles; i++) {
             Collections.addAll(iconsList2, icons1);
           }
-          Icon[] icons2 = ContainerUtil.toArray(iconsList2, new Icon[iconsList2.size()]);
+          Icon[] icons2 = iconsList2.toArray(new Icon[0]);
 
           JPanel panel = new JPanel(new BorderLayout());
           AnimatedIcon animatedIcon1 = new AnimatedIcon("Casual", icons1, passive, 600);

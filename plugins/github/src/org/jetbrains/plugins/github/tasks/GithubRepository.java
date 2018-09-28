@@ -161,7 +161,7 @@ public class GithubRepository extends BaseRepositoryImpl {
       tasks.add(createTask(issue, comments));
     }
 
-    return ContainerUtil.toArray(tasks, new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   @NotNull
