@@ -11,13 +11,17 @@ import com.sun.jdi.connect.Connector;
  */
 public class PidRemoteConnection extends RemoteConnection {
   private final String myPid;
+  private final boolean myFixedAddress;
 
   public PidRemoteConnection(String pid) {
-    this(pid, false);
+    super(false, null, null, false);
+    myFixedAddress = false;
+    myPid = pid;
   }
 
-  PidRemoteConnection(String pid, boolean serverMode) {
-    super(false, null, null, serverMode);
+  public PidRemoteConnection(String pid, boolean useSockets, String hostName, String address, boolean serverMode) {
+    super(useSockets, hostName, address, serverMode);
+    myFixedAddress = true;
     myPid = pid;
   }
 
@@ -26,6 +30,11 @@ public class PidRemoteConnection extends RemoteConnection {
   }
 
   public Connector getConnector(DebugProcessImpl debugProcess) throws ExecutionException {
+    assert !myFixedAddress;
     return DebugProcessImpl.findConnector("com.sun.jdi.ProcessAttach");
+  }
+
+  public boolean isFixedAddress() {
+    return myFixedAddress;
   }
 }
