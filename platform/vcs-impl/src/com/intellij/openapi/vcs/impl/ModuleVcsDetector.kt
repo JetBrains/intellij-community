@@ -90,7 +90,7 @@ class ModuleVcsDetector(private val myProject: Project,
     var mappingsUpdated = false
     for (file in module.rootManager.contentRoots) {
       val vcs = myVcsManager.findVersioningVcs(file)
-      if (vcs != null && vcs !== myVcsManager.getVcsFor(file)) {
+      if (vcs != null && vcs !== myVcsManager.getVcsFor(file, module)) {
         myVcsManager.setAutoDirectoryMapping(file.path, vcs.name)
         mappingsUpdated = true
       }
