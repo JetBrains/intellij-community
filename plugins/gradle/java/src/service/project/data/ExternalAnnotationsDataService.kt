@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project.data
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.registry.Registry
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Order(value = ExternalSystemConstants.UNORDERED)
 class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Library>() {
@@ -44,11 +46,18 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
         val library = modelsProvider.getLibraryByName(libraryName)
         if (library != null) {
           indicator.text = "Looking for annotations for '$libraryName'"
-          resolver.resolveAsync(project, library, "${libraryData.groupId}:${libraryData.artifactId}:${libraryData.version}")
-            .blockingGet(1, TimeUnit.MINUTES)
+          val mavenId = "${libraryData.groupId}:${libraryData.artifactId}:${libraryData.version}"
+          try {
+            resolver.resolveAsync(project, library, mavenId)
+              .blockingGet(1, TimeUnit.MINUTES)
+          } catch (e: TimeoutException) {
+            LOG.warn("Failed to resolve external annotations in time. Maven Id: '$mavenId'")
+          }
         }
-
       }
     }
+  }
+  companion object {
+    val LOG = Logger.getInstance(ExternalAnnotationsDataService::class.java)
   }
 }
