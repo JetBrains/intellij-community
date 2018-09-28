@@ -376,7 +376,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
     new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.8.4", license: "Eclipse Public License v1.0",
                        url: "https://github.com/JetBrains/pty4j"),
-    new LibraryLicense(name: "PureJavaComm", libraryName: "purejavacomm", version: "0.0.11.1", license: "BSD",
+    new LibraryLicense(name: "PureJavaComm", libraryName: "pty4j", version: "0.0.11.1", license: "BSD",
                        url: "https://github.com/nyholku/purejavacomm"),
     new LibraryLicense(name: "pycodestyle.py", attachedTo: "intellij.python.helpers", version: "2.3.1", license: "MIT",
                        url: "http://pycodestyle.readthedocs.io/"),
