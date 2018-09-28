@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gradle.model.RepositoriesModel;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
+import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl;
 
 public class MavenRepositoriesModelBuilder implements ModelBuilderService {
   @Override
