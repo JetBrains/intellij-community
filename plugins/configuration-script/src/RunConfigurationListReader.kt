@@ -16,11 +16,7 @@ import org.yaml.snakeyaml.nodes.SequenceNode
 internal class RunConfigurationListReader(private val processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   // rc grouped by type
   fun read(parentNode: MappingNode, isTemplatesOnly: Boolean) {
-    val keyToType = THashMap<String, ConfigurationType>()
-    processConfigurationTypes { configurationType, propertyName, _ ->
-      keyToType.put(propertyName.toString(), configurationType)
-    }
-
+    var keyToType: MutableMap<String, ConfigurationType>? = null
     for (tuple in parentNode.value) {
       val keyNode = tuple.keyNode
       if (keyNode !is ScalarNode) {
@@ -33,6 +29,14 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
           read(tuple.valueNode as? MappingNode ?: continue, false)
         }
         continue
+      }
+
+      // compute keyToType only if need
+      if (keyToType == null) {
+        keyToType = THashMap<String, ConfigurationType>()
+        processConfigurationTypes { configurationType, propertyName, _ ->
+          keyToType.put(propertyName.toString(), configurationType)
+        }
       }
 
       val configurationType = keyToType.get(keyNode.value)
