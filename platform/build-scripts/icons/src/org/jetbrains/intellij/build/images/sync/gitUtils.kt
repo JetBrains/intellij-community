@@ -40,7 +40,7 @@ private fun listGitTree(
     callSafely {
       listOf(GIT, "rebase", "--abort").execute(repo)
     }
-    throw e
+    log("Unable to pull changes for $repo")
   }
   return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .execute(repo).trim().lineSequence()
