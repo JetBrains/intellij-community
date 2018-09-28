@@ -210,7 +210,7 @@ public abstract class RootModelBase implements ModuleRootModel {
       }
     }
 
-    return result.toArray(Module.EMPTY_ARRAY);
+    return result == null ? Module.EMPTY_ARRAY : result.toArray(Module.EMPTY_ARRAY);
   }
 
   private static class CollectDependentModules extends RootPolicy<List<String>> {
