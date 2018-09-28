@@ -37,6 +37,10 @@ import java.util.List;
  */
 public class PyRegexpTest extends PyTestCase {
 
+  public void testCommentModeWhitespace() {
+    doTestHighlighting();
+  }
+
   public void testLookbehind() {
     doTestHighlighting();
   }
@@ -79,7 +83,7 @@ public class PyRegexpTest extends PyTestCase {
 
   public void testVerbose() {
     Lexer lexer = new PythonVerboseRegexpParserDefinition().createLexer(myFixture.getProject());
-    PyLexerTestCase.doLexerTest("# abc", lexer, "COMMENT", "COMMENT");
+    PyLexerTestCase.doLexerTest("# abc", lexer, "COMMENT");
   }
 
   public void testRedundantEscapeSingleQuote() {  // PY-5027
