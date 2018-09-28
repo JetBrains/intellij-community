@@ -123,6 +123,8 @@ public class PluginManagerConfigurableNew
   private final Object myRepositoriesLock = new Object();
   private List<String> myAllTagSorted;
 
+  private boolean myIgnoreFocusFromBackButton;
+
   public PluginManagerConfigurableNew() {
     myTagBuilder = new TagBuilder() {
       @NotNull
@@ -278,6 +280,7 @@ public class PluginManagerConfigurableNew
 
       backButton.addActionListener(event -> {
         removeDetailsPanel();
+        myIgnoreFocusFromBackButton = true;
         myCardPanel.select(myCurrentSearchPanel.isEmpty() ? currentTab : myCurrentSearchPanel.tabIndex, true);
         storeSelectionTab(currentTab);
         myTabHeaderComponent.setSelection(currentTab);
@@ -301,6 +304,10 @@ public class PluginManagerConfigurableNew
     mySearchTextField.getTextEditor().addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
+        if (myIgnoreFocusFromBackButton) {
+          myIgnoreFocusFromBackButton = false;
+          return;
+        }
         if (myCurrentSearchPanel.controller == null) {
           return;
         }
@@ -401,6 +408,7 @@ public class PluginManagerConfigurableNew
 
     myTabHeaderComponent = new TabHeaderComponent(actions, index -> {
       removeDetailsPanel();
+      myIgnoreFocusFromBackButton = false;
       myCardPanel.select(index, true);
       storeSelectionTab(index);
       updateSearchForSelectedTab(index);
