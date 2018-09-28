@@ -77,6 +77,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -746,7 +747,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myUpdateDocAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
       LOG.debug("Started fetching documentation...");
-
+      LockSupport.parkNanos(1000000000);
       PsiElement element = ReadAction.compute(() -> collector.element.isValid() ? collector.element : null);
       if (element == null) {
         LOG.debug("Element for which documentation was requested is not available anymore");
