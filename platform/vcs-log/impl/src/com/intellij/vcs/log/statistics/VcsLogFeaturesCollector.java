@@ -35,6 +35,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
         usages.add(StatisticsUtilKt.getBooleanUsage("details", properties.get(CommonUiProperties.SHOW_DETAILS)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("diffPreview", properties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
         usages.add(StatisticsUtilKt.getBooleanUsage("long.edges", properties.get(SHOW_LONG_EDGES)));
 
         PermanentGraph.SortType sortType = properties.get(BEK_SORT_TYPE);
