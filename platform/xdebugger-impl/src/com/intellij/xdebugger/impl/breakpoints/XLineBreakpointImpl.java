@@ -22,10 +22,11 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -213,14 +214,19 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       @Override
       public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
-          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+          XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(getProject());
+          XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
           if (isCopyAction(actionId)) {
-            WriteAction
-              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+            WriteAction.run(() -> breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
           }
           else {
             setFileUrl(file.getUrl());
             setLine(line, true);
+            XDebugSessionImpl session = debuggerManager.getCurrentSession();
+            if (session != null) {
+              session.clearActiveNonLineBreakpoint();
+              session.updateExecutionPosition();
+            }
           }
           return true;
         }
