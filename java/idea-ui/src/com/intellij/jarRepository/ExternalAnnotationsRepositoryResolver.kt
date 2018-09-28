@@ -7,6 +7,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
@@ -70,6 +71,8 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       runWriteAction {
         LOG.debug("Found ${roots.size} external annotations for ${library.name}")
         val editor = ExistingLibraryEditor(library, null)
+        val type = AnnotationOrderRootType.getInstance()
+        editor.getUrls(type).forEach { editor.removeRoot(it, type) }
         editor.addRoots(roots)
         editor.commit()
       }

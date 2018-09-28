@@ -2,6 +2,7 @@
 package com.intellij.jarRepository
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.libraries.Library
@@ -88,6 +89,27 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
     resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
     assertTrue(library.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
+  }
+
+  @Test fun `test annotations resolution overrides existing roots`() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val modifiableModel = library.modifiableModel
+    modifiableModel.addRoot("file://fake.url", AnnotationOrderRootType.getInstance())
+    runWriteAction { modifiableModel.commit() }
+
+    assertTrue(library.getUrls(AnnotationOrderRootType.getInstance()).single() == "file://fake.url")
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1.0-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
+    assertTrue(library.getUrls(AnnotationOrderRootType.getInstance()).single().endsWith("myGroup/myArtifact/1.0-an1/myArtifact-1.0-an1-annotations.zip!/"))
   }
 
   private fun <T> getResult(promise: Promise<T>): T? {
