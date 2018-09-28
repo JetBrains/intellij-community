@@ -190,6 +190,7 @@ public class EditorHyperlinkSupport {
    * @deprecated for binary compatibility with older plugins
    * @see #createHyperlink(int, int, TextAttributes, HyperlinkInfo)
    */
+  @Deprecated
   public void addHyperlink(final int highlightStartOffset,
                            final int highlightEndOffset,
                            @Nullable final TextAttributes highlightAttributes,

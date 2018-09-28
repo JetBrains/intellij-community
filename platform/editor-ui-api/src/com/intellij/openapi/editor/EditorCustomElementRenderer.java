@@ -46,6 +46,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #calcWidthInPixels(Inlay)} instead. This method will be removed.
    */
+  @Deprecated
   default int calcWidthInPixels(@NotNull Editor editor) {
     throw new RuntimeException("Method not implemented");
   }
@@ -79,6 +80,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} instead. This method will be removed.
    */
+  @Deprecated
   default void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
     throw new RuntimeException("Method not implemented");
   }
@@ -98,6 +100,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #getContextMenuGroupId(Inlay)} instead. This method will be removed.
    */
+  @Deprecated
   default String getContextMenuGroupId() {
     return null;
   }

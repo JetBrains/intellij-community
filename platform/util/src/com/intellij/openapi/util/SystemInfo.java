@@ -24,7 +24,7 @@ public class SystemInfo extends SystemInfoRt {
   /**
    * @deprecated use {@link #is32Bit} or {@link #is64Bit} instead
    */
-  public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
+  @Deprecated public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {

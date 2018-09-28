@@ -46,6 +46,7 @@ public class GitFileUtils {
   /**
    * @deprecated Use {@link #deletePaths}
    */
+  @Deprecated
   public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files,
                             String... additionalOptions) throws VcsException {
     deletePaths(project, root, files, additionalOptions);

@@ -55,6 +55,7 @@ import java.util.*;
  *
  * @author Vladislav.Soroka
  */
+@Deprecated
 public class CppModelBuilder implements ModelBuilderService {
   private static final boolean IS_410_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.10")) >= 0;
   private static final boolean IS_48_OR_BETTER = IS_410_OR_BETTER ||
