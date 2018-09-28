@@ -18,7 +18,6 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +64,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   @NotNull
   public PsiDirectory[] getDirectories() {
     final Collection<PsiDirectory> collection = getAllDirectories();
-    return ContainerUtil.toArray(collection, new PsiDirectory[collection.size()]);
+    return collection.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override
