@@ -31,7 +31,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -48,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -1548,21 +1546,6 @@ public class PluginManagerConfigurableNew
     Dimension size = button.getPreferredSize();
     size.width -= JBUI.scale(15);
     button.setPreferredSize(size);
-  }
-
-  public static void setWidth72(@NotNull JButton button) {
-    int width = JBUI.scale(72);
-    if (button instanceof JBOptionButton && button.getComponentCount() == 2) {
-      width += button.getComponent(1).getPreferredSize().width;
-    }
-    else {
-      Border border = button.getBorder();
-      if (border != null) {
-        Insets insets = border.getBorderInsets(button);
-        width += insets.left + insets.right;
-      }
-    }
-    button.setPreferredSize(new Dimension(width, button.getPreferredSize().height));
   }
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {

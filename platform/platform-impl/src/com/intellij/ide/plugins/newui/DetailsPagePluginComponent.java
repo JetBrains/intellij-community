@@ -209,7 +209,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         if (myPlugin.isBundled()) {
           myEnableDisableButton = new JButton(myPluginsModel.getEnabledTitle(myPlugin));
           myEnableDisableButton.addActionListener(e -> changeEnableDisable());
-          PluginManagerConfigurableNew.setWidth72(myEnableDisableButton);
+          ColorButton.setWidth72(myEnableDisableButton);
           buttons.add(myEnableDisableButton);
         }
         else {
