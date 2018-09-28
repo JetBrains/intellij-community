@@ -23,24 +23,6 @@ private const val ROOT_GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal const val DB_FILE_NAME = "c.kdbx"
 
-private fun loadOrNewOnError(dbFile: Path, masterPassword: ByteArray): KeePassDatabase {
-  if (!dbFile.exists()) {
-    return KeePassDatabase()
-  }
-
-  return try {
-    loadKdbx(dbFile, KdbxPassword(masterPassword))
-  }
-  catch (e: Throwable) {
-    LOG.error(e)
-    LOG.runAndLogException {
-      dbFile.move(dbFile.parent.resolve("corrupted.c.kdbx"))
-    }
-    NOTIFICATION_MANAGER.notify("KeePass database file is corrupted, new one is created", null)
-    KeePassDatabase()
-  }
-}
-
 @Suppress("FunctionName")
 internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials>): KeePassCredentialStore {
   val keepassDb = KeePassDatabase()
@@ -55,10 +37,18 @@ internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials
 }
 
 internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
-                                      var isMemoryOnly: Boolean = false,
+                                      isMemoryOnly: Boolean = false,
                                       dbFile: Path? = null,
                                       existingMasterPassword: ByteArray? = null,
                                       preloadedDb: KeePassDatabase? = null) : PasswordStorage, CredentialStore {
+  var isMemoryOnly = isMemoryOnly
+    set(value) {
+      if (field != value && !value) {
+        needToSave.set(true)
+      }
+      field = value
+    }
+
   internal var dbFile: Path = dbFile ?: baseDirectory.resolve(DB_FILE_NAME)
     set(path) {
       if (field == path) {
@@ -96,7 +86,10 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
           db = KeePassDatabase()
         }
         else {
-          db = loadOrNewOnError(this.dbFile, masterPassword)
+          db = when {
+            this.dbFile.exists() -> loadKdbx(this.dbFile, KdbxPassword(masterPassword))
+            else -> KeePassDatabase()
+          }
           if (existingMasterPassword != null) {
             masterKeyStorage.set(existingMasterPassword)
           }

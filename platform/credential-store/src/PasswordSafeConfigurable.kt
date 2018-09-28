@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordSafe
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -21,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.RadioButton
 import com.intellij.ui.layout.*
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import java.awt.Component
@@ -65,51 +69,81 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
-    return getNewProviderType() != settings.providerType || (getNewProviderType() == ProviderType.KEEPASS && getNewDbFileAsString() != settings.keepassDb)
+    return getNewProviderType() != settings.providerType || isKeepassFileLocationChanged(settings)
+  }
+
+  private fun isKeepassFileLocationChanged(settings: PasswordSafeSettings): Boolean {
+    return getNewProviderType() == ProviderType.KEEPASS && getNewDbFileAsString() != settings.keepassDb
   }
 
   override fun apply(settings: PasswordSafeSettings) {
     val providerType = getNewProviderType()
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
-    var provider = passwordSafe.currentProvider
-
     if (settings.providerType != providerType) {
       @Suppress("NON_EXHAUSTIVE_WHEN")
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {
-          if (provider is KeePassCredentialStore) {
-            provider.isMemoryOnly = true
-            provider.deleteFileStorage()
-          }
-          else {
-            provider = KeePassCredentialStore(isMemoryOnly = true)
+          if (!changeExistingKeepassStoreIfPossible(settings, passwordSafe, isMemoryOnly = true)) {
+            passwordSafe.currentProvider = KeePassCredentialStore(isMemoryOnly = true)
           }
         }
 
         ProviderType.KEYCHAIN -> {
-          provider = createPersistentCredentialStore(provider as? KeePassCredentialStore)
+          passwordSafe.currentProvider = createPersistentCredentialStore(passwordSafe.currentProvider as? KeePassCredentialStore)
         }
 
         ProviderType.KEEPASS -> {
-          provider = KeePassCredentialStore(dbFile = getNewDbFile(), existingMasterPassword = pendingMasterPassword)
+          runAndHandleIncorrectMasterPasswordException {
+            if (!changeExistingKeepassStoreIfPossible(settings, passwordSafe, isMemoryOnly = false)) {
+              passwordSafe.currentProvider = KeePassCredentialStore(dbFile = getNewDbFile(), existingMasterPassword = pendingMasterPassword)
+            }
+          }
           pendingMasterPassword = null
         }
+
+        else -> throw java.lang.IllegalStateException("Unknown provider type: $providerType")
       }
     }
-
-    val newProvider = provider
-    if (newProvider === passwordSafe.currentProvider && newProvider is KeePassCredentialStore) {
-      getNewDbFile()?.let {
-        newProvider.dbFile = it
+    else if (isKeepassFileLocationChanged(settings)) {
+      val newDbFile = getNewDbFile()
+      if (newDbFile != null) {
+        val currentProviderIfComputed = passwordSafe.currentProviderIfComputed as? KeePassCredentialStore
+        if (currentProviderIfComputed == null) {
+          runAndHandleIncorrectMasterPasswordException {
+            passwordSafe.currentProvider = KeePassCredentialStore(dbFile = getNewDbFile(), existingMasterPassword = pendingMasterPassword)
+          }
+        }
+        else {
+          currentProviderIfComputed.dbFile = newDbFile
+        }
+        settings.keepassDb = newDbFile.toString()
       }
     }
 
     settings.providerType = providerType
-    settings.keepassDb = when (newProvider) {
-      is KeePassCredentialStore -> newProvider.dbFile.toString()
-      else -> null
+  }
+
+  private fun changeExistingKeepassStoreIfPossible(settings: PasswordSafeSettings, passwordSafe: PasswordSafeImpl, isMemoryOnly: Boolean): Boolean {
+    if (settings.providerType != ProviderType.MEMORY_ONLY || settings.providerType != ProviderType.KEEPASS) {
+      return false
     }
-    passwordSafe.currentProvider = newProvider
+
+    // must be used only currentProviderIfComputed - no need to compute because it is unsafe operation (incorrect operation and so)
+    // if provider not yet computed, we will create a new one in a safe manner (PasswordSafe manager cannot handle correctly - no access to pending master password, cannot throw exceptions)
+    val provider = passwordSafe.currentProviderIfComputed as? KeePassCredentialStore ?: return false
+    provider.isMemoryOnly = isMemoryOnly
+    if (isMemoryOnly) {
+      provider.deleteFileStorage()
+    }
+    else {
+      getNewDbFile()?.let {
+        provider.dbFile = it
+      }
+      if (pendingMasterPassword != null) {
+        provider.setMasterPassword(pendingMasterPassword!!)
+      }
+    }
+    return true
   }
 
   private fun getNewDbFile() = getNewDbFileAsString()?.let { Paths.get(it) }
@@ -145,9 +179,26 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
             gearButton(
               object : DumbAwareAction("Clear") {
                 override fun actionPerformed(event: AnActionEvent) {
-                  if (MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
-                    passwordSafe.clearPasswords()
+                  if (!MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
+                    return
                   }
+
+                  LOG.info("Passwords cleared", Error())
+                  val dbFile = getNewDbFile() ?: return
+                  try {
+                    val db = KeePassCredentialStore(dbFile = dbFile, existingMasterPassword = pendingMasterPassword)
+                    db.clear()
+                    db.save()
+                  }
+                  catch (e: Exception) {
+                    // ok, just remove file
+                    LOG.error(e)
+                    dbFile.delete()
+                  }
+                }
+
+                override fun update(e: AnActionEvent) {
+                  e.presentation.isEnabled = getNewDbFile()?.exists() ?: false
                 }
               },
               object : DumbAwareAction("Import") {
@@ -161,7 +212,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                 override fun actionPerformed(event: AnActionEvent) {
                   val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
                   val masterPassword = requestMasterPassword(contextComponent, "Set New Master Password") ?: return
-                  val currentProvider = passwordSafe.currentProvider
+                  val currentProvider = if (passwordSafe.settings.providerType == ProviderType.KEEPASS) passwordSafe.currentProvider else null
                   if (currentProvider is KeePassCredentialStore && !currentProvider.isMemoryOnly) {
                     currentProvider.setMasterPassword(masterPassword)
                     pendingMasterPassword = null
@@ -199,9 +250,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
     catch (e: Exception) {
       val message: String
-      when {
-        e.message == "Inconsistent stream bytes" -> {
-          message = "Password is not correct"
+      when (e) {
+        is IncorrectMasterPasswordException -> {
+          message = "Master password is not correct"
           LOG.debug(e)
         }
         else -> {
@@ -243,4 +294,13 @@ enum class ProviderType {
   // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
   @Deprecated("")
   DO_NOT_STORE
+}
+
+private inline fun runAndHandleIncorrectMasterPasswordException(handler: () -> Unit) {
+  try {
+    handler()
+  }
+  catch (e: IncorrectMasterPasswordException) {
+    throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
+  }
 }

@@ -4,6 +4,7 @@
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.credentialStore.*
+import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
@@ -19,13 +20,26 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
     return KeePassCredentialStore(isMemoryOnly = true)
   }
-  else if (settings.providerType == ProviderType.KEEPASS) {
-    val dbFile = settings.keepassDb?.let { LOG.runAndLogException { Paths.get(it) } }
-    return KeePassCredentialStore(dbFile = dbFile)
-  }
-  else {
+
+  if (settings.providerType != ProviderType.KEEPASS) {
     return createPersistentCredentialStore()
   }
+
+  val dbFile = LOG.runAndLogException { Paths.get(settings.keepassDb!!) }
+  try {
+    return KeePassCredentialStore(dbFile = dbFile)
+  }
+  catch (e: IncorrectMasterPasswordException) {
+    LOG.warn(e)
+    NOTIFICATION_MANAGER.notify("Master password for KeePass database is not correct ($dbFile). In-memory password storage will be used.", null)
+  }
+  catch (e: Throwable) {
+    LOG.error(e)
+    NOTIFICATION_MANAGER.notify("Internal error during opening of KeePass database($dbFile). In-memory password storage will be used.", null)
+  }
+
+  settings.providerType = ProviderType.MEMORY_ONLY
+  return KeePassCredentialStore(isMemoryOnly = true)
 }
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
@@ -37,6 +51,9 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     }
 
   private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
+
+  internal val currentProviderIfComputed: CredentialStore?
+    get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
 
   internal var currentProvider: CredentialStore
     get() = _currentProvider.value
@@ -89,24 +106,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
-    val provider = _currentProvider
-    if (provider.isInitialized()) {
-      (provider.value as? KeePassCredentialStore)?.save()
-    }
-  }
-
-  fun clearPasswords() {
-    LOG.info("Passwords cleared", Error())
-    try {
-      if (memoryHelperProvider.isInitialized()) {
-        memoryHelperProvider.value.clear()
-      }
-    }
-    finally {
-      (currentProvider as? KeePassCredentialStore)?.clear()
-    }
-
-    ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
+    (currentProviderIfComputed as? KeePassCredentialStore)?.save()
   }
 
   override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {

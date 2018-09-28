@@ -3,6 +3,7 @@ package com.intellij.credentialStore
 
 import com.google.common.cache.CacheBuilder
 import com.intellij.ide.passwordSafe.PasswordStorage
+import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
@@ -18,7 +19,7 @@ private val nullCredentials = Credentials("\u0000", OneTimeString("\u0000"))
 
 internal val NOTIFICATION_MANAGER by lazy {
   // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
-  SingletonNotificationManager(NotificationGroup.balloonGroup("Password Safe"), NotificationType.WARNING, null)
+  SingletonNotificationManager(NotificationGroup("Password Safe", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
 }
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
