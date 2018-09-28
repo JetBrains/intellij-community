@@ -62,6 +62,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String mySvgIconUrl;
+  private String mySvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
 
@@ -385,7 +386,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   @Nullable
   public String getApplicationSvgIconUrl() {
-    return mySvgIconUrl;
+    return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
   }
 
   @Nullable
@@ -750,6 +751,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myToolWindowIconUrl = toolWindowIcon;
       }
       mySvgIconUrl = iconElement.getAttributeValue("svg");
+    }
+    Element iconEap = getChild(parentNode, "icon-eap");
+    if (iconEap != null) {
+      mySvgEapIconUrl = iconEap.getAttributeValue("svg");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
