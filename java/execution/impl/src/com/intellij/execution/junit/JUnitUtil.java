@@ -160,7 +160,13 @@ public class JUnitUtil {
 
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (psiClass.getQualifiedName() == null) return false;
-    if (isJUnit5(psiClass) && isJUnit5TestClass(psiClass, checkAbstract)) {
+    if (isJUnit5(psiClass)) {
+      if (isJUnit5TestClass(psiClass, checkAbstract)) {
+        return true;
+      }
+    }
+    else if (MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+      //no jupiter engine in the classpath
       return true;
     }
 
