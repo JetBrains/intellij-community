@@ -38,6 +38,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testIfWithLoop() { doTest("if"); }
   public void testElseWithLoop() { doTest("else"); }
   public void testTwoComments() { doTest("if"); }
+  public void testIncompleteIf() { assertQuickfixNotAvailable(getMessage("for")); }
 
   @Override
   protected void setUp() throws Exception {
