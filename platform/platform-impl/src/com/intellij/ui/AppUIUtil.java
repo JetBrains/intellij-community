@@ -84,7 +84,7 @@ public class AppUIUtil {
       if (svgIconUrl != null) {
         URL url = AppUIUtil.class.getResource(svgIconUrl);
         try {
-          Image svgIcon = SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(128), JBUI.pixScale(128));
+          Image svgIcon = SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(window) * 128, JBUI.pixScale(window) * 128);
           if (svgIcon != null) {
             images.add(svgIcon);
           }
