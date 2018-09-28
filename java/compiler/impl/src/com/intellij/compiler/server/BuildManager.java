@@ -1314,7 +1314,7 @@ public class BuildManager implements Disposable {
   }
 
   @NotNull
-  private File getBuildLogDirectory() {
+  public static File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
   }
 
