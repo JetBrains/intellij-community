@@ -33,7 +33,7 @@ private fun listGitTree(
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
-  try {
+  if (BUILD_SERVER == null) try {
     listOf(GIT, "pull", "--rebase").execute(repo)
   }
   catch (e: Exception) {

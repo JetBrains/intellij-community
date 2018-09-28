@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 internal lateinit var logger: Consumer<String>
@@ -23,7 +24,7 @@ internal fun List<String>.execute(workingDir: File?, silent: Boolean = false): S
       .start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
     val error = process.errorStream.bufferedReader().use { it.readText() }
-    process.waitFor()
+    process.waitFor(1, TimeUnit.MINUTES)
     if (process.exitValue() != 0) {
       error("Command ${this} failed with ${process.exitValue()} : $error")
     }

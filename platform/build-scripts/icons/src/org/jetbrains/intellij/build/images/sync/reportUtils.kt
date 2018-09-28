@@ -52,7 +52,7 @@ private fun sendNotification(isSuccess: Boolean) {
   }
 }
 
-private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
+internal val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 
