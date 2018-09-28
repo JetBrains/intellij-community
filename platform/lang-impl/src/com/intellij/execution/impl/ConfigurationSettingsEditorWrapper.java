@@ -9,7 +9,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
@@ -17,7 +16,6 @@ import com.intellij.ui.HideableDecorator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +79,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   protected JComponent createEditor() {
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myWholePanel, new MyDataProvider());
+    DataManager.registerDataProvider(myWholePanel, dataId -> {
+      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return this;
+      }
+      return null;
+    });
     return myWholePanel;
   }
 
@@ -148,16 +151,5 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void titleChanged(@NotNull String title) {
     myDecorator.setTitle(title);
-  }
-
-  private class MyDataProvider implements DataProvider {
-    @Nullable
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return ConfigurationSettingsEditorWrapper.this;
-      }
-      return null;
-    }
   }
 }
