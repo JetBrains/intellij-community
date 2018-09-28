@@ -37,7 +37,9 @@ private fun listGitTree(
     listOf(GIT, "pull", "--rebase").execute(repo)
   }
   catch (e: Exception) {
-    listOf(GIT, "rebase", "--abort").execute(repo)
+    callSafely {
+      listOf(GIT, "rebase", "--abort").execute(repo)
+    }
     throw e
   }
   return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
