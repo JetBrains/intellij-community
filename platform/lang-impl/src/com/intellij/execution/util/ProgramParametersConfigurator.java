@@ -71,6 +71,7 @@ public class ProgramParametersConfigurator {
     if (path != null && Registry.is("allow.macros.for.run.configurations")) {
         Collection<Macro> macros = MacroManager.getInstance().getMacros();
         for (Macro macro: macros) {
+          if (!path.contains("$" + macro.getName())) continue;
           String value = StringUtil.notNullize(
             macro instanceof PromptMacro ? ((PromptMacro)macro).promptUser():
             macro.preview(), "");
