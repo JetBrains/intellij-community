@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static com.intellij.util.containers.ContainerUtil.*;
+import static java.util.Collections.singletonList;
 import static java.util.function.Function.identity;
 
 public class NewMappings {
@@ -189,7 +189,7 @@ public class NewMappings {
 
     final List<VcsDirectoryMapping> itemsCopy;
     if (items.isEmpty()) {
-      itemsCopy = Collections.singletonList(new VcsDirectoryMapping("", ""));
+      itemsCopy = singletonList(new VcsDirectoryMapping("", ""));
     }
     else {
       itemsCopy = items;
@@ -364,6 +364,9 @@ public class NewMappings {
       final String vcsName = iterator.next();
       final Collection<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
 
+      VcsDirectoryMapping defaultMapping = find(mappings, it -> it.isDefaultMapping());
+      if (defaultMapping != null) mappings.remove(defaultMapping);
+
       List<Pair<VirtualFile, VcsDirectoryMapping>> objects = mapNotNull(mappings, dm -> {
         VirtualFile vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
         return vf == null ? null : Pair.create(vf, dm);
@@ -384,6 +387,8 @@ public class NewMappings {
       }
 
       List<VcsDirectoryMapping> filteredMappings = map(filteredFiles, Functions.pairSecond());
+      if (defaultMapping != null) filteredMappings.add(defaultMapping);
+
       if (filteredMappings.isEmpty()) {
         iterator.remove();
       }
