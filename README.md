@@ -29,20 +29,18 @@ run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Thes
 _**Note:**_ Always `git checkout` the `intellij-community`, `android`, and `android/tools-base` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
-Versions 2018.2 and newer of IntelliJ IDEA Community Edition or IntelliJ
-IDEA Ultimate Edition are required to build and develop for the IntelliJ
-Platform.
+Version 2018.2 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
+for the IntelliJ Platform.
 
 ### Opening the IntelliJ Source Code for Build
 Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory. 
-* If IntelliJ IDEA displays an error about a missing or out of date required plugin (e.g.
-Kotlin), [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
+* If IntelliJ IDEA displays an error about a missing or out of date required plugin (e.g. Kotlin),
+  [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
 * If IntelliJ IDEA displays and error about a Gradle configuration not found,
- [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
+  [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 is required for building and developing for IntelliJ IDEA Community
-Edition.
+JDK version 1.8 is required for building and developing for IntelliJ IDEA Community Edition.
 1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
    * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
      for the **1.8** JDK.
