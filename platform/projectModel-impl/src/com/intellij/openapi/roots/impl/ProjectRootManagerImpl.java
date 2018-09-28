@@ -205,6 +205,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return myProjectSdkName;
   }
 
+  public String getProjectSdkType() {
+    return myProjectSdkType;
+  }
+
   @Override
   public void setProjectSdk(Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();

@@ -107,7 +107,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     init();
   }
 
-  private String getJdkType() {
+  public String getJdkType() {
     if (myJdk != null){
       return myJdk.getSdkType().getName();
     }
