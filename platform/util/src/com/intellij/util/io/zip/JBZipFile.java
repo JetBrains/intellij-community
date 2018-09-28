@@ -439,15 +439,17 @@ public class JBZipFile implements Closeable {
       myOutputStream.finish();
       myOutputStream = null;
 
-      final Map<String, byte[]> existingEntries = new LinkedHashMap<String, byte[]>();
-      for (Map.Entry<String, JBZipEntry> entry : nameMap.entrySet()) {
-        existingEntries.put(entry.getKey(), entry.getValue().getData());
+      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<JBZipEntry, byte[]>();
+      for (JBZipEntry entry : entries) {
+        existingEntries.put(entry, entry.getData());
       }
 
       currentCfdOffset = 0;
       nameMap.clear();
-      for (Map.Entry<String, byte[]> entry : existingEntries.entrySet()) {
-        JBZipEntry zipEntry = getOrCreateEntry(entry.getKey());
+      entries.clear();
+      for (Map.Entry<JBZipEntry, byte[]> entry : existingEntries.entrySet()) {
+        JBZipEntry zipEntry = getOrCreateEntry(entry.getKey().getName());
+        zipEntry.setComment(entry.getKey().getComment());
         zipEntry.setData(entry.getValue());
       }
       getOutputStream().finish();
