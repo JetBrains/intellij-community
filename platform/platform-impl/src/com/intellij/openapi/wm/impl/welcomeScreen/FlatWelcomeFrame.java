@@ -185,7 +185,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static JBColor getSeparatorColor() {
-    return JBColor.namedColor("WelcomeScreen.Separator.color", new JBColor(Gray.xEC, new Color(72, 75, 78)));
+    return JBColor.namedColor("WelcomeScreen.separatorColor", new JBColor(Gray.xEC, new Color(72, 75, 78)));
   }
 
   @Override
