@@ -19,9 +19,7 @@ import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.RadioButton
-import com.intellij.ui.components.chars
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
@@ -46,12 +44,12 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val inKeychain = RadioButton("In native Keychain")
 
   private val inKeePass = RadioButton("In KeePass")
-  private val keePassMasterPassword = JBPasswordField()
   private var keePassDbFile: TextFieldWithHistoryWithBrowseButton by notNull()
 
   private val rememberPasswordsUntilClosing = RadioButton("Do not save, forget passwords after restart")
 
   private val modeToRow = THashMap<ProviderType, Row>()
+  private var pendingMasterPassword: ByteArray? = null
 
   override fun reset(settings: PasswordSafeSettings) {
     when (settings.providerType) {
@@ -73,11 +71,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     if (getProviderType() == ProviderType.KEEPASS) {
-      if (!keePassMasterPassword.chars.isNullOrBlank()) {
-        return true
-      }
-
-      getCurrentDbFile()?.let {
+      getNewDbFile()?.let {
         val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
         if ((passwordSafe.currentProvider as KeePassCredentialStore).dbFile != it) {
           return true
@@ -92,18 +86,16 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     var provider = passwordSafe.currentProvider
 
-    val masterPassword = keePassMasterPassword.chars.toString().nullize(true)?.toByteArray()
-
     if (settings.providerType != providerType) {
       @Suppress("NON_EXHAUSTIVE_WHEN")
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {
           if (provider is KeePassCredentialStore) {
-            provider.memoryOnly = true
+            provider.isMemoryOnly = true
             provider.deleteFileStorage()
           }
           else {
-            provider = KeePassCredentialStore(memoryOnly = true)
+            provider = KeePassCredentialStore(isMemoryOnly = true)
           }
         }
 
@@ -112,19 +104,15 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         ProviderType.KEEPASS -> {
-          provider = KeePassCredentialStore(existingMasterPassword = masterPassword, dbFile = getCurrentDbFile())
+          provider = KeePassCredentialStore(dbFile = getNewDbFile(), existingMasterPassword = pendingMasterPassword)
+          pendingMasterPassword = null
         }
       }
     }
 
     val newProvider = provider
     if (newProvider === passwordSafe.currentProvider && newProvider is KeePassCredentialStore) {
-      if (masterPassword != null) {
-        // so, provider is the same and we must change master password for existing database file
-        newProvider.setMasterPassword(masterPassword)
-      }
-
-      getCurrentDbFile()?.let {
+      getNewDbFile()?.let {
         newProvider.dbFile = it
       }
     }
@@ -137,12 +125,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       settings.state.keepassDb = null
     }
     passwordSafe.currentProvider = newProvider
-
-    keePassMasterPassword.text = null
-    keePassMasterPassword.setPasswordIsStored(true)
   }
 
-  fun getCurrentDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
+  private fun getNewDbFile() = keePassDbFile.text.trim().nullize()?.let { Paths.get(it) }
 
   private fun updateEnabledState() {
     modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getProviderType() == ProviderType.KEEPASS
@@ -150,9 +135,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
   override fun getComponent(): JPanel {
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
-
-    keePassMasterPassword.setPasswordIsStored(true)
-
     return panel {
       row { label("Save passwords:") }
 
@@ -171,7 +153,8 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
             }
             keePassDbFile = textFieldWithBrowseButton("KeePass Database File",
                                                       fileChooserDescriptor = fileChooserDescriptor,
-                                                      fileChosen = ::normalizeSelectedFile)
+                                                      fileChosen = ::normalizeSelectedFile,
+                                                      comment = if (SystemInfo.isWindows) null else "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
             gearButton(
               object : AnAction("Clear") {
                 override fun actionPerformed(event: AnActionEvent) {
@@ -186,18 +169,29 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                     importKeepassFile(Paths.get(normalizeSelectedFile(it)), event, passwordSafe)
                   }
                 }
+              },
+              object : AnAction("Set Master Password") {
+                override fun actionPerformed(event: AnActionEvent) {
+                  val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
+                  val masterPassword = requestMasterPassword(contextComponent, "Set New Master Password") ?: return
+                  val currentProvider = passwordSafe.currentProvider
+                  if (currentProvider is KeePassCredentialStore && !currentProvider.isMemoryOnly) {
+                    currentProvider.setMasterPassword(masterPassword)
+                    pendingMasterPassword = null
+                  }
+                  else {
+                    pendingMasterPassword = masterPassword
+                  }
+                }
               }
             )
-          }
-          row("Master Password:") {
-            keePassMasterPassword(comment = if (SystemInfo.isWindows) null else "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
           }
         }
 
         row {
           var comment: String? = null
           val currentProvider = passwordSafe.currentProvider
-          if (currentProvider is KeePassCredentialStore && !currentProvider.memoryOnly) {
+          if (currentProvider is KeePassCredentialStore && !currentProvider.isMemoryOnly) {
             comment = "Existing KeePass file will be removed."
           }
           rememberPasswordsUntilClosing(comment = comment)
@@ -207,13 +201,13 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   private fun importKeepassFile(dbFile: Path, event: AnActionEvent, passwordSafe: PasswordSafeImpl) {
-    val currentDbFile = getCurrentDbFile()
+    val currentDbFile = getNewDbFile()
     if (currentDbFile == dbFile) {
       return
     }
 
     val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-    val masterPassword = MessagesService.getInstance().showPasswordDialog(contextComponent, "Master Password:", "Specify Master Password", null, null)?.trim().nullize()?.toByteArray() ?: return
+    val masterPassword = requestMasterPassword(contextComponent, "Specify Master Password") ?: return
     val database = try {
       loadKdbx(dbFile, KdbxPassword(masterPassword))
     }
@@ -235,8 +229,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
     Files.copy(dbFile, currentDbFile, StandardCopyOption.REPLACE_EXISTING)
     passwordSafe.currentProvider = KeePassCredentialStore(preloadedDb = database, existingMasterPassword = masterPassword, dbFile = currentDbFile)
-
-    keePassMasterPassword.text = null
   }
 
   private fun getProviderType(): ProviderType {
@@ -246,6 +238,10 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       else -> ProviderType.KEYCHAIN
     }
   }
+}
+
+private fun requestMasterPassword(contextComponent: Component, title: String): ByteArray? {
+  return MessagesService.getInstance().showPasswordDialog(contextComponent, "Master Password:", title, null, null)?.trim().nullize()?.toByteArray()
 }
 
 private fun normalizeSelectedFile(file: VirtualFile): String {

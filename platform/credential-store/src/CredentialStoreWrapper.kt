@@ -22,11 +22,11 @@ internal val NOTIFICATION_MANAGER by lazy {
 }
 
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
-  private val fallbackStore = lazy { KeePassCredentialStore(memoryOnly = true) }
+  private val fallbackStore = lazy { KeePassCredentialStore(isMemoryOnly = true) }
 
   private val queueProcessor = QueueProcessor<() -> Unit> { it() }
 
-  private val postponedCredentials = KeePassCredentialStore(memoryOnly = true)
+  private val postponedCredentials = KeePassCredentialStore(isMemoryOnly = true)
   private val deniedItems = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<CredentialAttributes, Boolean>()
 
   override fun get(attributes: CredentialAttributes): Credentials? {

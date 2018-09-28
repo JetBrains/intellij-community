@@ -55,7 +55,7 @@ internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials
 }
 
 internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
-                                      var memoryOnly: Boolean = false,
+                                      var isMemoryOnly: Boolean = false,
                                       dbFile: Path? = null,
                                       existingMasterPassword: ByteArray? = null,
                                       preloadedDb: KeePassDatabase? = null) : PasswordStorage, CredentialStore {
@@ -80,7 +80,7 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
     if (preloadedDb == null) {
       needToSave = AtomicBoolean(false)
 
-      if (memoryOnly) {
+      if (isMemoryOnly) {
         db = KeePassDatabase()
       }
       else {
@@ -104,7 +104,7 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
       }
     }
     else {
-      needToSave = AtomicBoolean(!memoryOnly)
+      needToSave = AtomicBoolean(!isMemoryOnly)
       db = preloadedDb
       if (existingMasterPassword != null) {
         masterKeyStorage.set(existingMasterPassword)
@@ -114,7 +114,7 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
 
   @Synchronized
   fun save() {
-    if (memoryOnly || (!needToSave.compareAndSet(true, false) && !db.isDirty)) {
+    if (isMemoryOnly || (!needToSave.compareAndSet(true, false) && !db.isDirty)) {
       return
     }
 
@@ -207,7 +207,7 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
   }
 
   fun setMasterPassword(masterPassword: ByteArray) {
-    LOG.assertTrue(!memoryOnly)
+    LOG.assertTrue(!isMemoryOnly)
 
     masterKeyStorage.set(masterPassword)
     dbFile.writeSafe { db.save(KdbxPassword(masterPassword), it) }
