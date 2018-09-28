@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.IfCanBeSwitchInspection;
 
@@ -31,6 +30,7 @@ public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
   public void setUp() throws Exception {
     super.setUp();
     final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
+    inspection.minimumBranches = 2;
     inspection.suggestIntSwitches = true;
     myFixture.enableInspections(inspection);
     myRelativePath = "migration/if_can_be_switch";
