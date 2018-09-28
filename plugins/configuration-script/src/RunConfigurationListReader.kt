@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfigurationOptions
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
@@ -51,7 +50,6 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       }
 
       val valueNode = tuple.valueNode
-
       if (factories.size > 1) {
         if (valueNode !is MappingNode) {
           LOG.warn("Unexpected valueNode type: ${valueNode.nodeId}")
@@ -87,12 +85,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
   }
 
   private fun readRunConfigurationGroup(node: Node, factory: ConfigurationFactory) {
-    val optionsClass = factory.optionsClass
-    if (optionsClass == null) {
-      LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
-      return
-    }
-
+    val optionsClass = factory.optionsClass ?: RunConfigurationOptions::class.java
     if (node is MappingNode) {
       // direct child
       LOG.runAndLogException {
