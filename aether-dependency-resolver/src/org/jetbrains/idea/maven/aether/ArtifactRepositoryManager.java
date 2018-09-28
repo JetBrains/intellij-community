@@ -260,6 +260,21 @@ public class ArtifactRepositoryManager {
     return artifacts;
   }
 
+  /**
+   * Modify version constraint to look for applicable annotations artifact.
+   *
+   * Annotations artifact for a given library is matched by Group Id, Artifact Id
+   * and classifier "annotations". Annotations version is selected using following rules:
+   * <ul>
+   *   <li>it is larger or equal to major component of library version (or lower constraint bound).
+   *   E.g., annotations artifact ver 3.1 is applicable to library ver 3.6.5 (3.1 > 3.0)</li>
+   *   <li>it is smaller or equal to library version with suffix (-an10000).
+   *   E.g., annotations artifact ver 3.2-an3 is applicable to library ver 3.2</li>
+   * </ul>
+   * This allows to re-use existing annotations artifacts across different library versions
+   * @param constraint - version or range constraint of original library
+   * @return resulting relaxed constraint to select annotations artifact.
+   */
   private Set<VersionConstraint> relaxForAnnotations(VersionConstraint constraint) {
     String annotationsConstraint = constraint.toString();
 
