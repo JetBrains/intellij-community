@@ -453,5 +453,10 @@
       <action id="Vcs.Show.Local.Changes" class="com.intellij.vcs.VcsShowLocalChangesAction" text="Show Local Changes"/>
       <action id="Vcs.Show.Shelf" class="com.intellij.vcs.VcsShowShelfAction" text="Show Shelf"/>
     </group>
+
+    <action class="com.intellij.openapi.vcs.actions.ChangesAnalysisAction" id="Vcs.ChangesAnalysisAction" internal="true"
+            text="Show introduced code smells in changed files">
+    </action>
+
   </actions>
 </idea-plugin>
