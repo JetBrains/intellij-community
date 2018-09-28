@@ -74,7 +74,7 @@ class RetypeSession(
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
-    queueNext()
+    queueNextOrStop()
   }
 
   fun stop(startNext: Boolean) {
