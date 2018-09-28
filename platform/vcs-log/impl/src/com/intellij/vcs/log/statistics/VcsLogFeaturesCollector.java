@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKey
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
@@ -38,11 +37,8 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         usages.add(StatisticsUtilKt.getBooleanUsage("diffPreview", properties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
         usages.add(StatisticsUtilKt.getBooleanUsage("long.edges", properties.get(SHOW_LONG_EDGES)));
 
-        PermanentGraph.SortType sortType = properties.get(BEK_SORT_TYPE);
-        usages.add(StatisticsUtilKt.getBooleanUsage("sort.linear.bek", sortType.equals(PermanentGraph.SortType.LinearBek)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("sort.bek", sortType.equals(PermanentGraph.SortType.Bek)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("sort.normal", sortType.equals(PermanentGraph.SortType.Normal)));
-
+        usages.add(StatisticsUtilKt.getEnumUsage("sort", properties.get(BEK_SORT_TYPE)));
+        
         if (ui.getColorManager().isMultipleRoots()) {
           usages.add(StatisticsUtilKt.getBooleanUsage("roots", properties.get(CommonUiProperties.SHOW_ROOT_NAMES)));
         }
