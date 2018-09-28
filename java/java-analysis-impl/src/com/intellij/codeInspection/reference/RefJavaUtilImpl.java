@@ -148,13 +148,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        @Override
                        public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
                          visitReferenceExpression(node);
-                         node.getAnnotations().forEach(annotation -> annotation.accept(this));
-                         UExpression receiver = node.getReceiver();
-                         receiver.accept(this);
-                         if (!(receiver instanceof UInstanceExpression)) {
-                           node.getSelector().accept(this);
-                         }
-                         return true;
+                         return false;
                        }
 
                        @Override
@@ -203,6 +197,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        private void visitReferenceExpression(UExpression node) {
+                         UElement uastParent = node.getUastParent();
+                         if (uastParent instanceof UQualifiedReferenceExpression && ((UQualifiedReferenceExpression)uastParent).getSelector() == node) {
+                           return;
+                         }
                          PsiElement psiResolved = null;
                          if (node instanceof UResolvable) {
                            psiResolved = ((UResolvable)node).resolve();
