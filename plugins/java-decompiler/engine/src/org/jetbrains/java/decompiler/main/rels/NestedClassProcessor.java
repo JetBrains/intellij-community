@@ -641,11 +641,7 @@ public class NestedClassProcessor {
   private static void mergeListSignatures(List<VarFieldPair> first, List<VarFieldPair> second, boolean both) {
     int i = 1;
 
-    while (true) {
-      if (first.size() <= i || second.size() <= i) {
-        break;
-      }
-
+    while (first.size() > i && second.size() > i) {
       VarFieldPair fObj = first.get(first.size() - i);
       VarFieldPair sObj = second.get(second.size() - i);
 
