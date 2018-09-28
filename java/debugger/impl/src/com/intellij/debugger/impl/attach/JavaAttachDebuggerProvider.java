@@ -58,7 +58,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getDebuggerDisplayName() {
-      return "Java Debugger";
+      return myInfo.getDebuggerName();
     }
 
     @Override
@@ -69,16 +69,26 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   private static final Key<Map<String, LocalAttachInfo>> ADDRESS_MAP_KEY = Key.create("ADDRESS_MAP");
 
-  private static final XLocalAttachGroup ourAttachGroup = new XDefaultLocalAttachGroup() {
+  private static final XLocalAttachGroup ourAttachGroup = new JavaDebuggerAttachGroup("Java", -20);
+
+  static class JavaDebuggerAttachGroup extends XDefaultLocalAttachGroup {
+    private final String myName;
+    private final int myOrder;
+
+    JavaDebuggerAttachGroup(String name, int order) {
+      myName = name;
+      myOrder = order;
+    }
+
     @Override
     public int getOrder() {
-      return 1;
+      return myOrder;
     }
 
     @NotNull
     @Override
     public String getGroupName() {
-      return "Java";
+      return myName;
     }
 
     @NotNull
@@ -130,7 +140,14 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     LocalAttachInfo info = getAttachInfo(project, processInfo, addressMap);
-    return info != null ? Collections.singletonList(new JavaLocalAttachDebugger(project, info)) : Collections.emptyList();
+    if (info != null && isDebuggerAttach(info)) {
+      return Collections.singletonList(new JavaLocalAttachDebugger(project, info));
+    }
+    return Collections.emptyList();
+  }
+
+  boolean isDebuggerAttach(LocalAttachInfo info) {
+    return info instanceof DebuggerLocalAttachInfo;
   }
 
   private static Set<String> getAttachedPids(@NotNull Project project) {
@@ -301,6 +318,11 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
+    String getDebuggerName() {
+      return "Java Debugger";
+    }
+
+    @Override
     String getProcessDisplayText(String text) {
       return text + " (" + myAddress + ")";
     }
@@ -337,8 +359,12 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       return "pid " + myPid;
     }
 
+    String getDebuggerName() {
+      return "Read Only Java Debugger";
+    }
+
     String getProcessDisplayText(String text) {
-      return text + " (read only)";
+      return text;
     }
   }
 
