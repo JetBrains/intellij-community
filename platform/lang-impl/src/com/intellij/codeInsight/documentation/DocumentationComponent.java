@@ -122,7 +122,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final ActionToolbar myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
-  private boolean myResizing;
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private boolean myIgnoreFontSizeSliderChange;
@@ -796,15 +795,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void showHint() {
     if (myHint == null) return;
 
-    myResizing = true;
-
     setHintSize();
 
     Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
     DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
     PopupPositionManager.positionPopupInBestPosition(myHint, myManager.getEditor(), dataContext,
                                                      PopupPositionManager.Position.RIGHT, PopupPositionManager.Position.LEFT);
-    myResizing = false;
 
     if (myHint.getDimensionServiceKey() == null) {
       registerSizeTracker();
@@ -859,15 +855,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     AbstractPopup hint = myHint;
     if (hint == null || mySizeTrackerRegistered) return;
     mySizeTrackerRegistered = true;
-    Window window = hint.getPopupWindow();
-    ComponentAdapter listener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (!myResizing) hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
-      }
-    };
-    window.addComponentListener(listener);
-    Disposer.register(this, () -> hint.getPopupWindow().removeComponentListener(listener));
+    hint.addResizeListener(() -> hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE), this);
   }
 
   private int definitionPreferredWidth() {

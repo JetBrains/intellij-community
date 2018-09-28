@@ -32,10 +32,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -46,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -124,6 +122,7 @@ public class AbstractPopup implements JBPopup {
   @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
+  private final List<Runnable> myResizeListeners = new ArrayList<>();
 
   private static final WeakList<JBPopup> all = new WeakList<>();
 
@@ -881,6 +880,11 @@ public class AbstractPopup implements JBPopup {
             }
             super.setCursor(content, cursor);
           }
+        }
+
+        @Override
+        protected void notifyResized() {
+          myResizeListeners.forEach(Runnable::run);
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
@@ -1903,5 +1907,13 @@ public class AbstractPopup implements JBPopup {
       }
       return false;
     }).collect(Collectors.toList());
+  }
+
+  /**
+   * Passed listener will be notified if popup is resized by user (using mouse)
+   */
+  public void addResizeListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
+    myResizeListeners.add(runnable);
+    Disposer.register(parentDisposable, () -> myResizeListeners.remove(runnable));
   }
 }
