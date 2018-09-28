@@ -153,6 +153,10 @@ public class ListPluginComponent extends CellPluginComponent {
     fullRepaint();
   }
 
+  public void clearProgress() {
+    myIndicator = null;
+  }
+
   @NotNull
   private static AbstractLayoutManager createCheckboxIconLayout() {
     return new AbstractLayoutManager() {
