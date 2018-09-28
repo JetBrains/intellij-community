@@ -349,7 +349,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
-        builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
+        final String text = StringUtil.removeHtmlTags(typeText);
+        final int firstSentenceMark = text.indexOf(". ");
+        builder = builder.withTypeText(firstSentenceMark == -1 ? text : text.substring(0, firstSentenceMark + 1), true);
       }
       else {
         String type = jsonSchemaObject.getTypeDescription(true);
