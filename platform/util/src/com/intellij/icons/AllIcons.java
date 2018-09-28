@@ -1610,8 +1610,6 @@ public class AllIcons {
     public static final Icon InterceptorMethod = IconLoader.getIcon("/javaee/interceptorMethod.svg"); // 16x16
     public static final Icon JavaeeAppModule = IconLoader.getIcon("/javaee/JavaeeAppModule.svg"); // 16x16
     public static final Icon JpaFacet = IconLoader.getIcon("/javaee/jpaFacet.svg"); // 16x16
-    public static final Icon Local = IconLoader.getIcon("/javaee/local.png"); // 16x16
-    public static final Icon LocalHome = IconLoader.getIcon("/javaee/localHome.png"); // 16x16
     public static final Icon MessageBean = IconLoader.getIcon("/javaee/messageBean.svg"); // 16x16
     public static final Icon PersistenceAttribute = IconLoader.getIcon("/javaee/persistenceAttribute.svg"); // 16x16
     public static final Icon PersistenceEmbeddable = IconLoader.getIcon("/javaee/persistenceEmbeddable.svg"); // 16x16
@@ -1629,9 +1627,7 @@ public class AllIcons {
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.svg"); // 16x16
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.svg"); // 16x16
     public static final Icon WebService = IconLoader.getIcon("/javaee/WebService.svg"); // 16x16
-    public static final Icon WebService2 = IconLoader.getIcon("/javaee/WebService2.png"); // 16x16
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.svg"); // 16x16
-    public static final Icon WebServiceClient2 = IconLoader.getIcon("/javaee/WebServiceClient2.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1647,6 +1643,26 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon EntityBeanBig = IconLoader.getIcon("/javaee/entityBeanBig.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Interface */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Local = AllIcons.Nodes.Interface;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Javaee.Home */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon LocalHome = AllIcons.Javaee.Home;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Javaee.WebService */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon WebService2 = AllIcons.Javaee.WebService;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Javaee.WebServiceClient */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon WebServiceClient2 = AllIcons.Javaee.WebServiceClient;
 
   }
 
