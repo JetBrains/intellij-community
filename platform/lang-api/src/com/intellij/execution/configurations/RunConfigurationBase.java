@@ -139,7 +139,6 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
     myOptions.copyFrom(template.myOptions);
     myOptions.resetModificationCount();
-    template.copyCopyableDataTo(this);
     myBeforeRunTasks = ContainerUtil.copyList(template.myBeforeRunTasks);
   }
 
