@@ -24,13 +24,13 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
     get() {
       val result = state.keepassDb
       return when {
-        result == null && providerType === ProviderType.KEEPASS -> getDefaultKeePassDbFilePath()
+        result == null && providerType === ProviderType.KEEPASS -> getDefaultKeePassDbFile().toString()
         else -> result
       }
     }
     set(value) {
       var v = value.nullize(nullizeSpaces = true)
-      if (v != null && v == getDefaultKeePassDbFilePath()) {
+      if (v != null && v == getDefaultKeePassDbFile().toString()) {
         v = null
       }
       state.keepassDb = v

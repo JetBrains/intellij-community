@@ -1,17 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.EncryptionSupport
-import com.intellij.util.io.*
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
+import com.intellij.util.io.readBytes
+import com.intellij.util.io.writeSafe
 import java.nio.file.*
 import java.security.Key
 import java.security.SecureRandom
@@ -22,6 +25,7 @@ import javax.crypto.spec.SecretKeySpec
 private const val ROOT_GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal const val DB_FILE_NAME = "c.kdbx"
+internal const val MASTER_PASSWORD_FILE_NAME = "pdb.pwd"
 
 @Suppress("FunctionName")
 internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials>): KeePassCredentialStore {
@@ -33,14 +37,31 @@ internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials
     entry.password = credentials.password?.let(::SecureString)
     group.addEntry(entry)
   }
-  return KeePassCredentialStore(preloadedDb = keepassDb)
+  return KeePassCredentialStore(baseDirectory = getDefaultKeePassBaseDirectory(), preloadedDb = keepassDb)
 }
 
-internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
-                                      isMemoryOnly: Boolean = false,
-                                      dbFile: Path? = null,
-                                      existingMasterPassword: ByteArray? = null,
-                                      preloadedDb: KeePassDatabase? = null) : PasswordStorage, CredentialStore {
+internal fun getDefaultKeePassBaseDirectory() = Paths.get(PathManager.getConfigPath())
+
+internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_PASSWORD_FILE_NAME)
+
+internal fun createInMemoryKeePassCredentialStore(): KeePassCredentialStore {
+  val baseDirectory = getDefaultKeePassBaseDirectory()
+  // for now not safe to pass fake path because later KeePassCredentialStore can be transformed to not in memory
+  return KeePassCredentialStore(baseDirectory.resolve(DB_FILE_NAME), baseDirectory.resolve(MASTER_PASSWORD_FILE_NAME), isMemoryOnly = true)
+}
+
+internal class KeePassCredentialStore constructor(dbFile: Path,
+                                                  internal val masterPasswordFile: Path,
+                                                  preloadedMasterPassword: ByteArray? = null,
+                                                  preloadedDb: KeePassDatabase? = null,
+                                                  isMemoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
+  constructor(baseDirectory: Path, preloadedMasterPassword: ByteArray? = null, preloadedDb: KeePassDatabase? = null) : this(dbFile = baseDirectory.resolve(DB_FILE_NAME),
+                                                                                                                            masterPasswordFile = baseDirectory.resolve(MASTER_PASSWORD_FILE_NAME),
+                                                                                                                            preloadedMasterPassword = preloadedMasterPassword,
+                                                                                                                            preloadedDb = preloadedDb)
+
+  constructor(dbFile: Path, masterPasswordFile: Path) : this(dbFile = dbFile, masterPasswordFile = masterPasswordFile, isMemoryOnly = false)
+
   var isMemoryOnly = isMemoryOnly
     set(value) {
       if (field != value && !value) {
@@ -49,7 +70,7 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
       field = value
     }
 
-  internal var dbFile: Path = dbFile ?: baseDirectory.resolve(DB_FILE_NAME)
+  internal var dbFile: Path = dbFile
     set(path) {
       if (field == path) {
         return
@@ -62,46 +83,28 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
 
   private val db: KeePassDatabase
 
-  private val masterKeyStorage by lazy { MasterKeyFileStorage(baseDirectory) }
+  private val masterKeyStorage by lazy { MasterKeyFileStorage(masterPasswordFile) }
 
   private val needToSave: AtomicBoolean
 
   init {
     if (preloadedDb == null) {
       needToSave = AtomicBoolean(false)
-
-      if (isMemoryOnly) {
-        db = KeePassDatabase()
-      }
-      else {
-        val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
-        if (masterPassword == null) {
-          LOG.runAndLogException {
-            if (this.dbFile.exists()) {
-              val renameTo = baseDirectory.resolve("old.c.kdbx")
-              LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
-              this.dbFile.move(renameTo)
-            }
-          }
-          db = KeePassDatabase()
+      db = when {
+        !isMemoryOnly && dbFile.exists() -> {
+          val masterPassword = preloadedMasterPassword ?: masterKeyStorage.get() ?: throw IncorrectMasterPasswordException(isFileMissed = true)
+          loadKdbx(dbFile, KdbxPassword(masterPassword))
         }
-        else {
-          db = when {
-            this.dbFile.exists() -> loadKdbx(this.dbFile, KdbxPassword(masterPassword))
-            else -> KeePassDatabase()
-          }
-          if (existingMasterPassword != null) {
-            masterKeyStorage.set(existingMasterPassword)
-          }
-        }
+        else -> KeePassDatabase()
       }
     }
     else {
       needToSave = AtomicBoolean(!isMemoryOnly)
       db = preloadedDb
-      if (existingMasterPassword != null) {
-        masterKeyStorage.set(existingMasterPassword)
-      }
+    }
+
+    if (preloadedMasterPassword != null) {
+      masterKeyStorage.set(preloadedMasterPassword)
     }
   }
 
@@ -208,11 +211,11 @@ internal class KeePassCredentialStore(baseDirectory: Path = Paths.get(PathManage
   }
 }
 
-internal fun copyFileDatabase(path: Path, masterPassword: String, baseDirectory: Path = Paths.get(PathManager.getConfigPath())): KeePassCredentialStore {
+internal fun copyFileDatabase(file: Path, masterPasswordFile: Path, masterPassword: String, baseDirectory: Path): KeePassCredentialStore {
   val dbFile = baseDirectory.resolve(DB_FILE_NAME)
-  Files.copy(path, dbFile, StandardCopyOption.REPLACE_EXISTING)
+  Files.copy(file, dbFile, StandardCopyOption.REPLACE_EXISTING)
   dbFile.setOwnerPermissions()
-  return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword.toByteArray())
+  return KeePassCredentialStore(dbFile = dbFile, masterPasswordFile = masterPasswordFile, preloadedMasterPassword = masterPassword.toByteArray())
 }
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {
@@ -221,21 +224,20 @@ internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: Passwor
   }
 }
 
-interface MasterKeyStorage {
+private interface MasterKeyStorage {
   fun get(): ByteArray?
 
   fun set(key: ByteArray?)
 }
 
-class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
+private class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
   override fun encrypt(data: ByteArray, size: Int): ByteArray = WindowsCryptUtils.protect(super.encrypt(data, size))
 
   override fun decrypt(data: ByteArray): ByteArray = super.decrypt(WindowsCryptUtils.unprotect(data))
 }
 
-class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {
+private class MasterKeyFileStorage(private val passwordFile: Path) : MasterKeyStorage {
   private val encryptionSupport: EncryptionSupport
-  private val passwordFile = baseDirectory.resolve("pdb.pwd")
 
   init {
     val key = SecretKeySpec(byteArrayOf(

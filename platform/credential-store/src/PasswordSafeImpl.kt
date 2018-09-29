@@ -5,7 +5,6 @@ package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
-import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -14,32 +13,35 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
+import java.nio.file.Path
 import java.nio.file.Paths
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return KeePassCredentialStore(isMemoryOnly = true)
+    return createInMemoryKeePassCredentialStore()
   }
 
   if (settings.providerType != ProviderType.KEEPASS) {
-    return createPersistentCredentialStore()
+    createPersistentCredentialStore()?.let {
+      return it
+    }
   }
 
-  val dbFile = LOG.runAndLogException { Paths.get(settings.keepassDb!!) }
   try {
-    return KeePassCredentialStore(dbFile = dbFile)
+    val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
+    return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
   }
   catch (e: IncorrectMasterPasswordException) {
     LOG.warn(e)
-    NOTIFICATION_MANAGER.notify("Master password for KeePass database is not correct ($dbFile). In-memory password storage will be used.", null)
+    NOTIFICATION_MANAGER.notify("Master password for KeePass database is ${if (e.isFileMissed) "not found" else "not correct"} (${settings.keepassDb}). In-memory password storage will be used.", null)
   }
   catch (e: Throwable) {
     LOG.error(e)
-    NOTIFICATION_MANAGER.notify("Internal error during opening of KeePass database($dbFile). In-memory password storage will be used.", null)
+    NOTIFICATION_MANAGER.notify("Internal error during opening of KeePass database(${settings.keepassDb}). In-memory password storage will be used.", null)
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY
-  return KeePassCredentialStore(isMemoryOnly = true)
+  return createInMemoryKeePassCredentialStore()
 }
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
@@ -62,7 +64,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { KeePassCredentialStore(preloadedDb = KeePassDatabase(), isMemoryOnly = true) }
+  private val memoryHelperProvider = lazy { createInMemoryKeePassCredentialStore() }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
@@ -136,35 +138,24 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     get() = memoryHelperProvider.value
 }
 
-internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
+internal fun createPersistentCredentialStore(): PasswordStorage? {
   LOG.runAndLogException {
-    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
+      @Suppress("UnnecessaryVariable")
       val store = factory.create() ?: continue
-      if (convertFileStore) {
-        LOG.runAndLogException {
-          val fileStore = KeePassCredentialStore()
-          fileStore.copyTo(store)
-          fileStore.clear()
-          fileStore.save()
-        }
-      }
       return store
     }
   }
-
-  existing?.let {
-    it.isMemoryOnly = false
-    return it
-  }
-  return KeePassCredentialStore()
+  return null
 }
 
 @TestOnly
-internal fun createKeePassStore(file: String): PasswordSafe {
+fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
+  val store = KeePassCredentialStore(dbFile, masterPasswordFile)
   val settings = PasswordSafeSettings()
   settings.loadState(PasswordSafeSettings.PasswordSafeOptions().apply {
     provider = ProviderType.KEEPASS
-    keepassDb = file
+    keepassDb = store.dbFile.toString()
   })
-  return PasswordSafeImpl(settings, KeePassCredentialStore(dbFile = Paths.get(file)))
+  return PasswordSafeImpl(settings, store)
 }

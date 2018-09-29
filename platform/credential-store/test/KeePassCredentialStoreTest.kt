@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.testFramework.RuleChain
@@ -25,7 +11,7 @@ import org.junit.Test
 import java.util.*
 
 // part of specific tests in the IcsCredentialTest
-class FileCredentialStoreTest {
+class KeePassCredentialStoreTest {
   // we don't use in memory fs to check real file io
   private val tempDirManager = TemporaryDirectory()
 
@@ -73,11 +59,11 @@ class FileCredentialStoreTest {
 
     provider.setMasterPassword("foo".toByteArray())
 
-    val pdbFile = baseDir.resolve("c.kdbx")
-    val pdbPwdFile = baseDir.resolve("pdb.pwd")
+    val dbFile = baseDir.resolve("c.kdbx")
+    val masterPasswordFile = baseDir.resolve("pdb.pwd")
 
-    assertThat(pdbFile).exists()
-    assertThat(pdbPwdFile).exists()
+    assertThat(dbFile).exists()
+    assertThat(masterPasswordFile).exists()
 
     provider = KeePassCredentialStore(baseDirectory = baseDir)
 
@@ -89,25 +75,25 @@ class FileCredentialStoreTest {
 
     check()
 
-    // test if no pdb.pwd
-    pdbPwdFile.delete()
+    // test if no master password file
+    masterPasswordFile.delete()
 
     provider = KeePassCredentialStore(baseDirectory = baseDir)
 
     val oldDbFile = baseDir.resolve("old.c.kdbx")
     assertThat(oldDbFile).exists()
-    assertThat(pdbFile).doesNotExist()
-    assertThat(pdbPwdFile).doesNotExist()
+    assertThat(dbFile).doesNotExist()
+    assertThat(masterPasswordFile).doesNotExist()
 
     for ((attributes) in credentialMap) {
       assertThat(provider.get(attributes)).isNull()
     }
 
-    provider = copyFileDatabase(oldDbFile, "foo", baseDir)
+    provider = copyFileDatabase(oldDbFile, masterPasswordFile, "foo", baseDir)
 
     assertThat(oldDbFile).exists()
-    assertThat(pdbFile).exists()
-    assertThat(pdbPwdFile).exists()
+    assertThat(dbFile).exists()
+    assertThat(masterPasswordFile).exists()
 
     check()
   }

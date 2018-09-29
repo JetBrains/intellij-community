@@ -98,7 +98,7 @@ private fun checkStartBytes(kdbxHeader: KdbxHeader, decryptedInputStream: InputS
   }
 }
 
-internal class IncorrectMasterPasswordException : RuntimeException()
+internal class IncorrectMasterPasswordException(val isFileMissed: Boolean = false) : RuntimeException()
 
 private const val SIG1 = 0x9AA2D903.toInt()
 private const val SIG2 = 0xB54BFB67.toInt()
