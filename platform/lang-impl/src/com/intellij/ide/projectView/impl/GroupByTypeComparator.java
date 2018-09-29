@@ -133,7 +133,14 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     if (key1 instanceof String && key2 instanceof String) {
       return naturalCompare((String)key1, (String)key2);
     }
-    //noinspection unchecked
-    return key1.compareTo(key2);
+    try {
+      //noinspection unchecked
+      return key1.compareTo(key2);
+    }
+    catch (ClassCastException ignored) {
+      // if custom nodes provide comparable keys of different types,
+      // let's try to compare class names instead to avoid broken trees
+      return key1.getClass().getName().compareTo(key2.getClass().getName());
+    }
   }
 }
