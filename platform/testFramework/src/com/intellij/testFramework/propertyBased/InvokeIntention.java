@@ -113,21 +113,22 @@ public class InvokeIntention extends ActionOnFile {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
-    Disposable disposable = Disposer.newDisposable();
-    if (containsErrorElements) {
-      Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
-      Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
-    }
-
-    Pair<PsiFile, Editor> pair = ShowIntentionActionsHandler.chooseFileForAction(file, editor, intention);
-    if (pair != null && pair.second instanceof EditorWindow) {
-      // intentions too often break wildly when invoked inside injection :(
-      // todo remove return when IDEA-187613, IDEA-187427, IDEA-194969 are fixed
-      return;
-    }
-
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
+
+    Disposable disposable = Disposer.newDisposable();
     try {
+      if (containsErrorElements) {
+        Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
+        Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
+      }
+
+      Pair<PsiFile, Editor> pair = ShowIntentionActionsHandler.chooseFileForAction(file, editor, intention);
+      if (pair != null && pair.second instanceof EditorWindow) {
+        // intentions too often break wildly when invoked inside injection :(
+        // todo remove return when IDEA-187613, IDEA-187427, IDEA-194969 are fixed
+        return;
+      }
+
       if (changedDocument != null) {
         MadTestingUtil.restrictChangesToDocument(changedDocument, r);
       } else {
