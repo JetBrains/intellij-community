@@ -17,7 +17,6 @@ import com.intellij.util.io.readBytes
 import com.intellij.util.io.writeSafe
 import java.nio.file.*
 import java.security.Key
-import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
@@ -65,7 +64,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
   var isMemoryOnly = isMemoryOnly
     set(value) {
       if (field != value && !value) {
-        needToSave.set(true)
+        isNeedToSave.set(true)
       }
       field = value
     }
@@ -77,7 +76,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
       }
 
       field = path
-      needToSave.set(true)
+      isNeedToSave.set(true)
       save()
     }
 
@@ -85,11 +84,11 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
 
   private val masterKeyStorage by lazy { MasterKeyFileStorage(masterPasswordFile) }
 
-  private val needToSave: AtomicBoolean
+  private val isNeedToSave: AtomicBoolean
 
   init {
     if (preloadedDb == null) {
-      needToSave = AtomicBoolean(false)
+      isNeedToSave = AtomicBoolean(false)
       db = when {
         !isMemoryOnly && dbFile.exists() -> {
           val masterPassword = preloadedMasterPassword ?: masterKeyStorage.get() ?: throw IncorrectMasterPasswordException(isFileMissed = true)
@@ -99,7 +98,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
       }
     }
     else {
-      needToSave = AtomicBoolean(!isMemoryOnly)
+      isNeedToSave = AtomicBoolean(!isMemoryOnly)
       db = preloadedDb
     }
 
@@ -110,7 +109,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
 
   @Synchronized
   fun save() {
-    if (isMemoryOnly || (!needToSave.compareAndSet(true, false) && !db.isDirty)) {
+    if (isMemoryOnly || (!isNeedToSave.compareAndSet(true, false) && !db.isDirty)) {
       return
     }
 
@@ -118,7 +117,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
       var masterKey = masterKeyStorage.get()
       if (masterKey == null) {
         val bytes = ByteArray(512)
-        SecureRandom().nextBytes(bytes)
+        createSecureRandom().nextBytes(bytes)
         masterKey = Base64.getEncoder().withoutPadding().encode(bytes)
         masterKeyStorage.set(masterKey)
       }
@@ -128,10 +127,13 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
     }
     catch (e: Throwable) {
       // schedule save again
-      needToSave.set(true)
+      isNeedToSave.set(true)
       LOG.error("Cannot save password database", e)
     }
   }
+
+  @Synchronized
+  fun isNeedToSave() = !isMemoryOnly && (isNeedToSave.get() || db.isDirty)
 
   @Synchronized
   fun deleteFileStorage() {
@@ -145,7 +147,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
 
   fun clear() {
     db.rootGroup.removeGroup(ROOT_GROUP_NAME)
-    needToSave.set(db.isDirty)
+    isNeedToSave.set(db.isDirty)
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
@@ -188,7 +190,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
     }
 
     if (db.isDirty) {
-      needToSave.set(true)
+      isNeedToSave.set(true)
     }
   }
 

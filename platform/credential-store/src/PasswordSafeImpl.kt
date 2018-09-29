@@ -10,6 +10,9 @@ import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
@@ -69,6 +72,18 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
 
+  // SecureRandom (used to generate master password on first save) can be blocking on Linux
+  private val saveAlarm = SingleAlarm(Runnable {
+    val currentThread = Thread.currentThread()
+    ShutDownTracker.getInstance().registerStopperThread(currentThread)
+    try {
+      (currentProviderIfComputed as? KeePassCredentialStore)?.save()
+    }
+    finally {
+      ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
+    }
+  }, 0, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication())
+
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
     if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
@@ -108,7 +123,9 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
-    (currentProviderIfComputed as? KeePassCredentialStore)?.save()
+    if ((currentProviderIfComputed as? KeePassCredentialStore ?: return).isNeedToSave()) {
+      saveAlarm.request()
+    }
   }
 
   override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {
@@ -126,7 +143,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   }
 
   // public - backward compatibility
-  @Suppress("unused", "DeprecatedCallableAddReplaceWith")
+                                        @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use it")
   val masterKeyProvider: CredentialStore
     get() = currentProvider
