@@ -698,6 +698,18 @@ public class VfsUtilCore {
     return false;
   }
 
+  @Nullable
+  public static VirtualFile findContainingDirectory(@NotNull VirtualFile file, @NotNull CharSequence name) {
+    VirtualFile parent = file.isDirectory() ? file: file.getParent();
+    while (parent != null) {
+      if (Comparing.equal(parent.getNameSequence(), name, SystemInfoRt.isFileSystemCaseSensitive)) {
+        return parent;
+      }
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
   /**
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
