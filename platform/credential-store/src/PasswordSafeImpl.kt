@@ -7,9 +7,13 @@ import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
@@ -30,17 +34,25 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     }
   }
 
+  fun showError(message: String) {
+    NOTIFICATION_MANAGER.notify(content = "$message\nIn-memory password storage will be used.", action = object: NotificationAction("Open Settings") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
+      }
+    })
+  }
+
   try {
     val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
     return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
   }
   catch (e: IncorrectMasterPasswordException) {
     LOG.warn(e)
-    NOTIFICATION_MANAGER.notify("Master password for KeePass database is ${if (e.isFileMissed) "not found" else "not correct"} (${settings.keepassDb}). In-memory password storage will be used.", null)
+    showError("Master password of KeePass database is ${if (e.isFileMissed) "not found" else "not correct"} (${settings.keepassDb}).")
   }
   catch (e: Throwable) {
     LOG.error(e)
-    NOTIFICATION_MANAGER.notify("Internal error during opening of KeePass database(${settings.keepassDb}). In-memory password storage will be used.", null)
+    showError("Internal error during opening of KeePass database(${settings.keepassDb})")
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY
