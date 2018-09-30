@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.util.containers.MultiMap
@@ -14,7 +15,9 @@ import com.intellij.vcs.log.graph.asTestGraphString
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.impl.facade.BaseController
 import com.intellij.vcs.log.graph.impl.facade.FilteredController
+import gnu.trove.THashMap
 import gnu.trove.TIntObjectHashMap
+import gnu.trove.TObjectHashingStrategy
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
@@ -229,10 +232,58 @@ class FileHistoryTest {
       4()
     }
   }
+
+  @Test
+  fun caseOnlyRename() {
+    val lowercasePath = LocalFilePath("file.txt", false)
+    val uppercasePath = LocalFilePath("FILE.TXT", false)
+    val mixedPath = LocalFilePath("FiLe.TxT", false)
+    val fileNamesData = FileNamesDataBuilder(lowercasePath)
+      .addChange(lowercasePath, 7, listOf(ADDED), listOf(7))
+      .addChange(lowercasePath, 6, listOf(MODIFIED), listOf(7))
+
+      .addChange(lowercasePath, 5, listOf(REMOVED), listOf(6))
+      .addChange(mixedPath, 5, listOf(ADDED), listOf(6))
+      .addRename(6, 5, lowercasePath, mixedPath)
+
+      .addChange(mixedPath, 4, listOf(MODIFIED), listOf(5))
+
+      .addChange(mixedPath, 3, listOf(REMOVED), listOf(4))
+      .addChange(uppercasePath, 3, listOf(ADDED), listOf(4))
+      .addRename(4, 3, mixedPath, uppercasePath)
+
+      .addChange(uppercasePath, 2, listOf(MODIFIED), listOf(3))
+
+      .addChange(uppercasePath, 1, listOf(REMOVED), listOf(2))
+      .addChange(lowercasePath, 1, listOf(ADDED), listOf(2))
+      .addRename(2, 1, uppercasePath, lowercasePath)
+
+      .build()
+
+    graph {
+      0(1)
+      1(2)
+      2(3)
+      3(4)
+      4(5)
+      5(6)
+      6(7)
+      7()
+    }.assert(0, lowercasePath, fileNamesData) {
+      1(2)
+      2(3)
+      3(4)
+      4(5)
+      5(6)
+      6(7)
+      7()
+    }
+  }
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
-  private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> = mutableMapOf()
+  private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
+    THashMap(FilePathCaseSensitiveStrategy())
   private val renamesMap: MultiMap<Couple<Int>, Couple<FilePath>> = MultiMap.createSmart()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
@@ -262,4 +313,24 @@ private fun <T> List<Pair<Int, T>>.toIntObjectMap(): TIntObjectHashMap<T> {
   val result = TIntObjectHashMap<T>()
   this.forEach { result.put(it.first, it.second) }
   return result
+}
+
+private class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> {
+  override fun equals(path1: FilePath?, path2: FilePath?): Boolean {
+    if (path1 === path2) return true
+    if (path1 == null || path2 == null) return false
+
+    if (path1.isDirectory != path2.isDirectory) return false
+    val canonical1 = FileUtil.toCanonicalPath(path1.path)
+    val canonical2 = FileUtil.toCanonicalPath(path2.path)
+    return canonical1 == canonical2
+  }
+
+  override fun computeHashCode(path: FilePath?): Int {
+    if (path == null) return 0
+
+    var result = if (path.path.isEmpty()) 0 else FileUtil.toCanonicalPath(path.path).hashCode()
+    result = 31 * result + if (path.isDirectory) 1 else 0
+    return result
+  }
 }
