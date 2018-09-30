@@ -31,17 +31,15 @@ public class VarModifierTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testVarModifiersEditing() {
-    PsiFile file = myFixture.configureByText("a.java", "import lombok.experimental.var;\nclass Foo { {var o = <caret>;} }");
+    PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
     PsiLocalVariable var = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiLocalVariable.class);
     assertNotNull(var);
-
-    PsiType type1 = var.getType();
-    assertNotNull(type1);
-    assertEquals("lombok.experimental.var", type1.getCanonicalText(false));
+    assertNotNull(var.getType());
 
     myFixture.type('1');
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertTrue(var.isValid());
+    assertEquals(PsiPrimitiveType.INT, var.getType());
 
     assertNotNull(var.getModifierList());
     boolean isFinal = var.getModifierList().hasModifierProperty(PsiModifier.FINAL);

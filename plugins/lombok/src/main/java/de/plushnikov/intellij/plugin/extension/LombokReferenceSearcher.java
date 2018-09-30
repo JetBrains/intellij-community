@@ -23,8 +23,23 @@ public class LombokReferenceSearcher extends QueryExecutorBase<PsiReference, Ref
     super(true);
   }
 
-  @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
+  /**
+   * Used by IDEA from 2018.2
+   */
+//  @Override
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
+    processQueryIntern(queryParameters);
+  }
+
+  /**
+   * Used by IDEA before 2018.2
+   */
+//  @Override
+  public void processQueryIntern(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
+    processQueryIntern(queryParameters);
+  }
+
+  private void processQueryIntern(@NotNull ReferencesSearch.SearchParameters queryParameters) {
     PsiElement refElement = queryParameters.getElementToSearch();
 
     if (refElement instanceof PsiField) {

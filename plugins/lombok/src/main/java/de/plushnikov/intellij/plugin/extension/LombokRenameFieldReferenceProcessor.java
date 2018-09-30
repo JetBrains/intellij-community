@@ -60,10 +60,12 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
         allRenames.put(psiMethod, LombokUtils.toSetterName(accessorsInfo, newFieldName, isBoolean));
       }
 
-      final String witherName = LombokUtils.toWitherName(accessorsInfo, currentFieldName, isBoolean);
-      final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
-      for (PsiMethod psiMethod : psiWitherMethods) {
-        allRenames.put(psiMethod, LombokUtils.toWitherName(accessorsInfo, newFieldName, isBoolean));
+      if(!accessorsInfo.isFluent()) {
+        final String witherName = LombokUtils.toWitherName(accessorsInfo, currentFieldName, isBoolean);
+        final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
+        for (PsiMethod psiMethod : psiWitherMethods) {
+          allRenames.put(psiMethod, LombokUtils.toWitherName(accessorsInfo, newFieldName, isBoolean));
+        }
       }
 
       final PsiAnnotation builderAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, Builder.class, lombok.experimental.Builder.class);

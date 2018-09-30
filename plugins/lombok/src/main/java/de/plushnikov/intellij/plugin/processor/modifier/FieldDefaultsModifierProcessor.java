@@ -58,7 +58,8 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
     // FINAL
     // Is @FieldDefaults(makeFinal = true)?
-    if ((PsiAnnotationUtil.getBooleanAnnotationValue(fieldDefaultsAnnotation, "makeFinal", false)) && (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.NonFinal.class))) {
+    if ((PsiAnnotationUtil.getBooleanAnnotationValue(fieldDefaultsAnnotation, "makeFinal", false)) &&
+      (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.NonFinal.class))) {
       modifiers.add(PsiModifier.FINAL);
     }
 
