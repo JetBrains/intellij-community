@@ -8,12 +8,12 @@ import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 
 object GithubPullRequestKeys {
   @JvmStatic
-  val PULL_REQUESTS_LOADER =
-    DataKey.create<GithubPullRequestsLoader>("org.jetbrains.plugins.github.pullrequest.loader")
+  val PULL_REQUESTS_LIST_COMPONENT =
+    DataKey.create<GithubPullRequestsListComponent>("org.jetbrains.plugins.github.pullrequest.list.component")
   @JvmStatic
   val SELECTED_PULL_REQUEST = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.selected")
   @JvmStatic

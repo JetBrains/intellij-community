@@ -46,6 +46,13 @@ sealed class GithubApiRequestExecutor {
   fun addListener(listener: AuthDataChangeListener, disposable: Disposable) =
     authDataChangedEventDispatcher.addListener(listener, disposable)
 
+  fun addListener(disposable: Disposable, listener: () -> Unit) =
+    authDataChangedEventDispatcher.addListener(object : AuthDataChangeListener {
+      override fun authDataChanged() {
+        listener()
+      }
+    }, disposable)
+
   class WithTokenAuth internal constructor(githubSettings: GithubSettings,
                                            token: String,
                                            private val useProxy: Boolean) : Base(githubSettings) {

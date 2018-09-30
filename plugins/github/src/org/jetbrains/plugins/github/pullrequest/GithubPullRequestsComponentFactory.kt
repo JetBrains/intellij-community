@@ -19,7 +19,8 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings
-import org.jetbrains.plugins.github.pullrequest.data.*
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
@@ -46,8 +47,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val selectionModel = GithubPullRequestsListSelectionModel()
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
                                                selectionModel, listLoader,
-                                               CachingGithubAvatarIconsProvider.Factory(
-                                                 avatarLoader, imageResizer, requestExecutor))
+                                               CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor))
+    requestExecutor.addListener(list) { list.refresh() }
 
     val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
 
@@ -64,8 +65,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     // disposed by content manager when tab is closed
     val wrapper = WrappingComponent(splitter,
                                     repository, remote, repoPath, account,
-                                    selectionModel, listLoader,
-                                    dataLoader)
+                                    list, selectionModel, dataLoader)
     Disposer.register(wrapper, Disposable {
       Disposer.dispose(list)
       Disposer.dispose(preview)
@@ -83,8 +83,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                     private val remote: GitRemote,
                                     private val repoPath: GithubFullPath,
                                     private val account: GithubAccount,
+                                    private val list: GithubPullRequestsListComponent,
                                     private val selectionModel: GithubPullRequestsListSelectionModel,
-                                    private val listLoader: GithubPullRequestsLoader,
                                     private val dataLoader: GithubPullRequestsDataLoader)
       : Wrapper(wrapped), Disposable, DataProvider {
       init {
@@ -97,7 +97,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
           GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
           GithubPullRequestKeys.FULL_PATH.`is`(dataId) -> repoPath
           GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
-          GithubPullRequestKeys.PULL_REQUESTS_LOADER.`is`(dataId) -> listLoader
+          GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
           GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> selectionModel.current?.let(dataLoader::getDataProvider)
           else -> null
         }
