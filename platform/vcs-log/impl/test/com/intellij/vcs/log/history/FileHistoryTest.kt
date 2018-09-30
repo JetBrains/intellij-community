@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.util.containers.MultiMap
@@ -17,7 +16,6 @@ import com.intellij.vcs.log.graph.impl.facade.BaseController
 import com.intellij.vcs.log.graph.impl.facade.FilteredController
 import gnu.trove.THashMap
 import gnu.trove.TIntObjectHashMap
-import gnu.trove.TObjectHashingStrategy
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
@@ -283,7 +281,7 @@ class FileHistoryTest {
 
 private class FileNamesDataBuilder(private val path: FilePath) {
   private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
-    THashMap(FilePathCaseSensitiveStrategy())
+    THashMap(FILE_PATH_HASHING_STRATEGY)
   private val renamesMap: MultiMap<Couple<Int>, Couple<FilePath>> = MultiMap.createSmart()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
@@ -313,24 +311,4 @@ private fun <T> List<Pair<Int, T>>.toIntObjectMap(): TIntObjectHashMap<T> {
   val result = TIntObjectHashMap<T>()
   this.forEach { result.put(it.first, it.second) }
   return result
-}
-
-private class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> {
-  override fun equals(path1: FilePath?, path2: FilePath?): Boolean {
-    if (path1 === path2) return true
-    if (path1 == null || path2 == null) return false
-
-    if (path1.isDirectory != path2.isDirectory) return false
-    val canonical1 = FileUtil.toCanonicalPath(path1.path)
-    val canonical2 = FileUtil.toCanonicalPath(path2.path)
-    return canonical1 == canonical2
-  }
-
-  override fun computeHashCode(path: FilePath?): Int {
-    if (path == null) return 0
-
-    var result = if (path.path.isEmpty()) 0 else FileUtil.toCanonicalPath(path.path).hashCode()
-    result = 31 * result + if (path.isDirectory) 1 else 0
-    return result
-  }
 }
