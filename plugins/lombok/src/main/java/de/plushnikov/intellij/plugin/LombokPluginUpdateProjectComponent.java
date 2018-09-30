@@ -1,12 +1,8 @@
 package de.plushnikov.intellij.plugin;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,6 +10,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LombokPluginUpdateProjectComponent implements ProjectComponent {
   private LombokPluginApplicationComponent application;
+  private final Project myProject;
+
+  /**
+   * Constructor.
+   *
+   * @param project current project
+   */
+  public LombokPluginUpdateProjectComponent(@NotNull Project project) {
+    myProject = project;
+  }
 
   @Override
   public void initComponent() {
@@ -43,7 +49,7 @@ public class LombokPluginUpdateProjectComponent implements ProjectComponent {
         new NotificationListener.UrlOpeningListener(false)
       );
 
-      Notifications.Bus.notify(notification);
+      Notifications.Bus.notify(notification, myProject);
     }
   }
 

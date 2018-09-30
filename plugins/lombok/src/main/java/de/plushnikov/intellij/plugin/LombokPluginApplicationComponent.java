@@ -141,8 +141,6 @@ public class LombokPluginApplicationComponent implements ApplicationComponent {
     } catch (Exception ex) {
       LOG.error("Error injecting Lombok Agent", ex);
     }
-
-
   }
 
   @Override

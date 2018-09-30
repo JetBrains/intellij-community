@@ -19,7 +19,7 @@ Twenty-five version of plugin released. Contains a lot of bugfixes and some new 
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 15.0.6, 2016.3.8, 2017.3.5, 2018.1.5
+Tested and supports IntelliJ versions: 15.0.6, 2016.3.8, 2017.3.5, 2018.1.5, 2018.2.4
 
 Last support for IntelliJ 14.1.7 by plugin version 0.14!
 

@@ -32,14 +32,12 @@ allprojects {
 
   sourceSets {
     main {
-      java {
-        srcDirs = ['src/main/java',
-                   'generated/src']
-      }
-      resources {
-        srcDirs = ['src/main/resources',
-                   'generated/resources']
-      }
+      java.srcDirs 'src/main/java', 'generated/src'
+      resources.srcDirs 'src/main/resources', 'generated/resources'
+    }
+    test {
+      java.srcDir 'test/java'
+      resources.srcDirs 'test/resources', 'testData'
     }
   }
 
@@ -52,13 +50,13 @@ allprojects {
 
 idea {
   project {
+    jdkName = javaVersion
     languageLevel = javaVersion
   }
 }
 
 intellij {
-  def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
-  version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+  version System.getenv().getOrDefault('IDEA_VERSION', ideaVersion)
   println "Building for IntelliJ version: ${version}"
 
   pluginName pluginName
@@ -75,7 +73,7 @@ patchPluginXml {
 
   version pluginVersion + "." + ideaVersion
   // use open until build for last release
-  if(ideaVersion.contains("LATEST-EAP-SNAPSHOT") || ideaVersion.take(4).contains(".")) {
+  if (ideaVersion.contains("LATEST-EAP-SNAPSHOT") || ideaVersion.take(4).contains(".")) {
     untilBuild ""
     version pluginVersion + ".IDEA-EAP"
   }
