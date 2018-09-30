@@ -154,12 +154,6 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     } ?: false
   }
 
-  // public - backward compatibility
-                                        @Suppress("unused", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Do not use it")
-  val masterKeyProvider: CredentialStore
-    get() = currentProvider
-
   @Suppress("unused")
   @Deprecated("Do not use it")
   // public - backward compatibility
