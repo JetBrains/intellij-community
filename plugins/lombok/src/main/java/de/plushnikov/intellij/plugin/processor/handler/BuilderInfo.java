@@ -1,19 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiVariable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
@@ -22,7 +11,6 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.util.StringUtils;
 import lombok.Builder;
 import lombok.Singular;
 import org.jetbrains.annotations.NotNull;
@@ -248,10 +236,10 @@ public class BuilderInfo {
     result.append(fieldInBuilderName);
     result.append('(');
     if (hasObtainVaiAnnotatation()) {
-      if (StringUtils.isNotEmpty(viaFieldName)) {
+      if (StringUtil.isNotEmpty(viaFieldName)) {
         result.append("this.");
         result.append(viaFieldName);
-      } else if (StringUtils.isNotEmpty(viaMethodName)) {
+      } else if (StringUtil.isNotEmpty(viaMethodName)) {
 
         result.append(viaStaticCall ? getPsiClass().getName() : "this");
         result.append('.');
@@ -277,7 +265,7 @@ public class BuilderInfo {
   public Optional<PsiType> getObtainViaFieldVariableType() {
     PsiVariable psiVariable = variableInClass;
 
-    if (StringUtils.isNotEmpty(viaFieldName)) {
+    if (StringUtil.isNotEmpty(viaFieldName)) {
       final PsiField fieldByName = getPsiClass().findFieldByName(viaFieldName, false);
       if (fieldByName != null) {
         psiVariable = fieldByName;

@@ -27,7 +27,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
-import de.plushnikov.intellij.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -183,12 +182,12 @@ public class BuilderHandler {
     AtomicBoolean result = new AtomicBoolean(true);
     builderInfos.map(BuilderInfo::withObtainVia).filter(BuilderInfo::hasObtainVaiAnnotatation).forEach(builderInfo ->
     {
-      if (StringUtils.isEmpty(builderInfo.getViaFieldName()) == StringUtils.isEmpty(builderInfo.getViaMethodName())) {
+      if (StringUtil.isEmpty(builderInfo.getViaFieldName()) == StringUtil.isEmpty(builderInfo.getViaMethodName())) {
         problemBuilder.addError("The syntax is either @ObtainVia(field = \"fieldName\") or @ObtainVia(method = \"methodName\").");
         result.set(false);
       }
 
-      if (StringUtils.isEmpty(builderInfo.getViaMethodName()) && builderInfo.isViaStaticCall()) {
+      if (StringUtil.isEmpty(builderInfo.getViaMethodName()) && builderInfo.isViaStaticCall()) {
         problemBuilder.addError("@ObtainVia(isStatic = true) is not valid unless 'method' has been set.");
         result.set(false);
       }

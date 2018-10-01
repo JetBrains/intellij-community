@@ -16,7 +16,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -47,27 +46,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     log.debug("LombokAugmentProvider created");
 
     modifierProcessors = Arrays.asList(getModifierProcessors());
-  }
-
-  /**
-   * Support method required by patcher project and {@link ModifierVisibilityClassFileTransformer}.
-   * Provides a simple way to inject modifiers into older versions of IntelliJ. Return of the null value is dictated by legacy IntelliJ API.
-   *
-   * @param modifierList PsiModifierList that is being queried
-   * @param name         String name of the PsiModifier
-   * @return {@code Boolean.TRUE} if modifier exists (explicitly set by modifier transformers of the plugin), {@code null} otherwise.
-   */
-  public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull final String name) {
-    if (DumbService.isDumb(modifierList.getProject())) {
-      return null;
-    }
-
-    final Set<String> modifiers = this.transformModifiers(modifierList, Collections.<String>emptySet());
-    if (modifiers.contains(name)) {
-      return Boolean.TRUE;
-    }
-
-    return null;
   }
 
   @NotNull
@@ -119,11 +97,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
 
     if (type == PsiField.class) {
-      return CachedValuesManager.getCachedValue(element, new FieldLombokCachedValueProvider<Psi>(type, psiClass));
+      return CachedValuesManager.getCachedValue(element, new FieldLombokCachedValueProvider<>(type, psiClass));
     } else if (type == PsiMethod.class) {
-      return CachedValuesManager.getCachedValue(element, new MethodLombokCachedValueProvider<Psi>(type, psiClass));
+      return CachedValuesManager.getCachedValue(element, new MethodLombokCachedValueProvider<>(type, psiClass));
     } else if (type == PsiClass.class) {
-      return CachedValuesManager.getCachedValue(element, new ClassLombokCachedValueProvider<Psi>(type, psiClass));
+      return CachedValuesManager.getCachedValue(element, new ClassLombokCachedValueProvider<>(type, psiClass));
     } else {
       return emptyResult;
     }
