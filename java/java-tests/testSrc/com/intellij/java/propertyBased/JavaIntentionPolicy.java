@@ -179,6 +179,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
+          parent instanceof PsiAnnotationMethod ||
           parent instanceof PsiArrayInitializerMemberValue ||
           parent instanceof PsiSwitchLabelStatement) {
         break;
