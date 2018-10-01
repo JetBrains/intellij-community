@@ -356,15 +356,12 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/codehaus-plexus/plexus-classworlds", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "plexus-component-annotations", version: "1.5.5", libraryName: "plexus-component-annotations-1.5.5.jar",
                        license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "plexus-util", version: "2.0.6", license: "Apache 2.0", url: "http://maven.apache.org/",
-                       libraryName: 'plexus-utils-2.0.6.jar', licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
-
     new LibraryLicense(name: "Plexus Component Annotations", libraryName: "org.codehaus.plexus:plexus-component-annotations",
                        version: "1.6", license: "Apache 2.0",
                        url: "https://codehaus-plexus.github.io/plexus-containers/plexus-component-annotations/"),
     new LibraryLicense(name: "Plexus Interpolation", libraryName: "org.codehaus.plexus:plexus-interpolation", version: "1.21",
                        license: "Apache 2.0", url: "https://codehaus-plexus.github.io/plexus-interpolation/"),
-    new LibraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", version: "1.5.5", license: "Apache 2.0",
+    new LibraryLicense(name: "Plexus Utils", libraryName: "plexus-utils", version: "3.0.22", license: "Apache 2.0",
                        url: "http://plexus.codehaus.org/plexus-utils"),
 
     new LibraryLicense(name: "pockets", attachedTo: "intellij.python.helpers", version: "0.3.2", license: "BSD",
