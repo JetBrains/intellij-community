@@ -3,13 +3,10 @@ package com.intellij.credentialStore
 
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.keePass.KeePassFileManager
-import com.intellij.credentialStore.keePass.MasterKey
-import com.intellij.credentialStore.keePass.requestMasterPassword
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
@@ -24,7 +21,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
-import java.awt.Component
 import java.io.File
 import java.nio.file.Paths
 import javax.swing.JPanel
@@ -195,15 +191,11 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
               },
               object : DumbAwareAction("Set Master Password") {
                 override fun actionPerformed(event: AnActionEvent) {
-                  val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-                  val masterPassword = MasterKey(requestMasterPassword(contextComponent, "Set New Master Password") ?: return)
                   // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
-                  val currentProvider = if (passwordSafe.settings.providerType == ProviderType.KEEPASS) passwordSafe.currentProvider else null
-                  if (currentProvider is KeePassCredentialStore && !currentProvider.isMemoryOnly) {
-                    currentProvider.setMasterPassword(masterPassword)
-                  }
-                  else {
-                    createKeePassFileManager()?.setMasterKey(masterPassword)
+                  createKeePassFileManager()?.askAndSetMasterKey(event)
+                  if (passwordSafe.settings.providerType == ProviderType.KEEPASS) {
+                    // force reload of KeePass Store
+                    passwordSafe.closeCurrentProvider()
                   }
                 }
 

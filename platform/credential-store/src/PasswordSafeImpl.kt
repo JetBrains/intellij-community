@@ -78,6 +78,10 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
       _currentProvider = lazyOf(value)
     }
 
+  internal fun closeCurrentProvider() {
+    _currentProvider = lazy { computeProvider(settings) }
+  }
+
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { createInMemoryKeePassCredentialStore() }
 

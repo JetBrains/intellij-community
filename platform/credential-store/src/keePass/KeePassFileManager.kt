@@ -3,6 +3,7 @@ package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.KeePassCredentialStore
 import com.intellij.credentialStore.LOG
+import com.intellij.credentialStore.getTrimmedChars
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.loadKdbx
@@ -11,7 +12,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.MessagesService
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.dialog
+import com.intellij.ui.layout.*
+import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.toByteArray
 import java.awt.Component
@@ -19,9 +23,9 @@ import java.nio.CharBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import javax.swing.JPasswordField
 
-
-internal class KeePassFileManager(private val file: Path, private val masterKeyFile: Path) {
+internal open class KeePassFileManager(private val file: Path, private val masterKeyFile: Path) {
   fun clear() {
     try {
       val db = KeePassCredentialStore(dbFile = file, masterKeyFile = masterKeyFile)
@@ -43,7 +47,7 @@ internal class KeePassFileManager(private val file: Path, private val masterKeyF
     }
 
     val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-    val masterPassword = requestMasterPassword(contextComponent, "Specify Master Password") ?: return
+    val masterPassword = requestMasterPassword("Specify Master Password", contextComponent) ?: return
     val database = try {
       loadKdbx(fromFile, KdbxPassword(masterPassword))
     }
@@ -68,30 +72,84 @@ internal class KeePassFileManager(private val file: Path, private val masterKeyF
                                                           preloadedMasterKey = MasterKey(masterPassword))
   }
 
-  fun setMasterKey(masterKey: MasterKey) {
-    val store: KeePassCredentialStore
-    try {
-      store = KeePassCredentialStore(file, masterKeyFile)
+  fun askAndSetMasterKey(event: AnActionEvent?) {
+    val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+
+    // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
+    val store = try {
+      KeePassCredentialStore(file, masterKeyFile)
     }
     catch (e: IncorrectMasterPasswordException) {
-      // maybe new master key it is current (and stored in master key file is not correct)?
-      try {
-        KeePassCredentialStore(file, masterKeyFile, preloadedMasterKey = masterKey)
-        // no exception - is set correctly (if preloadedMasterKey specified, KeePassCredentialStore will automatically save it to master key file)
-        return
-      }
-      catch (e: IncorrectMasterPasswordException) {
-        // ok... let's ask user about old master password for existing database
-        throw TODO()
-      }
+      // ok, old key is required
+      requestOldAndNewKeys(contextComponent)
+      return
+    }
+    store.setMasterPassword(MasterKey(requestMasterPassword("Set Master Password", contextComponent) ?: return))
+  }
+
+  protected open fun requestOldAndNewKeys(contextComponent: Component?) {
+    val oldPasswordField = JPasswordField()
+    val newPasswordField = JPasswordField()
+    val panel = panel {
+      noteRow("Existing KeePass database requires old password.")
+      row("Old password:") { oldPasswordField() }
+      row("New password:") { newPasswordField() }
+
+      noteRow("If you don't remember old password,\nthe only solution to Clear database.")
     }
 
-    store.setMasterPassword(masterKey)
-  }
-}
+    dialog(title = "Change Master Password", panel = panel, focusedComponent = oldPasswordField, parent = contextComponent) {
+      val errors = SmartList<ValidationInfo>()
+      val old = checkIsEmpty(oldPasswordField, errors)
+      val new = checkIsEmpty(newPasswordField, errors)
 
-internal fun requestMasterPassword(contextComponent: Component, title: String): ByteArray? {
-  return MessagesService.getInstance().showPasswordDialog(contextComponent, "Master Password:", title, null, null)?.toByteArrayAndClear()
+      if (errors.isEmpty()) {
+        try {
+          if (doSetNewMasterPassword(old, new)) {
+            return@dialog errors
+          }
+        }
+        catch (e: IncorrectMasterPasswordException) {
+          errors.add(ValidationInfo("Old password not correct", oldPasswordField))
+          new?.fill(0.toChar())
+        }
+      }
+      else {
+        old?.fill(0.toChar())
+        new?.fill(0.toChar())
+      }
+
+      errors
+    }.show()
+  }
+
+  @Suppress("MemberVisibilityCanBePrivate")
+  protected fun doSetNewMasterPassword(old: CharArray?, new: CharArray?): Boolean {
+    val store = KeePassCredentialStore(file, masterKeyFile, preloadedMasterKey = MasterKey(old!!.toByteArrayAndClear()))
+    store.setMasterPassword(MasterKey(new!!.toByteArrayAndClear()))
+    return false
+  }
+
+  private fun checkIsEmpty(field: JPasswordField, errors: MutableList<ValidationInfo>): CharArray? {
+    val chars = field.getTrimmedChars()
+    if (chars == null) {
+      errors.add(ValidationInfo("Old master password is empty.", field))
+    }
+    return chars
+  }
+
+  protected open fun requestMasterPassword(title: String, contextComponent: Component?): ByteArray? {
+    val passwordField = JPasswordField()
+    val panel = panel {
+      row("Master password:") { passwordField() }
+    }
+    if (dialog(title = title, panel = panel, focusedComponent = passwordField, parent = contextComponent).showAndGet()) {
+      return passwordField.getTrimmedChars()?.toByteArrayAndClear()
+    }
+    else {
+      return null
+    }
+  }
 }
 
 private fun CharArray.toByteArrayAndClear(): ByteArray {

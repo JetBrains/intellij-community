@@ -11,6 +11,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.readText
 import org.junit.Rule
 import org.junit.Test
+import java.awt.Component
 
 private val testCredentialAttributes = CredentialAttributes("foo", "bar")
 
@@ -64,7 +65,8 @@ internal class KeePassFileManagerTest {
   @Test
   fun `set master password - new database`() {
     val baseDirectory = fsRule.fs.getPath("/")
-    KeePassFileManager(KeePassCredentialStore(baseDirectory = baseDirectory)).setMasterKey(MasterKey("boo".toByteArray(), encryption = EncryptionType.BUILT_IN))
+    KeePassFileManager(KeePassCredentialStore(baseDirectory = baseDirectory), masterPasswordRequestAnswer = "boo")
+      .askAndSetMasterKey(event = null)
 
     val store = KeePassCredentialStore(baseDirectory = baseDirectory)
     assertThat(store.dbFile).exists()
@@ -72,11 +74,25 @@ internal class KeePassFileManagerTest {
       encryption: BUILT_IN
       value: !!binary
     """.trimIndent())
+    assertThat(MasterKeyFileStorage(store.masterKeyFile).get()!!.toString(Charsets.UTF_8)).isEqualTo("boo")
   }
 
   @Test
   fun `set master password - existing database with the same master password but incorrect master key file`() {
-    KeePassFileManager(createTestStoreWithCustomMasterKey()).setMasterKey(MasterKey("foo".toByteArray()))
+    KeePassFileManager(createTestStoreWithCustomMasterKey(), masterPasswordRequestAnswer = "foo")
+      .askAndSetMasterKey(event = null)
+
+    val store = KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))
+    assertThat(store.dbFile).exists()
+    assertThat(MasterKeyFileStorage(store.masterKeyFile).get()!!.toString(Charsets.UTF_8)).isEqualTo("foo")
+  }
+
+  @Test
+  fun `set master password - existing database with the different master password and incorrect master key file`() {
+    val existingStore = createTestStoreWithCustomMasterKey()
+    fsRule.fs.getPath("/$MASTER_KEY_FILE_NAME").delete()
+    KeePassFileManager(existingStore, oldMasterPasswordRequestAnswer = "foo", masterPasswordRequestAnswer = "new")
+      .askAndSetMasterKey(event = null)
 
     val store = KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))
     assertThat(store.dbFile).exists()
@@ -87,4 +103,12 @@ internal class KeePassFileManagerTest {
 internal fun KeePassCredentialStore.setMasterKey(value: String) = setMasterPassword(MasterKey(value.toByteArray()))
 
 @Suppress("TestFunctionName")
-private fun KeePassFileManager(store: KeePassCredentialStore) = KeePassFileManager(store.dbFile, store.masterKeyFile)
+private fun KeePassFileManager(store: KeePassCredentialStore, masterPasswordRequestAnswer: String? = null, oldMasterPasswordRequestAnswer: String? = null): KeePassFileManager {
+  return object : KeePassFileManager(store.dbFile, store.masterKeyFile) {
+    override fun requestMasterPassword(title: String, contextComponent: Component?) = masterPasswordRequestAnswer?.toByteArray()
+
+    override fun requestOldAndNewKeys(contextComponent: Component?) {
+      doSetNewMasterPassword(oldMasterPasswordRequestAnswer!!.toCharArray(), masterPasswordRequestAnswer!!.toCharArray())
+    }
+  }
+}
