@@ -30,6 +30,10 @@ class GithubPullRequestRebaseAction : GithubPullRequestMergeActionBase("Rebase a
       override fun onThrowable(error: Throwable) {
         GithubNotifications.showError(project, "Failed To Rebase and Merge Pull Request", error)
       }
+
+      override fun onFinished() {
+        e.getData(GithubPullRequestKeys.PULL_REQUESTS_COMPONENT)?.refreshPullRequest(details.number)
+      }
     }.queue()
   }
 }

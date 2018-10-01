@@ -102,5 +102,8 @@
     </group>
     <action id="Github.PullRequest.Preview.Show.Details"
             class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestToggleDetailsAction"/>
+    <action id="Github.PullRequest.Preview.Refresh"
+            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshPreviewAction"
+            internal="true"/>
   </actions>
 </idea-plugin>

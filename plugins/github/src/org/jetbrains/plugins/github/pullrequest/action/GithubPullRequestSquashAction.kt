@@ -48,6 +48,10 @@ class GithubPullRequestSquashAction : GithubPullRequestMergeActionBase("Squash a
         override fun onThrowable(error: Throwable) {
           GithubNotifications.showError(project, "Failed To Squash and Merge Pull Request", error)
         }
+
+        override fun onFinished() {
+          e.getData(GithubPullRequestKeys.PULL_REQUESTS_COMPONENT)?.refreshPullRequest(details.number)
+        }
       }.queue()
     }
   }

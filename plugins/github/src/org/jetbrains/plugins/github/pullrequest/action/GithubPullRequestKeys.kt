@@ -8,6 +8,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 
@@ -16,7 +17,10 @@ object GithubPullRequestKeys {
   val API_REQUEST_EXECUTOR =
     DataKey.create<GithubApiRequestExecutor>("org.jetbrains.plugins.github.pullrequest.requestexecutor")
   @JvmStatic
-  val PULL_REQUESTS_LIST_COMPONENT =
+  internal val PULL_REQUESTS_COMPONENT =
+    DataKey.create<GithubPullRequestsComponentFactory.GithubPullRequestsComponent>("org.jetbrains.plugins.github.pullrequest.component")
+  @JvmStatic
+  internal val PULL_REQUESTS_LIST_COMPONENT =
     DataKey.create<GithubPullRequestsListComponent>("org.jetbrains.plugins.github.pullrequest.list.component")
   @JvmStatic
   val SELECTED_PULL_REQUEST = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.selected")

@@ -12,16 +12,19 @@ import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
+import com.intellij.util.EventDispatcher
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
+import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -36,21 +39,32 @@ class GithubPullRequestsDataLoader(private val project: Project,
 
   private val progressIndicator = NonReusableEmptyProgressIndicator()
   private val cache = CacheBuilder.newBuilder()
+    .removalListener<Long, DataProvider> { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
     .maximumSize(5)
     .build<Long, DataProvider>()
-    .asMap()
+
+  private val invalidationEventDispatcher = EventDispatcher.create(ProviderChangedListener::class.java)
 
   init {
-    LowMemoryWatcher.register(Runnable { cache.clear() }, this)
+    LowMemoryWatcher.register(Runnable { cache.invalidateAll() }, this)
   }
 
+  @CalledInAwt
+  fun invalidateData(number: Long) {
+    cache.invalidate(number)
+  }
+
+  @CalledInAwt
   fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): DataProvider {
-    return cache.getOrPut(githubSearchedIssue.number) {
+    return cache.get(githubSearchedIssue.number) {
       val task = DataTask(githubSearchedIssue.pullRequestLinks!!.url)
       progressManager.runProcessWithProgressAsynchronously(task, progressIndicator)
       task
     }
   }
+
+  fun addProviderChangesListener(listener: ProviderChangedListener, disposable: Disposable) =
+    invalidationEventDispatcher.addListener(listener, disposable)
 
   private inner class DataTask(private val url: String)
     : Task.Backgroundable(project, "Load Pull Request Data", true), DataProvider {
@@ -131,5 +145,9 @@ class GithubPullRequestsDataLoader(private val project: Project,
     val branchFetchRequest: CompletableFuture<Couple<String>>
     val logCommitsRequest: CompletableFuture<List<GitCommit>>
     val changesRequest: CompletableFuture<List<Change>>
+  }
+
+  interface ProviderChangedListener : EventListener {
+    fun providerChanged(pullRequestNumber: Long)
   }
 }

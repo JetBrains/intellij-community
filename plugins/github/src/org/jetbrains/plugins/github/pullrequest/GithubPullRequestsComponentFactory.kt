@@ -12,6 +12,7 @@ import com.intellij.ui.OnePixelSplitter
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -31,14 +32,14 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import javax.swing.JComponent
 
 
-class GithubPullRequestsComponentFactory(private val project: Project,
-                                         private val progressManager: ProgressManager,
-                                         private val git: Git,
-                                         private val uiSettings: GithubPullRequestsUISettings,
-                                         private val avatarLoader: CachingGithubUserAvatarLoader,
-                                         private val imageResizer: GithubImageResizer,
-                                         private val actionManager: ActionManager,
-                                         private val autoPopupController: AutoPopupController) {
+internal class GithubPullRequestsComponentFactory(private val project: Project,
+                                                  private val progressManager: ProgressManager,
+                                                  private val git: Git,
+                                                  private val uiSettings: GithubPullRequestsUISettings,
+                                                  private val avatarLoader: CachingGithubUserAvatarLoader,
+                                                  private val imageResizer: GithubImageResizer,
+                                                  private val actionManager: ActionManager,
+                                                  private val autoPopupController: AutoPopupController) {
 
   fun createComponent(requestExecutor: GithubApiRequestExecutor,
                       repository: GitRepository, remote: GitRemote,
@@ -48,11 +49,11 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     return GithubPullRequestsComponent(requestExecutor, avatarIconsProviderFactory, repository, remote, repoDetails, account)
   }
 
-  private inner class GithubPullRequestsComponent(private val requestExecutor: GithubApiRequestExecutor,
-                                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                                  private val repository: GitRepository, private val remote: GitRemote,
-                                                  private val repoDetails: GithubRepoDetailed,
-                                                  private val account: GithubAccount)
+  inner class GithubPullRequestsComponent(private val requestExecutor: GithubApiRequestExecutor,
+                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                          private val repository: GitRepository, private val remote: GitRemote,
+                                          private val repoDetails: GithubRepoDetailed,
+                                          private val account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.6f), Disposable, DataProvider {
 
     private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
@@ -91,16 +92,34 @@ class GithubPullRequestsComponentFactory(private val project: Project,
           preview.setPreviewDataProvider(dataProvider)
         }
       }, preview)
+
+      dataLoader.addProviderChangesListener(object : GithubPullRequestsDataLoader.ProviderChangedListener {
+        override fun providerChanged(pullRequestNumber: Long) {
+          val selection = list.selectionModel.current
+          if (selection != null && selection.number == pullRequestNumber) {
+            preview.setPreviewDataProvider(dataLoader.getDataProvider(selection))
+          }
+        }
+      }, preview)
+    }
+
+    //TODO: refresh in list
+    @CalledInAwt
+    fun refreshPullRequest(number: Long) {
+      dataLoader.invalidateData(number)
     }
 
     override fun getData(dataId: String): Any? {
+      if (Disposer.isDisposed(this)) return null
       return when {
         GithubPullRequestKeys.REPOSITORY.`is`(dataId) -> repository
         GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
         GithubPullRequestKeys.REPO_DETAILS.`is`(dataId) -> repoDetails
         GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
         GithubPullRequestKeys.API_REQUEST_EXECUTOR.`is`(dataId) -> requestExecutor
+        GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
         GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
+        GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> list.selectionModel.current
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
           list.selectionModel.current?.let(dataLoader::getDataProvider)
         else -> null

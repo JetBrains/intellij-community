@@ -35,11 +35,14 @@ class GithubPullRequestMergeCommitAction : GithubPullRequestMergeActionBase("Cre
 
       override fun onSuccess() {
         GithubNotifications.showInfo(project, "Pull Request Merged", "Successfully merged pull request #${details.number}")
-        //TODO: refresh table and details
       }
 
       override fun onThrowable(error: Throwable) {
         GithubNotifications.showError(project, "Failed To Merge Pull Request", error)
+      }
+
+      override fun onFinished() {
+        e.getData(GithubPullRequestKeys.PULL_REQUESTS_COMPONENT)?.refreshPullRequest(details.number)
       }
     }.queue()
   }
