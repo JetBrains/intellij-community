@@ -55,8 +55,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Nullable
   public abstract String getApplicationSvgIconUrl();
 
+  /**
+   * Return an svg file containing icon of the current version of the product. It may return special icon for EAP builds.
+   */
   @Nullable
-  public abstract File getSvgIconFile();
+  public abstract File getApplicationSvgIconFile();
 
   public abstract String getToolWindowIconUrl();
 

@@ -398,10 +398,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Nullable
   @Override
-  public File getSvgIconFile() {
-    if (mySvgIconUrl == null) return null;
+  public File getApplicationSvgIconFile() {
+    String svgIconUrl = getApplicationSvgIconUrl();
+    if (svgIconUrl == null) return null;
 
-    URL url = getClass().getResource(mySvgIconUrl);
+    URL url = getClass().getResource(svgIconUrl);
     if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
       return URLUtil.urlToFile(url);
     }

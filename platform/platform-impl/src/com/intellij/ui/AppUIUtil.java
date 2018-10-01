@@ -237,7 +237,7 @@ public class AppUIUtil {
       }
     }
 
-    File svgFile = ApplicationInfoEx.getInstanceEx().getSvgIconFile();
+    File svgFile = ApplicationInfoEx.getInstanceEx().getApplicationSvgIconFile();
     if (svgFile != null) {
       return svgFile.getAbsolutePath();
     }
