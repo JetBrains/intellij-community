@@ -94,15 +94,14 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @NotNull
   private Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
+    boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
+    if (hasExplicitUnversioned) return e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+
+    if (!canHaveUnversionedFiles(e)) return Stream.empty();
+
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
-
-    return hasExplicitUnversioned
-           ? e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)
-           : checkVirtualFiles(e)
-             ? notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager))
-             : Stream.empty();
+    return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager));
   }
 
   private boolean isFileUnversioned(@NotNull VirtualFile file,
@@ -124,7 +123,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
    * {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status and we should not explicitly
    * check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
    */
-  protected boolean checkVirtualFiles(@NotNull AnActionEvent e) {
+  protected boolean canHaveUnversionedFiles(@NotNull AnActionEvent e) {
     return ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
   }
 }
