@@ -206,7 +206,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
                                                              PsiCodeBlock body,
                                                              Set<PsiSwitchLabelStatement> fallThroughTargets) {
     final List<SwitchStatementBranch> openBranches = new ArrayList<>();
-    final Set<PsiLocalVariable> declaredVariables = new HashSet<>();
+    final Set<PsiElement> declaredElements = new HashSet<>();
     final List<SwitchStatementBranch> allBranches = new ArrayList<>();
     SwitchStatementBranch currentBranch = null;
     final PsiElement[] children = body.getChildren();
@@ -221,7 +221,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           }
           openBranches.clear();
           currentBranch = new SwitchStatementBranch();
-          currentBranch.addPendingVariableDeclarations(declaredVariables);
+          currentBranch.addPendingDeclarations(declaredElements);
           allBranches.add(currentBranch);
           openBranches.add(currentBranch);
         }
@@ -247,11 +247,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         if (statement instanceof PsiStatement) {
           if (statement instanceof PsiDeclarationStatement) {
             final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
-            final PsiElement[] elements = declarationStatement.getDeclaredElements();
-            for (PsiElement varElement : elements) {
-              final PsiLocalVariable variable = (PsiLocalVariable)varElement;
-              declaredVariables.add(variable);
-            }
+            Collections.addAll(declaredElements, declarationStatement.getDeclaredElements());
           }
           for (SwitchStatementBranch branch : openBranches) {
             branch.addStatement((PsiStatement)statement);
@@ -338,9 +334,15 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   private static void dumpBody(SwitchStatementBranch branch, @NonNls StringBuilder out, CommentTracker commentTracker) {
     final List<PsiElement> bodyStatements = branch.getBodyElements();
     out.append('{');
-    for (PsiLocalVariable variable : branch.getPendingVariableDeclarations()) {
-      if (ReferencesSearch.search(variable, new LocalSearchScope(bodyStatements.toArray(PsiElement.EMPTY_ARRAY))).findFirst() != null) {
-        out.append(variable.getType().getCanonicalText()).append(' ').append(variable.getName()).append(';');
+    for (PsiElement element : branch.getPendingDeclarations()) {
+      if (ReferencesSearch.search(element, new LocalSearchScope(bodyStatements.toArray(PsiElement.EMPTY_ARRAY))).findFirst() != null) {
+        if (element instanceof PsiVariable) {
+          PsiVariable var = (PsiVariable)element;
+          out.append(var.getType().getCanonicalText()).append(' ').append(var.getName()).append(';');
+        } else {
+          // Class
+          out.append(element.getText());
+        }
       }
     }
 

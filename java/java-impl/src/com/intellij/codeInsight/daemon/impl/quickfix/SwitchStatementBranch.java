@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
@@ -24,7 +23,7 @@ import java.util.*;
 
 class SwitchStatementBranch {
 
-  private final Set<PsiLocalVariable> myPendingVariableDeclarations = new HashSet<>(5);
+  private final Set<PsiElement> myPendingDeclarations = new HashSet<>(5);
   private final List<String> myCaseValues = new ArrayList<>(2);
   private final List<PsiElement> myBodyElements = new ArrayList<>(5);
   private final List<PsiElement> myPendingWhiteSpace = new ArrayList<>(2);
@@ -85,11 +84,11 @@ class SwitchStatementBranch {
     return myHasStatements;
   }
 
-  public void addPendingVariableDeclarations(Set<? extends PsiLocalVariable> vars) {
-    myPendingVariableDeclarations.addAll(vars);
+  public void addPendingDeclarations(Set<? extends PsiElement> vars) {
+    myPendingDeclarations.addAll(vars);
   }
 
-  public Set<PsiLocalVariable> getPendingVariableDeclarations() {
-    return Collections.unmodifiableSet(myPendingVariableDeclarations);
+  public Set<PsiElement> getPendingDeclarations() {
+    return Collections.unmodifiableSet(myPendingDeclarations);
   }
 }
