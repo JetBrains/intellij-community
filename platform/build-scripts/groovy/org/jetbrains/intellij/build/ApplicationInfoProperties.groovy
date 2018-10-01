@@ -59,7 +59,7 @@ class ApplicationInfoProperties {
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
     shortCompanyName = root.company.first().@shortName ?: shortenCompanyName(companyName)
     def svgPath = root.icon.first().@svg
-    svgRelativePath = isEAP && root."icon-eap" != null ? (root."icon-eap".first().@svg ?: svgPath) : svgPath
+    svgRelativePath = isEAP && !root."icon-eap".isEmpty() ? (root."icon-eap".first().@svg ?: svgPath) : svgPath
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
