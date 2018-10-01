@@ -912,7 +912,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JoinDeclarationAndAssignmentJava"
                      key="inspection.join.declaration.and.assignment.display.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFO"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
