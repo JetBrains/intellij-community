@@ -43,7 +43,6 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-@SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
 public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
@@ -692,6 +691,18 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         holder.registerProblem(psiAnchor,
                                InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix((PsiSwitchLabelStatement)psiAnchor));
+      } else if (trueSet.contains(instruction)) {
+        // If switch branch is always reachable, then all the subsequent branches are unreachable (thus weren't analyzed)
+        PsiSwitchLabelStatement current = (PsiSwitchLabelStatement)psiAnchor;
+        while(true) {
+          current = PsiTreeUtil.getNextSiblingOfType(current, PsiSwitchLabelStatement.class);
+          if (current == null) break;
+          if (!current.isDefaultCase()) {
+            holder.registerProblem(current,
+                                   InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
+                                   new DeleteSwitchLabelFix((PsiSwitchLabelStatement)psiAnchor));
+          }
+        }
       }
     }
     else if (psiAnchor != null && !isFlagCheck(psiAnchor)) {
