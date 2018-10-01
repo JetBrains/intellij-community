@@ -226,15 +226,18 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static void collectSuppressions(@NotNull PsiElement element,
-                                          Map<PsiElement, Collection<String>> suppressedScopes,
-                                          boolean ignoreAll,
-                                          RedundantSuppressionDetector suppressor) {
+  private static boolean collectSuppressions(@NotNull PsiElement element,
+                                             Map<PsiElement, Collection<String>> suppressedScopes,
+                                             boolean ignoreAll,
+                                             RedundantSuppressionDetector suppressor) {
     String idsString = suppressor.getSuppressionIds(element);
     if (idsString != null && !idsString.isEmpty()) {
       List<String> ids = new ArrayList<>();
       StringUtil.tokenize(idsString, "[, ]").forEach(ids::add);
-      if (ignoreAll && (ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase()))) return;
+      boolean isSuppressAll = ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase());
+      if (ignoreAll && isSuppressAll) {
+        return false;
+      }
       Collection<String> suppressed = suppressedScopes.get(element);
       if (suppressed == null) {
         suppressed = ids;
@@ -247,52 +250,15 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
         }
       }
       suppressedScopes.put(element, suppressed);
+      return isSuppressAll;
     }
+    return false;
   }
   
   public LocalInspectionTool createLocalTool(RedundantSuppressionDetector suppressor,
                                              Map<String, Set<PsiElement>> toolToSuppressScopes,
                                              Set<String> activeTools) {
-    return new LocalInspectionTool() {
-      @NotNull
-      @Override
-      public String getShortName() {
-        return SHORT_NAME;
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return RedundantSuppressInspection.this.getDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-        return new PsiElementVisitor() {
-
-          @Override
-          public void visitElement(PsiElement element) {
-            super.visitElement(element);
-            HashMap<PsiElement, Collection<String>> scopes = new HashMap<>();
-            collectSuppressions(element, scopes, false, suppressor);
-            Collection<String> suppressIds = scopes.get(element);
-            if (suppressIds != null) {
-              for (String suppressId : suppressIds) {
-                if (!activeTools.contains(suppressId)) continue;
-                Set<PsiElement> suppressedPlaces = toolToSuppressScopes.get(suppressId);
-                if (suppressedPlaces == null || suppressedPlaces.stream().noneMatch(place -> suppressor.isSuppressionFor(element, place, suppressId))) {
-                  holder.registerProblem(element, suppressor.getHighlightingRange(element, suppressId),
-                                         InspectionsBundle.message("inspection.redundant.suppression.description"),
-                                         suppressor.createRemoveRedundantSuppressionFix(suppressId));
-                }
-              }
-            }
-          }
-        };
-      }
-    };
+    return new LocalRedundantSuppressionInspection(suppressor, activeTools, toolToSuppressScopes);
   }
 
   private static QuickFix<ProblemDescriptor> createQuickFix(String key) {
@@ -346,5 +312,75 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
   protected GlobalInspectionContextBase createContext(PsiFile file) {
     final InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
     return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext(false);
+  }
+
+  private class LocalRedundantSuppressionInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
+    private final RedundantSuppressionDetector mySuppressor;
+    private final Set<String> myActiveTools;
+    private final Map<String, Set<PsiElement>> myToolToSuppressScopes;
+
+    private LocalRedundantSuppressionInspection(RedundantSuppressionDetector suppressor,
+                                                Set<String> activeTools,
+                                                Map<String, Set<PsiElement>> toolToSuppressScopes) {
+      mySuppressor = suppressor;
+      myActiveTools = activeTools;
+      myToolToSuppressScopes = toolToSuppressScopes;
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return SHORT_NAME;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return RedundantSuppressInspection.this.getDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+      return new PsiElementVisitor() {
+
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+          HashMap<PsiElement, Collection<String>> scopes = new HashMap<>();
+          boolean suppressAll = collectSuppressions(element, scopes, IGNORE_ALL, mySuppressor);
+          if (suppressAll) {
+            for (String suppressId : myActiveTools) {
+              if (isSuppressedFor(element, suppressId, myToolToSuppressScopes.get(suppressId))) {
+                return;
+              }
+            }
+            holder.registerProblem(element, mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL),
+                                   InspectionsBundle.message("inspection.redundant.suppression.description"),
+                                   mySuppressor.createRemoveRedundantSuppressionFix(SuppressionUtil.ALL));
+            return;
+          }
+          Collection<String> suppressIds = scopes.get(element);
+          if (suppressIds != null) {
+            for (String suppressId : suppressIds) {
+              if (myActiveTools.contains(suppressId) &&
+                  !isSuppressedFor(element, suppressId, myToolToSuppressScopes.get(suppressId)) &&
+                  //suppression in local pass is intentionally disabled to pass ALL
+                  !SuppressionUtil.inspectionResultSuppressed(element, LocalRedundantSuppressionInspection.this)) {
+                holder.registerProblem(element, mySuppressor.getHighlightingRange(element, suppressId),
+                                       InspectionsBundle.message("inspection.redundant.suppression.description"),
+                                       mySuppressor.createRemoveRedundantSuppressionFix(suppressId));
+              }
+            }
+          }
+        }
+
+        private boolean isSuppressedFor(PsiElement element, String suppressId, Set<PsiElement> suppressedPlaces) {
+          return suppressedPlaces != null && 
+                 suppressedPlaces.stream().anyMatch(place -> mySuppressor.isSuppressionFor(element, place, suppressId));
+        }
+      };
+    }
   }
 }
