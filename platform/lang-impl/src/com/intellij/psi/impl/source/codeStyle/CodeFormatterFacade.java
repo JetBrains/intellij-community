@@ -672,10 +672,7 @@ public class CodeFormatterFacade {
     boolean wrapLine = false;
     for (int i = startLineOffset; i < Math.min(endLineOffset, targetRangeEndOffset); i++) {
       char c = text.charAt(i);
-      switch (c) {
-        case '\t': symbolWidth = tabSize - (width % tabSize); break;
-        default: symbolWidth = 1;
-      }
+      symbolWidth = c == '\t' ? tabSize - (width % tabSize) : 1;
       if (width + symbolWidth + reservedWidthInColumns >= myRightMargin
           && (Math.min(endLineOffset, targetRangeEndOffset) - i) >= reservedWidthInColumns)
       {
@@ -707,16 +704,17 @@ public class CodeFormatterFacade {
     boolean wrapLine = false;
     for (int i = startLineOffset; i < Math.min(endLineOffset, targetRangeEndOffset); i++) {
       char c = text.charAt(i);
-      switch (c) {
-        case '\t':
-          newX = EditorUtil.nextTabStop(x, editor);
-          int diffInPixels = newX - x;
-          symbolWidth = diffInPixels / spaceSize;
-          if (diffInPixels % spaceSize > 0) {
-            symbolWidth++;
-          }
-          break;
-        default: newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor); symbolWidth = 1;
+      if (c == '\t') {
+        newX = EditorUtil.nextTabStop(x, editor);
+        int diffInPixels = newX - x;
+        symbolWidth = diffInPixels / spaceSize;
+        if (diffInPixels % spaceSize > 0) {
+          symbolWidth++;
+        }
+      }
+      else {
+        newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor);
+        symbolWidth = 1;
       }
       if (width + symbolWidth + reservedWidthInColumns >= myRightMargin
           && (Math.min(endLineOffset, targetRangeEndOffset) - i) >= reservedWidthInColumns)

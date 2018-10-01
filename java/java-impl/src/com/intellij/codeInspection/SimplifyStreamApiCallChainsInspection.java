@@ -844,12 +844,10 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      switch (myMode) {
-        case OPTIONAL:
-          return "Replace with 'Optional.of'";
-        default:
-          return "Use Stream element explicitly";
+      if (myMode == ReplacementMode.OPTIONAL) {
+        return "Replace with 'Optional.of'";
       }
+      return "Use Stream element explicitly";
     }
 
     @Override
