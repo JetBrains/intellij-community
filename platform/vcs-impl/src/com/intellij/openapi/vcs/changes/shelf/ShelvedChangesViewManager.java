@@ -279,7 +279,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @NotNull
   private DefaultMutableTreeNode createShelvedListNode(@NotNull ShelvedChangeList changeList) {
-    DefaultMutableTreeNode node = new ShelvedListNode(changeList);
+    DefaultMutableTreeNode shelvedListNode = new ShelvedListNode(changeList);
 
     final List<Object> shelvedFilesNodes = new ArrayList<>();
     List<ShelvedChange> changes = changeList.getChanges(myProject);
@@ -293,12 +293,9 @@ public class ShelvedChangesViewManager implements Disposable {
       shelvedFilesNodes.add(file);
     }
     Collections.sort(shelvedFilesNodes, ShelvedFilePatchComparator.getInstance());
-    for (int i = 0; i < shelvedFilesNodes.size(); i++) {
-      final Object filesNode = shelvedFilesNodes.get(i);
-      final DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(filesNode);
-      node.insert(pathNode, i);
-    }
-    return node;
+
+    shelvedFilesNodes.forEach(fNode -> shelvedListNode.add(new DefaultMutableTreeNode(fNode)));
+    return shelvedListNode;
   }
 
   @CalledInAwt
