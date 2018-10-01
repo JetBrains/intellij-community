@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -40,6 +41,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
+import git4idea.findProtectedRemoteBranch
 import git4idea.repo.GitRepository
 
 private val LOG: Logger = logger<GitRewordAction>()
@@ -58,7 +60,7 @@ class GitRewordAction : GitCommitEditingAction() {
     val repository = getRepository(e)
     val details = getOrLoadDetails(project, getLogData(e), commit)
 
-    RewordDialog(project, details, repository).show()
+    RewordDialog(project, getLogData(e), details, repository).show()
   }
 
   private fun getOrLoadDetails(project: Project, data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata {
@@ -107,7 +109,7 @@ class GitRewordAction : GitCommitEditingAction() {
     }.queue()
   }
 
-  private inner class RewordDialog(val project: Project, val commit: VcsCommitMetadata, val repository: GitRepository)
+  private inner class RewordDialog(val project: Project, val data: VcsLogData, val commit: VcsCommitMetadata, val repository: GitRepository)
     : DialogWrapper(project, true) {
 
     val originalHEAD = repository.info.currentRevision
@@ -143,9 +145,17 @@ class GitRewordAction : GitCommitEditingAction() {
     }
 
     override fun doValidate(): ValidationInfo? {
-      if (repository.info.currentRevision != originalHEAD) {
+      if (repository.info.currentRevision != originalHEAD ||
+          Disposer.isDisposed(data)) {
         return ValidationInfo("Can't reword commit: repository state was changed")
       }
+
+      val branches = findContainingBranches(data, commit.root, commit.id)
+      val protectedBranch = findProtectedRemoteBranch(repository, branches)
+      if (protectedBranch != null) {
+        return ValidationInfo("Can't reword commit: " + commitPushedToProtectedBranchError(protectedBranch))
+      }
+
       return null
     }
 
