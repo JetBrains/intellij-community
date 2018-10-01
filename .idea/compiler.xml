@@ -11,6 +11,7 @@
       <file url="file://$PROJECT_DIR$/java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala" />
       <file url="file://$PROJECT_DIR$/java/execution/jshell-frontend/src/com/intellij/execution/jshell/frontend/Main.java" />
       <file url="file://$PROJECT_DIR$/java/java-tests/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/TestConflict.java" />
+      <file url="file://$PROJECT_DIR$/../adt/idea/profilers/testSrc/com/android/tools/profilers/performance/DataSeriesPerformanceTest.kt" />
     </excludeFromCompile>
     <resourceExtensions>
       <entry name=".+\.(properties|gif|png|jpeg|jpg|xml|dtd|tld|xsd|ft|html|template)" />
