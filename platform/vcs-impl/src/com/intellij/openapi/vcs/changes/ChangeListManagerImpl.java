@@ -1265,6 +1265,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myFileStatusManager.fileStatusChanged(file);
     }
     VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
+    myChangesViewManager.scheduleRefresh();
 
     final Ref<List<Change>> foundChanges = Ref.create();
     final boolean moveRequired = !list.isDefault();
@@ -1289,16 +1290,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             }
           }
         });
-
-        myChangesViewManager.scheduleRefresh();
       }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
 
       if (changesConsumer != null) {
         changesConsumer.consume(foundChanges.get());
       }
-    }
-    else {
-      myChangesViewManager.scheduleRefresh();
     }
 
     return exceptions;
