@@ -81,6 +81,7 @@ import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionPro
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
+import static com.intellij.util.containers.ContainerUtil.process;
 
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
@@ -272,29 +273,32 @@ public class ShelvedChangesViewManager implements Disposable {
     }
     myMoveRenameInfo.clear();
 
-    for(ShelvedChangeList changeList: changeLists) {
-      DefaultMutableTreeNode node = new ShelvedListNode(changeList);
-      model.insertNodeInto(node, myRoot, myRoot.getChildCount());
-
-      final List<Object> shelvedFilesNodes = new ArrayList<>();
-      List<ShelvedChange> changes = changeList.getChanges(myProject);
-      for(ShelvedChange change: changes) {
-        putMovedMessage(change.getBeforePath(), change.getAfterPath());
-        shelvedFilesNodes.add(change);
-      }
-      List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
-      for(ShelvedBinaryFile file: binaryFiles) {
-        putMovedMessage(file.BEFORE_PATH, file.AFTER_PATH);
-        shelvedFilesNodes.add(file);
-      }
-      Collections.sort(shelvedFilesNodes, ShelvedFilePatchComparator.getInstance());
-      for (int i = 0; i < shelvedFilesNodes.size(); i++) {
-        final Object filesNode = shelvedFilesNodes.get(i);
-        final DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(filesNode);
-        model.insertNodeInto(pathNode, node, i);
-      }
-    }
+    changeLists.forEach(changeList -> model.insertNodeInto(createShelvedListNode(changeList), myRoot, myRoot.getChildCount()));
     return model;
+  }
+
+  @NotNull
+  private DefaultMutableTreeNode createShelvedListNode(@NotNull ShelvedChangeList changeList) {
+    DefaultMutableTreeNode node = new ShelvedListNode(changeList);
+
+    final List<Object> shelvedFilesNodes = new ArrayList<>();
+    List<ShelvedChange> changes = changeList.getChanges(myProject);
+    for (ShelvedChange change : changes) {
+      putMovedMessage(change.getBeforePath(), change.getAfterPath());
+      shelvedFilesNodes.add(change);
+    }
+    List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
+    for (ShelvedBinaryFile file : binaryFiles) {
+      putMovedMessage(file.BEFORE_PATH, file.AFTER_PATH);
+      shelvedFilesNodes.add(file);
+    }
+    Collections.sort(shelvedFilesNodes, ShelvedFilePatchComparator.getInstance());
+    for (int i = 0; i < shelvedFilesNodes.size(); i++) {
+      final Object filesNode = shelvedFilesNodes.get(i);
+      final DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(filesNode);
+      node.insert(pathNode, i);
+    }
+    return node;
   }
 
   @CalledInAwt
