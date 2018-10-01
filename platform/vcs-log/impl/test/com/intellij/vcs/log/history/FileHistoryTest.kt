@@ -4,6 +4,7 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind.*
 import com.intellij.vcs.log.graph.TestGraphBuilder
@@ -232,10 +233,10 @@ class FileHistoryTest {
 
 private class FileNamesDataBuilder(private val path: FilePath) {
   private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> = mutableMapOf()
-  private val renamesMap: MutableMap<Couple<Int>, Couple<FilePath>> = mutableMapOf()
+  private val renamesMap: MultiMap<Couple<Int>, Couple<FilePath>> = MultiMap.createSmart()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
-    renamesMap[Couple(parent, child)] = Couple(beforePath, afterPath)
+    renamesMap.putValue(Couple(parent, child), Couple(beforePath, afterPath))
     return this
   }
 
@@ -247,7 +248,7 @@ private class FileNamesDataBuilder(private val path: FilePath) {
   fun build(): FileNamesData {
     return object : FileNamesData(path) {
       override fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>? {
-        return renamesMap[Couple(parent, child)]
+        return renamesMap[Couple(parent, child)].find { accept(it) }
       }
 
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {
