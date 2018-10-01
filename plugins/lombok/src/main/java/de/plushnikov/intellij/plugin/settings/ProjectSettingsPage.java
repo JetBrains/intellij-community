@@ -18,7 +18,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
   private JPanel myGeneralPanel;
   private JPanel myLombokPanel;
-  private JPanel myThirdPartyPanel;
 
   private JCheckBox myEnableLombokInProject;
 
@@ -27,9 +26,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   private JCheckBox myEnableLogSupport;
   private JCheckBox myEnableConstructorSupport;
   private JCheckBox myEnableDelegateSupport;
-  private JCheckBox myEnableParcelableSupport;
   private JPanel mySettingsPanel;
-  private JCheckBox myEnableRuntimePatches;
   private JCheckBox myEnableLombokVersionWarning;
   private JCheckBox myMissingLombokWarning;
   private JPanel mySupportPanel;
@@ -70,14 +67,11 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
         boolean selected = checkBox.getModel().isSelected();
 
         myLombokPanel.setEnabled(selected);
-        myThirdPartyPanel.setEnabled(selected);
-
         myEnableValSupport.setEnabled(selected);
         myEnableBuilderSupport.setEnabled(selected);
         myEnableLogSupport.setEnabled(selected);
         myEnableConstructorSupport.setEnabled(selected);
         myEnableDelegateSupport.setEnabled(selected);
-        myEnableParcelableSupport.setEnabled(selected);
       }
     });
     myEnableConstructorSupport.setVisible(false);
@@ -94,9 +88,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
     myEnableLogSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED));
     myEnableConstructorSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED));
 
-    myEnableParcelableSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, false));
-
-    myEnableRuntimePatches.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, false));
     myEnableLombokVersionWarning.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
     myMissingLombokWarning.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false));
   }
@@ -109,8 +100,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
       myEnableDelegateSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED) ||
       myEnableLogSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED) ||
       myEnableConstructorSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED) ||
-      myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, false) ||
-      myEnableRuntimePatches.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, false) ||
       myEnableLombokVersionWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
       myMissingLombokWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false);
   }
@@ -126,12 +115,8 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED, myEnableLogSupport.isSelected());
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED, myEnableConstructorSupport.isSelected());
 
-    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, myEnableParcelableSupport.isSelected());
-
-    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, myEnableRuntimePatches.isSelected());
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, myMissingLombokWarning.isSelected());
-    LombokSettings.getInstance().setEnableRuntimePatch(myEnableRuntimePatches.isSelected());
 
     myLombokProcessorProvider.initProcessors();
   }

@@ -117,7 +117,6 @@ configurations {
 dependencies {
   lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.2', classifier: 'sources', ext: 'jar'
   lombok_dep group: 'org.projectlombok', name: 'lombok', version: '1.16.20', classifier: 'sources', ext: 'jar'
-  hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-core', version: '1.+'
@@ -156,15 +155,6 @@ copy {
   from({ zipTree(configurations.lombok_dep.singleFile) }) {
     include 'lombok/experimental/Value.java'
     include 'lombok/experimental/Builder.java'
-  }
-  into("generated/src")
-}
-
-copy {
-  includeEmptyDirs = false
-  from({ zipTree(configurations.hrisey.singleFile) }) {
-    include 'hrisey/Parcelable.java'
-    include 'hrisey/Preferences.java'
   }
   into("generated/src")
 }

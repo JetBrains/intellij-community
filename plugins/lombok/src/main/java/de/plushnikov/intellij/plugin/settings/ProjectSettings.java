@@ -14,9 +14,6 @@ public class ProjectSettings {
   public static final String IS_LOG_ENABLED = PREFIX + "IS_LOG_Enabled";
   public static final String IS_CONSTRUCTOR_ENABLED = PREFIX + "IS_CONSTRUCTOR_Enabled";
 
-  public static final String IS_THIRD_PARTY_ENABLED = PREFIX + "IS_THIRD_PARTY_Enabled";
-
-  public static final String IS_RUNTIME_PATCH_ENABLED = PREFIX + "IS_RUNTIME_PATCH_Enabled";
   public static final String IS_LOMBOK_VERSION_CHECK_ENABLED = PREFIX + "IS_LOMBOK_VERSION_CHECK_Enabled";
   public static final String IS_MISSING_LOMBOK_CHECK_ENABLED = PREFIX + "IS_MISSING_LOMBOK_CHECK_Enabled";
 

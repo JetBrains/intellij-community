@@ -45,11 +45,4 @@ public class LombokSettings implements PersistentStateComponent<LombokPluginStat
     myState.setPluginVersion(version);
   }
 
-  public boolean isEnableRuntimePatch() {
-    return myState.isEnableRuntimePatch();
-  }
-
-  public void setEnableRuntimePatch(boolean enableRuntimePatch) {
-    myState.setEnableRuntimePatch(enableRuntimePatch);
-  }
 }
