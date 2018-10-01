@@ -45,6 +45,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSmallIconUrl();
 
+  /**
+   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
+   */
+  @Deprecated
   @Nullable
   public abstract String getBigIconUrl();
 
