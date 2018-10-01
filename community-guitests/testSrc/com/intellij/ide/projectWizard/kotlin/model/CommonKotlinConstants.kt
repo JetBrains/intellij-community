@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import java.io.Serializable
 
 const val KOTLIN_PLUGIN_NAME = "Kotlin"
 
@@ -21,7 +22,7 @@ data class ProjectProperties(
   val frameworkName: String,
   val jars: ArtifactType,
   val libName: String? = null
-)
+) : Serializable
 
 enum class Projects(val title: String) {
   Kind("kind"),
@@ -38,7 +39,7 @@ enum class Projects(val title: String) {
   override fun toString() = title
 }
 
-data class KotlinLib(val map: Map<String, Any?>) {
+data class KotlinLib(val map: Map<String, Any?>) : Serializable {
   val kind: KotlinKind by map
   val javaProject: ProjectProperties by map
   val kotlinProject: ProjectProperties by map
@@ -187,7 +188,7 @@ val kotlinLibs = mapOf(
  * */
 val pathKotlinInConfig = "/plugins/Kotlin/kotlinc/lib".normalizeSeparator()
 
-data class ProjectRoots(val sourceRoot: String, val testRoot: String)
+data class ProjectRoots(val sourceRoot: String, val testRoot: String) : Serializable
 
 val sourceRoots = mapOf(
   ProjectStructure.Java to ProjectRoots("src",

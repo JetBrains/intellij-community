@@ -14,6 +14,7 @@ import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenar
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.io.Serializable
 
 @RunWith(GuiTestSuiteParam::class)
 class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
@@ -22,7 +23,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
   data class TestParameters(
     val projectName: String,
     val templateName: String,
-    val modules: Set<TargetPlatform>) {
+    val modules: Set<TargetPlatform>) : Serializable {
     override fun toString() = projectName
   }
 

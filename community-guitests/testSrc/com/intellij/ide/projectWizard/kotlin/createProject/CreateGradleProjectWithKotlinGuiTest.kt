@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenar
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.io.Serializable
 
 @RunWith(GuiTestSuiteParam::class)
 class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
@@ -18,7 +19,7 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
   data class TestParameters(
     val projectName: String,
     val project: ProjectProperties,
-    val expectedFacet: FacetStructure) {
+    val expectedFacet: FacetStructure) : Serializable {
     override fun toString() = projectName
   }
 
