@@ -20,7 +20,7 @@ public class EntityUtil
 {
     public static String encode(String text)
     {
-        StringBuffer res = new StringBuffer(text.length());
+        StringBuilder res = new StringBuilder(text.length());
         for (int i = 0; i < text.length(); i++)
         {
             char ch = text.charAt(i);
@@ -43,39 +43,29 @@ public class EntityUtil
 
     public static String decode(String text)
     {
-        StringBuffer res = new StringBuffer(text.length());
+        StringBuilder res = new StringBuilder(text.length());
 
         for (int i = 0; i < text.length(); i++)
         {
             char ch = text.charAt(i);
-            switch (ch)
-            {
-                case '&':
-                    int semi = text.indexOf(';', i);
-                    if (semi > i)
-                    {
-                        char newch = ch;
-                        String entity = text.substring(i, semi + 1);
-                        if (entity.equals("&#36;"))
-                        {
-                            newch = '$';
-                        }
-                        else if (entity.equals("&amp;"))
-                        {
-                            newch = '&';
-                            i = semi;
-                        }
-                        if (newch != ch)
-                        {
-                            ch = newch;
-                            i = semi;
-                        }
-                    }
-                    res.append(ch);
-                    break;
-                default:
-                    res.append(ch);
+            if (ch == '&') {
+              int semi = text.indexOf(';', i);
+              if (semi > i) {
+                char newch = '&';
+                String entity = text.substring(i, semi + 1);
+                if (entity.equals("&#36;")) {
+                  newch = '$';
+                }
+                else if (entity.equals("&amp;")) {
+                  i = semi;
+                }
+                if (newch != ch) {
+                  ch = newch;
+                  i = semi;
+                }
+              }
             }
+            res.append(ch);
         }
 
         return res.toString();

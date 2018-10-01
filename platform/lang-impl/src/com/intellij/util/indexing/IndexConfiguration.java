@@ -60,7 +60,7 @@ class IndexConfiguration {
                             @NotNull UpdatableIndex<K, V, FileContent> index,
                             FileBasedIndex.InputFilter inputFilter,
                             int version,
-                            @Nullable Collection<FileType> associatedFileTypes) {
+                            @Nullable Collection<? extends FileType> associatedFileTypes) {
     assert !myFreezed;
 
     synchronized (myIndices) {

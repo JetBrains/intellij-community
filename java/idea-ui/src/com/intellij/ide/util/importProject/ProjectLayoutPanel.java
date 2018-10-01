@@ -51,7 +51,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return getElementText(o1).compareToIgnoreCase(getElementText(o2));
   };
 
-  public ProjectLayoutPanel(final ModuleInsight insight) {
+  ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
     myInsight = insight;
@@ -520,7 +520,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private class EntryProperties implements ElementsChooser.ElementProperties {
     private final T myEntry;
 
-    public EntryProperties(final T entry) {
+    EntryProperties(final T entry) {
       myEntry = entry;
     }
 

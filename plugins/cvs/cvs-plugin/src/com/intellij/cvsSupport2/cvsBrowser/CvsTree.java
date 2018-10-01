@@ -43,8 +43,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListener, ChildrenLoader<CvsElement> {
   private CvsElement[] myCurrentSelection = CvsElement.EMPTY_ARRAY;
@@ -104,7 +104,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
         selection.add(cvsElement);
       }
     }
-    myCurrentSelection = selection.toArray(new CvsElement[0]);
+    myCurrentSelection = selection.toArray(CvsElement.EMPTY_ARRAY);
     mySelectionObservable.notifyObservers(SELECTION_CHANGED);
   }
 
@@ -213,7 +213,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     private int waitTime = 100;
     private TreePath mySelectionPath;
 
-    public MyGetContentCallback(CvsElement parentNode, ModalityState modalityState, Project project) {
+    MyGetContentCallback(CvsElement parentNode, ModalityState modalityState, Project project) {
       myParentNode = parentNode;
       myModalityState = modalityState;
       myProject = project;

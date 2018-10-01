@@ -256,7 +256,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private static class InstructionState extends Pair<Instruction, BitSet> {
-    public InstructionState(Instruction first, BitSet second) {
+    InstructionState(Instruction first, BitSet second) {
       super(first, second);
     }
   }

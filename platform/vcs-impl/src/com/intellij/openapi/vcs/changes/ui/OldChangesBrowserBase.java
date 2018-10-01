@@ -158,7 +158,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
       if (list.isEmpty()) list = myViewer.getChanges();
@@ -204,7 +204,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   private class ToggleChangeAction extends CheckboxAction {
-    public ToggleChangeAction() {
+    ToggleChangeAction() {
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
@@ -217,7 +217,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
 

@@ -579,7 +579,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<IntentionAction> filterAvailableIntentions(@NotNull String hint) {
-    return getAvailableIntentions().stream().filter(action -> action.getText().startsWith(hint)).collect(Collectors.toList());
+    return ContainerUtil.filter(getAvailableIntentions(), action -> action.getText().startsWith(hint));
   }
 
   @NotNull
@@ -847,7 +847,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return new ArrayList<>(processor.getResults());
   }
 
-  public static boolean processGuttersAtCaret(Editor editor, Project project, @NotNull Processor<GutterMark> processor) {
+  public static boolean processGuttersAtCaret(Editor editor, Project project, @NotNull Processor<? super GutterMark> processor) {
     int offset = editor.getCaretModel().getOffset();
 
     RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
@@ -1508,9 +1508,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public static <T extends Segment> String getTagsFromSegments(@NotNull String text,
-                                                               @NotNull Collection<T> segments,
+                                                               @NotNull Collection<? extends T> segments,
                                                                @NotNull String tagName,
-                                                               @Nullable Function<T, String> attrCalculator) {
+                                                               @Nullable Function<? super T, String> attrCalculator) {
     final List<Border> borders = new LinkedList<>();
     for (T region : segments) {
       String attr = attrCalculator == null ? null : attrCalculator.fun(region);
@@ -1661,7 +1661,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testStructureView(@NotNull Consumer<StructureViewComponent> consumer) {
+  public void testStructureView(@NotNull Consumer<? super StructureViewComponent> consumer) {
     assertNotNull("configure first", myFile);
 
     final FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myFile);

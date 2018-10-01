@@ -48,7 +48,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -101,11 +100,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     Color bgColor = color.getBackgroundColor();
     if (bgColor == null) {
       bgColor = color.getForegroundColor();
-    }
-    if (editor.getSettings().isLineNumbersShown() || editor.getGutter().isAnnotationsShown()) {
-      if (bgColor != null) {
-        bgColor = ColorUtil.toAlpha(bgColor, 150);
-      }
     }
     if (bgColor != null) {
       g.setColor(bgColor);
@@ -294,7 +288,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
   private class GotoPreviousCoveredLineAction extends BaseGotoCoveredLineAction {
 
-    public GotoPreviousCoveredLineAction(final Editor editor, final int lineNumber) {
+    GotoPreviousCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
       getTemplatePresentation().setText("Previous Coverage Mark");
@@ -318,7 +312,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
   private class GotoNextCoveredLineAction extends BaseGotoCoveredLineAction {
 
-    public GotoNextCoveredLineAction(final Editor editor, final int lineNumber) {
+    GotoNextCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
       getTemplatePresentation().setText("Next Coverage Mark");
@@ -344,7 +338,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     private final Editor myEditor;
     private final int myLineNumber;
 
-    public BaseGotoCoveredLineAction(final Editor editor, final int lineNumber) {
+    BaseGotoCoveredLineAction(final Editor editor, final int lineNumber) {
       myEditor = editor;
       myLineNumber = lineNumber;
     }

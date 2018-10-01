@@ -70,7 +70,7 @@ public class ModuleSourceSet {
   }
 
   @NotNull
-  public static Set<Module> getModules(@NotNull Collection<ModuleSourceSet> sourceSets) {
+  public static Set<Module> getModules(@NotNull Collection<? extends ModuleSourceSet> sourceSets) {
     return sourceSets.stream().map(ModuleSourceSet::getModule).collect(Collectors.toSet());
   }
 }

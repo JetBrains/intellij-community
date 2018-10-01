@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @see GenericProgramRunner
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {
-  ExtensionPointName<ProgramRunner> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
+  ExtensionPointName<ProgramRunner<RunnerSettings>> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
 
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
@@ -44,8 +44,8 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   }
 
   @Nullable
-  static ProgramRunner getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
-    for (ProgramRunner runner : PROGRAM_RUNNER_EP.getExtensionList()) {
+  static ProgramRunner<RunnerSettings> getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
+    for (ProgramRunner<RunnerSettings> runner : PROGRAM_RUNNER_EP.getExtensionList()) {
       if (runner.canRun(executorId, settings)) {
         return runner;
       }

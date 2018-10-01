@@ -167,7 +167,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {
-    public PsiClassOwnerTreeNode(PsiClassOwner classOwner, ViewSettings settings) {
+    PsiClassOwnerTreeNode(@NotNull PsiClassOwner classOwner, ViewSettings settings) {
       super(classOwner.getProject(), classOwner, settings);
     }
 

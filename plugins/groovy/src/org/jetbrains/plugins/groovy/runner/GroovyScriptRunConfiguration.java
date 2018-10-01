@@ -61,7 +61,7 @@ import static com.intellij.execution.util.ProgramParametersUtil.configureConfigu
 /**
  * @author peter
  */
-public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
+public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 
   private String vmParams;

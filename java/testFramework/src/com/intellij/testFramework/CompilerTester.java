@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathMacros;
@@ -21,6 +22,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,12 +42,12 @@ import com.intellij.util.io.FileTreePrinterKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.cmdline.LogSetup;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.junit.Assert;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,7 +61,7 @@ public class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
   private final Project myProject;
-  private List<Module> myModules;
+  private List<? extends Module> myModules;
   private TempDirTestFixture myMainOutput;
 
   public CompilerTester(@NotNull Module module) throws Exception {
@@ -70,7 +72,7 @@ public class CompilerTester {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
-  public CompilerTester(@NotNull Project project, @NotNull List<Module> modules, @Nullable Disposable disposable) throws Exception {
+  public CompilerTester(@NotNull Project project, @NotNull List<? extends Module> modules, @Nullable Disposable disposable) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
@@ -174,7 +176,7 @@ public class CompilerTester {
   }
 
   @NotNull
-  public List<CompilerMessage> runCompiler(@NotNull Consumer<CompileStatusNotification> runnable) {
+  public List<CompilerMessage> runCompiler(@NotNull Consumer<? super CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -221,6 +223,7 @@ public class CompilerTester {
           }
         }
       }
+      enableDebugLogging();
       runnable.consume(callback);
     });
 
@@ -232,6 +235,7 @@ public class CompilerTester {
       }
     }
 
+    printBuildLog();
     callback.throwException();
 
     if (!((CompilerManagerImpl)CompilerManager.getInstance(getProject())).waitForExternalJavacToTerminate(1, TimeUnit.MINUTES)) {
@@ -239,6 +243,45 @@ public class CompilerTester {
     }
 
     return callback.getMessages();
+  }
+
+  public static void printBuildLog() {
+    File logDirectory = BuildManager.getBuildLogDirectory();
+    File[] files = logDirectory.listFiles(file -> file.getName().endsWith(".log"));
+    if (files == null || files.length == 0) {
+      LOG.debug("No *.log files in " + logDirectory + " after build");
+      return;
+    }
+
+    Arrays.sort(files, Comparator.comparing(File::getName));
+    for (File file : files) {
+      LOG.debug(file.getName() + ":");
+      try {
+        List<String> lines = FileUtil.loadLines(file);
+        for (String line : lines) {
+          LOG.debug(line);
+        }
+      }
+      catch (IOException e) {
+        LOG.debug("Failed to load contents: " + e.getMessage());
+      }
+    }
+  }
+
+  public static void enableDebugLogging() throws IOException {
+    File logDirectory = BuildManager.getBuildLogDirectory();
+    FileUtil.delete(logDirectory);
+    FileUtil.createDirectory(logDirectory);
+    Properties properties = new Properties();
+    try (InputStream config = LogSetup.readDefaultLogConfig()) {
+      properties.load(config);
+    }
+
+    properties.setProperty("log4j.rootLogger", "debug, file");
+    File logFile = new File(logDirectory, LogSetup.LOG_CONFIG_FILE_NAME);
+    try (OutputStream output = new BufferedOutputStream(new FileOutputStream(logFile))) {
+      properties.store(output, null);
+    }
   }
 
   private static void refreshVfs(String path) {
@@ -258,16 +301,13 @@ public class CompilerTester {
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
-            final String text = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION ||
-                !(text.contains("Compilation completed successfully") ||
-                  text.contains("used to compile") ||
-                  text.startsWith("Using Groovy-Eclipse"))) {
+            String text = message.getMessage();
+            if (category != CompilerMessageCategory.INFORMATION || !isSpamMessage(text)) {
               myMessages.add(message);
             }
           }
@@ -280,6 +320,14 @@ public class CompilerTester {
       finally {
         mySemaphore.up();
       }
+    }
+
+    private static boolean isSpamMessage(String text) {
+      return text.contains("Compilation completed successfully") ||
+             text.contains("used to compile") ||
+             text.contains("illegal reflective") ||
+             text.contains("consider reporting this to the maintainers") ||
+             text.startsWith("Using Groovy-Eclipse");
     }
 
     void throwException() {

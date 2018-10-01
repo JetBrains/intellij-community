@@ -44,7 +44,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.XmlSerializer;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
@@ -225,12 +224,10 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
         for (VirtualFile file : files) {
           try {
-            Document document = JDOMUtil.loadDocument(file.getInputStream());
-            List<Element> children = document.getRootElement().getChildren();
-            children.forEach(element -> {
+            for (Element element : JDOMUtil.load(file.getInputStream()).getChildren()) {
               int idx = myTableModel.addIfNeeded(XmlSerializer.deserialize(element, CapturePoint.class));
               table.getSelectionModel().addSelectionInterval(idx, idx);
-            });
+            }
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
@@ -447,11 +444,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     @Override
     public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case ENABLED_COLUMN:
-          return Boolean.class;
-      }
-      return String.class;
+      return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
     CapturePoint get(int idx) {

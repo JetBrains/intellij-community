@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,8 +84,11 @@ public class WSLUtil {
         result.add(new WSLDistribution(descriptor, executablePath));
       }
     }
-    // add legacy WSL if it's available
-    ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
+
+    // add legacy WSL if it's available and enabled
+    if (Experiments.isFeatureEnabled("wsl.legacy.distribution")) {
+      ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
+    }
 
     return result;
   }
@@ -146,6 +150,6 @@ public class WSLUtil {
     if (slashIndex < wslPath.length() && wslPath.charAt(slashIndex) != '/') {
       return null;
     }
-    return FileUtil.toSystemDependentName(wslPath.charAt(driveLetterIndex) + ":" + wslPath.substring(slashIndex));
+    return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
   }
 }

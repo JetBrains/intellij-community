@@ -59,8 +59,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -101,7 +101,6 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           if (newTag != null) {
             generateTag(newTag, editor);
           }
-          ;
         });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         XmlElementDescriptor descriptor = ContainerUtil.find(descriptors,
@@ -302,7 +301,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     private final JLabel myNameLabel;
     private final JLabel myNSLabel;
 
-    public MyListCellRenderer() {
+    MyListCellRenderer() {
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
       myNameLabel = new JLabel();

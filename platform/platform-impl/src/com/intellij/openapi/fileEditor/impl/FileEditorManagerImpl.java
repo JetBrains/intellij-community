@@ -22,7 +22,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -53,6 +52,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -77,6 +77,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -99,6 +100,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
+  private static final Color DEFAULT_FILE_COLOR = JBColor.namedColor("EditorTabs.active.foreground", UIUtil.getLabelForeground());
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
@@ -160,14 +162,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         if (project == myProject) {
           FileEditorManagerImpl.this.projectOpened(connection);
         }
       }
 
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         if (project == myProject) {
           // Dispose created editors. We do not use use closeEditor method because
           // it fires event and changes history.
@@ -352,7 +354,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public Color getFileColor(@NotNull final VirtualFile file) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
-    if (statusColor == null) statusColor = UIUtil.getLabelForeground();
+    if (statusColor == null) statusColor = DEFAULT_FILE_COLOR;
     return statusColor;
   }
 
@@ -362,9 +364,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @NotNull
   public String getFileTooltipText(@NotNull VirtualFile file) {
-    EditorTabTitleProvider[] allExtensions = Extensions.getExtensions(EditorTabTitleProvider.EP_NAME);
-    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(allExtensions);
-
+    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(EditorTabTitleProvider.EP_NAME.getExtensionList());
     for (EditorTabTitleProvider provider : availableProviders) {
       String text = provider.getEditorTabTooltipText(myProject, file);
       if (text != null) {
@@ -705,7 +705,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     // Shift was used while clicking
     if (event instanceof MouseEvent &&
-        ((MouseEvent)event).isShiftDown() &&
+        ((MouseEvent)event).getModifiersEx() == InputEvent.SHIFT_DOWN_MASK &&
         (event.getID() == MouseEvent.MOUSE_CLICKED ||
          event.getID() == MouseEvent.MOUSE_PRESSED ||
          event.getID() == MouseEvent.MOUSE_RELEASED)) {
@@ -726,7 +726,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorWindow[] windows = splitters.getWindows();
 
     if (file != null && windows.length == 2) {
-      for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+      for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
         VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, file);
 
         if (associatedFile != null) {
@@ -1555,7 +1555,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
       if (oldData.first != null && newData.first != null) {
-        for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+        for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
           VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
 
           if (Comparing.equal(associatedFile, newData.first)) {
@@ -1818,7 +1818,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     private boolean myScheduled;
 
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       if (myScheduled) return;
       myScheduled = true;
       DumbService.getInstance(myProject).runWhenSmart(() -> {
@@ -1828,7 +1828,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void handleRootChange() {
-      EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
+      List<EditorFileSwapper> swappers = EditorFileSwapper.EP_NAME.getExtensionList();
 
       for (EditorWindow eachWindow : getWindows()) {
         EditorWithProviderComposite selected = eachWindow.getSelectedEditor();

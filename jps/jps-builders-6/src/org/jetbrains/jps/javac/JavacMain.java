@@ -38,12 +38,12 @@ public class JavacMain {
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
 
   public static boolean compile(Collection<String> options,
-                                final Collection<File> sources,
-                                Collection<File> classpath,
+                                final Collection<? extends File> sources,
+                                Collection<? extends File> classpath,
                                 Collection<File> platformClasspath,
-                                Collection<File> modulePath,
-                                Collection<File> upgradeModulePath,
-                                Collection<File> sourcePath,
+                                Collection<? extends File> modulePath,
+                                Collection<? extends File> upgradeModulePath,
+                                Collection<? extends File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
@@ -225,7 +225,7 @@ public class JavacMain {
     return false;
   }
 
-  private static void setModulePath(JavacFileManager fileManager, String option, Collection<File> path) throws IOException {
+  private static void setModulePath(JavacFileManager fileManager, String option, Collection<? extends File> path) throws IOException {
     JavaFileManager.Location location = StandardLocation.locationFor(option);
     if (location != null) { // if this option is supported
       fileManager.setLocation(location, path);
@@ -389,7 +389,7 @@ public class JavacMain {
     private final CanceledStatus myCanceledStatus;
     private static final AtomicBoolean ourOptimizedManagerMissingReported = new AtomicBoolean(false);
 
-    public ContextImpl(@NotNull JavaCompiler compiler,
+    ContextImpl(@NotNull JavaCompiler compiler,
                        @NotNull DiagnosticOutputConsumer outConsumer,
                        @NotNull OutputFileConsumer sink,
                        CanceledStatus canceledStatus, boolean canUseOptimizedmanager) {

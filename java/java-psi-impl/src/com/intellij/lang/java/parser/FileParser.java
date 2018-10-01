@@ -35,7 +35,7 @@ public class FileParser {
   }
 
   public void parseFile(@NotNull PsiBuilder builder,
-                        @NotNull Predicate<PsiBuilder> importListStopper,
+                        @NotNull Predicate<? super PsiBuilder> importListStopper,
                         @NotNull AbstractBundle bundle,
                         @NotNull String errorMessageKey) {
     parsePackageStatement(builder);
@@ -124,7 +124,7 @@ public class FileParser {
   }
 
   @NotNull
-  protected Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<PsiBuilder> stopper) {
+  protected Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
     PsiBuilder.Marker list = builder.mark();
 
     boolean isEmpty = true;
@@ -187,6 +187,7 @@ public class FileParser {
     return statement;
   }
 
+  @NotNull
   private static String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
     return bundle.getMessage(errorMessageKey);
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -48,6 +49,11 @@ class JavaIntentionPolicy extends IntentionPolicy {
     return mayBreakCompilation(action.getText()) || requiresRealJdk(action, file);
   }
 
+  @Override
+  public boolean shouldTolerateIntroducedError(@NotNull HighlightInfo info) {
+    return info.getText().contains("is public, should be declared in a file named"); // https://youtrack.jetbrains.com/issue/IDEA-196018
+  }
+
   private static boolean requiresRealJdk(@NotNull IntentionAction action, @NotNull PsiFile file) {
     return action.getText().contains("java.text.MessageFormat") && 
            JavaPsiFacade.getInstance(file.getProject()).findClass("java.text.MessageFormat", file.getResolveScope()) == null;
@@ -65,6 +71,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
+           actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
            actionText.equals("Replace with 'while'"); // TODO: remove when IDEA-195157 is fixed
   }
@@ -76,6 +83,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Fix doc comment") || //change formatting settings
            actionText.startsWith("Add Javadoc") ||
+           actionText.equals("Collapse 'catch' blocks") || // IDEA-195991
            super.shouldSkipIntention(actionText);
   }
 
@@ -139,6 +147,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
            actionText.equals("See other similar duplicates") ||
+           actionText.equals("Replace character literal with string") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||
@@ -170,6 +179,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
+          parent instanceof PsiAnnotationMethod ||
           parent instanceof PsiArrayInitializerMemberValue ||
           parent instanceof PsiSwitchLabelStatement) {
         break;

@@ -168,7 +168,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   private static void addSubstitutionGroups(Map<String, XmlElementDescriptor> result,
                                             XmlNSDescriptorImpl nsDescriptor,
-                                            Set<XmlNSDescriptorImpl> visited) {
+                                            Set<? super XmlNSDescriptorImpl> visited) {
     mainLoop: while (true) {
       for (final XmlElementDescriptor xmlElementDescriptor : result.values()) {
         XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
@@ -297,7 +297,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     final XmlNSDescriptorImpl documentDescriptor;
     final String expectedDefaultNs;
 
-    public CurrentContextInfo(XmlNSDescriptorImpl _nsDescriptor, String _ns) {
+    CurrentContextInfo(XmlNSDescriptorImpl _nsDescriptor, String _ns) {
       documentDescriptor = _nsDescriptor;
       expectedDefaultNs = _ns;
     }

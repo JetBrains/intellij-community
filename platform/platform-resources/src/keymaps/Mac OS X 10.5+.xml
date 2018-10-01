@@ -82,7 +82,6 @@
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
-  <action id="RunGc"/>
   <action id="RunClass"/>
 
   <action id="GotoBookmark0">
@@ -533,11 +532,11 @@
   </action>
 
   <action id="NextProjectWindow">
-    <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta alt BACK_QUOTE"/>
   </action>
 
   <action id="PreviousProjectWindow">
-    <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta shift alt BACK_QUOTE"/>
   </action>
 
   <action id="EditorCutLineEnd">

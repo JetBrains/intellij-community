@@ -88,7 +88,7 @@ public class IndexingStamp {
       ourLastStamp = Math.max(modificationCount, ourLastStamp);
     }
 
-    public IndexVersion(DataInput in) throws IOException {
+    IndexVersion(DataInput in) throws IOException {
       myModificationCount = DataInputOutputUtil.readTIME(in);
       advanceIndexStamp(myModificationCount);
     }
@@ -363,6 +363,7 @@ public class IndexingStamp {
         timestamps = new Timestamps(stream);
       }
       catch (IOException e) {
+        FSRecords.handleError(e);
         throw new RuntimeException(e);
       }
       if (isValid) myTimestampsCache.put(id, timestamps);

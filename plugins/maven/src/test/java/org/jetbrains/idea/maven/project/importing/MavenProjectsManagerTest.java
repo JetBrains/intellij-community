@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -845,7 +846,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     final boolean[] called = new boolean[1];
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   NativeMavenProjectHolder nativeMavenProject) {
         called[0] = true;
       }
@@ -1117,7 +1118,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.performScheduledImportInTests();
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
         for (Pair<MavenProject, MavenProjectChanges> each : updated) {
           log.append("updated: ").append(each.first.getDisplayName()).append(" ");
         }

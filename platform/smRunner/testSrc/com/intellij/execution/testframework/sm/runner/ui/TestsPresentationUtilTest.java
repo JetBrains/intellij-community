@@ -743,7 +743,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   private class MyRenderer extends TestTreeRenderer {
     private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
-    public MyRenderer(final boolean isPaused,
+    MyRenderer(final boolean isPaused,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {
       super(new SMTRunnerConsoleProperties(createRunConfiguration(), "SMRunnerTests", DefaultDebugExecutor.getDebugExecutorInstance()) {
         @Override

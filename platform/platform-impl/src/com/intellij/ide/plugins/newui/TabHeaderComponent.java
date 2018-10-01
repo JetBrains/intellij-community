@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -10,11 +11,12 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +59,7 @@ public class TabHeaderComponent extends JComponent {
       public void mouseExited(MouseEvent e) {
         if (myHoverTab != -1) {
           myHoverTab = -1;
-          repaint();
+          fullRepaint();
         }
       }
 
@@ -66,7 +68,7 @@ public class TabHeaderComponent extends JComponent {
         int tab = findTab(event);
         if (tab != -1 && tab != myHoverTab) {
           myHoverTab = tab;
-          repaint();
+          fullRepaint();
         }
       }
     };
@@ -111,9 +113,11 @@ public class TabHeaderComponent extends JComponent {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.GearPlain) {
+    toolbarActionGroup.add(new DumbAwareAction(null,
+                                               "Manage Repositories, Configure Proxy or Install Plugin from Disk",
+                                               AllIcons.General.GearPlain) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
@@ -141,8 +145,14 @@ public class TabHeaderComponent extends JComponent {
 
   public void update() {
     mySizeInfo = null;
-    revalidate();
-    repaint();
+    fullRepaint();
+  }
+
+  private void fullRepaint() {
+    Container parent = ObjectUtils.notNull(getParent(), this);
+    parent.doLayout();
+    parent.revalidate();
+    parent.repaint();
   }
 
   public int getSelectionTab() {
@@ -163,13 +173,13 @@ public class TabHeaderComponent extends JComponent {
     else {
       mySelectionTab = index;
     }
-    repaint();
+    fullRepaint();
   }
 
-  private void setSelectionWithEvents(int index) {
+  public void setSelectionWithEvents(int index) {
     mySelectionTab = index;
     myListener.selectionChanged(index);
-    repaint();
+    fullRepaint();
   }
 
   @TestOnly
@@ -204,12 +214,9 @@ public class TabHeaderComponent extends JComponent {
 
   @Override
   protected void paintComponent(Graphics g) {
+    UISettings.setupAntialiasing(g);
+    g.setFont(getFont());
     super.paintComponent(g);
-
-    if (g instanceof Graphics2D) {
-      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    }
-
     calculateSize();
 
     FontMetrics fm = getFontMetrics(getFont());
@@ -277,7 +284,7 @@ public class TabHeaderComponent extends JComponent {
     FontMetrics fm = getFontMetrics(getFont());
 
     for (int i = 0; i < size; i++) {
-      int tabWidth = offset + SwingUtilities2.stringWidth(null, fm, myTabs.get(i).compute()) + offset;
+      int tabWidth = offset + UIUtilities.stringWidth(null, fm, myTabs.get(i).compute()) + offset;
       mySizeInfo.tabTitleX[i] = x + offset;
       mySizeInfo.tabs[i] = new Rectangle(x, 0, tabWidth, -1);
       x += tabWidth;

@@ -15,9 +15,12 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,7 +45,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   // a language where there are bugs in completion which maintainers of this Java-specific test can't or don't want to fix
   private static boolean isBuggyInjection(@NotNull PsiFile file) {
-    return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
+    return Arrays.asList("XML", "HTML", "PointcutExpression", "HQL").contains(file.getLanguage().getID());
   }
 
   @Override
@@ -154,7 +157,8 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false;
       }
       if (parent instanceof PsiModifierList) {
-        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
+        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1 ||
+            HighlightUtil.checkIllegalModifierCombination((PsiKeyword)leaf, (PsiModifierList)parent) != null) {
           return false;
         }
         if (parent.getParent() instanceof PsiModifierListOwner && PsiTreeUtil.getParentOfType(parent.getParent(), PsiCodeBlock.class, true, PsiClass.class) != null) {
@@ -170,6 +174,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
       if (cls == null || cls.isInterface()) {
         return false;
       }
+    }
+    if (JavaLexer.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
+        !PsiJavaModule.MODULE_INFO_FILE.equals(leaf.getContainingFile().getName())) {
+      return false;
     }
     return true;
   }

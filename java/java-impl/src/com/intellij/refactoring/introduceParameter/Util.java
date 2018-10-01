@@ -38,9 +38,9 @@ import java.util.List;
 public class Util {
 
   public static void analyzeExpression(PsiExpression expr,
-                                       List<UsageInfo> localVars,
-                                       List<UsageInfo> classMemberRefs,
-                                       List<UsageInfo> params) {
+                                       List<? super UsageInfo> localVars,
+                                       List<? super UsageInfo> classMemberRefs,
+                                       List<? super UsageInfo> params) {
 
     if (expr instanceof PsiThisExpression || expr instanceof PsiSuperExpression) {
       classMemberRefs.add(new ClassMemberInExprUsageInfo(expr));
@@ -89,7 +89,7 @@ public class Util {
     return PsiTreeUtil.isAncestor(getPhysical(ancestor), getPhysical(element), strict);
   }
 
-  public static boolean anyFieldsWithGettersPresent(List<UsageInfo> classMemberRefs) {
+  public static boolean anyFieldsWithGettersPresent(List<? extends UsageInfo> classMemberRefs) {
     for (UsageInfo usageInfo : classMemberRefs) {
 
       if (usageInfo.getElement() instanceof PsiReferenceExpression) {

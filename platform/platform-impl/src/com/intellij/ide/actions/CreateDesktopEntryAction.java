@@ -132,7 +132,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     String binPath = PathManager.getBinPath();
     assert new File(binPath).isDirectory() : "Invalid bin path: '" + binPath + "'";
 
-    String iconPath = AppUIUtil.findIcon(binPath);
+    String iconPath = AppUIUtil.findIcon();
     if (iconPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }

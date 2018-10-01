@@ -49,6 +49,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   }
 
   public void clearCache() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     mySourcePositionCache.clear();
   }
 

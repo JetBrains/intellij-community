@@ -126,7 +126,7 @@ public class EditorPlace extends JComponent implements Disposable, ButtonlessScr
     }
   }
 
-  private void fireEditorReleased(Editor releasedEditor) {
+  private void fireEditorReleased(@NotNull Editor releasedEditor) {
     for (EditorListener listener : myListeners) {
       listener.onEditorReleased(releasedEditor);
     }
@@ -171,9 +171,9 @@ public class EditorPlace extends JComponent implements Disposable, ButtonlessScr
   }
 
   public interface EditorListener {
-    void onEditorCreated(EditorPlace place);
+    void onEditorCreated(@NotNull EditorPlace place);
 
-    void onEditorReleased(Editor releasedEditor);
+    void onEditorReleased(@NotNull Editor releasedEditor);
   }
 
   private static EditorFactory getEditorFactory() {

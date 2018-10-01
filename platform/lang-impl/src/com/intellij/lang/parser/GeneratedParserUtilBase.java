@@ -549,12 +549,14 @@ public class GeneratedParserUtilBase {
         eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
       PsiBuilder.Marker extensionMarker = null;
       IElementType extensionTokenType = null;
+      String errorMessage = null;
       // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
         extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
         extensionTokenType = latestDoneMarker.getTokenType();
+        errorMessage = PsiBuilderImpl.getErrorMessage(latestDoneMarker);
         ((PsiBuilder.Marker)latestDoneMarker).drop();
       }
       // advance to the last error pos
@@ -589,7 +591,12 @@ public class GeneratedParserUtilBase {
         errorReported = reportError(builder, state, frame, elementType != null, false, false);
       }
       if (extensionMarker != null) {
-        extensionMarker.done(extensionTokenType);
+        if (extensionTokenType == TokenType.ERROR_ELEMENT && errorMessage != null) {
+          extensionMarker.error(errorMessage);
+        }
+        else {
+          extensionMarker.done(extensionTokenType);
+        }
       }
       state.suppressErrors = false;
       if (errorReported || result) {

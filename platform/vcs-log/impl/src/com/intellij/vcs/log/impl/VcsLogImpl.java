@@ -52,8 +52,8 @@ public class VcsLogImpl implements VcsLog {
 
   @NotNull
   @Override
-  public List<VcsShortCommitDetails> getSelectedShortDetails() {
-    return getSelectedDataFromTable(GraphTableModel::getShortDetails);
+  public List<VcsCommitMetadata> getSelectedShortDetails() {
+    return getSelectedDataFromTable(GraphTableModel::getCommitMetadata);
   }
 
   @NotNull

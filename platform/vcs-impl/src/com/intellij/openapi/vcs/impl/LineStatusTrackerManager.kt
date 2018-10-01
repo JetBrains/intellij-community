@@ -658,10 +658,9 @@ class LineStatusTrackerManager(
 
     private fun forEachTrackerUnder(file: VirtualFile, action: (TrackerData) -> Unit) {
       if (file.isDirectory) {
-        for (data in trackers.values) {
-          if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
-            action(data)
-          }
+        val affected = trackers.values.filter { VfsUtil.isAncestor(file, it.tracker.virtualFile, false) }
+        for (data in affected) {
+          action(data)
         }
       }
       else {

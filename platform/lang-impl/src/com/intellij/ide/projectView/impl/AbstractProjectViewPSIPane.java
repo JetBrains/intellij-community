@@ -28,7 +28,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -50,10 +49,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   private AsyncProjectViewSupport myAsyncSupport;
   private JScrollPane myComponent;
 
-  protected AbstractProjectViewPSIPane(Project project) {
+  protected AbstractProjectViewPSIPane(@NotNull Project project) {
     super(project);
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     if (myComponent != null) {
@@ -141,8 +141,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    myTree.getSelectionModel().addTreeSelectionListener(e -> fireTreeChangeListener());
-    myTree.getModel().addTreeModelListener(TreeModelAdapter.create((e, t) -> fireTreeChangeListener()));
     new MySpeedSearch(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {

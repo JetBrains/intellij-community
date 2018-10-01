@@ -13,13 +13,14 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class PluginsListLayout extends AbstractLayoutManager {
+  private final ComponentCache myCache = new ComponentCache();
   int myLineHeight;
 
   @Override
   public Dimension preferredLayoutSize(@NotNull Container parent) {
     calculateLineHeight(parent);
 
-    java.util.List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
+    List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
     int height = 0;
 
     for (UIPluginGroup group : groups) {
@@ -34,7 +35,7 @@ public class PluginsListLayout extends AbstractLayoutManager {
   public void layoutContainer(@NotNull Container parent) {
     calculateLineHeight(parent);
 
-    java.util.List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
+    List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
     int width = parent.getWidth();
     int y = 0;
 
@@ -52,6 +53,10 @@ public class PluginsListLayout extends AbstractLayoutManager {
   }
 
   private void calculateLineHeight(@NotNull Container parent) {
+    if (myCache.isCached(parent)) {
+      return;
+    }
+
     List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
     int width = PluginManagerConfigurableNew.getParentWidth(parent) - parent.getInsets().right;
 

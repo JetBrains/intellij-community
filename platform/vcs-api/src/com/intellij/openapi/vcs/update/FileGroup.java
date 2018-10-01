@@ -179,7 +179,7 @@ public class FileGroup implements JDOMExternalizable {
     return myChildren;
   }
 
-  public static void writeGroupsToElement(List<FileGroup> groups, Element element) throws WriteExternalException {
+  public static void writeGroupsToElement(List<? extends FileGroup> groups, Element element) throws WriteExternalException {
     for (FileGroup fileGroup : groups) {
       Element groupElement = new Element(FILE_GROUP_ELEMENT_NAME);
       element.addContent(groupElement);
@@ -188,7 +188,7 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  public static void readGroupsFromElement(List<FileGroup> groups, Element element) throws InvalidDataException {
+  public static void readGroupsFromElement(List<? super FileGroup> groups, Element element) throws InvalidDataException {
     List groupElements = element.getChildren();
     for (final Object groupElement1 : groupElements) {
       Element groupElement = (Element)groupElement1;
@@ -245,7 +245,7 @@ public class FileGroup implements JDOMExternalizable {
     private final String myVcsName;
     private final String myRevision;
 
-    public UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
+    UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
       myPath = path;
       myVcsName = vcsKey.getName();
       myRevision = revision;

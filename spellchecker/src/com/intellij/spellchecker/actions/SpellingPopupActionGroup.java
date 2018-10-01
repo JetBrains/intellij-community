@@ -120,7 +120,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     private static final Logger LOGGER = Logger.getInstance("#SpellCheckerAction");
     private final IntentionAction intention;
 
-    public SpellCheckerIntentionAction(IntentionAction intention) {
+    SpellCheckerIntentionAction(IntentionAction intention) {
       super(intention.getText());
       this.intention = intention;
     }

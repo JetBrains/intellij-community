@@ -196,7 +196,7 @@ public class AsyncStacksUtils {
     final String myClass;
     final String myMethod;
 
-    public ProcessStackFrameItem(Location location, String aClass, String method) {
+    ProcessStackFrameItem(Location location, String aClass, String method) {
       super(location, null);
       myClass = aClass;
       myMethod = method;
@@ -269,7 +269,7 @@ public class AsyncStacksUtils {
     debugProcess.putUserData(key, value);
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         process.putUserData(key, null);
       }
     });

@@ -376,6 +376,7 @@ public class PsiUtilCore {
 
   public static int compareElementsByPosition(@Nullable PsiElement element1, @Nullable PsiElement element2) {
     if (element1 != null && element2 != null) {
+      if (element1.equals(element2)) return 0;
       final PsiFile psiFile1 = element1.getContainingFile();
       final PsiFile psiFile2 = element2.getContainingFile();
       if (Comparing.equal(psiFile1, psiFile2)){
@@ -384,7 +385,8 @@ public class PsiUtilCore {
         if (textRange1 != null && textRange2 != null) {
           return textRange1.getStartOffset() - textRange2.getStartOffset();
         }
-      } else if (psiFile1 != null && psiFile2 != null){
+      }
+      else if (psiFile1 != null && psiFile2 != null){
         final String name1 = psiFile1.getName();
         final String name2 = psiFile2.getName();
         return name1.compareToIgnoreCase(name2);
@@ -596,6 +598,7 @@ public class PsiUtilCore {
   public static IElementType getElementType(@Nullable PsiElement element) {
     return element == null ? null :
            element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getElementType() :
+           element instanceof PsiFile ? ((PsiFile)element).getFileElementType() :
            getElementType(element.getNode());
   }
 

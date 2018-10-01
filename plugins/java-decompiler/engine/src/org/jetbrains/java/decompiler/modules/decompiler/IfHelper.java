@@ -20,7 +20,7 @@ public class IfHelper {
     return res;
   }
 
-  private static boolean mergeAllIfsRec(Statement stat, Set<Integer> setReorderedIfs) {
+  private static boolean mergeAllIfsRec(Statement stat, Set<? super Integer> setReorderedIfs) {
     boolean res = false;
 
     if (stat.getExprents() == null) {
@@ -47,7 +47,7 @@ public class IfHelper {
     return res;
   }
 
-  public static boolean mergeIfs(Statement statement, Set<Integer> setReorderedIfs) {
+  public static boolean mergeIfs(Statement statement, Set<? super Integer> setReorderedIfs) {
     if (statement.type != Statement.TYPE_IF && statement.type != Statement.TYPE_SEQUENCE) {
       return false;
     }
@@ -678,7 +678,7 @@ public class IfHelper {
     public final List<IfNode> succs = new ArrayList<>();
     public final List<Integer> edgetypes = new ArrayList<>();
 
-    public IfNode(Statement value) {
+    IfNode(Statement value) {
       this.value = value;
     }
 

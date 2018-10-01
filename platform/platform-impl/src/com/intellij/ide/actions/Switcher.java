@@ -459,20 +459,11 @@ public class Switcher extends AnAction implements DumbAware {
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
         JPanel myPanel = new JPanel(new BorderLayout());
-        JLabel myLabel = new JLabel() {
-          @Override
-          protected void paintComponent(@NotNull Graphics g) {
-            GraphicsConfig config = new GraphicsConfig(g);
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-            super.paintComponent(g);
-            config.restore();
-          }
-        };
+        JLabel myLabel = createPaleLabel("* ");
 
         {
           myPanel.setOpaque(false);
           myPanel.setBackground(UIUtil.getListBackground());
-          myLabel.setText("* ");
         }
 
         @NotNull
@@ -744,7 +735,7 @@ public class Switcher extends AnAction implements DumbAware {
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
-      if (ctrl && isAutoHide()) {
+      if ((ctrl && isAutoHide()) || e.getKeyCode() == VK_ENTER) {
         navigate(e);
       }
     }
@@ -1048,7 +1039,7 @@ public class Switcher extends AnAction implements DumbAware {
     private class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
       private Object[] myElements;
 
-      public SwitcherSpeedSearch() {
+      SwitcherSpeedSearch() {
         super(SwitcherPanel.this);
         addChangeListener(this);
         setComparator(new SpeedSearchComparator(false, true));
@@ -1202,7 +1193,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;
 
-    public VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
+    VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
       mySwitcherPanel = switcherPanel;
     }
 
@@ -1236,7 +1227,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final Project myProject;
     private String myNameForRendering;
 
-    public FileInfo(VirtualFile first, EditorWindow second, Project project) {
+    FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
       myProject = project;
     }
@@ -1248,5 +1239,18 @@ public class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
+  }
+
+  @NotNull
+  public static JLabel createPaleLabel(@NotNull String text) {
+    return new JLabel(text) {
+      @Override
+      protected void paintComponent(@NotNull Graphics g) {
+        GraphicsConfig config = new GraphicsConfig(g);
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        super.paintComponent(g);
+        config.restore();
+      }
+    };
   }
 }

@@ -170,7 +170,6 @@ public class ReassignVariableUtil {
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.FINAL, false);
       }
-      ;
     });
     finishTemplate(editor);
   }

@@ -34,9 +34,9 @@ import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -106,7 +106,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     myTreeModel = new ScopeViewTreeModel(project, new ProjectViewSettings.Delegate(project, ID));
     myTreeModel.setStructureProvider(CompoundTreeStructureProvider.get(project));
     myTreeModel.setNodeDecorator(CompoundProjectViewNodeDecorator.get(project));
-    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, true, this);
+    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     myDependencyValidationManager.addScopeListener(myScopeListener);
     myNamedScopeManager.addScopeListener(myScopeListener);
     ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
@@ -156,16 +156,19 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return 4;
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return IdeBundle.message("scope.view.title");
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.Ide.LocalScope;
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     onSubIdChange();
@@ -214,6 +217,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return ActionCallback.DONE;
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ScopePaneSelectInTarget(myProject);
@@ -284,7 +288,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   public String[] getSubIds() {
     LinkedHashMap<String, NamedScopeFilter> map = myFilters;
     if (map == null || map.isEmpty()) return EMPTY_STRING_ARRAY;
-    return ContainerUtil.toArray(map.keySet(), EMPTY_STRING_ARRAY);
+    return ArrayUtil.toStringArray(map.keySet());
   }
 
   @NotNull
@@ -294,6 +298,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return filter != null ? filter.getScope().getName() : getTitle();
   }
 
+  @NotNull
   @Override
   public Icon getPresentableSubIdIcon(@NotNull String subId) {
     NamedScopeFilter filter = getFilter(subId);
@@ -301,7 +306,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  public void addToolbarActions(DefaultActionGroup actionGroup) {
+  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");

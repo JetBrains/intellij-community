@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
+  /**
+   * @deprecated use {@link #UsageNode(Node, Usage)} instead
+   */
   @Deprecated
   // todo remove in 2018.1
   public UsageNode(@NotNull Usage usage, UsageViewTreeModelBuilder model) {
@@ -36,6 +39,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     setParent(parent);
   }
 
+  @Override
   public String toString() {
     return getUsage().toString();
   }

@@ -17,6 +17,8 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -29,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +58,7 @@ public class InvokeIntention extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
   private final IntentionPolicy myPolicy;
 
-  public InvokeIntention(PsiFile file, IntentionPolicy policy) {
+  public InvokeIntention(@NotNull PsiFile file, @NotNull IntentionPolicy policy) {
     super(file);
     myPolicy = policy;
   }
@@ -110,14 +113,22 @@ public class InvokeIntention extends ActionOnFile {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
-    Disposable disposable = Disposer.newDisposable();
-    if (containsErrorElements) {
-      Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
-      Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
-    }
-
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
+
+    Disposable disposable = Disposer.newDisposable();
     try {
+      if (containsErrorElements) {
+        Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
+        Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
+      }
+
+      Pair<PsiFile, Editor> pair = ShowIntentionActionsHandler.chooseFileForAction(file, editor, intention);
+      if (pair != null && pair.second instanceof EditorWindow) {
+        // intentions too often break wildly when invoked inside injection :(
+        // todo remove return when IDEA-187613, IDEA-187427, IDEA-194969 are fixed
+        return;
+      }
+
       if (changedDocument != null) {
         MadTestingUtil.restrictChangesToDocument(changedDocument, r);
       } else {
@@ -140,7 +151,7 @@ public class InvokeIntention extends ActionOnFile {
       PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
 
       if (!mayBreakCode && !hasErrors) {
-        checkNoNewErrors(project, editor, intentionString);
+        checkNoNewErrors(project, editor, intentionString, myPolicy);
       }
 
       if (checkComments) {
@@ -255,8 +266,8 @@ public class InvokeIntention extends ActionOnFile {
                       .collect(Collectors.toList());
   }
 
-  private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
-    List<HighlightInfo> errors = highlightErrors(project, editor);
+  private static void checkNoNewErrors(Project project, Editor editor, String intentionString, IntentionPolicy policy) {
+    List<HighlightInfo> errors = ContainerUtil.filter(highlightErrors(project, editor), info -> policy.shouldTolerateIntroducedError(info));
     if (!errors.isEmpty()) {
       throw new AssertionError("New highlighting errors introduced after invoking " + intentionString +
                                "\nIf this is correct, add it to IntentionPolicy#mayBreakCode." +

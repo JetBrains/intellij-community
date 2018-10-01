@@ -44,7 +44,7 @@ public class GenerateDependencyUtil {
   }
 
   @NotNull
-  public static List<MavenDomDependency> chooseDependencies(Collection<MavenDomDependency> candidates, final Project project) {
+  public static List<MavenDomDependency> chooseDependencies(Collection<? extends MavenDomDependency> candidates, final Project project) {
     List<MavenDomDependency> dependencies = new ArrayList<>();
 
     MavenDomProjectModelMember[] memberCandidates =
@@ -79,7 +79,7 @@ public class GenerateDependencyUtil {
   private static class MavenDomProjectModelMember extends MemberChooserObjectBase implements ClassMember {
     private final MavenDomDependency myDependency;
 
-    public MavenDomProjectModelMember(final MavenDomDependency dependency) {
+    MavenDomProjectModelMember(final MavenDomDependency dependency) {
       super(dependency.toString(), AllIcons.Nodes.PpLib);
       myDependency = dependency;
     }
@@ -129,7 +129,7 @@ public class GenerateDependencyUtil {
 
     private static class MavenDomProjectModelFileMemberChooserObjectBase extends PsiElementMemberChooserObject {
 
-      public MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable String projectName) {
+      MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable String projectName) {
         super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, MavenIcons.MavenProject);
       }
     }

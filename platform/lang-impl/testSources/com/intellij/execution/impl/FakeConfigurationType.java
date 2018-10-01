@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class FakeConfigurationType implements ConfigurationType {
+public final class FakeConfigurationType implements ConfigurationType {
   @NotNull
   @Override
   public String getDisplayName() {

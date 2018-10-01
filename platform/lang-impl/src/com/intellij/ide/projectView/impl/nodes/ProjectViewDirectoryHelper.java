@@ -340,7 +340,7 @@ public class ProjectViewDirectoryHelper {
   // used only for non-flatten packages mode
   private void processPsiDirectoryChildren(final PsiDirectory psiDir,
                                            PsiElement[] children,
-                                           List<AbstractTreeNode> container,
+                                           List<? super AbstractTreeNode> container,
                                            ProjectFileIndex projectFileIndex,
                                            @Nullable ModuleFileIndex moduleFileIndex,
                                            ViewSettings viewSettings,
@@ -384,7 +384,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   // used only in flatten packages mode
-  private void addAllSubpackages(List<AbstractTreeNode> container,
+  private void addAllSubpackages(List<? super AbstractTreeNode> container,
                                  PsiDirectory dir,
                                  @Nullable ModuleFileIndex moduleFileIndex,
                                  ViewSettings viewSettings,

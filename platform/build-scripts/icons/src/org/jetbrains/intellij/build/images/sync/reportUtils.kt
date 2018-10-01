@@ -19,7 +19,7 @@ internal fun report(
   consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean
 ) {
   log("Skipped $skipped dirs")
-  fun Collection<String>.logIcons(description: String) = "$size $description${if (size in 1..10) ": ${joinToString()}" else ""}"
+  fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
   val report = """
     |$devIcons icons are found in dev repo:
     | ${addedByDev.logIcons("added")}
@@ -52,7 +52,7 @@ private fun sendNotification(isSuccess: Boolean) {
   }
 }
 
-private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
+internal val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 

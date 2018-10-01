@@ -22,7 +22,6 @@ import com.intellij.application.options.codeStyle.WrappingAndBracesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -183,7 +182,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    */
   protected final void createTab(CodeStyleSettingsProvider provider) {
     if (provider.hasSettingsPage()) return;
-    Configurable configurable = provider.createSettingsPage(getCurrentSettings(), getSettings());
+    Configurable configurable = provider.createConfigurable(getCurrentSettings(), getSettings());
     addTab(configurable);
   }
 
@@ -432,7 +431,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     private final Configurable myConfigurable;
     private JComponent myComponent;
 
-    public ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
+    ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
       super(settings);
       myConfigurable = configurable;
 

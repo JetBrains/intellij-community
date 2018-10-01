@@ -19,7 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 // List of non-negative ints, monotonically increasing, optimized for one int case (90% of our lists are one-element)
-final class StubIdList {
+public final class StubIdList {
   private final int myData;
   private final int[] myArray;
 

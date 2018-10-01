@@ -290,7 +290,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected boolean hasIconsOutsideOfTextField() {
-    return UIUtil.isUnderGTKLookAndFeel();
+    return false;
   }
 
   protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {

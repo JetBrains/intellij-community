@@ -399,7 +399,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;
 
-    public FieldOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
+    FieldOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
                   @NotNull String fieldName,
                   @NotNull String title,
                   @Nullable String groupName,
@@ -458,7 +458,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     @NotNull final String[] options;
     @NotNull final int[] values;
 
-    public SelectionOption(Class<? extends CustomCodeStyleSettings> clazz,
+    SelectionOption(Class<? extends CustomCodeStyleSettings> clazz,
                            @NotNull String fieldName,
                            @NotNull String title,
                            @Nullable String groupName,
@@ -508,7 +508,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myDefaultValue;
     @Nullable private final Function<Integer,String> myDefaultValueRenderer;
 
-    public IntOption(Class<? extends CustomCodeStyleSettings> clazz,
+    IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
                      @NotNull String title,
                      @Nullable String groupName, 
@@ -713,7 +713,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
 
-    public MyValueRenderer() {
+    MyValueRenderer() {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myIntLabel);
@@ -845,7 +845,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
     };
 
-    public MyValueEditor() {
+    MyValueEditor() {
       final ActionListener itemChoosen = new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
@@ -976,7 +976,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return options;
   }
 
-  private static void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+  private static void collectOptions(Set<? super String> optionNames, final List<? extends Option> optionList) {
     for (Option option : optionList) {
       if (option.groupName != null) {
         optionNames.add(option.groupName);

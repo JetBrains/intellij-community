@@ -54,7 +54,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setSelectedConfiguration(configuration);
     }
 
-    ExecutionUtil.runConfiguration(configuration, myExecutor);
+    ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, context.getDataContext());
   }
 
   @Override
@@ -93,7 +93,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   @NotNull
   @Override
   protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<ConfigurationFromContext> configurations) {
+                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
     final List<AnAction> childActions = new ArrayList<>(super.createChildActions(context, configurations));
     boolean isMultipleConfigurationsFromAlternativeLocations =
       configurations.size() > 1 && configurations.get(0).isFromAlternativeLocation();
@@ -106,14 +106,14 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> configurationsFromContext) {
+  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
       "Run all",
       "Run all configurations available in this context",
       LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
     ) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         long groupId = ExecutionEnvironment.getNextUnusedExecutionId();
 
         List<ConfigurationType> types = ContainerUtil.map(configurationsFromContext, context1 -> context1.getConfiguration().getType());

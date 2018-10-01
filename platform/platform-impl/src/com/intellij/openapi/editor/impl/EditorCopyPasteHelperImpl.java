@@ -49,7 +49,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     CopyPasteManager.getInstance().setContents(contents);
   }
 
-  public static String getSelectedTextForClipboard(@NotNull Editor editor, @NotNull Collection<TextBlockTransferableData> extraDataCollector) {
+  public static String getSelectedTextForClipboard(@NotNull Editor editor, @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
     final StringBuilder buf = new StringBuilder();
     String separator = "";
     List<Caret> carets = editor.getCaretModel().getAllCarets();

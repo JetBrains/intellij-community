@@ -4,7 +4,6 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
@@ -225,7 +224,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                                                                              myUsageView, myShowEmptyScopes)) {
       addScopeDescriptor(model, new ScopeDescriptor(scope));
     }
-    for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
+    for (ScopeDescriptorProvider provider : ScopeDescriptorProvider.EP_NAME.getExtensionList()) {
       for (ScopeDescriptor scopeDescriptor : provider.getScopeDescriptors(myProject)) {
         if(myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
           model.addElement(scopeDescriptor);

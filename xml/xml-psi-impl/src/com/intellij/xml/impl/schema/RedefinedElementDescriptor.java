@@ -25,7 +25,7 @@ public class RedefinedElementDescriptor extends XmlElementDescriptorImpl {
   }
 
   private class RedefinedTypeDescriptor extends ComplexTypeDescriptor {
-    public RedefinedTypeDescriptor(ComplexTypeDescriptor original) {
+    RedefinedTypeDescriptor(ComplexTypeDescriptor original) {
       super(original.getNsDescriptor(), original.getDeclaration());
     }
 

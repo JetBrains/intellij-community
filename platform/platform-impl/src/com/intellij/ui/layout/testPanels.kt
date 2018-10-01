@@ -5,10 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.RadioButton
-import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.components.*
 import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.*
@@ -153,6 +150,18 @@ fun noteRowInTheDialog(): JPanel {
     row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
     noteRow("Should be an empty row above as a gap. <a href=''>Click me</a>.") {
       System.out.println("Hello")
+    }
+  }
+}
+
+fun jbTextField(): JPanel {
+  val passwordField = JBPasswordField()
+  return panel {
+    noteRow("Enter credentials for bitbucket.org")
+    row("Username:") { JTextField("develar")() }
+    row("Password:") { passwordField() }
+    row {
+      JBCheckBox(CommonBundle.message("checkbox.remember.password"), true)()
     }
   }
 }

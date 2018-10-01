@@ -77,7 +77,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     return ArrayUtil.toStringArray(list);
   }
 
-  private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor, boolean forCompletion) {
+  private boolean processEnumeration(XmlElement context, PairProcessor<? super PsiElement, ? super String> processor, boolean forCompletion) {
     if (getDeclaration() == null) return false;
 
     XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, false) : null;
@@ -102,7 +102,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   private boolean processEnumerationImpl(final XmlTag declaration,
                                          @Nullable ComplexTypeDescriptor type,
-                                         final PairProcessor<PsiElement, String> pairProcessor,
+                                         final PairProcessor<? super PsiElement, ? super String> pairProcessor,
                                          boolean forCompletion) {
     XmlAttribute name = declaration.getAttribute("name");
     if (name != null && "boolean".equals(name.getValue()) && type != null) {
@@ -163,5 +163,23 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   @Override
   protected PsiElement getDefaultValueDeclaration() {
     return getDeclaration();
+  }
+
+  @Override
+  public boolean isList() {
+    XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), null);
+    if (elementDescriptor == null) return false;
+    TypeDescriptor type = elementDescriptor.getType(null);
+    if (!(type instanceof ComplexTypeDescriptor)) return false;
+    final Ref<Boolean> result = new Ref<>(false);
+    new XmlSchemaTagsProcessor(((ComplexTypeDescriptor)type).getNsDescriptor()) {
+      @Override
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, @Nullable XmlTag ref) {
+        if ("list".equals(tagName) || "union".equals(tagName)) {
+          result.set(true);
+        }
+      }
+    }.startProcessing(type.getDeclaration());
+    return result.get();
   }
 }

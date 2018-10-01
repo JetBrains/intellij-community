@@ -48,7 +48,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   @Nullable private final ProgressIndicator myProgress;
 
-  public SvnChangeProviderContext(@NotNull SvnVcs vcs, @NotNull ChangelistBuilder changelistBuilder, @Nullable ProgressIndicator progress) {
+  SvnChangeProviderContext(@NotNull SvnVcs vcs, @NotNull ChangelistBuilder changelistBuilder, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
     myChangelistBuilder = changelistBuilder;
     myProgress = progress;

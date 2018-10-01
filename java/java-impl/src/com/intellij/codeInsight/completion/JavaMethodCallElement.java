@@ -191,7 +191,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     startArgumentLiveTemplate(context, method);
-    showParameterHints(context, method, methodCall);
+    showParameterHints(this, context, method, methodCall);
   }
 
   static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
@@ -289,8 +289,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return true;
   }
 
-  public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
-    if (methodCall == null) return;
+  public static void showParameterHints(LookupElement element, InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
+    if (methodCall == null ||
+        methodCall.getContainingFile() instanceof PsiCodeFragment ||
+        element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null) {
+      return;
+    }
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
     PsiExpressionList parameterOwner = methodCall.getArgumentList();
@@ -377,12 +381,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     templateState.addTemplateStateListener(new TemplateEditingAdapter() {
       @Override
-      public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
+      public void currentVariableChanged(@NotNull TemplateState templateState, Template template, int oldIndex, int newIndex) {
         maxEditedVariable.set(Math.max(maxEditedVariable.get(), oldIndex));
       }
 
       @Override
-      public void beforeTemplateFinished(TemplateState state, Template template, boolean brokenOff) {
+      public void beforeTemplateFinished(@NotNull TemplateState state, Template template, boolean brokenOff) {
         if (brokenOff) {
           removeUntouchedArguments((TemplateImpl)template);
         }

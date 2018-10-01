@@ -31,7 +31,6 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41));
@@ -347,7 +346,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         float arc = COMPONENT_ARC.getFloat();
 
         Object op = comboBox.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (comboBox.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, arc, true, hasFocus, Outline.valueOf(op.toString()));
         } else {
           if (hasFocus) {

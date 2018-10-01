@@ -8,71 +8,45 @@ package com.intellij.execution.remote;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public class RemoteConfigurationType implements ConfigurationType {
-  private final ConfigurationFactory myFactory;
-
-  /**reflection*/
+public final class RemoteConfigurationType extends SimpleConfigurationType {
   public RemoteConfigurationType() {
-    myFactory = new ConfigurationFactory(this) {
-      @Override
-      @NotNull
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new RemoteConfiguration(project, this);
-      }
-
-    };
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return ExecutionBundle.message("remote.debug.configuration.display.name");
-  }
-
-  @Override
-  public String getConfigurationTypeDescription() {
-    return ExecutionBundle.message("remote.debug.configuration.description");
-  }
-
-  @Override
-  public Icon getIcon() {
-    return AllIcons.RunConfigurations.Remote;
-  }
-
-  @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[]{myFactory};
-  }
-
-  @NotNull
-  public ConfigurationFactory getFactory() {
-    return myFactory;
+    super("Remote", ExecutionBundle.message("remote.debug.configuration.display.name"), ExecutionBundle.message("remote.debug.configuration.description"),
+          NotNullLazyValue.createValue(() -> AllIcons.RunConfigurations.Remote));
   }
 
   @Override
   @NotNull
-  public String getId() {
-    return "Remote";
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new RemoteConfiguration(project, this);
   }
 
   @NotNull
   @Override
-  public String getConfigurationPropertyName() {
+  public String getTag() {
     return "jvmRemote";
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug." + getId();
+  }
+
+  @NotNull
+  @Deprecated
+  public ConfigurationFactory getFactory() {
+    return this;
   }
 
   @NotNull
   public static RemoteConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(RemoteConfigurationType.class);
   }
-
 }

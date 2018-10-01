@@ -25,7 +25,7 @@ import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgBookmarkCommand {
 
-  public static void createBookmarkAsynchronously(@NotNull List<HgRepository> repositories, @NotNull String name, boolean isActive) {
+  public static void createBookmarkAsynchronously(@NotNull List<? extends HgRepository> repositories, @NotNull String name, boolean isActive) {
     final Project project = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(repositories)).getProject();
     if (StringUtil.isEmptyOrSpaces(name)) {
       VcsNotifier.getInstance(project).notifyError("Hg Error", "Bookmark name is empty");

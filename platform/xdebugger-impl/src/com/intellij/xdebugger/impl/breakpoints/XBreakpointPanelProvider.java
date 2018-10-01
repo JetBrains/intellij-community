@@ -90,7 +90,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     public final BreakpointsListener myListener;
     public final XBreakpointManager myBreakpointManager;
 
-    public MyXBreakpointListener(BreakpointsListener listener, XBreakpointManager breakpointManager) {
+    MyXBreakpointListener(BreakpointsListener listener, XBreakpointManager breakpointManager) {
       myListener = listener;
       myBreakpointManager = breakpointManager;
     }

@@ -33,7 +33,7 @@ public class DuplicateLinesAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
-    public Handler() {
+    Handler() {
       super(true);
     }
 

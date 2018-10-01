@@ -19,8 +19,8 @@
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
-                        serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
@@ -28,6 +28,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
@@ -73,5 +75,16 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
+    <group id="Github.PullRequest.ToolWindow.List.Toolbar">
+      <action id="Github.PullRequest.List.Refresh"
+              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
+    </group>
+    <group id="Github.PullRequest.ToolWindow.List.Popup">
+      <action id="Github.PullRequest.Branch.Create"
+              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
+      <reference id="Github.Open.In.Browser"/>
+    </group>
+    <action id="Github.PullRequest.Preview.Show.Details"
+            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestToggleDetailsAction"/>
   </actions>
 </idea-plugin>

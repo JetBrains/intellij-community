@@ -16,7 +16,7 @@ import javax.swing.*;
 /**
  * @author Roman Chernyatchik
  */
-public class MockRuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
+public final class MockRuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   public MockRuntimeConfiguration(final Project project) {
     super(project, new MockConfigurationFactory(), "");
   }
@@ -43,7 +43,7 @@ public class MockRuntimeConfiguration extends LocatableConfigurationBase impleme
   }
 
   private static class MockConfigurationFactory extends ConfigurationFactory {
-    public MockConfigurationFactory() {
+    MockConfigurationFactory() {
       super(new MyConfigurationType());
     }
 

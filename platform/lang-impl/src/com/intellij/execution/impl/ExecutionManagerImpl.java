@@ -270,7 +270,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
 
     final RunConfiguration runConfiguration = (RunConfiguration)profile;
-    final List<BeforeRunTask> beforeRunTasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(runConfiguration);
+    final List<BeforeRunTask<?>> beforeRunTasks = RunManagerImplKt.doGetBeforeRunTasks(runConfiguration);
     if (beforeRunTasks.isEmpty()) {
       startRunnable.run();
     }
@@ -365,7 +365,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
 
     RunContentDescriptor contentToReuse = environment.getContentToReuse();
     final List<RunContentDescriptor> runningOfTheSameType = new SmartList<>();
-    if (configuration != null && configuration.isSingleton()) {
+    if (configuration != null && !configuration.getConfiguration().isAllowRunningInParallel()) {
       runningOfTheSameType.addAll(getRunningDescriptorsOfTheSameConfigType(configuration));
     }
     else if (isProcessRunning(contentToReuse)) {

@@ -51,7 +51,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     private final TextRange myRange;
     @NonNls private static final String ELEMENT_DECLARATION_NAME = "ELEMENT";
 
-    public ElementReference(final XmlElement element, final XmlElement nameElement) {
+    ElementReference(final XmlElement element, final XmlElement nameElement) {
       myElement = element;
       myNameElement = nameElement;
 

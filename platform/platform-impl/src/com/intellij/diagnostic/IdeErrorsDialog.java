@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -444,8 +443,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
-    String date = DateFormatUtil.formatPrettyDateTime(message.getDate());
     int count = cluster.messages.size();
+    String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
     info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
 
     String url = null;
@@ -649,7 +648,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   /* UI components */
 
   private class BackAction extends AnAction implements DumbAware {
-    public BackAction() {
+    BackAction() {
       super("Previous", null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (action != null) {
@@ -670,7 +669,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private class ForwardAction extends AnAction implements DumbAware {
-    public ForwardAction() {
+    ForwardAction() {
       super("Next", null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (action != null) {
@@ -760,14 +759,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   public void newEntryAdded() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      updateMessages();
-      updateControls();
+      if (isShowing()) {
+        updateMessages();
+        updateControls();
+      }
     });
   }
 
   @Override
   public void poolCleared() {
-    UIUtil.invokeLaterIfNeeded(() -> doCancelAction());
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isShowing()) {
+        doCancelAction();
+      }
+    });
   }
 
   @Override
@@ -950,9 +955,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
 
-    ErrorReportSubmitter[] reporters;
+    List<ErrorReportSubmitter> reporters;
     try {
-      reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
+      reporters = ExtensionPoints.ERROR_HANDLER_EP.getExtensionList();
     }
     catch (Throwable ignored) {
       return null;

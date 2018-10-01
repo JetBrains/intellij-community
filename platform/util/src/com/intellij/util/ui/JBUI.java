@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.image.ImageObserver;
@@ -653,7 +654,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarSmallComboBoxFont() {
-      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+      return label(11);
     }
   }
 
@@ -1001,13 +1002,13 @@ public class JBUI {
      * @param <S> the context type
      */
     public static class Cache<D, S extends BaseScaleContext> {
-      private final Function<S, D> myDataProvider;
+      private final Function<? super S, ? extends D> myDataProvider;
       private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
 
       /**
        * @param dataProvider provides a data object matching the passed scale context
        */
-      public Cache(@NotNull Function<S, D> dataProvider) {
+      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
         this.myDataProvider = dataProvider;
       }
 
@@ -1254,7 +1255,7 @@ public class JBUI {
     }
 
     public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
-      public Cache(@NotNull Function<ScaleContext, D> dataProvider) {
+      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
         super(dataProvider);
       }
     }
@@ -1510,6 +1511,11 @@ public class JBUI {
     }
   }
 
+  public static Border asUIResource(@NotNull Border border) {
+    if (border instanceof UIResource) return border;
+    return new BorderUIResource(border);
+  }
+
   public static class CurrentTheme {
     public static class ActionButton {
       @NotNull
@@ -1518,15 +1524,25 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
       }
     }
 
     public static class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
-        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+        return JBColor.namedColor("Separator.foreground", new JBColor(0xcdcdcd, 0x515151));
       }
 
       @NotNull
@@ -1632,8 +1648,8 @@ public class JBUI {
 
       @NotNull
       public static Icon comboTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
-                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ArrowDown)
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ArrowDown);
       }
     }
 
@@ -1689,6 +1705,14 @@ public class JBUI {
       public static int toolbarHeight() {
         return scale(28);
       }
+
+      public static Color separatorColor() {
+        return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
+      }
+
+      public static Color separatorTextColor() {
+        return JBColor.namedColor("Popup.separator.foreground", Color.gray);
+      }
     }
 
     public static class Focus {
@@ -1724,7 +1748,7 @@ public class JBUI {
     }
 
     //todo #UX-1 maybe move to popup
-    public static class SearchEverywhere {
+    public static class BigPopup {
       public static Color dialogBackground() {
         return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
       }
@@ -1735,6 +1759,10 @@ public class JBUI {
 
       public static Color selectedTabColor() {
         return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
+      }
+
+      public static Color selectedTabTextColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
       }
 
       public static Color searchFieldBackground() {
@@ -1755,6 +1783,24 @@ public class JBUI {
 
       public static Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
+    }
+
+    public static class Validator {
+      public static Color errorBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
+      }
+
+      public static Color errorBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
+      }
+
+      public static Color warningBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
+      }
+
+      public static Color warningBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
       }
     }
   }

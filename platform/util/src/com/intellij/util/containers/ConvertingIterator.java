@@ -21,8 +21,8 @@ import java.util.Iterator;
  * @author dsl
  */
 public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
-  private final Iterator<Domain> myBaseIterator;
-  private final Convertor<Domain, Range> myConvertor;
+  private final Iterator<? extends Domain> myBaseIterator;
+  private final Convertor<? super Domain, ? extends Range> myConvertor;
 
   public static class IdConvertor <T> implements Convertor<T, T> {
     @Override
@@ -31,7 +31,7 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
     }
   }
 
-  public ConvertingIterator(Iterator<Domain> baseIterator, Convertor<Domain, Range> convertor) {
+  public ConvertingIterator(Iterator<? extends Domain> baseIterator, Convertor<? super Domain, ? extends Range> convertor) {
     myBaseIterator = baseIterator;
     myConvertor = convertor;
   }
@@ -51,8 +51,8 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
     myBaseIterator.remove();
   }
 
-  public static <Domain, Intermediate, Range> Convertor<Domain, Range> composition(final Convertor<Domain, Intermediate> convertor1,
-                                                                                   final Convertor<Intermediate, Range> convertor2) {
+  public static <Domain, Intermediate, Range> Convertor<Domain, Range> composition(final Convertor<? super Domain, ? extends Intermediate> convertor1,
+                                                                                   final Convertor<? super Intermediate, ? extends Range> convertor2) {
     return new Convertor<Domain, Range>() {
       @Override
       public Range convert(Domain domain) {
@@ -61,8 +61,7 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
     };
   }
 
-  public static <Domain, Range> ConvertingIterator<Domain, Range>
-    create(Iterator<Domain> iterator, Convertor<Domain, Range> convertor) {
+  public static <Domain, Range> ConvertingIterator<Domain, Range> create(Iterator<? extends Domain> iterator, Convertor<? super Domain, ? extends Range> convertor) {
     return new ConvertingIterator<Domain, Range>(iterator, convertor);
   }
 }

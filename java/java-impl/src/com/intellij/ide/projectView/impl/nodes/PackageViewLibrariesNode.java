@@ -75,7 +75,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     return super.someChildContainsFile(file);    
   }
 
-  private static void addModuleLibraryRoots(ModuleRootManager moduleRootManager, List<VirtualFile> roots) {
+  private static void addModuleLibraryRoots(ModuleRootManager moduleRootManager, List<? super VirtualFile> roots) {
     final VirtualFile[] files = moduleRootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().classes().getRoots();
     for (final VirtualFile file : files) {
       if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {

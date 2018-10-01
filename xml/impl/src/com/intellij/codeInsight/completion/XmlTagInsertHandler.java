@@ -151,7 +151,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
 
       @Override
-      public void templateFinished(final Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull final Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
         if (chooseAttributeName && offset > 0) {

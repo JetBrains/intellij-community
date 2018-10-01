@@ -17,9 +17,10 @@
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 public interface MemberInfoChangeListener<T extends PsiElement, M extends MemberInfoBase<T>> extends EventListener {
-  void memberInfoChanged(MemberInfoChange<T, M> event);
+  void memberInfoChanged(@NotNull MemberInfoChange<T, M> event);
 }

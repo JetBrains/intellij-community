@@ -15,7 +15,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.initComponent(component, isService)
   }
 
-  override final fun beforeSaveComponents(errors: MutableList<Throwable>) {
+  final override fun beforeSaveComponents(errors: MutableList<Throwable>) {
     // component state uses scheme manager in an ipr project, so, we must save it before
     val isIprProject = project?.let { !it.isDirectoryBased } ?: false
     if (isIprProject) {
@@ -30,7 +30,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     }
   }
 
-  override final fun afterSaveComponents(errors: MutableList<Throwable>) {
+  final override fun afterSaveComponents(errors: MutableList<Throwable>) {
     val isIprProject = project?.let { !it.isDirectoryBased } ?: false
     for (settingsSavingComponent in settingsSavingComponents) {
       if (!isIprProject || settingsSavingComponent !is SchemeManagerFactoryBase) {

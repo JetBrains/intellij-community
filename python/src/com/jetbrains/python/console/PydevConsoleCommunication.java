@@ -298,7 +298,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
   @NotNull
   private static PydevCompletionVariant toPydevCompletionVariant(@NotNull CompletionOption option) {
-    String args = option.arguments.stream().collect(Collectors.joining(" "));
+    String args = String.join(" ", option.arguments);
     return new PydevCompletionVariant(option.name, option.documentation, args, option.type.getValue());
   }
 

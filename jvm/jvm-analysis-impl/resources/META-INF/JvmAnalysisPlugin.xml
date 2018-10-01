@@ -15,6 +15,10 @@
                      enabledByDefault="true" level="WARNING"
                      key="jvm.inspections.blocking.method.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="ScheduledForRemoval"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.scheduled.for.removal.display.name"
+                     implementationClass="com.intellij.codeInspection.ScheduledForRemovalInspection"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

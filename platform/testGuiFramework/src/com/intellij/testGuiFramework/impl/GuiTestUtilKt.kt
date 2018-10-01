@@ -219,10 +219,10 @@ object GuiTestUtilKt {
     }, timeout)
   }
 
-  inline fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+  fun <R> tryWithPause(exceptionClass: Class<out Exception>,
                    condition: String = "try block will not throw ${exceptionClass.name} exception",
                    timeout: Timeout,
-                   crossinline tryBlock: () -> R): R {
+                   tryBlock: () -> R): R {
     val exceptionRef: Ref<Exception> = Ref.create()
     try {
       return withPauseWhenNull (condition, timeout) {
@@ -338,10 +338,11 @@ object GuiTestUtilKt {
     return result?.first
   }
 
-  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+  inline fun <T> ignoreComponentLookupException(action: () -> T): T? = try {
     action()
   }
   catch (ignore: ComponentLookupException) {
+    null
   }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {

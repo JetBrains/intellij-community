@@ -33,7 +33,7 @@ public class ToolWindowUsagesCollector extends ApplicationUsagesCollector implem
 
   @Override
   public FUSUsageContext getContext() {
-    return FUSUsageContext.DEFAULT;
+    return FUSUsageContext.OS_CONTEXT;
   }
 }
 

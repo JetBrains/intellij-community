@@ -53,7 +53,7 @@ public abstract class FacetModelBase implements FacetModel {
     return mySortedFacets;
   }
 
-  private static void addUnderlyingFacets(final LinkedHashSet<Facet> facets, final Facet facet) {
+  private static void addUnderlyingFacets(final LinkedHashSet<? super Facet> facets, final Facet facet) {
     final Facet underlyingFacet = facet.getUnderlyingFacet();
     if (underlyingFacet != null && !facets.contains(facet)) {
       addUnderlyingFacets(facets, underlyingFacet);

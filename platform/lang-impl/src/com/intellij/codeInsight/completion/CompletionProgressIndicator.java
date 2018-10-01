@@ -28,7 +28,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -795,7 +794,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
-      for (CompletionPreselectionBehaviourProvider provider : Extensions.getExtensions(CompletionPreselectionBehaviourProvider.EP_NAME)) {
+      for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.EP_NAME.getExtensionList()) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {
           return false;
         }
@@ -873,7 +872,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private static class ModifierTracker extends KeyAdapter {
     private final JComponent myContentComponent;
 
-    public ModifierTracker(JComponent contentComponent) {
+    ModifierTracker(JComponent contentComponent) {
       myContentComponent = contentComponent;
     }
 

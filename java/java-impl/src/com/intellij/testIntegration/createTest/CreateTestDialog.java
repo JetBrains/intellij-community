@@ -15,8 +15,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
@@ -212,9 +210,8 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return "reference.dialogs.createTest";
   }
 
   @Override
@@ -365,7 +362,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     final DefaultComboBoxModel<TestFramework> model = (DefaultComboBoxModel<TestFramework>)myLibrariesCombo.getModel();
 
-    final List<TestFramework> descriptors = new SmartList<>(Extensions.getExtensions(TestFramework.EXTENSION_NAME));
+    final List<TestFramework> descriptors = new SmartList<>(TestFramework.EXTENSION_NAME.getExtensionList());
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
 
     for (final TestFramework descriptor : descriptors) {
@@ -597,11 +594,6 @@ public class CreateTestDialog extends DialogWrapper {
   private String getPackageName() {
     String name = myTargetPackageField.getText();
     return name != null ? name.trim() : "";
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.dialogs.createTest");
   }
 
   private class MyChooseSuperClassAction implements ActionListener {

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
@@ -188,7 +188,7 @@ public class MacOSApplicationProvider {
     }
   }
 
-  public static boolean tryOpenFileList(Project project, List<File> list, String location) {
+  public static boolean tryOpenFileList(Project project, List<? extends File> list, String location) {
     for (File file : list) {
       if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
         LOG.debug(location + ": load project from ", file);
@@ -205,11 +205,11 @@ public class MacOSApplicationProvider {
           OpenFileAction.openFile(path, project);
           result = true;
         } else {
-          PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+          CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
           if (processor != null) {
             VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
             if (virtualFile != null && virtualFile.isValid()) {
-              result |= processor.doOpenProject(virtualFile, null, false) != null;
+              result |= processor.openProjectAndFile(virtualFile, -1, false) != null;
             }
           }
         }

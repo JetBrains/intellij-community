@@ -416,7 +416,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return new SpeedSearchComparator(false);
   }
 
-  protected void disableAlphabeticalSorting(final AnActionEvent event) {
+  protected void disableAlphabeticalSorting(@NotNull AnActionEvent event) {
     mySortAction.setSelected(event, false);
   }
 
@@ -519,7 +519,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreSelection(pair);
   }
 
-  private static void sortNode(ParentNode node, final Comparator<ElementNode> sortComparator) {
+  private static void sortNode(ParentNode node, final Comparator<? super ElementNode> sortComparator) {
     ArrayList<ElementNode> arrayList = new ArrayList<>();
     Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {
@@ -590,7 +590,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreSelection(selection);
   }
 
-  private void setShowClasses(boolean showClasses) {
+  protected void setShowClasses(boolean showClasses) {
     myShowClasses = showClasses;
     restoreTree();
   }
@@ -620,7 +620,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
 
-  private void restoreSelection(Pair<ElementNode,List<ElementNode>> pair) {
+  private void restoreSelection(Pair<? extends ElementNode, ? extends List<ElementNode>> pair) {
     List<ElementNode> selectedNodes = pair.second;
 
     DefaultMutableTreeNode root = getRootNode();
@@ -669,7 +669,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (key.equals(CommonDataKeys.PSI_ELEMENT)) {
       if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
         T selectedElement = mySelectedElements.iterator().next();
@@ -760,7 +760,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class SelectNoneAction extends AbstractAction {
-    public SelectNoneAction() {
+    SelectNoneAction() {
       super(IdeBundle.message("action.select.none"));
     }
 
@@ -804,18 +804,18 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class SortEmAction extends ToggleAction {
-    public SortEmAction() {
+    SortEmAction() {
       super(IdeBundle.message("action.sort.alphabetically"),
             IdeBundle.message("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isAlphabeticallySorted();
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myAlphabeticallySorted = flag;
       setSortComparator(flag ? new AlphaComparator() : new OrderComparator());
       if (flag) {
@@ -834,12 +834,12 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return myShowClasses;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setShowClasses(flag);
     }
 
@@ -852,7 +852,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class ExpandAllAction extends AnAction {
-    public ExpandAllAction() {
+    ExpandAllAction() {
       super(IdeBundle.message("action.expand.all"), IdeBundle.message("action.expand.all"),
             AllIcons.Actions.Expandall);
     }
@@ -864,7 +864,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class CollapseAllAction extends AnAction {
-    public CollapseAllAction() {
+    CollapseAllAction() {
       super(IdeBundle.message("action.collapse.all"), IdeBundle.message("action.collapse.all"),
             AllIcons.Actions.Collapseall);
     }
@@ -901,9 +901,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private static class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
-    private final Comparator<T> myDelegate;
+    private final Comparator<? super T> myDelegate;
 
-    public ElementNodeComparatorWrapper(final Comparator<T> delegate) {
+    ElementNodeComparatorWrapper(final Comparator<? super T> delegate) {
       myDelegate = delegate;
     }
 

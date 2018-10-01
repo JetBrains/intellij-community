@@ -91,7 +91,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   @Nullable
-  private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<IdeaPluginDescriptor> allPlugins) {
+  private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) {
     final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
@@ -206,7 +206,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   @Nullable
-  static IdeaPluginDescriptor getDisabledPlugin(Set<Plugin> plugins) {
+  static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
     for (Plugin plugin : plugins) {
       if (disabledPlugins.contains(plugin.myPluginId)) return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
@@ -214,7 +214,7 @@ public class PluginsAdvertiser implements StartupActivity {
     return null;
   }
 
-  static List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
+  static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) return null;
     final List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
@@ -490,7 +490,7 @@ public class PluginsAdvertiser implements StartupActivity {
     private final Set<PluginDownloader> myPlugins;
     private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
 
-    public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
+    ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
                                     Project project,
                                     List<IdeaPluginDescriptor> allPlugins,
                                     Set<PluginDownloader> plugins,

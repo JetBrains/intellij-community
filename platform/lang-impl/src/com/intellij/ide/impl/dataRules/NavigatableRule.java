@@ -23,10 +23,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class NavigatableRule implements GetDataRule {
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     final Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
     if (navigatable instanceof OpenFileDescriptor) {
       final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)navigatable;

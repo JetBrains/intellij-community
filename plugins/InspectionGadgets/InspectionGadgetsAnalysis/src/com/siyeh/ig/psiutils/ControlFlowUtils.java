@@ -552,7 +552,7 @@ public class ControlFlowUtils {
     return i == count;
   }
 
-  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<? extends T> aClass) {
     return PsiTreeUtil.getParentOfType(element, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
   }
 
@@ -1022,16 +1022,16 @@ public class ControlFlowUtils {
    * Returns true if given element is an empty statement
    *
    * @param element element to check
-   * @param ignoreComments if true, empty statement containing comments is still considered empty
+   * @param commentIsContent if true, empty statement containing comments is not considered empty
    * @param emptyBlocks if true, empty block (or nested empty block like {@code {{}}}) is considered an empty statement
    * @return true if given element is an empty statement
    */
-  public static boolean isEmpty(PsiElement element, boolean ignoreComments, boolean emptyBlocks) {
-    if (!ignoreComments && element instanceof PsiComment) {
+  public static boolean isEmpty(PsiElement element, boolean commentIsContent, boolean emptyBlocks) {
+    if (!commentIsContent && element instanceof PsiComment) {
       return true;
     }
     else if (element instanceof PsiEmptyStatement) {
-      return !ignoreComments ||
+      return !commentIsContent ||
              PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
              !(PsiTreeUtil.skipWhitespacesBackward(element) instanceof PsiComment);
     }
@@ -1040,7 +1040,7 @@ public class ControlFlowUtils {
     }
     else if (element instanceof PsiBlockStatement) {
       final PsiBlockStatement block = (PsiBlockStatement)element;
-      return isEmpty(block.getCodeBlock(), ignoreComments, emptyBlocks);
+      return isEmpty(block.getCodeBlock(), commentIsContent, emptyBlocks);
     }
     else if (emptyBlocks && element instanceof PsiCodeBlock) {
       final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
@@ -1050,7 +1050,7 @@ public class ControlFlowUtils {
       }
       for (int i = 1; i < children.length - 1; i++) {
         final PsiElement child = children[i];
-        if (!isEmpty(child, ignoreComments, true)) {
+        if (!isEmpty(child, commentIsContent, true)) {
           return false;
         }
       }

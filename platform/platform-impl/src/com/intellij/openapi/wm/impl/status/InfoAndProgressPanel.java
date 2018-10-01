@@ -420,12 +420,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     if (balloonLayout != null) {
       class MyListener implements JBPopupListener, Runnable {
         @Override
-        public void beforeShown(LightweightWindowEvent event) {
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
           balloonLayout.addListener(this);
         }
 
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           balloonLayout.removeListener(this);
         }
 

@@ -27,11 +27,11 @@ import java.util.Collection;
 
 class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
 
-  private final Computable<Collection<StructureViewTreeElement>> myChildrenComputable;
+  private final Computable<? extends Collection<StructureViewTreeElement>> myChildrenComputable;
   private final String myHeader;
 
-  public Html5SectionTreeElement(final XmlTag tag,
-                                 final Computable<Collection<StructureViewTreeElement>> childrenComputable,
+  Html5SectionTreeElement(final XmlTag tag,
+                                 final Computable<? extends Collection<StructureViewTreeElement>> childrenComputable,
                                  final @Nullable String header) {
     super(tag);
     myChildrenComputable = childrenComputable;

@@ -78,7 +78,7 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.notifyArtifactBuilt(targetFilePath)
     }
   }
-  
+
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
@@ -122,7 +122,7 @@ class BuildTasksImpl extends BuildTasks {
     buildContext.ant.mkdir(dir: tempDir)
     String systemPath = "$tempDir/system"
     String configPath = "$tempDir/config"
-  
+
     def ideClasspath = new LinkedHashSet<String>()
     modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(it), false) }
 
@@ -224,8 +224,22 @@ idea.fatal.error.notification=disabled
         }
       }
 
+      if (buildContext.applicationInfo.svgRelativePath != null) {
+        buildContext.ant.copy(file: findBrandingResource(buildContext.applicationInfo.svgRelativePath), tofile: "$buildContext.paths.distAll/bin/${buildContext.productProperties.baseFileName}.svg")
+      }
+
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  private File findBrandingResource(String relativePath) {
+    def inModule = buildContext.findFileInModuleSources(buildContext.productProperties.applicationInfoModule, relativePath)
+    if (inModule != null) return inModule
+    def inResources = buildContext.productProperties.brandingResourcePaths.collect { new File(it, relativePath) }.find { it.exists() }
+    if (inResources == null) {
+      buildContext.messages.error("Cannot find '$relativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+    }
+    return inResources
   }
 
   private void copyLogXml() {
@@ -240,8 +254,8 @@ idea.fatal.error.notification=disabled
       @Override
       String run(BuildContext context) {
         def builder = factory.apply(context)
-        if (builder != null && context.shouldBuildDistributionForOS(builder.osTargetId)) {
-          return context.messages.block("Build $builder.osName Distribution") {
+        if (builder != null && context.shouldBuildDistributionForOS(builder.targetOs.osId)) {
+          return context.messages.block("Build $builder.targetOs.osName Distribution") {
             def distDirectory = builder.copyFilesForOsDistribution()
             builder.buildArtifacts(distDirectory)
             distDirectory
@@ -261,8 +275,7 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
-    def bundledPlugins = productLayout.bundledPluginModules as Set<String>
-    def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
+    def moduleNames = productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
                       DistributionJARsBuilder.getPlatformApiModules(productLayout) +
                       DistributionJARsBuilder.getPlatformImplModules(productLayout) +
                       DistributionJARsBuilder.getProductApiModules(productLayout) +
@@ -287,7 +300,7 @@ idea.fatal.error.notification=disabled
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>() 
+          pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
             def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
             pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
@@ -319,7 +332,7 @@ idea.fatal.error.notification=disabled
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
+        def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
         def moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
         new MavenArtifactsBuilder(buildContext).generateMavenArtifacts(moduleNames)
       }
@@ -341,7 +354,15 @@ idea.fatal.error.notification=disabled
         scramble()
       }
       logFreeDiskSpace("before downloading JREs")
-      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
+      String[] args = [
+        'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion",
+        "-Dintellij.build.bundled.jre.prefix=$buildContext.options.bundledJrePrefix"
+      ]
+      if (buildContext.options.bundledJreBuild != null) {
+        args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+      }
+      buildContext.gradle.run('Setting up JetBrains JREs', args)
       logFreeDiskSpace("after downloading JREs")
       layoutShared()
 
@@ -450,6 +471,10 @@ idea.fatal.error.notification=disabled
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
     def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
+    for (osFamily in OsFamily.values()) {
+      checkPluginModules(layout.bundledOsPluginModules[osFamily],
+                         "productProperties.productLayout.bundledOsPluginModules[$osFamily]", optionalModules)
+    }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
     if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
@@ -480,7 +505,8 @@ idea.fatal.error.notification=disabled
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    nonTrivialPlugins.findAll {layout.bundledPluginModules.contains(it.mainModule)}.each { plugin ->
+    def allBundledPlugins = layout.allBundledPluginsModules
+    nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
@@ -512,6 +538,9 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
+    if (!pluginModules) {
+      return
+    }
     checkModules(pluginModules, fieldName)
     def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {

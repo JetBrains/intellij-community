@@ -388,7 +388,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, final String errorMessage) {
+    public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, @NotNull final String errorMessage) {
       StartMarker marker = (StartMarker)before;
       ErrorItem errorItem = myBuilder.myPool.allocateErrorItem();
       errorItem.myMessage = errorMessage;
@@ -398,13 +398,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public void error(String message) {
+    public void error(@NotNull String message) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.processDone(this, message, null);
     }
 
     @Override
-    public void errorBefore(final String message, @NotNull final Marker before) {
+    public void errorBefore(@NotNull final String message, @NotNull final Marker before) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.processDone(this, message, (StartMarker)before);
     }
@@ -883,7 +883,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Override
-  public void error(String messageText) {
+  public void error(@NotNull String messageText) {
     ProductionMarker lastMarker = myProduction.getStartingMarkerAt(myProduction.size() - 1);
     if (lastMarker instanceof ErrorItem && lastMarker.myLexemeIndex == myCurrentLexeme) {
       return;
@@ -951,11 +951,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
-    private final DiffTreeChangeBuilder<ASTNode, ASTNode> myDelegate;
+    private final DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> myDelegate;
     private final ASTConverter myConverter;
 
     private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode,
-                                          @NotNull DiffTreeChangeBuilder<ASTNode, ASTNode> delegate,
+                                          @NotNull DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> delegate,
                                           @Nullable ASTFactory astFactory) {
       myDelegate = delegate;
       myConverter = new ASTConverter(rootNode, astFactory);
@@ -1265,7 +1265,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private static CompositeElement createComposite(@NotNull StartMarker marker, @Nullable ASTFactory astFactory) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
-      return Factory.createErrorElement(marker.myBuilder.myOptionalData.getDoneError(marker.markerId));
+      String error = marker.myBuilder.myOptionalData.getDoneError(marker.markerId);
+      return Factory.createErrorElement(error);
     }
 
     if (type == null) {
@@ -1302,12 +1303,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
-    private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom;
-    @NotNull private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
+    private final TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>
+      custom;
+    @NotNull private final List<? extends CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
-    private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
-                         @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators,
+    private MyComparator(TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         @NotNull List<? extends CustomLanguageASTComparator> customLanguageASTComparators,
                          @NotNull MyTreeStructure treeStructure) {
       this.custom = custom;
       myCustomLanguageASTComparators = customLanguageASTComparators;
@@ -1444,7 +1446,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private final LimitedPool<LazyParseableToken> myLazyPool;
     private final StartMarker myRoot;
 
-    public MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
+    MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
         myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<Token>() {
           @Override

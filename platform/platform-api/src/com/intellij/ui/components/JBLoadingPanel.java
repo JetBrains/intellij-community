@@ -53,7 +53,7 @@ public class JBLoadingPanel extends JPanel {
     });
   }
 
-  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<JPanel, LoadingDecorator> createLoadingDecorator) {
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<? super JPanel, ? extends LoadingDecorator> createLoadingDecorator) {
     super(new BorderLayout());
     myPanel = manager == null ? new JPanel() : new JPanel(manager);
     myPanel.setOpaque(false);

@@ -27,7 +27,13 @@ fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = CachedValue
 }
 
 private fun doGetDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
-  return GrDelegatesToProvider.EP_NAME.extensions.asSequence().mapNotNull { it.getDelegatesToInfo(closure) }.firstOrNull()
+  for (ext in GrDelegatesToProvider.EP_NAME.extensions) {
+    val info = ext.getDelegatesToInfo(closure)
+    if (info != null) {
+      return info
+    }
+  }
+  return null
 }
 
 fun getContainingCall(closableBlock: GrClosableBlock): GrCall? {
@@ -58,6 +64,13 @@ private fun doResolveActualCall(call: GrMethodCall): GroovyResolveResult {
   val expression = call.invokedExpression
   val type = expression.type ?: return result
 
-  val calls = ResolveUtil.getMethodCandidates(type, "call", expression, *getArgumentTypes(expression, false))
+  val argumentTypes = getArgumentTypes(expression, false)
+  // work around KT-27229
+  val calls = if (argumentTypes == null) {
+    ResolveUtil.getMethodCandidates(type, "call", expression, null)
+  }
+  else {
+    ResolveUtil.getMethodCandidates(type, "call", expression, *argumentTypes)
+  }
   return calls.singleOrNull() ?: EmptyGroovyResolveResult
 }

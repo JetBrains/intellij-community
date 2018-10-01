@@ -130,7 +130,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  public static With findWithElement(List<With> elements, PsiField field) {
+  public static With findWithElement(List<? extends With> elements, PsiField field) {
     for (With element : elements) {
       if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
         return element;

@@ -180,7 +180,7 @@ public class TemporaryPlacesRegistry {
     public final InjectedLanguage language;
     public final SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer;
 
-    public TempPlace(InjectedLanguage language, SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer) {
+    TempPlace(InjectedLanguage language, SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer) {
       this.language = language;
       this.elementPointer = elementPointer;
     }

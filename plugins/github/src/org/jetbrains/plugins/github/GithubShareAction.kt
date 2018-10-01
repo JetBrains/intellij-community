@@ -16,6 +16,7 @@
  */
 package org.jetbrains.plugins.github
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -391,6 +392,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
     init {
       title = "Add Files For Initial Commit"
+      setOKButtonText(CommonBundle.getAddButtonText())
+      setCancelButtonText(CommonBundle.getCancelButtonText())
       init()
     }
 

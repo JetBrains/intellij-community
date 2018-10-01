@@ -8,7 +8,6 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -58,8 +57,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
-    ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for (ProjectOpenProcessor processor : processors) {
+    for (ProjectOpenProcessor processor : EXTENSION_POINT_NAME.getExtensionList()) {
       if (processor instanceof PlatformProjectOpenProcessor) {
         return (PlatformProjectOpenProcessor)processor;
       }
@@ -267,7 +265,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }
@@ -279,7 +277,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
       }

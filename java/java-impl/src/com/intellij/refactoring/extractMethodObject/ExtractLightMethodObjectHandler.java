@@ -327,7 +327,7 @@ public class ExtractLightMethodObjectHandler {
     private final ExtractMethodObjectProcessor myProcessor;
     private final String myMethodName;
 
-    public LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
+    LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }

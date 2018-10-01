@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class InvalidUsageNoteProjectNode extends ProjectViewNodeWithChildrenList<InvalidUsageNoteNode> {
-  public InvalidUsageNoteProjectNode(Project project, InvalidUsageNoteNode node, ViewSettings viewSettings) {
+  public InvalidUsageNoteProjectNode(Project project, @NotNull InvalidUsageNoteNode node, ViewSettings viewSettings) {
     super(project, node, viewSettings);
   }
 

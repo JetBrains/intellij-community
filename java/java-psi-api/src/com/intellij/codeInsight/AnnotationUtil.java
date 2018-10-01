@@ -235,7 +235,7 @@ public class AnnotationUtil {
     return isAnnotated(listOwner, annotationFqn, flags, null);
   }
 
-  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, @Flags int flags, @Nullable Set<PsiMember> processed) {
+  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, @Flags int flags, @Nullable Set<? super PsiMember> processed) {
     if (!listOwner.isValid()) return false;
 
     PsiModifierList modifierList = listOwner.getModifierList();
@@ -368,14 +368,14 @@ public class AnnotationUtil {
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  @Nullable Set<PsiModifierListOwner> visited) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited) {
     return getAllAnnotations(owner, inHierarchy, visited, true);
   }
 
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  @Nullable Set<PsiModifierListOwner> visited, boolean withInferred) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited, boolean withInferred) {
     final PsiModifierList list = owner.getModifierList();
     PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     if (list != null) {

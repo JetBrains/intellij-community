@@ -85,18 +85,14 @@ public class ChunkExtractor {
     }
   }
 
-  private static final ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>> ourExtractors = new ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>>() {
+  private static final ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>> ourExtractors = ThreadLocal.withInitial(
+    () -> new WeakFactory<Map<PsiFile, ChunkExtractor>>() {
+    @NotNull
     @Override
-    protected WeakFactory<Map<PsiFile, ChunkExtractor>> initialValue() {
-      return new WeakFactory<Map<PsiFile, ChunkExtractor>>() {
-        @NotNull
-        @Override
-        protected Map<PsiFile, ChunkExtractor> create() {
-          return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
-        }
-      };
+    protected Map<PsiFile, ChunkExtractor> create() {
+      return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
     }
-  };
+  });
 
   @NotNull 
   public static TextChunk[] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
@@ -121,7 +117,7 @@ public class ChunkExtractor {
     myDocumentStamp = -1;
   }
 
-  public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
+  public static int getStartOffset(final List<? extends RangeMarker> rangeMarkers) {
     LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {

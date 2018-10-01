@@ -37,7 +37,7 @@ public interface ProviderBinding {
     }
   }
   void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                       @NotNull List<ProviderInfo<ProcessingContext>> list,
+                                       @NotNull List<? super ProviderInfo<ProcessingContext>> list,
                                        @NotNull PsiReferenceService.Hints hints);
 
   void unregisterProvider(@NotNull PsiReferenceProvider provider);

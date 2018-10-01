@@ -135,7 +135,7 @@ public class UiUtils {
     });
   }
 
-  public static JPanel createTreeClassChooserList(final Collection<String> collection,
+  public static JPanel createTreeClassChooserList(final Collection<? super String> collection,
                                                   String borderTitle,
                                                   final String chooserTitle,
                                                   String... ancestorClasses) {

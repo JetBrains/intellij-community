@@ -5,9 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -37,6 +35,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Kirill Kalishev
@@ -203,12 +202,16 @@ public class RegistryUi implements Disposable {
     }
   }
 
+
   private static class MyTableModel extends AbstractTableModel {
 
     private final List<RegistryValue> myAll;
 
     private MyTableModel() {
       myAll = Registry.getAll();
+      myAll.addAll(Experiments.EP_NAME.getExtensionList().stream()
+                     .map(ExperimentalFeatureRegistryValueWrapper::new)
+                     .collect(Collectors.toList()));
       final List<String> recent = getRecent();
 
       Collections.sort(myAll, (o1, o2) -> {
@@ -501,7 +504,7 @@ public class RegistryUi implements Disposable {
   }
 
   private class RestoreDefaultsAction extends AbstractAction {
-    public RestoreDefaultsAction() {
+    RestoreDefaultsAction() {
       super("Restore Defaults");
     }
 

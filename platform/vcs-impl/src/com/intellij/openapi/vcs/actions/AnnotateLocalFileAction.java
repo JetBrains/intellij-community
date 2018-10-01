@@ -149,7 +149,7 @@ public class AnnotateLocalFileAction {
         }
 
         if (!fileAnnotationRef.isNull()) {
-          AnnotateToggleAction.doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
+          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
       }
     };

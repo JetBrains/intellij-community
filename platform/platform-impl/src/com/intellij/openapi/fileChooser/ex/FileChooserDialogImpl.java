@@ -341,7 +341,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
         }
       });
@@ -433,7 +433,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
       @Override
-      public void selectionChanged(final List<VirtualFile> selection) {
+      public void selectionChanged(@NotNull final List<? extends VirtualFile> selection) {
         // myTreeIsUpdating makes no sense for AsyncTreeModel
         if (myTreeIsUpdating && myFileSystemTree.getTreeBuilder() == null) myTreeIsUpdating = false;
         updatePathFromTree(selection, false);
@@ -627,7 +627,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
 
-  private void updatePathFromTree(final List<VirtualFile> selection, boolean now) {
+  private void updatePathFromTree(final List<? extends VirtualFile> selection, boolean now) {
     if (!isToShowTextField() || myTreeIsUpdating) return;
 
     String text = "";

@@ -79,7 +79,7 @@ public class ReplaceInProjectManager {
     myProject = project;
   }
 
-  private static boolean hasReadOnlyUsages(final Collection<Usage> usages) {
+  private static boolean hasReadOnlyUsages(final Collection<? extends Usage> usages) {
     for (Usage usage : usages) {
       if (usage.isReadOnly()) return true;
     }
@@ -499,7 +499,7 @@ public class ReplaceInProjectManager {
 
   private boolean getStringToReplace(int textOffset,
                                      int textEndOffset,
-                                     Document document, FindModel findModel, Ref<String> stringToReplace)
+                                     Document document, FindModel findModel, Ref<? super String> stringToReplace)
     throws FindManager.MalformedReplacementStringException {
     if (textOffset < 0 || textOffset >= document.getTextLength()) {
       return false;
@@ -524,7 +524,7 @@ public class ReplaceInProjectManager {
     return true;
   }
 
-  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @NotNull final Set<Usage> usagesSet) {
+  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @NotNull final Set<? extends Usage> usagesSet) {
     if (usagesSet.isEmpty()) {
       return;
     }
@@ -547,7 +547,7 @@ public class ReplaceInProjectManager {
     replaceContext.invalidateExcludedSetCache();
   }
 
-  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<Usage> selectedUsages) {
+  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<? extends Usage> selectedUsages) {
     Set<VirtualFile> readOnlyFiles = null;
     for (final Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();

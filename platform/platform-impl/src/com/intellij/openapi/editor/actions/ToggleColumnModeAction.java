@@ -35,7 +35,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final EditorEx editor = getEditor(e);
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
@@ -99,7 +99,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     final EditorEx ex = getEditor(e);
     return ex != null && ex.isColumnMode();
   }

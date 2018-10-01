@@ -32,7 +32,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -253,8 +252,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new JavaReplaceHandler(context);
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
+    return new JavaReplaceHandler(project, replaceOptions);
   }
 
   @NotNull
@@ -362,6 +361,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
              secondElement instanceof PsiExpressionStatement &&
              PsiTreeUtil.lastChild(secondElement) instanceof PsiErrorElement) {
       // might be generic method
+      return true;
+    }
+    else if (firstElement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)firstElement).isDefaultCase() &&
+             PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement && secondElement instanceof PsiDeclarationStatement) {
+      // possible default method
       return true;
     }
     else if (firstElement instanceof PsiExpressionStatement && firstElement.getFirstChild() instanceof PsiMethodCallExpression &&
@@ -826,7 +830,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (completePattern || variableNode == null) return false;
         if (variableNode instanceof PsiLiteralExpression && ((PsiLiteralExpression)variableNode).getValue() instanceof String) return true;
         final PsiElement parent = variableNode.getParent();
-        return parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement;
+        return parent instanceof PsiJavaCodeReferenceElement;
       default: return super.isApplicableConstraint(constraintName, variableNode, completePattern, target);
     }
   }

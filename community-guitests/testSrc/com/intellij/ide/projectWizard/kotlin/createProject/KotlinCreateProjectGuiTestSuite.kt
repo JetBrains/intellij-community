@@ -57,7 +57,7 @@ class KotlinCreateProjectGuiTestSuite : GuiTestSuite() {
   @RunWith(Suite::class)
   @RunWithIde(CommunityIde::class)
   @Suite.SuiteClasses(
-     CreateKotlinProjectGuiTest::class
+    CreateKotlinProjectGuiTest::class
     , CreateGradleProjectAndConfigureKotlinGuiTest::class
     , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
     , CreateGradleProjectWithKotlinGuiTest::class

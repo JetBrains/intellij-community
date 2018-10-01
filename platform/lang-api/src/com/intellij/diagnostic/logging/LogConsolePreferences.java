@@ -218,7 +218,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   @Override
-  public void setFilterSelected(LogFilter filter, boolean state) {
+  public void setFilterSelected(@NotNull LogFilter filter, boolean state) {
     if (filter instanceof IndependentLogFilter) {
       ((IndependentLogFilter)filter).selectFilter();
     }
@@ -237,7 +237,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     }
   }
 
-  private void fireStateChanged(final LogFilter filter) {
+  private void fireStateChanged(@NotNull LogFilter filter) {
     for (LogFilterListener listener : myListeners) {
       listener.onFilterStateChange(filter);
     }

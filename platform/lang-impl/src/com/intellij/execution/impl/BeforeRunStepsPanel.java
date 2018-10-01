@@ -39,7 +39,7 @@ import java.util.*;
 /**
  * @author Vassiliy Kudryashov
  */
-class BeforeRunStepsPanel extends JPanel {
+final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
   private final JBList<BeforeRunTask<?>> myList;
@@ -269,7 +269,7 @@ class BeforeRunStepsPanel extends JPanel {
     return myRunConfiguration instanceof UnknownRunConfiguration;
   }
 
-  void doAddAction(@NotNull AnActionButton button) {
+  private void doAddAction(@NotNull AnActionButton button) {
     if (isUnknown()) {
       return;
     }
@@ -352,7 +352,7 @@ class BeforeRunStepsPanel extends JPanel {
   interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
 
-    void titleChanged(String title);
+    void titleChanged(@NotNull String title);
   }
 
   private class MyListCellRenderer extends JBList.StripedListCellRenderer {

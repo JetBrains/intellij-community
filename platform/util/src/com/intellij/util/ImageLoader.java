@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,6 +38,11 @@ public class ImageLoader implements Serializable {
 
   public static final long CACHED_IMAGE_MAX_SIZE = (long)(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
+
+  public static void clearCache() {
+    ourCache.clear();
+  }
+
 
   @SuppressWarnings("UnusedDeclaration") // set from com.intellij.internal.IconsLoadTime
   private static LoadFunction measureLoad;
@@ -394,6 +385,28 @@ public class ImageLoader implements Serializable {
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
     return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
+  }
+
+  @NotNull
+  public static Image scaleImage(@NotNull Image image, int targetSize) {
+    return scaleImage(image, targetSize, targetSize);
+  }
+
+  @NotNull
+  public static Image scaleImage(@NotNull Image image, int targetWidth, int targetHeight) {
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).scale(targetWidth, targetHeight);
+    }
+    int w = image.getWidth(null);
+    int h = image.getHeight(null);
+
+    if (w <= 0 || h <= 0 || w == targetWidth && h == targetHeight) {
+      return image;
+    }
+
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT,
+                        targetWidth, targetHeight,
+                        (BufferedImageOp[])null);
   }
 
   @Nullable

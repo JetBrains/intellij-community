@@ -156,7 +156,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   public synchronized void saveAndWait() throws Exception {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
     save();
-    myAlarm.waitForAllExecuted(1, TimeUnit.SECONDS);
+    myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
@@ -303,7 +303,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static DataNode<ProjectData> convert(@NotNull ProjectSystemId systemId,
                                                @NotNull ExternalProjectPojo rootProject,
-                                               @NotNull Collection<ExternalProjectPojo> childProjects) {
+                                               @NotNull Collection<? extends ExternalProjectPojo> childProjects) {
     ProjectData projectData = new ProjectData(systemId, rootProject.getName(), rootProject.getPath(), rootProject.getPath());
     DataNode<ProjectData> projectDataNode = new DataNode<>(PROJECT, projectData, null);
 
@@ -472,10 +472,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     @XCollection(elementName = "id")
     public final Set<String> set = ContainerUtil.newConcurrentSet();
 
-    public ModuleState() {
+    ModuleState() {
     }
 
-    public ModuleState(Collection<String> values) {
+    ModuleState(Collection<String> values) {
       set.addAll(values);
     }
   }
@@ -484,7 +484,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     private final Project myProject;
     private final Collection<InternalExternalProjectInfo> myExternalProjects;
 
-    public MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
+    MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
       myProject = project;
       myExternalProjects = ContainerUtil.map(externalProjects, info -> (InternalExternalProjectInfo)info.copy());
     }

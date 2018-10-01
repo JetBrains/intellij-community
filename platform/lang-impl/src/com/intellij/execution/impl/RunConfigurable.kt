@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditorConfigurable
@@ -35,7 +34,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.TreeTraversal
-import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
 import gnu.trove.THashMap
@@ -74,9 +72,9 @@ private fun getName(userObject: Any): String {
 
 open class RunConfigurable @JvmOverloads constructor(private val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
   @Volatile private var isDisposed: Boolean = false
-  val root: DefaultMutableTreeNode = DefaultMutableTreeNode("Root")
-  val treeModel: MyTreeModel = MyTreeModel(root)
-  val tree: Tree = Tree(treeModel)
+  val root = DefaultMutableTreeNode("Root")
+  val treeModel = MyTreeModel(root)
+  val tree = Tree(treeModel)
   private val rightPanel = JPanel(BorderLayout())
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
@@ -86,7 +84,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
   private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
   private var toolbarDecorator: ToolbarDecorator? = null
-  private var isFolderCreating: Boolean = false
+  private var isFolderCreating = false
   private val toolbarAddAction = MyToolbarAddAction()
   private val runDashboardTypesPanel = RunDashboardTypesPanel(project)
 
@@ -199,30 +197,28 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val manager = runManager
-    for (type in manager.configurationFactories) {
-      val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
+    for ((type, folderMap) in manager.getConfigurationsGroupedByTypeAndFolder(true)) {
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
-      val folderMapping = THashMap<String, DefaultMutableTreeNode>()
-      for (configuration in configurations) {
-        val folder = configuration.folderName
+      for ((folder, configurations) in folderMap.entries) {
+        val node: DefaultMutableTreeNode
         if (folder == null) {
-          typeNode.add(DefaultMutableTreeNode(configuration))
+          node = typeNode
         }
         else {
-          val node = folderMapping.getOrPut(folder) {
-            val node = DefaultMutableTreeNode(folder)
-            typeNode.insert(node, folderMapping.size)
-            node
-          }
-          node.add(DefaultMutableTreeNode(configuration))
+          node = DefaultMutableTreeNode(folder)
+          typeNode.add(node)
+        }
+
+        for (it in configurations) {
+          node.add(DefaultMutableTreeNode(it))
         }
       }
     }
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES)
-    for (type in manager.configurationFactoriesWithoutUnknown) {
+    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -548,7 +544,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
   override fun createComponent(): JComponent? {
-    for (each in Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT, project)) {
+    for (each in RunConfigurationsSettings.EXTENSION_POINT.getExtensions(project)) {
       val configurable = each.createConfigurable()
       additionalSettings.add(Pair.create(configurable, configurable.createComponent()))
     }
@@ -623,7 +619,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         manager.config.recentsLimit = recentLimit
         manager.checkRecentsLimit()
       }
-      recentsLimit.text = "" + recentLimit
+      recentsLimit.text = recentLimit.toString()
       recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
       confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
@@ -638,7 +634,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
       additionalSettings.forEach { it.first.apply() }
 
-      manager.setOrder(Comparator.comparingInt(ToIntFunction<RunnerAndConfigurationSettings> { settingsToOrder.get(it) }))
+      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.get(it) }), isApplyAdditionalSortByTypeAndGroup = false)
     }
     finally {
       manager.fireEndUpdate()
@@ -970,9 +966,8 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     val suggestedName = suggestName(configuration)
     val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
     configuration.name = name
-    (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
-    @Suppress("UNCHECKED_CAST")
-    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
+    (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
+    callNewConfigurationCreated(factory, configuration)
     return createNewConfiguration(settings, node, selectedNode)
   }
 
@@ -1002,9 +997,9 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
-      val allTypes = runManager.configurationFactoriesWithoutUnknown
+      val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
-      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> type1!!.displayName.compareTo(type2!!.displayName, ignoreCase = true) })
+      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
         configurationTypes.add(null)
@@ -1180,8 +1175,9 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
         settings.name = copyName
         val factory = settings.factory
-        @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
+        (settings.configuration as? ConfigurationCreationListener)?.onConfigurationCopied()
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)
@@ -1196,7 +1192,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     override fun update(e: AnActionEvent) {
       val configuration = selectedConfiguration
-      e.presentation.isEnabled = configuration != null && configuration.configuration !is UnknownRunConfiguration
+      e.presentation.isEnabled = configuration != null && configuration.configuration.type.isManaged
     }
   }
 

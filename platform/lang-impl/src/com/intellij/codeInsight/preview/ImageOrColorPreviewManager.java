@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.preview;
 
@@ -25,7 +11,6 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -126,7 +111,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   private static boolean isSupportedFile(PsiFile psiFile) {
     for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
-      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+      for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensionList()) {
         if (provider.isSupportedFile(file)) {
           return true;
         }
@@ -153,7 +138,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       return Collections.emptySet();
     }
 
-    final Set<PsiElement> elements = Collections.newSetFromMap(ContainerUtil.createWeakMap());
+    final Set<PsiElement> elements = ContainerUtil.createWeakSet();
     final int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
     if (documentManager.isCommitted(document)) {
       ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
@@ -180,34 +165,23 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
     alarm.cancelAllRequests();
     Point point = event.getMouseEvent().getPoint();
-    if (myElements == null && event.getMouseEvent().isShiftDown()) {
+    Collection<PsiElement> elements = myElements;
+    if (elements == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
-    else if (myElements != null) {
-      Collection<PsiElement> elements = myElements;
-      if (!getPsiElementsAt(point, editor).equals(elements)) {
-        myElements = null;
-        for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
-          try {
-            if (elements != null) {
-              for (PsiElement element : elements) {
-                provider.hide(element, editor);
-              }
-            } else {
-              provider.hide(null, editor);
-            }
+    else if (elements != null && !getPsiElementsAt(point, editor).equals(elements)) {
+      myElements = null;
+      for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensionList()) {
+        try {
+          for (PsiElement element : elements) {
+            provider.hide(element, editor);
           }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
-  }
-
-  @Override
-  public void mouseDragged(EditorMouseEvent e) {
-    // nothing
   }
 
   private final class PreviewRequest implements Runnable {
@@ -215,7 +189,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     private final Editor editor;
     private final boolean keyTriggered;
 
-    public PreviewRequest(Point point, Editor editor, boolean keyTriggered) {
+    PreviewRequest(Point point, Editor editor, boolean keyTriggered) {
       this.point = point;
       this.editor = editor;
       this.keyTriggered = keyTriggered;

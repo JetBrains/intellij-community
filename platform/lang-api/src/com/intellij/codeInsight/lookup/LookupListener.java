@@ -13,6 +13,15 @@ import java.util.EventListener;
  */
 public interface LookupListener extends EventListener {
   /*
+   * Note: this event comes inside the command that performs inserting of text into the editor and is
+   * called before the lookup string is inserted into the document. If any listener returns false,
+   * the lookup string is not inserted.
+   */
+  default boolean beforeItemSelected(@NotNull LookupEvent event) {
+    return true;
+  }
+
+  /*
    * Note: this event comes inside the command that performs inserting of text into the editor.
    */
   default void itemSelected(@NotNull LookupEvent event) {
@@ -22,5 +31,12 @@ public interface LookupListener extends EventListener {
   }
 
   default void currentItemChanged(@NotNull LookupEvent event) {
+  }
+
+  /**
+   * Fired when the contents or the selection of the lookup list is changed (items added by
+   * background calculation, selection moved by the user, etc.)
+   */
+  default void uiRefreshed() {
   }
 }

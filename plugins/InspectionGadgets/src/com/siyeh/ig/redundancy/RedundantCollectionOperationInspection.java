@@ -95,7 +95,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
 
     @NotNull
     default String getFixName() {
-      return InspectionGadgetsBundle.message("replace.with", getReplacement());
+      return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
   }
 
@@ -151,7 +151,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static class ContainsBeforeAddRemoveHandler implements RedundantCollectionOperationHandler {
     private final String myName;
 
-    public ContainsBeforeAddRemoveHandler(String name) {
+    ContainsBeforeAddRemoveHandler(String name) {
       myName = name;
     }
 
@@ -466,7 +466,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static class RedundantSortAsListHandler implements RedundantCollectionOperationHandler {
     private final boolean myCollectionsSort;
 
-    public RedundantSortAsListHandler(boolean collectionsSort) {
+    RedundantSortAsListHandler(boolean collectionsSort) {
       myCollectionsSort = collectionsSort;
     }
 
@@ -523,7 +523,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static class RedundantCollectionOperationFix implements LocalQuickFix {
     private final RedundantCollectionOperationHandler myHandler;
 
-    public RedundantCollectionOperationFix(RedundantCollectionOperationHandler handler) {
+    RedundantCollectionOperationFix(RedundantCollectionOperationHandler handler) {
       myHandler = handler;
     }
 

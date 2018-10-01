@@ -25,7 +25,7 @@ import java.util.Comparator;
   /**
    * @param direction defines direction for next usage searching.
    */
-  public GotoElementUnderCaretUsageBase(@NotNull Direction direction) {
+  GotoElementUnderCaretUsageBase(@NotNull Direction direction) {
     myDirection = direction;
   }
 
@@ -80,13 +80,13 @@ import java.util.Comparator;
   }
 
   protected enum Direction {
-    FORWARD((l, r) -> l - r),
-    BACKWARD((l, r) -> r - l);
+    FORWARD(Comparator.naturalOrder()),
+    BACKWARD(Comparator.reverseOrder());
 
     public final Comparator<Integer> ordering;
 
     Direction(Comparator<Integer> ordering) {
       this.ordering = ordering;
     }
-  };
+  }
 }

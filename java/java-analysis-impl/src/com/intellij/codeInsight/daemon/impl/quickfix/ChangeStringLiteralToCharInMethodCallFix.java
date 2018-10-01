@@ -126,7 +126,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals,
+  private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
                                       @NotNull final HighlightInfo info) {
     for (PsiLiteralExpression literal : literals) {
@@ -139,7 +139,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
    * @return {@code true} if exact TYPEs match
    */
   private static boolean findMatchingExpressions(final PsiExpression[] arguments, final PsiMethod existingMethod,
-                                                 final Set<PsiLiteralExpression>result) {
+                                                 final Set<? super PsiLiteralExpression> result) {
     final PsiParameterList parameterList = existingMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 

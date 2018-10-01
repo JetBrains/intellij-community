@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -83,12 +82,12 @@ public class ServiceManagerImpl implements Disposable {
     extensionPoint.addExtensionPointListener(myExtensionPointListener);
   }
 
+  @NotNull
   public List<ServiceDescriptor> getAllDescriptors() {
-    ServiceDescriptor[] extensions = Extensions.getExtensions(myExtensionPointName);
-    return Arrays.asList(extensions);
+    return myExtensionPointName.getExtensionList();
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<Class<?>, PluginDescriptor> processor) {
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {
     @SuppressWarnings("unchecked")
     Collection<ComponentAdapter> adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
@@ -96,7 +95,7 @@ public class ServiceManagerImpl implements Disposable {
     }
 
     for (ComponentAdapter o : adapters) {
-      Class aClass;
+      Class<?> aClass;
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
         PluginDescriptor pluginDescriptor = adapter.myPluginDescriptor;
@@ -159,7 +158,7 @@ public class ServiceManagerImpl implements Disposable {
     private final ComponentManagerEx myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
+    MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;

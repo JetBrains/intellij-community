@@ -689,7 +689,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private static class PackageChooserActionListener extends BrowseModuleValueActionListener {
-    public PackageChooserActionListener(final Project project) {
+    PackageChooserActionListener(final Project project) {
       super(project);
     }
 
@@ -703,7 +703,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private class TestsChooserActionListener extends TestClassBrowser {
-    public TestsChooserActionListener(final Project project) {
+    TestsChooserActionListener(final Project project) {
       super(project);
     }
 
@@ -733,7 +733,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private class TestClassBrowser extends ClassBrowser {
-    public TestClassBrowser(final Project project) {
+    TestClassBrowser(final Project project) {
       super(project, ExecutionBundle.message("choose.test.class.dialog.title"));
     }
 
@@ -758,8 +758,22 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       try {
         final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject());
         applyEditorTo(configurationCopy);
-        classFilter = TestClassFilter
-          .create(SourceScope.modulesWithDependencies(configurationCopy.getModules()), configurationCopy.getConfigurationModule().getModule());
+        SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
+        GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
+        if (JUnitUtil.isJUnit5(globalSearchScope, getProject())) {
+          return new ClassFilter.ClassFilterWithScope() {
+            @Override
+            public GlobalSearchScope getScope() {
+              return globalSearchScope;
+            }
+
+            @Override
+            public boolean isAccepted(PsiClass aClass) {
+              return JUnitUtil.isJUnit5TestClass(aClass,true);
+            }
+          };
+        }
+        classFilter = TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule());
       }
       catch (JUnitUtil.NoJUnitException e) {
         throw NoFilterException.noJUnitInModule(module);
@@ -769,7 +783,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private class CategoryBrowser extends ClassBrowser {
-    public CategoryBrowser(Project project) {
+    CategoryBrowser(Project project) {
       super(project, "Category Interface");
     }
 

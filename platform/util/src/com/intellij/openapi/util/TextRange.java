@@ -25,6 +25,7 @@ public class TextRange implements Segment, Serializable {
   private static final Logger LOG = Logger.getInstance(TextRange.class);
   private static final long serialVersionUID = -670091356599757430L;
   public static final TextRange EMPTY_RANGE = new TextRange(0,0);
+  public static final TextRange[] EMPTY_ARRAY = new TextRange[0];
   private final int myStartOffset;
   private final int myEndOffset;
 
@@ -120,8 +121,12 @@ public class TextRange implements Segment, Serializable {
 
   @NotNull
   public TextRange cutOut(@NotNull TextRange subRange) {
-    assert subRange.getStartOffset() <= getLength() : "SubRange: " + subRange + "; this=" + this;
-    assert subRange.getEndOffset() <= getLength() : "SubRange: " + subRange + "; this=" + this;
+    if (subRange.getStartOffset() > getLength()) {
+      throw new IllegalArgumentException("SubRange: " + subRange + "; this=" + this);
+    }
+    if (subRange.getEndOffset() > getLength()) {
+      throw new IllegalArgumentException("SubRange: " + subRange + "; this=" + this);
+    }
     assertProperRange(subRange);
     return new TextRange(myStartOffset + subRange.getStartOffset(),
                          Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));

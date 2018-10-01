@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -56,7 +57,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private Boolean myHorizontalAutoScrolling = null;
+  private ThreeState myHorizontalAutoScrolling = ThreeState.UNSURE;
 
   private TreePath rollOverPath;
 
@@ -118,7 +119,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
     }
@@ -405,21 +406,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                             true, MouseEvent.BUTTON3);
       }
     }
-    else if (UIUtil.isUnderGTKLookAndFeel()) {
-      if (SwingUtilities.isLeftMouseButton(e) && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
-        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          Rectangle bounds = getPathBounds(path);
-          if (bounds != null &&
-              e.getY() > bounds.y && e.getY() < bounds.y + bounds.height &&
-              (e.getX() >= bounds.x + bounds.width ||
-               e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
-            int newX = bounds.x + bounds.width - 2;
-            e2 = MouseEventAdapter.convert(e, e.getComponent(), newX, e.getY());
-          }
-        }
-      }
-    }
 
     super.processMouseEvent(e2);
   }
@@ -655,7 +641,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return (PresentableNodeDescriptor)userObject;
   }
 
-  public TreePath getPath(PresentableNodeDescriptor node) {
+  public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
     DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
 
@@ -868,11 +854,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isHorizontalAutoScrollingEnabled() {
-    return myHorizontalAutoScrolling != null ? myHorizontalAutoScrolling : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
+    return myHorizontalAutoScrolling != ThreeState.UNSURE ? myHorizontalAutoScrolling == ThreeState.YES : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {
-    myHorizontalAutoScrolling = enabled;
+    myHorizontalAutoScrolling = enabled ? ThreeState.YES : ThreeState.NO;
   }
 
   /**

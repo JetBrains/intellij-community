@@ -19,15 +19,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowClassesWithInstanceAction extends ToggleAction {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return MemoryViewManager.getInstance().isNeedShowInstancesOnly();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project != null) {
       MemoryViewManager.getInstance().setShowWithInstancesOnly(state);

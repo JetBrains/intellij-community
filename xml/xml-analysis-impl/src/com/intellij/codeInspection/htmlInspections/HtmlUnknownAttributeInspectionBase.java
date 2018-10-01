@@ -116,7 +116,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     }
   }
 
-  private static void addSimilarAttributesQuickFixes(XmlTag tag, String name, ArrayList<LocalQuickFix> quickfixes) {
+  private static void addSimilarAttributesQuickFixes(XmlTag tag, String name, ArrayList<? super LocalQuickFix> quickfixes) {
     XmlElementDescriptor descriptor = tag.getDescriptor();
     if (descriptor == null) return;
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
@@ -132,7 +132,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   private static class RenameAttributeFix implements LocalQuickFix, HighPriorityAction {
     private final String name;
 
-    public RenameAttributeFix(XmlAttributeDescriptor attr) {
+    RenameAttributeFix(XmlAttributeDescriptor attr) {
       name = attr.getName();
     }
 

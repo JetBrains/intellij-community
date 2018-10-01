@@ -89,7 +89,7 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
   }
   
   private static class NonEclipseXmlFileException extends Exception {
-    public NonEclipseXmlFileException(String message) {
+    NonEclipseXmlFileException(String message) {
       super(message);
     }
   }

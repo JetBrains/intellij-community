@@ -55,7 +55,7 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
       final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiMethod) {
-          result.add(new MethodSmartPointerNode(project, element, viewSettings));
+          result.add(new MethodSmartPointerNode(project, (PsiMethod)element, viewSettings));
         }
       }
       return result.isEmpty() ? null : result;
@@ -66,7 +66,7 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
     if (element instanceof PsiMethod) {
-      return new MethodSmartPointerNode(project, element, viewSettings);
+      return new MethodSmartPointerNode(project, (PsiMethod)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
   }

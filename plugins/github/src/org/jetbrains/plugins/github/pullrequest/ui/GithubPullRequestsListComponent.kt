@@ -2,69 +2,102 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.util.ProgressWindow
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.*
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
+import java.awt.Component
+import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.ListSelectionEvent
 
-class GithubPullRequestsListComponent(project: Project,
-                                      actionManager: ActionManager,
-                                      autoPopupController: AutoPopupController,
-                                      popupFactory: JBPopupFactory,
-                                      private val loader: GithubPullRequestsLoader)
-  : BorderLayoutPanel(), Disposable, GithubPullRequestsLoader.StateListener {
+internal class GithubPullRequestsListComponent(project: Project,
+                                               actionManager: ActionManager,
+                                               autoPopupController: AutoPopupController,
+                                               private val selectionModel: GithubPullRequestsListSelectionModel,
+                                               private val loader: GithubPullRequestsLoader,
+                                               avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+  : BorderLayoutPanel(), Disposable,
+    GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener,
+    DataProvider {
 
-  private val tableModel = GithubPullRequestsTableModel()
-  private val table = GithubPullRequestsTable(tableModel)
-  private val scrollPane = ScrollPaneFactory.createScrollPane(table,
+  private val listModel = CollectionListModel<GithubSearchedIssue>()
+  private val list = GithubPullRequestsList(avatarIconsProviderFactory, listModel)
+  private val scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
     border = JBUI.Borders.empty()
     verticalScrollBar.model.addChangeListener { potentiallyLoadMore() }
   }
   private var loadOnScrollThreshold = true
+  private var isDisposed = false
   private val errorPanel = HtmlErrorPanel()
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val searchModel = GithubPullRequestSearchModel()
-  private val search = GithubPullRequestSearchComponent(project, autoPopupController, popupFactory, searchModel)
+  private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel).apply {
+    border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
+  }
+  private val tableToolbarWrapper: Wrapper
 
   init {
-    loader.addStateListener(this)
+    loader.addProcessListener(this, this)
+    loader.addLoadingListener(this, this)
 
-    searchModel.addStateListener(object : GithubPullRequestSearchModel.StateListener {
+    searchModel.addListener(object : GithubPullRequestSearchModel.StateListener {
       override fun queryChanged() {
         loader.setSearchQuery(searchModel.query)
         loader.reset()
       }
-    })
+    }, this)
 
-    val refreshAction = object : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
-      override fun actionPerformed(e: AnActionEvent) = loader.reset()
+    list.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
+      if (!e.valueIsAdjusting) {
+        if (list.selectedIndex < 0) selectionModel.current = null
+        else selectionModel.current = listModel.getElementAt(list.selectedIndex)
+      }
     }
-    val actionGroup = DefaultActionGroup(refreshAction)
-    val toolbar = actionManager.createActionToolbar("GithubPullRequestsToolWindowListToolbar", actionGroup, true)
-    toolbar.setReservePlaceAutoPopupIcon(false)
 
-    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(toolbar.component)
+    val toolbar = actionManager.createActionToolbar("GithubPullRequestListToolbar",
+                                                    actionManager.getAction("Github.PullRequest.ToolWindow.List.Toolbar") as ActionGroup,
+                                                    true)
+      .apply {
+        setReservePlaceAutoPopupIcon(false)
+        setTargetComponent(this@GithubPullRequestsListComponent)
+      }
+
+    val popupHandler = object : PopupHandler() {
+      override fun invokePopup(comp: Component, x: Int, y: Int) {
+        if (ListUtil.isPointOnSelection(list, x, y)) {
+          val popupMenu = actionManager
+            .createActionPopupMenu("GithubPullRequestListPopup",
+                                   actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup)
+          popupMenu.setTargetComponent(this@GithubPullRequestsListComponent)
+          popupMenu.component.show(comp, x, y)
+        }
+      }
+    }
+    list.addMouseListener(popupHandler)
+
+    tableToolbarWrapper = Wrapper(toolbar.component)
+
+    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(tableToolbarWrapper)
     val tableWithError = JBUI.Panels
       .simplePanel(progressStripe)
       .addToTop(errorPanel)
@@ -74,6 +107,16 @@ class GithubPullRequestsListComponent(project: Project,
     addToTop(headerPanel)
 
     resetSearch()
+
+    Disposer.register(this, list)
+  }
+
+  override fun getData(dataId: String): Any? {
+    return if (GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId)) selectionModel.current else null
+  }
+
+  fun setToolbarHeightReferent(referent: JComponent) {
+    tableToolbarWrapper.setVerticalSizeReferent(referent)
   }
 
   private fun potentiallyLoadMore() {
@@ -83,6 +126,7 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   private fun loadMore() {
+    if (isDisposed) return
     loadOnScrollThreshold = false
     loader.requestLoadMore()
   }
@@ -97,38 +141,32 @@ class GithubPullRequestsListComponent(project: Project,
     return true
   }
 
-  override fun loadingStarted() {
-    invokeAndWaitIfNeed {
-      table.emptyText.text = "Loading pull requests..."
-      errorPanel.setError(null)
-      progressStripe.startLoading()
-    }
+  override fun processStarted() {
+    list.emptyText.text = "Loading pull requests..."
+    errorPanel.setError(null)
+    progressStripe.startLoading()
   }
 
-  override fun loadingStopped() {
-    invokeAndWaitIfNeed {
-      progressStripe.stopLoading()
-    }
+  override fun processFinished() {
+    progressStripe.stopLoading()
   }
 
   override fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {
-    invokeAndWaitIfNeed {
-      if (searchModel.query.isEmpty()) {
-        table.emptyText.text = "No pull requests loaded."
-      }
-      else {
-        table.emptyText.text = "No pull requests matching filters."
-        table.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
-          resetSearch()
-        }
-      }
-      loadOnScrollThreshold = hasNext
-      tableModel.addItems(data)
-
-      //otherwise scrollbar will have old values (before data insert)
-      scrollPane.viewport.validate()
-      potentiallyLoadMore()
+    if (searchModel.query.isEmpty()) {
+      list.emptyText.text = "No pull requests loaded."
     }
+    else {
+      list.emptyText.text = "No pull requests matching filters."
+      list.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
+        resetSearch()
+      }
+    }
+    loadOnScrollThreshold = hasNext
+    listModel.add(data)
+
+    //otherwise scrollbar will have old values (before data insert)
+    scrollPane.viewport.validate()
+    potentiallyLoadMore()
   }
 
   private fun resetSearch() {
@@ -136,37 +174,45 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   override fun loaderReset() {
-    invokeAndWaitIfNeed {
-      loadOnScrollThreshold = false
-      tableModel.clear()
-      loader.requestLoadMore()
-    }
+    loadOnScrollThreshold = false
+    list.selectionModel.clearSelection()
+    listModel.removeAll()
+    loader.requestLoadMore()
   }
 
   override fun loadingErrorOccurred(error: Throwable) {
-    invokeAndWaitIfNeed {
-      loadOnScrollThreshold = false
-      val prefix = if (table.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
-      table.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
-        .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-        .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
-      if (!table.isEmpty) {
-        //language=HTML
-        val errorText = "<html><body>$prefix ${getLoadingErrorText(error)}<a href=''>Retry</a></body></html>"
-        errorPanel.setError(errorText, linkActivationListener = { loadMore() })
-      }
+    loadOnScrollThreshold = false
+    val prefix = if (list.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
+    list.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+      .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
+    if (!list.isEmpty) {
+      //language=HTML
+      val errorText = "<html><body>$prefix<br/>${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>"
+      errorPanel.setError(errorText, linkActivationListener = { loadMore() })
     }
   }
 
-  private fun getLoadingErrorText(error: Throwable): String {
-    return error.message?.let { addDotIfNeeded(it) }?.let { addSpaceIfNeeded(it) }
-           ?: "Unknown loading error. "
+  private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
+    if (error is GithubStatusCodeException && error.error != null) {
+      val githubError = error.error!!
+      val builder = StringBuilder(githubError.message)
+      if (githubError.errors.isNotEmpty()) {
+        builder.append(": ").append(newLineSeparator)
+        for (e in githubError.errors) {
+          builder.append(e.message ?: "${e.code} error in ${e.resource} field ${e.field}").append(newLineSeparator)
+        }
+      }
+      return builder.toString()
+    }
+
+    return error.message?.let { addDotIfNeeded(it) } ?: "Unknown loading error."
   }
 
   private fun addDotIfNeeded(line: String) = if (line.endsWith('.')) line else "$line."
-  private fun addSpaceIfNeeded(line: String) = if (line.endsWith(' ')) line else "$line "
 
   override fun dispose() {
-    loader.removeStateListener(this)
+    isDisposed = true
   }
 }

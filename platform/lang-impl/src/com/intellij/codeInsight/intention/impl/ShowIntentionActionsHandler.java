@@ -135,7 +135,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<PsiFile, Editor> predicate) {
+  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
     Editor editorToApply = null;
     PsiFile fileToApply = null;
 
@@ -212,9 +212,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
 
-  static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
-                                                   @Nullable Editor hostEditor,
-                                                   @NotNull IntentionAction action) {
+  @Nullable
+  public static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
+                                                          @Nullable Editor hostEditor,
+                                                          @NotNull IntentionAction action) {
     return hostEditor == null ? Pair.create(hostFile, null) :
            chooseBetweenHostAndInjected(hostFile, hostEditor, (psiFile, editor) -> availableFor(psiFile, editor, action));
   }

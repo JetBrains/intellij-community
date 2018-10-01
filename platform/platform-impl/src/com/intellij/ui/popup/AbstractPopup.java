@@ -32,7 +32,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -41,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashSet;
@@ -51,8 +53,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
 import static java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK;
-import static java.awt.event.MouseEvent.MOUSE_ENTERED;
-import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
@@ -65,8 +66,6 @@ public class AbstractPopup implements JBPopup {
   public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
-
-  private static final Object SUPPRESS_MAC_CORNER = new Object();
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -232,7 +231,7 @@ public class AbstractPopup implements JBPopup {
                                  PopupBorder.Factory.create(true, showShadow) :
                                  PopupBorder.Factory.createEmpty();
     myShadowed = showShadow;
-    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
+    myContent = createContentPanel(resizable, myPopupBorder, false);
     myMayBeParent = mayBeParent;
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
 
@@ -332,26 +331,7 @@ public class AbstractPopup implements JBPopup {
 
   @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, PopupBorder border, boolean isToDrawMacCorner) {
-    return new MyContentPanel(resizable, border, isToDrawMacCorner);
-  }
-
-  private boolean isToDrawMacCorner() {
-    if (!SystemInfo.isMac || myComponent.getComponentCount() <= 0) {
-      return false;
-    }
-
-    if (SystemInfo.isMacOSYosemite) {
-      return false;
-    }
-
-    if (myComponent.getComponentCount() > 0) {
-      Component component = myComponent.getComponent(0);
-      if (component instanceof JComponent && Boolean.TRUE.equals(((JComponent)component).getClientProperty(SUPPRESS_MAC_CORNER))) {
-        return false;
-      }
-    }
-
-    return true;
+    return new MyContentPanel(border);
   }
 
   public void setShowHints(boolean show) {
@@ -364,8 +344,8 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  @Deprecated
   public static void suppressMacCornerFor(JComponent popupComponent) {
-    popupComponent.putClientProperty(SUPPRESS_MAC_CORNER, Boolean.TRUE);
   }
 
 
@@ -871,7 +851,7 @@ public class AbstractPopup implements JBPopup {
       WindowResizeListener resizeListener = new WindowResizeListener(
         myComponent,
         myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
-        isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
+        null) {
         private Cursor myCursor;
 
         @Override
@@ -1090,7 +1070,7 @@ public class AbstractPopup implements JBPopup {
           bounds.x -= 2;
           bounds.y -= 2;
           bounds.width += 4;
-          bounds.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
+          bounds.height += 4;
         }
         if (bounds == null || !bounds.contains(e.getLocationOnScreen())) {
           cancel();
@@ -1439,26 +1419,16 @@ public class AbstractPopup implements JBPopup {
   }
 
   public static class MyContentPanel extends JPanel implements DataProvider {
-    private final boolean myResizable;
-    private final boolean myDrawMacCorner;
     @Nullable private DataProvider myDataProvider;
 
+    @Deprecated
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
-      super(new BorderLayout());
-      myResizable = resizable;
-      myDrawMacCorner = drawMacCorner;
-      setBorder(border);
+      this(border);
     }
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-
-      if (myResizable && myDrawMacCorner) {
-        AllIcons.General.MacCorner.paintIcon(this, g,
-                                             getX() + getWidth() - AllIcons.General.MacCorner.getIconWidth(),
-                                             getY() + getHeight() - AllIcons.General.MacCorner.getIconHeight());
-      }
+    public MyContentPanel(PopupBorder border) {
+      super(new BorderLayout());
+      setBorder(border);
     }
 
     public Dimension computePreferredSize() {
@@ -1509,6 +1479,7 @@ public class AbstractPopup implements JBPopup {
           }
           break;
         case MOUSE_MOVED:
+        case MOUSE_PRESSED:
           if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
             if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
               cancel();
@@ -1774,12 +1745,12 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void addListener(final JBPopupListener listener) {
+  public void addListener(@NotNull final JBPopupListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeListener(final JBPopupListener listener) {
+  public void removeListener(@NotNull final JBPopupListener listener) {
     myListeners.remove(listener);
   }
 
@@ -1885,7 +1856,7 @@ public class AbstractPopup implements JBPopup {
    */
   private static Component getFrameOrDialog(Component component) {
     while (component != null) {
-      if (component instanceof Frame || component instanceof Dialog || component instanceof Window) return component;
+      if (component instanceof Window) return component;
       component = component.getParent();
     }
     return null;

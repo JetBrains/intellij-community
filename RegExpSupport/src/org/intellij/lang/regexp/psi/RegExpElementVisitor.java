@@ -35,8 +35,8 @@ public class RegExpElementVisitor extends PsiElementVisitor {
         visitRegExpElement(simpleClass);
     }
 
-    public void visitRegExpClass(RegExpClass expClass) {
-        visitRegExpElement(expClass);
+    public void visitRegExpClass(RegExpClass regExpClass) {
+        visitRegExpElement(regExpClass);
     }
 
     public void visitRegExpGroup(RegExpGroup group) {

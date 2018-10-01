@@ -553,7 +553,7 @@ public class FinallyProcessor {
       // TODO: correct handling (merging) of multiple paths
       public List<int[]> lstStoreVars;
 
-      public BlockStackEntry(BasicBlock blockCatch, BasicBlock blockSample, List<int[]> lstStoreVars) {
+      BlockStackEntry(BasicBlock blockCatch, BasicBlock blockSample, List<int[]> lstStoreVars) {
         this.blockCatch = blockCatch;
         this.blockSample = blockSample;
         this.lstStoreVars = new ArrayList<>(lstStoreVars);

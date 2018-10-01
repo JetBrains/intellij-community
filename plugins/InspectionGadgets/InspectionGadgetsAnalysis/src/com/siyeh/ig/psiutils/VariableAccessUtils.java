@@ -57,12 +57,12 @@ public class VariableAccessUtils {
   }
 
   public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, @Nullable PsiElement context,
-                                                         Processor<PsiCall> callProcessor) {
+                                                         Processor<? super PsiCall> callProcessor) {
     return variableIsPassedAsMethodArgument(variable, context, false, callProcessor);
   }
 
   public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, @Nullable PsiElement context,
-                                                         boolean builderPattern, Processor<PsiCall> callProcessor) {
+                                                         boolean builderPattern, Processor<? super PsiCall> callProcessor) {
     if (context == null) {
       return false;
     }
@@ -397,7 +397,7 @@ public class VariableAccessUtils {
     return visitor.getUsedVariables();
   }
 
-  public static boolean isAnyVariableAssigned(@NotNull Collection<PsiVariable> variables, @Nullable PsiElement context) {
+  public static boolean isAnyVariableAssigned(@NotNull Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }

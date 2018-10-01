@@ -16,6 +16,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.diff.GitSubmoduleContentRevision;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,46 +114,16 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                Project project,
                                                boolean unescapePath) throws VcsException {
     FilePath file = createPath(vcsRoot, path, unescapePath);
-    return createRevision(file, revisionNumber, project);
-  }
-
-  @NotNull
-  private static ContentRevision createRevision(@NotNull FilePath filePath,
-                                                @Nullable VcsRevisionNumber revisionNumber,
-                                                @NotNull Project project) {
-    SubmoduleAndParent submoduleAndParent = getRepositoryIfSubmodule(project, filePath);
-    if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
-      if (submoduleAndParent != null) {
-        return GitSubmoduleContentRevision.createRevision(submoduleAndParent.parent, submoduleAndParent.submodule, revisionNumber);
-      }
-      return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
-    }
-    else if (submoduleAndParent != null) {
-      return GitSubmoduleContentRevision.createCurrentRevision(submoduleAndParent.submodule);
-    }
-    else {
-      return CurrentContentRevision.create(filePath);
-    }
-  }
-
-  private static class SubmoduleAndParent {
-    @NotNull private final GitRepository submodule;
-    @NotNull private final GitRepository parent;
-
-    SubmoduleAndParent(@NotNull GitRepository submodule, @NotNull GitRepository parent) {
-      this.submodule = submodule;
-      this.parent = parent;
-    }
+    return createRevision(file, revisionNumber, project, null);
   }
 
   @Nullable
-  private static SubmoduleAndParent getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
-    if (!path.isDirectory()) {
+  public static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+    if (file == null) { // NB: deletion of a submodule is not supported yet
       return null;
     }
-
-    VirtualFile file = path.getVirtualFile();
-    if (file == null) { // TODO support deletion of a submodule if possible
+    if (!file.isDirectory()) {
       return null;
     }
 
@@ -160,13 +132,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     if (candidate == null) { // not a root
       return null;
     }
-
-    for (GitRepository repo : repositoryManager.getRepositories()) {
-      if (repositoryManager.getDirectSubmodules(repo).contains(candidate)) {
-        return new SubmoduleAndParent(candidate, repo);
-      }
-    }
-    return null;
+    return GitSubmoduleKt.asSubmodule(candidate);
   }
 
   @NotNull
@@ -183,7 +149,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     } else {
       filePath = createPath(vcsRoot, path, unescapePath);
     }
-    return createRevision(filePath, revisionNumber, project);
+    return createRevision(filePath, revisionNumber, project, null);
   }
 
   @NotNull
@@ -213,8 +179,15 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                @NotNull Project project,
                                                @Nullable Charset charset) {
+    GitSubmodule submodule = getRepositoryIfSubmodule(project, filePath);
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
+      if (submodule != null) {
+        return GitSubmoduleContentRevision.createRevision(submodule, revisionNumber);
+      }
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
+    }
+    else if (submodule != null) {
+      return GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
     }
     else {
       return CurrentContentRevision.create(filePath);

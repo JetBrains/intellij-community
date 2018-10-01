@@ -196,7 +196,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   private static class GradleAbstractWizard extends AbstractWizard<ExternalModuleSettingsStep> {
     private final AbstractExternalModuleBuilder<GradleProjectSettings> myBuilder;
 
-    public GradleAbstractWizard(WizardContext wizardContext, GradleProjectSettings gradleProjectSettings) {
+    GradleAbstractWizard(WizardContext wizardContext, GradleProjectSettings gradleProjectSettings) {
       super("Open Gradle Project", (Project)null);
       myBuilder = new AbstractExternalModuleBuilder<GradleProjectSettings>(GradleConstants.SYSTEM_ID, gradleProjectSettings) {
         @Override
@@ -285,7 +285,8 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
 
   private static boolean setupGradleJvm(@Nullable Project project, @NotNull GradleProjectSettings projectSettings) {
     final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
-    if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
+    if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first) ||
+        ExternalSystemJdkUtil.isValidJdk(sdkPair.second.getHomePath())) {
       projectSettings.setGradleJvm(sdkPair.first);
       return true;
     }

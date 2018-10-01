@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 
@@ -65,7 +66,7 @@ public class DarculaTitlePane extends JPanel {
 
     setOpaque(true);
     setBackground(JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground());
-    setBorder(new DarculaMenuBarBorder(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
+    setBorder(new SideBorder(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), SideBorder.BOTTOM, JBUI.scale(2)));
   }
 
   private void uninstall() {
@@ -405,7 +406,7 @@ public class DarculaTitlePane extends JPanel {
   }
 
   private class CloseAction extends AbstractAction {
-    public CloseAction() {
+    CloseAction() {
       super("Close", AllIcons.Windows.CloseSmall);
     }
 
@@ -417,7 +418,7 @@ public class DarculaTitlePane extends JPanel {
 
 
   private class IconifyAction extends AbstractAction {
-    public IconifyAction() {
+    IconifyAction() {
       super("Minimize", AllIcons.Windows.MinimizeSmall);
     }
 
@@ -429,7 +430,7 @@ public class DarculaTitlePane extends JPanel {
 
 
   private class RestoreAction extends AbstractAction {
-    public RestoreAction() {
+    RestoreAction() {
       super("Restore", AllIcons.Windows.RestoreSmall);
     }
 
@@ -441,7 +442,7 @@ public class DarculaTitlePane extends JPanel {
 
 
   private class MaximizeAction extends AbstractAction {
-    public MaximizeAction() {
+    MaximizeAction() {
       super("Maximize", AllIcons.Windows.MaximizeSmall);
     }
 

@@ -1,27 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
-
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.ExpectedTypesProvider
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
-
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author ven
  */
-class CreateMethodFromUsageTemplateTest extends LightQuickFixTestCase {
+class CreateMethodFromUsageTemplateTest extends LightCodeInsightFixtureTestCase {
 
   void testTemplateAssertions() throws Exception {
-    configureFromFileText "a.java", """
+    myFixture.configureByText "a.java", """
 class SomeOuterClassWithLongName {
     void foo(PropertyDescriptorWithVeryLongName.Group group, PropertyDescriptorWithVeryLongName.Group child) {
         group.add<caret>SubGroup(child);
@@ -42,9 +38,7 @@ class SomeOuterClassWithLongName {
     // parameter type
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString?.endsWith('Group')
 
-    EditorActionManager actionManager = EditorActionManager.getInstance()
-    final DataContext dataContext = DataManager.getInstance().getDataContext()
-    actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM).execute(getEditor(), dataContext)
+    myFixture.type('\n')
 
     // parameter name, skip it
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'child'
@@ -52,7 +46,7 @@ class SomeOuterClassWithLongName {
 
     assert state.finished
 
-    checkResultByText """
+    myFixture.checkResult """
 class SomeOuterClassWithLongName {
     void foo(PropertyDescriptorWithVeryLongName.Group group, PropertyDescriptorWithVeryLongName.Group child) {
         group.addSubGroup(child);
@@ -70,8 +64,12 @@ class SomeOuterClassWithLongName {
 
   }
 
+  def doAction(String hint) {
+    myFixture.launchAction(myFixture.findSingleIntention(hint))
+  }
+
   void "test prefer nearby return types"() {
-    configureFromFileText "a.java", """
+    myFixture.configureByText "a.java", """
 class Singleton {
     boolean add(Object o) {}
 
@@ -85,13 +83,11 @@ class Usage {
 """
     TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
     doAction("Create method 'getInstance' in 'Singleton'")
-    def state = TemplateManagerImpl.getTemplateState(getEditor())
-    // parameter type
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'Singleton'
   }
 
   void "test delete created modifiers"() {
-    configureFromFileText "a.java", """
+    myFixture.configureByText "a.java", """
 interface Singleton {
     default boolean add(Object o) {}
 
@@ -109,8 +105,8 @@ class Usage {
 
     def document = getEditor().getDocument()
     def offset = getEditor().getCaretModel().getOffset()
-    
-    ApplicationManager.application.runWriteAction {
+
+    WriteCommandAction.runWriteCommandAction(project) {
       def method = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethod.class)
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, false)
       PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
@@ -120,7 +116,7 @@ class Usage {
   }
 
   void "test prefer outer class when static is not applicable for inner"() {
-    configureFromFileText "a.java", """
+    myFixture.configureByText "a.java", """
 class A {
     int x;
     A(int x) { this.x = x; }
@@ -133,7 +129,7 @@ class A {
     doAction("Create method 'foo' in 'A'")
     TemplateManagerImpl.getTemplateState(getEditor()).gotoEnd(false)
 
-    checkResultByText """
+    myFixture.checkResult """
 class A {
     int x;
     A(int x) { this.x = x; }
@@ -150,9 +146,9 @@ class A {
   }
 
   void "test use fully qualified names with conflicting imports"() {
-    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(project);
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(project)
     settings.setUseFqClassNames(true)
-    configureFromFileText "a.java", """
+    myFixture.configureByText "a.java", """
 import java.awt.List;
 class A {
     void m(java.util.List<String> list){
@@ -175,7 +171,7 @@ class A {
 
     state.gotoEnd(false)
 
-    checkResultByText """
+    myFixture.checkResult """
 import java.awt.List;
 class A {
     void m(java.util.List<String> list){
@@ -190,7 +186,7 @@ class A {
   }
 
   void "test format adjusted imports"() {
-    configureFromFileText "a.java", """
+    myFixture.configureByText "a.java", """
   /**javadoc*/
   class A {
       void m(java.util.List<String> list){
@@ -204,7 +200,7 @@ class A {
     
       state.gotoEnd(false)
 
-      checkResultByText """import java.util.List;
+      myFixture.checkResult """import java.util.List;
 
 /**javadoc*/
   class A {
@@ -220,7 +216,7 @@ class A {
   }
 
   void 'test guess type parameters'() {
-    configureFromFileText 'a.java', '''\
+    myFixture.configureByText 'a.java', '''\
 public class A {
     void m(java.util.List<String> list, B<String> b) {
         b.<caret>foo(list);
@@ -232,7 +228,7 @@ class B<T>
 }
 '''
     doAction("Create method 'foo' in 'B'")
-    checkResultByText '''\
+    myFixture.checkResult '''\
 import java.util.List;
 
 public class A {
@@ -251,7 +247,7 @@ class B<T>
   }
 
   void 'test create property in invalid class'() {
-    configureFromFileText 'InvalidClass.java', '''\
+    myFixture.configureByText 'InvalidClass.java', '''\
 public class InvalidClass {
     void usage() {
         <caret>getFoo();
@@ -262,7 +258,7 @@ public class InvalidClass {
     doAction "Create read-only property 'foo' in 'InvalidClass'"
     TemplateManagerImpl.getTemplateState editor gotoEnd false
 
-    checkResultByText '''\
+    myFixture.checkResult '''\
 public class InvalidClass {
     private Object foo;
 
@@ -277,7 +273,7 @@ public class InvalidClass {
   }
 
   void 'test deepest super methods are included in expected info when available'() {
-    configureFromFileText 'a.java', '''\
+    myFixture.configureByText 'a.java', '''\
 class A {
   {
     new A().get<caret>Bar().toString();
@@ -288,5 +284,35 @@ class A {
 
     def types = ExpectedTypesProvider.getExpectedTypes(expr, false)
     assertNotNull(types.find {it.defaultType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)})
+  }
+
+  void 'test typing generics'() {
+    myFixture.configureByText 'a.java', '''\
+class A {
+    {
+        pass<caret>Class(String.class)
+    }
+}
+'''
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    try {
+      doAction "Create method 'passClass' in 'A'"
+      myFixture.type('\t')
+      myFixture.type('Class<?>\n')
+      myFixture.checkResult '''\
+class A {
+    {
+        passClass(String.class)
+    }
+
+    private void passClass(Class<?> <selection>stringClass</selection>) {
+    }
+}
+'''
+    }
+    finally {
+      CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    }
   }
 }

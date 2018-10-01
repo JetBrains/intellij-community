@@ -75,7 +75,7 @@ public class FindUtil {
     if (editor != null) {
       String s = editor.getSelectionModel().getSelectedText();
       if (s != null && s.length() < 10000) {
-        FindModel.initStringToFindNoMultiline(findModel, s);
+        FindModel.initStringToFind(findModel, s);
       }
     }
   }
@@ -800,7 +800,7 @@ public class FindUtil {
                                     FindResult result,
                                     @NotNull String stringToReplace,
                                     boolean reallyReplace,
-                                    List<Pair<TextRange, String>> rangesToChange) {
+                                    List<? super Pair<TextRange, String>> rangesToChange) {
     final int startOffset = result.getStartOffset();
     final int endOffset = result.getEndOffset();
 
@@ -929,7 +929,7 @@ public class FindUtil {
    *                                     if negative, carets will be positioned at selection ends
    */
   public static void selectSearchResultsInEditor(@NotNull Editor editor,
-                                                 @NotNull Iterator<FindResult> resultIterator,
+                                                 @NotNull Iterator<? extends FindResult> resultIterator,
                                                  int caretShiftFromSelectionStart) {
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       return;

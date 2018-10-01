@@ -474,9 +474,7 @@ public class ColorThief {
       int[] histo = new int[HISTOSIZE];
       int index, rval, gval, bval;
 
-      int numPixels = pixels.length;
-      for (int i = 0; i < numPixels; i++) {
-        int[] pixel = pixels[i];
+      for (int[] pixel : pixels) {
         rval = pixel[0] >> RSHIFT;
         gval = pixel[1] >> RSHIFT;
         bval = pixel[2] >> RSHIFT;
@@ -494,28 +492,29 @@ public class ColorThief {
       int rval, gval, bval;
 
       // find min/max
-      int numPixels = pixels.length;
-      for (int i = 0; i < numPixels; i++) {
-        int[] pixel = pixels[i];
+      for (int[] pixel : pixels) {
         rval = pixel[0] >> RSHIFT;
         gval = pixel[1] >> RSHIFT;
         bval = pixel[2] >> RSHIFT;
 
         if (rval < rmin) {
           rmin = rval;
-        } else if (rval > rmax) {
+        }
+        else if (rval > rmax) {
           rmax = rval;
         }
 
         if (gval < gmin) {
           gmin = gval;
-        } else if (gval > gmax) {
+        }
+        else if (gval > gmax) {
           gmax = gval;
         }
 
         if (bval < bmin) {
           bmin = bval;
-        } else if (bval > bmax) {
+        }
+        else if (bval > bmax) {
           bmax = bval;
         }
       }
@@ -709,7 +708,7 @@ public class ColorThief {
     /**
      * Inner function to do the iteration.
      */
-    private static void iter(List<VBox> lh, Comparator<VBox> comparator, int target, int[] histo) {
+    private static void iter(List<VBox> lh, Comparator<? super VBox> comparator, int target, int[] histo) {
       int ncolors = 1;
       int niters = 0;
       VBox vbox;

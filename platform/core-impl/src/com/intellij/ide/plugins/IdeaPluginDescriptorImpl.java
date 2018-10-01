@@ -25,7 +25,6 @@ import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import org.jdom.Content;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -128,27 +127,25 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Deprecated
   public void setPath(@SuppressWarnings("unused") File path) { }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     Application application = ApplicationManager.getApplication();
-    readExternal(document, url, application != null && application.isUnitTestMode(), pathResolver);
+    readExternal(element, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
-    Element rootElement = document.getRootElement();
-    if (JDOMUtil.isEmpty(rootElement)) {
+    if (JDOMUtil.isEmpty(element)) {
       return;
     }
 
-    JDOMXIncluder.resolveNonXIncludeElement(rootElement, url.toExternalForm(), ignoreMissingInclude, pathResolver);
-    readExternal(JDOMUtil.internElement(rootElement));
+    JDOMXIncluder.resolveNonXIncludeElement(element, url.toExternalForm(), ignoreMissingInclude, pathResolver);
+    readExternal(JDOMUtil.internElement(element));
   }
 
   public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
     try {
-      Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+      readExternal(JDOMUtil.load(url), url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
     }
     catch (FileNotFoundException e) {
       throw e;
@@ -168,9 +165,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myId = idString != null ? PluginId.getId(idString) : nameString != null ? PluginId.getId(nameString) : null;
     myName = ObjectUtils.chooseNotNull(nameString, idString);
 
-    myProductCode = pluginBean.productCode;
+    final ProductDescriptor pd = pluginBean.productDescriptor;
+    myProductCode = pd != null? pd.code : null;
     myReleaseDate = parseReleaseDate(pluginBean);
-    myReleaseVersion = pluginBean.releaseVersion;
+    myReleaseVersion = pd != null? pd.releaseVersion : 0;
+    
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
@@ -296,7 +295,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Nullable
   private static Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
-    final String dateStr = bean.releaseDate;
+    final ProductDescriptor pd = bean.productDescriptor;
+    final String dateStr = pd != null? pd.releaseDate : null;
     if (dateStr != null) {
       try {
         return new SimpleDateFormat("yyyyMMdd", Locale.US).parse(dateStr);

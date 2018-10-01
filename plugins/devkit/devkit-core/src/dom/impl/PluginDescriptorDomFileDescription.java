@@ -43,6 +43,6 @@ public class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaP
 
   @Override
   public int getStubVersion() {
-    return 9;
+    return 10;
   }
 }

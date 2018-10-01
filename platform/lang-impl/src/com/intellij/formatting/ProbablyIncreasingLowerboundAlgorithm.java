@@ -27,7 +27,7 @@ class ProbablyIncreasingLowerboundAlgorithm<T extends AbstractBlockWrapper> {
   private int myLastCalculatedOffset = -1;
   private int myLastCalculatedAnswerIndex = -1;
 
-  public ProbablyIncreasingLowerboundAlgorithm(@NotNull List<T> blocks) {
+  ProbablyIncreasingLowerboundAlgorithm(@NotNull List<T> blocks) {
     myBlocks = blocks;
   }
 

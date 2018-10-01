@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,7 +77,7 @@ public class Utils{
    */
   public static void expandActionGroup(boolean isInModalContext,
                                        @NotNull ActionGroup group,
-                                       List<AnAction> list,
+                                       List<? super AnAction> list,
                                        PresentationFactory presentationFactory,
                                        @NotNull DataContext context,
                                        String place,
@@ -93,7 +92,7 @@ public class Utils{
    */
   private static void expandActionGroup(boolean isInModalContext,
                                         @NotNull ActionGroup group,
-                                        List<AnAction> list,
+                                        List<? super AnAction> list,
                                         PresentationFactory presentationFactory,
                                         DataContext context,
                                         @NotNull String place,
@@ -110,7 +109,7 @@ public class Utils{
    */
   public static void expandActionGroup(boolean isInModalContext,
                                        @NotNull ActionGroup group,
-                                       List<AnAction> list,
+                                       List<? super AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
                                        @NotNull String place,
@@ -148,7 +147,7 @@ public class Utils{
       AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0, isContextMenuAction, isToolbarAction);
       e1.setInjectedContext(child.isInInjectedContext());
 
-      if (transparentOnly && child.isTransparentUpdate() || !transparentOnly) {
+      if (!transparentOnly || child.isTransparentUpdate()) {
         if (!doUpdate(isInModalContext, child, e1, presentation)) continue;
       }
 
@@ -306,14 +305,6 @@ public class Utils{
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
           component.add(new JPopupMenu.Separator() {
             private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
-            @Override
-            public Insets getInsets() {
-              final Insets insets = super.getInsets();
-              final boolean fix = UIUtil.isUnderGTKLookAndFeel() &&
-                                  getBorder() != null &&
-                                  insets.top + insets.bottom == 0;
-              return fix ? new Insets(2, insets.left, 3, insets.right) : insets;  // workaround for Sun bug #6636964
-            }
 
             @Override
             public void doLayout() {
@@ -325,22 +316,13 @@ public class Utils{
 
             @Override
             protected void paintComponent(Graphics g) {
-              if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWindowsLookAndFeel()
-                  || UIUtil.isUnderWin10LookAndFeel()) {
+              if (UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
                 g.setColor(component.getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
               }
               if (myMenu != null) {
                 myMenu.paint(g);
               } else {
-                if (SystemInfo.isMac) {
-                  Graphics2D g2 = (Graphics2D)g.create();
-                  g2.setStroke(new BasicStroke(2));
-                  g2.setColor(UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
-                  double y = (double)getHeight() / 2;
-                  g2.draw(new Line2D.Double(0, y, getWidth(), y));
-                  return;
-                }
                 super.paintComponent(g);
               }
             }
@@ -355,7 +337,7 @@ public class Utils{
       else if (action instanceof ActionGroup &&
                !(((ActionGroup)action).canBePerformed(context) &&
                  !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, false, useDarkIcons);
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
       }

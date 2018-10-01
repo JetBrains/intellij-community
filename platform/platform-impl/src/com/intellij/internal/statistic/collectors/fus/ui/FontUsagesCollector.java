@@ -32,7 +32,8 @@ public class FontUsagesCollector extends ApplicationUsagesCollector {
   public Set<UsageDescriptor> getUsages() {
     UISettings settings = UISettings.getShadowInstance();
 
-    FUSUsageContext context = FUSUsageContext.create(SystemInfo.OS_NAME, Integer.toString(settings.getFontSize()), settings.getFontFace());
+    FUSUsageContext context = FUSUsageContext.create(FUSUsageContext.getOSNameContextData(),
+                                                     Integer.toString(settings.getFontSize()), settings.getFontFace());
 
     return Collections.singleton(new UsageDescriptor("ui.font", 1, context));
   }

@@ -341,7 +341,7 @@ class ProjectData {
     }
 
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       final Content content = event.getContent();
@@ -375,12 +375,12 @@ class ProjectData {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) { _removeContent(event.getContent()); }
+    public void contentRemoved(@NotNull ContentManagerEvent event) { _removeContent(event.getContent()); }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {}
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {}
     @Override
-    public void selectionChanged(ContentManagerEvent event) {}
+    public void selectionChanged(@NotNull ContentManagerEvent event) {}
 
     private void _registerContent(@NotNull Content content, @NotNull ActionGroup optActions) {
       ApplicationManager.getApplication().assertIsDispatchThread();

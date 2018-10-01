@@ -70,7 +70,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
     getUi().addListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         log.activate();
       }
     }, log);

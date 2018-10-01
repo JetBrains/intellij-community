@@ -19,13 +19,13 @@ public final class ShowHiddensAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     final FileSystemTree fileSystemTree = e.getData(FileSystemTree.DATA_KEY);
     return fileSystemTree != null && fileSystemTree.areHiddensShown();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final FileSystemTree fileSystemTree = e.getData(FileSystemTree.DATA_KEY);
     if (fileSystemTree != null) {
       fileSystemTree.showHiddens(state);

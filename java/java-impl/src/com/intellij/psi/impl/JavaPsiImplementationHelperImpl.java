@@ -9,7 +9,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -71,7 +70,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return findCompiledElement(module, scope -> JavaFileManager.getInstance(myProject).findModules(module.getName(), scope));
   }
 
-  private <T extends PsiElement> T findCompiledElement(T original, Function<GlobalSearchScope, Collection<T>> candidateFinder) {
+  private <T extends PsiElement> T findCompiledElement(T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
     PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) {
       @SuppressWarnings("unchecked") T t = (T)cls;
@@ -143,7 +142,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
       .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
 
-    Stream<VirtualFile> synthRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
+    Stream<VirtualFile> synthRoots = AdditionalLibraryRootsProvider.EP_NAME.getExtensionList().stream()
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
       .filter(library -> library.contains(file, false, true))
       .flatMap(library -> library.getSourceRoots().stream());

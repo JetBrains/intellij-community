@@ -78,7 +78,7 @@ public class MergePanel2 implements DiffViewer {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<>();
     EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
       @Override
-      public void onEditorCreated(EditorPlace place) {
+      public void onEditorCreated(@NotNull EditorPlace place) {
         if (myDuringCreation) return;
         disposeMergeList();
         myDuringCreation = true;
@@ -91,7 +91,7 @@ public class MergePanel2 implements DiffViewer {
       }
 
       @Override
-      public void onEditorReleased(Editor releasedEditor) {
+      public void onEditorReleased(@NotNull Editor releasedEditor) {
         LOG.assertTrue(!myDuringCreation);
         disposeMergeList();
       }
@@ -618,13 +618,13 @@ public class MergePanel2 implements DiffViewer {
   private class DividersRepainter implements ChangeList.Listener {
 
     @Override
-    public void onChangeApplied(ChangeList source) {
+    public void onChangeApplied(@NotNull ChangeList source) {
       FragmentSide side = myMergeList.getSideOf(source);
       myDividers[side.getIndex()].repaint();
     }
 
     @Override
-    public void onChangeRemoved(ChangeList source) {
+    public void onChangeRemoved(@NotNull ChangeList source) {
       FragmentSide side = myMergeList.getSideOf(source);
       myDividers[side.getIndex()].repaint();
     }
@@ -638,7 +638,7 @@ public class MergePanel2 implements DiffViewer {
     }
 
     @Override
-    public void onCountersChanged(ChangeCounter counter) {
+    public void onCountersChanged(@NotNull ChangeCounter counter) {
       int changes = counter.getChangeCounter();
       int conflicts = counter.getConflictCounter();
       String text;

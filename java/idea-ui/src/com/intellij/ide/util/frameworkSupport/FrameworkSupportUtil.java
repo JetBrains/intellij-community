@@ -97,7 +97,7 @@ public class FrameworkSupportUtil {
   }
 
   @Nullable
-  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<FrameworkSupportInModuleProvider> providers) {
+  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<? extends FrameworkSupportInModuleProvider> providers) {
     for (FrameworkSupportInModuleProvider provider : providers) {
       String frameworkId = provider.getFrameworkType().getId();
       if (id.equals(frameworkId)
@@ -112,7 +112,7 @@ public class FrameworkSupportUtil {
   private static class ProvidersGraph implements InboundSemiGraph<FrameworkSupportInModuleProvider> {
     private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
-    public ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
+    ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
       myFrameworkSupportProviders = new ArrayList<>(frameworkSupportProviders);
     }
 

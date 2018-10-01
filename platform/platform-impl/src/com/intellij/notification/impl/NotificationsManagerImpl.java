@@ -74,15 +74,15 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager {
-  public static final Color FILL_COLOR = new JBColor(Gray._242, new Color(78, 80, 82));
-  public static final Color BORDER_COLOR = new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205));
+  public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
+  public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(Notifications.TOPIC, new MyNotificationListener(null));
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
           notification.hideBalloon();
         }
@@ -177,7 +177,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           else {
             balloon.addListener(new JBPopupAdapter() {
               @Override
-              public void onClosed(LightweightWindowEvent event) {
+              public void onClosed(@NotNull LightweightWindowEvent event) {
                 if (!event.isOk()) {
                   notification.expire();
                 }
@@ -1010,7 +1010,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class DropDownAction extends LinkLabel<Void> {
     Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
 
-    public DropDownAction(String text, @Nullable LinkListener<Void> listener) {
+    DropDownAction(String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
@@ -1107,7 +1107,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private JPanel myActionPanel;
     private Component myExpandAction;
 
-    public CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
+    CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
       myText = text;
       myLayoutData = layoutData;
     }
@@ -1288,7 +1288,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private String myTitleTextR;
     private String myTitleTextD;
 
-    public LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
+    LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
       myContent = content;
       myContentTextR = textR;
       myContentTextD = textD;
@@ -1322,7 +1322,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
-    public TextCaret(@NotNull BalloonLayoutData layoutData) {
+    TextCaret(@NotNull BalloonLayoutData layoutData) {
       myLayoutData = layoutData;
     }
 

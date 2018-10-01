@@ -74,7 +74,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     private final SelectInContext mySelectInContext;
     private final List<SelectInTarget> myVisibleTargets;
 
-    public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
+    SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
       myVisibleTargets = ContainerUtil.newArrayList(targetVector);
       List<Icon> icons = fillInIcons(targetVector, selectInContext);
@@ -82,7 +82,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static List<Icon> fillInIcons(@NotNull Collection<SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
+    private static List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
       List<Icon> list = new ArrayList<>();
       for (SelectInTarget target : targets) {
@@ -162,7 +162,7 @@ public class SelectInAction extends AnAction implements DumbAware {
   }
 
   private static class NoTargetsAction extends AnAction {
-    public NoTargetsAction() {
+    NoTargetsAction() {
       super(IdeBundle.message("message.no.targets.available"));
     }
 

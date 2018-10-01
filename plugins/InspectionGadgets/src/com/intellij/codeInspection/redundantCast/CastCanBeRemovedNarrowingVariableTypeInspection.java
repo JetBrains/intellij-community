@@ -110,7 +110,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     private final String myType;
     private final boolean myOnTheFly;
 
-    public CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type, boolean onTheFly) {
+    CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type, boolean onTheFly) {
       myVariableName = variable.getName();
       myType = type.getPresentableText();
       myOnTheFly = onTheFly;
@@ -145,7 +145,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           PsiTypeCastExpression castOccurrence =
             tryCast(PsiUtil.skipParenthesizedExprUp(((PsiReferenceExpression)reference).getParent()), PsiTypeCastExpression.class);
           if (castOccurrence != null && RedundantCastUtil.isCastRedundant(castOccurrence)) {
-            RedundantCastUtil.removeCast(castOccurrence);
+            RemoveRedundantCastUtil.removeCast(castOccurrence);
           }
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -14,7 +14,6 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -133,12 +132,7 @@ public class XmlUtil {
   @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final String XHTML4_SCHEMA_LOCATION;
-  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
   @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
   @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
@@ -408,7 +402,7 @@ public class XmlUtil {
 
   public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
                                                                           final Map<String, T> presentNames,
-                                                                          DuplicationInfoProvider<T> provider,
+                                                                          DuplicationInfoProvider<? super T> provider,
                                                                           final Validator.ValidationHost host) {
     for (T t : elements) {
       final String name = provider.getName(t);
@@ -661,7 +655,7 @@ public class XmlUtil {
     final XmlTag tag = document.getRootTag();
     if (tag == null) return null;
 
-    @NotNull final XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
+    @NotNull final List<XmlFileNSInfoProvider> nsProviders = XmlFileNSInfoProvider.EP_NAME.getExtensionList();
     if (file != null) {
 
       NextProvider:
@@ -895,7 +889,7 @@ public class XmlUtil {
     return elementDescriptor;
   }
 
-  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<? super String> variants) {
     return processEnumerationValues(element, xmlTag -> {
       variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
       return true;
@@ -905,7 +899,7 @@ public class XmlUtil {
   /**
    * @return true if enumeration is exhaustive
    */
-  public static boolean processEnumerationValues(final XmlTag element, final Processor<XmlTag> tagProcessor) {
+  public static boolean processEnumerationValues(final XmlTag element, final Processor<? super XmlTag> tagProcessor) {
     boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
@@ -922,6 +916,21 @@ public class XmlUtil {
       else if (localName.equals("union")) {
         exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
+        XmlAttribute attribute = tag.getAttribute("memberTypes");
+        if (attribute != null && attribute.getValueElement() != null) {
+          for (PsiReference reference : attribute.getValueElement().getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof XmlTag) {
+              processEnumerationValues((XmlTag)resolve, tagProcessor);
+            }
+          }
+        }
+      }
+      else if (localName.equals("extension")) {
+        XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
+        if (base != null) {
+          return processEnumerationValues(base, tagProcessor);
+        }
       }
       else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
@@ -1151,7 +1160,7 @@ public class XmlUtil {
     return buffer.toString();
   }
 
-  public static String generateElementDTD(String name, List<String> tags, List<MyAttributeInfo> attributes) {
+  public static String generateElementDTD(String name, List<String> tags, List<? extends MyAttributeInfo> attributes) {
     if (name == null || "".equals(name)) return "";
     if (name.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
 

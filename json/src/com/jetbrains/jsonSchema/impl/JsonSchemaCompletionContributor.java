@@ -65,6 +65,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     if (!service.isApplicableToFile(file)) return;
     final JsonSchemaObject rootSchema = service.getSchemaObject(file);
     if (rootSchema == null) return;
+    PsiElement positionParent = position.getParent();
+    if (positionParent != null) {
+      PsiElement parent = positionParent.getParent();
+      if (parent instanceof JsonProperty && "$ref".equals(((JsonProperty)parent).getName()) && service.isSchemaFile(file)) {
+        return;
+      }
+    }
 
     updateStat(service.getSchemaProvider(rootSchema.getSchemaFile()));
     doCompletion(parameters, result, rootSchema);
@@ -89,6 +96,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   }
 
   @TestOnly
+  @NotNull
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema,
                                                           @NotNull final PsiElement position, @NotNull final PsiElement originalPosition) {
     final List<LookupElement> result = new ArrayList<>();
@@ -127,7 +135,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private final Set<LookupElement> myVariants;
     private final JsonLikePsiWalker myWalker;
 
-    public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
+    Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
                   @NotNull PsiElement originalPosition, @NotNull final Consumer<LookupElement> resultConsumer) {
       myRootSchema = rootSchema;
       myPosition = position;
@@ -341,7 +349,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
-        builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
+        final String text = StringUtil.removeHtmlTags(typeText);
+        final int firstSentenceMark = text.indexOf(". ");
+        builder = builder.withTypeText(firstSentenceMark == -1 ? text : text.substring(0, firstSentenceMark + 1), true);
       }
       else {
         String type = jsonSchemaObject.getTypeDescription(true);
@@ -451,81 +461,96 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           ApplicationManager.getApplication().assertWriteAccessAllowed();
           Editor editor = context.getEditor();
           Project project = context.getProject();
-          String stringToInsert;
+          String stringToInsert = null;
           final String comma = insertComma ? "," : "";
 
           if (handleInsideQuotesInsertion(context, editor, hasValue)) return;
+
+          PsiElement element = context.getFile().findElementAt(editor.getCaretModel().getOffset());
+          boolean insertColon = element == null || !":".equals(element.getText());
+          if (!insertColon) {
+            editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
+          }
 
           if (finalType != null) {
             boolean hadEnter;
             switch (finalType) {
               case _object:
-                EditorModificationUtil.insertStringAtCaret(editor, ": ",
-                                                           false, true, 2);
+                EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
+                                                           false, true,
+                                                           insertColon ? 2 : 1);
                 hadEnter = false;
                 boolean invokeEnter = myWalker.invokeEnterBeforeObjectAndArray();
-                if (invokeEnter) {
+                if (insertColon && invokeEnter) {
                   invokeEnterHandler(editor);
                   hadEnter = true;
                 }
-                stringToInsert = myWalker.getDefaultObjectValue() + comma;
-                EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
-                                                           false, true,
-                                                           hadEnter ? 0 : 1);
+                if (insertColon) {
+                  stringToInsert = myWalker.getDefaultObjectValue() + comma;
+                  EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
+                                                             false, true,
+                                                             hadEnter ? 0 : 1);
+                }
 
-                if (hadEnter) {
+                if (hadEnter || !insertColon) {
                   EditorActionUtil.moveCaretToLineEnd(editor, false, false);
                 }
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                if (!hadEnter) {
+                if (!hadEnter && stringToInsert != null) {
                   formatInsertedString(context, stringToInsert.length());
                 }
-                if (!invokeEnter) {
+                if (stringToInsert != null && !invokeEnter) {
                   invokeEnterHandler(editor);
                 }
                 break;
               case _boolean:
                 String value = String.valueOf(Boolean.TRUE.toString().equals(defaultValueAsString));
-                stringToInsert = ": " + value + comma;
+                stringToInsert = (insertColon ? ": " : " ") + value + comma;
                 SelectionModel model = editor.getSelectionModel();
 
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
-                                                           false, true, stringToInsert.length() - comma.length());
+                                                           false, true,
+                                                           stringToInsert.length() - comma.length());
                 formatInsertedString(context, stringToInsert.length());
                 int start = editor.getSelectionModel().getSelectionStart();
                 model.setSelection(start - value.length(), start);
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
                 break;
               case _array:
-                EditorModificationUtil.insertStringAtCaret(editor, ": ",
-                                                           false, true, 2);
+                EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
+                                                           false, true,
+                                                           insertColon ? 2 : 1);
                 hadEnter = false;
-                if (myWalker.invokeEnterBeforeObjectAndArray()) {
+                if (insertColon && myWalker.invokeEnterBeforeObjectAndArray()) {
                   invokeEnterHandler(editor);
                   hadEnter = true;
                 }
-                stringToInsert = myWalker.getDefaultArrayValue() + comma;
-                EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
-                                                           false, true,
-                                                           hadEnter ? 0 : 1);
+                if (insertColon) {
+                  stringToInsert = myWalker.getDefaultArrayValue() + comma;
+                  EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
+                                                             false, true,
+                                                             hadEnter ? 0 : 1);
+                }
                 if (hadEnter) {
                   EditorActionUtil.moveCaretToLineEnd(editor, false, false);
                 }
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-                formatInsertedString(context, stringToInsert.length());
+                if (stringToInsert != null) {
+                  formatInsertedString(context, stringToInsert.length());
+                }
                 break;
               case _string:
               case _integer:
-                insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker);
+                insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker, insertColon);
                 break;
               default:
             }
           }
           else {
-            insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma, myWalker);
+            insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma, myWalker, insertColon);
           }
         }
       };
@@ -593,7 +618,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                             List<Object> values,
                                             JsonSchemaType type,
                                             String comma,
-                                            JsonLikePsiWalker walker) {
+                                            JsonLikePsiWalker walker,
+                                            boolean insertColon) {
     if (!walker.quotesForStringLiterals() && defaultValue != null) {
       defaultValue = StringUtil.unquoteString(defaultValue);
     }
@@ -603,8 +629,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
     boolean hasQuotes = isNumber || !walker.quotesForStringLiterals();
-    String stringToInsert = ": " + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
-    EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
+    String stringToInsert = (insertColon ? ": " : " ") + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
+    EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
+                                               insertColon ? 2 : 1);
     if (!hasQuotes || hasDefaultValue) {
       SelectionModel model = editor.getSelectionModel();
       int caretStart = model.getSelectionStart();
@@ -614,7 +641,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    if (!walker.invokeEnterBeforeObjectAndArray()) {
+    if (!walker.invokeEnterBeforeObjectAndArray() && !stringToInsert.equals(": ")) {
       formatInsertedString(context, stringToInsert.length());
     }
 

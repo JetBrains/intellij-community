@@ -18,7 +18,6 @@ import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisito
 import com.intellij.structuralsearch.impl.matcher.compiler.XmlCompilingVisitor;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -152,15 +151,18 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new XmlReplaceHandler(context);
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
+    return new XmlReplaceHandler(project, replaceOptions);
   }
 
   private static class XmlReplaceHandler extends StructuralReplaceHandler {
-    private final ReplacementContext myContext;
 
-    XmlReplaceHandler(ReplacementContext context) {
-      myContext = context;
+    @NotNull private final Project myProject;
+    @NotNull private final ReplaceOptions myReplaceOptions;
+
+    XmlReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
+      myProject = project;
+      myReplaceOptions = replaceOptions;
     }
 
     @Override
@@ -172,12 +174,15 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       final boolean listContext = elementParent instanceof XmlTag;
 
       if (listContext) {
-        doReplaceInContext(info, elementToReplace, replacementToMake, elementParent, myContext);
+        doReplaceInContext(info, elementToReplace, replacementToMake, elementParent);
       }
       else {
-        final PsiElement[] statements = ReplacerUtil.createTreeForReplacement(replacementToMake, PatternTreeContext.Block, myContext);
-        if (statements.length > 0) {
-          PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, statements, replacementToMake, elementParent);
+        final PsiElement[] replacements = MatcherImplUtil.createTreeFromText(replacementToMake,
+                                                                             PatternTreeContext.Block,
+                                                                             myReplaceOptions.getMatchOptions().getFileType(),
+                                                                             myProject);
+        if (replacements.length > 0) {
+          PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, replacements, replacementToMake, elementParent);
 
           // preserve comments
           Replacer.handleComments(elementToReplace, replacement, info);
@@ -189,23 +194,22 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       }
     }
 
-    private static void doReplaceInContext(ReplacementInfo info,
-                                           PsiElement elementToReplace,
-                                           String replacementToMake,
-                                           PsiElement elementParent,
-                                           ReplacementContext context) {
-      final PsiElement[] statements = ReplacerUtil.createTreeForReplacement(replacementToMake, PatternTreeContext.Block, context);
+    private void doReplaceInContext(ReplacementInfo info, PsiElement elementToReplace, String replacementToMake, PsiElement elementParent) {
+      final PsiElement[] replacements = MatcherImplUtil.createTreeFromText(replacementToMake,
+                                                                           PatternTreeContext.Block,
+                                                                           myReplaceOptions.getMatchOptions().getFileType(),
+                                                                           myProject);
 
-      if (statements.length > 1) {
-        elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);
+      if (replacements.length > 1) {
+        elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
       }
-      else if (statements.length == 1) {
-        Replacer.handleComments(elementToReplace, statements[0], info);
+      else if (replacements.length == 1) {
+        Replacer.handleComments(elementToReplace, replacements[0], info);
         try {
-          elementParent.addBefore(statements[0], elementToReplace);
+          elementParent.addBefore(replacements[0], elementToReplace);
         }
         catch (IncorrectOperationException e) {
-          elementToReplace.replace(statements[0]);
+          elementToReplace.replace(replacements[0]);
         }
       }
 

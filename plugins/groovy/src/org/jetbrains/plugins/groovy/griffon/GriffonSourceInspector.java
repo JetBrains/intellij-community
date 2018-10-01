@@ -200,8 +200,7 @@ public class GriffonSourceInspector {
     List<String> words = new ArrayList<>();
     int i = 0;
     char[] chars = name.toCharArray();
-    for (int j = 0; j < chars.length; j++) {
-      char c = chars[j];
+    for (char c : chars) {
       String w;
       if (i >= words.size()) {
         w = "";

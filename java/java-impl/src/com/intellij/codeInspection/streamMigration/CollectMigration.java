@@ -967,7 +967,7 @@ class CollectMigration extends BaseStreamApiMigration {
     private final PsiType myType;
     private final PsiLocalVariable myVar;
 
-    public WrapperCandidate(PsiExpression candidate, PsiType type, PsiLocalVariable var) {
+    WrapperCandidate(PsiExpression candidate, PsiType type, PsiLocalVariable var) {
       myCandidate = candidate;
       myType = type;
       myVar = var;

@@ -44,7 +44,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     add(container);
     addIconComponent(container, BorderLayout.WEST);
 
-    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5(), JBUI.scale(180)));
+    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5(), JBUI.scale(181)));
     container.add(centerPanel);
 
     addNameComponent(centerPanel);
@@ -56,7 +56,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     addInstallButton();
 
     setOpaque(true);
-    setBorder(JBUI.Borders.empty(10, 5));
+    setBorder(JBUI.Borders.empty(10));
 
     setLayout(new AbstractLayoutManager() {
       @Override
@@ -81,13 +81,14 @@ public class GridCellPluginComponent extends CellPluginComponent {
         Border border = myLastComponent.getBorder();
         int borderOffset = border == null ? 0 : border.getBorderInsets(myLastComponent).left;
         myLastComponent
-          .setBounds(bounds.x + location.x - borderOffset, bounds.y + PluginManagerConfigurableNew.offset5() + bounds.height, Math.min(buttonSize.width, size.width),
+          .setBounds(bounds.x + location.x - borderOffset, bounds.y + PluginManagerConfigurableNew.offset5() + bounds.height,
+                     Math.min(buttonSize.width, size.width),
                      buttonSize.height);
       }
     });
 
     updateIcon(false, false);
-    setSelection(EventHandler.SelectionType.NONE);
+    updateColors(EventHandler.SelectionType.NONE);
   }
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {
@@ -104,23 +105,24 @@ public class GridCellPluginComponent extends CellPluginComponent {
       centerPanel.add(panel);
 
       if (date != null) {
-        myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
-        myLastUpdated.setOpaque(false);
-        panel.add(PluginManagerConfigurableNew.installTiny(myLastUpdated));
+        myLastUpdated = createRatingLabel(panel, date, AllIcons.Plugins.Updated);
       }
-
       if (downloads != null) {
-        myDownloads = new JLabel(downloads, AllIcons.Plugins.Downloads, SwingConstants.CENTER);
-        myDownloads.setOpaque(false);
-        panel.add(PluginManagerConfigurableNew.installTiny(myDownloads));
+        myDownloads = createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
       }
-
       if (rating != null) {
-        myRating = new JLabel(rating, AllIcons.Plugins.Rating, SwingConstants.CENTER);
-        myRating.setOpaque(false);
-        panel.add(PluginManagerConfigurableNew.installTiny(myRating));
+        myRating = createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
       }
     }
+  }
+
+  @NotNull
+  private static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull String text, @NotNull Icon icon) {
+    JLabel label = new JLabel(text, icon, SwingConstants.CENTER);
+    label.setOpaque(false);
+    label.setIconTextGap(2);
+    panel.add(PluginManagerConfigurableNew.installTiny(label));
+    return label;
   }
 
   private void addInstallButton() {

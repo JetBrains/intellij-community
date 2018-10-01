@@ -574,7 +574,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     private final String myName;
     private final boolean myIsOnTheFly;
 
-    public VariableFix(String name, boolean isOnTheFly) {
+    VariableFix(String name, boolean isOnTheFly) {
       myName = name;
       myIsOnTheFly = isOnTheFly;
     }

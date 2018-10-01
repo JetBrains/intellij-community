@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -21,7 +22,7 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   private final Executor myDelegateExecutor;
 
   private final Buffer myBuffer = new Buffer();
-  private final BiConsumer<List<MultithreadSearcher.ElementInfo>, List<MultithreadSearcher.ElementInfo>> myFlushConsumer;
+  private final BiConsumer<List<SESearcher.ElementInfo>, List<SESearcher.ElementInfo>> myFlushConsumer;
 
   ThrottlingListenerWrapper(int throttlingDelay, MultithreadSearcher.Listener delegateListener, Executor delegateExecutor) {
     myThrottlingDelay = throttlingDelay;
@@ -38,20 +39,24 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
     };
   }
 
+  public void clearBuffer() {
+    myBuffer.clear();
+  }
+
   @Override
-  public void elementsAdded(List<MultithreadSearcher.ElementInfo> list) {
+  public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.ADD, list));
     flushBufferIfNeeded();
   }
 
   @Override
-  public void elementsRemoved(List<MultithreadSearcher.ElementInfo> list) {
+  public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.REMOVE, list));
     flushBufferIfNeeded();
   }
 
   @Override
-  public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+  public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
     myBuffer.flush(myFlushConsumer);
     myDelegateExecutor.execute(() -> myDelegateListener.searchFinished(hasMoreContributors));
   }
@@ -69,9 +74,9 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
     static final int ADD = 1;
 
     final int type;
-    final List<MultithreadSearcher.ElementInfo> items;
+    final List<SESearcher.ElementInfo> items;
 
-    public Event(int type, List<MultithreadSearcher.ElementInfo> items) {
+    Event(int type, List<SESearcher.ElementInfo> items) {
       this.type = type;
       this.items = items;
     }
@@ -88,9 +93,9 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
       return Optional.ofNullable(myQueue.peek()).map(pair -> pair.second);
     }
 
-    public void flush(BiConsumer<List<MultithreadSearcher.ElementInfo>, List<MultithreadSearcher.ElementInfo>> consumer) {
-      List<MultithreadSearcher.ElementInfo> added = new ArrayList<>();
-      List<MultithreadSearcher.ElementInfo> removed = new ArrayList<>();
+    public void flush(BiConsumer<List<SESearcher.ElementInfo>, List<SESearcher.ElementInfo>> consumer) {
+      List<SESearcher.ElementInfo> added = new ArrayList<>();
+      List<SESearcher.ElementInfo> removed = new ArrayList<>();
       myQueue.forEach(pair -> {
         Event event = pair.first;
         if (event.type == Event.ADD) {
@@ -105,6 +110,10 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
       });
       myQueue.clear();
       consumer.accept(added, removed);
+    }
+
+    public void clear() {
+      myQueue.clear();
     }
   }
 

@@ -58,4 +58,12 @@ class Contracts {
     assertThat(things, not(is(arrayWithSize(2))));
     assertThat(<warning descr="Array access 'things[0]' may produce 'NullPointerException'">things[0]</warning>, is(equalTo("...")));
   }
+
+  void testBoxed(Contracts c) {
+    assertThat(c.getSomething(), is(true));
+  }
+
+  Boolean getSomething() {
+    return true;
+  }
 }

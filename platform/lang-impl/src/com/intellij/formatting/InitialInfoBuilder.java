@@ -61,7 +61,7 @@ public class InitialInfoBuilder {
 
   private final Stack<InitialInfoBuilderState> myStates = new Stack<>();
   
-  private WhiteSpace                       myCurrentWhiteSpace;
+  private @NotNull WhiteSpace              myCurrentWhiteSpace;
   private CompositeBlockWrapper            myRootBlockWrapper;
   private LeafBlockWrapper                 myPreviousBlock;
   private LeafBlockWrapper                 myFirstTokenBlock;
@@ -286,7 +286,7 @@ public class InitialInfoBuilder {
   }
   
   private void initCurrentWhiteSpace(@NotNull Block currentRoot, @Nullable Block previousBlock, @NotNull Block currentBlock) {
-    if (previousBlock != null || (myCurrentWhiteSpace != null && myCurrentWhiteSpace.isIsFirstWhiteSpace())) {
+    if (previousBlock != null || myCurrentWhiteSpace.isIsFirstWhiteSpace()) {
       myCurrentSpaceProperty = (SpacingImpl)currentRoot.getSpacing(previousBlock, currentBlock);
     }
   }
@@ -368,12 +368,6 @@ public class InitialInfoBuilder {
         break;
       case NONE:
         break;
-    }
-  }
-
-  private void checkRange(TextRange textRange) {
-    if (textRange.getLength() == 0) {
-      ASSERT.assertInvalidRanges(textRange.getStartOffset(), textRange.getEndOffset(), myModel, "empty block");
     }
   }
 

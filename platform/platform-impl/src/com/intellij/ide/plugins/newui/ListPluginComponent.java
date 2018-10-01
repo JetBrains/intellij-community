@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -85,7 +86,7 @@ public class ListPluginComponent extends CellPluginComponent {
       showProgress(false);
     }
 
-    setSelection(EventHandler.SelectionType.NONE);
+    updateColors(EventHandler.SelectionType.NONE);
   }
 
   private void createButtons(boolean update) {
@@ -150,6 +151,10 @@ public class ListPluginComponent extends CellPluginComponent {
       changeUpdateToRestart();
     }
     fullRepaint();
+  }
+
+  public void clearProgress() {
+    myIndicator = null;
   }
 
   @NotNull
@@ -298,7 +303,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull java.util.List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -335,9 +340,9 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
       }
     });
@@ -349,9 +354,9 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     group.addSeparator();
-    group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
+    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(component, component.myPlugin, null);
         }
@@ -360,7 +365,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void handleKeyAction(int keyCode, @NotNull java.util.List<CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -403,7 +408,7 @@ public class ListPluginComponent extends CellPluginComponent {
           myPluginModel.changeEnableDisable(result.second, result.first);
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+      else if (keyCode == EventHandler.DELETE_CODE) {
         for (CellPluginComponent component : selection) {
           if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
@@ -446,27 +451,34 @@ public class ListPluginComponent extends CellPluginComponent {
     myPluginModel.removeComponent(this);
   }
 
-  private static class ButtonAnAction extends AnAction {
+  private static class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
-    public ButtonAnAction(@NotNull JButton... buttons) {
+    ButtonAnAction(@NotNull JButton... buttons) {
       super(buttons[0].getText());
       myButtons = buttons;
       setShortcutSet(CommonShortcuts.ENTER);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (JButton button : myButtons) {
         button.doClick();
       }
     }
   }
 
-  private abstract static class MyAnAction extends AnAction {
-    public MyAnAction(@Nullable String text, int keyCode) {
+  private abstract static class MyAnAction extends DumbAwareAction {
+    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0)));
+      ShortcutSet shortcutSet = null;
+      if (actionId != null) {
+        shortcutSet = EventHandler.getShortcuts(actionId);
+      }
+      if (shortcutSet == null) {
+        shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0));
+      }
+      setShortcutSet(shortcutSet);
     }
   }
 }

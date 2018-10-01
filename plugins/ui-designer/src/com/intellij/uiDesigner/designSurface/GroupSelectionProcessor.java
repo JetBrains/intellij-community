@@ -138,7 +138,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
     private final Color myColor;
 
 
-    public MyRectanglePainter() {
+    MyRectanglePainter() {
       myComposite1 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f);
       myComposite2 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.6f);
       myColor = new Color(47, 67, 96);

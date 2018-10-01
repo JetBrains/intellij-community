@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -570,7 +568,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
@@ -591,7 +589,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myIndicator.isCanceled() && shouldAskUser()) {
           int result = Messages.showOkCancelDialog(
@@ -614,14 +612,14 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
     }
 
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
       }

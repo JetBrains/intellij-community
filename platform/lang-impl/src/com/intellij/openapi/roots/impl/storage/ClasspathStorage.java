@@ -187,7 +187,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<? super String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     getStorageDataRef().set(false);

@@ -602,7 +602,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return myProjectConfig;
   }
 
-  public void registerObsoleteLibraryRoots(@NotNull Collection<VirtualFile> roots) {
+  public void registerObsoleteLibraryRoots(@NotNull Collection<? extends VirtualFile> roots) {
     myObsoleteLibraryFilesRemover.registerObsoleteLibraryRoots(roots);
   }
 
@@ -624,7 +624,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private class MyPanel extends JPanel implements DataProvider {
-    public MyPanel() {
+    MyPanel() {
       super(new BorderLayout());
     }
 

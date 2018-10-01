@@ -16,15 +16,19 @@
 package com.intellij.diff.chains;
 
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface DiffRequestChain extends UserDataHolder {
   @NotNull
+  @CalledInAwt
   List<? extends DiffRequestProducer> getRequests();
 
+  @CalledInAwt
   int getIndex();
 
+  @CalledInAwt
   void setIndex(int index);
 }

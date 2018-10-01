@@ -133,7 +133,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected void applyFix(@NotNull Project project,
                           @NotNull GlobalInspectionContextImpl context,
                           @NotNull CommonProblemDescriptor[] descriptors,
-                          @NotNull Set<PsiElement> ignoredElements) {
+                          @NotNull Set<? super PsiElement> ignoredElements) {
   }
 
   private void doApplyFix(@NotNull Project project,
@@ -165,7 +165,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected void performFixesInBatch(@NotNull Project project,
                                      @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
-                                     Set<PsiElement> ignoredElements) {
+                                     Set<? super PsiElement> ignoredElements) {
     final String templatePresentationText = getTemplatePresentation().getText();
     assert templatePresentationText != null;
     CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -225,7 +225,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   private static Set<VirtualFile> getReadOnlyFiles(@NotNull RefEntity[] refElements) {
     Set<VirtualFile> readOnlyFiles = new THashSet<>();
     for (RefEntity refElement : refElements) {
-      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
       if (psiElement == null || psiElement.getContainingFile() == null) continue;
       readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
     }
@@ -241,7 +241,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return selection;
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
+  private static void refreshViews(@NotNull Project project, @NotNull Set<? extends PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
@@ -255,7 +255,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
     for (RefEntity element : resolvedElements) {
-      final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getElement() : null;
+      final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getPsiElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         ignoredElements.add(psiElement);
       }
@@ -308,11 +308,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   private class PerformFixesTask extends PerformFixesModalTask {
     @NotNull private final GlobalInspectionContextImpl myContext;
     @NotNull
-    private final Set<PsiElement> myIgnoredElements;
+    private final Set<? super PsiElement> myIgnoredElements;
 
     PerformFixesTask(@NotNull Project project,
                      @NotNull List<CommonProblemDescriptor[]> descriptors,
-                     @NotNull Set<PsiElement> ignoredElements,
+                     @NotNull Set<? super PsiElement> ignoredElements,
                      @NotNull GlobalInspectionContextImpl context) {
       super(project, descriptors);
       myContext = context;

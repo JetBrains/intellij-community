@@ -37,12 +37,12 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     this(highlighter.createIterator(range.getStartOffset()), Collections.singletonList(range));
   }
 
-  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges) {
+  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<? extends TextRange> ranges) {
     this(sourceIterator, ranges, 0, false);
   }
 
   public FragmentedEditorHighlighter(HighlighterIterator sourceIterator,
-                                     List<TextRange> ranges,
+                                     List<? extends TextRange> ranges,
                                      final int additionalOffset,
                                      boolean mergeByTextAttributes) {
     myMergeByTextAttributes = mergeByTextAttributes;
@@ -52,7 +52,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     translate(sourceIterator, ranges);
   }
 
-  private void translate(HighlighterIterator iterator, List<TextRange> ranges) {
+  private void translate(HighlighterIterator iterator, List<? extends TextRange> ranges) {
     int offset = 0;
     int index = 0;
 

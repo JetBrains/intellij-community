@@ -10,7 +10,7 @@ public class Main {
             "aaa",
             "bbb",
 
-            "ccc"//comment
+            "ccc" //comment
     );
   }
 }

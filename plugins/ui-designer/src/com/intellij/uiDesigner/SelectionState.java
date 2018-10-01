@@ -59,7 +59,7 @@ public final class SelectionState{
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
 
     @Override
-    public void selectedComponentChanged(final GuiEditor source) {
+    public void selectedComponentChanged(@NotNull final GuiEditor source) {
       if(myInsideChange){ // do not react on own events
         return;
       }

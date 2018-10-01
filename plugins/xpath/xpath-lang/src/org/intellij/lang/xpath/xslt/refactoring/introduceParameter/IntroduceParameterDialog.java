@@ -103,7 +103,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
     }
 
     private class MyPreviewAction extends AbstractAction {
-        public MyPreviewAction() {
+        MyPreviewAction() {
             super("&Preview");
         }
 

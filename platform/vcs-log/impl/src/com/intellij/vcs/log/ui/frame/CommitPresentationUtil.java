@@ -277,7 +277,7 @@ public class CommitPresentationUtil {
   @NotNull
   public static CommitPresentation buildPresentation(@NotNull Project project,
                                                      @NotNull VcsCommitMetadata commit,
-                                                     @NotNull Set<String> unresolvedHashes) {
+                                                     @NotNull Set<? super String> unresolvedHashes) {
     String rawMessage = commit.getFullMessage();
     String hashAndAuthor = formatCommitHashAndAuthor(commit);
 
@@ -291,7 +291,7 @@ public class CommitPresentationUtil {
   }
 
   private static class UnresolvedPresentation extends CommitPresentation {
-    public UnresolvedPresentation(@NotNull Project project,
+    UnresolvedPresentation(@NotNull Project project,
                                   @NotNull VirtualFile root,
                                   @NotNull String rawMessage,
                                   @NotNull String hashAndAuthor) {

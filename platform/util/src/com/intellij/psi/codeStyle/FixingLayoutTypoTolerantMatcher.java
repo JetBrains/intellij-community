@@ -11,7 +11,7 @@ class FixingLayoutTypoTolerantMatcher extends TypoTolerantMatcher {
   @Nullable
   private final MinusculeMatcher myFixedMatcher;
 
-  public FixingLayoutTypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+  FixingLayoutTypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
     super(pattern, options, hardSeparators);
     String s = FixingLayoutMatcher.fixLayout(pattern);
     myFixedMatcher = s == null ? null : new TypoTolerantMatcher(s, options, hardSeparators);

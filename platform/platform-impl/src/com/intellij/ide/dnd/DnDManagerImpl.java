@@ -602,7 +602,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   private class MyDragSourceListener implements DragSourceListener {
     private final DnDSource mySource;
 
-    public MyDragSourceListener(final DnDSource source) {
+    MyDragSourceListener(final DnDSource source) {
       mySource = source;
     }
 

@@ -21,21 +21,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class SimpleConfigurable<UI extends ConfigurableUi<S>, S> extends ConfigurableBase<UI, S> {
-  private final Class<UI> uiClass;
-  private final Getter<S> settingsGetter;
+  private final Class<? extends UI> uiClass;
+  private final Getter<? extends S> settingsGetter;
 
-  private SimpleConfigurable(@NotNull String id, @NotNull String displayName, @Nullable String helpTopic, @NotNull Class<UI> uiClass, @NotNull Getter<S> settingsGetter) {
+  private SimpleConfigurable(@NotNull String id, @NotNull String displayName, @Nullable String helpTopic, @NotNull Class<? extends UI> uiClass, @NotNull Getter<? extends S> settingsGetter) {
     super(id, displayName, helpTopic);
 
     this.uiClass = uiClass;
     this.settingsGetter = settingsGetter;
   }
 
-  public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id, @NotNull String displayName, @Nullable String helpTopic, @NotNull Class<UI> uiClass, @NotNull Getter<S> settingsGetter) {
+  public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id, @NotNull String displayName, @Nullable String helpTopic, @NotNull Class<? extends UI> uiClass, @NotNull Getter<? extends S> settingsGetter) {
     return new SimpleConfigurable<>(id, displayName, helpTopic, uiClass, settingsGetter);
   }
 
-  public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id, @NotNull String displayName, @NotNull Class<UI> uiClass, @NotNull Getter<S> settingsGetter) {
+  public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id, @NotNull String displayName, @NotNull Class<? extends UI> uiClass, @NotNull Getter<? extends S> settingsGetter) {
     return create(id, displayName, id, uiClass, settingsGetter);
   }
 

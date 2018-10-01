@@ -141,7 +141,7 @@ public abstract class ArrayAction extends DebuggerAction {
   private static class NamedArrayConfigurable extends ArrayRendererConfigurable implements Configurable {
     private final String myTitle;
 
-    public NamedArrayConfigurable(String title, ArrayRenderer renderer) {
+    NamedArrayConfigurable(String title, ArrayRenderer renderer) {
       super(renderer);
       myTitle = title;
     }

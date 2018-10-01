@@ -139,7 +139,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @Override
-  public void visibleAreaChanged(VisibleAreaEvent e) {
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
     checkFontRenderContext(null);
   }
   public int yToVisualLine(int y) {

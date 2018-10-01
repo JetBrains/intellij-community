@@ -33,12 +33,12 @@ class ActionTracker {
     myProject = editor.getProject();
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         myActionsHappened = true;
       }
 
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         myActionsHappened = true;
       }
     });

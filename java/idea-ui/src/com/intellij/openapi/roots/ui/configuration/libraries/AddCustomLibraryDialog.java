@@ -45,13 +45,13 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   private final LibrariesContainer myLibrariesContainer;
   private final Module myModule;
   private final ModifiableRootModel myModifiableRootModel;
-  private final @Nullable ParameterizedRunnable<ModifiableRootModel> myBeforeLibraryAdded;
+  private final @Nullable ParameterizedRunnable<? super ModifiableRootModel> myBeforeLibraryAdded;
   private final List<Library> myAddedLibraries = new ArrayList<>();
 
   private AddCustomLibraryDialog(CustomLibraryDescription description, LibrariesContainer librariesContainer,
                                  Module module,
                                  ModifiableRootModel modifiableRootModel,
-                                 @Nullable ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                 @Nullable ParameterizedRunnable<? super ModifiableRootModel> beforeLibraryAdded) {
     super(module.getProject(), true);
     myLibrariesContainer = librariesContainer;
     myModule = module;
@@ -67,14 +67,14 @@ public class AddCustomLibraryDialog extends DialogWrapper {
 
   public static AddCustomLibraryDialog createDialog(@NotNull CustomLibraryDescription description,
                                                     final @NotNull Module module,
-                                                    final ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                                    final ParameterizedRunnable<? super ModifiableRootModel> beforeLibraryAdded) {
     return createDialog(description, LibrariesContainerFactory.createContainer(module), module, null, beforeLibraryAdded);
   }
 
   public static AddCustomLibraryDialog createDialog(CustomLibraryDescription description,
                                                     final @NotNull LibrariesContainer librariesContainer, final @NotNull Module module,
                                                     final @Nullable ModifiableRootModel modifiableRootModel,
-                                                    @Nullable ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                                    @Nullable ParameterizedRunnable<? super ModifiableRootModel> beforeLibraryAdded) {
     return new AddCustomLibraryDialog(description, librariesContainer, module, modifiableRootModel, beforeLibraryAdded);
   }
 

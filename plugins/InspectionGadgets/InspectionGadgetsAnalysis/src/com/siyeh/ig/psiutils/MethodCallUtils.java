@@ -468,7 +468,7 @@ public class MethodCallUtils {
     private final PsiMethod myMethod;
     private boolean mySuperCallFound;
 
-    public SuperCallVisitor(@NotNull PsiMethod method) {
+    SuperCallVisitor(@NotNull PsiMethod method) {
       this.myMethod = method;
     }
 

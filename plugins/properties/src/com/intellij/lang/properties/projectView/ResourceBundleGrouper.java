@@ -60,9 +60,9 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     });
   }
 
-  private static void appendPropertiesFilesNodes(@NotNull List<PropertiesFile> files,
+  private static void appendPropertiesFilesNodes(@NotNull List<? extends PropertiesFile> files,
                                                  @NotNull Project project,
-                                                 @NotNull Consumer<AbstractTreeNode> nodeConsumer,
+                                                 @NotNull Consumer<? super AbstractTreeNode> nodeConsumer,
                                                  ViewSettings settings) {
     ResourceBundleManager manager = ResourceBundleManager.getInstance(project);
 
@@ -100,15 +100,15 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       for (AbstractTreeNode selectedElement : selected) {
         Object element = selectedElement.getValue();
         if (element instanceof ResourceBundle) {
           return new ResourceBundleDeleteProvider();
         }
       }
-    } else if (ResourceBundle.ARRAY_DATA_KEY.is(dataName)) {
+    } else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
       final List<ResourceBundle> selectedElements = new ArrayList<>();
       for (AbstractTreeNode node : selected) {
         final Object value = node.getValue();

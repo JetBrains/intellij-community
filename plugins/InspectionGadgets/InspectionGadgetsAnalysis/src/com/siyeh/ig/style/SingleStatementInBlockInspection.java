@@ -74,6 +74,9 @@ public class SingleStatementInBlockInspection extends BaseInspection {
         }
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement) && !isDanglingElseProblem(statements[0], body)) {
+          if (PsiUtilCore.hasErrorElementChild(statements[0])) {
+            return false;
+          }
           final PsiFile file = body.getContainingFile();
           //this inspection doesn't work in JSP files, as it can't tell about tags
           // inside the braces

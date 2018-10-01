@@ -17,16 +17,14 @@ package com.intellij.diff.tools.external;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
-import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.chains.SimpleDiffRequestChain;
+import com.intellij.diff.chains.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -37,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,25 +59,11 @@ public class ExternalDiffTool {
                           @NotNull final DiffRequestChain chain,
                           @NotNull final DiffDialogHints hints) {
     try {
-      //noinspection unchecked
-      final Ref<List<DiffRequest>> requestsRef = new Ref<>();
-      final Ref<Throwable> exceptionRef = new Ref<>();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Loading Requests", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            requestsRef.set(collectRequests(project, chain, indicator));
-          }
-          catch (Throwable e) {
-            exceptionRef.set(e);
-          }
-        }
-      });
-
-      if (!exceptionRef.isNull()) throw exceptionRef.get();
+      final List<DiffRequest> requests = loadRequestsUnderProgress(project, chain);
+      if (requests == null) return;
 
       List<DiffRequest> showInBuiltin = new ArrayList<>();
-      for (DiffRequest request : requestsRef.get()) {
+      for (DiffRequest request : requests) {
         if (canShow(request)) {
           showRequest(project, request);
         }
@@ -99,17 +84,44 @@ public class ExternalDiffTool {
     }
   }
 
+  @Nullable
+  private static List<DiffRequest> loadRequestsUnderProgress(@Nullable Project project,
+                                                             @NotNull DiffRequestChain chain) throws Throwable {
+    if (chain instanceof AsyncDiffRequestChain) {
+      return loadInBackground(project, "Loading Requests", indicator -> {
+        ListSelection<? extends DiffRequestProducer> listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
+        return collectRequests(project, listSelection.getList(), listSelection.getSelectedIndex(), indicator);
+      });
+    }
+    else {
+      List<? extends DiffRequestProducer> allProducers = chain.getRequests();
+      int index = chain.getIndex();
+
+      return loadInBackground(project, "Loading Requests", indicator -> {
+        return collectRequests(project, allProducers, index, indicator);
+      });
+    }
+  }
+
   @NotNull
   private static List<DiffRequest> collectRequests(@Nullable Project project,
-                                                   @NotNull final DiffRequestChain chain,
+                                                   @NotNull List<? extends DiffRequestProducer> allProducers,
+                                                   int index,
+                                                   @NotNull ProgressIndicator indicator) {
+    // TODO: show all changes on explicit selection (not only `chain.getIndex()` one)
+    if (allProducers.isEmpty()) return Collections.emptyList();
+    List<? extends DiffRequestProducer> producers = Collections.singletonList(allProducers.get(index));
+    return collectRequests(project, producers, indicator);
+  }
+
+  @NotNull
+  private static List<DiffRequest> collectRequests(@Nullable Project project,
+                                                   @NotNull List<? extends DiffRequestProducer> producers,
                                                    @NotNull ProgressIndicator indicator) {
     List<DiffRequest> requests = new ArrayList<>();
 
     UserDataHolderBase context = new UserDataHolderBase();
     List<String> errorRequests = new ArrayList<>();
-
-    // TODO: show all changes on explicit selection
-    List<? extends DiffRequestProducer> producers = Collections.singletonList(chain.getRequests().get(chain.getIndex()));
 
     for (DiffRequestProducer producer : producers) {
       try {
@@ -150,5 +162,29 @@ public class ExternalDiffTool {
       if (!ExternalDiffToolUtil.canCreateFile(content)) return false;
     }
     return true;
+  }
+
+
+  @Nullable
+  private static <T> T loadInBackground(@Nullable Project project,
+                                        @NotNull String title,
+                                        @NotNull ThrowableConvertor<ProgressIndicator, T, Throwable> computable) throws Throwable {
+    final Ref<T> requestsRef = new Ref<>();
+    final Ref<Throwable> exceptionRef = new Ref<>();
+
+    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          requestsRef.set(computable.convert(indicator));
+        }
+        catch (Throwable e) {
+          exceptionRef.set(e);
+        }
+      }
+    });
+
+    if (!exceptionRef.isNull()) throw exceptionRef.get();
+    return requestsRef.get();
   }
 }

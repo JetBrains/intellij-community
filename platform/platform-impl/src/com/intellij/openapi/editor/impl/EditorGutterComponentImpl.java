@@ -72,8 +72,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -140,8 +140,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
-  private boolean myForceLeftFreePaintersAreaShown;
-  private boolean myForceRightFreePaintersAreaShown;
+  boolean myForceLeftFreePaintersAreaShown;
+  boolean myForceRightFreePaintersAreaShown;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
 
@@ -286,8 +286,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return;
     }
 
-    int startVisualLine = myEditor.yToVisibleLine(clip.y);
-    int endVisualLine = myEditor.yToVisibleLine(clip.y + clip.height);
+    int startVisualLine = myEditor.yToVisualLine(clip.y);
+    int endVisualLine = myEditor.yToVisualLine(clip.y + clip.height);
 
     // paint all backgrounds
     int gutterSeparatorX = getWhitespaceSeparatorOffset();
@@ -336,12 +336,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (line == visualStart.getLine()) {
         if (visualStart.getColumn() == 0) {
           drawEditorLineBackgroundRect(g, attributes, line, defaultBackgroundColor, defaultForegroundColor, startX,
-                                       myEditor.visibleLineToY(line));
+                                       myEditor.visualLineToY(line));
         }
       }
       else if (line != visualEnd.getLine() || visualEnd.getColumn() != 0) {
         drawEditorLineBackgroundRect(g, attributes, line, defaultBackgroundColor, defaultForegroundColor, startX,
-                                     myEditor.visibleLineToY(line));
+                                     myEditor.visualLineToY(line));
       }
     }
   }
@@ -545,6 +545,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
               g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+            } else {
+              g.setColor(color);
+            }
+
+            //todo[kb] move to editor scheme when have colors for Default and Darcula
+            if (Registry.is("editor.highlight.current.line.number") && myEditor.getCaretModel().getLogicalPosition().line == logLine) {
+              g.setColor(Registry.getColor("editor.highlight.current.line.color", color));
             }
 
             String s = String.valueOf(logLine + 1);
@@ -923,10 +930,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
 
-    int startY = myEditor.visibleLineToY(myEditor.offsetToVisualLine(startOffset));
+    int startY = myEditor.visualLineToY(myEditor.offsetToVisualLine(startOffset));
 
     // top edge of the last line of the highlighted area
-    int endY = myEditor.visibleLineToY(myEditor.offsetToVisualLine(endOffset));
+    int endY = myEditor.visualLineToY(myEditor.offsetToVisualLine(endOffset));
     // => add one line height to make height correct (bottom edge of the highlighted area)
     endY += myEditor.getLineHeight();
 
@@ -984,7 +991,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
-    final int y = myEditor.visibleLineToY(line);
+    final int y = myEditor.visualLineToY(line);
 
     for (GutterMark r : row) {
       if (!checkDumbAware(r)) continue;
@@ -1056,6 +1063,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
+  @NotNull
+  @Override
+  public List<TextAnnotationGutterProvider> getTextAnnotations() {
+    return new ArrayList<>(myTextAnnotationGutters);
+  }
+
   private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     final double width = getFoldingAnchorWidth2D();
 
@@ -1112,11 +1125,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getLineCenterY(int line) {
-    return myEditor.visibleLineToY(line) + myEditor.getLineHeight() / 2;
+    return myEditor.visualLineToY(line) + myEditor.getLineHeight() / 2;
   }
 
   private double getFoldAnchorY(int line, double width) {
-    return myEditor.visibleLineToY(line) + myEditor.getAscent() - width;
+    return myEditor.visualLineToY(line) + myEditor.getAscent() - width;
   }
 
   int getHeadCenterY(FoldRegion foldRange) {
@@ -1438,7 +1451,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int anchorX = getFoldingAreaOffset();
     int anchorWidth = getFoldingAnchorWidth();
 
-    int visualLine = myEditor.yToVisibleLine(y);
+    int visualLine = myEditor.yToVisualLine(y);
     int neighbourhoodStartOffset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0)));
     int neighbourhoodEndOffset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(visualLine,
                                                                                                                       Integer.MAX_VALUE)));
@@ -1522,7 +1535,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     else {
       final Ref<Point> t = new Ref<>(e.getPoint());
-      int line = myEditor.yToVisibleLine(e.getY());
+      int line = myEditor.yToVisualLine(e.getY());
       List<GutterMark> row = getGutterRenderers(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
@@ -1930,7 +1943,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   @Nullable
   public GutterMark getGutterRenderer(final Point p) {
-    int line = myEditor.yToVisibleLine(p.y);
+    int line = myEditor.yToVisualLine(p.y);
     List<GutterMark> renderers = getGutterRenderers(line);
     if (renderers == null) {
       return null;
@@ -1955,7 +1968,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @NotNull
-  private static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
+  static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
     if (renderer instanceof LineMarkerRendererEx) {
       return ((LineMarkerRendererEx)renderer).getPosition();
     }

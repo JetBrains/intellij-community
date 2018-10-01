@@ -38,7 +38,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final JsonSchemaService myService;
   private static final String ID = "JSONSchemaSelector";
 
-  public JsonSchemaStatusWidget(Project project) {
+  JsonSchemaStatusWidget(Project project) {
     super(project);
     myService = JsonSchemaService.Impl.get(project);
     myService.registerRemoteUpdateCallback(myUpdateCallback);
@@ -49,7 +49,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private static class MyWidgetState extends WidgetState {
     boolean warning = false;
-    public MyWidgetState(String toolTip, String text, boolean actionEnabled) {
+    MyWidgetState(String toolTip, String text, boolean actionEnabled) {
       super(toolTip, text, actionEnabled);
     }
 
@@ -162,7 +162,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
     info.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
-      public void fileDownloaded(VirtualFile localFile) {
+      public void fileDownloaded(@NotNull VirtualFile localFile) {
         update();
       }
 

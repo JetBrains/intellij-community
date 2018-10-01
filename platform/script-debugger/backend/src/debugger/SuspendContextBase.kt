@@ -15,7 +15,5 @@
  */
 package org.jetbrains.debugger
 
-abstract class SuspendContextBase<F : CallFrame>(protected val explicitPaused: Boolean) : SuspendContext<F> {
-  override val state: SuspendState
-    get() = if (exceptionData == null) (if (explicitPaused) SuspendState.PAUSED else SuspendState.NORMAL) else SuspendState.EXCEPTION
+abstract class SuspendContextBase<F : CallFrame> : SuspendContext<F> {
 }

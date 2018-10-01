@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -111,27 +110,6 @@ public class PsiUtil {
     if (((GrReferenceExpression)invokedExpression).isQualified()) return null;
 
     return ((GrReferenceExpression)invokedExpression).getReferenceName();
-  }
-
-  @Nullable
-  public static String getQualifiedReferenceText(GrCodeReferenceElement referenceElement) {
-    StringBuilder builder = new StringBuilder();
-    if (!appendName(referenceElement, builder)) return null;
-
-    return builder.toString();
-  }
-
-  private static boolean appendName(GrCodeReferenceElement referenceElement, StringBuilder builder) {
-    String refName = referenceElement.getReferenceName();
-    if (refName == null) return false;
-    GrCodeReferenceElement qualifier = referenceElement.getQualifier();
-    if (qualifier != null) {
-      appendName(qualifier, builder);
-      builder.append(".");
-    }
-
-    builder.append(refName);
-    return true;
   }
 
   public static boolean isLValue(GroovyPsiElement element) {

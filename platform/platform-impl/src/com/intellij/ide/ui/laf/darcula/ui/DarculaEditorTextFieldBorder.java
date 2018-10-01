@@ -46,12 +46,12 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
     if (editorTextField != null && editor != null) {
       editor.addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(Editor editor) {
+        public void focusGained(@NotNull Editor editor) {
           editorTextField.repaint();
         }
 
         @Override
-        public void focusLost(Editor editor) {
+        public void focusLost(@NotNull Editor editor) {
           editorTextField.repaint();
         }
       });
@@ -97,7 +97,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
         g2.fill(outer);
 
         Object op = editorTextField.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (editorTextField.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, Outline.valueOf(op.toString()));
         } else if (editorTextField.isEnabled() && editorTextField.isVisible()) {
           if (hasFocus) {

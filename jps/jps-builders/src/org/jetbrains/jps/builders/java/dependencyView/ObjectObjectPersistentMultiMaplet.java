@@ -222,7 +222,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
     private final DataExternalizer<V> myElementExternalizer;
     private final CollectionFactory<V> myCollectionFactory;
 
-    public CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
+    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
                                       CollectionFactory<V> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;

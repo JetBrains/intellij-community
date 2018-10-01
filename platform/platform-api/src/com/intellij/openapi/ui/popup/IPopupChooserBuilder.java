@@ -25,7 +25,7 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback);
 
   @NotNull
-  IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback);
+  IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback);
 
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 
@@ -89,7 +89,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAccessibleName(String title);
 
-  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c);
+  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c);
 
   IPopupChooserBuilder<T> withHintUpdateSupply();
 

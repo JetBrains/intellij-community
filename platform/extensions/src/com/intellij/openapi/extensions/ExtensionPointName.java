@@ -8,26 +8,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class ExtensionPointName<T> {
-  private final String myName;
-
-  public ExtensionPointName(@NotNull @NonNls final String name) {
-    myName = name;
+public final class ExtensionPointName<T> extends BaseExtensionPointName {
+  public ExtensionPointName(@NotNull String name) {
+    super(name);
   }
 
   @NotNull
   public static <T> ExtensionPointName<T> create(@NotNull @NonNls final String name) {
     return new ExtensionPointName<>(name);
-  }
-
-  @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  @Override
-  public String toString() {
-    return myName;
   }
 
   /**
@@ -41,6 +29,10 @@ public final class ExtensionPointName<T> {
   @NotNull
   public List<T> getExtensionList() {
     return getExtensionList(null);
+  }
+
+  public boolean hasAnyExtensions() {
+    return getPoint(null).hasAnyExtensions();
   }
 
   @NotNull

@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 
 /**
@@ -26,4 +27,8 @@ public interface SearchTopHitProvider {
   ExtensionPointName<SearchTopHitProvider> EP_NAME = ExtensionPointName.create("com.intellij.search.topHitProvider");
 
   void consumeTopHits(String pattern, Consumer<Object> collector, Project project);
+
+  static String getTopHitAccelerator() {
+    return Registry.is("new.search.everywhere") ? "/" : "#";
+  }
 }

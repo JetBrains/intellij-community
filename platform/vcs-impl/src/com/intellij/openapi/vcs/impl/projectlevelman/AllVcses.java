@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
@@ -28,7 +27,7 @@ public class AllVcses implements AllVcsesI, Disposable {
     myVcses = new HashMap<>();
     myLock = new Object();
 
-    final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
+    final VcsEP[] vcsEPs = VcsEP.EP_NAME.getExtensions(myProject);
     final HashMap<String, VcsEP> map = new HashMap<>();
     for (VcsEP vcsEP : vcsEPs) {
       map.put(vcsEP.name, vcsEP);

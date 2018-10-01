@@ -9,12 +9,13 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.GitSubmodule
 
-abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
+abstract class GitSubmoduleContentRevision(val submodule: GitRepository,
                                            private val revisionNumber: VcsRevisionNumber) : ContentRevision {
 
   override fun getFile(): FilePath {
-    return VcsUtil.getFilePath(submodule.root)
+    return VcsUtil.getFilePath(submodule.root.path, false) // NB: treating submodule folder as a file in the parent repository
   }
 
   override fun getRevisionNumber(): VcsRevisionNumber {
@@ -22,7 +23,7 @@ abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
   }
 
   private class Committed(private val parentRepo: GitRepository,
-                          private val submodule: GitRepository,
+                          submodule: GitRepository,
                           revisionNumber: VcsRevisionNumber) : GitSubmoduleContentRevision(submodule, revisionNumber) {
 
     override fun getContent(): String? {
@@ -42,7 +43,7 @@ abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
     }
   }
 
-  private class Current(private val submodule: GitRepository,
+  private class Current(submodule: GitRepository,
                         revisionNumber: VcsRevisionNumber) : GitSubmoduleContentRevision(submodule, revisionNumber) {
     override fun getContent(): String? {
       return submodule.currentRevision
@@ -51,8 +52,8 @@ abstract class GitSubmoduleContentRevision(private val submodule: GitRepository,
 
   companion object {
     @JvmStatic
-    fun createRevision(parentRepo: GitRepository, submodule: GitRepository, revisionNumber: VcsRevisionNumber): ContentRevision {
-      return GitSubmoduleContentRevision.Committed(parentRepo, submodule, revisionNumber)
+    fun createRevision(submodule: GitSubmodule, revisionNumber: VcsRevisionNumber): ContentRevision {
+      return GitSubmoduleContentRevision.Committed(submodule.parent, submodule.repository, revisionNumber)
     }
 
     @JvmStatic

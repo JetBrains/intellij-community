@@ -91,6 +91,7 @@ public class TypeUtils {
     return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
   }
 
+  @Contract("null -> false")
   public static boolean isOptional(@Nullable PsiType type) {
     return isOptional(PsiUtil.resolveClassInClassTypeOnly(type));
   }

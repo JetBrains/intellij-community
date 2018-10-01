@@ -46,6 +46,12 @@ public class VcsLogTabsManager {
     }
   }
 
+  // for statistics
+  @NotNull
+  public List<String> getTabs() {
+    return myUiProperties.getTabs();
+  }
+
   public void openAnotherLogTab(@NotNull VcsLogManager manager) {
     openAnotherLogTab(manager, false);
   }
@@ -60,13 +66,13 @@ public class VcsLogTabsManager {
     if (resetFilters) myUiProperties.resetState(tabId);
 
     VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
-   return VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+    return VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     private final VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> myFactory;
 
-    public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory) {
+    PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory) {
       myFactory = factory;
     }
 

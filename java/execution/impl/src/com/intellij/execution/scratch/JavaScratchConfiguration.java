@@ -30,7 +30,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  */
 public class JavaScratchConfiguration extends ApplicationConfiguration {
-  protected JavaScratchConfiguration(String name, Project project, @NotNull ConfigurationFactory factory) {
+  protected JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, project, factory);
   }
 
@@ -72,7 +72,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
           if (vFile != null) {
             DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessListener() {
               @Override
-              public void processAttached(DebugProcess process) {
+              public void processAttached(@NotNull DebugProcess process) {
                 if (vFile.isValid()) {
                   process.appendPositionManager(new JavaScratchPositionManager((DebugProcessImpl)process, vFile));
                 }
@@ -109,6 +109,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
+  @NotNull
   @Override
   protected JavaScratchConfigurationOptions getOptions() {
     return (JavaScratchConfigurationOptions)super.getOptions();

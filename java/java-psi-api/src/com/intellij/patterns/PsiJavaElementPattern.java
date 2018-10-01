@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -50,14 +52,14 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
-  public Self annotationParam(@NotNull ElementPattern<PsiAnnotation> annotation) {
+  public Self annotationParam(@NotNull ElementPattern<? extends PsiAnnotation> annotation) {
     return withParent(
       PsiJavaPatterns.psiNameValuePair().withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
           annotation)));
   }
 
-  public Self annotationParam(String parameterName, @NotNull ElementPattern<PsiAnnotation> annotation) {
+  public Self annotationParam(String parameterName, @NotNull ElementPattern<? extends PsiAnnotation> annotation) {
     return withParent(
       PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(annotation)));

@@ -341,7 +341,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       err.error(YAMLBundle.message("YAMLParser.invalid.header.symbols"));
     }
 
-    if (getTokenType() == EOL) {
+    if (YAMLElementTypes.EOL_ELEMENTS.contains(getTokenType())) {
       advanceLexer();
     }
     PsiBuilder.Marker endOfValue = myBuilder.mark();

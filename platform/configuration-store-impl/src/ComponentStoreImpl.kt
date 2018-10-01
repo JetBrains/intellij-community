@@ -31,7 +31,6 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.xmlb.JDOMXIncluder
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -80,7 +79,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
-  override abstract val storageManager: StateStorageManager
+  abstract override val storageManager: StateStorageManager
 
   internal fun getComponents(): Map<String, ComponentInfo> {
     return components
@@ -129,7 +128,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override final fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  final override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val errors: MutableList<Throwable> = SmartList<Throwable>()
 
     beforeSaveComponents(errors)
@@ -418,9 +417,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
     try {
-      val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
-      getPathMacroManagerForDefaults()?.expandPaths(documentElement)
-      return deserializeState(documentElement, stateClass, null)
+      val element = JDOMUtil.load(url)
+      getPathMacroManagerForDefaults()?.expandPaths(element)
+      return deserializeState(element, stateClass, null)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state from $url", e)
@@ -465,13 +464,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  override final fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     runBatchUpdate(messageBus) {
       reinitComponents(componentNames)
     }
   }
 
-  override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
+  final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {

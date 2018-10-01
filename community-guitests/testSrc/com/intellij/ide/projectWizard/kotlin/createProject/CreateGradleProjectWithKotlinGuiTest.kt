@@ -2,9 +2,10 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
-import com.intellij.testGuiFramework.framework.GuiTestSuiteParam
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.impl.waitForGradleReimport
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
@@ -12,7 +13,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(GuiTestSuiteParam::class)
-class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) : KotlinGuiTestCase() {
+class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
 
   data class TestParameters(
     val projectName: String,
@@ -44,26 +45,26 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
           project = kotlinLibs.getValue(KotlinKind.JVM).gradleGProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
         ),
-        TestParameters(
-          projectName = "gradle_mpp_jvm",
-          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
-        ),
+//        TestParameters(
+//          projectName = "gradle_mpp_jvm",
+//          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
+//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+//        ),
         TestParameters(
           projectName = "gradle_with_js",
           project = kotlinLibs.getValue(KotlinKind.JS).gradleGProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        ),
-        TestParameters(
-          projectName = "gradle_mpp_js",
-          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        ),
-        TestParameters(
-          projectName = "gradle_mpp_common",
-          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
-        )
+        )//,
+//        TestParameters(
+//          projectName = "gradle_mpp_js",
+//          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
+//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+//        ),
+//        TestParameters(
+//          projectName = "gradle_mpp_common",
+//          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
+//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
+//        )
       )
     }
   }
@@ -78,14 +79,16 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
       projectPath = projectFolder,
       gradleOptions = gradleOptions
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false
     )
     gradleReimport()
-    waitAMoment(extraTimeOut)
+    waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
+    waitAMoment()
 
     projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
       project, kotlinVersion, gradleOptions.artifact, expectedFacet

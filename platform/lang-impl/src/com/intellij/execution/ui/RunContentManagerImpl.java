@@ -142,7 +142,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myToolwindowIdToBaseIconMap.put(toolWindowId, toolWindowIcon);
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
           Content content = event.getContent();
           Executor contentExecutor = executor;
@@ -407,7 +407,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                                                                       @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName,
-                                                                      @Nullable Condition<Content> reuseCondition) {
+                                                                      @Nullable Condition<? super Content> reuseCondition) {
     Content content = null;
     if (descriptor != null) {
       //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -448,7 +448,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static Content getContentFromManager(ContentManager contentManager,
                                                @Nullable String preferredName,
                                                long executionId,
-                                               @Nullable Condition<Content> reuseCondition) {
+                                               @Nullable Condition<? super Content> reuseCondition) {
     ArrayList<Content> contents = new ArrayList<>(Arrays.asList(contentManager.getContents()));
     Content first = contentManager.getSelectedContent();
     if (first != null && contents.remove(first)) {//selected content should be checked first
@@ -616,7 +616,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void contentRemoved(final ContentManagerEvent event) {
+    public void contentRemoved(@NotNull final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
         Disposer.dispose(this);
@@ -644,7 +644,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void contentRemoveQuery(final ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         final boolean canClose = closeQuery(false);
         if (!canClose) {
@@ -654,7 +654,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void projectClosed(final Project project) {
+    public void projectClosed(@NotNull final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
         Disposer.dispose(this); // Dispose content even if content manager refused to.

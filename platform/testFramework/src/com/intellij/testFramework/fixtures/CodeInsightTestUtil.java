@@ -77,10 +77,21 @@ public class CodeInsightTestUtil {
   private CodeInsightTestUtil() { }
 
   @Nullable
-  public static IntentionAction findIntentionByText(@NotNull List<IntentionAction> actions, @NonNls @NotNull String text) {
+  public static IntentionAction findIntentionByText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
     for (IntentionAction action : actions) {
       final String s = action.getText();
       if (s.equals(text)) {
+        return action;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static IntentionAction findIntentionByPartialText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
+    for (IntentionAction action : actions) {
+      final String s = action.getText();
+      if (s.contains(text)) {
         return action;
       }
     }

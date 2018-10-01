@@ -97,7 +97,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
   private static class SimplifyCollectorFix implements LocalQuickFix {
     private final String myMethodName;
 
-    public SimplifyCollectorFix(String methodName) {
+    SimplifyCollectorFix(String methodName) {
       myMethodName = methodName;
     }
 

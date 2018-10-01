@@ -103,7 +103,25 @@ fun ULiteralExpression.getLongValue(): Long = value.let {
 }
 
 /**
- * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
+ * @return corresponding [PsiLanguageInjectionHost] for this [UExpression] if it exists.
+ * Tries to not return same [PsiLanguageInjectionHost] for different UElement-s, thus returns `null` if host could be obtained from
+ * another [UExpression].
+ */
+val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
+  get() {
+    (this.sourcePsi as? PsiLanguageInjectionHost)?.let { return it }
+    // following is a handling of KT-27283
+    if (this !is ULiteralExpression) return null
+    val parent = this.uastParent
+    if (parent is UPolyadicExpression && parent.sourcePsi is PsiLanguageInjectionHost) return null
+    (this.sourcePsi?.parent as? PsiLanguageInjectionHost)?.let { return it }
+    return null
+  }
+
+/**
+ * @return a non-strict parent [PsiLanguageInjectionHost] for [sourcePsi] of given literal expression if it exists.
+ *
+ * NOTE: consider using [sourceInjectionHost] as more performant. Probably will be deprecated in future.
  */
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
   get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }

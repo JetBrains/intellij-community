@@ -94,7 +94,7 @@ public class GradleRunnerConfigurable implements Configurable {
   }
 
   static class TestRunnerItem {
-    public TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
+    TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
       this.value = value;
     }
 

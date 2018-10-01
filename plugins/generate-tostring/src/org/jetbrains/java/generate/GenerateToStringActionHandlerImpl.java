@@ -148,7 +148,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
           .toArray(PsiElementClassMember[]::new);
     }
 
-    public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
+    public static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember> dialog) {
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
         dialog.selectElements(getPreselection(clazz, members));

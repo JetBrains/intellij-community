@@ -55,7 +55,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   }
 
   public static StdArrangementExtendableSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
-                                                                    @NotNull List<StdArrangementMatchRule> matchRules,
+                                                                    @NotNull List<? extends StdArrangementMatchRule> matchRules,
                                                                     @NotNull Collection<StdArrangementRuleAliasToken> rulesAliases) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (StdArrangementMatchRule rule : matchRules) {
@@ -101,7 +101,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   }
 
   public void appendExpandedRules(@NotNull final StdArrangementMatchRule rule,
-                                  @NotNull final List<StdArrangementMatchRule> rules,
+                                  @NotNull final List<? super StdArrangementMatchRule> rules,
                                   @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
     final List<StdArrangementMatchRule> sequence = getRuleSequence(rule, tokenIdToDefinition);
     if (sequence == null || sequence.isEmpty()) {

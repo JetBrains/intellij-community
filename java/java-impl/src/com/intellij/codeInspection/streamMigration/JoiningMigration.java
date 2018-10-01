@@ -233,7 +233,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if (element.isValid() && element instanceof PsiExpression) {
           PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)element);
           if (call != null && "toString".equals(call.getMethodExpression().getReferenceName())) {
-            call.replace(element);
+            new CommentTracker().replaceAndRestoreComments(call, element);
           }
         }
       }
@@ -654,7 +654,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       private final @NotNull List<PsiExpression> myPrefixJoinParts;
       private final @NotNull List<PsiExpression> mySuffixJoinParts;
 
-      public PrefixSuffixContext(@Nullable PsiMethodCallExpression beforeLoopStatement,
+      PrefixSuffixContext(@Nullable PsiMethodCallExpression beforeLoopStatement,
                                  @Nullable PsiMethodCallExpression afterLoopStatement,
                                  @NotNull List<PsiExpression> prefixJoinParts,
                                  @NotNull List<PsiExpression> suffixJoinParts) {
@@ -742,7 +742,7 @@ List<PsiExpression> builderStrInitializers = null;
        * @return list of declaration statements or null if error
        */
       @Nullable("when failed to get declaration of any var")
-      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<PsiLocalVariable> variables) {
+      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<? extends PsiLocalVariable> variables) {
         List<PsiDeclarationStatement> list = new ArrayList<>();
         for (PsiLocalVariable var : variables) {
           PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);
@@ -1260,7 +1260,7 @@ List<PsiExpression> builderStrInitializers = null;
       private final @NotNull List<PsiExpression> myMainJoinParts;
       private final @NotNull List<PsiExpression> myDelimiterJoinParts;
 
-      public JoinData(@Nullable String delimiter,
+      JoinData(@Nullable String delimiter,
                       @NotNull List<PsiExpression> mainJoinParts,
                       @NotNull List<PsiExpression> delimiterJoinParts) {
         myDelimiter = delimiter;

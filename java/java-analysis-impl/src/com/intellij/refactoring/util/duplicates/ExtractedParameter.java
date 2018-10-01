@@ -97,7 +97,8 @@ public class ExtractedParameter {
     Set<PsiExpression> firstUsages = null;
     for (Match match : matches) {
       List<ExtractedParameter> parameters = match.getExtractedParameters();
-      PsiElement[] candidateElements = ContainerUtil.find(candidates, elements -> match.getMatchStart() == elements[0]);
+      PsiElement[] candidateElements = ContainerUtil.find(candidates,
+                                                          elements -> elements.length != 0 && match.getMatchStart() == elements[0]);
       Set<PsiVariable> candidateVariables = ContainerUtil.map2SetNotNull(parameters, parameter -> parameter.myCandidate.myVariable);
       if (candidateElements == null || containsModifiedField(candidateElements, candidateVariables)) {
         continue;
@@ -140,7 +141,7 @@ public class ExtractedParameter {
     private final Set<PsiField> myFields;
     private boolean myModified;
 
-    public FieldModificationVisitor(Set<PsiField> fields) {
+    FieldModificationVisitor(Set<PsiField> fields) {
       myFields = fields;
     }
 

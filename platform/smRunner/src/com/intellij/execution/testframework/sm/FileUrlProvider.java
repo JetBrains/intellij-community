@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -130,6 +131,18 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       if (!(elementAtLine instanceof PsiWhiteSpace)) break;
       int length = elementAtLine.getTextLength();
       offset += length > 1 ? length - 1 : 1;
+    }
+    
+    if (elementAtLine instanceof PsiPlainText && offset > 0) {
+      int offsetInPlainTextFile = offset;
+      return new PsiLocation<PsiPlainText>(project, (PsiPlainText)elementAtLine) {
+        @Nullable
+        @Override
+        public OpenFileDescriptor getOpenFileDescriptor() {
+          VirtualFile file = getVirtualFile();
+          return file != null ? new OpenFileDescriptor(getProject(), file, offsetInPlainTextFile) : null;
+        }
+      };
     }
 
     return PsiLocation.fromPsiElement(project, elementAtLine != null ? elementAtLine : psiFile);

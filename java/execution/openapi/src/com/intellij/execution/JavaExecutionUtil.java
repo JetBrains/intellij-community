@@ -49,7 +49,7 @@ public class JavaExecutionUtil {
   private JavaExecutionUtil() {
   }
 
-  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
+  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<? super PsiClass> isTestMethod) {
     final Set<Module> modules = new HashSet<>();
     for (String className : patterns) {
       final PsiClass psiClass = findMainClass(project,
@@ -102,7 +102,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
-    return ModuleUtilCore.findModuleForPsiElement(psiClass);
+    return ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile());
   }
 
   @Nullable

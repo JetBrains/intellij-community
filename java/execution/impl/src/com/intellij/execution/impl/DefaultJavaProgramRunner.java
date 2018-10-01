@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -22,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
@@ -84,7 +86,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
 
-      if (Registry.is("execution.java.always.debug")) {
+      if (Registry.is("execution.java.always.debug") && DebuggerSettings.getInstance().ALWAYS_DEBUG) {
         ParametersList parametersList = parameters.getVMParametersList();
         if (parametersList.getList().stream().noneMatch(s -> s.startsWith("-agentlib:jdwp"))) {
           parametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,quiet=y");
@@ -210,7 +212,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
   }
 
-  protected static class AttachDebuggerAction extends AnAction {
+  protected static class AttachDebuggerAction extends DumbAwareAction {
     private final AtomicBoolean myEnabled = new AtomicBoolean();
     private final AtomicBoolean myAttached = new AtomicBoolean();
     private final BaseProcessHandler myProcessHandler;
@@ -223,8 +225,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           // 1 second delay to allow jvm to start correctly
-          JobScheduler.getScheduler().schedule(
-            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())), 1, TimeUnit.SECONDS);
+          JobScheduler.getScheduler()
+            .schedule(() -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+                      1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -240,8 +243,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     @SuppressWarnings("unchecked")
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (myConnection == null) {
-        myConnection = e.getProject().getMessageBus().connect();
+      Project project = e.getProject();
+      if (project != null && myConnection == null) {
+        myConnection = project.getMessageBus().connect();
         myConnection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
           @Override
           public void processStarted(@NotNull XDebugProcess debugProcess) {
@@ -275,7 +279,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myAttached.set(JavaDebuggerAttachUtil.attach(myProcessHandler.getProcess(), e.getProject()));
+      myAttached.set(JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject()));
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {
@@ -290,7 +294,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     private final ProcessHandler myProcessHandler;
     private final CapturingProcessAdapter myListener;
 
-    public WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
+    WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
       myProject = project;
       myProcessHandler = processHandler;
       myListener = new CapturingProcessAdapter();

@@ -531,7 +531,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     group.add(new StopAction());
     if (canHideWarnings()) {
       group.addSeparator();
-      group.add(new HideWarningsAction());
+      group.add(new ShowWarningsAction());
     }
 
     fillRightToolbarGroup(group);
@@ -572,11 +572,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return myOccurrenceNavigatorSupport.hasPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurrenceNavigatorSupport.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
@@ -586,7 +588,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     private final Runnable myRerunAction;
     private final AnAction myCloseAction;
 
-    public RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
+    RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
       super(IdeBundle.message("action.refresh"), null, AllIcons.Actions.Rerun);
       myRerunAction = rerunAction;
       myCloseAction = closeAction;
@@ -606,7 +608,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private class StopAction extends DumbAwareAction {
-    public StopAction() {
+    StopAction() {
       super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
     }
 
@@ -630,20 +632,20 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return true;
   }
 
-  private class HideWarningsAction extends ToggleAction implements DumbAware {
-    public HideWarningsAction() {
-      super(IdeBundle.message("action.hide.warnings"), null, AllIcons.General.HideWarnings);
+  private class ShowWarningsAction extends ToggleAction implements DumbAware {
+    ShowWarningsAction() {
+      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
-      return isHideWarnings();
+    public boolean isSelected(@NotNull AnActionEvent event) {
+      return !isHideWarnings();
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
-      if (isHideWarnings() != flag) {
-        myConfiguration.setHideWarnings(flag);
+    public void setSelected(@NotNull AnActionEvent event, boolean showWarnings) {
+      if (showWarnings == isHideWarnings()) {
+        myConfiguration.setHideWarnings(!showWarnings);
         myBuilder.updateTree();
       }
     }
@@ -676,7 +678,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private static class MyOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
-    public MyOccurrenceNavigatorSupport(final Tree tree) {
+    MyOccurrenceNavigatorSupport(final Tree tree) {
       super(tree);
     }
 
@@ -694,11 +696,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return null;
     }
 
+    @NotNull
     @Override
     public String getNextOccurenceActionName() {
       return IdeBundle.message("action.next.message");
     }
 
+    @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.message");

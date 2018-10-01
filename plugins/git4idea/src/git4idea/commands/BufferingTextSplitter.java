@@ -10,7 +10,7 @@ class BufferingTextSplitter {
   @NotNull private final Consumer<String> myLineConsumer;
   private boolean myCrLast = false;
 
-  public BufferingTextSplitter(@NotNull Consumer<String> lineConsumer) {myLineConsumer = lineConsumer;}
+  BufferingTextSplitter(@NotNull Consumer<String> lineConsumer) {myLineConsumer = lineConsumer;}
 
   /**
    * Walks the input array from 0 to {@param contentLength - 1} and sends complete lines (separated by \n,\r or \r\n) to the consumer

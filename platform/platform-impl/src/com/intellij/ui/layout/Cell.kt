@@ -83,10 +83,11 @@ abstract class Cell {
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 historyProvider: (() -> List<String>)? = null,
-                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+                                comment: String? = null): TextFieldWithHistoryWithBrowseButton {
     val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChosen)
     value?.let { component.text = it }
-    component()
+    component(comment = comment)
     return component
   }
 

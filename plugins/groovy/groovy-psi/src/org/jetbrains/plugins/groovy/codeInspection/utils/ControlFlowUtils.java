@@ -775,7 +775,7 @@ public class ControlFlowUtils {
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
       @NotNull
       @Override
-      public BitSet join(@NotNull List<BitSet> ins) {
+      public BitSet join(@NotNull List<? extends BitSet> ins) {
         BitSet result = new BitSet(flow.length);
         for (BitSet set : ins) {
           result.or(set);

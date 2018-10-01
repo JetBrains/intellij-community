@@ -18,14 +18,14 @@ import java.util.List;
  * @author peter
  */
 public class RunAll implements Runnable {
-  private final List<ThrowableRunnable<?>> myActions;
+  private final List<? extends ThrowableRunnable<?>> myActions;
 
   @SafeVarargs
   public RunAll(@NotNull ThrowableRunnable<Throwable>... actions) {
     this(ContainerUtil.newArrayList(actions));
   }
 
-  public RunAll(@NotNull List<ThrowableRunnable<?>> actions) {
+  public RunAll(@NotNull List<? extends ThrowableRunnable<?>> actions) {
     myActions = actions;
   }
 

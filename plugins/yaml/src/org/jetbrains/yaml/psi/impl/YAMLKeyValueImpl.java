@@ -3,6 +3,7 @@ package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -159,6 +160,10 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
 
   @Override
   public ItemPresentation getPresentation() {
+    ItemPresentation custom = ItemPresentationProviders.getItemPresentation(this);
+    if (custom != null) {
+      return custom;
+    }
     final YAMLFile yamlFile = (YAMLFile)getContainingFile();
     final PsiElement value = getValue();
     return new ItemPresentation() {

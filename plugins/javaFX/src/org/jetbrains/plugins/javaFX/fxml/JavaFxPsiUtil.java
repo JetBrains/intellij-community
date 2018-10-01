@@ -480,7 +480,7 @@ public class JavaFxPsiUtil {
     });
   }
 
-  public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
+  public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<? super String> messageConsumer) {
     if (psiClass.isEnum() || hasNamedArgOrNoArgConstructor(psiClass)) return true;
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
@@ -543,7 +543,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isClassAcceptable(@Nullable XmlTag targetTag, @Nullable final PsiClass fromClass,
-                                          @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                          @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetTag == null || fromClass == null || !fromClass.isValid()) {
       return true;
     }
@@ -573,14 +573,14 @@ public class JavaFxPsiUtil {
     return true;
   }
 
-  private static boolean noDefaultPropertyError(@NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+  private static boolean noDefaultPropertyError(@NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Parent tag has no default property",
                            Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean canCoerce(@Nullable PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
-                                   @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                   @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetType == null) return true;
     PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(targetType, fromClass.getResolveScope());
     if (collectionItemType == null && InheritanceUtil.isInheritor(targetType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
@@ -605,7 +605,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean canCoerceImpl(@NotNull PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
-                                       @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                       @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ||
         targetType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
         targetType.isAssignableFrom(PsiTypesUtil.getClassType(fromClass))) {
@@ -640,14 +640,14 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                             @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                             @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Unable to coerce " + HighlightUtil.formatClass(fromClass) + " to " + targetType.getCanonicalText(),
                            Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                               @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                               @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Conversion between unrelated types, " + HighlightUtil.formatClass(fromClass) +
                            " to " + targetType.getCanonicalText(),
                            Validator.ValidationHost.ErrorType.WARNING);
@@ -1239,7 +1239,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean findControllerClassInjection(@NotNull PsiReference loaderReference,
-                                                      @NotNull Ref<PsiClass> injectedController,
+                                                      @NotNull Ref<? super PsiClass> injectedController,
                                                       PsiMethod injectControllerMethod) {
     final PsiElement element = loaderReference.getElement();
     if (element instanceof PsiReferenceExpression) {

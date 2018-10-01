@@ -12,7 +12,6 @@ import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents a test result tree node.
@@ -209,10 +209,8 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addChild(@NotNull SMTestProxy child) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     if (myChildren == null) {
-      myChildren = ContainerUtil.newArrayListWithCapacity(4);
+      myChildren = new CopyOnWriteArrayList<>();
     }
     myChildren.add(child);
 
@@ -800,28 +798,26 @@ public class SMTestProxy extends AbstractTestProxy {
   protected AbstractState determineSuiteStateOnFinished() {
     final AbstractState state;
     if (isLeaf()) {
-      state = SuiteFinishedState.EMPTY_LEAF_SUITE;
+      state = SuiteFinishedState.EMPTY_SUITE;
+    }
+    else if (isDefect()) {
+      // Test suit contains errors if at least one of its tests contains error
+      if (containsErrorTests()) {
+        state = SuiteFinishedState.ERROR_SUITE;
+      }
+      else {
+        // if suite contains failed tests - all suite should be
+        // consider as failed
+        state = containsFailedTests()
+                ? SuiteFinishedState.FAILED_SUITE
+                : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
+      }
     }
     else if (isEmptySuite()) {
       state = SuiteFinishedState.EMPTY_SUITE;
     }
     else {
-      if (isDefect()) {
-        // Test suit contains errors if at least one of its tests contains error
-        if (containsErrorTests()) {
-          state = SuiteFinishedState.ERROR_SUITE;
-        }
-        else {
-          // if suite contains failed tests - all suite should be
-          // consider as failed
-          state = containsFailedTests()
-                  ? SuiteFinishedState.FAILED_SUITE
-                  : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
-        }
-      }
-      else {
-        state = SuiteFinishedState.PASSED_SUITE;
-      }
+      state = SuiteFinishedState.PASSED_SUITE;
     }
     return state;
   }

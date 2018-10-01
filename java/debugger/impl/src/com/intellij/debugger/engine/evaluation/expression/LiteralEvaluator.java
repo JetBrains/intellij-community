@@ -23,7 +23,7 @@ class LiteralEvaluator implements Evaluator {
   private final Object myValue;
   private final String myExpectedType;
 
-  public LiteralEvaluator(Object value, String expectedType) {
+  LiteralEvaluator(Object value, String expectedType) {
     myValue = value;
     myExpectedType = expectedType;
   }

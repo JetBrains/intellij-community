@@ -215,7 +215,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       }
     }
 
-    private static void accumulateChildren(@NotNull final TreeNode node, @NotNull final List<TreeNode> list, final boolean showRoot) {
+    private static void accumulateChildren(@NotNull final TreeNode node, @NotNull final List<? super TreeNode> list, final boolean showRoot) {
       if (showRoot || node.getParent() != null) list.add(node);
 
       final int count = node.getChildCount();
@@ -269,7 +269,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private final Object myNode;
     private int myIndex = -1;
 
-    public ChildrenEnumeration(@NotNull final TreeModel treeModel, @NotNull final Object node) {
+    ChildrenEnumeration(@NotNull final TreeModel treeModel, @NotNull final Object node) {
       myTreeModel = treeModel;
       myNode = node;
     }
@@ -289,7 +289,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private final TreeModel myTreeModel;
     private final Stack<Enumeration> myStack;
 
-    public PreorderEnumeration(@NotNull final TreeModel treeModel) {
+    PreorderEnumeration(@NotNull final TreeModel treeModel) {
       myTreeModel = treeModel;
       myStack = new Stack<>();
       myStack.push(Collections.enumeration(Collections.singleton(treeModel.getRoot())));

@@ -14,6 +14,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -79,7 +80,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<CommonProblemDescriptor> isDescriptorExcluded);
+  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
   @NotNull
   QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
   @NotNull
@@ -92,11 +93,29 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   GlobalInspectionContextImpl getContext();
 
   void exportResults(@NotNull Element parentNode,
-                     @NotNull Predicate<RefEntity> isEntityExcluded,
-                     @NotNull Predicate<CommonProblemDescriptor> isProblemExcluded);
+                     @NotNull Predicate<? super RefEntity> isEntityExcluded,
+                     @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
 
+  /** Export aggregate results that can't be attached to any specific problem descriptor. */
+  default void exportAggregateResults(@NotNull Element bulkRoot,
+                                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
+                                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded) {}
+
+  /** Override the preview panel for the entity. */
   @Nullable
   default JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+    return null;
+  }
+
+  /** Override the preview panel for the problem descriptor. */
+  @Nullable
+  default JComponent getCustomPreviewPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
+    return null;
+  }
+
+  /** Additional actions applicable to the problem descriptor. May be (but not necessarily) related to the custom preview panel. */
+  @Nullable
+  default JComponent getCustomActionsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
     return null;
   }
 

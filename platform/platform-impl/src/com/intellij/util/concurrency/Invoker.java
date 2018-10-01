@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.openapi.project.IndexNotReadyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -32,7 +32,7 @@ public abstract class Invoker implements Disposable {
   private volatile boolean disposed;
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
-    description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
+    description = UID.getAndIncrement() + ".Invoker." + prefix + ": " + parent;
     register(parent, this);
   }
 
@@ -151,7 +151,7 @@ public abstract class Invoker implements Disposable {
         promise.setResult(null);
       }
     }
-    catch (ProcessCanceledException exception) {
+    catch (ProcessCanceledException | IndexNotReadyException exception) {
       if (canRestart(task, promise, attempt)) {
         count.incrementAndGet();
         int nextAttempt = attempt + 1;
@@ -159,14 +159,13 @@ public abstract class Invoker implements Disposable {
         LOG.debug("Task is restarted");
       }
     }
-    catch (Exception exception) {
-      LOG.warn(exception);
-      promise.setError(exception);
-    }
     catch (Throwable throwable) {
-      LOG.warn(throwable);
-      promise.setError(throwable);
-      throw throwable;
+      try {
+        LOG.error(throwable);
+      }
+      finally {
+        promise.setError(throwable);
+      }
     }
     finally {
       count.decrementAndGet();
@@ -223,17 +222,8 @@ public abstract class Invoker implements Disposable {
    * which is the only one valid thread for this invoker.
    */
   public static final class EDT extends Invoker {
-    private final TransferToEDTQueue<Runnable> queue;
-
     public EDT(@NotNull Disposable parent) {
       super("EDT", parent);
-      queue = TransferToEDTQueue.createRunnableMerger(toString());
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      queue.stop();
     }
 
     @Override
@@ -247,7 +237,7 @@ public abstract class Invoker implements Disposable {
         EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, MILLISECONDS);
       }
       else {
-        queue.offer(runnable);
+        EdtExecutorService.getInstance().execute(runnable);
       }
     }
   }
@@ -301,10 +291,14 @@ public abstract class Invoker implements Disposable {
     @Override
     void offer(@NotNull Runnable runnable, int delay) {
       schedule(executor, () -> {
-        if (thread != null) LOG.warn("unexpected thread: " + thread);
-        thread = Thread.currentThread();
-        runnable.run();
-        thread = null;
+        if (thread != null) LOG.error("unexpected thread: " + thread);
+        try {
+          thread = Thread.currentThread();
+          runnable.run(); // may throw an assertion error
+        }
+        finally {
+          thread = null;
+        }
       }, delay);
     }
   }

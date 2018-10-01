@@ -17,8 +17,8 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 
 import java.util.Collections;
 
@@ -67,10 +67,10 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
                                                                         "  \"patternProperties\": {\n" +
                                                                         "    <warning descr=\"Unclosed character class near index 8\n" +
                                                                         ".*p[0-9.*\n" +
-                                                                        "        ^\">\"p[0-9\"</warning>: {},\n" +
+                                                                        "        ^\">\"p[0-9<error>\"</error></warning>: {},\n" +
                                                                         "    <warning descr=\"Unclosed character class near index 8\n" +
                                                                         ".*b[0-7.*\n" +
-                                                                        "        ^\">\"b[0-7\"</warning>: {}\n" +
+                                                                        "        ^\">\"b[0-7<error>\"</error></warning>: {}\n" +
                                                                         "  }\n" +
                                                                         "}"), true, true, false, myFile));
       }

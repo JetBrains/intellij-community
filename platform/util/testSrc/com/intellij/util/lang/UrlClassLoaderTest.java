@@ -37,6 +37,7 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.execution.CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX;
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.*;
 
@@ -148,14 +149,14 @@ public class UrlClassLoaderTest {
       File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), entryName, "-");
       File theBad = createTestFile(sadHill, "2_broken.jar", new String(new char[1024]));
 
-      UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).get();
+      UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).useLazyClassloadingCaches(false).get();
       assertNotNull(findResource(flat, entryName, false));
 
       String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
                        Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
-      File theUgly = createTestJar(createTestFile(sadHill, "3_classpath.jar"), JarFile.MANIFEST_NAME, content);
+      File theUgly = createTestJar(createTestFile(sadHill, CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
 
-      UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).get();
+      UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).useLazyClassloadingCaches(false).get();
       assertNotNull(findResource(recursive, entryName, false));
     }
     finally {

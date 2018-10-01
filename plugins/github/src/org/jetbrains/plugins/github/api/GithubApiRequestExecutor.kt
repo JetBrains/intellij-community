@@ -81,20 +81,20 @@ sealed class GithubApiRequestExecutor {
     protected fun <T> RequestBuilder.execute(request: GithubApiRequest<T>, indicator: ProgressIndicator): T {
       indicator.checkCanceled()
       try {
+        LOG.debug("Request: ${request.url} ${request.operationName} : Connecting")
         return connect {
           val connection = it.connection as HttpURLConnection
           if (request is GithubApiRequest.WithBody) {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body}")
+            LOG.debug("Request: ${connection.url} ${connection.requestMethod} with body:\n${request.body} : Connected")
             it.write(request.body)
           }
           else {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url}")
+            LOG.debug("Request: ${connection.url} ${connection.requestMethod} : Connected")
           }
           checkResponseCode(connection)
           indicator.checkCanceled()
-
           val result = request.extractResult(createResponse(it, indicator))
-          LOG.debug("Request: ${connection.requestMethod} ${connection.url}: Success")
+          LOG.debug("Request: ${connection.url} ${connection.requestMethod} : Result extracted")
           result
         }
       }
@@ -142,16 +142,16 @@ sealed class GithubApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN -> {
           val otpHeader = connection.getHeaderField(OTP_HEADER_NAME)
           if (otpHeader != null && otpHeader.contains("required", true)) {
-            GithubTwoFactorAuthenticationException(jsonError?.message ?: errorText)
+            GithubTwoFactorAuthenticationException(jsonError?.presentableError ?: errorText)
           }
           else if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
-            GithubRateLimitExceededException(jsonError.message)
+            GithubRateLimitExceededException(jsonError.presentableError)
           }
-          else GithubAuthenticationException("Request response: " + (jsonError?.message ?: errorText))
+          else GithubAuthenticationException("Request response: " + (jsonError?.presentableError ?: errorText))
         }
         else -> {
           if (jsonError != null) {
-            GithubStatusCodeException("$statusLine - ${jsonError.message}", jsonError, connection.responseCode)
+            GithubStatusCodeException("$statusLine - ${jsonError.presentableError}", jsonError, connection.responseCode)
           }
           else {
             GithubStatusCodeException("$statusLine - ${errorText}", connection.responseCode)

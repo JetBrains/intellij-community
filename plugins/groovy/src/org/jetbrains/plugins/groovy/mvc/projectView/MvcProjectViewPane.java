@@ -162,11 +162,13 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return myDescriptor.getFramework().getIcon();
@@ -188,6 +190,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     throw new UnsupportedOperationException();
@@ -207,9 +210,8 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
-    final Project project = myProject;
     final String id = getId();
-    return new ProjectTreeStructure(project, id) {
+    return new ProjectTreeStructure(myProject, id) {
 
       @Override
       public boolean isHideEmptyMiddlePackages() {
@@ -217,7 +219,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       }
 
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new MvcProjectNode(project, this, myDescriptor);
       }
     };
@@ -498,12 +500,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myViewState.hideEmptyMiddlePackages;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myViewState.hideEmptyMiddlePackages = flag;
       TreeUtil.collapseAll(myTree, 1);
     }

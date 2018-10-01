@@ -15,7 +15,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandl
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -217,7 +216,7 @@ public class SMTestRunnerConnectionUtil {
   private static class CombinedTestLocator implements SMTestLocator, DumbAware {
     private final SMTestLocator myLocator;
 
-    public CombinedTestLocator(SMTestLocator locator) {
+    CombinedTestLocator(SMTestLocator locator) {
       myLocator = locator;
     }
 
@@ -320,11 +319,11 @@ public class SMTestRunnerConnectionUtil {
   @SuppressWarnings("deprecation")
   private static class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
-    private final TestLocationProvider[] myLocators;
+    private final List<TestLocationProvider> myLocators;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {
       myPrimaryLocator = primaryLocator;
-      myLocators = Extensions.getExtensions(TestLocationProvider.EP_NAME);
+      myLocators = TestLocationProvider.EP_NAME.getExtensionList();
     }
 
     @NotNull

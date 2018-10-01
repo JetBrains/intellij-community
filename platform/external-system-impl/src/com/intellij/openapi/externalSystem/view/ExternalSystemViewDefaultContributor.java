@@ -106,12 +106,12 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static void addDependenciesNode(@NotNull ExternalProjectsView externalProjectsView,
                                           @NotNull MultiMap<Key<?>, DataNode<?>> dataNodes,
-                                          @NotNull List<ExternalSystemNode<?>> result) {
+                                          @NotNull List<? super ExternalSystemNode<?>> result) {
     final Collection<DataNode<?>> moduleDeps = dataNodes.get(ProjectKeys.MODULE_DEPENDENCY);
     final Collection<DataNode<?>> libDeps = dataNodes.get(ProjectKeys.LIBRARY_DEPENDENCY);
 
     if (!moduleDeps.isEmpty() || !libDeps.isEmpty()) {
-      final ExternalSystemNode depNode = new MyDependenciesNode(externalProjectsView);
+      final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
 
       for (DataNode<?> dataNode : moduleDeps) {
         if (!(dataNode.getData() instanceof ModuleDependencyData)) continue;
@@ -155,7 +155,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static void addModuleNodes(@NotNull ExternalProjectsView externalProjectsView,
                                      @NotNull MultiMap<Key<?>, DataNode<?>> dataNodes,
-                                     @NotNull List<ExternalSystemNode<?>> result) {
+                                     @NotNull List<? super ExternalSystemNode<?>> result) {
     final Collection<DataNode<?>> moduleDataNodes = dataNodes.get(ProjectKeys.MODULE);
     if (!moduleDataNodes.isEmpty()) {
       final AbstractExternalSystemSettings systemSettings =
@@ -178,7 +178,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   @Order(ExternalSystemNode.BUILTIN_DEPENDENCIES_DATA_NODE_ORDER)
   private static class MyDependenciesNode extends ExternalSystemNode {
-    public MyDependenciesNode(ExternalProjectsView externalProjectsView) {
+    MyDependenciesNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked
       super(externalProjectsView, null, null);
     }
@@ -197,7 +197,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static abstract class DependencyDataExternalSystemNode<T extends DependencyData> extends ExternalSystemNode<T> {
 
-    public DependencyDataExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
+    DependencyDataExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
                                             @Nullable ExternalSystemNode parent,
                                             @Nullable DataNode<T> dataNode) {
       super(externalProjectsView, parent, dataNode);
@@ -275,7 +275,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static class ModuleDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<ModuleDependencyData> {
 
-    public ModuleDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<ModuleDependencyData> dataNode) {
+    ModuleDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<ModuleDependencyData> dataNode) {
       super(externalProjectsView, null, dataNode);
     }
 
@@ -293,7 +293,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static class LibraryDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<LibraryDependencyData> {
 
-    public LibraryDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<LibraryDependencyData> dataNode) {
+    LibraryDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<LibraryDependencyData> dataNode) {
       super(externalProjectsView, null, dataNode);
     }
 

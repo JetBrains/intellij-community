@@ -15,6 +15,7 @@ intellij.python.reStructuredText
 intellij.python.ipnb
 intellij.editorconfig
 intellij.settingsRepository
+intellij.configurationScript
 intellij.yaml
 intellij.properties
 intellij.markdown

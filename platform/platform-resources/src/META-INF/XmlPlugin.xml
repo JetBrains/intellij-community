@@ -572,6 +572,9 @@
     <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
     <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
 
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.HtmlIndexPatternBuilder" order="after xml"/>
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.XmlIndexPatternBuilder" id="xml"/>
+
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
 
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.XmlVcsSelectionProvider"/>

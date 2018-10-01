@@ -142,7 +142,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   public static boolean addAnnotationsDependency(@NotNull final Project project,
-                                                 @NotNull final Set<Module> modulesWithoutAnnotations,
+                                                 @NotNull final Set<? extends Module> modulesWithoutAnnotations,
                                                  @NotNull String annoFQN, final String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {

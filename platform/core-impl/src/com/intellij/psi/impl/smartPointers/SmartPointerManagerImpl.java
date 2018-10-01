@@ -109,7 +109,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     SmartPsiElementPointerImpl cachedPointer = SoftReference.dereference(data);
     if (cachedPointer != null) {
       PsiElement cachedElement = cachedPointer.getElement();
-      if (cachedElement == null || cachedElement != element) {
+      if (cachedElement != element) {
         return null;
       }
     }
@@ -207,7 +207,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
 
-  public void updatePointers(@NotNull Document document, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  public void updatePointers(@NotNull Document document, @NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     SmartPointerTracker list = file == null ? null : getTracker(file);
     if (list != null) list.updateMarkers(frozen, events);

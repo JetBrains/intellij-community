@@ -281,7 +281,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
   }
 
   private static class ASTWrapperPsiComment extends ASTWrapperPsiElement implements PsiComment {
-    public ASTWrapperPsiComment(@NotNull ASTNode node) {
+    ASTWrapperPsiComment(@NotNull ASTNode node) {
       super(node);
     }
 

@@ -141,6 +141,9 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       clear();
       throw new IllegalStateException("Seems you haven't called startInjecting()");
     }
+    if (!host.isValidHost()) {
+      throw new IllegalArgumentException(host + ".isValidHost() in " + host.getClass() + " returned false so you mustn't inject here.");
+    }
     PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(host);
     assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile, myLanguage,
                                                               myHostPsiFile, myHostVirtualFile, myHostDocument, placeInfos, myDocumentManagerBase);
@@ -183,7 +186,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       if (!decodeSuccessful) {
         // if there are invalid chars, adjust the range
         int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - before, info.registeredRangeInsideHost);
-        relevantRange = relevantRange.intersection(new ProperTextRange(0, offsetInHost));
+        relevantRange = relevantRange.intersection(new ProperTextRange(0, Math.max(0,offsetInHost)));
       }
     }
     outChars.append(info.suffix);
@@ -238,7 +241,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     for (PlaceInfo info : placeInfos) {
       isAncestor |= PsiTreeUtil.isAncestor(contextElement, info.host, false);
     }
-    assert isAncestor : exceptionContext("Context element " + contextElement.getTextRange() + ": '" + contextElement + "'; " +
+    assert isAncestor : exceptionContext("Context element " + contextElement.getTextRange() + ": '" + contextElement + "' (" + contextElement.getClass() + "); " +
                                          " must be the parent of at least one of injection hosts", language,
                                          hostPsiFile, hostVirtualFile, hostDocument, placeInfos, documentManager);
   }
@@ -311,7 +314,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       super(message);
     }
   }
-  private static void patchLeaves(@NotNull List<PlaceInfo> placeInfos,
+  private static void patchLeaves(@NotNull List<? extends PlaceInfo> placeInfos,
                                   @NotNull InjectedFileViewProvider viewProvider,
                                   @NotNull ASTNode parsedNode,
                                   @NotNull CharSequence documentText) throws PatchException {

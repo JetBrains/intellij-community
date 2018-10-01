@@ -27,23 +27,18 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
-  private final Map<Object, Icon> myIconsCache = new LinkedHashMap<Object, Icon>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<Object, Icon> eldest) {
-      return size() > 100;
-    }
-  };
+  private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(100);
   private long myLastClearTimestamp;
 
   public IconDeferrerImpl(@NotNull MessageBus bus) {
@@ -78,11 +73,11 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> evaluator) {
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator) {
     return deferImpl(base, param, evaluator, true);
   }
 
-  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> evaluator, final boolean autoUpdatable) {
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator, final boolean autoUpdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return evaluator.fun(param);
     }

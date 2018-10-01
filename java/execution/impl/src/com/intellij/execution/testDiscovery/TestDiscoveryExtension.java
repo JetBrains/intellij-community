@@ -85,6 +85,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (agentPath == null) return;
     params.getVMParametersList().add("-javaagent:" + agentPath);
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
+    params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.DATA_VERSION, String.valueOf(3));
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.HOST_PROP, "127.0.0.1");
@@ -114,7 +115,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  public boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
     return configuration instanceof JavaTestConfigurationBase && Registry.is(TEST_DISCOVERY_REGISTRY_KEY);
   }
 
@@ -129,7 +130,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   private static final Object ourTracesLock = new Object();
-  
+
   private static void processTracesFile(JavaTestConfigurationWithDiscoverySupport configuration) {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());

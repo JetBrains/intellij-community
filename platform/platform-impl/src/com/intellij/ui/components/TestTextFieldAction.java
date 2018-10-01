@@ -92,7 +92,7 @@ public class TestTextFieldAction extends DumbAwareAction {
           new ExtendableTextComponent.Extension() {
             @Override
             public Icon getIcon(boolean hovered) {
-              return hovered ? AllIcons.General.LocateHover : AllIcons.General.Locate;
+              return hovered ? AllIcons.General.ContextHelp : AllIcons.General.Locate;
             }
 
             @Override
@@ -196,7 +196,7 @@ public class TestTextFieldAction extends DumbAwareAction {
       update(field -> center.add(field, gbc));
     }
 
-    private void update(Consumer<JTextField> consumer) {
+    private void update(Consumer<? super JTextField> consumer) {
       fields.forEach(consumer);
       center.revalidate();
       center.repaint();

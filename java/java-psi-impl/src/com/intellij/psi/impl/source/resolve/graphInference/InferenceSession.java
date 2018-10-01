@@ -1902,7 +1902,7 @@ public class InferenceSession {
     return false;
   }
 
-  void collectCaptureDependencies(InferenceVariable inferenceVariable, Set<InferenceVariable> dependencies) {
+  void collectCaptureDependencies(InferenceVariable inferenceVariable, Set<? super InferenceVariable> dependencies) {
     myIncorporationPhase.collectCaptureDependencies(inferenceVariable, dependencies);
   }
 
@@ -1948,7 +1948,7 @@ public class InferenceSession {
     return s.substitute(type);
   }
 
-  public static PsiClass findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,
+  public static PsiClass findParameterizationOfTheSameGenericClass(List<? extends PsiType> upperBounds,
                                                                    Processor<? super Pair<PsiType, PsiType>> processor) {
     for (int i = 0; i < upperBounds.size(); i++) {
       final PsiType sBound = upperBounds.get(i);

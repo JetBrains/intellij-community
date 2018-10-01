@@ -206,7 +206,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     private final List<ModelProblem> myProblems;
     private final DependencyResolutionResult myDependencyResolutionResult;
 
-    public MyProjectBuildingResult(String projectId,
+    MyProjectBuildingResult(String projectId,
                                    File pomFile,
                                    MavenProject mavenProject,
                                    List<ModelProblem> problems,

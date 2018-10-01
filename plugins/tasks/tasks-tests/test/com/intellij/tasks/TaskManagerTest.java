@@ -44,7 +44,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     final Ref<Integer> count = Ref.create(0);
     TaskListener listener = new TaskListenerAdapter() {
       @Override
-      public void taskActivated(LocalTask task) {
+      public void taskActivated(@NotNull LocalTask task) {
         count.set(count.get() + 1);
       }
     };
@@ -186,5 +186,12 @@ public class TaskManagerTest extends TaskManagerTestCase {
     myTaskManager.loadState(config);
 
     assertEquals(repository, myTaskManager.getActiveTask().getRepository());
+  }
+
+  public void testCopyPresentableName() {
+    LocalTaskImpl task = new LocalTaskImpl("007", "");
+    LocalTaskImpl copy = new LocalTaskImpl(task);
+    copy.setSummary("foo");
+    assertEquals("foo", copy.getPresentableName());
   }
 }

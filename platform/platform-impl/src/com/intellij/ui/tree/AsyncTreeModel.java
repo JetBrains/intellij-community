@@ -46,7 +46,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   private final boolean showLoadingNode;
   private final TreeModelListener listener = new TreeModelAdapter() {
     @Override
-    protected void process(TreeModelEvent event, EventType type) {
+    protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
       TreePath path = event.getTreePath();
       if (path == null) {
         // request a new root from model according to the specification
@@ -90,7 +90,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   };
 
   public AsyncTreeModel(@NotNull TreeModel model) {
-    this(model, false);
+    this(model, true);
   }
 
   public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode) {
@@ -107,6 +107,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     this.model = model;
     this.model.addTreeModelListener(listener);
     this.showLoadingNode = showLoadingNode;
+  }
+
+  public AsyncTreeModel(@NotNull TreeModel model, @NotNull Disposable parent) {
+    this(model, true, parent);
   }
 
   public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {

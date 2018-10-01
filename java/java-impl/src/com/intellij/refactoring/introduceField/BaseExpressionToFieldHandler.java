@@ -946,7 +946,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final PsiExpression myInitializer;
     private boolean myCheckThrowables = true;
 
-    public IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
+    IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
       super(aClass);
       myInitializer = initializer;
     }

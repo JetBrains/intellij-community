@@ -366,23 +366,28 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       boolean isCellRenderer = DarculaUIUtil.isTableCellEditor(c);
       int bw = 1;
 
-      Object op = comboBox.getClientProperty("JComponent.outline");
-      if (op != null) {
-        Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
-        bw = isCellRenderer ? 1 : 2;
-      } else if (comboBox.isEnabled()) {
-        if (comboBox.isEditable()) {
+      if (comboBox.isEnabled()) {
+        Object op = comboBox.getClientProperty("JComponent.outline");
+        if (op != null) {
+          Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+          bw = isCellRenderer ? 1 : 2;
+        }
+        else if (comboBox.isEditable()) {
           if (hasFocus) {
             g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-          } else {
+          }
+          else {
             g2.setColor(UIManager.getColor(isEditorHover() ? "TextField.hoverBorderColor" : "TextField.borderColor"));
           }
-        } else {
+        }
+        else {
           if (isPressed() || popup.isVisible()) {
             g2.setColor(UIManager.getColor("Button.intellij.native.pressedBorderColor"));
-          } else if (isHover() || hasFocus) {
+          }
+          else if (isHover() || hasFocus) {
             g2.setColor(UIManager.getColor("Button.intellij.native.focusedBorderColor"));
-          } else {
+          }
+          else {
             g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
           }
         }
@@ -390,7 +395,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         if (!isCellRenderer) {
           JBInsets.removeFrom(r, JBUI.insets(1));
         }
-      } else {
+      }
+      else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
 
         float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
@@ -565,7 +571,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
     private final ListCellRenderer<Object> myRenderer;
 
-    public ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
       myRenderer = renderer;
     }
 

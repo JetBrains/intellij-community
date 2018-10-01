@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice
 
 object ReadBeforeWriteSemilattice : Semilattice<ReadBeforeWriteState> {
 
-  override fun join(ins: List<ReadBeforeWriteState>): ReadBeforeWriteState {
+  override fun join(ins: MutableList<out ReadBeforeWriteState>): ReadBeforeWriteState {
     val states = ins.filter { it !== ReadBeforeWriteState.bottom }
     if (states.isEmpty()) return ReadBeforeWriteState()
     val iterator = states.iterator()

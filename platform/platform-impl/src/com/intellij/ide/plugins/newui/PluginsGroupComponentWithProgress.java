@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -16,15 +15,8 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
-  private AsyncProcessIcon myIcon = new AsyncProcessIcon.Big("Loading") {
-    @NotNull
-    @Override
-    protected Rectangle calculateBounds(@NotNull JComponent container) {
-      Dimension size = container.getSize();
-      Dimension iconSize = getPreferredSize();
-      return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);
-    }
-  };
+  private AsyncProcessIcon myIcon = new CenteredIcon();
+  private Runnable myVisibleRunnable;
 
   public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
                                            @NotNull EventHandler eventHandler,
@@ -39,25 +31,19 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   }
 
   @Override
-  public void removeNotify() {
-    super.removeNotify();
-    if (myIcon != null && ScreenUtil.isStandardAddRemoveNotify(this)) {
-      dispose();
-    }
-  }
-
-  @Override
   public void doLayout() {
     super.doLayout();
-    if (myIcon != null) {
-      myIcon.updateLocation(this);
-    }
+    updateIconLocation();
   }
 
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    if (myIcon != null) {
+    updateIconLocation();
+  }
+
+  private void updateIconLocation() {
+    if (myIcon != null && myIcon.isVisible()) {
       myIcon.updateLocation(this);
     }
   }
@@ -66,9 +52,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
     if (myIcon != null) {
       myIcon.setVisible(true);
       myIcon.resume();
-      doLayout();
-      revalidate();
-      repaint();
+      fullRepaint();
     }
   }
 
@@ -76,16 +60,57 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
     if (myIcon != null) {
       myIcon.suspend();
       myIcon.setVisible(false);
-      dispose();
-      doLayout();
-      revalidate();
-      repaint();
+      fullRepaint();
     }
   }
 
-  private void dispose() {
-    remove(myIcon);
-    Disposer.dispose(myIcon);
-    myIcon = null;
+  private void fullRepaint() {
+    doLayout();
+    revalidate();
+    repaint();
+  }
+
+  public void dispose() {
+    if (myIcon != null) {
+      remove(myIcon);
+      Disposer.dispose(myIcon);
+      myIcon = null;
+    }
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    if (myIcon != null) {
+      add(myIcon);
+    }
+  }
+
+  public void setVisibleRunnable(@NotNull Runnable visibleRunnable) {
+    myVisibleRunnable = visibleRunnable;
+  }
+
+  @Override
+  public void setVisible(boolean aFlag) {
+    super.setVisible(aFlag);
+    if (aFlag && myVisibleRunnable != null) {
+      Runnable runnable = myVisibleRunnable;
+      myVisibleRunnable = null;
+      runnable.run();
+    }
+  }
+
+  private static class CenteredIcon extends AsyncProcessIcon.Big {
+    CenteredIcon() {
+      super("Loading");
+    }
+
+    @NotNull
+    @Override
+    protected Rectangle calculateBounds(@NotNull JComponent container) {
+      Dimension size = container.getSize();
+      Dimension iconSize = getPreferredSize();
+      return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);
+    }
   }
 }

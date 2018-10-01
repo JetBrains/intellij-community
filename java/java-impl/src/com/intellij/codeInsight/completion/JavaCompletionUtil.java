@@ -361,7 +361,7 @@ public class JavaCompletionUtil {
                                     @NotNull PsiTypeLookupItem castTypeItem,
                                     @Nullable PsiType plainQualifier,
                                     @NotNull JavaCompletionProcessor processor,
-                                    @NotNull Set<PsiType> expectedTypes) {
+                                    @NotNull Set<? extends PsiType> expectedTypes) {
     PsiType castType = castTypeItem.getType();
     if (plainQualifier != null) {
       Object o = item.getObject();
@@ -439,8 +439,8 @@ public class JavaCompletionUtil {
   }
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
-                                                     @NotNull List<PsiTypeLookupItem> castTypeItems,
-                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<PsiType> expectedTypes) {
+                                                     @NotNull List<? extends PsiTypeLookupItem> castTypeItems,
+                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<? extends PsiType> expectedTypes) {
     return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor, expectedTypes));
   }
 
@@ -557,18 +557,21 @@ public class JavaCompletionUtil {
     return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
   }
 
-  public static boolean hasAccessibleConstructor(PsiType type) {
+  public static boolean hasAccessibleConstructor(@NotNull PsiType type, @NotNull PsiElement place) {
     if (type instanceof PsiArrayType) return true;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType()) return false;
 
     PsiMethod[] methods = psiClass.getConstructors();
-    return methods.length == 0 || Arrays.stream(methods).anyMatch(JavaCompletionUtil::isConstructorCompletable);
+    return methods.length == 0 || Arrays.stream(methods).anyMatch(constructor -> isConstructorCompletable(constructor, place));
   }
 
-  private static boolean isConstructorCompletable(@NotNull PsiMethod constructor) {
-    return !(constructor instanceof PsiCompiledElement) || !constructor.hasModifierProperty(PsiModifier.PRIVATE);
+  private static boolean isConstructorCompletable(@NotNull PsiMethod constructor, @NotNull PsiElement place) {
+    if (!(constructor instanceof PsiCompiledElement)) return true; // it's possible to use a quick fix to make accessible after completion
+    if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    if (constructor.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return PsiUtil.isAccessible(constructor, place, null);
+    return true;
   }
 
   public static LinkedHashSet<String> getAllLookupStrings(@NotNull PsiMember member) {

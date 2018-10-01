@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -31,8 +32,11 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class ThemeColorAnnotator implements Annotator {
-  private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("^#([A-Fa-f0-9]{6})$");
+public class ThemeColorAnnotator implements Annotator, DumbAware {
+  private static final Pattern COLOR_HEX_PATTERN_RGB = Pattern.compile("^#([A-Fa-f0-9]{6})$");
+  private static final Pattern COLOR_HEX_PATTERN_RGBA = Pattern.compile("^#([A-Fa-f0-9]{8})$");
+  private static final int HEX_COLOR_LENGTH_RGB = 7;
+  private static final int HEX_COLOR_LENGTH_RGBA = 9;
 
 
   @Override
@@ -45,19 +49,22 @@ public class ThemeColorAnnotator implements Annotator {
   }
 
   private static boolean isColorLineMarkerProviderEnabled() {
-    return LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider());
+    return LineMarkerSettings.getSettings().isEnabled(ColorLineMarkerProvider.INSTANCE);
   }
 
   private static boolean isTargetElement(@NotNull PsiElement element) {
     if (!(element instanceof JsonStringLiteral)) return false;
+    if (!ThemeJsonSchemaProviderFactory.isAllowedFileName(element.getContainingFile().getName())) return false;
 
     String text = ((JsonStringLiteral)element).getValue();
-    if (StringUtil.isEmpty(text)) return false;
-    if (!text.startsWith("#")) return false;
-    if (text.length() != 7) return false; // '#FFFFFF'
-    if (!HEX_COLOR_PATTERN.matcher(text).matches()) return false;
+    return isColorCode(text);
+  }
 
-    return true;
+  private static boolean isColorCode(@Nullable String text) {
+    if (!StringUtil.startsWithChar(text, '#')) return false;
+    //noinspection ConstantConditions - StringUtil#startsWithChar checks for null
+    if (text.length() != HEX_COLOR_LENGTH_RGB && text.length() != HEX_COLOR_LENGTH_RGBA) return false;
+    return COLOR_HEX_PATTERN_RGB.matcher(text).matches() || COLOR_HEX_PATTERN_RGBA.matcher(text).matches();
   }
 
 
@@ -76,12 +83,11 @@ public class ThemeColorAnnotator implements Annotator {
     @NotNull
     @Override
     public Icon getIcon() {
-      try {
-        Color color = Color.decode(myColorHex);
+      Color color = getColor(myColorHex);
+      if (color != null) {
         return JBUI.scale(new ColorIcon(ICON_SIZE, color));
-      } catch (NumberFormatException ignore) {
-        return JBUI.scale(EmptyIcon.create(ICON_SIZE));
       }
+      return JBUI.scale(EmptyIcon.create(ICON_SIZE));
     }
 
     @Nullable
@@ -98,10 +104,11 @@ public class ThemeColorAnnotator implements Annotator {
 
           Color newColor = ColorChooser.chooseColor(editor.getComponent(),
                                                     DevKitBundle.message("theme.choose.color.dialog.title"),
-                                                    currentColor);
+                                                    currentColor,
+                                                    isRgbaColorHex(myColorHex));
           if (newColor == null || newColor.equals(currentColor)) return;
 
-          String newColorHex = ColorUtil.toHtmlColor(newColor);
+          String newColorHex = "#" + ColorUtil.toHex(newColor, true);
           Project project = myLiteral.getProject();
           JsonStringLiteral newLiteral = new JsonElementGenerator(project).createStringLiteral(newColorHex);
 
@@ -112,12 +119,30 @@ public class ThemeColorAnnotator implements Annotator {
 
     @Nullable
     private static Color getColor(@NotNull String colorHex) {
+      boolean isRgba = isRgbaColorHex(colorHex);
+      if (!isRgba && !isRgbColorHex(colorHex)) return null;
+
       try {
-        return Color.decode(colorHex);
+        String alpha = isRgba ? colorHex.substring(HEX_COLOR_LENGTH_RGB) : null;
+        String colorHexWithoutAlpha = isRgba ? colorHex.substring(0, HEX_COLOR_LENGTH_RGB) : colorHex;
+        Color color = Color.decode(colorHexWithoutAlpha);
+        if (isRgba) {
+          color = ColorUtil.toAlpha(color, Integer.parseInt(alpha, 16));
+        }
+
+        return color;
       }
       catch (NumberFormatException ignored) {
         return null;
       }
+    }
+
+    private static boolean isRgbaColorHex(@NotNull String colorHex) {
+      return colorHex.length() == HEX_COLOR_LENGTH_RGBA;
+    }
+
+    private static boolean isRgbColorHex(@NotNull String colorHex) {
+      return colorHex.length() == HEX_COLOR_LENGTH_RGB;
     }
 
     @Override

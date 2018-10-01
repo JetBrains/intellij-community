@@ -51,13 +51,15 @@ class LibraryTreeStructure extends AbstractTreeStructure {
     };
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElementDescriptor;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (element == myRootElementDescriptor) {
       List<LibraryTableTreeContentElement> elements = new ArrayList<>(3);
@@ -114,13 +116,13 @@ class LibraryTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     return ((NodeDescriptor)element).getParentDescriptor();
   }
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
   }
 }

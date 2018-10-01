@@ -14,7 +14,7 @@ public class StreamInlining {
     List<String> l = null;
     l.<warning descr="Method invocation 'stream' will produce 'NullPointerException'">stream</warning>().count();
     int[] arr = null;
-    Arrays.stream(<warning descr="Argument 'arr' might be null">arr</warning>).count();
+    Arrays.stream(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">arr</warning>).count();
     Stream<String> stream = null;
     stream.<warning descr="Method invocation 'filter' will produce 'NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
   }
@@ -42,7 +42,7 @@ public class StreamInlining {
   }
 
   int hash(List<Holder> holders) {
-    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>()).sum();
+    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>()).sum();
   }
 
   void test2(int[] array) {

@@ -63,7 +63,7 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     private final Document myDocument;
     private int myOffsetDelta;
 
-    public Visitor(Document document) {
+    Visitor(Document document) {
       myDocument = document;
     }
 

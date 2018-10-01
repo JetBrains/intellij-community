@@ -65,7 +65,7 @@ public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember
   }
 
   private class MyMemberInfoModel extends DelegatingMemberInfoModel<PsiMember,MemberInfo> {
-    public MyMemberInfoModel() {
+    MyMemberInfoModel() {
       super(new ANDCombinedMemberInfoModel<>(
         new UsesDependencyMemberInfoModel<>(getSourceClass(), null, false),
         new UsedByDependencyMemberInfoModel<>(getSourceClass()))

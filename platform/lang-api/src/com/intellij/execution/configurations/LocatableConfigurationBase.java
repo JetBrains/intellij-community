@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,11 +14,16 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  */
-public abstract class LocatableConfigurationBase extends RunConfigurationBase implements LocatableConfiguration {
-  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, String name) {
+public abstract class LocatableConfigurationBase<T> extends RunConfigurationBase<T> implements LocatableConfiguration {
+  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, @Nullable String name) {
     super(project, factory, name);
   }
 
+  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory) {
+    super(project, factory, null);
+  }
+
+  @NotNull
   @Override
   protected LocatableRunConfigurationOptions getOptions() {
     return (LocatableRunConfigurationOptions)super.getOptions();
@@ -39,7 +45,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
    * Renames the configuration to its suggested name.
    */
   public void setGeneratedName() {
-    setName(suggestedName());
+    setName(StringUtilRt.notNullize(suggestedName()));
     getOptions().setNameGenerated(true);
   }
 

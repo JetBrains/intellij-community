@@ -417,12 +417,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
       editor.addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(final Editor editor) {
+        public void focusGained(@NotNull final Editor editor) {
           mySelectedEditor = editor;
         }
 
         @Override
-        public void focusLost(final Editor editor) {
+        public void focusLost(@NotNull final Editor editor) {
           if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
             myVfsListener.flush();
@@ -575,7 +575,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
     JTree tree = myStructureViewComponent.getTree();
     return JBIterable.of(tree.getSelectionModel().getSelectionPaths())
-      .map(o -> TreeUtil.getUserObject(o.getLastPathComponent()));
+      .map(TreeUtil::getLastUserObject);
   }
 
   @Nullable
@@ -653,7 +653,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     return myStructureViewComponent;
   }
 
-  private Object getData(final String dataId) {
+  private Object getData(@NotNull String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       VirtualFile file = getSelectedPropertiesFile();
       return file == null ? null : new FileSelectInContext(myProject, file);

@@ -22,7 +22,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -121,7 +120,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
         filtered.add(occurrence);
       }
     }
-    return ContainerUtil.toArray(filtered, new PsiElement[filtered.size()]);
+    return filtered.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable

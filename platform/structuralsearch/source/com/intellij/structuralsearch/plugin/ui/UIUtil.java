@@ -120,10 +120,19 @@ public class UIUtil {
 
   public static void setContent(final Editor editor, String text) {
     final String value = text != null ? text : "";
-
+    final Document document = editor.getDocument();
     CommandProcessor.getInstance().executeCommand(
-      editor.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
-        () -> editor.getDocument().replaceString(0, editor.getDocument().getTextLength(), value)),
+      editor.getProject(),
+      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
+      MODIFY_EDITOR_CONTENT, SS_GROUP);
+  }
+
+  public static void setContent(final EditorTextField editor, String text) {
+    final String value = text != null ? text : "";
+    final Document document = editor.getDocument();
+    CommandProcessor.getInstance().executeCommand(
+      editor.getProject(),
+      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
       MODIFY_EDITOR_CONTENT, SS_GROUP);
   }
 
@@ -171,7 +180,7 @@ public class UIUtil {
   }
 
   @NotNull
-  public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
+  public static JComponent createCompleteMatchInfo(final Producer<? extends Configuration> configurationProducer) {
     return installCompleteMatchInfo(new JLabel(AllIcons.Actions.ListFiles), configurationProducer);
   }
 

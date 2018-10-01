@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 public class AddConstructorFix implements LocalQuickFix, IntentionAction {
 
   private final SmartPsiElementPointer<PsiClass> myBeanClass;
-  private final List<PsiParameter> myParameters;
+  private final List<? extends PsiParameter> myParameters;
   private final String name;
 
-  public AddConstructorFix(PsiClass beanClass, List<PsiParameter> parameters) {
+  public AddConstructorFix(PsiClass beanClass, List<? extends PsiParameter> parameters) {
     myBeanClass = SmartPointerManager.getInstance(beanClass.getProject()).createSmartPsiElementPointer(beanClass);
     myParameters = parameters;
     final String params = myParameters.stream().map(p -> p.getText()).collect(Collectors.joining(", "));

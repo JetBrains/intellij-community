@@ -16,7 +16,7 @@ final class BeanPropertyListCellRenderer extends ColoredListCellRenderer{
   private final SimpleTextAttributes myAttrs1;
   private final SimpleTextAttributes myAttrs2;
 
-  public BeanPropertyListCellRenderer() {
+  BeanPropertyListCellRenderer() {
     myAttrs1 = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
     myAttrs2 = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }

@@ -238,7 +238,7 @@ public class TouchBarsManager {
     if (editor instanceof EditorEx)
       ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
       @Override
-      public void focusGained(Editor editor) {
+      public void focusGained(@NotNull Editor editor) {
         // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
         pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
 
@@ -250,7 +250,7 @@ public class TouchBarsManager {
         }
       }
       @Override
-      public void focusLost(Editor editor) {}
+      public void focusLost(@NotNull Editor editor) {}
     });
   }
 
@@ -378,7 +378,7 @@ public class TouchBarsManager {
     };
   }
 
-  public static void showStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
+  public static void showStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = BuildUtils.createStopRunningBar(stoppableDescriptors);
     BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
     container.setOnHideCallback(() -> { container.release(); });
@@ -396,7 +396,7 @@ public class TouchBarsManager {
   private static boolean _hasPopup() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isPopup()); }
   private static boolean _hasNonModalDialog() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isNonModalDialog()); }
 
-  private static BarContainer _findByParentComponent(Container child, Collection<BarContainer> candidates, Predicate<BarContainer> filter) {
+  private static BarContainer _findByParentComponent(Container child, Collection<? extends BarContainer> candidates, Predicate<? super BarContainer> filter) {
     for (BarContainer bc: candidates) {
       if (filter != null && !filter.apply(bc))
         continue;

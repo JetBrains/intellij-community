@@ -341,7 +341,7 @@ public class GenericsHighlightUtil {
                                                                  @NotNull PsiElement place,
                                                                  @NotNull PsiSubstitutor derivedSubstitutor,
                                                                  @NotNull Map<PsiClass, PsiSubstitutor> inheritedClasses,
-                                                                 @NotNull Set<PsiClass> visited,
+                                                                 @NotNull Set<? super PsiClass> visited,
                                                                  @NotNull TextRange textRange) {
     final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
     for (PsiClassType.ClassResolveResult result : superTypes) {
@@ -507,11 +507,11 @@ public class GenericsHighlightUtil {
            unrelatedMethodContainingClass.isInheritor(defaultMethodContainingClass, true);
   }
 
-  private static boolean hasNotOverriddenAbstract(@NotNull List<PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
+  private static boolean hasNotOverriddenAbstract(@NotNull List<? extends PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
     return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
-  private static String hasUnrelatedDefaults(@NotNull List<PsiClass> defaults) {
+  private static String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {
     if (defaults.size() > 1) {
       PsiClass[] defaultClasses = defaults.toArray(PsiClass.EMPTY_ARRAY);
       ArrayList<PsiClass> classes = new ArrayList<>(defaults);
@@ -689,7 +689,11 @@ public class GenericsHighlightUtil {
                                "generics.methods.have.same.erasure.hide" :
                                "generics.methods.have.same.erasure.override";
     String description = JavaErrorMessages.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+    HighlightInfo info =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createSameErasureButDifferentMethodsFix(method, superMethod));
+
+    return info;
   }
 
   static HighlightInfo checkTypeParameterInstantiation(@NotNull PsiNewExpression expression) {
@@ -1517,7 +1521,7 @@ public class GenericsHighlightUtil {
 
   @Nullable
   private static String isTypeAccessible(@Nullable PsiType type,
-                                         @NotNull Set<PsiClass> classes,
+                                         @NotNull Set<? super PsiClass> classes,
                                          boolean checkParameters,
                                          @NotNull GlobalSearchScope resolveScope,
                                          @NotNull JavaPsiFacade factory) {

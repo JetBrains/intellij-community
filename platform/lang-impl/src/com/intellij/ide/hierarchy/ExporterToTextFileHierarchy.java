@@ -5,17 +5,19 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
 class ExporterToTextFileHierarchy implements ExporterToTextFile {
   private static final Logger LOG = Logger.getInstance(ExporterToTextFileHierarchy.class);
   private final HierarchyBrowserBase myHierarchyBrowserBase;
 
-  public ExporterToTextFileHierarchy(@NotNull HierarchyBrowserBase hierarchyBrowserBase) {
+  ExporterToTextFileHierarchy(@NotNull HierarchyBrowserBase hierarchyBrowserBase) {
     myHierarchyBrowserBase = hierarchyBrowserBase;
   }
 
@@ -23,17 +25,17 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   @Override
   public String getReportText() {
     StringBuilder buf = new StringBuilder();
-    HierarchyTreeBuilder currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
+    StructureTreeModel currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
     LOG.assertTrue(currentBuilder != null);
-    appendNode(buf, currentBuilder.getRootNode(), SystemProperties.getLineSeparator(), "");
+    appendNode(buf, currentBuilder.getRootImmediately(), SystemProperties.getLineSeparator(), "");
     return buf.toString();
   }
 
-  private void appendNode(StringBuilder buf, DefaultMutableTreeNode node, String lineSeparator, String indent) {
+  private void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
     final String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";
-      final HierarchyNodeDescriptor descriptor = myHierarchyBrowserBase.getDescriptor(node);
+      final HierarchyNodeDescriptor descriptor = myHierarchyBrowserBase.getDescriptor((DefaultMutableTreeNode)node);
       if (descriptor != null) {
         buf.append(indent).append(descriptor.getHighlightedText().getText()).append(lineSeparator);
       }

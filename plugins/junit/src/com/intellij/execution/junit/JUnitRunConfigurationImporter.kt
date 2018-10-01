@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.junit
 
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
@@ -77,10 +79,22 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
         runConfig.setModule(module)
       }
     }
+
+    consumeIfCast(cfg["shortenCommandLine"], String::class.java) {
+      try {
+        runConfig.shortenCommandLine = ShortenCommandLine.valueOf(it)
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Illegal value of 'shortenCommandLine': $it", e)
+      }
+    }
   }
 
   override fun getConfigurationFactory(): ConfigurationFactory =
     ConfigurationTypeUtil
       .findConfigurationType<JUnitConfigurationType>(JUnitConfigurationType::class.java)
       .configurationFactories[0]
+
+  companion object {
+    val LOG = Logger.getInstance(JUnitRunConfigurationImporter::class.java)
+  }
 }

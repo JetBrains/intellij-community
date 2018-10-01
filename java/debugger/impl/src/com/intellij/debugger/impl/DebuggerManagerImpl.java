@@ -32,7 +32,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +82,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       }
     }
   };
-  @NonNls private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   @Override
   public void addClassNameMapper(final NameMapper mapper) {

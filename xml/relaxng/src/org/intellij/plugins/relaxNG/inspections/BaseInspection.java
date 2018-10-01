@@ -145,7 +145,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   }
 
   @SuppressWarnings({ "SSBasedInspection" })
-  private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<String, String> replace) {
+  private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<? super String, String> replace) {
     final Project project = file.getProject();
     final VirtualFile vfile = file.getVirtualFile();
     if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles()) {
@@ -182,7 +182,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
 
-    public SuppressAction(String location) {
+    SuppressAction(String location) {
       myLocation = location;
     }
 

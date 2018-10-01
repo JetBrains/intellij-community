@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.find.impl;
 
 import com.intellij.JavaTestUtil;
@@ -70,6 +56,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -102,7 +89,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindString() throws InterruptedException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-
+    @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = myFindManager.findString(text, 0, findModel);
     assertTrue(findResult.isStringFound());
@@ -605,28 +592,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       fixture.tearDown();
     }
   }
-  
-  public void testFindInCommentsInJsInsideHtml() {
-    FindModel findModel = FindManagerTestUtils.configureFindModel("@param t done");
 
-    String text = "<script>\n" +
-                  "/**\n" +
-                  " * @param t done\n" +
-                  " * @param t done\n" +
-                  " * @param t done\n" +
-                  "*/</script>";
-    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
-    FindManager findManager = FindManager.getInstance(myProject);
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
-
-    findModel.setRegularExpressions(true);
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
-
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
-    findModel.setRegularExpressions(false);
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
-  }
-  
   public void testFindInCommentsAndLiterals() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 

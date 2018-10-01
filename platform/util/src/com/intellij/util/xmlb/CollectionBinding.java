@@ -10,7 +10,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
-  public CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
+  CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
     super(XmlSerializerImpl.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
 
@@ -29,7 +29,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
 
   @NotNull
   @Override
-  protected Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  protected Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     Collection result;
     boolean isContextMutable = isMutableCollection(context);
     if (isContextMutable) {

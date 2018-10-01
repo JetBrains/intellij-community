@@ -63,6 +63,7 @@ public class RepositoryLibraryPropertiesEditor {
   private JButton myReloadButton;
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
+  private JBCheckBox downloadAnnotationsCheckBox;
   private JBLabel mavenCoordinates;
   private final ThreeStateCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel myPropertiesPanel;
@@ -72,7 +73,7 @@ public class RepositoryLibraryPropertiesEditor {
   private final SwingActionLink myManageDependenciesLink;
 
   public interface ModelChangeListener {
-    void onChange(RepositoryLibraryPropertiesEditor editor);
+    void onChange(@NotNull RepositoryLibraryPropertiesEditor editor);
   }
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
@@ -80,7 +81,7 @@ public class RepositoryLibraryPropertiesEditor {
                                            RepositoryLibraryDescription description) {
     this(project, model, description, true, new ModelChangeListener() {
       @Override
-      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+      public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
 
       }
     });
@@ -117,7 +118,7 @@ public class RepositoryLibraryPropertiesEditor {
     });
     this.onChangeListener = new ModelChangeListener() {
       @Override
-      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+      public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
         onChangeListener.onChange(editor);
         mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }
@@ -200,6 +201,15 @@ public class RepositoryLibraryPropertiesEditor {
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
+    downloadAnnotationsCheckBox.setSelected(model.isDownloadAnnotations());
+    downloadAnnotationsCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        model.setDownloadAnnotations(downloadAnnotationsCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
+      }
+    });
+
     updateIncludeTransitiveDepsCheckBoxState();
     myIncludeTransitiveDepsCheckBox.addChangeListener(new ChangeListener() {
       @Override

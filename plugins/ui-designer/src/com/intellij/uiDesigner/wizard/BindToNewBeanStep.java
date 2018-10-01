@@ -102,7 +102,7 @@ final class BindToNewBeanStep extends StepAdapter{
     private final String[] myColumnNames;
     private final Class[] myColumnClasses;
 
-    public MyTableModel() {
+    MyTableModel() {
       myColumnNames = new String[]{
         UIDesignerBundle.message("column.form.field"),
         UIDesignerBundle.message("column.bean.property")};

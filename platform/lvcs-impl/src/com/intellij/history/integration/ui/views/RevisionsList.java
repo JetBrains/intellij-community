@@ -134,7 +134,7 @@ public class RevisionsList {
 
     private final String myDisplayString;
 
-    private Period(String displayString) {
+    Period(String displayString) {
       myDisplayString = displayString;
     }
 

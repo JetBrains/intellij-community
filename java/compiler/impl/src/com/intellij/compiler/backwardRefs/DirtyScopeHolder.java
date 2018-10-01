@@ -43,7 +43,8 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
+@SuppressWarnings("WeakerAccess")
+public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
   private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
@@ -83,7 +84,7 @@ class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
 
       connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
-        public void beforeRootsChange(ModuleRootEvent event) {
+        public void beforeRootsChange(@NotNull ModuleRootEvent event) {
           final Module[] modules = ModuleManager.getInstance(myService.getProject()).getModules();
           synchronized (myLock) {
             ContainerUtil.addAll(myVFSChangedModules, modules);
@@ -104,7 +105,7 @@ class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
     }
   }
 
-  void upToDateChecked(boolean isUpToDate) {
+  public void upToDateChecked(boolean isUpToDate) {
     final Module[] modules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -150,7 +151,7 @@ class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
   }
 
   @NotNull
-  GlobalSearchScope getDirtyScope() {
+  public GlobalSearchScope getDirtyScope() {
     final Project project = myService.getProject();
     return ReadAction.compute(() -> {
       synchronized (myLock) {
@@ -177,7 +178,7 @@ class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
   }
 
   @NotNull
-  Set<Module> getAllDirtyModules() {
+  public Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
@@ -241,7 +242,7 @@ class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
     }
   }
 
-  void installVFSListener() {
+  public void installVFSListener() {
     myService.getProject().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 

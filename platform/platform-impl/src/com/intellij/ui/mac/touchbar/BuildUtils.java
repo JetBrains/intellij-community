@@ -280,7 +280,7 @@ class BuildUtils {
   }
 
   // creates releaseOnClose touchbar
-  static TouchBar createStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
+  static TouchBar createStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
     tb.addButton().setText("Stop All").setActionOnEDT(() -> {
       stoppableDescriptors.forEach((pair) -> { pair.second.run(); });
@@ -298,7 +298,7 @@ class BuildUtils {
     private final @Nullable Customizer myCustomizer;
 
     private int mySeparatorCounter = 0;
-    private LinkedList<InternalNode> myNodePath = new LinkedList<>();
+    private final LinkedList<InternalNode> myNodePath = new LinkedList<>();
 
     GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer) {
       this.myOut = out;
@@ -508,7 +508,7 @@ class BuildUtils {
           setEnabledInModalContext(true);
           if (useTextFromAction) {
             final Object name = action == null ? fromButton.getText() : action.getValue(Action.NAME);
-            getTemplatePresentation().setText(name != null && name instanceof String ? (String)name : "");
+            getTemplatePresentation().setText(name instanceof String ? (String)name : "");
           }
         }
         @Override
@@ -552,26 +552,28 @@ class BuildUtils {
         secondary.add(jbdesc);
     }
 
-    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = (desc1, desc2) -> Integer.compare(desc1.getOrder(), desc2.getOrder());
+    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = Comparator.comparingInt(TouchbarDataKeys.DlgButtonDesc::getOrder);
     main.sort(cmp);
     secondary.sort(cmp);
     return ContainerUtil.concat(secondary, main);
   }
 
-  private static void _collectActions(@NotNull AnAction act, @NotNull List<AnAction> out) {
+  private static void _collectActions(@NotNull AnAction act, @NotNull List<? super AnAction> out) {
     if (act instanceof ActionGroup) {
       final ActionGroup group = (ActionGroup)act;
       final AnAction[] children = group.getChildren(null);
-      for (int i = 0; i < children.length; i++) {
-        final AnAction child = children[i];
-        if (child == null)
+      for (final AnAction child : children) {
+        if (child == null) {
           continue;
+        }
 
         if (child instanceof ActionGroup) {
           final @NotNull ActionGroup childGroup = (ActionGroup)child;
           _collectActions(childGroup, out);
-        } else
+        }
+        else {
           out.add(child);
+        }
       }
     } else
       out.add(act);

@@ -37,7 +37,7 @@ import java.util.List;
 class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   private final boolean myInStructureViewPopup;
 
-  public HtmlFileTreeElement(final boolean inStructureViewPopup, final XmlFile xmlFile) {
+  HtmlFileTreeElement(final boolean inStructureViewPopup, final XmlFile xmlFile) {
     super(xmlFile);
     myInStructureViewPopup = inStructureViewPopup;
   }

@@ -64,7 +64,7 @@ public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTe
 
     private final FileTemplate myTemplate;
 
-    public TestAction(FileTemplate template) {
+    TestAction(FileTemplate template) {
       super("", "", null);
       myTemplate = template;
     }

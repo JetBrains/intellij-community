@@ -198,7 +198,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   }
 
   // returns false if canceled
-  private boolean addInjectedPsiHighlights(@NotNull final Set<PsiFile> injectedFiles,
+  private boolean addInjectedPsiHighlights(@NotNull final Set<? extends PsiFile> injectedFiles,
                                            @NotNull final ProgressIndicator progress,
                                            @NotNull final Collection<? super HighlightInfo> outInfos) {
     if (injectedFiles.isEmpty()) return true;

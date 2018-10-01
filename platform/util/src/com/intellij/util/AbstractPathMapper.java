@@ -28,7 +28,7 @@ import java.util.List;
 public abstract class AbstractPathMapper implements PathMapper {
 
   @Nullable
-  public static String convertToLocal(@NotNull String remotePath, @NotNull Iterable<PathMappingSettings.PathMapping> mappings) {
+  public static String convertToLocal(@NotNull String remotePath, @NotNull Iterable<? extends PathMappingSettings.PathMapping> mappings) {
     PathMappingSettings.BestMappingSelector selector = new PathMappingSettings.BestMappingSelector();
     for (PathMappingSettings.PathMapping mapping : mappings) {
       if (mapping.canReplaceRemote(remotePath)) {
@@ -43,10 +43,10 @@ public abstract class AbstractPathMapper implements PathMapper {
   }
 
   @Nullable
-  public static String convertToRemote(@NotNull String localPath, @NotNull Collection<PathMappingSettings.PathMapping> pathMappings) {
+  public static String convertToRemote(@NotNull String localPath, @NotNull Collection<? extends PathMappingSettings.PathMapping> pathMappings) {
     PathMappingSettings.BestMappingSelector selector = new PathMappingSettings.BestMappingSelector();
     for (PathMappingSettings.PathMapping mapping : pathMappings) {
-      if (mapping.canReplaceLocal(localPath)) {
+      if (mapping != null && mapping.canReplaceLocal(localPath)) {
         selector.consider(mapping, mapping.getLocalLen());
       }
     }

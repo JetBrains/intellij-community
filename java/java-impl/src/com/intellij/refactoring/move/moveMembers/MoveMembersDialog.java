@@ -9,7 +9,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -34,7 +33,6 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,18 +46,18 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOptions {
-  @NonNls private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
-  private MyMemberInfoModel myMemberInfoModel;
+  private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
 
   private final Project myProject;
   private final PsiClass mySourceClass;
   private final String mySourceClassName;
   private final List<MemberInfo> myMemberInfos;
   private final ReferenceEditorComboWithBrowseButton myTfTargetClassName;
-  private MemberSelectionTable myTable;
   private final MoveCallback myMoveCallback;
 
-  JavaVisibilityPanel myVisibilityPanel;
+  private MyMemberInfoModel myMemberInfoModel;
+  private MemberSelectionTable myTable;
+  private JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox myIntroduceEnumConstants = new JCheckBox(RefactoringBundle.message("move.enum.constant.cb"), true);
 
   @Override
@@ -373,8 +371,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.MOVE_MEMBERS);
+  protected String getHelpId() {
+    return HelpID.MOVE_MEMBERS;
   }
 
   private class ChooseClassAction implements ActionListener {
@@ -408,7 +406,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     PsiClass myTargetClass;
-    public MyMemberInfoModel() {
+    MyMemberInfoModel() {
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }
 

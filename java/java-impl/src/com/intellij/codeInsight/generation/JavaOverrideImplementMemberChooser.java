@@ -66,8 +66,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   @Nullable
   public static JavaOverrideImplementMemberChooser create(final PsiElement aClass,
                                                           final boolean toImplement,
-                                                          final Collection<CandidateInfo> candidates,
-                                                          final Collection<CandidateInfo> secondary) {
+                                                          final Collection<? extends CandidateInfo> candidates,
+                                                          final Collection<? extends CandidateInfo> secondary) {
     final Project project = aClass.getProject();
     final PsiFile file = aClass.getContainingFile();
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
@@ -190,7 +190,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
              : CodeInsightBundle.message("methods.to.override.chooser.title");
   }
 
-  private static PsiMethodMember[] convertToMethodMembers(Collection<CandidateInfo> candidates) {
+  private static PsiMethodMember[] convertToMethodMembers(Collection<? extends CandidateInfo> candidates) {
     return ContainerUtil.map2Array(candidates, PsiMethodMember.class, s -> new PsiMethodMember(s));
   }
 
@@ -200,18 +200,18 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   }
 
   private class MySortByOverridingAction extends ToggleAction {
-    public MySortByOverridingAction() {
+    MySortByOverridingAction() {
       super(SORT_METHODS_BY_PERCENT_DESCRIPTION, SORT_METHODS_BY_PERCENT_DESCRIPTION, AllIcons.ObjectBrowser.SortedByUsage);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_MASK)), myTree);
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return mySortedByOverriding;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       mySortedByOverriding = state;
       if (state) {
         if (myMerge) {
@@ -236,12 +236,12 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myMerge;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myMerge = state;
       if (state && mySortedByOverriding) {
         mySortedByOverriding = false;

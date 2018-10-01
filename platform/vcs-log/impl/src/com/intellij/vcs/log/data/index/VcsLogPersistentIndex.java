@@ -42,6 +42,7 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.util.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 8;
+  private static final int VERSION = 9;
   private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -134,7 +135,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler, @NotNull String logId) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myUserRegistry, myRoots, fatalErrorHandler, this),
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myStorage, myUserRegistry, myRoots, fatalErrorHandler, this),
                                            () -> IndexStorage.cleanup(logId));
     }
     catch (IOException e) {
@@ -310,7 +311,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private volatile boolean myIsFresh;
 
-    public IndexStorage(@NotNull String logId,
+    IndexStorage(@NotNull String logId,
+                        @NotNull VcsLogStorage storage,
                         @NotNull VcsUserRegistryImpl userRegistry,
                         @NotNull Set<VirtualFile> roots,
                         @NotNull FatalErrorHandler fatalErrorHandler,
@@ -335,7 +337,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, roots, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, roots, storage, fatalErrorHandler, this);
 
         File parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
@@ -404,7 +406,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
-    public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
+    MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
       super(project, "index", EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
@@ -467,7 +469,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
 
-    public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
+    IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
       myRoot = root;
       myCommits = commits;
       myFull = full;
@@ -627,14 +629,14 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
 
     private void showIndexingNotification(long time) {
-      VcsLogUtil.triggerUsage("IndexingTooLongNotification");
+      VcsLogUsageTriggerCollector.triggerUsage("IndexingTooLongNotification");
       Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
                                                                  "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
                                                                  "Indexing was taking too long (" +
                                                                  StopWatch.formatTime(time - time % 1000) +
                                                                  ")", NotificationType.WARNING, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
-        VcsLogUtil.triggerUsage("ResumeIndexingClick");
+        VcsLogUsageTriggerCollector.triggerUsage("ResumeIndexingClick");
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
           myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());

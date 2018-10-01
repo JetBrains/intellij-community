@@ -101,13 +101,13 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   private static class MyTabLabel extends TabLabel {
-    public MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
+    MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
       super(tabs, info);
     }
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(JBUI.Borders.empty(5, 5, 7, 5));
+      setBorder(JBUI.Borders.empty(4));
     }
 
     @Override

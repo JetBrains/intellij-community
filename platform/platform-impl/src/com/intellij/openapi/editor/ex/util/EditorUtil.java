@@ -655,7 +655,7 @@ public final class EditorUtil {
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
-    int line = editor instanceof EditorImpl ? ((EditorImpl)editor).yToVisibleLine(y): y / editor.getLineHeight();
+    int line = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 
@@ -820,5 +820,13 @@ public final class EditorUtil {
       pos = new VisualPosition(pos.line, pos.column + 1);
     }
     return pos;
+  }
+
+  public static int getTotalInlaysHeight(@NotNull List<? extends Inlay> inlays) {
+    int sum = 0;
+    for (Inlay inlay : inlays) {
+      sum += inlay.getHeightInPixels();
+    }
+    return sum;
   }
 }

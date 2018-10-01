@@ -156,7 +156,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
   private final class MyApplyRunnable implements Runnable {
     private final DispatchThreadProgressWindow myProgressWindow;
 
-    public MyApplyRunnable(final DispatchThreadProgressWindow progressWindow) {
+    MyApplyRunnable(final DispatchThreadProgressWindow progressWindow) {
       myProgressWindow = progressWindow;
     }
 

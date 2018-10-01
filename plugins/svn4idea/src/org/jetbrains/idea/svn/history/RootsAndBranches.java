@@ -412,12 +412,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myHighlightingOn;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         turnFromHereHighlighting();
       }
@@ -428,7 +428,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   private abstract class CommonFilter extends DumbAwareToggleAction {
-    private boolean mySelected;
+    boolean mySelected;
     private final Icon myIcon;
 
     protected CommonFilter(final Icon icon, final String text) {
@@ -446,12 +446,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return mySelected;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       mySelected = state;
       myStrategy.notifyListener();
     }
@@ -566,7 +566,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class IntegrateChangeListsAction extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
     private final boolean myIntegrate;
 
-    public IntegrateChangeListsAction(boolean integrate) {
+    IntegrateChangeListsAction(boolean integrate) {
       super(false);
       myIntegrate = integrate;
     }
@@ -673,7 +673,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     private boolean myInitialized;
     private final static String ourKey = "MERGE_PANEL";
 
-    public MergePanelFiltering(final JComponent panel) {
+    MergePanelFiltering(final JComponent panel) {
       myPanel = panel;
     }
 
@@ -720,7 +720,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     @NotNull
     public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
-      if ((!myFilterAlien.isSelected(null)) && (!myFilterNotMerged.isSelected(null)) && (!myFilterMerged.isSelected(null))) {
+      if ((!myFilterAlien.mySelected) && (!myFilterNotMerged.mySelected) && (!myFilterMerged.mySelected)) {
         return changeLists;
       }
 
@@ -731,18 +731,18 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           result.add(list);
         }
         else if ((status == null) || ListMergeStatus.ALIEN.equals(status)) {
-          if (!myFilterAlien.isSelected(null)) {
+          if (!myFilterAlien.mySelected) {
             result.add(list);
           }
         }
         else if (ListMergeStatus.MERGED.equals(status) || ListMergeStatus.COMMON.equals(status)) {
-          if (!myFilterMerged.isSelected(null)) {
+          if (!myFilterMerged.mySelected) {
             result.add(list);
           }
         }
         else {
           // not merged
-          if (!myFilterNotMerged.isSelected(null)) {
+          if (!myFilterNotMerged.mySelected) {
             result.add(list);
           }
         }

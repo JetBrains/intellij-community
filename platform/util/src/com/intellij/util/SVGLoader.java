@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
@@ -183,6 +184,18 @@ public class SVGLoader {
     }
   }
 
+  /**
+   * Loads an image with the specified {@code width} and {@code height}. Size specified in svg file is ignored.
+   */
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, double width, double height) throws IOException {
+    try {
+      return new SVGLoader(url, stream, width, height, 1).createImage();
+    }
+    catch (TranscoderException ex) {
+      throw new IOException(ex);
+    }
+  }
+
   public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
     BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
     //noinspection unchecked
@@ -200,6 +213,10 @@ public class SVGLoader {
   }
 
   private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
+    this(url, stream, -1, -1, scale);
+  }
+
+  private SVGLoader(@Nullable URL url, InputStream stream, double width, double height, double scale) throws IOException {
     Document document;
     String uri = null;
     try {
@@ -218,7 +235,7 @@ public class SVGLoader {
     }
     patchColors(document);
     myInput = new TranscoderInput(document);
-    mySize = Size.parse(document).scale(scale);
+    mySize = (width < 0 || height < 0 ? Size.parse(document) : new Size(width, height)).scale(scale);
   }
 
   private static void patchColors(Document document) {
@@ -229,6 +246,7 @@ public class SVGLoader {
 
   public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
     ourColorPatcher = colorPatcher;
+    IconLoader.clearCache();
   }
 
   private BufferedImage createImage() throws TranscoderException {
@@ -265,7 +283,7 @@ public class SVGLoader {
    * A workaround for https://issues.apache.org/jira/browse/BATIK-1220
    */
   private static class MySAXSVGDocumentFactory extends SAXSVGDocumentFactory {
-    public MySAXSVGDocumentFactory(String parser) {
+    MySAXSVGDocumentFactory(String parser) {
       super(parser);
       implementation = new MySVGDOMImplementation();
     }

@@ -36,6 +36,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +177,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
     private final XBreakpointGroupingRule myRule;
 
-    public ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
+    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
       super(rule.getPresentableName(), rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
@@ -383,7 +384,7 @@ public class BreakpointsDialog extends DialogWrapper {
     saveTreeState(dialogState);
     final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
-    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
+    dialogState.setSelectedGroupingRules(new THashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 
@@ -421,7 +422,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private class AddXBreakpointAction extends AnAction implements DumbAware {
     private final XBreakpointType<?, ?> myType;
 
-    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
+    AddXBreakpointAction(XBreakpointType<?, ?> type) {
       myType = type;
       getTemplatePresentation().setIcon(type.getEnabledIcon());
       getTemplatePresentation().setText(type.getTitle());

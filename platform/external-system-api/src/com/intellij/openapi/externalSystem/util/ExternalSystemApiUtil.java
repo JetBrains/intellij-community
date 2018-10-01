@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,8 +34,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -46,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Queue;
 import java.util.*;
 
 import static com.intellij.util.PlatformUtils.*;
@@ -89,12 +90,6 @@ public class ExternalSystemApiUtil {
   };
 
   @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
-
-  @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<>("External System queue", runnable -> {
-      runnable.run();
-      return true;
-    }, Conditions.alwaysFalse());
 
   private ExternalSystemApiUtil() {
   }
@@ -207,17 +202,17 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<? extends DataNode<?>> nodes) {
     return ContainerUtil.groupBy(nodes, GROUPER);
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final Class<K> moduleDataClass) {
     return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, @NotNull final Key<K> key) {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
@@ -250,7 +245,7 @@ public class ExternalSystemApiUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
+  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<? super DataNode<T>> predicate) {
     for (DataNode<?> child : node.getChildren()) {
       if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
         return (DataNode<T>)child;
@@ -270,7 +265,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static <T> DataNode<T> findParent(@NotNull DataNode<?> node,
                                            @NotNull Key<T> key,
-                                           @Nullable BooleanFunction<DataNode<T>> predicate) {
+                                           @Nullable BooleanFunction<? super DataNode<T>> predicate) {
     DataNode<?> parent = node.getParent();
     if (parent == null) return null;
     return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
@@ -283,7 +278,7 @@ public class ExternalSystemApiUtil {
     return getChildren(parent, key);
   }
 
-  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
     if (node == null) return;
 
     Stack<DataNode> toProcess = ContainerUtil.newStack(node);
@@ -307,20 +302,20 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes) {
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes) {
     return findAllRecursively(nodes, null);
   }
 
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
-                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
     if (node == null) return Collections.emptyList();
     return findAllRecursively(node.getChildren(), predicate);
   }
 
   @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
-                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
     SmartList<DataNode<?>> result = new SmartList<>();
     for (DataNode<?> node : nodes) {
       if (predicate == null || predicate.fun(node)) {
@@ -335,23 +330,23 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
-                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
 
   @Nullable
-  public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
-                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+  public static DataNode<?> findFirstRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable
   private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
-                                         @NotNull BooleanFunction<DataNode<?>> predicate) {
+                                         @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
-      DataNode node = queue.remove();
+      DataNode<?> node = queue.remove();
       if (predicate.fun(node)) {
         return node;
       }
@@ -416,7 +411,7 @@ public class ExternalSystemApiUtil {
       runnable.run();
     }
     else {
-      TRANSFER_TO_EDT_QUEUE.offer(runnable);
+      EdtExecutorService.getInstance().execute(runnable);
     }
   }
 

@@ -17,6 +17,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.*
 
+@Throws(IncorrectMasterPasswordException::class)
 internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase {
   return file.inputStream().use { inputStream ->
     val kdbxHeader = KdbxHeader()

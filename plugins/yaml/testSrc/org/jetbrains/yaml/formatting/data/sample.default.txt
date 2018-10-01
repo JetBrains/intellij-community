@@ -1,14 +1,14 @@
 - - a:
-    - - d
-      - e
-    - pp
-    - x: |3
-           hahah
-          dadas
-    - y: |
-        hello
-         world
-        ups
+      - - d
+        - e
+      - pp
+      - x: |3
+             hahah
+            dadas
+      - y: |
+          hello
+           world
+          ups
     'key : sd': ttt
     pp: >
       Hello
@@ -22,8 +22,8 @@
     - k
 
   - key: &an2
-    - t
-    - k
+      - t
+      - k
   - &an3
     longKey: v1
     k: v2

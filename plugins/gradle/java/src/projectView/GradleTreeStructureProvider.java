@@ -237,8 +237,8 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     private final String myModuleShortName;
     private final Module myModule;
 
-    public GradleModuleDirectoryNode(Project project,
-                                     PsiDirectory psiDirectory,
+    GradleModuleDirectoryNode(Project project,
+                              @NotNull PsiDirectory psiDirectory,
                                      ViewSettings settings,
                                      Module module,
                                      String moduleShortName,
@@ -270,7 +270,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     @NotNull
     private final String myModuleShortName;
 
-    public GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
+    GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
       super(project, value, viewSettings);
       myModuleShortName = moduleShortName;
     }

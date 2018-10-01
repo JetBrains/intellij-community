@@ -274,7 +274,7 @@ public class DiffDrawUtil {
   public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
                                                                       @NotNull LineRange deleted,
                                                                       @NotNull LineRange inserted,
-                                                                      @Nullable List<DiffFragment> innerFragments) {
+                                                                      @Nullable List<? extends DiffFragment> innerFragments) {
     boolean ignored = innerFragments != null;
 
     List<RangeHighlighter> list = new ArrayList<>();

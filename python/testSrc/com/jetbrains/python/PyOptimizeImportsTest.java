@@ -173,6 +173,19 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20159
+  public void testCaseInsensitiveOrderOfImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = true;
+    doTest();
+  }
+
+  // PY-20159
+  public void testCaseInsensitiveOrderOfNamesInsideFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = true;
+    doTest();
+  }
+
   // PY-19674
   public void testUnresolvedRelativeImportsShouldBeInProjectGroup() {
     final String testName = getTestName(true);

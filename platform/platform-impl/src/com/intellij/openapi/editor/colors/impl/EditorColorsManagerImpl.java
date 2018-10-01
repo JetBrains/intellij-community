@@ -34,6 +34,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.URLUtil;
@@ -76,7 +78,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @Override
       public EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
                                                  @NotNull String name,
-                                                 @NotNull Function<String, String> attributeProvider,
+                                                 @NotNull Function<? super String, String> attributeProvider,
                                                  boolean isBundled) {
         EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
         // todo be lazy
@@ -237,6 +239,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).restart();
+      // force highlighting caches to rebuild
+      ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
     }
 
     // we need to push events to components that use editor font, e.g. HTML editor panes
@@ -245,7 +249,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   static class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
-    public BundledScheme() {
+    BundledScheme() {
       super(null);
     }
 
@@ -316,7 +320,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     return result;
   }
 
-  private static EditorColorsScheme[] getAllVisibleSchemes(@NotNull Collection<EditorColorsScheme> schemes) {
+  private static EditorColorsScheme[] getAllVisibleSchemes(@NotNull Collection<? extends EditorColorsScheme> schemes) {
     List<EditorColorsScheme> visibleSchemes = new ArrayList<>(schemes.size() - 1);
     for (EditorColorsScheme scheme : schemes) {
       if (AbstractColorsScheme.isVisible(scheme)) {

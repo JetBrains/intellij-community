@@ -12,7 +12,7 @@ class CompositeRepositoryLocation implements RepositoryLocation {
   private final CommittedChangesProvider myProvider;
   private final RepositoryLocation myProviderLocation;
 
-  public CompositeRepositoryLocation(final CommittedChangesProvider provider, final RepositoryLocation providerLocation) {
+  CompositeRepositoryLocation(final CommittedChangesProvider provider, final RepositoryLocation providerLocation) {
     myProvider = provider;
     myProviderLocation = providerLocation;
   }

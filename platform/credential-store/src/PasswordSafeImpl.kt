@@ -4,27 +4,59 @@
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.credentialStore.*
+import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
+import java.nio.file.Path
 import java.nio.file.Paths
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return KeePassCredentialStore(memoryOnly = true)
+    return createInMemoryKeePassCredentialStore()
   }
-  else if (settings.providerType == ProviderType.KEEPASS) {
-    val dbFile = settings.state.keepassDb?.let { LOG.runAndLogException { Paths.get(it) } }
-    return KeePassCredentialStore(dbFile = dbFile)
+
+  if (settings.providerType != ProviderType.KEEPASS) {
+    createPersistentCredentialStore()?.let {
+      return it
+    }
   }
-  else {
-    return createPersistentCredentialStore()
+
+  fun showError(message: String) {
+    NOTIFICATION_MANAGER.notify(content = "$message\nIn-memory password storage will be used.", action = object: NotificationAction("Open Settings") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
+      }
+    })
   }
+
+  try {
+    val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
+    return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+  }
+  catch (e: IncorrectMasterPasswordException) {
+    LOG.warn(e)
+    showError("Master password of KeePass database is ${if (e.isFileMissed) "not found" else "not correct"} (${settings.keepassDb}).")
+  }
+  catch (e: Throwable) {
+    LOG.error(e)
+    showError("Internal error during opening of KeePass database(${settings.keepassDb})")
+  }
+
+  settings.providerType = ProviderType.MEMORY_ONLY
+  return createInMemoryKeePassCredentialStore()
 }
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
@@ -37,17 +69,36 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
 
   private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
 
+  internal val currentProviderIfComputed: CredentialStore?
+    get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
+
   internal var currentProvider: CredentialStore
     get() = _currentProvider.value
     set(value) {
       _currentProvider = lazyOf(value)
     }
 
+  internal fun closeCurrentProvider() {
+    _currentProvider = lazy { computeProvider(settings) }
+  }
+
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
+  private val memoryHelperProvider = lazy { createInMemoryKeePassCredentialStore() }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
+
+  // SecureRandom (used to generate master password on first save) can be blocking on Linux
+  private val saveAlarm = SingleAlarm(Runnable {
+    val currentThread = Thread.currentThread()
+    ShutDownTracker.getInstance().registerStopperThread(currentThread)
+    try {
+      (currentProviderIfComputed as? KeePassCredentialStore)?.save()
+    }
+    finally {
+      ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
+    }
+  }, 0, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication())
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
@@ -88,21 +139,9 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
-    (currentProvider as? KeePassCredentialStore)?.save()
-  }
-
-  fun clearPasswords() {
-    LOG.info("Passwords cleared", Error())
-    try {
-      if (memoryHelperProvider.isInitialized()) {
-        memoryHelperProvider.value.clear()
-      }
+    if ((currentProviderIfComputed as? KeePassCredentialStore ?: return).isNeedToSave()) {
+      saveAlarm.request()
     }
-    finally {
-      (currentProvider as? KeePassCredentialStore)?.clear()
-    }
-
-    ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
   }
 
   override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {
@@ -119,12 +158,6 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     } ?: false
   }
 
-  // public - backward compatibility
-  @Suppress("unused", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Do not use it")
-  val masterKeyProvider: CredentialStore
-    get() = currentProvider
-
   @Suppress("unused")
   @Deprecated("Do not use it")
   // public - backward compatibility
@@ -132,31 +165,24 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     get() = memoryHelperProvider.value
 }
 
-internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
+internal fun createPersistentCredentialStore(): PasswordStorage? {
   LOG.runAndLogException {
-    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
+      @Suppress("UnnecessaryVariable")
       val store = factory.create() ?: continue
-      if (convertFileStore) {
-        LOG.runAndLogException {
-          val fileStore = KeePassCredentialStore()
-          fileStore.copyTo(store)
-          fileStore.clear()
-          fileStore.save()
-        }
-      }
       return store
     }
   }
-
-  existing?.let {
-    it.memoryOnly = false
-    return it
-  }
-  return KeePassCredentialStore()
+  return null
 }
 
 @TestOnly
-internal fun createKeePassStore(file: String): PasswordSafe =
-  PasswordSafeImpl(
-    PasswordSafeSettings().apply { loadState(PasswordSafeSettings.State().apply { providerType = ProviderType.KEEPASS; keepassDb = file }) },
-    KeePassCredentialStore(dbFile = Paths.get(file)))
+fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
+  val store = KeePassCredentialStore(dbFile, masterPasswordFile)
+  val settings = PasswordSafeSettings()
+  settings.loadState(PasswordSafeSettings.PasswordSafeOptions().apply {
+    provider = ProviderType.KEEPASS
+    keepassDb = store.dbFile.toString()
+  })
+  return PasswordSafeImpl(settings, store)
+}

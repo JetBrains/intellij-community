@@ -6,7 +6,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +39,7 @@ public class AATextInfo {
     if (SystemInfo.IS_AT_LEAST_JAVA9) {
       return new AATextInfo(aaHint, lcdContrastHint);
     }
-    return new SwingUtilities2.AATextInfo(aaHint, lcdContrastHint);
+    return UIUtilities.createAATextInfo(aaHint, lcdContrastHint);
   }
 
   public static void putClientProperty(@Nullable Object aaTextInfo, @NotNull JComponent comp) {
@@ -49,7 +48,7 @@ public class AATextInfo {
       comp.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, info.aaHint);
       comp.putClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST, info.lcdContrastHint);
     } else {
-      comp.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
+      comp.putClientProperty(UIUtilities.AA_TEXT_PROPERTY_KEY, aaTextInfo);
     }
   }
 
@@ -59,7 +58,7 @@ public class AATextInfo {
       Object lcdContrastHint = comp.getClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST);
       return new AATextInfo(aaHint, lcdContrastHint != null ? (Integer)lcdContrastHint : null);
     }
-    return comp.getClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY);
+    return comp.getClientProperty(UIUtilities.AA_TEXT_PROPERTY_KEY);
   }
 
   public static Pair<Object, Object>[] toArray(@Nullable Object aaTextInfo) {
@@ -72,6 +71,6 @@ public class AATextInfo {
       };
     }
     //noinspection unchecked
-    return new Pair[] {Pair.create(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo)};
+    return new Pair[] {Pair.create(UIUtilities.AA_TEXT_PROPERTY_KEY, aaTextInfo)};
   }
 }

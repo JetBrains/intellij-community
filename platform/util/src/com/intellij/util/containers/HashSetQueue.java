@@ -47,7 +47,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     private QueueEntry<T> next;
     private QueueEntry<T> prev;
 
-    public QueueEntry(@NotNull T t) {
+    QueueEntry(@NotNull T t) {
       this.t = t;
     }
 

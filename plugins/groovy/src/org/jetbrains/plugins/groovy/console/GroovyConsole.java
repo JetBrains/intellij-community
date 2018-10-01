@@ -97,7 +97,7 @@ public class GroovyConsole {
 
   public static void getOrCreateConsole(@NotNull final Project project,
                                         @NotNull final VirtualFile contentFile,
-                                        @NotNull final Consumer<GroovyConsole> callback) {
+                                        @NotNull final Consumer<? super GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) return;
 

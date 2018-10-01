@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
@@ -17,6 +18,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -32,8 +34,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 
-import static com.intellij.util.ui.UIUtil.uiChildren;
-
 /**
  * @author Alexander Lobas
  */
@@ -42,7 +42,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   private final TagBuilder myTagBuilder;
   private final LinkListener<String> mySearchListener;
   public final IdeaPluginDescriptor myPlugin;
-  private JLabel myNameComponent;
+  private LinkLabel myNameComponent;
   private JLabel myIconLabel;
   private JButton myUpdateButton;
   private JButton myInstallButton;
@@ -132,8 +132,13 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       }
     });
 
-    myNameComponent = new JLabel(myPlugin.getName());
+    myNameComponent = new LinkComponent();
     myNameComponent.setOpaque(false);
+    myNameComponent.setText(myPlugin.getName());
+    myNameComponent.setPaintUnderline(false);
+    //noinspection unchecked
+    myNameComponent.setListener((_0, _1) -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())), null);
     Font font = myNameComponent.getFont();
     if (font != null) {
       myNameComponent.setFont(font.deriveFont(Font.BOLD, 30));
@@ -171,7 +176,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
       int nameBaseline = myNameComponent.getBaseline(myNameComponent.getWidth(), myNameComponent.getHeight());
       int versionBaseline = versionComponent.getBaseline(versionComponent.getWidth(), versionComponent.getHeight());
-      versionComponent.setBorder(JBUI.Borders.empty(nameBaseline - versionBaseline + 6, 4, 0, 0));
+      versionComponent.setBorder(JBUI.Borders.empty(nameBaseline - versionBaseline, 4, 0, 0));
     }
 
     return centerPanel;
@@ -204,7 +209,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         if (myPlugin.isBundled()) {
           myEnableDisableButton = new JButton(myPluginsModel.getEnabledTitle(myPlugin));
           myEnableDisableButton.addActionListener(e -> changeEnableDisable());
-          PluginManagerConfigurableNew.setWidth72(myEnableDisableButton);
+          ColorButton.setWidth72(myEnableDisableButton);
           buttons.add(myEnableDisableButton);
         }
         else {
@@ -225,7 +230,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       }
     }
 
-    for (Component component : uiChildren(buttons)) {
+    for (Component component : UIUtil.uiChildren(buttons)) {
       component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
     }
 
@@ -290,17 +295,10 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       myCenterPanel.add(metrics);
 
       if (date != null) {
-        JLabel lastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
-        lastUpdated.setOpaque(false);
-        lastUpdated.setForeground(grayedFg);
-        metrics.add(PluginManagerConfigurableNew.installTiny(lastUpdated));
+        createRatingLabel(metrics, date, AllIcons.Plugins.Updated, grayedFg);
       }
-
       if (downloads != null) {
-        JLabel downloadsComponent = new JLabel(downloads, AllIcons.Plugins.Downloads, SwingConstants.CENTER);
-        downloadsComponent.setOpaque(false);
-        downloadsComponent.setForeground(grayedFg);
-        metrics.add(PluginManagerConfigurableNew.installTiny(downloadsComponent));
+        createRatingLabel(metrics, downloads, AllIcons.Plugins.Downloads, grayedFg);
       }
 
       if (rating != null) {
@@ -309,6 +307,13 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         metrics.add(PluginManagerConfigurableNew.installTiny(ratesPanel));
       }
     }
+  }
+
+  private static void createRatingLabel(@NotNull JPanel panel, @NotNull String text, @NotNull Icon icon, @NotNull Color color) {
+    JLabel label = new JLabel(text, icon, SwingConstants.CENTER);
+    label.setOpaque(false);
+    label.setForeground(color);
+    panel.add(PluginManagerConfigurableNew.installTiny(label));
   }
 
   private void createErrorPanel() {
@@ -464,11 +469,12 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
         StyleSheet sheet = kit.getStyleSheet();
         sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
-        descriptionComponent.setContentType("text/html");
-        descriptionComponent.setEditorKit(kit);
+        sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBColor.link()) + "}");
         descriptionComponent.setEditable(false);
         descriptionComponent.setOpaque(false);
         descriptionComponent.setBorder(null);
+        descriptionComponent.setContentType("text/html");
+        descriptionComponent.setEditorKit(kit);
         descriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
         descriptionComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
@@ -506,7 +512,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   @NotNull
   private static JPanel createLabelsPanel(@NotNull JPanel parent,
-                                          @NotNull java.util.List<JLabel> labels,
+                                          @NotNull java.util.List<? super JLabel> labels,
                                           @NotNull String labelText,
                                           @NotNull String text,
                                           @Nullable String link) {
@@ -521,7 +527,10 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       linePanel.add(new JLabel(text));
     }
     else {
-      linePanel.add(new LinkLabel<>(text, null, (_0, _1) -> BrowserUtil.browse(link)));
+      LinkLabel<Object> linkLabel = new LinkLabel<>(text, AllIcons.Ide.External_link_arrow, (_0, _1) -> BrowserUtil.browse(link));
+      linkLabel.setIconTextGap(0);
+      linkLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+      linePanel.add(linkLabel);
     }
 
     return linePanel;

@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.augment;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -83,7 +68,7 @@ public abstract class PsiAugmentProvider {
   //<editor-fold desc="API and the inner kitchen.">
 
   @NotNull
-  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type) {
     List<Psi> result = ContainerUtil.newSmartList();
 
     forEach(element.getProject(), provider -> {
@@ -126,9 +111,9 @@ public abstract class PsiAugmentProvider {
     return result.get();
   }
 
-  private static void forEach(Project project, Processor<PsiAugmentProvider> processor) {
+  private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
     boolean dumb = DumbService.isDumb(project);
-    for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (PsiAugmentProvider provider : EP_NAME.getExtensionList()) {
       if (!dumb || DumbService.isDumbAware(provider)) {
         try {
           boolean goOn = processor.process(provider);

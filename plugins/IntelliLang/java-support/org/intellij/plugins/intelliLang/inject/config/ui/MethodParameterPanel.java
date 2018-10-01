@@ -359,7 +359,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private class BrowseClassListener implements ActionListener {
     private final Project myProject;
 
-    public BrowseClassListener(Project project) {
+    BrowseClassListener(Project project) {
       myProject = project;
     }
 
@@ -378,12 +378,12 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   }
 
   private static class MyView extends TreeTableView implements TypeSafeDataProvider {
-    public MyView(ListTreeTableModelOnColumns treeTableModel) {
+    MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
         final Collection selection = getSelection();
         if (!selection.isEmpty()) {

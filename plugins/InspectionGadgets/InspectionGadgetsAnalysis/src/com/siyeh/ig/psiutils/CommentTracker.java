@@ -209,7 +209,8 @@ public final class CommentTracker {
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     PsiElement result = replace(element, replacement);
-    PsiElement anchor = PsiTreeUtil.getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class);
+    PsiElement anchor = PsiTreeUtil
+      .getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class, PsiNameValuePair.class);
     if (anchor instanceof PsiLambdaExpression && anchor != result) {
       anchor = ((PsiLambdaExpression)anchor).getBody();
     }
@@ -339,7 +340,16 @@ public final class CommentTracker {
     grabComments(element);
   }
 
-  private void grabComments(PsiElement element) {
+  /**
+   * Grab the comments from given element which should be restored. Normally you don't need to call this method.
+   * It should be called only if element is about to be deleted by other code which is not CommentTracker-aware.
+   *
+   * <p>Calling this method repeatedly has no effect. It's also safe to call this method, then delete element using
+   * other methods from this class like {@link #delete(PsiElement)}.
+   *
+   * @param element element to grab the comments from.
+   */
+  public void grabComments(PsiElement element) {
     checkState();
     for (PsiComment comment : PsiTreeUtil.collectElementsOfType(element, PsiComment.class)) {
       if (!shouldIgnore(comment)) {

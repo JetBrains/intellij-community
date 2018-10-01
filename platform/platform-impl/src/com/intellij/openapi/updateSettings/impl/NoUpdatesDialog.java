@@ -38,7 +38,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     private JLabel myNothingToUpdateLabel;
     private JEditorPane myMessageArea;
 
-    public NoUpdatesPanel() {
+    NoUpdatesPanel() {
       String app = ApplicationNamesInfo.getInstance().getFullProductName();
       String toolName = UpdateSettings.getInstance().getPackageManagerName();
       if (toolName == null) {

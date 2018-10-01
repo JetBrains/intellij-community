@@ -27,6 +27,7 @@ object Writer {
 
   private fun write(str: String) {
     print(str)
+    GeneratedCodeReceiver.sendCode(str)
     writeToEditor(str)
   }
 

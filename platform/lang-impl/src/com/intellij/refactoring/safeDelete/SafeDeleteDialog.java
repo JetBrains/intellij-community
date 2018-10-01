@@ -1,26 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,7 +14,6 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,13 +28,11 @@ public class SafeDeleteDialog extends DialogWrapper {
   private final Project myProject;
   private final PsiElement[] myElements;
   private final Callback myCallback;
+  private final SafeDeleteProcessorDelegate myDelegate;
 
   private StateRestoringCheckBox myCbSearchInComments;
   private StateRestoringCheckBox myCbSearchTextOccurrences;
-
   private JCheckBox myCbSafeDelete;
-
-  private final SafeDeleteProcessorDelegate myDelegate;
 
   public interface Callback {
     void run(SafeDeleteDialog dialog);
@@ -80,14 +60,8 @@ public class SafeDeleteDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("refactoring.safeDelete");
+  protected String getHelpId() {
+    return "refactoring.safeDelete";
   }
 
   @Override
@@ -170,7 +144,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   @Nullable
   private SafeDeleteProcessorDelegate getDelegate() {
     if (myElements.length == 1) {
-      for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(myElements[0])) {
           return delegate;
         }
@@ -220,7 +194,7 @@ public class SafeDeleteDialog extends DialogWrapper {
         }
       } else {
         myDelegate.setToSearchInComments(myElements[0], isSearchInComments());
-  
+
         if (myCbSearchTextOccurrences != null) {
           myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
         }

@@ -56,7 +56,7 @@ public class FormWordsScanner extends SimpleWordsScanner {
     }
   }
 
-  private static void processClassAndPackagesNames(String qName, final Processor<WordOccurrence> processor) {
+  private static void processClassAndPackagesNames(String qName, final Processor<? super WordOccurrence> processor) {
     WordOccurrence occurrence = new WordOccurrence(qName, 0, qName.length(), WordOccurrence.Kind.FOREIGN_LANGUAGE);
     processor.process(occurrence);
     int idx = qName.lastIndexOf('.');

@@ -119,7 +119,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     private final ActionRunner myRunner;
     private final List<String> myLines;
 
-    public VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
+    VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myRunner = runner;
       myLines = new CopyOnWriteArrayList<>();

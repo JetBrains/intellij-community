@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.intellij.util.ui.EmptyIcon.ICON_16;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -45,9 +47,9 @@ public class ExecutionNode extends CachingSimpleNode {
   private static final Icon NODE_ICON_WARNING = AllIcons.General.Warning;
   private static final Icon NODE_ICON_INFO = AllIcons.General.Information;
   private static final Icon NODE_ICON_SKIPPED = AllIcons.Process.State.YellowStr;
-  private static final Icon NODE_ICON_STATISTICS = AllIcons.General.Mdot_empty;
-  private static final Icon NODE_ICON_SIMPLE = AllIcons.General.Mdot_empty;
-  private static final Icon NODE_ICON_DEFAULT = AllIcons.General.Mdot_empty;
+  private static final Icon NODE_ICON_STATISTICS = ICON_16;
+  private static final Icon NODE_ICON_SIMPLE = ICON_16;
+  private static final Icon NODE_ICON_DEFAULT = ICON_16;
 
   private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
   private long startTime;
@@ -74,7 +76,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected SimpleNode[] buildChildren() {
-    return myChildrenList.size() == 0 ? NO_CHILDREN : ContainerUtil.toArray(myChildrenList, new ExecutionNode[myChildrenList.size()]);
+    return myChildrenList.toArray(NO_CHILDREN);
   }
 
   @Override
@@ -237,7 +239,7 @@ public class ExecutionNode extends CachingSimpleNode {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<Icon> iconProvider) {
+  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<Icon>() {
       @Nullable
       @Override

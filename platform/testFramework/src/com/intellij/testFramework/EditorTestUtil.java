@@ -453,10 +453,26 @@ public class EditorTestUtil {
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
     return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
       @Override
-      public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 1; }
 
       @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {}
+    });
+  }
+
+  public static Inlay addBlockInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 0;}
+
+      @Override
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {}
     });
   }
 

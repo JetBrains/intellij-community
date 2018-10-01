@@ -181,7 +181,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     private final Collection<PluginId> myIds;
     private final boolean myEnabled;
 
-    public UndoPluginsSwitchAction(Collection<PluginId> ids, boolean enabled) {
+    UndoPluginsSwitchAction(Collection<PluginId> ids, boolean enabled) {
       super(IdeBundle.message("plugins.auto.switch.action.name"));
       myIds = ids;
       myEnabled = enabled;

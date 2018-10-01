@@ -595,7 +595,7 @@ public class CustomMaven30ArtifactResolver
 
     private final ArtifactResolutionResult result;
 
-    public ResolveTask( ClassLoader classLoader, CountDownLatch latch, Artifact artifact, RepositorySystemSession session,
+    ResolveTask( ClassLoader classLoader, CountDownLatch latch, Artifact artifact, RepositorySystemSession session,
                         List<ArtifactRepository> remoteRepositories, ArtifactResolutionResult result )
     {
       this.classLoader = classLoader;

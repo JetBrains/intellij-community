@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -28,7 +28,11 @@ class GrInspectionTest extends GrHighlightingTestBase {
 
   void testUsedLabel() { doTest(new GroovyLabeledStatementInspection()) }
 
-  void testOverlyLongMethodInspection() { doTest(new GroovyOverlyLongMethodInspection()) }
+  void testOverlyLongMethodInspection() {
+    def inspection = new GroovyOverlyLongMethodInspection()
+    inspection.m_limit = 5
+    doTest(inspection)
+  }
 
   void testInaccessibleConstructorCall() { doTest(new GroovyAccessibilityInspection()) }
 

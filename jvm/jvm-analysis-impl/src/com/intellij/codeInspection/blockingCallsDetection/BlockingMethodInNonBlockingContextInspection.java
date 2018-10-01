@@ -75,8 +75,8 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   private static boolean isInspectionActive(PsiFile file,
                                             List<BlockingMethodChecker> myBlockingMethodCheckers,
                                             List<NonBlockingContextChecker> myNonBlockingContextCheckers) {
-    return myBlockingMethodCheckers.stream().anyMatch(extension -> extension.isActive(file)) &&
-           myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isActive(file));
+    return myBlockingMethodCheckers.stream().anyMatch(extension -> extension.isApplicable(file)) &&
+           myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isApplicable(file));
   }
 
 
@@ -132,7 +132,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     private final List<BlockingMethodChecker> myBlockingMethodCheckers;
     private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
 
-    public BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
+    BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
                                                      List<BlockingMethodChecker> blockingMethodCheckers,
                                                      List<NonBlockingContextChecker> nonBlockingContextCheckers) {
       myHolder = holder;

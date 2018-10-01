@@ -110,7 +110,7 @@ public abstract class CompletionService {
    * @param parameters Parameters specifying current completion environment
    * @param consumer This consumer will directly add lookup elements to the lookup
    */
-  public abstract void performCompletion(CompletionParameters parameters, Consumer<CompletionResult> consumer);
+  public abstract void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer);
 
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 

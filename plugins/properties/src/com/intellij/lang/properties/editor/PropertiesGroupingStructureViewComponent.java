@@ -29,7 +29,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   }
 
   @Override
-  protected void addGroupByActions(DefaultActionGroup result) {
+  protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
     if (getTreeModel() instanceof ResourceBundleStructureViewModel) {
@@ -45,12 +45,12 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     actionGroup.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
         rebuild();
       }
@@ -62,15 +62,12 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
     private final Set<String> myPredefinedSeparators = new LinkedHashSet<>();
 
-    public ChangeGroupSeparatorAction() {
+    ChangeGroupSeparatorAction() {
       super("Group by: ", true);
       myPredefinedSeparators.add(".");
       myPredefinedSeparators.add("_");
       myPredefinedSeparators.add("/");
-      String currentSeparator = getCurrentSeparator();
-      if (!myPredefinedSeparators.contains(currentSeparator)) {
-        myPredefinedSeparators.add(currentSeparator);
-      }
+      myPredefinedSeparators.add(getCurrentSeparator());
       refillActionGroup();
     }
 
@@ -107,7 +104,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     private final class SelectSeparatorAction extends AnAction {
 
-      public SelectSeparatorAction() {
+      SelectSeparatorAction() {
         super(PropertiesBundle.message("select.separator.action.with.empty.separator.name"));
       }
 

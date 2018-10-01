@@ -73,7 +73,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 String title,
-                                Consumer<VcsDirtyScopeManager> dirtyScopeManager,
+                                Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
                                 ModalityState state) {
     afterUpdate.run();
   }
@@ -394,6 +394,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public String editComment(@NotNull String fromName, String newComment) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
     throw new UnsupportedOperationException();
   }
 

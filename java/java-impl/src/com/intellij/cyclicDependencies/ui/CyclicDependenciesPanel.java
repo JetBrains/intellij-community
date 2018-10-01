@@ -396,7 +396,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   private final class CloseAction extends AnAction implements DumbAware {
-    public CloseAction() {
+    CloseAction() {
       super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
@@ -416,12 +416,12 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
       mySettings.UI_SHOW_FILES = flag;
       rebuild();
@@ -436,12 +436,12 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       DependencyUISettings.getInstance().UI_FILTER_OUT_OF_CYCLE_PACKAGES = state;
       mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES = state;
       rebuild();
@@ -455,12 +455,12 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_GROUP_BY_SCOPE_TYPE;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
       mySettings.UI_GROUP_BY_SCOPE_TYPE = flag;
       rebuild();

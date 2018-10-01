@@ -312,7 +312,7 @@ public class JBMovePanel extends JBPanel {
   private class LeftAction extends AnAction {
 
     LeftAction() {
-      getTemplatePresentation().setIcon(AllIcons.General.SplitLeft);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowLeft);
     }
 
     @Override
@@ -324,7 +324,7 @@ public class JBMovePanel extends JBPanel {
   private class RightAction extends AnAction {
 
     RightAction() {
-      getTemplatePresentation().setIcon(AllIcons.General.SplitRight);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowRight);
     }
 
     @Override
@@ -360,7 +360,7 @@ public class JBMovePanel extends JBPanel {
   private class UpAction extends AnAction {
 
     UpAction() {
-      getTemplatePresentation().setIcon(AllIcons.General.SplitUp);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowUp);
     }
 
     @Override
@@ -372,7 +372,7 @@ public class JBMovePanel extends JBPanel {
   private class DownAction extends AnAction {
 
     DownAction() {
-      getTemplatePresentation().setIcon(AllIcons.General.SplitDown);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowDown);
     }
 
     @Override

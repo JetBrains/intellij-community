@@ -44,16 +44,17 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 class TestDirectory extends TestPackage {
-  public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 
@@ -93,7 +94,7 @@ class TestDirectory extends TestPackage {
 
   @Nullable
   @Override
-  protected Path getRootPath() {
+  protected VirtualFile[] getRootPaths() {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(getConfiguration().getPersistentData().getDirName()));
     if (file == null) return null;
     Module dirModule = ModuleUtilCore.findModuleForFile(file, getConfiguration().getProject());
@@ -162,11 +163,12 @@ class TestDirectory extends TestPackage {
         protected void onFound() throws ExecutionException {
           String packageName = TestDirectory.super.getPackageName(getConfiguration().getPersistentData());
           try {
-            Path rootPath = getRootPath();
-            LOG.assertTrue(rootPath != null);
+            VirtualFile[] rootPaths = getRootPaths();
+            LOG.assertTrue(rootPaths != null);
             JUnitStarter
-              .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "",
-                                classes.isEmpty() ? packageName + "\\..*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
+              .printClassesList(Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "",
+                                classes.isEmpty() ? (packageName.isEmpty() ? ".*" : packageName + "\\..*") 
+                                                  : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"),
                                 myTempFile);
           }
           catch (IOException e) {
@@ -179,6 +181,7 @@ class TestDirectory extends TestPackage {
     return super.createSearchingForTestsTask();
   }
 
+  @NotNull
   @Override
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     return "";
@@ -186,14 +189,14 @@ class TestDirectory extends TestPackage {
 
 
   @Override
-  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<PsiClass> acceptClassCondition, Set<PsiClass> classes) throws CantRunException {
+  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<? super PsiClass> acceptClassCondition, Set<? super PsiClass> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
 
   private static void collectClassesRecursively(PsiDirectory directory,
-                                                Condition<PsiClass> acceptAsTest,
-                                                Set<PsiClass> classes) {
+                                                Condition<? super PsiClass> acceptAsTest,
+                                                Set<? super PsiClass> classes) {
     PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
     for (PsiDirectory subDirectory : subDirectories) {
       collectClassesRecursively(subDirectory, acceptAsTest, classes);

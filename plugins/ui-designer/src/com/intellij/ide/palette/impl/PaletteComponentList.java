@@ -272,7 +272,7 @@ public class PaletteComponentList extends JBList {
     private final Action defaultAction;
     private final boolean focusNext;
 
-    public MoveFocusAction(Action defaultAction, boolean focusNext) {
+    MoveFocusAction(Action defaultAction, boolean focusNext) {
       this.defaultAction = defaultAction;
       this.focusNext = focusNext;
     }
@@ -307,7 +307,7 @@ public class PaletteComponentList extends JBList {
     private final Action defaultAction;
     private final boolean selectNext;
 
-    public ChangeColumnAction(Action defaultAction, boolean selectNext) {
+    ChangeColumnAction(Action defaultAction, boolean selectNext) {
       this.defaultAction = defaultAction;
       this.selectNext = selectNext;
     }

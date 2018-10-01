@@ -53,8 +53,14 @@ public class AddImportHelper {
     return firstIsFromImport - secondIsFromImport;
   };
 
-  private static final Comparator<PyImportStatementBase> IMPORT_NAMES_COMPARATOR =
-    (import1, import2) -> ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2));
+  @NotNull
+  private static Comparator<PyImportStatementBase> getImportNamesComparator(@NotNull PyCodeStyleSettings settings) {
+    return (import1, import2) -> {
+      final Comparator<String> stringComparator =
+        settings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2), Comparator.nullsFirst(stringComparator));
+    };
+  }
 
   @NotNull
   private static List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
@@ -93,10 +99,10 @@ public class AddImportHelper {
   public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
     final PyCodeStyleSettings settings = CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class);
     if (settings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST) {
-      return IMPORT_TYPE_COMPARATOR.thenComparing(IMPORT_NAMES_COMPARATOR);
+      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportNamesComparator(settings));
     }
     else {
-      return IMPORT_NAMES_COMPARATOR.thenComparing(IMPORT_TYPE_COMPARATOR);
+      return getImportNamesComparator(settings).thenComparing(IMPORT_TYPE_COMPARATOR);
     }
   }
 
@@ -111,7 +117,7 @@ public class AddImportHelper {
     private final ImportPriority myPriority;
     private final String myDescription;
 
-    public ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
+    ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
       myPriority = priority;
       myDescription = description;
     }

@@ -86,7 +86,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myIsEnabled.addListener(new RegistryValueListener.Adapter() {
       @Override
-      public void afterValueChanged(RegistryValue value) {
+      public void afterValueChanged(@NotNull RegistryValue value) {
         processEnabled();
       }
     }, ApplicationManager.getApplication());
@@ -95,7 +95,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
     ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     });
@@ -397,7 +397,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
-    return JBColor.blue;
+    return JBColor.link();
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
@@ -408,7 +408,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
-    AllIcons.General.Mdot.getIconWidth();  // keep icon reference
     return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 

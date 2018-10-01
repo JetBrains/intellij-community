@@ -245,7 +245,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     private final PsiExpression myDelimiter;
     private final PsiExpression myRest;
 
-    public JoiningTerminalGenerator(PsiType operandType, String mapToString, PsiExpression delimiter, PsiExpression rest) {
+    JoiningTerminalGenerator(PsiType operandType, String mapToString, PsiExpression delimiter, PsiExpression rest) {
       myOperandType = operandType;
       myMapToString = mapToString;
       myDelimiter = delimiter;

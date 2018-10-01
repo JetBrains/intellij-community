@@ -170,7 +170,7 @@ public class RunContentExecutor implements Disposable {
   }
 
   private class RerunAction extends AnAction {
-    public RerunAction(JComponent consolePanel) {
+    RerunAction(JComponent consolePanel) {
       super("Rerun", "Rerun",
             AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
@@ -194,7 +194,7 @@ public class RunContentExecutor implements Disposable {
   }
 
   private class StopAction extends AnAction implements DumbAware {
-    public StopAction() {
+    StopAction() {
       super("Stop", "Stop",
             AllIcons.Actions.Suspend);
     }

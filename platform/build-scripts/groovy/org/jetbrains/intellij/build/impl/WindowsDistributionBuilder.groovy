@@ -16,10 +16,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
@@ -33,7 +32,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final String icoPath
 
   WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties, File patchedApplicationInfo) {
-    super(BuildOptions.OS_WINDOWS, "Windows", buildContext)
+    super(buildContext)
     this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
     this.ideaProperties = ideaProperties
@@ -41,9 +40,14 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
+  OsFamily getTargetOs() {
+    return OsFamily.WINDOWS
+  }
+
+  @Override
   String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for Windows")
-    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.win"
+    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -84,7 +88,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && !buildContext.isBundledJreModular()) {
       File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
         //prepare folder with jre x86 for win archive
@@ -113,7 +117,10 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath)
+      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
+      generateProductJson(productJsonDir, jreDirectoryPath64 != null)
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir)
     }
   }
 
@@ -223,17 +230,30 @@ IDS_VM_OPTIONS=$vmOptions
   }
 
   private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+    zipNameSuffix += buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths.findAll {it != null}
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
+      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
+      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
+      dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
         }
       }
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
       buildContext.notifyArtifactBuilt(targetPath)
     }
+  }
+
+  private void generateProductJson(String targetDir, boolean isJreIncluded) {
+    def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
+    def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
+    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    new ProductInfoGenerator(buildContext)
+      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

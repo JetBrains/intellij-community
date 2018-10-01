@@ -31,7 +31,7 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
   
   private final Charset myBaseCharset;
 
-  public Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
+  Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
     super(charset, 1, 6);
     myBaseCharset = charset.getBaseCharset();
   }

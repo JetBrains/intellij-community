@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -38,6 +24,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Function;
+import org.jdom.Element;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.HashSet;
@@ -62,8 +50,7 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
     myConfiguration = configuration;
   }
 
-  public static
-  <T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters>
+  public static <T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters>
   boolean tryWithAnotherModule(T configuration, boolean isDebug) {
     final String packageName = configuration.getPackage();
     if (packageName == null) return false;
@@ -87,17 +74,17 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
         final String moduleName = module1.getName();
         return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
       };
-      String message = "Tests were not found in module \"" + module.getName() + "\".\n" +
-                       "Use ";
+      StringBuilder message = new StringBuilder("Tests were not found in module \"").append(module.getName()).append( "\".\nUse ");
       if (modulesWithPackage.size() == 1) {
-        message += "module \"" + moduleNameRef.fun(modulesWithPackage.iterator().next()) + "\" ";
+        message.append("module \"").append(moduleNameRef.fun(modulesWithPackage.iterator().next())).append("\" ");
       }
       else {
-        message += "one of\n" + StringUtil.join(modulesWithPackage, moduleNameRef, "\n") + "\n";
+        message.append("one of\n").append(StringUtil.join(modulesWithPackage, moduleNameRef, "\n")).append("\n");
       }
-      message += "instead";
-      toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
-                                        new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId));
+      message.append("instead");
+      UIUtil.invokeLaterIfNeeded(() ->
+                                   toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message.toString(), null, 
+                                                                     new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId)));
       return true;
     }
     return false;

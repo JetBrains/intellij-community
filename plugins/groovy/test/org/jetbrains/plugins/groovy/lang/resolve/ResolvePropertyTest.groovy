@@ -503,6 +503,27 @@ new Foo().fo<caret>o(2)"""
     assertInstanceOf resolved, GrAccessorMethod
   }
 
+  void 'test property vs field in call from outside'() {
+    def method = resolveByText '''\
+class C {
+  def foo = { 42 }
+  def getFoo() { return { 43 } }
+}
+new C().<caret>foo(2)
+''', GrMethod
+    assert !(method instanceof GrAccessorMethod)
+  }
+
+  void 'test property vs field in attribute call from outside'() {
+    resolveByText '''\
+class C {
+  def foo = { 42 }
+  def getFoo() { return { 43 } }
+}
+new C().@<caret>foo(2)
+''', GrField
+  }
+
   void testPropertyImportedOnDemand() {
     myFixture.addFileToProject("foo/A.groovy", 'package foo; class Foo {static def foo}')
     myFixture.configureByText("B.groovy", """package foo

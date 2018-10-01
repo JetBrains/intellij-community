@@ -36,8 +36,4 @@ public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTest
     TypeMigrationProcessor.ourSkipFailedConversionInTestMode = false;
     super.tearDown();
   }
-
-  public void test() {
-    doAllTests();
-  }
 }

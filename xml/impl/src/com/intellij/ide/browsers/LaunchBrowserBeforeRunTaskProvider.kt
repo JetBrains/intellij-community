@@ -112,7 +112,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
 internal class LaunchBrowserBeforeRunTaskState : BaseState() {
   @get:Attribute(value = "browser", converter = WebBrowserReferenceConverter::class)
-  var browser by property<WebBrowser>()
+  var browser by property<WebBrowser?>(null) { it == null }
   @get:Attribute()
   var url by string()
   @get:Attribute()

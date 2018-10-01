@@ -36,7 +36,7 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     SearchSession search = e.getData(SearchSession.KEY);
     if (search != null) {
       setSelected(search, selected);

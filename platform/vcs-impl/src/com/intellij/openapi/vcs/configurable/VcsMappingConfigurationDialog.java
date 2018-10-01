@@ -141,7 +141,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {
 
-    public MyBrowseFolderListener(String title,
+    MyBrowseFolderListener(String title,
                                   String description,
                                   TextFieldWithBrowseButton textField,
                                   Project project,

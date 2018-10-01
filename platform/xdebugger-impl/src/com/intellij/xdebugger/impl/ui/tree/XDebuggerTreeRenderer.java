@@ -37,7 +37,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
-  public XDebuggerTreeRenderer() {
+  XDebuggerTreeRenderer() {
     getIpad().right = 0;
     myLink.getIpad().left = 0;
   }
@@ -195,7 +195,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     private String myText;
     private Project myProject;
 
-    public MyLongTextHyperlink() {
+    MyLongTextHyperlink() {
       super(XDebuggerBundle.message("node.test.show.full.value"));
     }
 

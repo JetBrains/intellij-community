@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
@@ -65,14 +66,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     private final boolean decrement;
 
-    public ManualArrayCopyFix(boolean decrement) {
+    ManualArrayCopyFix(boolean decrement) {
       this.decrement = decrement;
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()");
     }
 
     @Override

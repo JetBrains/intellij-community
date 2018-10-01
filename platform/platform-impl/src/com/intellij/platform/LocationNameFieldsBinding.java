@@ -98,7 +98,7 @@ public class LocationNameFieldsBinding {
   }
 
   private class NameFieldDocument extends PlainDocument {
-    public NameFieldDocument(final JTextField projectNameTextField, final TextFieldWithBrowseButton locationField) {
+    NameFieldDocument(final JTextField projectNameTextField, final TextFieldWithBrowseButton locationField) {
       addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull final DocumentEvent e) {

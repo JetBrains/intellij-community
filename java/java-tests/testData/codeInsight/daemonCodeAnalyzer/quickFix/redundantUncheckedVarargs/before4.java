@@ -8,7 +8,7 @@ public class Test {
   }
 
   void foo() {
-    //noinspe<caret>ction unchecked
+    //noinspection unche<caret>cked
     List<ArrayList<String>> list = foo(new ArrayList<String>());
   }
 }

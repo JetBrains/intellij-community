@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
@@ -25,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 
 @JvmField
-val NON_CODE: Key<Boolean?> = Key.create<Boolean?>("groovy.process.non.code.members")
+val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")
 
 fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
 
@@ -145,4 +146,12 @@ fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
 
 fun getName(state: ResolveState, element: PsiNamedElement): String? {
   return state[importedNameKey] ?: element.name
+}
+
+fun valid(allCandidates: Collection<GroovyResolveResult>): List<GroovyResolveResult> = allCandidates.filter {
+  it.isValidResult
+}
+
+fun singleOrValid(allCandidates: List<GroovyResolveResult>): List<GroovyResolveResult> {
+  return if (allCandidates.size <= 1) allCandidates else valid(allCandidates)
 }

@@ -235,7 +235,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       final Module module = entry.getKey();
       final Sdk newSdk = entry.getValue();
       final Sdk oldSdk = myModuleSdks.get(module);
-      return myModuleSdks.containsKey(module) && (newSdk != null || oldSdk != null) && newSdk != oldSdk;
+      return myModuleSdks.containsKey(module) && newSdk != oldSdk;
     }));
 
     myModuleSdks.putAll(moduleSdks);
@@ -292,7 +292,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     };
     project.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         DumbService.getInstance(project).cancelTask(task);
       }
     });
@@ -321,7 +321,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     @NotNull private final LanguageLevel myLanguageLevel;
     private final boolean myShouldSuppressSizeLimit;
 
-    public UpdateRootTask(@NotNull Project project, @NotNull VirtualFile root, @NotNull LanguageLevel languageLevel,
+    UpdateRootTask(@NotNull Project project, @NotNull VirtualFile root, @NotNull LanguageLevel languageLevel,
                           boolean shouldSuppressSizeLimit) {
       myProject = project;
       myRoot = root;

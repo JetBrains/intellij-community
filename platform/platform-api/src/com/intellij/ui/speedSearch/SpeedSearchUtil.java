@@ -127,7 +127,7 @@ public final class SpeedSearchUtil {
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,
                                             final String text,
-                                            Iterable<TextRange> colored,
+                                            Iterable<? extends TextRange> colored,
                                             final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
     final List<Pair<String, Integer>> searchTerms = new ArrayList<>();
     for (TextRange fragment : colored) {

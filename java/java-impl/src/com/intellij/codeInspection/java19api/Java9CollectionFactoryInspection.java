@@ -321,7 +321,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
   private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
     private final String myMessage;
 
-    public ReplaceWithCollectionFactoryFix(String message) {
+    ReplaceWithCollectionFactoryFix(String message) {
       myMessage = message;
     }
 

@@ -28,7 +28,7 @@ public abstract class CachedValueProviderOnPsiFile<T> implements CachedValueProv
   public abstract T evaluate(@NotNull PsiFile psiFile);
 
   @Nullable
-  public static <T> T getOrCompute(@NotNull PsiFile psiFile, @NotNull Function<PsiFile, T> eval, @NotNull Key<CachedValue<T>> key) {
+  public static <T> T getOrCompute(@NotNull PsiFile psiFile, @NotNull Function<? super PsiFile, ? extends T> eval, @NotNull Key<CachedValue<T>> key) {
     final CachedValueProvider<T> provider = new CachedValueProviderOnPsiFile<T>(psiFile) {
       @Override
       @Nullable

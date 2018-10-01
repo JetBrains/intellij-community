@@ -5,17 +5,21 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
@@ -26,6 +30,7 @@ public class SearchPopup implements CaretListener {
   private final JBPopupListener myListener;
   private final JBTextField myEditor;
   private JBPopup myPopup;
+  private LightweightWindowEvent myEvent;
 
   public CollectionListModel<Object> model;
   public JList<Object> list;
@@ -61,10 +66,14 @@ public class SearchPopup implements CaretListener {
       this.callback = (SearchPopupCallback)callback;
     }
 
+    Insets ipad = renderer.getIpad();
+    ipad.left = ipad.right = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 5 : UIUtil.getListCellHPadding());
+
     myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list = new JBList<>(model))
       .setMovable(false).setResizable(false).setRequestFocus(false)
       .setItemChosenCallback(callback)
       .setRenderer(renderer).createPopup();
+    myEvent = new LightweightWindowEvent(myPopup);
 
     skipCaretEvent = true;
     myPopup.addListener(myListener);
@@ -98,7 +107,7 @@ public class SearchPopup implements CaretListener {
     }
     else {
       hide();
-      myListener.onClosed(null);
+      myListener.onClosed(myEvent);
     }
   }
 }

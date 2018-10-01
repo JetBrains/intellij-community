@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
@@ -9,10 +12,10 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ErrorCollector
-import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
 
 open class GuiTestCaseExt : GuiTestCase() {
@@ -29,12 +32,8 @@ open class GuiTestCaseExt : GuiTestCase() {
   @JvmField
   val logActionsDuringTest = LogActionsDuringTest()
 
-  @get:Rule
-  val testRootPath: TemporaryFolder by lazy {
-    TemporaryFolder()
-  }
   val projectFolder: String by lazy {
-    testRootPath.newFolder(testMethod.methodName).canonicalPath
+    projectsFolder.newFolder(testMethod.methodName).canonicalPath
   }
 
 //  @Rule
@@ -49,14 +48,12 @@ open class GuiTestCaseExt : GuiTestCase() {
 
   @Before
   open fun setUp() {
-    guiTestRule.IdeHandling().setUp()
     logStartTest(testMethod.methodName)
   }
 
   @After
   fun tearDown() {
     logEndTest(testMethod.methodName)
-    guiTestRule.IdeHandling().tearDown()
   }
 
   open fun isIdeFrameRun(): Boolean = true
@@ -99,11 +96,40 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
  * before using this test
  * @param expectedItem - expected exact item
  * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * @param predicate - searcher rule, how to compare an item and name. By default they are compared by equality
  * */
-fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
+fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+  }
+}
+
+/**
+ * Performs test whether the specified item exists in a list
+ * Note: the dialog with the investigated list must be open
+ * before using this test
+ * @param expectedItem - expected exact item
+ * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * */
+fun GuiTestCase.testListItemExist(name: String, expectedItem: String) {
+  ideFrame {
+    logInfo("Check that $name -> $expectedItem exists in a list element")
+    kotlin.assert(exists { jList(expectedItem, timeout = Timeouts.seconds05) }) { "$name '$expectedItem' not found" }
+  }
+}
+
+/**
+ * Performs test whether the specified item exists in a table
+ * Note: the dialog with the investigated list must be open
+ * before using this test
+ * @param expectedItem - expected exact item
+ * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * */
+fun GuiTestCase.testTableItemExist(name: String, expectedItem: String) {
+  ideFrame {
+    logInfo("Check that $name -> $expectedItem exists in a list element")
+    kotlin.assert(exists { table(expectedItem, timeout = Timeouts.seconds05) }) { "$name '$expectedItem' not found" }
   }
 }
 
@@ -132,14 +158,81 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
   }
 }
 
+/**
+ *  Wait for Gradle reimport finishing
+ *  I detect end of reimport by following signs:
+ *  - action button "Refresh all external projects" becomes enable. But sometimes it becomes
+ *  enable only for a couple of moments and becomes disable again.
+ *  - the gradle tool window contains the project tree. But if reimporting fails the tree is empty.
+ *
+ *  @param waitForProject true if we expect reimporting successful
+ *  @param waitForProject false if we expect reimporting failing and the tree window is expected empty
+ *  @param rootPath root name expected to be shown in the tree. Checked only if [waitForProject] is true
+ * */
+fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean){
+  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
+    var result = false
+    try {
+      ideFrame {
+        toolwindow(id = "Gradle") {
+          content(tabName = "") {
+            // first, check whether the action button "Refresh all external projects" is enabled
+            val text = "Refresh all external projects"
+            val isReimportButtonEnabled = try {
+              val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
+              assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
+              fixtureByTextAnyState.isEnabled
+            }
+            catch (e: Exception) {
+              logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
+              false
+            }
+            // second, check that Gradle tool window contains a tree with the specified [rootPath]
+            val gradleWindowHasPath = if(waitForProject){
+              try {
+                jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
+              }
+              catch (e: Exception) {
+                logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
+                false
+              }
+            }
+            else true
+            // calculate result whether to continue waiting
+            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
+            result = gradleWindowHasPath && isReimportButtonEnabled
+          }
+        }
+        // check status in the Build tool window
+        var syncState = !waitForProject
+        if(waitForProject) {
+          toolwindow(id = "Build") {
+            content(tabName = "Sync") {
+              val tree = treeTable().target.tree
+              val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
+              val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
+              logInfo("$currentTimeInHumanString: state of Build toolwindow: $state")
+              syncState = state.contains("sync finished")
+            }
+          }
+        }
+        // final calculating of result
+        result = result && syncState
+      }
+    }
+    catch (ignore: Exception) {}
+    result
+  }
+
+}
 
 fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
       content(tabName = "") {
-        //        waitAMoment()
-        actionButton("Refresh all external projects").click()
+        waitAMoment()
+        actionButton("Refresh all external projects", timeout = Timeouts.minutes05).click()
       }
     }
   }

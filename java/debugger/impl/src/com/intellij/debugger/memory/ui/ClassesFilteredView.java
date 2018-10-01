@@ -114,7 +114,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     });
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processAttached(DebugProcess process) {
+      public void processAttached(@NotNull DebugProcess process) {
         debugProcess.removeDebugProcessListener(this);
         managerThread.invoke(new DebuggerCommandImpl() {
           @Override
@@ -237,7 +237,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
       TypeInfo selectedClass = getTable().getSelectedClass();
       if (selectedClass != null) {
