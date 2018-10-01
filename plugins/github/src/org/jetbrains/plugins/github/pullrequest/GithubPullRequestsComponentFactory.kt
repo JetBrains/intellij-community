@@ -48,7 +48,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     return GithubPullRequestsComponent(requestExecutor, avatarIconsProviderFactory, repository, remote, repoDetails, account)
   }
 
-  private inner class GithubPullRequestsComponent(requestExecutor: GithubApiRequestExecutor,
+  private inner class GithubPullRequestsComponent(private val requestExecutor: GithubApiRequestExecutor,
                                                   avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                   private val repository: GitRepository, private val remote: GitRemote,
                                                   private val repoDetails: GithubRepoDetailed,
@@ -99,6 +99,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
         GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
         GithubPullRequestKeys.REPO_DETAILS.`is`(dataId) -> repoDetails
         GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
+        GithubPullRequestKeys.API_REQUEST_EXECUTOR.`is`(dataId) -> requestExecutor
         GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
           list.selectionModel.current?.let(dataLoader::getDataProvider)

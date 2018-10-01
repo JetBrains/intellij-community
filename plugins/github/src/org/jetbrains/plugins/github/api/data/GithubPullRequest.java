@@ -47,6 +47,11 @@ public class GithubPullRequest {
   private String authorAssociation;
 
   @NotNull
+  public String getUrl() {
+    return url;
+  }
+
+  @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
   }

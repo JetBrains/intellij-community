@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.openapi.actionSystem.DataKey
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
@@ -11,6 +12,9 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoade
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 
 object GithubPullRequestKeys {
+  @JvmStatic
+  val API_REQUEST_EXECUTOR =
+    DataKey.create<GithubApiRequestExecutor>("org.jetbrains.plugins.github.pullrequest.requestexecutor")
   @JvmStatic
   val PULL_REQUESTS_LIST_COMPONENT =
     DataKey.create<GithubPullRequestsListComponent>("org.jetbrains.plugins.github.pullrequest.list.component")
