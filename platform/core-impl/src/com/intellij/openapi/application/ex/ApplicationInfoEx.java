@@ -52,6 +52,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Nullable
   public abstract String getBigIconUrl();
 
+  /**
+   * Return path to an svg file containing icon of the current version of the product. The path is a relative path inside the product's JAR
+   * files. It may return special icon for EAP builds.
+   */
   @Nullable
   public abstract String getApplicationSvgIconUrl();
 
