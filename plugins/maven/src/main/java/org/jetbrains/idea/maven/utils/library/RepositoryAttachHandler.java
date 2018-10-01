@@ -46,7 +46,7 @@ public class RepositoryAttachHandler {
                                                            boolean attachJavaDoc,
                                                            boolean attachSources,
                                                            @Nullable final String copyTo,
-                                                           List<MavenRepositoryInfo> repositories) {
+                                                           List<? extends MavenRepositoryInfo> repositories) {
     final ArrayList<RemoteRepositoryDescription> repos =
       repositories.stream().map(info -> toRemoteRepositoryDescription(info)).collect(Collectors.toCollection(ArrayList::new));
     return JarRepositoryManager.resolveAndDownload(project, coord, attachSources, attachJavaDoc, true, copyTo, repos);

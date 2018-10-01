@@ -765,7 +765,7 @@ public class RefactoringUtil {
   }
 
   public static void replaceMovedMemberTypeParameters(final PsiElement member,
-                                                      final Iterable<PsiTypeParameter> parametersIterable,
+                                                      final Iterable<? extends PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final PsiElementFactory factory) {
     final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<>();
@@ -1125,7 +1125,7 @@ public class RefactoringUtil {
    * @param initialRelation
    * @return subset of graph.getVertices()
    */
-  public static <T> Set<T> transitiveClosure(Graph<T> graph, Condition<T> initialRelation) {
+  public static <T> Set<T> transitiveClosure(Graph<T> graph, Condition<? super T> initialRelation) {
     Set<T> result = new HashSet<>();
 
     final Set<T> vertices = graph.getVertices();
@@ -1199,20 +1199,20 @@ public class RefactoringUtil {
     return dataElements[0].getText();
   }
 
-  public static void fixJavadocsForParams(PsiMethod method, Set<PsiParameter> newParameters) throws IncorrectOperationException {
+  public static void fixJavadocsForParams(PsiMethod method, Set<? extends PsiParameter> newParameters) throws IncorrectOperationException {
     fixJavadocsForParams(method, newParameters, Conditions.alwaysFalse());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
-                                        Set<PsiParameter> newParameters,
-                                        Condition<Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
+                                          Set<? extends PsiParameter> newParameters,
+                                          Condition<? super Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
     fixJavadocsForParams(method, newParameters, eqCondition, Conditions.alwaysTrue());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
-                                          Set<PsiParameter> newParameters,
-                                          Condition<Pair<PsiParameter, String>> eqCondition,
-                                          Condition<String> matchedToOldParam) throws IncorrectOperationException {
+                                          Set<? extends PsiParameter> newParameters,
+                                          Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
     final PsiDocComment docComment = method.getDocComment();
     if (docComment == null) return;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -1403,7 +1403,7 @@ public class RefactoringUtil {
 
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
-                                                                                   Condition<PsiTypeParameter> filter,
+                                                                                   Condition<? super PsiTypeParameter> filter,
                                                                                    @NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<>();

@@ -123,7 +123,7 @@ class AntReferenceInjector implements DomReferenceInjector {
     }
   }
   
-  public static void addMacrodefParameterRefs(@NotNull XmlAttributeValue element, final Collection<PsiReference> refs) {
+  public static void addMacrodefParameterRefs(@NotNull XmlAttributeValue element, final Collection<? super PsiReference> refs) {
     final DomElement domElement = DomUtil.getDomElement(element);
     if (domElement == null) {
       return;

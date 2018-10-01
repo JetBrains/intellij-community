@@ -544,7 +544,7 @@ public class EditorPainter implements TextDrawingCallback {
   }
 
   private static void collectVisibleInnerHighlighters(@NotNull FoldRegion region, @NotNull MarkupModelEx markupModel,
-                                                      @NotNull List<RangeHighlighterEx> highlighters) {
+                                                      @NotNull List<? super RangeHighlighterEx> highlighters) {
     int startOffset = region.getStartOffset();
     int endOffset = region.getEndOffset();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, h -> {

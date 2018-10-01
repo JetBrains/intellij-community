@@ -92,7 +92,7 @@ public class PsiProximityComparator implements Comparator<Object> {
   }
 
   @Nullable
-  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final Computable<PsiElement> elementComputable, final PsiElement context, ProcessingContext processingContext) {
+  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final Computable<? extends PsiElement> elementComputable, final PsiElement context, ProcessingContext processingContext) {
     PsiElement element = elementComputable.compute();
     if (element == null) return null;
     if (element instanceof MetadataPsiElementBase) return null;

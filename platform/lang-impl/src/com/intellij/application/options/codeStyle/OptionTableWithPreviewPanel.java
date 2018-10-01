@@ -976,7 +976,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return options;
   }
 
-  private static void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+  private static void collectOptions(Set<? super String> optionNames, final List<? extends Option> optionList) {
     for (Option option : optionList) {
       if (option.groupName != null) {
         optionNames.add(option.groupName);

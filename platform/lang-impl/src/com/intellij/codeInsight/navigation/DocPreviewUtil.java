@@ -208,7 +208,7 @@ public class DocPreviewUtil {
     }
   }
   
-  private static boolean intersects(@NotNull List<TextRange> ranges, int start, int end) {
+  private static boolean intersects(@NotNull List<? extends TextRange> ranges, int start, int end) {
     for (TextRange range : ranges) {
       if (range.intersectsStrict(start, end)) {
         return true;

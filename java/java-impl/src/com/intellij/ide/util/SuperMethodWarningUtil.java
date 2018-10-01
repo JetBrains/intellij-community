@@ -146,7 +146,7 @@ public class SuperMethodWarningUtil {
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
                                       @NotNull String actionString,
-                                      @NotNull final PsiElementProcessor<PsiMethod> processor,
+                                      @NotNull final PsiElementProcessor<? super PsiMethod> processor,
                                       @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();

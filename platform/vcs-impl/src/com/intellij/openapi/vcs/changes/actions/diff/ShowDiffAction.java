@@ -59,7 +59,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
     return changes != null && canShowDiff(project, Arrays.asList(changes));
   }
 
-  public static boolean canShowDiff(@Nullable Project project, @Nullable List<Change> changes) {
+  public static boolean canShowDiff(@Nullable Project project, @Nullable List<? extends Change> changes) {
     if (changes == null || changes.size() == 0) return false;
     for (Change change : changes) {
       if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
@@ -80,22 +80,22 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   // Impl
   //
 
-  public static void showDiffForChange(@Nullable Project project, @NotNull Iterable<Change> changes) {
+  public static void showDiffForChange(@Nullable Project project, @NotNull Iterable<? extends Change> changes) {
     showDiffForChange(project, changes, 0);
   }
 
-  public static void showDiffForChange(@Nullable Project project, @NotNull Iterable<Change> changes, int index) {
+  public static void showDiffForChange(@Nullable Project project, @NotNull Iterable<? extends Change> changes, int index) {
     showDiffForChange(project, changes, index, new ShowDiffContext());
   }
 
   public static void showDiffForChange(@Nullable Project project,
-                                       @NotNull ListSelection<Change> changes) {
+                                       @NotNull ListSelection<? extends Change> changes) {
     showDiffForChange(project, changes, new ShowDiffContext());
   }
 
   public static void showDiffForChange(@Nullable Project project,
-                                       @NotNull Iterable<Change> changes,
-                                       @NotNull Condition<Change> condition,
+                                       @NotNull Iterable<? extends Change> changes,
+                                       @NotNull Condition<? super Change> condition,
                                        @NotNull ShowDiffContext context) {
     List<Change> list = ContainerUtil.newArrayList(changes);
     int index = ContainerUtil.indexOf(list, condition);
@@ -103,7 +103,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   public static void showDiffForChange(@Nullable Project project,
-                                       @NotNull Iterable<Change> changes,
+                                       @NotNull Iterable<? extends Change> changes,
                                        int index,
                                        @NotNull ShowDiffContext context) {
     List<Change> list = ContainerUtil.newArrayList(changes);
@@ -111,7 +111,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   public static void showDiffForChange(@Nullable Project project,
-                                       @NotNull ListSelection<Change> changes,
+                                       @NotNull ListSelection<? extends Change> changes,
                                        @NotNull ShowDiffContext context) {
     ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> {
       return ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));

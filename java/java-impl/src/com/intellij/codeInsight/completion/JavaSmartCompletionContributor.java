@@ -215,12 +215,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   @NotNull
-  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
+  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<? extends ExpectedTypeInfo> infos) {
     return lookupElement -> result.addElement(decorate(lookupElement, infos));
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,
-                                             THashSet<ExpectedTypeInfo> mergedInfos,
+                                             THashSet<? extends ExpectedTypeInfo> mergedInfos,
                                              boolean quick,
                                              Consumer<LookupElement> consumer) {
     PsiElement position = params.getPosition();
@@ -243,7 +243,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     super.fillCompletionVariants(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
   }
 
-  public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<ExpectedTypeInfo> infos) {
+  public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<? extends ExpectedTypeInfo> infos) {
     return new SmartCompletionDecorator(lookupElement, infos);
   }
 

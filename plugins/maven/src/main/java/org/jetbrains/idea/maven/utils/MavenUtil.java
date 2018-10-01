@@ -250,7 +250,7 @@ public class MavenUtil {
     return new File(parent.getPath(), MavenConstants.PROFILES_XML);
   }
 
-  public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
+  public static <T, U> List<T> collectFirsts(List<? extends Pair<T, U>> pairs) {
     List<T> result = new ArrayList<>(pairs.size());
     for (Pair<T, ?> each : pairs) {
       result.add(each.first);
@@ -258,7 +258,7 @@ public class MavenUtil {
     return result;
   }
 
-  public static <T, U> List<U> collectSeconds(List<Pair<T, U>> pairs) {
+  public static <T, U> List<U> collectSeconds(List<? extends Pair<T, U>> pairs) {
     List<U> result = new ArrayList<>(pairs.size());
     for (Pair<T, U> each : pairs) {
       result.add(each.second);
@@ -266,11 +266,11 @@ public class MavenUtil {
     return result;
   }
 
-  public static List<String> collectPaths(List<VirtualFile> files) {
+  public static List<String> collectPaths(List<? extends VirtualFile> files) {
     return ContainerUtil.map(files, file -> file.getPath());
   }
 
-  public static List<VirtualFile> collectFiles(Collection<MavenProject> projects) {
+  public static List<VirtualFile> collectFiles(Collection<? extends MavenProject> projects) {
     return ContainerUtil.map(projects, project -> project.getFile());
   }
 

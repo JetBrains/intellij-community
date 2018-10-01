@@ -90,7 +90,7 @@ public abstract class StubProcessingHelperBase {
     return false;
   }
 
-  private static PsiElement getStubPsi(List<StubbedSpine> spines, int index) {
+  private static PsiElement getStubPsi(List<? extends StubbedSpine> spines, int index) {
     if (spines.size() == 1) return spines.get(0).getStubPsi(index);
 
     for (StubbedSpine spine : spines) {

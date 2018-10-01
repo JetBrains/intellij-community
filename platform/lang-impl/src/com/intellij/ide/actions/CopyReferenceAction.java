@@ -171,7 +171,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     return doCopy(Arrays.asList(element), project, null);
   }
 
-  private static boolean doCopy(List<PsiElement> elements, @Nullable final Project project, @Nullable Editor editor) {
+  private static boolean doCopy(List<? extends PsiElement> elements, @Nullable final Project project, @Nullable Editor editor) {
     if (elements.isEmpty()) return false;
 
     List<String> fqns = ContainerUtil.newArrayList();

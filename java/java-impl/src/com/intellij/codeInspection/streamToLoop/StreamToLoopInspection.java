@@ -242,7 +242,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Contract("null -> null")
   @Nullable
-  static TerminalOperation getTerminal(List<OperationRecord> operations) {
+  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {

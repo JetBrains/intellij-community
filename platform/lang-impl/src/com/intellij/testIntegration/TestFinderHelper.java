@@ -57,14 +57,14 @@ public class TestFinderHelper {
     return posProximity + sizeProximity;
   }
 
-  public static List<PsiElement> getSortedElements(final List<Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
+  public static List<PsiElement> getSortedElements(final List<? extends Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending) {
     return getSortedElements(elementsWithWeights, weightsAscending, null);
   }
 
-  public static List<PsiElement> getSortedElements(final List<Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
+  public static List<PsiElement> getSortedElements(final List<? extends Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending,
-                                                   @Nullable final Comparator<PsiElement> sameNameComparator) {
+                                                   @Nullable final Comparator<? super PsiElement> sameNameComparator) {
     Collections.sort(elementsWithWeights, (o1, o2) -> {
       int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
       if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());

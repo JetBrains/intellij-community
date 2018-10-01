@@ -174,7 +174,7 @@ public class JDOMUtil {
   }
 
   @SuppressWarnings("DuplicateDetector")
-  private static boolean isAttributesEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
+  private static boolean isAttributesEqual(@NotNull List<? extends Attribute> l1, @NotNull List<? extends Attribute> l2, boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
       l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
       l2 = ContainerUtil.filter(l2, NOT_EMPTY_VALUE_CONDITION);

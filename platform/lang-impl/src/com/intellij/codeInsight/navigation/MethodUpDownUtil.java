@@ -34,7 +34,7 @@ public class MethodUpDownUtil {
     return offsetsFromElements(array);
   }
 
-  public static int[] offsetsFromElements(final Collection<PsiElement> array) {
+  public static int[] offsetsFromElements(final Collection<? extends PsiElement> array) {
     TIntArrayList offsets = new TIntArrayList(array.size());
     for (PsiElement element : array) {
       int offset = element.getTextOffset();

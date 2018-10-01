@@ -337,7 +337,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
     }
   }
 
-  public static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkTypeId> filter) {
+  public static Condition<Sdk> getSdkFilter(@Nullable final Condition<? super SdkTypeId> filter) {
     return filter == null ? Conditions.alwaysTrue() : sdk -> filter.value(sdk.getSdkType());
   }
 

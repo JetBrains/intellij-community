@@ -101,7 +101,7 @@ public class VcsUtil {
    * @deprecated use the {@link VcsDirtyScopeManager} directly.
    */
   @Deprecated
-  public static void refreshFiles(Project project, HashSet<FilePath> paths) {
+  public static void refreshFiles(Project project, HashSet<? extends FilePath> paths) {
     for (FilePath path : paths) {
       VirtualFile vFile = path.getVirtualFile();
       if (vFile != null) {
@@ -529,7 +529,7 @@ public class VcsUtil {
   }
 
   @NotNull
-  public static List<VcsDirectoryMapping> addMapping(@NotNull List<VcsDirectoryMapping> existingMappings,
+  public static List<VcsDirectoryMapping> addMapping(@NotNull List<? extends VcsDirectoryMapping> existingMappings,
                                                      @NotNull String path,
                                                      @NotNull String vcs) {
     List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);

@@ -232,7 +232,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myRefModule;
   }
 
-  private static boolean isSelfInheritor(UClass uClass, List<UClass> visited) {
+  private static boolean isSelfInheritor(UClass uClass, List<? super UClass> visited) {
     if (visited.contains(uClass)) return true;
     visited.add(uClass);
     if (uClass.getUastSuperTypes().stream()

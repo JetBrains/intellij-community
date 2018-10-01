@@ -259,8 +259,8 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList,
-                                            @NotNull Function<VcsFullCommitDetails, Collection<Change>> getChanges) {
+  public static List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
+                                            @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
     List<Change> changes = ContainerUtil.newArrayList();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {

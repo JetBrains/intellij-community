@@ -216,7 +216,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     return textArea;
   }
 
-  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<VcsFileRevision> selectedRevisionConsumer,
+  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<? super VcsFileRevision> selectedRevisionConsumer,
                                    final boolean showComments) {
     ColumnInfo[] columns = new ColumnInfo[] { REVISION_TABLE_COLUMN, DATE_TABLE_COLUMN, AUTHOR_TABLE_COLUMN };
     for(VcsFileRevision revision: revisions) {

@@ -1433,7 +1433,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> String join(@NotNull T[] items, @NotNull Function<T, String> f, @NotNull String separator) {
+  public static <T> String join(@NotNull T[] items, @NotNull Function<? super T, String> f, @NotNull String separator) {
     return join(Arrays.asList(items), f, separator);
   }
 

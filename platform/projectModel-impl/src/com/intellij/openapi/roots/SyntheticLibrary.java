@@ -157,7 +157,7 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private static Set<VirtualFile> asSet(@NotNull Collection<VirtualFile> collection) {
+  private static Set<VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof Set ? (Set)collection : ContainerUtil.newTroveSet(collection);
   }
 }

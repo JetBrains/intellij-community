@@ -519,7 +519,7 @@ public abstract class MvcFramework {
 
   public abstract String getSomeFrameworkClass();
 
-  public static void addAvailableSystemScripts(final Collection<String> result, @NotNull Module module) {
+  public static void addAvailableSystemScripts(final Collection<? super String> result, @NotNull Module module) {
     VirtualFile scriptRoot = null;
 
     GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
@@ -556,7 +556,7 @@ public abstract class MvcFramework {
 
   public abstract boolean isToReformatOnCreation(VirtualFile file);
 
-  public static void addAvailableScripts(final Collection<String> result, @Nullable final VirtualFile root) {
+  public static void addAvailableScripts(final Collection<? super String> result, @Nullable final VirtualFile root) {
     if (root == null || !root.isDirectory()) {
       return;
     }

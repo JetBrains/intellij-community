@@ -46,7 +46,7 @@ public class FileHistoryUtil {
 
   @NotNull
   static List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details,
-                                             @NotNull Condition<Change> isRelevant) {
+                                             @NotNull Condition<? super Change> isRelevant) {
     List<Change> changes = filter(details.getChanges(), isRelevant);
     if (!changes.isEmpty()) return changes;
     if (details.getParents().size() > 1) {

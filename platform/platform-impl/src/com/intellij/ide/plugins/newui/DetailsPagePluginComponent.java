@@ -512,7 +512,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   @NotNull
   private static JPanel createLabelsPanel(@NotNull JPanel parent,
-                                          @NotNull java.util.List<JLabel> labels,
+                                          @NotNull java.util.List<? super JLabel> labels,
                                           @NotNull String labelText,
                                           @NotNull String text,
                                           @Nullable String link) {

@@ -368,7 +368,7 @@ public class AnnotationUtil {
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  @Nullable Set<PsiModifierListOwner> visited) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited) {
     return getAllAnnotations(owner, inHierarchy, visited, true);
   }
 

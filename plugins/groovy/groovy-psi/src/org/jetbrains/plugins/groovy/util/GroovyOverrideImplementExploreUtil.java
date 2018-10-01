@@ -60,7 +60,7 @@ public class GroovyOverrideImplementExploreUtil {
   }
 
   @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, Collection<HierarchicalMethodSignature> allMethodSignatures, boolean toImplement, boolean skipImplemented) {
+  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, Collection<? extends HierarchicalMethodSignature> allMethodSignatures, boolean toImplement, boolean skipImplemented) {
     Map<MethodSignature, PsiMethod> abstracts = ContainerUtil.newLinkedHashMap();
     Map<MethodSignature, PsiMethod> finals = ContainerUtil.newLinkedHashMap();
     Map<MethodSignature, PsiMethod> concretes = ContainerUtil.newLinkedHashMap();

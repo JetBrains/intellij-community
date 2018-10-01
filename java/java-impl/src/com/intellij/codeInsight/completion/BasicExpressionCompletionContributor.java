@@ -35,7 +35,7 @@ public class BasicExpressionCompletionContributor {
   }
 
   public static void fillCompletionVariants(JavaSmartCompletionParameters parameters,
-                                            final Consumer<LookupElement> result,
+                                            final Consumer<? super LookupElement> result,
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
     if (JavaKeywordCompletion.isAfterTypeDot(element)) {

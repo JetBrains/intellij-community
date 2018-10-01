@@ -117,7 +117,7 @@ public class ChunkExtractor {
     myDocumentStamp = -1;
   }
 
-  public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
+  public static int getStartOffset(final List<? extends RangeMarker> rangeMarkers) {
     LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {

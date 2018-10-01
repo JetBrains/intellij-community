@@ -127,7 +127,7 @@ public class FileChooser {
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
                                 @Nullable final Project project,
                                 @Nullable final VirtualFile toSelect,
-                                @NotNull final Consumer<VirtualFile> callback) {
+                                @NotNull final Consumer<? super VirtualFile> callback) {
     chooseFile(descriptor, project, null, toSelect, callback);
   }
 
@@ -146,7 +146,7 @@ public class FileChooser {
                                 @Nullable final Project project,
                                 @Nullable final Component parent,
                                 @Nullable final VirtualFile toSelect,
-                                @NotNull final Consumer<VirtualFile> callback) {
+                                @NotNull final Consumer<? super VirtualFile> callback) {
     LOG.assertTrue(!descriptor.isChooseMultiple());
     chooseFiles(descriptor, project, parent, toSelect, files -> callback.consume(files.get(0)));
   }

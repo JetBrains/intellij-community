@@ -186,7 +186,7 @@ public class UnusedSymbolUtil {
                                       @NotNull PsiMember member,
                                       @NotNull ProgressIndicator progress,
                                       @Nullable PsiFile ignoreFile,
-                                      @NotNull Processor<UsageInfo> usageInfoProcessor) {
+                                      @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
     String name = member.getName();
     if (name == null) {
       log("* "+member.getName()+" no name; false");

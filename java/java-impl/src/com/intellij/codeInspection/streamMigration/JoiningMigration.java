@@ -742,7 +742,7 @@ List<PsiExpression> builderStrInitializers = null;
        * @return list of declaration statements or null if error
        */
       @Nullable("when failed to get declaration of any var")
-      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<PsiLocalVariable> variables) {
+      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<? extends PsiLocalVariable> variables) {
         List<PsiDeclarationStatement> list = new ArrayList<>();
         for (PsiLocalVariable var : variables) {
           PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);

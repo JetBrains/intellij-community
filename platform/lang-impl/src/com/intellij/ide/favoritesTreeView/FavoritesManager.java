@@ -276,7 +276,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return result;
   }
 
-  private static TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<TreeItem<Pair<AbstractUrl, String>>> list) {
+  private static TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<? extends TreeItem<Pair<AbstractUrl, String>>> list) {
     for (TreeItem<Pair<AbstractUrl, String>> pair : list) {
       if (url.equals(pair.getData().getFirst())) {
         return pair;
@@ -357,7 +357,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return result;
   }
 
-  private static void readFavoritesOneLevel(Element list, Project project, Collection<TreeItem<Pair<AbstractUrl, String>>> result) {
+  private static void readFavoritesOneLevel(Element list, Project project, Collection<? super TreeItem<Pair<AbstractUrl, String>>> result) {
     for (Element favorite : list.getChildren(FAVORITES_ROOT)) {
       final String className = favorite.getAttributeValue(CLASS_NAME);
       final AbstractUrl abstractUrl = readUrlFromElement(favorite, project);
@@ -435,7 +435,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return null;
   }
 
-  private static void writeRoots(Element element, Collection<TreeItem<Pair<AbstractUrl, String>>> roots) {
+  private static void writeRoots(Element element, Collection<? extends TreeItem<Pair<AbstractUrl, String>>> roots) {
     for (TreeItem<Pair<AbstractUrl, String>> root : roots) {
       final AbstractUrl url = root.getData().getFirst();
       if (url == null) continue;
@@ -547,8 +547,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return false;
   }
 
-  private static void iterateTreeItems(final Collection<TreeItem<Pair<AbstractUrl, String>>> coll,
-                                       Consumer<TreeItem<Pair<AbstractUrl, String>>> consumer) {
+  private static void iterateTreeItems(final Collection<? extends TreeItem<Pair<AbstractUrl, String>>> coll,
+                                       Consumer<? super TreeItem<Pair<AbstractUrl, String>>> consumer) {
     final ArrayDeque<TreeItem<Pair<AbstractUrl, String>>> queue = new ArrayDeque<>(coll);
     while (!queue.isEmpty()) {
       final TreeItem<Pair<AbstractUrl, String>> item = queue.removeFirst();

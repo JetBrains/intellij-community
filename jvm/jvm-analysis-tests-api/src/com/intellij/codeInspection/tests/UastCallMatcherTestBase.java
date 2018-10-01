@@ -25,11 +25,11 @@ public abstract class UastCallMatcherTestBase extends JavaCodeInsightFixtureTest
     moduleBuilder.addLibrary("javaUtil", PathUtil.getJarPathForClass(Locale.class));
   }
 
-  protected static int matchCallExpression(UastCallMatcher matcher, Set<UCallExpression> expressions) {
+  protected static int matchCallExpression(UastCallMatcher matcher, Set<? extends UCallExpression> expressions) {
     return (int)expressions.stream().filter(matcher::testCallExpression).count();
   }
 
-  protected static int matchCallableReferenceExpression(UastCallMatcher matcher, Set<UCallableReferenceExpression> expressions) {
+  protected static int matchCallableReferenceExpression(UastCallMatcher matcher, Set<? extends UCallableReferenceExpression> expressions) {
     return (int)expressions.stream().filter(matcher::testCallableReferenceExpression).count();
   }
 

@@ -50,7 +50,7 @@ public class XsltIncludeIndex {
     return false;
   }
 
-  public static boolean processForwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
+  public static boolean processForwardDependencies(@NotNull XmlFile file, Processor<? super XmlFile> processor) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return true;
@@ -61,7 +61,7 @@ public class XsltIncludeIndex {
     return _process(files, project, processor);
   }
 
-  public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
+  public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<? super XmlFile> processor) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return true;
@@ -72,7 +72,7 @@ public class XsltIncludeIndex {
     return _process(files, project, processor);
   }
 
-  private static boolean _process(VirtualFile[] files, Project project, Processor<XmlFile> processor) {
+  private static boolean _process(VirtualFile[] files, Project project, Processor<? super XmlFile> processor) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, (NullableFunction<VirtualFile, PsiFile>)file -> psiManager.findFile(file));
     for (final PsiFile psiFile : psiFiles) {

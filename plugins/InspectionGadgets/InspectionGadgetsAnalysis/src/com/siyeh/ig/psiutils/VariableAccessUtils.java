@@ -397,7 +397,7 @@ public class VariableAccessUtils {
     return visitor.getUsedVariables();
   }
 
-  public static boolean isAnyVariableAssigned(@NotNull Collection<PsiVariable> variables, @Nullable PsiElement context) {
+  public static boolean isAnyVariableAssigned(@NotNull Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }

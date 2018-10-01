@@ -899,7 +899,7 @@ public class XmlUtil {
   /**
    * @return true if enumeration is exhaustive
    */
-  public static boolean processEnumerationValues(final XmlTag element, final Processor<XmlTag> tagProcessor) {
+  public static boolean processEnumerationValues(final XmlTag element, final Processor<? super XmlTag> tagProcessor) {
     boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {

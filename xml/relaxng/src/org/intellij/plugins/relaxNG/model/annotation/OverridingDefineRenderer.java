@@ -76,7 +76,7 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
     }
   }
 
-  static void doClickAction(AnActionEvent e, Collection<Define> set, String title) {
+  static void doClickAction(AnActionEvent e, Collection<? extends Define> set, String title) {
     if (set.size() == 1) {
       final Navigatable n = (Navigatable)set.iterator().next().getPsiElement();
       OpenSourceUtil.navigate(true, n);

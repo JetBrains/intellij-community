@@ -82,7 +82,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     return children;
   }
 
-  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<? super AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     VirtualFile[] files =
       entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getRootFiles(OrderRootType.CLASSES);

@@ -196,7 +196,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   // returns true if processor is run or is going to be run after showing popup
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
-                                              @NotNull PsiElementProcessor<PsiElement> processor,
+                                              @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
                                               @Nullable PsiElement[] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {

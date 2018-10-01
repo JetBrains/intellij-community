@@ -303,7 +303,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static DataNode<ProjectData> convert(@NotNull ProjectSystemId systemId,
                                                @NotNull ExternalProjectPojo rootProject,
-                                               @NotNull Collection<ExternalProjectPojo> childProjects) {
+                                               @NotNull Collection<? extends ExternalProjectPojo> childProjects) {
     ProjectData projectData = new ProjectData(systemId, rootProject.getName(), rootProject.getPath(), rootProject.getPath());
     DataNode<ProjectData> projectDataNode = new DataNode<>(PROJECT, projectData, null);
 

@@ -330,7 +330,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   public static void highlightRanges(@NotNull HighlightManager highlightManager, @NotNull Editor editor, @NotNull TextAttributes attributes,
                                      boolean clearHighlights,
-                                     @NotNull List<TextRange> textRanges) {
+                                     @NotNull List<? extends TextRange> textRanges) {
     if (clearHighlights) {
       clearHighlights(editor, highlightManager, textRanges, attributes);
       return;

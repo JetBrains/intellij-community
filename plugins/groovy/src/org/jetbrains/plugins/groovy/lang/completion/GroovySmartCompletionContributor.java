@@ -247,7 +247,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }
   }
 
-  static void generateInheritorVariants(final CompletionParameters parameters, PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
+  static void generateInheritorVariants(final CompletionParameters parameters, PrefixMatcher matcher, final Consumer<? super LookupElement> consumer) {
     final PsiElement place = parameters.getPosition();
     final GrExpression expression = PsiTreeUtil.getParentOfType(place, GrExpression.class);
     if (expression == null) return;

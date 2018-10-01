@@ -2609,7 +2609,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<Component> condition) {
+  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -3608,7 +3608,7 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<T> cls) {
+  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<? extends T> cls) {
     final ArrayList<T> result = new ArrayList<T>();
     findComponentsOfType(parent, cls, result);
     return result;

@@ -118,7 +118,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
+  private static void doBuild(@NotNull Project project, final @NotNull List<? extends ArtifactPopupItem> items, boolean rebuild) {
     final Artifact[] artifacts = getArtifacts(items, project);
     if (rebuild) {
       ProjectTaskManager.getInstance(project).rebuild(artifacts);
@@ -128,7 +128,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static Artifact[] getArtifacts(final List<ArtifactPopupItem> items, final Project project) {
+  private static Artifact[] getArtifacts(final List<? extends ArtifactPopupItem> items, final Project project) {
     Set<Artifact> artifacts = new LinkedHashSet<>();
     for (ArtifactPopupItem item : items) {
       artifacts.addAll(item.getArtifacts(project));

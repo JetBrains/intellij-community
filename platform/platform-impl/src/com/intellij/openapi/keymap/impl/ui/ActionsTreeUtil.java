@@ -130,7 +130,7 @@ public class ActionsTreeUtil {
     return pluginsGroup;
   }
 
-  private static Group createMainMenuGroup(Condition<AnAction> filtered) {
+  private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
     Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
@@ -170,7 +170,7 @@ public class ActionsTreeUtil {
     return false;
   }
 
-  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<AnAction> filtered) {
+  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<? super AnAction> filtered) {
     AnAction[] mainMenuTopGroups = getActions(actionGroup);
     for (AnAction action : mainMenuTopGroups) {
       if (!(action instanceof ActionGroup)) continue;
@@ -181,7 +181,7 @@ public class ActionsTreeUtil {
     }
   }
 
-  public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<AnAction> filtered) {
+  public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<? super AnAction> filtered) {
     return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), null, ignore, filtered);
   }
 
@@ -215,11 +215,11 @@ public class ActionsTreeUtil {
                                   Icon icon,
                                   Icon openIcon,
                                   boolean ignore,
-                                  Condition<AnAction> filtered) {
+                                  Condition<? super AnAction> filtered) {
     return createGroup(actionGroup, groupName, icon, openIcon, ignore, filtered, true);
   }
 
-  public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore, Condition<AnAction> filtered,
+  public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore, Condition<? super AnAction> filtered,
                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
@@ -337,7 +337,7 @@ public class ActionsTreeUtil {
   }
 
   @NotNull
-  private static Group createOtherGroup(@Nullable Condition<AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
+  private static Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
     addedActions.initIds();
     Set<String> result = new THashSet<>();
 
@@ -452,7 +452,7 @@ public class ActionsTreeUtil {
                                       final QuickList[] quickLists,
                                       final String filter,
                                       final boolean forceFiltering,
-                                      final Condition<AnAction> filtered) {
+                                      final Condition<? super AnAction> filtered) {
     final Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap, ActionManager.getInstance());
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
     mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
@@ -539,11 +539,11 @@ public class ActionsTreeUtil {
            shortcut != null ? isActionFiltered(actionManager, keymap, shortcut) : null;
   }
 
-  public static void addAction(KeymapGroup group, AnAction action, Condition<AnAction> filtered) {
+  public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered) {
     addAction(group, action, filtered, false);
   }
 
-  public static void addAction(KeymapGroup group, AnAction action, Condition<AnAction> filtered, boolean forceNonPopup) {
+  public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered, boolean forceNonPopup) {
     if (action instanceof ActionGroup) {
       if (forceNonPopup) {
         AnAction[] actions = getActions((ActionGroup)action);

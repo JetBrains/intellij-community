@@ -343,7 +343,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivities(@NotNull List<Runnable> activities) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities) {
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }

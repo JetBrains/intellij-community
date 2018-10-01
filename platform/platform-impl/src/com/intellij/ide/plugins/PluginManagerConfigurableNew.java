@@ -1252,9 +1252,9 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static void loadPlugins(@NotNull List<IdeaPluginDescriptor> descriptors,
+  private static void loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
                                   @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
-                                  @NotNull Set<String> excludeDescriptors,
+                                  @NotNull Set<? super String> excludeDescriptors,
                                   @NotNull String query) throws IOException {
     boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
@@ -1354,7 +1354,7 @@ public class PluginManagerConfigurableNew
   @NotNull
   public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
                                        @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<Boolean> enableAction) {
+                                       @NotNull Ref<? super Boolean> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());

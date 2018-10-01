@@ -56,7 +56,7 @@ public class Callbacks {
       return myAffectedFiles;
     }
 
-    public static ConstantAffection compose(final Collection<ConstantAffection> affections) {
+    public static ConstantAffection compose(final Collection<? extends ConstantAffection> affections) {
       if (affections.isEmpty()) {
         return EMPTY;
       }

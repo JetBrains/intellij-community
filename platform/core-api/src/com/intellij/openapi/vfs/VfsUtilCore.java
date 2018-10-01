@@ -610,7 +610,7 @@ public class VfsUtilCore {
     return file;
   }
 
-  public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
+  public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<? super VirtualFile> processor) {
     final Ref<Boolean> result = Ref.create(true);
     visitChildrenRecursively(root, new VirtualFileVisitor() {
       @NotNull
@@ -734,8 +734,8 @@ public class VfsUtilCore {
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
   @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
-                                             @NotNull Processor<VirtualFile> processor,
-                                             @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
+                                             @NotNull Processor<? super VirtualFile> processor,
+                                             @NotNull Convertor<? super VirtualFile, Boolean> directoryFilter) {
     if (!processor.process(root)) return;
 
     if (root.isDirectory() && directoryFilter.convert(root)) {
