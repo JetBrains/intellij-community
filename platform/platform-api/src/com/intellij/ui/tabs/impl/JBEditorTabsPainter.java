@@ -30,7 +30,7 @@ public abstract class JBEditorTabsPainter {
   protected Color myDefaultTabColor;
   protected final JBEditorTabs myTabs;
 
-  protected static final Color BACKGROUND_COLOR = JBColor.namedColor("EditorTabs.backgroundColor", UIUtil.CONTRAST_BORDER_COLOR);
+  protected static final Color BORDER_COLOR = JBColor.namedColor("EditorTabs.borderColor", UIUtil.CONTRAST_BORDER_COLOR);
   protected static final Color UNDERLINE_COLOR = JBColor.namedColor("EditorTabs.active.underlineColor", 0x439EB8);
   protected static final Color DEFAULT_TAB_COLOR = JBColor.namedColor("EditorTabs.active.background", new JBColor(0xFFFFFF, 0x515658));
   protected static final Color INACTIVE_MASK_COLOR = JBColor.namedColor("EditorTabs.inactive.maskColor",
@@ -77,7 +77,7 @@ public abstract class JBEditorTabsPainter {
         g2d.fillRect(rect.x, rect.y - 1, rect.width, thickness);
       } else if (position == JBTabsPosition.top){
         g2d.fillRect(rect.x, rect.y + rect.height - thickness + 1, rect.width, thickness);
-        g2d.setColor(BACKGROUND_COLOR);
+        g2d.setColor(BORDER_COLOR);
         g2d.drawLine(Math.max(0, rect.x - 1), rect.y, rect.x + rect.width, rect.y);
       } else if (position == JBTabsPosition.left) {
         g2d.fillRect(rect.x + rect.width - thickness + 1, rect.y, thickness, rect.height);
