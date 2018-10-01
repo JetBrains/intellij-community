@@ -20,6 +20,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -58,6 +59,11 @@ import java.io.IOException;
  */
 public class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
+
+  public static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
+  public static final String MODE_ATTACH = "attach";
+  public static final String MODE_REPLACE = "replace";
+  public static final String MODE_NEW = "new";
 
   private ProjectUtil() { }
 
@@ -277,6 +283,22 @@ public class ProjectUtil {
       }
     }
     return confirmOpenNewProject;
+  }
+
+  /**
+   * @return  0 == GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+   *          1 == GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+   *          2 == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH
+   *         -1 == CANCEL
+   */
+  public static int confirmOpenOrAttachProject() {
+    final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
+    int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.or.attach"), "Open Project",
+                                       new String[]{"&This Window", "New &Window", "&Attach", CommonBundle.getCancelButtonText()},
+                                       MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
+                                       Messages.getQuestionIcon());
+
+    return  exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW: exitCode == 2? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH : -1;
   }
 
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
