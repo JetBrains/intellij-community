@@ -56,7 +56,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
 
   @Override
   public final char charAt(int index) {
-    return (char)myChars[index + myStart];
+    return (char)(myChars[index + myStart] & 0xff);
   }
 
   @NotNull
