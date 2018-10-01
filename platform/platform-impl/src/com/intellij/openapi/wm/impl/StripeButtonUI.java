@@ -22,7 +22,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI {
   private final Rectangle myViewRect = new Rectangle();
   private Insets ourViewInsets = JBUI.emptyInsets();
 
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.background",
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.hoverBackground",
                                new JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)));
 
   private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedBackground",
