@@ -176,6 +176,12 @@ class CommunityRepositoryModules {
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.platform.testGuiFramework") {
+      mainJarName = "testGuiFramework"
+      withModule("intellij.platform.testGuiFramework")
+      withProjectLibrary("fest")
+      withProjectLibrary("fest-swing")
+    },
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
       withModule("intellij.junit.rt", "junit-rt.jar")
