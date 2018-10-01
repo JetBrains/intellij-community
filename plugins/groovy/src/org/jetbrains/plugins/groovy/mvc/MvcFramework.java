@@ -40,6 +40,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -621,6 +622,7 @@ public abstract class MvcFramework {
 
   public boolean isRunTargetActionSupported(Module module) { return false; }
 
+  @Contract("null -> null")
   @Nullable
   public static MvcFramework getInstance(@Nullable final Module module) {
     if (module == null) {
