@@ -1215,29 +1215,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                                 @Nullable Consumer<? super List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<>();
-    ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
-      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-      if (environment != null) {
-        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
-        Set<VirtualFile> parents = getUnversionedParents(vcs, items, statusChecker);
+    ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
 
-        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
-        // (inside the method) - so common add logic just needs to refresh statuses of parents
-        final List<VcsException> result = ContainerUtil.newArrayList();
-        ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setIndeterminate(true);
+        ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
+          final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+          if (environment != null) {
+            Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+            Set<VirtualFile> parents = getUnversionedParents(vcs, items, statusChecker);
+
+            // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+            // (inside the method) - so common add logic just needs to refresh statuses of parents
             List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
             if (exs != null) {
-              ContainerUtil.addAll(result, exs);
+              exceptions.addAll(exs);
             }
+
+            allProcessedFiles.addAll(descendants);
+            allProcessedFiles.addAll(parents);
           }
         });
-
-        allProcessedFiles.addAll(descendants);
-        allProcessedFiles.addAll(parents);
-        exceptions.addAll(result);
       }
     });
 
