@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.credentialStore
+package com.intellij.credentialStore.keePass
 
+import com.intellij.credentialStore.KeePassCredentialStore
+import com.intellij.credentialStore.LOG
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.loadKdbx
@@ -11,16 +13,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.util.io.delete
-import com.intellij.util.text.nullize
+import com.intellij.util.io.toByteArray
 import java.awt.Component
+import java.nio.CharBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-internal class KeePassFileManager(private val file: Path, private val masterPasswordFile: Path) {
-  fun clear(pendingMasterPassword: ByteArray?) {
+
+internal class KeePassFileManager(private val file: Path, private val masterKeyFile: Path) {
+  fun clear() {
     try {
-      val db = KeePassCredentialStore(dbFile = file, masterPasswordFile = masterPasswordFile, preloadedMasterPassword = pendingMasterPassword)
+      val db = KeePassCredentialStore(dbFile = file, masterKeyFile = masterKeyFile)
       db.clear()
       db.save()
     }
@@ -60,10 +64,39 @@ internal class KeePassFileManager(private val file: Path, private val masterPass
     }
 
     Files.copy(fromFile, file, StandardCopyOption.REPLACE_EXISTING)
-    passwordSafe.currentProvider = KeePassCredentialStore(dbFile = file, masterPasswordFile = masterPasswordFile, preloadedDb = database, preloadedMasterPassword = masterPassword)
+    passwordSafe.currentProvider = KeePassCredentialStore(dbFile = file, masterKeyFile = masterKeyFile, preloadedDb = database,
+                                                          preloadedMasterKey = MasterKey(masterPassword))
+  }
+
+  fun setMasterKey(masterKey: MasterKey) {
+    val store: KeePassCredentialStore
+    try {
+      store = KeePassCredentialStore(file, masterKeyFile)
+    }
+    catch (e: IncorrectMasterPasswordException) {
+      // maybe new master key it is current (and stored in master key file is not correct)?
+      try {
+        KeePassCredentialStore(file, masterKeyFile, preloadedMasterKey = masterKey)
+        // no exception - is set correctly (if preloadedMasterKey specified, KeePassCredentialStore will automatically save it to master key file)
+        return
+      }
+      catch (e: IncorrectMasterPasswordException) {
+        // ok... let's ask user about old master password for existing database
+        throw TODO()
+      }
+    }
+
+    store.setMasterPassword(masterKey)
   }
 }
 
 internal fun requestMasterPassword(contextComponent: Component, title: String): ByteArray? {
-  return MessagesService.getInstance().showPasswordDialog(contextComponent, "Master Password:", title, null, null)?.trim().nullize()?.toByteArray()
+  return MessagesService.getInstance().showPasswordDialog(contextComponent, "Master Password:", title, null, null)?.toByteArrayAndClear()
+}
+
+private fun CharArray.toByteArrayAndClear(): ByteArray {
+  val charBuffer = CharBuffer.wrap(this)
+  val byteBuffer = Charsets.UTF_8.encode(charBuffer)
+  charBuffer.array().fill(0.toChar())
+  return byteBuffer.toByteArray(isClear = true)
 }

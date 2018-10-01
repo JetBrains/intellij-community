@@ -36,4 +36,9 @@ class PasswordInputDialog extends Messages.InputDialog {
   protected JTextComponent createTextFieldComponent() {
     return new JPasswordField(30);
   }
+
+  @Override
+  public JPasswordField getTextField() {
+    return (JPasswordField)super.getTextField();
+  }
 }

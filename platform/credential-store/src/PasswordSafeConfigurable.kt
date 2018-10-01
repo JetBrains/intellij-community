@@ -2,6 +2,9 @@
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.keePass.KeePassFileManager
+import com.intellij.credentialStore.keePass.MasterKey
+import com.intellij.credentialStore.keePass.requestMasterPassword
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
@@ -44,7 +47,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val rememberPasswordsUntilClosing = RadioButton("Do not save, forget passwords after restart")
 
   private val modeToRow = THashMap<ProviderType, Row>()
-  private var pendingMasterPassword: ByteArray? = null
 
   override fun reset(settings: PasswordSafeSettings) {
     when (settings.providerType) {
@@ -89,7 +91,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
               passwordSafe.currentProvider = createKeePassCredentialStoreUsingNewOptions()
             }
           }
-          pendingMasterPassword = null
         }
 
         else -> throw IllegalStateException("Unknown provider type: $providerType")
@@ -115,7 +116,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   private fun createKeePassCredentialStoreUsingNewOptions(): KeePassCredentialStore {
-    return KeePassCredentialStore(dbFile = getNewDbFileOrError(), masterPasswordFile = getDefaultMasterPasswordFile(), preloadedMasterPassword = pendingMasterPassword)
+    return KeePassCredentialStore(dbFile = getNewDbFileOrError(), masterKeyFile = getDefaultMasterPasswordFile())
   }
 
   private fun getNewDbFileOrError() = getNewDbFile() ?: throw ConfigurationException("KeePass database path is empty")
@@ -135,9 +136,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     else {
       getNewDbFile()?.let {
         provider.dbFile = it
-      }
-      if (pendingMasterPassword != null) {
-        provider.setMasterPassword(pendingMasterPassword!!)
       }
     }
     return true
@@ -181,7 +179,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                   }
 
                   LOG.info("Passwords cleared", Error())
-                  createKeePassFileManager()?.clear(pendingMasterPassword)
+                  createKeePassFileManager()?.clear()
                 }
 
                 override fun update(e: AnActionEvent) {
@@ -198,15 +196,19 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
               object : DumbAwareAction("Set Master Password") {
                 override fun actionPerformed(event: AnActionEvent) {
                   val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-                  val masterPassword = requestMasterPassword(contextComponent, "Set New Master Password") ?: return
+                  val masterPassword = MasterKey(requestMasterPassword(contextComponent, "Set New Master Password") ?: return)
+                  // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
                   val currentProvider = if (passwordSafe.settings.providerType == ProviderType.KEEPASS) passwordSafe.currentProvider else null
                   if (currentProvider is KeePassCredentialStore && !currentProvider.isMemoryOnly) {
                     currentProvider.setMasterPassword(masterPassword)
-                    pendingMasterPassword = null
                   }
                   else {
-                    pendingMasterPassword = masterPassword
+                    createKeePassFileManager()?.setMasterKey(masterPassword)
                   }
+                }
+
+                override fun update(e: AnActionEvent) {
+                  e.presentation.isEnabled = getNewDbFileAsString() != null
                 }
               }
             )

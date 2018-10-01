@@ -1,11 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.credentialStore
+package com.intellij.credentialStore.keePass
 
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.DB_FILE_NAME
+import com.intellij.credentialStore.KeePassCredentialStore
+import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.delete
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Rule
 import org.junit.Test
 import java.util.*
@@ -57,10 +63,10 @@ class KeePassCredentialStoreTest {
       credentialMap.put(attributes, credentials)
     }
 
-    provider.setMasterPassword("foo".toByteArray())
+    provider.setMasterKey("foo")
 
-    val dbFile = baseDir.resolve("c.kdbx")
-    val masterPasswordFile = baseDir.resolve("pdb.pwd")
+    val dbFile = baseDir.resolve(DB_FILE_NAME)
+    val masterPasswordFile = baseDir.resolve(MASTER_KEY_FILE_NAME)
 
     assertThat(dbFile).exists()
     assertThat(masterPasswordFile).exists()
@@ -78,24 +84,12 @@ class KeePassCredentialStoreTest {
     // test if no master password file
     masterPasswordFile.delete()
 
-    provider = KeePassCredentialStore(baseDirectory = baseDir)
+    assertThatThrownBy {
+      provider = KeePassCredentialStore(baseDirectory = baseDir)
+    }.isInstanceOf(IncorrectMasterPasswordException::class.java)
 
-    val oldDbFile = baseDir.resolve("old.c.kdbx")
-    assertThat(oldDbFile).exists()
-    assertThat(dbFile).doesNotExist()
-    assertThat(masterPasswordFile).doesNotExist()
-
-    for ((attributes) in credentialMap) {
-      assertThat(provider.get(attributes)).isNull()
-    }
-
-    provider = copyFileDatabase(oldDbFile, masterPasswordFile, "foo", baseDir)
-
-    assertThat(oldDbFile).exists()
     assertThat(dbFile).exists()
-    assertThat(masterPasswordFile).exists()
-
-    check()
+    assertThat(masterPasswordFile).doesNotExist()
   }
 
   @Test
@@ -113,8 +107,8 @@ class KeePassCredentialStoreTest {
 
     assertThat(baseDir).doesNotExist()
 
-    val pdbFile = baseDir.resolve("c.kdbx")
-    val pdbPwdFile = baseDir.resolve("pdb.pwd")
+    val pdbFile = baseDir.resolve(DB_FILE_NAME)
+    val pdbPwdFile = baseDir.resolve(MASTER_KEY_FILE_NAME)
 
     provider.save()
 

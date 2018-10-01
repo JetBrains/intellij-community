@@ -4,7 +4,9 @@ package com.intellij.ui.messages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.messages.*;
+import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.messages.MessagesService;
+import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +28,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChars;
 import static com.intellij.openapi.ui.Messages.*;
 
 public class MessagesServiceImpl implements MessagesService {
@@ -133,14 +136,14 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
-  public String showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator) {
+  public char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestInputImplementation().show(message, validator);
+      return getTestInputImplementation().show(message, validator).toCharArray();
     }
 
-    final InputDialog dialog = new PasswordInputDialog(parentComponent, message, title, icon, validator);
+    PasswordInputDialog dialog = new PasswordInputDialog(parentComponent, message, title, icon, validator);
     dialog.show();
-    return dialog.getInputString();
+    return dialog.getExitCode() == 0 ? getTrimmedChars(dialog.getTextField()) : null;
   }
 
   @Override
