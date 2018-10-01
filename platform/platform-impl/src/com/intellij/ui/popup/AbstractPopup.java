@@ -544,23 +544,41 @@ public class AbstractPopup implements JBPopup {
     if (targetSize == null) {
       targetSize = getSize();
     }
-    Rectangle preferredBounds = new Rectangle(preferredLocation.getScreenPoint(), targetSize);
+    Point preferredPoint = preferredLocation.getScreenPoint();
+    Point result = getLocationAboveEditorLineIfPopupIsClippedAtTheBottom(preferredPoint, targetSize, editor);
+    if (myLocateWithinScreen) {
+      Rectangle rectangle = new Rectangle(result, targetSize);
+      Rectangle screen = ScreenUtil.getScreenRectangle(preferredPoint);
+      ScreenUtil.moveToFit(rectangle, screen, null);
+      result = rectangle.getLocation();
+    }
+    return toRelativePoint(result, preferredLocation.getComponent());
+  }
+
+  @NotNull
+  private static RelativePoint toRelativePoint(@NotNull Point screenPoint, @Nullable Component component) {
+    if (component == null) {
+      return RelativePoint.fromScreen(screenPoint);
+    }
+    SwingUtilities.convertPointFromScreen(screenPoint, component);
+    return new RelativePoint(component, screenPoint);
+  }
+
+  @NotNull
+  private static Point getLocationAboveEditorLineIfPopupIsClippedAtTheBottom(@NotNull Point originalLocation,
+                                                                             @NotNull Dimension popupSize,
+                                                                             @NotNull Editor editor) {
+    Rectangle preferredBounds = new Rectangle(originalLocation, popupSize);
     Rectangle adjustedBounds = new Rectangle(preferredBounds);
     ScreenUtil.moveRectangleToFitTheScreen(adjustedBounds);
     if (preferredBounds.y - adjustedBounds.y <= 0) {
-      return preferredLocation;
+      return originalLocation;
     }
-    int adjustedY = preferredBounds.y - editor.getLineHeight() - targetSize.height;
+    int adjustedY = preferredBounds.y - editor.getLineHeight() - popupSize.height;
     if (adjustedY < 0) {
-      return preferredLocation;
+      return originalLocation;
     }
-    Point point = new Point(preferredBounds.x, adjustedY);
-    Component component = preferredLocation.getComponent();
-    if (component == null) {
-      return RelativePoint.fromScreen(point);
-    }
-    SwingUtilities.convertPointFromScreen(point, component);
-    return new RelativePoint(component, point);
+    return new Point(preferredBounds.x, adjustedY);
   }
 
   protected void addPopupListener(JBPopupListener listener) {
