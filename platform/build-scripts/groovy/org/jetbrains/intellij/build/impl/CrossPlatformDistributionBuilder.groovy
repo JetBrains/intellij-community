@@ -48,6 +48,7 @@ class CrossPlatformDistributionBuilder {
       buildContext.ant.copy(todir: "$zipDir/bin") {
         fileset(dir: "$macDistPath/bin") {
           include(name: "*.jnilib")
+          exclude(name: ".DS_Store")
         }
         mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
       }
@@ -56,7 +57,7 @@ class CrossPlatformDistributionBuilder {
       Map<String, File> macFiles = collectFilesUnder(macDistPath)
       def commonFiles = checkCommonFilesAreTheSame(linuxFiles, macFiles)
 
-      new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(zipDir, [
+      new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(zipDir, "bin", [
         new ProductInfoLaunchData(OsFamily.WINDOWS.osName, "bin/${executableName}.bat", null, "bin/win/${executableName}64.exe.vmoptions",
                                   null),
         new ProductInfoLaunchData(OsFamily.LINUX.osName, "bin/${executableName}.sh", null, "bin/linux/${executableName}64.vmoptions",

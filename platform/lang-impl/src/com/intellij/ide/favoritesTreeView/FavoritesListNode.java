@@ -39,14 +39,14 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
   private final Project myProject;
   private final String myDescription;
 
-  public FavoritesListNode(Project project, String listName, String description) {
+  public FavoritesListNode(Project project, @NotNull String listName, String description) {
     super(project, listName);
     myProject = project;
     myName = listName;
     myDescription = description;
   }
 
-  public FavoritesListNode(Project project, String listName) {
+  public FavoritesListNode(Project project, @NotNull String listName) {
     this(project, listName, null);
   }
 

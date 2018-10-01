@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -255,7 +254,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Nullable
   private static PsiElement resolveByMembersProviders(PyFile module, String name, @NotNull PyResolveContext resolveContext) {
-    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+    for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       if (!(provider instanceof PyOverridingModuleMembersProvider)) {
         final PsiElement element = provider.resolveMember(module, name, resolveContext);
         if (element != null) {
@@ -270,7 +269,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   private static PsiElement resolveByOverridingMembersProviders(@NotNull PyFile module,
                                                                 @NotNull String name,
                                                                 @NotNull PyResolveContext resolveContext) {
-    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+    for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof PyOverridingModuleMembersProvider) {
         final PsiElement element = provider.resolveMember(module, name, resolveContext);
         if (element != null) {
@@ -416,7 +415,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     final PointInImport point = ResolveImportUtil.getPointInImport(location);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
 
-    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+    for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       for (PyCustomMember member : provider.getMembers(myModule, point, typeEvalContext)) {
         final String name = member.getName();
         if (namesAlready != null) {

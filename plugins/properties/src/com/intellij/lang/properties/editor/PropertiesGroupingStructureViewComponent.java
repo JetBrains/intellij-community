@@ -29,7 +29,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   }
 
   @Override
-  protected void addGroupByActions(DefaultActionGroup result) {
+  protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
     if (getTreeModel() instanceof ResourceBundleStructureViewModel) {

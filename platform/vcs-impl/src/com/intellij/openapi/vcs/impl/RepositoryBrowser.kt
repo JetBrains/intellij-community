@@ -2,14 +2,9 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.ide.impl.ContentManagerWatcher
-import com.intellij.ide.util.treeView.AbstractTreeBuilder
-import com.intellij.ide.util.treeView.AbstractTreeStructure
-import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
-import com.intellij.openapi.fileChooser.ex.RootFileElement
-import com.intellij.openapi.fileChooser.impl.FileTreeBuilder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -35,18 +30,14 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
 import java.awt.BorderLayout
 import java.io.File
-import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
-import javax.swing.JTree
-import javax.swing.tree.DefaultTreeModel
 
 const val TOOLWINDOW_ID = "Repositories"
 
 fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, title: String) {
   val toolWindowManager = ToolWindowManager.getInstance(project)
-  val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID)
-                       ?: registerRepositoriesToolWindow(toolWindowManager)
+  val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager, project)
 
   for (content in repoToolWindow.contentManager.contents) {
     val component = content.component as? RepositoryBrowserPanel ?: continue
@@ -64,8 +55,8 @@ fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localR
   repoToolWindow.activate(null)
 }
 
-private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {
-  val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT)
+private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager, project: Project): ToolWindow {
+  val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT, project, true)
   ContentManagerWatcher(toolWindow, toolWindow.contentManager)
   return toolWindow
 }
@@ -91,18 +82,8 @@ class RepositoryBrowserPanel(
       }
     }
     fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
-      override fun createTreeBuilder(tree: JTree?,
-                                     treeModel: DefaultTreeModel?,
-                                     treeStructure: AbstractTreeStructure?,
-                                     comparator: Comparator<NodeDescriptor<Any>>?,
-                                     descriptor: FileChooserDescriptor?,
-                                     onInitialized: Runnable?): AbstractTreeBuilder {
-        return object : FileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized) {
-          override fun isAutoExpandNode(nodeDescriptor: NodeDescriptor<*>): Boolean {
-            return nodeDescriptor.element is RootFileElement
-          }
-        }
-      }
+      @Suppress("OverridingDeprecatedMember")
+      override fun useNewAsyncModel() = true
     }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles

@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

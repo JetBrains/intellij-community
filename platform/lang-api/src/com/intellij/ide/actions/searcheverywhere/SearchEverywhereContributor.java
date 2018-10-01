@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -40,6 +41,11 @@ public interface SearchEverywhereContributor<F> {
 
   default int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return 0;
+  }
+
+  @NotNull
+  default List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    return Collections.emptyList();
   }
 
   void fetchElements(@NotNull String pattern,

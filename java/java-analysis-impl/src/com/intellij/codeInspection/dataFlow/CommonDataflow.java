@@ -4,10 +4,12 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +24,11 @@ public class CommonDataflow {
    * Represents the result of dataflow applied to some code fragment (usually a method)
    */
   public static class DataflowResult {
+    private final Object VALUE_NOT_KNOWN = ObjectUtils.sentinel("VALUE_NOT_KNOWN");
+
     private final Map<PsiExpression, DfaFactMap> myFacts = new HashMap<>();
+    private final Map<PsiExpression, Object> myValues = new HashMap<>();
+    private final Map<PsiExpression, Set<Object>> myNotValues = new HashMap<>();
 
     DataflowResult copy() {
       DataflowResult copy = new DataflowResult();
@@ -31,6 +37,40 @@ public class CommonDataflow {
     }
 
     void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      addFacts(expression, memState, value);
+      addValue(expression, memState, value);
+      addNotValues(expression, memState, value);
+    }
+
+    private void addNotValues(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      // We do not store not-values for integral numbers as this functionality is covered by range fact
+      if (value instanceof DfaVariableValue && !TypeConversionUtil.isIntegralNumberType(value.getType())) {
+        Set<Object> notValues = myNotValues.get(expression);
+        if (notValues == null) {
+          Set<Object> constants = memState.getNonEqualConstants((DfaVariableValue)value);
+          myNotValues.put(expression, constants.isEmpty() ? Collections.emptySet() : constants);
+        } else if (!notValues.isEmpty()) {
+          notValues.retainAll(memState.getNonEqualConstants((DfaVariableValue)value));
+          if (notValues.isEmpty()) {
+            myNotValues.put(expression, Collections.emptySet());
+          }
+        }
+      }
+    }
+
+    private void addValue(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      Object curValue = myValues.get(expression);
+      if (curValue != VALUE_NOT_KNOWN) {
+        DfaConstValue constantValue = memState.getConstantValue(value);
+        Object newValue = constantValue == null ? null : constantValue.getValue();
+        if (newValue == null || curValue != null && !Objects.equals(curValue, newValue)) {
+          newValue = VALUE_NOT_KNOWN;
+        }
+        myValues.put(expression, newValue);
+      }
+    }
+
+    private void addFacts(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
       DfaFactMap existing = myFacts.get(expression);
       if(existing != DfaFactMap.EMPTY) {
         DfaFactMap newMap = memState.getFactMap(value);
@@ -57,7 +97,9 @@ public class CommonDataflow {
      * the dataflow implementation details.
      */
     public boolean expressionWasAnalyzed(PsiExpression expression) {
-      assert !(expression instanceof PsiParenthesizedExpression);
+      if (expression instanceof PsiParenthesizedExpression) {
+        throw new IllegalArgumentException("Should not pass parenthesized expression");
+      }
       return myFacts.containsKey(expression);
     }
 
@@ -73,6 +115,36 @@ public class CommonDataflow {
     public <T> T getExpressionFact(PsiExpression expression, DfaFactType<T> type) {
       DfaFactMap map = this.myFacts.get(expression);
       return map == null ? null : map.get(type);
+    }
+
+    /**
+     * Returns an expression value if known
+     *
+     * @param expression an expression to get its value
+     * @return a value or null if not known
+     */
+    @Nullable
+    @Contract("null -> null")
+    public Object getExpressionValue(@Nullable PsiExpression expression) {
+      return this.myValues.get(expression);
+    }
+
+    /**
+     * Returns a set of values which are known to be not equal to given expression.
+     * An empty list is returned if nothing is known.
+     *
+     * <p>
+     * This method may return nothing if {@link #getExpressionValue(PsiExpression)}
+     * returns some value (if expression value is known, it's not equal to any other value),
+     * or if expression type is an integral type (in this case use
+     * {@code getExpressionFact(expression, DfaFactType.RANGE)} which would provide more information anyway).
+     *
+     * @param expression an expression to get values not equal to.
+     * @return a set of values; empty set if nothing is known or this expression was not tracked.
+     */
+    @NotNull
+    public Set<Object> getValuesNotEqualToExpression(@Nullable PsiExpression expression) {
+      return myNotValues.getOrDefault(expression, Collections.emptySet());
     }
 
     /**

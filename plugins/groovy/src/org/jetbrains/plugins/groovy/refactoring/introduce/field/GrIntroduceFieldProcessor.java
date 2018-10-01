@@ -332,7 +332,7 @@ public class GrIntroduceFieldProcessor {
     if (block == null) return null;
     final List<PsiElement> elements = ContainerUtil.findAll(replaced, element -> PsiTreeUtil.isAncestor(block, element, true));
     if (elements.isEmpty()) return null;
-    return (GrStatement)GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
+    return (GrStatement)GrIntroduceHandlerBase.findAnchor(elements.toArray(PsiElement.EMPTY_ARRAY), block);
   }
 
   @NotNull

@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.impl.PyStringLiteralDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -625,7 +625,7 @@ public class PyStringFormatParser {
   @NotNull
   public static List<TextRange> getEscapeRanges(@NotNull String s) {
     final List<TextRange> ranges = new ArrayList<>();
-    Matcher matcher = PyStringLiteralExpressionImpl.PATTERN_ESCAPE.matcher(s);
+    Matcher matcher = PyStringLiteralDecoder.PATTERN_ESCAPE.matcher(s);
     while (matcher.find()) {
       ranges.add(TextRange.create(matcher.start(), matcher.end()));
     }

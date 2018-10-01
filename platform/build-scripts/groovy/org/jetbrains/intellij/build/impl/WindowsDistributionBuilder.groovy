@@ -119,7 +119,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
       generateProductJson(productJsonDir, jreDirectoryPath64 != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, [winDistPath, jreDirectoryPath64], [])
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir)
     }
   }
@@ -253,6 +253,6 @@ IDS_VM_OPTIONS=$vmOptions
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
     def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
+      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

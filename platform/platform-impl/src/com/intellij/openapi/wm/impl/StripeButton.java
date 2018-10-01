@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -34,8 +33,6 @@ import java.awt.image.BufferedImage;
  * @author Vladimir Kondratyev
  */
 public final class StripeButton extends AnchoredButton implements ActionListener, Disposable {
-  private final Color ourBackgroundColor = new Color(247, 243, 239);
-
   /**
    * This is analog of Swing mnemomic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
@@ -92,9 +89,8 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   private void init() {
     setFocusable(false);
-    setBackground(ourBackgroundColor);
-    final Border border = JBUI.Borders.empty(5, 5, 0, 5);
-    setBorder(border);
+
+    setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     updatePresentation();
     apply(myDecorator.getWindowInfo());
     addActionListener(this);

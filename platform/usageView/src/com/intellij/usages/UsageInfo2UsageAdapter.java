@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -68,13 +67,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     ReadAction.compute(() -> {
       PsiElement element = getElement();
       PsiFile psiFile = usageInfo.getFile();
-      Document document = psiFile == null || psiFile instanceof PsiCompiledElement ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+      boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
+      Document document = isNullOrBinary
+                          ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
 
       int offset;
       int lineNumber;
       if (document == null) {
         // element over light virtual file
-        offset = element == null || element instanceof PsiCompiledElement ? 0 : element.getTextOffset();
+        offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
         lineNumber = -1;
       }
       else {
@@ -104,8 +105,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @NotNull
   private TextChunk[] initChunks() {
     TextChunk[] chunks;
+    VirtualFile file = getFile();
+    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+
     PsiElement element = getElement();
-    if (element instanceof PsiCompiledElement) {
+    if (element != null && isNullOrBinary) {
       EditorColorsScheme scheme = UsageTreeColorsScheme.getInstance().getScheme();
       chunks = new TextChunk[]{
         new TextChunk(scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME), clsType(element)),
@@ -310,7 +314,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (virtualFile == null) return null;
 
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
-    if (psiFile instanceof PsiCompiledElement || fileIndex.isInLibrarySource(virtualFile)) {
+    if (virtualFile.getFileType().isBinary() || fileIndex.isInLibrarySource(virtualFile)) {
       List<OrderEntry> orders = fileIndex.getOrderEntriesForFile(virtualFile);
       for (OrderEntry order : orders) {
         if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
@@ -336,7 +340,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     VirtualFile sourcesRoot = fileIndex.getSourceRootForFile(virtualFile);
     if (sourcesRoot != null) {
       List<SyntheticLibrary> list = new ArrayList<>();
-      for (AdditionalLibraryRootsProvider e : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
           if (library.getSourceRoots().contains(sourcesRoot)) {
             Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();
@@ -493,7 +497,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @NotNull
   public String getPlainText() {
     final PsiElement element = getElement();
-    if (element instanceof PsiCompiledElement) {
+    VirtualFile file = getFile();
+    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    if (element != null && isNullOrBinary) {
       return clsType(element) + " " + clsName(element);
     }
     int startOffset;

@@ -17,11 +17,14 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBranchesFetcher
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 import javax.swing.JComponent
 
@@ -31,6 +34,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val requestExecutorManager: GithubApiRequestExecutorManager,
                                          private val git: Git,
                                          private val uiSettings: GithubPullRequestsUISettings,
+                                         private val avatarLoader: CachingGithubUserAvatarLoader,
+                                         private val imageResizer: GithubImageResizer,
                                          private val actionManager: ActionManager,
                                          private val autoPopupController: AutoPopupController) {
 
@@ -41,16 +46,21 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val listLoader = GithubPullRequestsLoader(progressManager, requestExecutorHolder,
                                               account.server, repoPath)
     val selectionModel = GithubPullRequestsListSelectionModel()
-    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, selectionModel, listLoader)
+    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
+                                               selectionModel, listLoader,
+                                               CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutorHolder))
 
     val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, selectionModel)
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
 
-    val preview = GithubPullRequestPreviewComponent(project, detailsLoader, changesLoader, actionManager, uiSettings)
+    val changes = GithubPullRequestChangesComponent(project, changesLoader, actionManager)
+    val details = GithubPullRequestDetailsComponent(project, detailsLoader)
+
+    val preview = GithubPullRequestPreviewComponent(uiSettings, changes, details)
     list.setToolbarHeightReferent(preview.toolbarComponent)
 
-    val splitter = OnePixelSplitter("Github.PullRequests.Component", 0.7f)
+    val splitter = OnePixelSplitter("Github.PullRequests.Component", 0.6f)
     splitter.firstComponent = list
     splitter.secondComponent = preview
 
@@ -67,6 +77,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
 
       Disposer.dispose(requestExecutorHolder)
     })
+    changes.diffAction.registerCustomShortcutSet(wrapper, wrapper)
     return wrapper
   }
 

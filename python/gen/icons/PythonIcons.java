@@ -9,34 +9,34 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public class PythonIcons {
+public final class PythonIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, PythonIcons.class);
   }
 
 
-  public static class Cython {
+  public final static class Cython {
     public static final Icon CythonFile = load("/icons/com/jetbrains/cython/cythonFile.png"); // 16x16
 
   }
 
-  public static class Pyqt {
+  public final static class Pyqt {
     public static final Icon TsFile = load("/icons/com/jetbrains/pyqt/tsFile.png"); // 16x16
     public static final Icon UiForm = load("/icons/com/jetbrains/pyqt/uiForm.png"); // 16x16
 
   }
 
-  public static class Python {
+  public final static class Python {
     public static final Icon Anaconda = load("/icons/com/jetbrains/python/anaconda.png"); // 16x16
 
-    public static class Buildout {
+    public final static class Buildout {
       public static final Icon Buildout = load("/icons/com/jetbrains/python/buildout/buildout.png"); // 16x16
 
     }
     public static final Icon Condaenv = load("/icons/com/jetbrains/python/condaenv.png"); // 16x16
     public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.svg"); // 13x13
 
-    public static class Debug {
+    public final static class Debug {
       public static final Icon CommandLine = load("/icons/com/jetbrains/python/debug/commandLine.png"); // 16x16
       public static final Icon SpecialVar = load("/icons/com/jetbrains/python/debug/specialVar.png"); // 16x16
       public static final Icon StepIntoMyCode = load("/icons/com/jetbrains/python/debug/StepIntoMyCode.svg"); // 16x16
@@ -48,7 +48,7 @@ public class PythonIcons {
     public static final Icon IpythonNotebook = load("/icons/com/jetbrains/python/IpythonNotebook.png"); // 16x16
     public static final Icon Jython = load("/icons/com/jetbrains/python/jython.png"); // 16x16
 
-    public static class Nodes {
+    public final static class Nodes {
       public static final Icon Cyan_dot = load("/icons/com/jetbrains/python/nodes/cyan-dot.png"); // 16x16
       public static final Icon Lock = load("/icons/com/jetbrains/python/nodes/lock.png"); // 16x16
       public static final Icon Red_inv_triangle = load("/icons/com/jetbrains/python/nodes/red-inv-triangle.png"); // 16x16

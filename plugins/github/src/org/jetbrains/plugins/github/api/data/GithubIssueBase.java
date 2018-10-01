@@ -103,7 +103,7 @@ public abstract class GithubIssueBase {
   private String url;
   private String repositoryUrl;
   private String labelsUrl;
-  private String commentsUrl;
+  @Mandatory private String commentsUrl;
   private String eventsUrl;
   @Mandatory private String htmlUrl;
   private Long id;
@@ -111,10 +111,11 @@ public abstract class GithubIssueBase {
   @Mandatory private Long number;
   @Mandatory private String title;
   @Mandatory private GithubUser user;
+  @Mandatory private List<GithubIssueLabel> labels;
   @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private GithubUser assignee;
-  private List<GithubUser> assignees;
+  @Mandatory private List<GithubUser> assignees;
   //private ??? milestone;
   private Long comments;
   @Mandatory private Date createdAt;
@@ -122,6 +123,11 @@ public abstract class GithubIssueBase {
   private Date closedAt;
   private String authorAssociation;
   private String body;
+
+  @NotNull
+  public String getCommentsUrl() {
+    return commentsUrl;
+  }
 
   @NotNull
   public String getHtmlUrl() {
@@ -143,6 +149,11 @@ public abstract class GithubIssueBase {
   }
 
   @NotNull
+  public List<GithubIssueLabel> getLabels() {
+    return labels;
+  }
+
+  @NotNull
   public String getBody() {
     return StringUtil.notNullize(body);
   }
@@ -155,6 +166,11 @@ public abstract class GithubIssueBase {
   @Nullable
   public GithubUser getAssignee() {
     return assignee;
+  }
+
+  @NotNull
+  public List<GithubUser> getAssignees() {
+    return assignees;
   }
 
   @Nullable

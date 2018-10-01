@@ -12,11 +12,14 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
@@ -62,6 +65,9 @@ public class SearchPopup implements CaretListener {
     if (callback instanceof SearchPopupCallback) {
       this.callback = (SearchPopupCallback)callback;
     }
+
+    Insets ipad = renderer.getIpad();
+    ipad.left = ipad.right = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 5 : UIUtil.getListCellHPadding());
 
     myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list = new JBList<>(model))
       .setMovable(false).setResizable(false).setRequestFocus(false)

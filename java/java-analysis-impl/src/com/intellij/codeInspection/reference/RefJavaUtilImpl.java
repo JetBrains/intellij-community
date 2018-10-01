@@ -41,6 +41,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       if (element == null) continue;
       element.accept(new AbstractUastVisitor() {
                        @Override
+                       public boolean visitEnumConstant(@NotNull UEnumConstant node) {
+                         processNewLikeConstruct(node.resolve(), node.getValueArguments());
+                         return false;
+                       }
+
+                       @Override
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
@@ -76,6 +82,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              }
                            });
                          }
+                       }
+
+                       @Override
+                       public boolean visitVariable(@NotNull UVariable node) {
+                         visitTypeRefs(node.getType());
+                         return false;
                        }
 
                        @Override
@@ -185,6 +197,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        private void visitReferenceExpression(UExpression node) {
+                         UElement uastParent = node.getUastParent();
+                         if (uastParent instanceof UQualifiedReferenceExpression && ((UQualifiedReferenceExpression)uastParent).getSelector() == node) {
+                           return;
+                         }
                          PsiElement psiResolved = null;
                          if (node instanceof UResolvable) {
                            psiResolved = ((UResolvable)node).resolve();
@@ -284,7 +300,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                                           final UDeclaration from,
                                                           boolean defaultConstructorOnly) {
                          if (psiClass != null) {
-                           RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass.getNavigationElement());
+                           RefClassImpl refClass = ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;
@@ -667,7 +683,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     UElement parent = skipParenthesises(expression);
     return !(parent instanceof UBinaryExpression) ||
            !(((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator) ||
-           UastUtils.isChildOf(((UBinaryExpression)parent).getRightOperand(), expression, false);
+           UastUtils.isUastChildOf(((UBinaryExpression)parent).getRightOperand(), expression, false);
   }
 
   private static boolean isOnAssignmentLeftHand(@NotNull UElement expression) {
@@ -675,7 +691,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     if (parent == null) return false;
     return parent instanceof UBinaryExpression
            && ((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator
-           && UastUtils.isChildOf(expression, ((UBinaryExpression)parent).getLeftOperand(), false);
+           && UastUtils.isUastChildOf(expression, ((UBinaryExpression)parent).getLeftOperand(), false);
   }
 
   private static UElement skipParenthesises(@NotNull UElement expression) {

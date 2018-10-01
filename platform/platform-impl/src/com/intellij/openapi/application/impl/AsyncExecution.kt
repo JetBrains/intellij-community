@@ -3,17 +3,20 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.EmptyCoroutineContext
 
 /**
  * @author eldar
  */
 interface AsyncExecution<E : AsyncExecution<E>> {
   /**
-   * Creates a new [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
+   * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
+   * Contains: [ContinuationInterceptor] + [CoroutineExceptionHandler] + [CoroutineName].
    */
-  fun createJobContext(context: CoroutineContext = EmptyCoroutineContext, parent: Job? = null): CoroutineContext
+  fun coroutineDispatchingContext(): CoroutineContext
+
+  fun shutdown(cause: Throwable? = null)
 
   fun withConstraint(constraint: ContextConstraint): E
   fun expireWith(parentDisposable: Disposable): E

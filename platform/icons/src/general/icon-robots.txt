@@ -76,6 +76,7 @@ deprecated: recursive.png -> /actions/showAsTree.svg; to be removed in IDEA 2020
 deprecated: run.png -> /runConfigurations/testState/run.png; to be removed in IDEA 2020 - use AllIcons.RunConfigurations.TestState.Run
 deprecated: searchEverywhereGear.png; to be removed in IDEA 2020
 deprecated: secondaryGroup.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
+deprecated: show_to_override.png; to be removed in IDEA 2020
 deprecated: smallConfigurableVcs.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
 deprecated: splitCenterH.png -> /general/arrowSplitCenterH.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterH
 deprecated: splitCenterV.png -> /general/arrowSplitCenterV.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterV

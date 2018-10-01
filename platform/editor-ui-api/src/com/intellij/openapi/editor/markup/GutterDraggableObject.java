@@ -53,7 +53,7 @@ public interface GutterDraggableObject {
    */
   Cursor getCursor(int line, int actionId);
 
-  default void remove() {};
+  default void remove() {}
 
-  static DataFlavor[] getFlavors() {return new DataFlavor[] {flavor};};
+  static DataFlavor[] getFlavors() {return new DataFlavor[] {flavor};}
 }

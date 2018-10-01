@@ -3,6 +3,7 @@ package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -164,4 +165,4 @@ class ChangesBuilder {
 }
 
 private val ContentRevision?.relativePath: String
-  get() = FileUtil.getRelativePath(Executor.ourCurrentDir().path!!, this!!.file.path, '/')!!
+  get() = FileUtil.getRelativePath(Executor.ourCurrentDir().systemIndependentPath, this!!.file.path, '/')!!

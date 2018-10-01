@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -51,7 +52,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "==");
     }
 
     @Override
@@ -76,10 +77,13 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (expression.getRExpression() == null || !(expression.getLExpression() instanceof PsiReferenceExpression)) {
+      if (expression.getRExpression() == null ||
+          expression.getOperationTokenType() != JavaTokenType.EQ ||
+          !PsiType.BOOLEAN.equals(expression.getType())) {
         return;
       }
-      if (!PsiType.BOOLEAN.equals(expression.getType())) {
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
+      if (!(lhs instanceof PsiReferenceExpression)) {
         return;
       }
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());

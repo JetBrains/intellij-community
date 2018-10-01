@@ -505,6 +505,11 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 
+Function .onInstSuccess
+  SetErrorLevel 0
+FunctionEnd
+
+
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
@@ -533,7 +538,7 @@ uac_err:
 uac_elevation_aborted:
   IfSilent done set_install_dir
 set_install_dir:
-  StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
   goto done
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
@@ -565,7 +570,7 @@ check_if_install_dir_contains_PROGRAMFILES64:
     ${StrLoc} $0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
     StrCmp $0 "" done update_install_dir
 update_install_dir:
-    StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
   ${EndIf}
 done:
   pop $0
@@ -904,6 +909,52 @@ createRegistration:
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
+
+; add "Open with PRODUCT" action for files to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Edit with ${MUI_PRODUCT}"
+  call OMWriteRegStr
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
+; add "Open with PRODUCT" action for folders to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
 FunctionEnd
 
 Function ProductAssociation
@@ -1133,10 +1184,10 @@ skip_ipr:
   ; Regenerating the Shared Archives for java x64 and x86 bit.
   ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
   IfFileExists $INSTDIR\jre32\bin\javaw.exe 0 java64
-  ExecWait "$INSTDIR\jre32\bin\javaw.exe -Xshare:dump"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre32\bin\javaw.exe" -Xshare:dump'
 java64:
   IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
-  ExecWait "$INSTDIR\jre64\bin\javaw.exe -Xshare:dump"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre64\bin\javaw.exe" -Xshare:dump'
 
 skip_regeneration_shared_archive_for_java_64:
   SetOutPath $INSTDIR\bin
@@ -1194,6 +1245,11 @@ Done:
 FunctionEnd
 
 
+Function un.onUninstSuccess
+  SetErrorLevel 0
+FunctionEnd
+
+
 Function un.onInit
   SetRegView 32
   Call un.getRegKey
@@ -1207,13 +1263,13 @@ required_admin_perm:
 
 uninstall_location:
   ;check if the uninstallation is running from the product location
-  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
+  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
 
 copy_uninstall:
   ;do copy for unistall.exe
-  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
-  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   Quit
 
 UAC_Elevate:
@@ -1519,7 +1575,6 @@ skip_delete_settings:
 
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
-  Delete "$INSTDIR\jre32\bin\client\classes.jsa"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
 
   Push "Complete"
@@ -1533,6 +1588,12 @@ skip_delete_settings:
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
+  IfFileExists "$INSTDIR\jre32\*.*" 0 no_jre32
+    Delete "$INSTDIR\jre32\bin\server\classes.jsa"
+    StrCpy $0 "$INSTDIR\jre32\lib\applet"
+    Call un.DeleteDirIfEmpty
+    !include "un_jre32_win.nsh"
+no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR"
   Call un.DeleteDirIfEmpty
@@ -1548,6 +1609,17 @@ desktop_shortcut_launcher64:
     Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
   StrCpy $5 "Software\${MANUFACTURER}"
   StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
   push "${ASSOCIATION}"

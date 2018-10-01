@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.List;
 
 public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretImpl");
@@ -540,10 +539,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public void moveToVisualPosition(@NotNull final VisualPosition pos) {
-    myEditor.getCaretModel().doWithCaretMerging(() -> moveToVisualPosition(pos, true));
+    moveToVisualPosition(pos, true);
   }
 
-  void moveToVisualPosition(@NotNull VisualPosition pos, boolean fireListeners) {
+  private void moveToVisualPosition(@NotNull final VisualPosition pos, boolean fireListeners) {
+    myEditor.getCaretModel().doWithCaretMerging(() -> doMoveToVisualPosition(pos, fireListeners));
+  }
+
+  void doMoveToVisualPosition(@NotNull VisualPosition pos, boolean fireListeners) {
     assertIsDispatchThread();
     validateCallContext();
     if (mySkipChangeRequests) {
@@ -727,7 +730,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     int currentOffset = getOffset();
     if (offset == currentOffset) {
       VisualPosition pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
-      moveToVisualPosition(pos);
+      moveToVisualPosition(pos, false);
     }
     else {
       updateVisualPosition();

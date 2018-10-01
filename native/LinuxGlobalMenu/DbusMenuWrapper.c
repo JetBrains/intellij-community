@@ -3,6 +3,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+
 #include <gio/gio.h>
 #include <libdbusmenu-glib/server.h>
 
@@ -398,6 +401,36 @@ void setItemIcon(DbusmenuMenuitem *item, const char *iconBytesPng, int iconBytes
 //    _logmsg(LOG_LEVEL_INFO, "\tset %d icon bytes for item %s", iconBytesCount, _getItemLabel(item));
 //  else
 //    _logmsg(LOG_LEVEL_ERROR, "\tcan't set %d icon bytes for item %s", iconBytesCount, _getItemLabel(item));
+}
+
+void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode) {
+  GVariantBuilder builder;
+  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
+  if ((jmodifiers & JMOD_SHIFT) != 0)
+    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
+  if ((jmodifiers & JMOD_CTRL) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
+  if ((jmodifiers & JMOD_ALT) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
+  if ((jmodifiers & JMOD_META) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
+
+  char* xname = XKeysymToString(jkeycode);
+  if (xname == NULL) {
+    _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for jkeycode=%d", jkeycode);
+    return;
+  }
+
+  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for jkeycode=%d", xname, jkeycode);
+
+  g_variant_builder_add(&builder, "s", xname);
+
+  GVariant *insideArr = g_variant_builder_end(&builder);
+  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
+  g_variant_builder_add_value(&builder, insideArr);
+
+  GVariant *outsideArr = g_variant_builder_end(&builder);
+  dbusmenu_menuitem_property_set_variant(item, DBUSMENU_MENUITEM_PROP_SHORTCUT, outsideArr);
 }
 
 static gboolean _execJRunnable(gpointer user_data) {

@@ -1577,12 +1577,15 @@ public class StringUtil extends StringUtilRt {
     return formatDuration(duration, " ");
   }
 
+  private static final String[] TIME_UNITS = {"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"};
+  private static final long[] TIME_MULTIPLIERS = {1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000};
+
   /** Formats given duration as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    String[] units = {"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"};
-    long[] multipliers = {1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000};
+    String[] units = TIME_UNITS;
+    long[] multipliers = TIME_MULTIPLIERS;
 
     StringBuilder sb = new StringBuilder();
     long count = duration, remainder;

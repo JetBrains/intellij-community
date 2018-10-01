@@ -75,7 +75,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       getModules(),
       module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
                 StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
-    return ContainerUtil.toArray(modules, new Module[modules.size()]);
+    return modules.toArray(Module.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -198,7 +198,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
         if (((LibraryOrderEntry)entry).isModuleLevel() && libraryDependencyData.getLevel() != LibraryLevel.MODULE) continue;
         if (isEmpty(((LibraryOrderEntry)entry).getLibraryName())) {
           final Set<String> paths = ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
-                                                          path -> PathUtil.getLocalPath(path));
+                                                          PathUtil::getLocalPath);
           final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
                                                                s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
           if (entryPaths.equals(paths) && ((LibraryOrderEntry)entry).getScope() == data.getScope()) return entry;
@@ -292,7 +292,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
         // do not add prefix which was already included into the name (e.g. as a result of deduplication on the external system side)
         boolean isAlreadyIncluded = false;
-        if (duplicateCandidate.length() > 0) {
+        if (!duplicateCandidate.isEmpty()) {
           if (duplicateCandidate.equals(part) ||
               duplicateCandidate.endsWith(myDelimiter + part) ||
               duplicateCandidate.endsWith('_' + part)) {

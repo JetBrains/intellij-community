@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,7 +53,7 @@ public class ShowColorPickerAction extends DumbAwareAction {
   private static Window parent() {
     Window activeWindow = null;
     for (Window w : Window.getWindows()) {
-      if (w.isActive()) {activeWindow = w;};
+      if (w.isActive()) {activeWindow = w;}
     }
     return activeWindow;
   }

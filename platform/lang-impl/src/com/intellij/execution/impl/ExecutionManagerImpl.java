@@ -270,7 +270,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
 
     final RunConfiguration runConfiguration = (RunConfiguration)profile;
-    final List<BeforeRunTask> beforeRunTasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(runConfiguration);
+    final List<BeforeRunTask<?>> beforeRunTasks = RunManagerImplKt.doGetBeforeRunTasks(runConfiguration);
     if (beforeRunTasks.isEmpty()) {
       startRunnable.run();
     }

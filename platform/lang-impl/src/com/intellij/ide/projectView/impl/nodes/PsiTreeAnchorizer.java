@@ -36,7 +36,7 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
       PsiElement psi = (PsiElement)element;
       return ReadAction.compute(() -> {
         if (!psi.isValid()) return psi;
-        return new SmartPointerWrapper(SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi));
+        return SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi);
       });
     }
     return super.createAnchor(element);
@@ -44,8 +44,8 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   @Override
   @Nullable
   public Object retrieveElement(@NotNull final Object pointer) {
-    if (pointer instanceof SmartPointerWrapper) {
-      return ReadAction.compute(() -> ((SmartPointerWrapper)pointer).myPointer.getElement());
+    if (pointer instanceof SmartPsiElementPointer) {
+      return ReadAction.compute(() -> ((SmartPsiElementPointer)pointer).getElement());
     }
 
     return super.retrieveElement(pointer);
@@ -53,39 +53,14 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
 
   @Override
   public void freeAnchor(final Object element) {
-    if (element instanceof SmartPointerWrapper) {
+    if (element instanceof SmartPsiElementPointer) {
       ApplicationManager.getApplication().runReadAction(() -> {
-        SmartPsiElementPointer pointer = ((SmartPointerWrapper)element).myPointer;
+        SmartPsiElementPointer pointer = (SmartPsiElementPointer)element;
         Project project = pointer.getProject();
         if (!project.isDisposed()) {
           SmartPointerManager.getInstance(project).removePointer(pointer);
         }
       });
-    }
-  }
-
-  private static class SmartPointerWrapper {
-    private final SmartPsiElementPointer myPointer;
-
-    private SmartPointerWrapper(@NotNull SmartPsiElementPointer pointer) {
-      myPointer = pointer;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof SmartPointerWrapper)) return false;
-
-      SmartPointerWrapper wrapper = (SmartPointerWrapper)o;
-
-      if (!myPointer.equals(wrapper.myPointer)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myPointer.hashCode();
     }
   }
 }

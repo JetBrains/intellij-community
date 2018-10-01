@@ -1,11 +1,11 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.rules.InMemoryFsRule
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -17,17 +17,15 @@ class PasswordSafeTest {
     val projectRule = ApplicationRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
-
-  @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager)
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   @Test
   fun `erase password - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    doErasePassword(PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath())))
+    doErasePassword(PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))))
   }
 
   @Test
@@ -58,7 +56,7 @@ class PasswordSafeTest {
   fun `null username - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    doNullUsername(PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath())))
+    doNullUsername(PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))))
   }
 
   @Test
@@ -88,7 +86,7 @@ class PasswordSafeTest {
   fun `overwrite credentials - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath()))
+    val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/")))
 
     val booleans = booleanArrayOf(true, false)
     for (old in booleans) {
@@ -100,10 +98,10 @@ class PasswordSafeTest {
     }
   }
 
-  fun checkCredentialsRewritten(passwordSafe: PasswordSafe,
-                                isMemoryOnlyOld: Boolean,
-                                isMemoryOnlyNew: Boolean,
-                                rewriteWithNull: Boolean) {
+  private fun checkCredentialsRewritten(passwordSafe: PasswordSafe,
+                                        isMemoryOnlyOld: Boolean,
+                                        isMemoryOnlyNew: Boolean,
+                                        rewriteWithNull: Boolean) {
     val id = "test checkCredentialsRewritten $isMemoryOnlyOld $isMemoryOnlyNew $rewriteWithNull"
     val attributesMemoryOnly = CredentialAttributes(id, null, null, true)
     val attributesSaved = CredentialAttributes(id, null, null, false)
@@ -147,7 +145,7 @@ class PasswordSafeTest {
   fun `credentials with empty username - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = tempDirManager.newPath()))
+    val ps = PasswordSafeImpl(settings, KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/")))
 
     val id = "test PasswordSafeTest.credentials with empty username"
     val attributes = CredentialAttributes(id, isPasswordMemoryOnly = true)

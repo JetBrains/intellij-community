@@ -82,7 +82,6 @@
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
-  <action id="RunGc"/>
   <action id="RunClass"/>
 
   <action id="GotoBookmark0">

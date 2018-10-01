@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Pair;
@@ -14,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -164,25 +167,32 @@ class MultithreadSearcher implements SESearcher {
     public void run() {
       LOG.debug("Search task started for contributor ", myContributor);
       try {
-        myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, myIndicator,
-                                    element -> {
-                                      try {
-                                        int priority = myContributor.getElementPriority(element, myPattern);
-                                        boolean added = myAccumulator.addElement(element, myContributor, priority);
-                                        if (!added) {
-                                          myAccumulator.setContributorHasMore(myContributor, true);
-                                        }
-                                        return added;
-                                      }
-                                      catch (InterruptedException e) {
-                                        LOG.warn("Search task was interrupted");
-                                        return false;
-                                      }
-                                    });
+        boolean repeat = false;
+        do {
+          ProgressIndicator wrapperIndicator = new SensitiveProgressWrapper(myIndicator);
+          try {
+            myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, wrapperIndicator,
+                                        element -> {
+                                          try {
+                                            int priority = myContributor.getElementPriority(element, myPattern);
+                                            boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
+                                            if (!added) {
+                                              myAccumulator.setContributorHasMore(myContributor, true);
+                                            }
+                                            return added;
+                                          }
+                                          catch (InterruptedException e) {
+                                            LOG.warn("Search task was interrupted");
+                                            return false;
+                                          }
+                                        });
+          } catch (ProcessCanceledException pce) {}
+          repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();
+        } while (repeat);
+
         if (myIndicator.isCanceled()) {
           return;
         }
-
         myAccumulator.contributorFinished(myContributor);
       } finally {
         finishCallback.run();
@@ -214,7 +224,7 @@ class MultithreadSearcher implements SESearcher {
       return res;
     }
 
-    public abstract boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority) throws InterruptedException;
+    public abstract boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException;
     public abstract void contributorFinished(SearchEverywhereContributor<?> contributor);
     public abstract void setContributorHasMore(SearchEverywhereContributor<?> contributor, boolean hasMore);
   }
@@ -232,7 +242,7 @@ class MultithreadSearcher implements SESearcher {
     }
 
     @Override
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority) {
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) {
       assert contributor == myExpandedContributor; // Only expanded contributor items allowed
 
       Collection<ElementInfo> section = sections.get(contributor);
@@ -297,7 +307,7 @@ class MultithreadSearcher implements SESearcher {
     }
 
     @Override
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority) throws InterruptedException {
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
       ElementInfo newElementInfo = new ElementInfo(element, priority, contributor);
       Condition condition = conditionsMap.get(contributor);
       Collection<ElementInfo> section = sections.get(contributor);
@@ -306,7 +316,8 @@ class MultithreadSearcher implements SESearcher {
       lock.lock();
       try {
         while (section.size() >= limit && !mySearchFinished) {
-          condition.await();
+          indicator.checkCanceled();
+          condition.await(100, TimeUnit.MILLISECONDS);
         }
 
         if (mySearchFinished) {

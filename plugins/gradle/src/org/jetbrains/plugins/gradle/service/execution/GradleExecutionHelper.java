@@ -519,7 +519,7 @@ public class GradleExecutionHelper {
     Iterator<String> it = args.iterator();
     while (it.hasNext()) {
       final String next = it.next();
-      if ("--tests".equals(next)) {
+      if (GradleConstants.TESTS_ARG_NAME.equals(next)) {
         it.remove();
         if (it.hasNext()) {
           testIncludePatterns.add(it.next());

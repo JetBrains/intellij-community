@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.arrangement.match.*;
@@ -37,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.MODIFIER_AS_TYPE;
 
 /**
  * @author Denis Zhdanov
@@ -77,7 +62,7 @@ public class ArrangementUtil {
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
     return rearranger == null ? null : rearranger.getSerializer();
   }
-  
+
   //endregion
 
   @NotNull
@@ -139,7 +124,7 @@ public class ArrangementUtil {
    *     void test1(){} void test2() {} int i;
    *   }
    * </pre>
-   * 
+   *
    * @param initialRange  anchor range
    * @param document      target document against which the ranges are built
    * @return              expanded range if possible; {@code null} otherwise
@@ -148,7 +133,7 @@ public class ArrangementUtil {
   public static TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {
     CharSequence text = document.getCharsSequence();
     String ws = " \t";
-    
+
     int startLine = document.getLineNumber(initialRange.getStartOffset());
     int lineStartOffset = document.getLineStartOffset(startLine);
     int i = CharArrayUtil.shiftBackward(text, lineStartOffset + 1, initialRange.getStartOffset() - 1, ws);
@@ -159,11 +144,11 @@ public class ArrangementUtil {
     int endLine = document.getLineNumber(initialRange.getEndOffset());
     int lineEndOffset = document.getLineEndOffset(endLine);
     i = CharArrayUtil.shiftForward(text, initialRange.getEndOffset(), lineEndOffset, ws);
-    
+
     return i == lineEndOffset ? TextRange.create(lineStartOffset, lineEndOffset) : initialRange;
   }
   //endregion
-  
+
   @Nullable
   public static ArrangementSettingsToken parseType(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
     final Ref<ArrangementSettingsToken> result = new Ref<>();
@@ -183,7 +168,7 @@ public class ArrangementUtil {
           if (result.get() != null) {
             return;
           }
-        } 
+        }
       }
     });
 
@@ -209,7 +194,7 @@ public class ArrangementUtil {
         ArrangementSettingsToken type = condition.getType();
         Object value = condition.getValue();
         result.put(condition.getType(), type.equals(value) ? null : value);
-        
+
         if (type instanceof CompositeArrangementToken) {
           Set<ArrangementSettingsToken> tokens = ((CompositeArrangementToken)type).getAdditionalTokens();
           for (ArrangementSettingsToken token : tokens) {
@@ -222,7 +207,7 @@ public class ArrangementUtil {
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         for (ArrangementMatchCondition operand : condition.getOperands()) {
           operand.invite(this);
-        } 
+        }
       }
     });
     return result;
@@ -244,7 +229,7 @@ public class ArrangementUtil {
         }
         else {
           composites.peek().addMatcher(matcher);
-        } 
+        }
       }
 
       @Override
@@ -293,7 +278,7 @@ public class ArrangementUtil {
                                                         @NotNull ArrangementStandardSettingsManager settingsManager)
     throws IllegalArgumentException
   {
-    for (ArrangementUiComponent.Factory factory : Extensions.getExtensions(ArrangementUiComponent.Factory.EP_NAME)) {
+    for (ArrangementUiComponent.Factory factory : ArrangementUiComponent.Factory.EP_NAME.getExtensionList()) {
       ArrangementUiComponent result = factory.build(role, tokens, colorsProvider, settingsManager);
       if (result != null) {
         return result;

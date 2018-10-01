@@ -20,8 +20,7 @@ class RunConfigurationScenarios(val testCase: GuiTestCase) : TestUtilsClass(test
 
 val GuiTestCase.runConfigScenarios by RunConfigurationScenarios
 
-fun RunConfigurationScenarios.openRunConfiguration(vararg configuration: String) {
-  val configurationName = configuration.last()
+fun RunConfigurationScenarios.openRunConfiguration(configurationName: String) {
   with(guiTestCase) {
     ideFrame {
       logTestStep("Going to check presence of run/debug configuration `$configurationName`")
@@ -43,7 +42,7 @@ fun RunConfigurationScenarios.checkRunConfiguration(
   expectedValues: Map<RunConfigurationModel.ConfigurationField, String>,
   vararg configuration: String) {
   with(guiTestCase) {
-    openRunConfiguration(*configuration)
+    openRunConfiguration(configuration.last())
     runConfigModel.checkConfigurationExistsAndSelect(*configuration)
     for ((field, expectedValue) in expectedValues) {
       runConfigModel.checkOneValue(field, expectedValue)
@@ -56,7 +55,7 @@ fun RunConfigurationScenarios.changeRunConfiguration(
   changedValues: Map<RunConfigurationModel.ConfigurationField, String>,
   vararg configuration: String) {
   with(guiTestCase) {
-    openRunConfiguration(*configuration)
+    openRunConfiguration(configuration.last())
     runConfigModel.checkConfigurationExistsAndSelect(*configuration)
     for ((field, changedValue) in changedValues) {
       runConfigModel.changeOneValue(field, changedValue)

@@ -54,7 +54,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setSelectedConfiguration(configuration);
     }
 
-    ExecutionUtil.runConfiguration(configuration, myExecutor);
+    ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, context.getDataContext());
   }
 
   @Override

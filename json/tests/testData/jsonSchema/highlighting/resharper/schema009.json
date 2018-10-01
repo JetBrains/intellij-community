@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "a": {
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        },
+        {
+          "type":  "boolean"
+        }
+      ]      
+
+    }
+  }
+}
+

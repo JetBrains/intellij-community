@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -65,14 +64,24 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getThrownExceptions(@NotNull PsiElement element) {
     List<PsiClassType> result = new ArrayList<>();
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      @Override
+      public void visitElement(PsiElement psiElement) {
+        if (psiElement != element) {
+          PsiElement parent = psiElement.getParent();
+          // do not process any anonymous class children except its getArgumentList()
+          //if the visitor was not called from inside anonymous class
+          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
+            return;
+          }
+        }
+        super.visitElement(psiElement);
+      }
+
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
-        final PsiExpressionList argumentList = aClass.getArgumentList();
-        if (argumentList != null){
-          super.visitExpressionList(argumentList);
-        }
-        super.visitAnonymousClass(aClass);
+        // process anonymous getArgumentList()
+        visitElement(aClass);
       }
 
       @Override
@@ -128,7 +137,8 @@ public class ExceptionUtil {
         addExceptions(result, getTryExceptions(statement));
         // do not call super: try exception goes into try body recursively
       }
-    });
+    }
+    element.accept(new Visitor());
     return result;
   }
 
@@ -737,7 +747,7 @@ public class ExceptionUtil {
 
     static HandlePlace fromBoolean(boolean isHandled) {
       return isHandled ? UNKNOWN : UNHANDLED;
-    };
+    }
   }
 
   @NotNull
@@ -811,7 +821,7 @@ public class ExceptionUtil {
         return HandlePlace.fromBoolean(areAllConstructorsThrow(aClass, exceptionType));
       }
     } else {
-      for (CustomExceptionHandler exceptionHandler : Extensions.getExtensions(CustomExceptionHandler.KEY)) {
+      for (CustomExceptionHandler exceptionHandler : CustomExceptionHandler.KEY.getExtensionList()) {
         if (exceptionHandler.isHandled(element, exceptionType, topElement)) return HandlePlace.UNKNOWN;
       }
     }

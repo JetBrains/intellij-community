@@ -334,7 +334,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
       removeAll();
       final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
-      final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
+      final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar() || myGlobalMenuLinux != null;
       for (final AnAction action : myVisibleActions) {
         add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu));
       }
@@ -543,29 +543,26 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  public static boolean isLinuxGlobalMenuAvailable() {
-    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
-      return false;
-
-    final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-    return desktop == null ? false : desktop.startsWith("Unity") || desktop.startsWith("ubuntu");
-  }
-
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
-    if (!isLinuxGlobalMenuAvailable())
+    if (!GlobalMenuLinux.isAvailable())
       return;
 
+    // NOTE: must be called when frame is visible (otherwise frame.getPeer() == null)
     if (frame.getJMenuBar() instanceof IdeMenuBar) {
-      final GlobalMenuLinux gml = GlobalMenuLinux.create(frame);
-      if (gml == null)
-        return;
-
       final IdeMenuBar frameMenuBar = (IdeMenuBar)frame.getJMenuBar();
-      frameMenuBar.myGlobalMenuLinux = gml;
-      Disposer.register(frameMenuBar.myDisposable, gml);
-      frameMenuBar.updateMenuActions(true);
-      frameMenuBar.setVisible(false);
-    }
+      if (frameMenuBar.myGlobalMenuLinux == null) {
+        final GlobalMenuLinux gml = GlobalMenuLinux.create(frame);
+        if (gml == null)
+          return;
+
+        frameMenuBar.myGlobalMenuLinux = gml;
+        Disposer.register(frameMenuBar.myDisposable, gml);
+        frameMenuBar.updateMenuActions(true);
+        if (!Registry.is("linux.native.menu.debug.show.frame.menu"))
+          frameMenuBar.setVisible(false);
+      }
+    } else if (frame.getJMenuBar() != null)
+      LOG.info("The menubar '" + frame.getJMenuBar() + "' of frame '" + frame + "' isn't instance of IdeMenuBar");
   }
 
   private static class MyExitFullScreenButton extends JButton {

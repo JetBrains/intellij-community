@@ -575,6 +575,15 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
+    loadAndShowCommittedChangesDetails(project, revision, virtualFile, () -> {
+      return getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
+    });
+  }
+
+  public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
+                                                        @NotNull VcsRevisionNumber revision,
+                                                        @NotNull VirtualFile virtualFile,
+                                                        @NotNull CommittedChangeListProvider changelistProvider) {
     final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
                                                                            revision, virtualFile.getPath());
@@ -582,14 +591,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (lock.isLocked()) return;
     lock.lock();
 
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject);
+    ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
     dlg.setTitle(title);
 
     Disposer.register(dlg.getDisposable(), () -> lock.unlock());
 
     dlg.loadChangesInBackground(() -> {
       try {
-        Pair<CommittedChangeList, FilePath> pair = getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
+        Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
         if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(virtualFile, revision));
 
         CommittedChangeList changeList = pair.getFirst();
@@ -739,5 +748,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @TestOnly
   public static void setCustomExceptionHandler(Project project, Consumer<VcsException> customHandler) {
     ((AbstractVcsHelperImpl)getInstance(project)).myCustomHandler = customHandler;
+  }
+
+  public interface CommittedChangeListProvider {
+    @Nullable
+    Pair<? extends CommittedChangeList, FilePath> loadChangelist() throws VcsException;
   }
 }

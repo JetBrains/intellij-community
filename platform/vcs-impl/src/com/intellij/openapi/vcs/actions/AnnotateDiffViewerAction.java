@@ -274,8 +274,9 @@ public class AnnotateDiffViewerAction {
         revisionNumber == VcsRevisionNumber.NULL) {
       return null;
     }
-    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
+    if (!((AnnotationProviderEx)annotationProvider).isAnnotationValid(path, revisionNumber)) return null;
 
     return new FileAnnotationLoader(vcs) {
       @Override

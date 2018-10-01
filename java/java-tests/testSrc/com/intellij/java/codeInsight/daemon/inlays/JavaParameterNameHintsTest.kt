@@ -1169,7 +1169,7 @@ public class Test {
     assertThat(realText).isEqualTo(expectedText)
   }
 
-  fun getHintText(inlay: Inlay): String {
+  fun getHintText(inlay: Inlay<*>): String {
     return ParameterHintsPresentationManager.getInstance().getHintText(inlay)
   }
 

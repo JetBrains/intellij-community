@@ -54,7 +54,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
-class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -69,9 +69,9 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @Nullable private Runnable myModelUpdateListener;
 
   VcsLogChangesBrowser(@NotNull Project project,
-                              @NotNull MainVcsLogUiProperties uiProperties,
-                              @NotNull Function<CommitId, VcsShortCommitDetails> getter,
-                              @NotNull Disposable parent) {
+                       @NotNull MainVcsLogUiProperties uiProperties,
+                       @NotNull Function<CommitId, VcsShortCommitDetails> getter,
+                       @NotNull Disposable parent) {
     super(project, false, false);
     myProject = project;
     myUiProperties = uiProperties;
@@ -258,42 +258,54 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @Nullable
   public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
+    if (!(userObject instanceof Change)) return null;
+    Change change = (Change)userObject;
+
     Map<Key, Object> context = ContainerUtil.newHashMap();
-    if (userObject instanceof MergedChange) {
-      MergedChange mergedChange = (MergedChange)userObject;
-      if (mergedChange.getSourceChanges().size() == 2) {
-        if (forDiffPreview) {
-          putFilePathsIntoContext(mergedChange, context);
-        }
-        return new MergedChangeDiffRequestProvider.MyProducer(myProject, mergedChange, context);
-      }
+    if (!(change instanceof MergedChange)) {
+      putRootTagIntoChangeContext(change, context);
     }
-    if (userObject instanceof Change) {
-      Change change = (Change)userObject;
-
-      if (forDiffPreview) {
-        putFilePathsIntoContext(change, context);
-      }
-
-      CommitId parentId = null;
-      for (CommitId commitId : myChangesToParents.keySet()) {
-        if (myChangesToParents.get(commitId).contains(change)) {
-          parentId = commitId;
-          break;
-        }
-      }
-
-      if (parentId != null) {
-        RootTag tag = new RootTag(parentId.getHash(), getText(parentId));
-        context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
-      }
-
-      return ChangeDiffRequestProducer.create(myProject, change, context);
-    }
-    return null;
+    return createDiffRequestProducer(myProject, change, context, forDiffPreview);
   }
 
-  private static void putFilePathsIntoContext(@NotNull MergedChange change, @NotNull Map<Key, Object> context) {
+  @Nullable
+  public static ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
+                                                                          @NotNull Change change,
+                                                                          @NotNull Map<Key, Object> context,
+                                                                          boolean forDiffPreview) {
+    if (change instanceof MergedChange) {
+      MergedChange mergedChange = (MergedChange)change;
+      if (mergedChange.getSourceChanges().size() == 2) {
+        if (forDiffPreview) {
+          putFilePathsIntoMergedChangeContext(mergedChange, context);
+        }
+        return new MergedChangeDiffRequestProvider.MyProducer(project, mergedChange, context);
+      }
+    }
+
+    if (forDiffPreview) {
+      putFilePathsIntoChangeContext(change, context);
+    }
+
+    return ChangeDiffRequestProducer.create(project, change, context);
+  }
+
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+    CommitId parentId = null;
+    for (CommitId commitId : myChangesToParents.keySet()) {
+      if (myChangesToParents.get(commitId).contains(change)) {
+        parentId = commitId;
+        break;
+      }
+    }
+
+    if (parentId != null) {
+      RootTag tag = new RootTag(parentId.getHash(), getText(parentId));
+      context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
+    }
+  }
+
+  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key, Object> context) {
     ContentRevision centerRevision = change.getAfterRevision();
     ContentRevision leftRevision = change.getSourceChanges().get(0).getBeforeRevision();
     ContentRevision rightRevision = change.getSourceChanges().get(1).getBeforeRevision();
@@ -305,7 +317,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  private static void putFilePathsIntoContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+  private static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
     FilePath aFile = afterRevision == null ? null : afterRevision.getFile();

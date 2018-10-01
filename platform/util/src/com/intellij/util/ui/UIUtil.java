@@ -44,7 +44,6 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
-import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
 import javax.swing.text.html.ParagraphView;
@@ -121,6 +120,17 @@ public class UIUtil {
 
   public static boolean isTypeAheadAware(Window window) {
     return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
+  }
+
+  // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
+  public static void markAsPossibleOwner(Dialog dialog) {
+    if (dialog instanceof RootPaneContainer) {
+      ((RootPaneContainer)dialog).getRootPane().putClientProperty("PossibleOwner", Boolean.TRUE);
+    }
+  }
+
+  public static boolean isPossibleOwner(Dialog dialog) {
+    return (dialog instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)dialog).getRootPane(), "PossibleOwner"));
   }
 
   private static void blockATKWrapper() {
@@ -388,21 +398,11 @@ public class UIUtil {
   };
 
   private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
-  private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", new Color(0xa0bad5));
+  private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
   private static final Color BORDER_COLOR = JBColor.namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
 
-  public static final Color CONTRAST_BORDER_COLOR = JBColor.namedColor("Borders.ContrastBorderColor", new JBColor(new NotNullProducer<Color>() {
-    final Color color = new JBColor(0x9b9b9b, 0x4b4b4b);
-    @NotNull
-    @Override
-    public Color produce() {
-      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
-        return Gray.xC9;
-      }
-      return color;
-    }
-  }));
+  public static final Color CONTRAST_BORDER_COLOR = JBColor.namedColor("Borders.ContrastBorderColor", new JBColor(Gray.x9B, Gray.x4B));
 
   public static final Color SIDE_PANEL_BACKGROUND = JBColor.namedColor("SidePanel.background", new JBColor(0xE6EBF0, 0x3E434C));
 
@@ -1091,7 +1091,7 @@ public class UIUtil {
   }
 
   public static Color getContextHelpForeground() {
-    return Gray.x78;
+    return JBColor.namedColor("Label.grayForeground", Gray.x78);
   }
 
   @NotNull
@@ -1395,8 +1395,9 @@ public class UIUtil {
     return UIManager.getFont("Menu.font");
   }
 
+  @Deprecated
   public static Color getSeparatorForeground() {
-    return UIManager.getColor("Separator.foreground");
+    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
   public static Color getSeparatorBackground() {
@@ -1415,8 +1416,9 @@ public class UIUtil {
     return UIManager.getColor("nimbusBlueGrey");
   }
 
+  @Deprecated
   public static Color getSeparatorColor() {
-    return getSeparatorForeground();
+    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -2632,6 +2634,15 @@ public class UIUtil {
     return component;
   }
 
+  public static void layoutRecursively(@NotNull Component component) {
+    if (component instanceof JComponent) {
+      component.doLayout();
+      for (Component child : ((JComponent)component).getComponents()) {
+        layoutRecursively(child);
+      }
+    }
+  }
+
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
     return getCssFontDeclaration(font, null, null, null);
@@ -2838,7 +2849,6 @@ public class UIUtil {
       return null;
     }
 
-    private static final Method MODEL_CHANGED = ReflectionUtil.getDeclaredMethod(BasicTextUI.class, "modelChanged");
     private final StyleSheet style;
     private final HyperlinkListener myHyperlinkListener;
 
@@ -2852,37 +2862,25 @@ public class UIUtil {
       myHyperlinkListener = new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
+          Element element = e.getSourceElement();
+          if (element == null) return;
+
           if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-            setUnderlined(true, e.getSourceElement());
+            setUnderlined(true, element);
           } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-            setUnderlined(false, e.getSourceElement());
-          }
-          if (MODEL_CHANGED == null) {
-            LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
-            return;
-          }
-          try {
-            MODEL_CHANGED.invoke(((JEditorPane)e.getSource()).getUI());
-          }
-          catch (IllegalAccessException exception) {
-            LOG.error(exception);
-          }
-          catch (InvocationTargetException exception) {
-            LOG.error(exception);
+            setUnderlined(false, element);
           }
         }
 
         private void setUnderlined(boolean underlined, Element element) {
-          if (element == null) return;
           AttributeSet attributes = element.getAttributes();
           Object attribute = attributes.getAttribute(HTML.Tag.A);
           if (attribute instanceof MutableAttributeSet) {
             MutableAttributeSet a = (MutableAttributeSet)attribute;
-            if (underlined) {
-              a.addAttribute(CSS.Attribute.TEXT_DECORATION, "underline");
-            } else {
-              a.removeAttribute(CSS.Attribute.TEXT_DECORATION);
-            }
+            a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
+            ((StyledDocument)element.getDocument()).setCharacterAttributes(element.getStartOffset(),
+                                                                           element.getEndOffset() - element.getStartOffset(),
+                                                                           a, false);
           }
         }
       };

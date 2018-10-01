@@ -20,6 +20,7 @@ import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
@@ -37,9 +38,8 @@ public interface PopupBorder extends Border {
 
     @NotNull
     public static PopupBorder create(boolean active, boolean windowWithShadow) {
-      PopupBorder border = SystemInfo.isMac && windowWithShadow
-                           ? createEmpty()
-                           : new BaseBorder(true, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
+      boolean visible = !(SystemInfo.isMac && windowWithShadow) || UIManager.getBoolean("Popup.paintBorder") == Boolean.TRUE;
+      PopupBorder border = new BaseBorder(visible, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
       border.setActive(active);
       return border;
     }

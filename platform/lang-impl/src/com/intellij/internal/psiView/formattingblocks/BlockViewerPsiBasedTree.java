@@ -218,6 +218,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       }
 
       TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
+      if (path == null) return;
       DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (component == null) return;
       Object item = component.getUserObject();

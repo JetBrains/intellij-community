@@ -88,8 +88,8 @@ public class DeleteCatchFix implements IntentionAction {
             }
           }
           else {
-            tryParent.addBefore(tryBlock, tryStatement);
-            lastAddedStatement = tryBlock;
+            tryStatement.replace(tryBlock);
+            return tryBlock;
           }
         }
       }

@@ -34,7 +34,7 @@ import java.util.EventObject;
  *   <li>In event handler, you should be very careful to avoid traversing invalid PSI or expanding lazy-parseable elements.</li>
  *   <li>There's no specification, and the precise events you get can be changed in future
  *   as the infrastructure algorithms are improved or bugs are fixed.</li>
- *   <li>To say nothing of the fact that the precise already depend on file size and the unpredictable activity of garbage collector,
+ *   <li>To say nothing of the fact that the precise events already depend on file size and the unpredictable activity of garbage collector,
  *   so events in production might differ from the ones you've seen in test environment.</li>
  * </ul>
  *

@@ -259,10 +259,4 @@ public class TableUtil {
       scrollPane.repaint();
     }
   }
-
-  public static boolean isPointOnSelection(@NotNull JTable table, int x, int y) {
-    int row = table.rowAtPoint(new Point(x, y));
-    if (row < 0) return false;
-    return table.isRowSelected(row);
-  }
 }

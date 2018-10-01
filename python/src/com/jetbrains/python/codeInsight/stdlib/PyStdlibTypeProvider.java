@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +32,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
-    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
       if (typeProvider instanceof PyStdlibTypeProvider) {
         return (PyStdlibTypeProvider)typeProvider;
       }

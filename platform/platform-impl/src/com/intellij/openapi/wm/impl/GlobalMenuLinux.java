@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
@@ -48,6 +50,7 @@ interface GlobalMenuLib extends Library {
   void setItemLabel(Pointer item, String label);
   void setItemEnabled(Pointer item, boolean isEnabled);
   void setItemIcon(Pointer item, byte[] iconBytesPng, int iconBytesCount);
+  void setItemShortcut(Pointer item, int jmodifiers, int jkeycode);
 
   interface EventHandler extends Callback {
     void handleEvent(int uid, int eventType);
@@ -75,6 +78,11 @@ interface GlobalMenuLib extends Library {
   int ITEM_SUBMENU = 1;
   int ITEM_CHECK = 2;
   int ITEM_RADIO = 3;
+
+  int JMOD_SHIFT = 1;
+  int JMOD_CTRL  = 1 << 1;
+  int JMOD_ALT   = 1 << 2;
+  int JMOD_META  = 1 << 3;
 }
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
@@ -136,10 +144,8 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     final List<MenuItemInternal> newRoots = roots != null && !roots.isEmpty() ? new ArrayList<>(roots.size()) : null;
     if (newRoots != null) {
       for (ActionMenu am: roots) {
-        // final int uid = myUid2MI.size();
         final int uid = System.identityHashCode(am);
-        final MenuItemInternal mi = new MenuItemInternal(uid, GlobalMenuLib.ITEM_SUBMENU, am.getText(), null, true, am);
-        //myUid2MI.put(uid, mi);
+        final MenuItemInternal mi = new MenuItemInternal(uid, GlobalMenuLib.ITEM_SUBMENU, _buildMnemonicLabel(am), null, true, am);
         newRoots.add(mi);
       }
     }
@@ -345,12 +351,23 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public static boolean isAvailable() { return ourLib != null; }
 
+  private static boolean _isLinuxEnvSupportsGlobalMenu() {
+    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
+      return false;
+
+    if (!Registry.is("linux.native.menu.debug.check.desktop"))
+      return true;
+
+    final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return desktop != null && (desktop.startsWith("Unity") || desktop.startsWith("ubuntu"));
+  }
+
   private static GlobalMenuLib _loadLibrary() {
     if (!SystemInfo.isLinux)
       return null;
 
-    if (!"Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
-      LOG.info("skip loading of dbusmenu wrapper because not-unity desktop used");
+    if (!_isLinuxEnvSupportsGlobalMenu()) {
+      LOG.info("skip loading of dbusmenu wrapper because not-supported desktop used: " + String.valueOf(System.getenv("XDG_CURRENT_DESKTOP")));
       return null;
     }
 
@@ -377,6 +394,8 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     final int type;
     final String txt;
     final byte[] iconPngBytes;
+    final int jmodifiers;
+    final int jkeycode;
     final JMenuItem jmenuitem;
     final boolean isEnabled;
     Pointer nativePeer;
@@ -389,10 +408,52 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       this.iconPngBytes = iconPngBytes;
       this.isEnabled = isEnabled;
       this.jmenuitem = jmenuitem;
+      this.jmodifiers = _calcModifiers(jmenuitem);
+      this.jkeycode = _calcKeyCode(jmenuitem);
     }
 
     @Override
     public String toString() { return String.format("'%s' (%d)",txt, uid); }
+  }
+
+  private static int _calcModifiers(JMenuItem jmenuitem) {
+    if (jmenuitem == null || jmenuitem.getAccelerator() == null)
+      return 0;
+
+    final int modifiers = jmenuitem.getAccelerator().getModifiers();
+    int result = 0;
+    if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_SHIFT;
+    if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_CTRL;
+    if ((modifiers & InputEvent.META_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_META;
+    if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_ALT;
+    return result;
+  }
+
+  private static int _calcKeyCode(JMenuItem jmenuitem) {
+    if (jmenuitem == null || jmenuitem.getAccelerator() == null)
+      return 0;
+    return jmenuitem.getAccelerator().getKeyCode();
+  }
+
+  private static String _buildMnemonicLabel(JMenuItem jmenuitem) {
+    String text = jmenuitem.getText();
+    final int mnemonicCode = jmenuitem.getMnemonic();
+    final int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
+    if (text == null)
+      text = "";
+    final int index;
+    if (mnemonicIndex >= 0 && mnemonicIndex < text.length() && Character.toUpperCase(text.charAt(mnemonicIndex)) == mnemonicCode) {
+      index = mnemonicIndex;
+    } else {
+      // Mnemonic mismatch index
+      index = -1;
+      // LOG.error("Mnemonic code " + mnemonicCode + " mismatch index " + mnemonicIndex + " with txt: " + text);
+    }
+
+    final StringBuilder res = new StringBuilder(text);
+    if(index != -1)
+      res.insert(index, '_');
+    return res.toString();
   }
 
   private static long _getX11WindowXid(@NotNull JFrame frame) {

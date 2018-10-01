@@ -4,7 +4,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -143,7 +142,7 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
-    VcsLogProvider[] allLogProviders = Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project);
+    VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
     for (VcsRoot root: roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();

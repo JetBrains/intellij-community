@@ -18,18 +18,25 @@ class ClosureConstraint(val closure: GrClosableBlock, val leftType: PsiType) : C
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     if ((session as GroovyInferenceSession).skipClosureBlock || session.closureSkipList.contains(findCall(closure))) {
       //TODO:add explicit typed closure constraints
-    } else {
+    }
+    else {
       if (leftType !is PsiClassType) return true
-      val closureReturnType = closure.returnType ?: return true
-      if (closureReturnType == PsiType.VOID) {
-        return true
+      val closureReturnType by lazy(LazyThreadSafetyMode.NONE) {
+        closure.returnType
       }
-      if ( TypesUtil.isClassType(leftType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+      if (TypesUtil.isClassType(leftType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
         val parameters = leftType.parameters
         if (parameters.size != 1) return true
+        if (closureReturnType == null || closureReturnType == PsiType.VOID) {
+          return true
+        }
         constraints.add(TypeConstraint(parameters[0], closureReturnType, closure))
-      } else {
+      }
+      else {
         val samReturnType = callSamReturnType() ?: return true
+        if (closureReturnType == null || closureReturnType == PsiType.VOID) {
+          return true
+        }
         constraints.add(TypeConstraint(samReturnType, closureReturnType, closure))
       }
     }

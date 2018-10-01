@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -186,7 +185,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   }
 
   private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
-    for (final AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+    for (final AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
         if (library.contains(file)) {
           return true;

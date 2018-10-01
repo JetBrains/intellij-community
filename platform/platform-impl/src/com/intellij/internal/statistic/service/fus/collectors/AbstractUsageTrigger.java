@@ -41,10 +41,12 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
 
   protected abstract FeatureUsagesCollector findCollector(@NotNull Class<? extends T> fusClass);
 
+  protected abstract Map<String, Object> createEventLogData(@Nullable FUSUsageContext context);
+
   protected void doTrigger(@NotNull String usageCollectorId,
                            @NotNull String feature,
                            @Nullable FUSUsageContext context) {
-    FeatureUsageLogger.INSTANCE.log(usageCollectorId, feature, context != null ? context.getData() : Collections.emptyMap());
+    FeatureUsageLogger.INSTANCE.log(usageCollectorId, feature, createEventLogData(context));
 
     SessionInfo sessionInfo = getOrCreateSessionInfo();
     UsagesCollectorInfo collectorInfo = sessionInfo.getUsageCollectorInfo(usageCollectorId);

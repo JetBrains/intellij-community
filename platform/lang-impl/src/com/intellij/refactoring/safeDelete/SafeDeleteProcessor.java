@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -8,7 +8,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -121,7 +120,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<UsageInfo>());
     for (PsiElement element : myElements) {
       boolean handled = false;
-      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(element)) {
           final NonCodeUsageSearchInfo filter = delegate.findUsages(element, myElements, usages);
           if (filter != null) {
@@ -169,9 +168,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     ArrayList<String> conflicts = new ArrayList<>();
 
     for (PsiElement element : myElements) {
-      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(element)) {
-          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase 
+          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase
                                               ? ((SafeDeleteProcessorDelegateBase)delegate).findConflicts(element, myElements, usages)
                                               : delegate.findConflicts(element, myElements);
           if (foundConflicts != null) {
@@ -185,7 +184,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     if (checkConflicts(usages, conflicts)) return false;
 
     UsageInfo[] preprocessedUsages = usages;
-    for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+    for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
       preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
       if (preprocessedUsages == null) return false;
     }
@@ -258,7 +257,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
                                         RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
     usageView.addPerformOperationAction(() -> {
       UsageInfo[] preprocessedUsages = usages;
-      for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
         if (preprocessedUsages == null) return;
       }
@@ -268,7 +267,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager) {
-    for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+    for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
        if (delegate instanceof SafeDeleteProcessorDelegateBase) {
          final UsageView view = ((SafeDeleteProcessorDelegateBase)delegate).showUsages(usages, presentation, manager, myElements);
          if (view != null) return view;
@@ -392,7 +391,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
 
       for (PsiElement element : myElements) {
-        for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+        for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             delegate.prepareForDeletion(element);
           }
@@ -477,7 +476,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     HashSet<PsiElement> elementsToDeleteSet = new HashSet<>(Arrays.asList(elementsToDelete));
 
     for (PsiElement psiElement : elementsToDelete) {
-      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(psiElement)) {
           Collection<PsiElement> addedElements = delegate.getAdditionalElementsToDelete(psiElement, elementsToDeleteSet, askForAccessors);
           if (addedElements != null) {

@@ -294,7 +294,6 @@ public class GroovyIntroduceParameterUtil {
   private static boolean shouldRemove(GrParameter parameter, int start, int end) {
     for (PsiReference reference : ReferencesSearch.search(parameter)) {
       final PsiElement element = reference.getElement();
-      if (element == null) continue;
 
       final int offset = element.getTextRange().getStartOffset();
       if (offset < start || end <= offset) {
@@ -313,7 +312,7 @@ public class GroovyIntroduceParameterUtil {
       if (expr == null) return PsiElement.EMPTY_ARRAY;
 
       final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, scope);
-      if (occurrences == null || occurrences.length == 0) {
+      if (occurrences.length == 0) {
         throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
       }
       return occurrences;
@@ -321,12 +320,9 @@ public class GroovyIntroduceParameterUtil {
     else {
       final GrVariable var = settings.getVar();
       LOG.assertTrue(var != null);
-      final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+      final List<PsiElement> list = Collections.synchronizedList(new ArrayList<>());
       ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(psiReference -> {
-        final PsiElement element = psiReference.getElement();
-        if (element != null) {
-          list.add(element);
-        }
+        list.add(psiReference.getElement());
         return true;
       });
       return list.toArray(PsiElement.EMPTY_ARRAY);
@@ -404,7 +400,7 @@ public class GroovyIntroduceParameterUtil {
     }
 
     public PsiField[] getResult() {
-      return ContainerUtil.toArray(result, new PsiField[result.size()]);
+      return result.toArray(PsiField.EMPTY_ARRAY);
     }
 
     @Override

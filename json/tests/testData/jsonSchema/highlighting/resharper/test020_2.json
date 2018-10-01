@@ -1,0 +1,7 @@
+<warning descr="Validates against 'not' schema">{
+
+  "a": 5,
+  "b": 5,
+  "x": 5
+}</warning>
+ 

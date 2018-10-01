@@ -286,6 +286,16 @@ public class LongRangeKnownMethods {
     }
   }
 
+  void testDoubleBrace() {
+    List<String> list = new ArrayList<String>() {{
+      this.add("foo");
+      this.add("bar");
+    }};
+    if(list.isEmpty()) {
+      System.out.println("Not known now");
+    }
+  }
+
   void testSizeCheck() {
     List<String> list = new ArrayList<>();
     list.add(null);

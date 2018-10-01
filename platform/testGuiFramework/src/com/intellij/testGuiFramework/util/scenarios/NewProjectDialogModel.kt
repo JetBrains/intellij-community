@@ -45,6 +45,8 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textRootModuleName
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
+import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
 import java.awt.Point
@@ -242,6 +244,8 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
       }
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
+      logUIStep("Wait when downloading dialog disappears")
+      checkDownloadingDialog()
     }
     ideFrame {
       this.waitForBackgroundTasksToFinish()
@@ -520,6 +524,8 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
+      logUIStep("Wait when downloading dialog disappears")
+      checkDownloadingDialog()
     }
     ideFrame {
       this.waitForBackgroundTasksToFinish()
@@ -563,5 +569,45 @@ fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups
     list.clickItem(group.toString())
 
     waitLoadingTemplates()
+  }
+}
+
+fun NewProjectDialogModel.selectSdk(sdk: String) {
+  with(guiTestCase) {
+    logUIStep("Going to select $sdk as a project SDK")
+    with(connectDialog()) {
+      val sdkCombo = combobox("Project SDK:")
+      val selectedItem = sdkCombo.listItems().firstOrNull { it.startsWith(sdk) }
+      if (selectedItem != null)
+        sdkCombo.selectItem(selectedItem)
+      else
+        throw IllegalStateException(
+          "Required SDK $sdk is absent in the \"Project SDK\" list. Found following values: ${sdkCombo.listItems()}")
+    }
+  }
+}
+
+fun NewProjectDialogModel.checkDownloadingDialog(){
+  GuiTestUtilKt.waitUntil("Wait when downloading dialog disappears"){
+    val dialog = try{
+      guiTestCase.dialog(title = null, timeout = Timeouts.noTimeout, ignoreCaseTitle = true)
+    }
+    catch (e: ComponentLookupException){
+      null
+    }
+    catch (e: WaitTimedOutError){
+      null
+    }
+    if(dialog != null){
+      println("Found dialog: ${dialog.target().title}")
+      try{
+        dialog.button("Try again", timeout = Timeouts.noTimeout).click()
+        println("button try again was found and clicked")
+      }
+      catch (ignore: ComponentLookupException){
+        // do nothing if no "Try again" button is found
+      }
+    }
+    dialog != null
   }
 }

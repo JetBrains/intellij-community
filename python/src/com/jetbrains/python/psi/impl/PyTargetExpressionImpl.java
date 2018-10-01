@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
@@ -272,7 +271,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (enterType != null) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
-      for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
         final PyType typeFromProvider = provider.getContextManagerVariableType(cls, withExpression, context);
         if (typeFromProvider != null) {
           return typeFromProvider;

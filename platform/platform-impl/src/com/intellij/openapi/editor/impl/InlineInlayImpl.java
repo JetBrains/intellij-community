@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-class InlineInlayImpl extends InlayImpl<InlineInlayImpl> {
+class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl> {
   InlineInlayImpl(@NotNull EditorImpl editor,
                   int offset,
                   boolean relatesToPrecedingText,
-                  @NotNull EditorCustomElementRenderer renderer) {
+                  @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
   }
 
@@ -48,8 +48,9 @@ class InlineInlayImpl extends InlayImpl<InlineInlayImpl> {
     }
   }
 
+  @Override
   void doUpdateSize() {
-    myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
+    myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {
       throw new IllegalArgumentException("Positive width should be defined for an inline element");
     }

@@ -36,11 +36,12 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration configuration);
 
-  public void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks) {
-    setBeforeRunTasks(configuration, tasks, false);
-  }
+  public abstract void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks);
 
-  public abstract void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
+  @Deprecated
+  public final void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks, @SuppressWarnings("unused") boolean addEnabledTemplateTasksIfAbsent) {
+    setBeforeRunTasks(configuration, tasks);
+  }
 
   @NotNull
   public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderId);

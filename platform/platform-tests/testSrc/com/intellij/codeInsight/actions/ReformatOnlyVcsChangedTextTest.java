@@ -421,8 +421,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     }
 
     private void injectChanges(@NotNull List<Change> changes) {
-      Change[] arr = new Change[changes.size()];
-      ContainerUtil.toArray(changes, arr);
+      Change[] arr = changes.toArray(new Change[0]);
       myMockChangeListManager.addChanges(arr);
     }
 

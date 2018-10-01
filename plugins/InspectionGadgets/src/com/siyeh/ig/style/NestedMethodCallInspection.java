@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -38,8 +37,8 @@ public class NestedMethodCallInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreFieldInitializations = true;
-  protected boolean ignoreStaticMethods = false;
-  protected boolean ignoreGetterCalls = false;
+  public boolean ignoreStaticMethods = false;
+  public boolean ignoreGetterCalls = false;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -74,28 +73,9 @@ public class NestedMethodCallInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    if (ignoreStaticMethods) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreStaticMethods")
-                        .setAttribute("value", String.valueOf(ignoreStaticMethods)));
-    }
-    if (ignoreGetterCalls) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreGetterCalls")
-                        .setAttribute("value", String.valueOf(ignoreGetterCalls)));
-    }
-  }
-
-  @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
-    for (Element option : node.getChildren("option")) {
-      if ("ignoreGetterCalls".equals(option.getAttributeValue("name"))) {
-        ignoreGetterCalls = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-      else if ("ignoreStaticMethods".equals(option.getAttributeValue("name"))) {
-        ignoreStaticMethods = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-    }
+    defaultWriteSettings(node, "ignoreStaticMethods", "ignoreGetterCalls");
+    writeBooleanOption(node, "ignoreStaticMethods", false);
+    writeBooleanOption(node, "ignoreGetterCalls", false);
   }
 
   @Override

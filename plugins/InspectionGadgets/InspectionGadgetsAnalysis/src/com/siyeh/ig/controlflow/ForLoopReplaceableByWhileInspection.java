@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -90,8 +91,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "for.loop.replaceable.by.while.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.WHILE);
     }
 
     @Override

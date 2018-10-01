@@ -15,25 +15,53 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
+import java.awt.geom.Path2D;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource {
-  @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    g.setColor(UIManager.getDefaults().getColor("Separator.foreground"));
-    g.drawRect(0,0,width-1,height-1);
+  @Override public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));
+      g2.fill(getBorderShape(c, new Rectangle(x, y, width, height)));
+    } finally {
+      g2.dispose();
+    }
+  }
+
+  private static Shape getBorderShape(Component c, Rectangle rect) {
+    Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    if ("ComboPopup.popup".equals(c.getName()) && c instanceof BasicComboPopup &&
+        ((BasicComboPopup)c).getClientProperty("JComboBox.isCellEditor") == Boolean.TRUE) {
+      JBInsets.removeFrom(rect, JBUI.insets(0, 1));
+    }
+
+    border.append(rect, false);
+
+    Rectangle innerRect = new Rectangle(rect);
+    JBInsets.removeFrom(innerRect, JBUI.insets(1));
+    border.append(innerRect, false);
+
+    return border;
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(1).asUIResource();
+    if ("ComboPopup.popup".equals(c.getName())) {
+      return JBUI.insets(1, 2).asUIResource();
+    } else {
+      return JBUI.insets(1).asUIResource();
+    }
   }
 }

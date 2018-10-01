@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.reference.SoftReference;
-import java.util.HashSet;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Contract;
@@ -42,6 +41,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -335,7 +335,7 @@ public class ContentRevisionCache {
     }
   }
 
-  public static enum UniqueType {
+  public enum UniqueType {
     REPOSITORY_CONTENT,
     REMOTE_CONTENT
   }

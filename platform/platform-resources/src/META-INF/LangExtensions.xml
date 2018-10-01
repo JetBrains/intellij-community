@@ -754,6 +754,11 @@
       <category>Language Injection</category>
     </intentionAction>
 
+    <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
+    <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor"/>
+    <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.CleanupIntentionMenuContributor"/>
+    <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.EditorNotificationActions"/>
+
     <!-- LookupManagerActions -->
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpHandler"/>
     <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownHandler"/>
@@ -888,6 +893,9 @@
     <localInspection shortName="LongLine" bundle="messages.InspectionsBundle" key="long.line.display.name"
                      groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.longLine.LongLineInspection"/>
+    <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
+                      groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
 

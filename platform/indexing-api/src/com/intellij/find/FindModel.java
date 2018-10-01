@@ -34,9 +34,14 @@ import java.util.regex.PatternSyntaxException;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
+  @Deprecated
   public static void initStringToFindNoMultiline(FindModel findModel, String s) {
+    initStringToFind(findModel, s);
+  }
+
+  public static void initStringToFind(FindModel findModel, String s) {
     if (!StringUtil.isEmpty(s)) {
-      if (!s.contains("\r") && !s.contains("\n")) {
+      if (findModel.isMultiline() || (!s.contains("\r") && !s.contains("\n"))) {
         findModel.setStringToFind(s);
       }
       else {
@@ -102,10 +107,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public void setMultiline(boolean multiline) {
     if (multiline != isMultiline) {
-      if (!multiline) {
-        initStringToFindNoMultiline(this, getStringToFind());
-      }
       isMultiline = multiline;
+      initStringToFind(this, getStringToFind());
       notifyObservers();
     }
   }
@@ -564,6 +567,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   /**
    * @deprecated and not used anymore
    */
+  @Deprecated
   public boolean isOpenInNewTabVisible() {
     return true;
   }
@@ -571,6 +575,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   /**
    * @deprecated and not used anymore
    */
+  @Deprecated
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
   }
 

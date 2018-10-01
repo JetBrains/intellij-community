@@ -175,7 +175,13 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     append(answer, " * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead", 0)
     append(answer, " */", 0)
 
-    append(answer, "public class $className {", 0)
+
+    answer.append("public")
+    // backward compatibility
+    if (className != "AllIcons") {
+      answer.append(" final")
+    }
+    answer.append(" class ").append(className).append(" {\n")
     if (customLoad) {
       append(answer, "private static Icon load(String path) {", 1)
       append(answer, "return IconLoader.getIcon(path, ${className}.class);", 2)
@@ -230,7 +236,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
 
         if (inners.isNotEmpty()) {
           append(answer, "", level)
-          append(answer, "public static class " + className(key) + " {", level)
+          append(answer, "public final static class " + className(key) + " {", level)
           append(answer, inners.toString(), 0)
           append(answer, "}", level)
         }
@@ -319,8 +325,12 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {
-    if (text.isNotBlank()) answer.append("  ".repeat(level))
-    answer.append(text).append("\n")
+    if (text.isNotBlank()) {
+      for (i in 0 until level) {
+        answer.append("  ")
+      }
+    }
+    answer.append(text).append('\n')
   }
 
   private fun getImageId(image: ImagePaths, depth: Int): String {

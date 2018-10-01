@@ -518,7 +518,8 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName())) {
+          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) && 
+              methodExpression.resolve() == ((PsiMethodCallExpression)expression).resolveMethod()) {
             result.add(expr.getMethodExpression());
           }
         }
@@ -596,7 +597,7 @@ public class CreateFromUsageUtils {
                                              List<? super String> expectedFieldNames) {
     Comparator<ExpectedTypeInfo> expectedTypesComparator = (o1, o2) -> compareExpectedTypes(o1, o2, expression);
     for (PsiExpression expr : collectExpressions(expression, PsiMember.class, PsiFile.class)) {
-      PsiElement parent = expr.getParent();
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
 
       if (!(parent instanceof PsiReferenceExpression)) {
         boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&

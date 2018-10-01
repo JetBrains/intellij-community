@@ -58,7 +58,7 @@ public interface TreePatcher {
                                   @NotNull TextRange rangeToRemove,
                                   @NotNull CharTable table) {
     CharSequence chars = leaf.getChars();
-    String res = rangeToRemove.replace(chars.toString(), "");;
+    String res = rangeToRemove.replace(chars.toString(), "");
     LeafElement newLeaf = ASTFactory.leaf(leaf.getElementType(), table.intern(res));
     leaf.rawInsertBeforeMe(newLeaf);
     leaf.rawRemove();

@@ -299,9 +299,7 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
   
-  return editor.inlayModel
-      .getInlineElementsInRange(startOffset, endOffset)
-      .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
+  return !ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(editor, startOffset, endOffset).isEmpty()
 }
 
 

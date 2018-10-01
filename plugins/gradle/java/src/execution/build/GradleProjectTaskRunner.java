@@ -121,7 +121,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
             final List<Module> affectedModules = ContainerUtil.concat(modules, modulesOfFiles);
             // have to refresh in case of errors too, because run configuration may be set to ignore errors
             Collection<String> affectedRoots = ContainerUtil.newHashSet(
-              CompilerPathsEx.getOutputPaths(ContainerUtil.toArray(affectedModules, new Module[affectedModules.size()])));
+              CompilerPathsEx.getOutputPaths(affectedModules.toArray(Module.EMPTY_ARRAY)));
             if (!affectedRoots.isEmpty()) {
               CompilerUtil.refreshOutputRoots(affectedRoots);
             }

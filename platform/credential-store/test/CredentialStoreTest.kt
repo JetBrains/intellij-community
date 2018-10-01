@@ -32,7 +32,7 @@ internal class CredentialStoreTest {
 
   @Test
   fun keePass() {
-    doTest(KeePassCredentialStore())
+    doTest(createInMemoryKeePassCredentialStore())
   }
 
   @Test
@@ -56,17 +56,17 @@ internal class CredentialStoreTest {
 
   @Test
   fun `KeePass - testEmptyAccountName`() {
-    testEmptyAccountName(KeePassCredentialStore())
+    testEmptyAccountName(createInMemoryKeePassCredentialStore())
   }
 
   @Test
   fun `KeePass - changedAccountName`() {
-    testChangedAccountName(KeePassCredentialStore())
+    testChangedAccountName(createInMemoryKeePassCredentialStore())
   }
 
   @Test
   fun `KeePass - memoryOnlyPassword`() {
-    memoryOnlyPassword(KeePassCredentialStore())
+    memoryOnlyPassword(createInMemoryKeePassCredentialStore())
   }
 
   @Test

@@ -1012,12 +1012,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable JComponent parentComponent,
                                             @Nullable String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
-    Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
+    return runWriteActionWithClass(action.getClass(), ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInSwingThread(() -> action.consume(indicator));
       return !indicator.isCanceled();
+    });
+  }
+
+  private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
+    startWrite(clazz);
+    try {
+      return computable.compute();
     }
     finally {
       endWrite(clazz);
@@ -1031,8 +1036,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                               @Nullable String cancelText,
                                                               @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
+    return runWriteActionWithClass(clazz, ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInBackground(() -> {
         assert myWriteActionThread == null;
@@ -1044,10 +1048,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       return !indicator.isCanceled();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    });
   }
 
   @Override
@@ -1065,25 +1066,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public <T> T runWriteAction(@NotNull final Computable<T> computation) {
     Class<? extends Computable> clazz = computation.getClass();
-    startWrite(clazz);
-    try {
-      return computation.compute();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    return runWriteActionWithClass(clazz, () -> computation.compute());
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     Class<? extends ThrowableComputable> clazz = computation.getClass();
-    startWrite(clazz);
-    try {
-      return computation.compute();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    return runWriteActionWithClass(clazz, computation);
   }
 
   @Override
@@ -1227,7 +1216,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      ActionPauses.WRITE.started("write action ("+clazz+")");
+      ActionPauses.WRITE.started();
     }
     myWriteActionPending = true;
     try {

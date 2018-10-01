@@ -29,6 +29,8 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
 
     checkDescription(variants, "env", "Environment variables")
     checkDescription(variants, "isAllowRunningInParallel", "Allow running in parallel")
+    checkDescription(variants, "isShowConsoleOnStdErr", "Show console when a message is printed to standard error stream")
+    checkDescription(variants, "isShowConsoleOnStdOut", "Show console when a message is printed to standard output stream")
   }
 
   fun `test no isAllowRunningInParallel if singleton policy not configurable`() {
@@ -39,10 +41,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     """.trimIndent())
 
     assertThat(variantsToText(variants)).isEqualTo("""
-    fileOutput (object)
-    isShowConsoleOnStdErr (Show console when a message is printed to standard error stream)
-    isShowConsoleOnStdOut (Show console when a message is printed to standard output stream)
-    logFiles (array)
+    configurations (array)
     """.trimIndent())
   }
   

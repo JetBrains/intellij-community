@@ -48,7 +48,6 @@ import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgr
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 
 public class CommitHelper {
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<>("DOCUMENT_BEING_COMMITTED");
@@ -358,9 +357,13 @@ public class CommitHelper {
     private void updateChangelistAfterRefresh() {
       if (!(myChangeList instanceof LocalChangeList)) return;
 
-      ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-      LocalChangeList localList = clManager.findChangeList(myChangeList.getName());
+      ChangeListManagerEx clManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+      String listName = myChangeList.getName();
+
+      LocalChangeList localList = clManager.findChangeList(listName);
       if (localList == null) return;
+
+      clManager.editChangeListData(listName, null);
 
       if (!localList.isDefault()) {
         clManager.scheduleAutomaticEmptyChangeListDeletion(localList);
@@ -487,6 +490,6 @@ public class CommitHelper {
 
   @NotNull
   static List<VcsException> collectErrors(@NotNull List<VcsException> exceptions) {
-    return exceptions.stream().filter(e -> !e.isWarning()).collect(toList());
+    return filter(exceptions, e -> !e.isWarning());
   }
 }

@@ -25,8 +25,9 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
 /**
- * @author Kirill Likhodedov
+ * @deprecated Use {@link git4idea.fetch.GitFetchSupport}
  */
+@Deprecated
 public final class GitFetchResult {
 
   private final Type myType;

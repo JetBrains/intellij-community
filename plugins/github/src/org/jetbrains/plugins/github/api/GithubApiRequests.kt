@@ -134,6 +134,9 @@ object GithubApiRequests {
           GithubApiPagesLoader.Request(get(server, username, repoName, issueId), ::get)
 
         @JvmStatic
+        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
+
+        @JvmStatic
         fun get(server: GithubServerPath, username: String, repoName: String, issueId: String,
                 pagination: GithubRequestPagination? = null) =
           get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix,

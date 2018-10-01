@@ -37,6 +37,7 @@ import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +179,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
       myTextToReformat = myEditor.getDocument().getText();
     }
     else if (useDefaultSample || myTextToReformat == null) {
-      myTextToReformat = StringUtil.convertLineSeparators(getPreviewText());
+      myTextToReformat = StringUtil.convertLineSeparators(ObjectUtils.notNull(getPreviewText(), ""));
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
@@ -620,7 +621,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         JPanel tabPanel = findTabbedPaneChild(component);
         if (tabPanel != null) {
           JTabbedPane tabbedPane = (JTabbedPane)tabPanel.getParent();
-          tabbedPane.setSelectedComponent(tabPanel);
+          int index = tabbedPane.indexOfComponent(tabPanel);
+          if (index >= 0) {
+            tabbedPane.setSelectedIndex(index);
+          }
         }
       }
     }

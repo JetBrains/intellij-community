@@ -65,6 +65,12 @@ public abstract class DfaFactType<T> extends Key<T> {
              super.isSuper(superFact, subFact);
     }
 
+    @NotNull
+    @Override
+    DfaNullability unionFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
+      return left == right ? left : DfaNullability.FLUSHED;
+    }
+
     @Nullable
     @Override
     DfaNullability intersectFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
@@ -200,6 +206,13 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     boolean isSuper(@Nullable TypeConstraint superFact, @Nullable TypeConstraint subFact) {
       return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));
+    }
+
+    @Nullable
+    @Override
+    TypeConstraint calcFromVariable(@NotNull DfaVariableValue value) {
+      DfaPsiType type = value.getDfaType();
+      return type == null ? null : TypeConstraint.empty().withInstanceofValue(type);
     }
 
     @Override

@@ -474,7 +474,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // (e.g no tests found or all tests passed, etc.)
     // treeStructure.getChildElements(treeStructure.getRootElement()).length == 0
 
-    myTreeBuilder.performUpdate();
+    myTreeBuilder.updateFromRoot();
   }
 
   @Override
@@ -687,7 +687,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * for java unit tests
    */
   public void performUpdate() {
-    myTreeBuilder.performUpdate();
+    myTreeBuilder.updateFromRoot();
   }
 
   private void updateIconProgress(boolean updateWithAttention) {

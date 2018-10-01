@@ -15,9 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
-public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, DiscoveredTestsIndex.UsedMethods> {
+public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
   protected DiscoveredTestsIndex(@NotNull File file) throws IOException {
     super(INDEX_EXTENSION, new MyIndexStorage(file), new MyForwardIndex() {
       @NotNull
@@ -54,7 +53,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     }
   }
 
-  private static final IndexExtension<Integer, TIntArrayList, UsedMethods> INDEX_EXTENSION = new IndexExtension<Integer, TIntArrayList, UsedMethods>() {
+  private static final IndexExtension<Integer, TIntArrayList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, TIntArrayList, UsedSources>() {
     @NotNull
     @Override
     public IndexId<Integer, TIntArrayList> getName() {
@@ -63,7 +62,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
 
     @NotNull
     @Override
-    public DataIndexer<Integer, TIntArrayList, UsedMethods> getIndexer() {return inputData -> inputData.myTestUsedMethods;}
+    public DataIndexer<Integer, TIntArrayList, UsedSources> getIndexer() {return inputData -> inputData.myUsedMethods;}
 
     @NotNull
     @Override
@@ -92,10 +91,5 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     public boolean containsDataFrom(int testId) throws IOException {
       return getInput(testId) != null;
     }
-  }
-
-  static class UsedMethods {
-    private final Map<Integer, TIntArrayList> myTestUsedMethods;
-    UsedMethods(Map<Integer, TIntArrayList> methods) {myTestUsedMethods = methods;}
   }
 }

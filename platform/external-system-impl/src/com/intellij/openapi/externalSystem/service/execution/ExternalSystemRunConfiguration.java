@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -37,7 +35,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -137,7 +134,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
     }
-    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
     if (javaRunConfigurationExtensionManager != null) {
       javaRunConfigurationExtensionManager.readExternal(this, element);
     }
@@ -160,7 +157,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         }
       }
     }));
-    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
     if (javaRunConfigurationExtensionManager != null) {
       javaRunConfigurationExtensionManager.writeExternal(this, element);
     }
@@ -177,7 +174,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
                     new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
     if (javaRunConfigurationExtensionManager != null) {
       javaRunConfigurationExtensionManager.appendEditors(this, group);
     }
@@ -330,7 +327,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         progressListener == null || buildOutputParsers.isEmpty() ? null :
         new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
 
-      JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+      JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
       if (javaRunConfigurationExtensionManager != null) {
         javaRunConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
       }
@@ -449,8 +446,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if(!ExternalSystemApiUtil.isJavaCompatibleIde()) return null;
 
       final JavaParameters extensionsJP = new JavaParameters();
-      final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
-      for (RunConfigurationExtension ext : extensions) {
+      for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
         ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
       }
 

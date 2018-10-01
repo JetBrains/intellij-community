@@ -101,6 +101,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import gnu.trove.THashSet;
@@ -120,7 +121,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * @author cdr
@@ -2401,7 +2401,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PlatformTestUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
       document.insertString(0, "class X { void foo() {}}");
@@ -2488,9 +2488,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private List<IntentionAction> findStupidFixes() {
-    return CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
-      .stream().filter(f->f.getFamilyName().equals(new MyInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()))
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), f -> f.getFamilyName()
+      .equals(new MyInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()));
   }
 
   private static class MyInspection extends LocalInspectionTool {

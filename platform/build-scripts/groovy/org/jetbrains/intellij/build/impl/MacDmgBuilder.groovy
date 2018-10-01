@@ -118,18 +118,18 @@ class MacDmgBuilder {
     def suffix = jreArchivePath != null ? "" : "-no-jdk"
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir,
-                                               jreArchivePath != null ? "jdk/Contents/Home/jre/bin/java" : null)
+                                               jreArchivePath != null ? "../jdk/Contents/Home/${buildContext.options.isBundledJreModular ? '' : 'jre/'}bin/java" : null)
     def installationArchives = [Pair.create(macZipPath, MacDistributionBuilder.getZipRoot(buildContext, customizer))]
     if (jreArchivePath != null) {
       installationArchives.add(Pair.create(jreArchivePath, ""))
     }
-    new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, [], installationArchives)
+    new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "Resources/", [], installationArchives)
 
     String targetFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: macZipPath, tofile: sitFilePath)
     ftpAction("mkdir") {}
-    signMacZip(sitFilePath, targetFileName, jreArchivePath, new File(productJsonDir, ProductInfoGenerator.FILE_NAME).absolutePath)
+    signMacZip(sitFilePath, targetFileName, jreArchivePath, new File(productJsonDir, "Resources/$ProductInfoGenerator.FILE_NAME").absolutePath)
     buildDmg(targetFileName)
   }
 

@@ -155,9 +155,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateThrows" bundle="messages.InspectionsBundle" key="inspection.duplicate.throws.display.name"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection" />
-    <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
-                      groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
-                      implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
     <globalInspection groupPath="Java" shortName="UnnecessaryModuleDependencyInspection" bundle="messages.InspectionsBundle"
                       key="unnecessary.module.dependency.display.name" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
                       level="WARNING"

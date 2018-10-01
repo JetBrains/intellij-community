@@ -1,16 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.google.common.io.ByteStreams
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
 import org.jetbrains.io.mandatory.NullCheckingFactory
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.awt.Image
-import java.awt.Toolkit
 import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
+import javax.imageio.ImageIO
 
 object GithubApiContentHelper {
   const val JSON_MIME_TYPE = "application/json"
@@ -62,7 +61,6 @@ object GithubApiContentHelper {
   @JvmStatic
   @Throws(IOException::class)
   fun loadImage(stream: InputStream): Image {
-    val bytes = ByteStreams.toByteArray(stream)
-    return Toolkit.getDefaultToolkit().createImage(bytes)
+    return ImageIO.read(stream)
   }
 }

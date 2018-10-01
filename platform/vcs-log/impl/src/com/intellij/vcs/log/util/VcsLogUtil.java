@@ -1,16 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
-import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -23,8 +22,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +30,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
 import static java.util.Collections.singletonList;
 
 public class VcsLogUtil {
@@ -202,23 +200,6 @@ public class VcsLogUtil {
     return branchName;
   }
 
-  public static void triggerUsage(@NotNull AnActionEvent e) {
-    String text = e.getPresentation().getText();
-    if (text != null) {
-      triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
-    }
-  }
-
-  public static void triggerUsage(@NotNull String text) {
-    triggerUsage(text, false);
-  }
-
-  public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    String prefix = isFromHistory ? "history." : "log.";
-    String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
-    FUSApplicationUsageTrigger.getInstance().trigger(VcsLogUsageTriggerCollector.class, feature);
-  }
-
   public static boolean maybeRegexp(@NotNull String text) {
     return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
   }
@@ -287,5 +268,15 @@ public class VcsLogUtil {
     }
 
     return CommittedChangesTreeBrowser.zipChanges(changes);
+  }
+
+  @Nullable
+  public static VirtualFile getActualRoot(@NotNull Project project, @NotNull FilePath path) {
+    VcsRoot rootObject = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(path);
+    if (rootObject == null) return null;
+    Map<VirtualFile, VcsLogProvider> providers = findLogProviders(singletonList(rootObject), project);
+    if (providers.isEmpty()) return null;
+    VcsLogProvider provider = notNull(getFirstItem(providers.values()));
+    return provider.getVcsRoot(project, path);
   }
 }

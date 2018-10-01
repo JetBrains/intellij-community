@@ -89,7 +89,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   private final MigrationUsagesPanel myUsagesPanel;
   private final MigrationConflictsPanel myConflictsPanel;
 
-  public MigrationPanel(final PsiElement[] roots, TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
+  public MigrationPanel(final PsiElement[] roots, @NotNull TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
     super(new BorderLayout());
     myInitialRoots = roots;
     myLabeler = labeler;
