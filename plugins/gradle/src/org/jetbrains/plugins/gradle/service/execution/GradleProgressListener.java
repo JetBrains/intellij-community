@@ -72,6 +72,11 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     if (!GradleEnvironment.GRADLE_PROGRESS_VERBOSE_EVENTS) {
       if (event.getDisplayName().startsWith("Resolve ")) return;
       if (event.getDisplayName().startsWith("Apply plugin ")) return;
+      if (event.getDisplayName().startsWith("Apply script ")) return;
+      if (event.getDisplayName().startsWith("Notify ") && event.getDisplayName().contains(" listeners")) return;
+      if (event.getDisplayName().startsWith("Realize task ")) return;
+      if (event.getDisplayName().startsWith("Metadata of ")) return;
+      if (event.getDisplayName().equals("Snapshot task inputs")) return;
     }
 
     ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId + "_");
