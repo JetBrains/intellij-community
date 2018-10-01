@@ -97,7 +97,7 @@ public class DefaultStubBuilder implements StubBuilder {
         if (type.shouldCreateStub(node)) {
           PsiElement element = node.getPsi();
           if (!(element instanceof StubBasedPsiElement)) {
-            LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
+            LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element + ", language: #" + type.getLanguage());
           }
           @SuppressWarnings("unchecked") StubElement stub = type.createStub(element, parentStub);
           //noinspection ConstantConditions
