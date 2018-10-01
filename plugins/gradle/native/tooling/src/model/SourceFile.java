@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.model;
 import java.io.File;
 import java.io.Serializable;
 
-public interface CppFileSettings extends Serializable {
+public interface SourceFile extends Serializable {
+  File getSourceFile();
+
   File getObjectFile();
 }
