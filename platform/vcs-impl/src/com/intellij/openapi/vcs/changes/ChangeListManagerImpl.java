@@ -1217,11 +1217,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   // TODO this is for quick-fix for GitAdd problem. To be removed after proper fix
   // (which should introduce something like VcsAddRemoveEnvironment)
   @Deprecated
-  @NotNull
-  public List<VcsException> addUnversionedFiles(@NotNull final LocalChangeList list,
-                                                @NotNull final List<VirtualFile> files,
-                                                @NotNull final Condition<? super FileStatus> statusChecker,
-                                                @Nullable Consumer<? super List<Change>> changesConsumer) {
+  public boolean addUnversionedFiles(@NotNull final LocalChangeList list,
+                                     @NotNull final List<VirtualFile> files,
+                                     @NotNull final Condition<? super FileStatus> statusChecker,
+                                     @Nullable Consumer<? super List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<>();
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
@@ -1297,7 +1296,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     }
 
-    return exceptions;
+    return exceptions.isEmpty();
   }
 
   @NotNull
