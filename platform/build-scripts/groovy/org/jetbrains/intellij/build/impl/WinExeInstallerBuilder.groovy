@@ -81,7 +81,8 @@ class WinExeInstallerBuilder {
     }
 
     String communityHome = buildContext.paths.communityHome
-    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) +
+                         buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.progress("Building Windows installer $outFileName")
 
     def box = "$buildContext.paths.temp/winInstaller"

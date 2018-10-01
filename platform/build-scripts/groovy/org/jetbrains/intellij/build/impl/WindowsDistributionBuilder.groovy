@@ -88,7 +88,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && !buildContext.isBundledJreModular()) {
       File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
         //prepare folder with jre x86 for win archive
@@ -230,6 +230,7 @@ IDS_VM_OPTIONS=$vmOptions
   }
 
   private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+    zipNameSuffix += buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)

@@ -62,11 +62,8 @@ jrePlatformsToDownload(targetOs).each { platform ->
         commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
         if (isBundledJreModular) {
           doLast {
-            exec {
-              commandLine = ['rm', '-rf'] + modularJdkSpecificFiles(platform).collect {
-                "$outputDir/$it".replace('**/', '').replace('/**', '')
-              }
-              ignoreExitValue = true
+            delete fileTree(outputDir) {
+              include modularJdkSpecificFiles(platform)
             }
           }
         }
