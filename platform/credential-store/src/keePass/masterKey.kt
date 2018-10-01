@@ -46,16 +46,8 @@ internal enum class EncryptionType {
   BUILT_IN, CRYPT_32
 }
 
-internal class MasterKey() {
-  constructor(password: ByteArray, encryption: EncryptionType = getDefaultEncryptionType()) : this() {
-    this.value = password
-    this.encryption = encryption
-  }
-
-  @JvmField
-  var encryption: EncryptionType? = null
-  @JvmField
-  var value: ByteArray? = null
+internal class MasterKey(value: ByteArray, var encryption: EncryptionType = getDefaultEncryptionType()) {
+  var value: ByteArray? = value
 
   /**
    * Clear byte array to avoid sensitive data in memory
@@ -109,48 +101,54 @@ internal class MasterKeyFileStorage(private val passwordFile: Path) : MasterKeyS
     try {
       val masterKey: MasterKey
       if (isOld) {
-        masterKey = MasterKey()
-        masterKey.encryption = getDefaultEncryptionType()
-        masterKey.value = data
+        masterKey = MasterKey(data, getDefaultEncryptionType())
       }
       else {
-        val composer = Composer(ParserImpl(StreamReader(data.inputStream().reader())), object : Resolver() {
-          override fun resolve(kind: NodeId, value: String?, implicit: Boolean): Tag {
-            return when (kind) {
-              NodeId.scalar -> Tag.STR
-              else -> super.resolve(kind, value, implicit)
-            }
-          }
-        })
-        val list = (composer.singleNode as? MappingNode)?.value ?: emptyList()
-        masterKey = MasterKey()
-        for (node in list) {
-          val keyNode = node.keyNode
-          val valueNode = node.valueNode
-          if (keyNode is ScalarNode && valueNode is ScalarNode) {
-            when (keyNode.value) {
-              "encryption" -> masterKey.encryption = EncryptionType.valueOf(valueNode.value.toUpperCase())
-              "value" -> masterKey.value = Base64.getDecoder().decode(valueNode.value)
-            }
-          }
-        }
-        if (masterKey.encryption == null) {
-          LOG.error("encryption type not specified in $passwordFile, default one will be used (file content:\n${data.toString(Charsets.UTF_8)})")
-          masterKey.encryption = getDefaultEncryptionType()
-        }
-        if (masterKey.value == null) {
-          LOG.error("password not specified in $passwordFile, automatically generated will be used (file content:\n${data.toString(Charsets.UTF_8)})")
-          return null
-        }
+        masterKey = readMasterKey(data) ?: return null
       }
 
-      encryptionType = masterKey.encryption!!
-      return createEncryptionSupport(encryptionType).decrypt(masterKey.value!!)
+      encryptionType = masterKey.encryption
+      return createEncryptionSupport(masterKey.encryption).decrypt(masterKey.value!!)
     }
     catch (e: Exception) {
       LOG.warn("Cannot decrypt master key, file content:\n${if (isOld) Base64.getEncoder().encodeToString(data) else data.toString(Charsets.UTF_8)}", e)
       return null
     }
+  }
+
+  private fun readMasterKey(data: ByteArray): MasterKey? {
+    val composer = Composer(ParserImpl(StreamReader(data.inputStream().reader())), object : Resolver() {
+      override fun resolve(kind: NodeId, value: String?, implicit: Boolean): Tag {
+        return when (kind) {
+          NodeId.scalar -> Tag.STR
+          else -> super.resolve(kind, value, implicit)
+        }
+      }
+    })
+
+    var encryptionType: EncryptionType? = null
+    var value: ByteArray? = null
+    val list = (composer.singleNode as? MappingNode)?.value ?: emptyList()
+    for (node in list) {
+      val keyNode = node.keyNode
+      val valueNode = node.valueNode
+      if (keyNode is ScalarNode && valueNode is ScalarNode) {
+        when (keyNode.value) {
+          "encryption" -> encryptionType = EncryptionType.valueOf(valueNode.value.toUpperCase())
+          "value" -> value = Base64.getDecoder().decode(valueNode.value)
+        }
+      }
+    }
+
+    if (encryptionType == null) {
+      LOG.error("encryption type not specified in $passwordFile, default one will be used (file content:\n${data.toString(Charsets.UTF_8)})")
+      encryptionType = getDefaultEncryptionType()
+    }
+    if (value == null) {
+      LOG.error("password not specified in $passwordFile, automatically generated will be used (file content:\n${data.toString(Charsets.UTF_8)})")
+      return null
+    }
+    return MasterKey(value, encryptionType)
   }
 
   override fun set(key: MasterKey?) {
@@ -160,7 +158,7 @@ internal class MasterKeyFileStorage(private val passwordFile: Path) : MasterKeyS
     }
 
     val out = BufferExposingByteArrayOutputStream()
-    val encryptionType = key.encryption!!
+    val encryptionType = key.encryption
     out.writer().use {
       it.append("encryption: ").append(encryptionType.name).append('\n')
       it.append("value: !!binary ")
