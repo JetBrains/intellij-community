@@ -1575,7 +1575,6 @@ skip_delete_settings:
 
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
-  Delete "$INSTDIR\jre32\bin\client\classes.jsa"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
 
   Push "Complete"
@@ -1589,6 +1588,12 @@ skip_delete_settings:
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
+  IfFileExists "$INSTDIR\jre32\*.*" 0 no_jre32
+    Delete "$INSTDIR\jre32\bin\server\classes.jsa"
+    StrCpy $0 "$INSTDIR\jre32\lib\applet"
+    Call un.DeleteDirIfEmpty
+    !include "un_jre32_win.nsh"
+no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR"
   Call un.DeleteDirIfEmpty
