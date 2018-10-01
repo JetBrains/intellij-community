@@ -66,13 +66,16 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       @Override
-      public void visitElement(PsiElement element) {
-        PsiElement parent = element.getParent();
-        // do not process any anonymous class children except its getArgumentList()
-        if (parent instanceof PsiAnonymousClass && !(element instanceof PsiExpressionList)) {
-          return;
+      public void visitElement(PsiElement psiElement) {
+        if (psiElement != element) {
+          PsiElement parent = psiElement.getParent();
+          // do not process any anonymous class children except its getArgumentList()
+          //if the visitor was not called from inside anonymous class
+          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
+            return;
+          }
         }
-        super.visitElement(element);
+        super.visitElement(psiElement);
       }
 
       @Override
