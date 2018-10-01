@@ -49,14 +49,14 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     if (c != ':' || !JsonEditorOptions.getInstance().AUTO_WHITESPACE_AFTER_COLON) return;
     int offset = editor.getCaretModel().getOffset();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-    PsiElement element = PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(offset));
-    if (!(element instanceof JsonProperty)) return;
+    PsiElement element = PsiTreeUtil.getParentOfType(PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(offset)), JsonProperty.class, false);
+    if (element == null) return;
     final ASTNode[] children = element.getNode().getChildren(TokenSet.create(JsonElementTypes.COLON));
     if (children.length == 0) return;
     final ASTNode colon = children[0];
     final ASTNode next = colon.getTreeNext();
     final String text = next.getText();
-    if (text.length() == 0 || !StringUtil.isEmptyOrSpaces(text)) {
+    if (text.length() == 0 || !StringUtil.isEmptyOrSpaces(text) || StringUtil.isLineBreak(text.charAt(0))) {
       final int insOffset = colon.getStartOffset() + 1;
       editor.getDocument().insertString(insOffset, " ");
       editor.getCaretModel().moveToOffset(insOffset + 1);

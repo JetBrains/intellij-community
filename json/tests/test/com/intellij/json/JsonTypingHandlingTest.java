@@ -77,4 +77,16 @@ public class JsonTypingHandlingTest extends JsonTestCase {
   public void testAutoQuotesForPropNameFalse2() {
     doTestColon( "{ \"x<caret>\"}", "{ \"x:<caret>\"}");
   }
+  public void testAutoQuotesAndWhitespaceFollowingNewline() {
+    doTestColon("{\n" +
+                " \"a\": 5,\n" +
+                " x<caret>\n" +
+                " \"q\": 8\n" +
+                "}",
+                "{\n" +
+                " \"a\": 5,\n" +
+                "  \"x\": <caret>\n" +
+                " \"q\": 8\n" +
+                "}");
+  }
 }
