@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.components.panels.Wrapper
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -19,9 +18,14 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings.SettingsChangedListener
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
-import org.jetbrains.plugins.github.pullrequest.ui.*
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestDetailsComponent
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestPreviewComponent
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
+import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionModel.SelectionChangedListener
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import javax.swing.JComponent
@@ -40,69 +44,76 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                       repository: GitRepository, remote: GitRemote,
                       repoDetails: GithubRepoDetailed,
                       account: GithubAccount): JComponent? {
+    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor)
+    return GithubPullRequestsComponent(requestExecutor, avatarIconsProviderFactory, repository, remote, repoDetails, account)
+  }
 
-    val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor,
-                                              account.server, repoDetails.fullPath)
-    val selectionModel = GithubPullRequestsListSelectionModel()
-    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
-                                               selectionModel, listLoader,
-                                               CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor))
-    requestExecutor.addListener(list) { list.refresh() }
+  private inner class GithubPullRequestsComponent(requestExecutor: GithubApiRequestExecutor,
+                                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                                  private val repository: GitRepository, private val remote: GitRemote,
+                                                  private val repoDetails: GithubRepoDetailed,
+                                                  private val account: GithubAccount)
+    : OnePixelSplitter("Github.PullRequests.Component", 0.6f), Disposable, DataProvider {
 
-    val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
+    private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
 
-    val changes = GithubPullRequestChangesComponent(project, selectionModel, dataLoader, actionManager)
-    val details = GithubPullRequestDetailsComponent(project, selectionModel, dataLoader)
+    private val changes = GithubPullRequestChangesComponent(project, actionManager).apply {
+      diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
+    }
+    private val details = GithubPullRequestDetailsComponent(project)
+    private val preview = GithubPullRequestPreviewComponent(changes, details).apply {
+      detailsVisible = uiSettings.showDetails
+    }
 
-    val preview = GithubPullRequestPreviewComponent(uiSettings, changes, details)
-    list.setToolbarHeightReferent(preview.toolbarComponent)
+    private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)
+    private val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
+                                                       listLoader,
+                                                       avatarIconsProviderFactory).apply {
+      requestExecutor.addListener(this) { this.refresh() }
+      setToolbarHeightReferent(preview.toolbarComponent)
+    }
 
-    val splitter = OnePixelSplitter("Github.PullRequests.Component", 0.6f)
-    splitter.firstComponent = list
-    splitter.secondComponent = preview
 
-    // disposed by content manager when tab is closed
-    val wrapper = WrappingComponent(splitter,
-                                    repository, remote, repoDetails, account,
-                                    list,selectionModel, dataLoader)
-    Disposer.register(wrapper, Disposable {
+    init {
+      firstComponent = list
+      secondComponent = preview
+      isFocusCycleRoot = true
+
+      uiSettings.addChangesListener(object : SettingsChangedListener {
+        override fun settingsChanged() {
+          preview.detailsVisible = uiSettings.showDetails
+        }
+      }, preview)
+
+      list.selectionModel.addChangesListener(object : SelectionChangedListener {
+        override fun selectionChanged() {
+          val dataProvider = list.selectionModel.current?.let(dataLoader::getDataProvider)
+          preview.setPreviewDataProvider(dataProvider)
+        }
+      }, preview)
+    }
+
+    override fun getData(dataId: String): Any? {
+      return when {
+        GithubPullRequestKeys.REPOSITORY.`is`(dataId) -> repository
+        GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
+        GithubPullRequestKeys.REPO_DETAILS.`is`(dataId) -> repoDetails
+        GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
+        GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
+        GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
+          list.selectionModel.current?.let(dataLoader::getDataProvider)
+        else -> null
+      }
+    }
+
+    override fun dispose() {
       Disposer.dispose(list)
       Disposer.dispose(preview)
+      Disposer.dispose(changes)
+      Disposer.dispose(details)
 
       Disposer.dispose(listLoader)
       Disposer.dispose(dataLoader)
-    })
-    changes.diffAction.registerCustomShortcutSet(wrapper, wrapper)
-    return wrapper
-  }
-
-  companion object {
-    private class WrappingComponent(wrapped: JComponent,
-                                    private val repository: GitRepository,
-                                    private val remote: GitRemote,
-                                    private val repoDetails: GithubRepoDetailed,
-                                    private val account: GithubAccount,
-                                    private val list: GithubPullRequestsListComponent,
-                                    private val selectionModel: GithubPullRequestsListSelectionModel,
-                                    private val dataLoader: GithubPullRequestsDataLoader)
-      : Wrapper(wrapped), Disposable, DataProvider {
-      init {
-        isFocusCycleRoot = true
-      }
-
-      override fun getData(dataId: String): Any? {
-        return when {
-          GithubPullRequestKeys.REPOSITORY.`is`(dataId) -> repository
-          GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
-          GithubPullRequestKeys.REPO_DETAILS.`is`(dataId) -> repoDetails
-          GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
-          GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
-          GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> selectionModel.current?.let(dataLoader::getDataProvider)
-          else -> null
-        }
-      }
-
-      override fun dispose() {}
     }
   }
 }

@@ -15,71 +15,51 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.ComponentWithEmptyText
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
-class GithubPullRequestChangesComponent(project: Project,
-                                        private val selectionModel: GithubPullRequestsListSelectionModel,
-                                        private val dataLoader: GithubPullRequestsDataLoader,
-                                        actionManager: ActionManager)
-  : Wrapper(), Disposable, GithubPullRequestsListSelectionModel.SelectionChangedListener {
+class GithubPullRequestChangesComponent(project: Project, actionManager: ActionManager)
+  : GithubDataLoadingComponent<List<Change>>(), Disposable {
   private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
+  private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   val toolbarComponent: JComponent = changesBrowser.toolbar.component
   val diffAction = changesBrowser.diffAction
-  private val changesLoadingPanel = JBLoadingPanel(BorderLayout(), this,
-                                                   ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
-
-  private var updateFuture: CompletableFuture<Unit>? = null
 
   init {
-    selectionModel.addChangesListener(this, this)
-
-    changesLoadingPanel.add(changesBrowser, BorderLayout.CENTER)
-    setContent(changesLoadingPanel)
+    loadingPanel.add(changesBrowser, BorderLayout.CENTER)
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
+    setContent(loadingPanel)
   }
 
-  override fun selectionChanged() {
-    reset()
-    updateFuture = updateChanges(selectionModel.current)
-  }
-
-  private fun updateChanges(item: GithubSearchedIssue?) =
-    item?.let { selection ->
-      changesBrowser.emptyText.clear()
-      changesLoadingPanel.startLoading()
-
-      dataLoader.getDataProvider(selection).changesRequest
-        .handleOnEdt { changes, error ->
-          when {
-            error != null && !GithubAsyncUtil.isCancellation(error) -> {
-              changesBrowser.emptyText
-                .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
-                .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-            }
-            changes != null -> {
-              changesBrowser.emptyText.text = "Pull request does not contain any changes"
-              changesBrowser.changes = changes
-            }
-          }
-          changesLoadingPanel.stopLoading()
-        }
-    }
-
-  private fun reset() {
-    updateFuture?.cancel(true)
+  override fun reset() {
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     changesBrowser.changes = emptyList()
+  }
+
+  override fun handleResult(result: List<Change>) {
+    changesBrowser.emptyText.text = "Pull request does not contain any changes"
+    changesBrowser.changes = result
+  }
+
+  override fun handleError(error: Throwable) {
+    changesBrowser.emptyText
+      .clear()
+      .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+  }
+
+  override fun setBusy(busy: Boolean) {
+    if (busy) {
+      changesBrowser.emptyText.clear()
+      loadingPanel.startLoading()
+    }
+    else {
+      loadingPanel.stopLoading()
+    }
   }
 
   override fun dispose() {}

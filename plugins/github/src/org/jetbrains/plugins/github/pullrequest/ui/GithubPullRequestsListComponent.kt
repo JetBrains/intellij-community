@@ -34,11 +34,11 @@ import javax.swing.event.ListSelectionEvent
 class GithubPullRequestsListComponent internal constructor(project: Project,
                                                            actionManager: ActionManager,
                                                            autoPopupController: AutoPopupController,
-                                                           private val selectionModel: GithubPullRequestsListSelectionModel,
                                                            private val loader: GithubPullRequestsLoader,
                                                            avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : BorderLayoutPanel(), Disposable, DataProvider {
 
+  val selectionModel = GithubPullRequestsListSelectionModel()
   private val listModel = CollectionListModel<GithubSearchedIssue>()
   private val list = GithubPullRequestsList(avatarIconsProviderFactory, listModel)
   private val scrollPane = ScrollPaneFactory.createScrollPane(list,
