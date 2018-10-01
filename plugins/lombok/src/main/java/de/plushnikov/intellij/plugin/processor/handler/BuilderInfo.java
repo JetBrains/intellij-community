@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
@@ -53,7 +54,7 @@ public class BuilderInfo {
 
     result.variableInClass = psiParameter;
     result.fieldInBuilderType = psiParameter.getType();
-    result.deprecated = PsiAnnotationSearchUtil.isAnnotatedWith(psiParameter, Deprecated.class);
+    result.deprecated = hasDeprecatedAnnotation(psiParameter);
     result.fieldInitializer = null;
     result.hasBuilderDefaultAnnotation = false;
 
@@ -65,11 +66,15 @@ public class BuilderInfo {
     return result;
   }
 
+  private static boolean hasDeprecatedAnnotation(@NotNull PsiModifierListOwner modifierListOwner) {
+    return PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, Deprecated.class);
+  }
+
   public static BuilderInfo fromPsiField(@NotNull PsiField psiField) {
     final BuilderInfo result = new BuilderInfo();
 
     result.variableInClass = psiField;
-    result.deprecated = psiField.isDeprecated();
+    result.deprecated = isDeprecated(psiField);
     result.fieldInBuilderType = psiField.getType();
     result.fieldInitializer = psiField.getInitializer();
     result.hasBuilderDefaultAnnotation = null == PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION);
@@ -81,6 +86,10 @@ public class BuilderInfo {
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiField, result.singularAnnotation);
 
     return result;
+  }
+
+  private static boolean isDeprecated(@NotNull PsiField psiField) {
+    return PsiImplUtil.isDeprecatedByDocTag(psiField) || hasDeprecatedAnnotation(psiField);
   }
 
   public BuilderInfo withSubstitutor(@NotNull PsiSubstitutor builderSubstitutor) {
@@ -209,7 +218,7 @@ public class BuilderInfo {
 
   public Collection<String> getAnnotations() {
     if (deprecated) {
-      return Collections.singleton(Deprecated.class.getName());
+      return Collections.singleton(CommonClassNames.JAVA_LANG_DEPRECATED);
     }
     return Collections.emptyList();
   }
