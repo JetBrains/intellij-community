@@ -188,7 +188,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
               object : DumbAwareAction("Import") {
                 override fun actionPerformed(event: AnActionEvent) {
                   chooseFile(fileChooserDescriptor, event) {
-                    createKeePassFileManager()?.importKeepassFile(Paths.get(normalizeSelectedFile(it)), event)
+                    createKeePassFileManager()?.import(Paths.get(normalizeSelectedFile(it)), event)
                     // force reload KeePass Store
                     passwordSafe.closeCurrentProvider()
                   }

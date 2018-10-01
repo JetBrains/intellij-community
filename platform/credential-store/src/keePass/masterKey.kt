@@ -99,7 +99,9 @@ internal class MasterKeyFileStorage(private val passwordFile: Path) {
       }
 
       encryptionType = masterKey.encryption
-      return createEncryptionSupport(masterKey.encryption).decrypt(masterKey.value!!)
+      val decrypted = createEncryptionSupport(masterKey.encryption).decrypt(masterKey.value!!)
+      masterKey.clear()
+      return decrypted
     }
     catch (e: Exception) {
       LOG.warn("Cannot decrypt master key, file content:\n${if (isOld) Base64.getEncoder().encodeToString(data) else data.toString(Charsets.UTF_8)}", e)

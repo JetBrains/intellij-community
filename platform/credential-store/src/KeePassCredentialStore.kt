@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.writeSafe
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -80,7 +81,7 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
       save()
     }
 
-  private val db: KeePassDatabase
+  private var db: KeePassDatabase
 
   private val masterKeyStorage by lazy { MasterKeyFileStorage(masterKeyFile) }
 
@@ -105,6 +106,18 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
     if (preloadedMasterKey != null) {
       masterKeyStorage.set(preloadedMasterKey)
     }
+  }
+
+  @Synchronized
+  @TestOnly
+  fun reload() {
+    LOG.assertTrue(!isMemoryOnly)
+
+    val key = masterKeyStorage.get()!!
+    val kdbxPassword = KdbxPassword(key)
+    key.fill(0)
+    db = loadKdbx(dbFile, kdbxPassword)
+    isNeedToSave.set(false)
   }
 
   @Synchronized

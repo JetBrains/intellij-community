@@ -12,16 +12,17 @@ import com.intellij.util.io.readText
 import org.junit.Rule
 import org.junit.Test
 import java.awt.Component
+import java.nio.file.Path
 
-private val testCredentialAttributes = CredentialAttributes("foo", "bar")
+private val testCredentialAttributes = CredentialAttributes("foo", "u")
 
 internal class KeePassFileManagerTest {
   @JvmField
   @Rule
   val fsRule = InMemoryFsRule()
 
-  private fun createTestStoreWithCustomMasterKey(): KeePassCredentialStore {
-    val store = KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))
+  private fun createTestStoreWithCustomMasterKey(baseDirectory: Path = fsRule.fs.getPath("/")): KeePassCredentialStore {
+    val store = KeePassCredentialStore(baseDirectory = baseDirectory)
     store.set(testCredentialAttributes, Credentials("u", "p"))
     store.setMasterKey("foo")
     return store
@@ -98,6 +99,22 @@ internal class KeePassFileManagerTest {
     val store = KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))
     assertThat(store.dbFile).exists()
     assertThat(store.masterKeyFile).exists()
+  }
+
+  @Test
+  fun `import with custom master key located under imported file dir`() {
+    val otherStore = createTestStoreWithCustomMasterKey(fsRule.fs.getPath("/other"))
+    otherStore.save()
+
+    val store = KeePassCredentialStore(baseDirectory = fsRule.fs.getPath("/"))
+    KeePassFileManager(store).import(otherStore.dbFile, event = null)
+
+    store.reload()
+
+    assertThat(store.dbFile).exists()
+    assertThat(store.masterKeyFile).exists()
+
+    assertThat(store.get(testCredentialAttributes)!!.getPasswordAsString()).isEqualTo("p")
   }
 }
 
