@@ -47,12 +47,12 @@ class NsisFileListGenerator {
     }
   }
 
-  void generateUninstallerFile(String installDir = "\$INSTDIR", File outputFile) {
+  void generateUninstallerFile(File outputFile) {
     outputFile.withWriter { BufferedWriter out ->
       filesRelativePaths.toSorted().each {
-        out.writeLine("Delete \"${installDir}\\${toWinPath(it)}\"")
+        out.writeLine("Delete \"\$INSTDIR\\${toWinPath(it)}\"")
         if (it.endsWith(".py")) {
-          out.writeLine("Delete \"${installDir}\\${toWinPath(it)}c\"") //.pyc
+          out.writeLine("Delete \"\$INSTDIR\\${toWinPath(it)}c\"") //.pyc
         }
       }
 
@@ -60,11 +60,11 @@ class NsisFileListGenerator {
 
       directoryToFiles.keySet().toSorted().reverseEach {
         if (!it.empty) {
-          out.writeLine("RmDir /r \"${installDir}\\${toWinPath(it)}\\__pycache__\"");
-          out.writeLine("RmDir \"${installDir}\\${toWinPath(it)}\"");
+          out.writeLine("RmDir /r \"\$INSTDIR\\${toWinPath(it)}\\__pycache__\"");
+          out.writeLine("RmDir \"\$INSTDIR\\${toWinPath(it)}\"");
         }
       }
-      out.writeLine("RmDir \"${installDir}\"")
+      out.writeLine("RmDir \"\$INSTDIR\"")
     }
   }
 
