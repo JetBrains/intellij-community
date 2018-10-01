@@ -68,8 +68,7 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
     manager.setMainProjectCodeStyle(null);
   }
 
-  @Bombed(month = Calendar.MARCH, day = 1, user = "Rustam Vishnyakov")
-  public void testNonDefaultSettings() {
+  public void _testNonDefaultSettings() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     CodeStyleSettings appSettings = CodeStyleSettingsManager.getInstance().getMainProjectCodeStyle();
     assertNotNull(appSettings);
