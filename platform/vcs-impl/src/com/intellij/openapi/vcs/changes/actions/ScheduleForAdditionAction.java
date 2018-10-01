@@ -10,7 +10,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -86,8 +89,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, changesConsumer);
-    return exceptions.isEmpty();
+    return manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, changesConsumer);
   }
 
   @NotNull
