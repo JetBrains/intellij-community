@@ -1266,8 +1266,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
           final CheckinEnvironment environment = vcs.getCheckinEnvironment();
           if (environment != null) {
-            Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items);
-            Set<VirtualFile> parents = getUnversionedParents(vcs, items);
+            Set<VirtualFile> descendants = new HashSet<>();
+            Set<VirtualFile> parents = new HashSet<>();
+            ReadAction.run(() -> {
+              collectUnversionedDescendantsRecursively(items, descendants);
+              collectUnversionedParents(vcs, items, parents);
+            });
 
             // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
             // (inside the method) - so common add logic just needs to refresh statuses of parents
@@ -1292,9 +1296,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return allProcessedFiles;
   }
 
-  @NotNull
-  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items) {
-    final Set<VirtualFile> result = ContainerUtil.newHashSet();
+  private void collectUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items,
+                                                        @NotNull Set<VirtualFile> result) {
     Processor<VirtualFile> addToResultProcessor = file -> {
       if (getStatus(file) == FileStatus.UNKNOWN) {
         result.add(file);
@@ -1305,16 +1308,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     for (VirtualFile item : items) {
       VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addToResultProcessor);
     }
-
-    return result;
   }
 
-  @NotNull
-  private Set<VirtualFile> getUnversionedParents(@NotNull AbstractVcs vcs,
-                                                 @NotNull Collection<? extends VirtualFile> items) {
-    if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
-
-    HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+  private void collectUnversionedParents(@NotNull AbstractVcs vcs,
+                                         @NotNull Collection<? extends VirtualFile> items,
+                                         @NotNull Set<VirtualFile> result) {
+    if (!vcs.areDirectoriesVersionedItems()) return;
 
     for (VirtualFile item : items) {
       VirtualFile parent = item.getParent();
@@ -1324,8 +1323,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         parent = parent.getParent();
       }
     }
-
-    return result;
   }
 
   @Override
