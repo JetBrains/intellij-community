@@ -49,9 +49,9 @@ class ChangesAnalysisAction : AnAction() {
         location2CodeSmell.putValue(Pair(psiFile.virtualFile, oldLine), codeSmellInfo)
       }
     }
-    performAfterStashing(project) {
-      val oldCodeSmells = codeSmellDetector.findCodeSmells(allChanges.mapNotNull { it.virtualFile } .filter { it.exists() })
-      val commonCodeSmells = HashSet<CodeSmellInfo>()
+    val commonCodeSmells = HashSet<CodeSmellInfo>()
+    performShelve(project, {
+      val oldCodeSmells = codeSmellDetector.findCodeSmells(allChanges.mapNotNull { it.virtualFile }.filter { it.exists() })
       oldCodeSmells.forEach { oldCodeSmell ->
         val file = FileDocumentManager.getInstance().getFile(oldCodeSmell.document) ?: return@forEach
         location2CodeSmell[Pair(file, oldCodeSmell.startLine)].forEach inner@{ newCodeSmell ->
@@ -61,9 +61,10 @@ class ChangesAnalysisAction : AnAction() {
           }
         }
       }
+    }, {
       val introducedCodeSmells = newCodeSmells.filter { !commonCodeSmells.contains(it) }
       codeSmellDetector.showCodeSmellErrors(introducedCodeSmells)
-    }
+    })
   }
 
   private companion object {
@@ -88,15 +89,16 @@ class ChangesAnalysisAction : AnAction() {
     }
 
     @Synchronized
-    fun performAfterStashing(project: Project, action: () -> Unit) {
+    fun performShelve(project: Project, afterShelve: () -> Unit, afterUnshelve: () -> Unit) {
       val operation = StashOperation(project)
       operation.changeListManager.blockModalNotifications()
       val rollbackWorker = RollbackWorker(project)
       val changes = operation.save()
       val analyze = {
         try {
-          action()
+          afterShelve()
           operation.load()
+          afterUnshelve()
         } finally {
           operation.changeListManager.unblockModalNotifications()
         }
