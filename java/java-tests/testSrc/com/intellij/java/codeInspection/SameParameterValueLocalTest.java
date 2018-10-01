@@ -86,4 +86,8 @@ public class SameParameterValueLocalTest extends InspectionTestCase {
       myGlobalTool.minimalUsageCount = previous;
     }
   }
+
+  public void testOverrideGroovy() {
+    doTest(getGlobalTestDir(), myTool);
+  }
 }
