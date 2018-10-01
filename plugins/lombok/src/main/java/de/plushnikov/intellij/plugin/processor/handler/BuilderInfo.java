@@ -200,7 +200,7 @@ public class BuilderInfo {
     return null != singularAnnotation;
   }
 
-  public boolean hasObtainVaiAnnotatation() {
+  public boolean hasObtainViaAnnotation() {
     return null != obtainViaAnnotation;
   }
 
@@ -244,7 +244,7 @@ public class BuilderInfo {
 
     result.append(fieldInBuilderName);
     result.append('(');
-    if (hasObtainVaiAnnotatation()) {
+    if (hasObtainViaAnnotation()) {
       if (StringUtil.isNotEmpty(viaFieldName)) {
         result.append("this.");
         result.append(viaFieldName);

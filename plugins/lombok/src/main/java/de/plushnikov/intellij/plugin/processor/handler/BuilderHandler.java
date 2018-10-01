@@ -180,7 +180,7 @@ public class BuilderHandler {
 
   private boolean validateObtainViaAnnotations(Stream<BuilderInfo> builderInfos, @NotNull ProblemBuilder problemBuilder) {
     AtomicBoolean result = new AtomicBoolean(true);
-    builderInfos.map(BuilderInfo::withObtainVia).filter(BuilderInfo::hasObtainVaiAnnotatation).forEach(builderInfo ->
+    builderInfos.map(BuilderInfo::withObtainVia).filter(BuilderInfo::hasObtainViaAnnotation).forEach(builderInfo ->
     {
       if (StringUtil.isEmpty(builderInfo.getViaFieldName()) == StringUtil.isEmpty(builderInfo.getViaMethodName())) {
         problemBuilder.addError("The syntax is either @ObtainVia(field = \"fieldName\") or @ObtainVia(method = \"methodName\").");
