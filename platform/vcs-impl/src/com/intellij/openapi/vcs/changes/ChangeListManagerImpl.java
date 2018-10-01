@@ -1213,7 +1213,53 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                      @NotNull final Condition<? super FileStatus> statusChecker,
                                      @Nullable Consumer<? super List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
-    final Set<VirtualFile> allProcessedFiles = new HashSet<>();
+    final Set<VirtualFile> allProcessedFiles = scheduleUnversionedFilesAddition(files, statusChecker, exceptions);
+
+    if (!exceptions.isEmpty()) {
+      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
+      for (VcsException ex : exceptions) {
+        message.append("\n").append(ex.getMessage());
+      }
+      Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
+    }
+
+    final boolean moveRequired = !list.isDefault();
+    boolean syncUpdateRequired = changesConsumer != null;
+
+    if (moveRequired || syncUpdateRequired) {
+      // find the changes for the added files and move them to the necessary changelist
+      InvokeAfterUpdateMode updateMode = syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
+                                                            : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
+      final Ref<List<Change>> foundChanges = Ref.create();
+      invokeAfterUpdate(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          synchronized (myDataLock) {
+            List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
+              FilePath path = ChangesUtil.getAfterPath(change);
+              return path != null && allProcessedFiles.contains(path.getVirtualFile());
+            });
+            foundChanges.set(newChanges);
+
+            if (moveRequired && !newChanges.isEmpty()) {
+              moveChangesTo(list, newChanges.toArray(new Change[0]));
+            }
+          }
+        });
+      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+
+      if (changesConsumer != null) {
+        changesConsumer.consume(foundChanges.get());
+      }
+    }
+
+    return exceptions.isEmpty();
+  }
+
+  @NotNull
+  private Set<VirtualFile> scheduleUnversionedFilesAddition(@NotNull List<VirtualFile> files,
+                                                            @NotNull final Condition<? super FileStatus> statusChecker,
+                                                            @NotNull List<VcsException> exceptions) {
+    Set<VirtualFile> allProcessedFiles = new HashSet<>();
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -1239,51 +1285,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     });
 
-    if (!exceptions.isEmpty()) {
-      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
-      for (VcsException ex : exceptions) {
-        message.append("\n").append(ex.getMessage());
-      }
-      Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
-    }
-
     for (VirtualFile file : allProcessedFiles) {
       myFileStatusManager.fileStatusChanged(file);
     }
     VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
     myChangesViewManager.scheduleRefresh();
 
-    final Ref<List<Change>> foundChanges = Ref.create();
-    final boolean moveRequired = !list.isDefault();
-    boolean syncUpdateRequired = changesConsumer != null;
-
-    if (moveRequired || syncUpdateRequired) {
-      // find the changes for the added files and move them to the necessary changelist
-      InvokeAfterUpdateMode updateMode =
-        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
-
-      invokeAfterUpdate(() -> {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          synchronized (myDataLock) {
-            List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
-              FilePath path = ChangesUtil.getAfterPath(change);
-              return path != null && allProcessedFiles.contains(path.getVirtualFile());
-            });
-            foundChanges.set(newChanges);
-
-            if (moveRequired && !newChanges.isEmpty()) {
-              moveChangesTo(list, newChanges.toArray(new Change[0]));
-            }
-          }
-        });
-      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
-
-      if (changesConsumer != null) {
-        changesConsumer.consume(foundChanges.get());
-      }
-    }
-
-    return exceptions.isEmpty();
+    return allProcessedFiles;
   }
 
   @NotNull
