@@ -191,7 +191,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       RunConfiguration configuration = each.first.getConfiguration();
       if (!(configuration instanceof TargetAwareRunProfile)) return true;
 
-      if ((ApplicationManager.getApplication().isInternal() || Registry.is("update.run.configuration.actions.from.cache"))
+      if ((Registry.is("update.run.configuration.actions.from.cache"))
           && RunManagerImpl.getInstanceImpl(myProject).isInvalidInCache(each.first)) {
         return false;
       }
