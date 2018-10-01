@@ -8,7 +8,7 @@ import com.intellij.remote.RemoteFile
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 
 class PyUnsupportedPackageManager(sdk: Sdk) : PyPackageManagerImpl(sdk) {
-  override fun getHelperPath(helper: String?): String? = (sdk.sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.helpersPath?.let {
+  override fun getHelperPath(helper: String): String? = (sdk.sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.helpersPath?.let {
     RemoteFile(it, helper).path
   }
 

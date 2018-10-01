@@ -15,8 +15,11 @@
  */
 package com.jetbrains.python.remote
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.remote.CredentialsType
 import com.intellij.util.PathMappingSettings
 import java.io.File
 import java.util.function.Consumer
@@ -79,6 +82,19 @@ interface PyProjectSynchronizer {
    * @param filePath local file name (in case of java-to-python), remote otherwise
    */
   fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String?
+}
+/**
+ * Plugin registers [PyProjectSynchronizer] for [CredentialsType]
+ */
+interface PyProjectSynchronizerProvider {
+  fun getSynchronizer(credsType: CredentialsType<*>, sdk: Sdk): PyProjectSynchronizer?
+
+  companion object {
+    private val EP: ExtensionPointName<PyProjectSynchronizerProvider> =
+      ExtensionPointName.create("com.jetbrains.python.remote.projectSynchronizerProvider")
+
+    fun find(credsType: CredentialsType<*>, sdk: Sdk) = EP.extensions.mapNotNull { it.getSynchronizer(credsType, sdk) }.firstOrNull()
+  }
 }
 
 /**

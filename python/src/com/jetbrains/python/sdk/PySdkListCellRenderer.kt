@@ -59,7 +59,8 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   }
 
   private fun appendName(sdk: Sdk) {
-    val name = sdkModifiers?.get(sdk)?.name ?: sdk.name
+    val modificator = sdkModifiers?.get(sdk)
+    val name = modificator?.name ?: sdk.name
     when {
       PythonSdkType.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
         append("[invalid] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
@@ -75,7 +76,7 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
         append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
       }
     }
-    val homePath = sdk.homePath
+    val homePath = modificator?.homePath ?: sdk.homePath
     val relHomePath = homePath?.let { FileUtil.getLocationRelativeToUserHome(it) }
     if (relHomePath != null && homePath !in name && relHomePath !in name) {
       append(" $relHomePath", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
