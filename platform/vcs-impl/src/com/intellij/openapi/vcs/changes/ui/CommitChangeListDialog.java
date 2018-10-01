@@ -567,9 +567,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private boolean addUnversionedFiles() {
-    return ScheduleForAdditionAction
-      .addUnversioned(myProject, myBrowser.getIncludedUnversionedFiles(), ChangeListManagerImpl.getDefaultUnversionedFileCondition(),
-                      myBrowser);
+    return ScheduleForAdditionAction.addUnversioned(myProject, myBrowser.getIncludedUnversionedFiles(), myBrowser);
   }
 
   @NotNull

@@ -1211,7 +1211,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
-    addUnversionedFiles(list, files, getDefaultUnversionedFileCondition(), null);
+    addUnversionedFiles(list, files, null);
   }
 
   // TODO this is for quick-fix for GitAdd problem. To be removed after proper fix
@@ -1219,7 +1219,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Deprecated
   public boolean addUnversionedFiles(@NotNull final LocalChangeList list,
                                      @NotNull final List<VirtualFile> files,
-                                     @NotNull final Condition<? super FileStatus> statusChecker,
                                      @Nullable Consumer<? super List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<>();
@@ -1232,8 +1231,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             Set<VirtualFile> descendants = new HashSet<>();
             Set<VirtualFile> parents = new HashSet<>();
             ReadAction.run(() -> {
-              collectUnversionedDescendantsRecursively(items, statusChecker, descendants);
-              collectUnversionedParents(vcs, items, statusChecker, parents);
+              collectUnversionedDescendantsRecursively(items, descendants);
+              collectUnversionedParents(vcs, items, parents);
             });
 
             // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
@@ -1297,16 +1296,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return exceptions.isEmpty();
   }
 
-  @NotNull
-  public static Condition<FileStatus> getDefaultUnversionedFileCondition() {
-    return status -> status == FileStatus.UNKNOWN;
-  }
-
   private void collectUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items,
-                                                        @NotNull Condition<? super FileStatus> condition,
                                                         @NotNull Set<VirtualFile> result) {
     Processor<VirtualFile> addToResultProcessor = file -> {
-      if (condition.value(getStatus(file))) {
+      if (getStatus(file) == FileStatus.UNKNOWN) {
         result.add(file);
       }
       return true;
@@ -1319,14 +1312,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void collectUnversionedParents(@NotNull AbstractVcs vcs,
                                          @NotNull Collection<? extends VirtualFile> items,
-                                         @NotNull Condition<? super FileStatus> condition,
                                          @NotNull Set<VirtualFile> result) {
     if (!vcs.areDirectoriesVersionedItems()) return;
 
     for (VirtualFile item : items) {
       VirtualFile parent = item.getParent();
 
-      while (parent != null && condition.value(getStatus(parent))) {
+      while (parent != null && getStatus(parent) == FileStatus.UNKNOWN) {
         result.add(parent);
         parent = parent.getParent();
       }
