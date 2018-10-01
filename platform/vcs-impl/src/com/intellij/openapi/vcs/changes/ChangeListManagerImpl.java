@@ -1202,7 +1202,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
-    addUnversionedFiles(list, files, getDefaultUnversionedFileCondition(), null);
+    addUnversionedFiles(list, files, null);
   }
 
   // TODO this is for quick-fix for GitAdd problem. To be removed after proper fix
@@ -1210,10 +1210,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Deprecated
   public boolean addUnversionedFiles(@NotNull final LocalChangeList list,
                                      @NotNull final List<VirtualFile> files,
-                                     @NotNull final Condition<? super FileStatus> statusChecker,
                                      @Nullable Consumer<? super List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
-    final Set<VirtualFile> allProcessedFiles = scheduleUnversionedFilesAddition(files, statusChecker, exceptions);
+    final Set<VirtualFile> allProcessedFiles = scheduleUnversionedFilesAddition(files, exceptions);
 
     if (!exceptions.isEmpty()) {
       StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
@@ -1257,7 +1256,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   private Set<VirtualFile> scheduleUnversionedFilesAddition(@NotNull List<VirtualFile> files,
-                                                            @NotNull final Condition<? super FileStatus> statusChecker,
                                                             @NotNull List<VcsException> exceptions) {
     Set<VirtualFile> allProcessedFiles = new HashSet<>();
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
@@ -1268,8 +1266,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
           final CheckinEnvironment environment = vcs.getCheckinEnvironment();
           if (environment != null) {
-            Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
-            Set<VirtualFile> parents = getUnversionedParents(vcs, items, statusChecker);
+            Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items);
+            Set<VirtualFile> parents = getUnversionedParents(vcs, items);
 
             // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
             // (inside the method) - so common add logic just needs to refresh statuses of parents
@@ -1295,16 +1293,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @NotNull
-  public static Condition<FileStatus> getDefaultUnversionedFileCondition() {
-    return status -> status == FileStatus.UNKNOWN;
-  }
-
-  @NotNull
-  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items,
-                                                                @NotNull final Condition<? super FileStatus> condition) {
+  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items) {
     final Set<VirtualFile> result = ContainerUtil.newHashSet();
     Processor<VirtualFile> addToResultProcessor = file -> {
-      if (condition.value(getStatus(file))) {
+      if (getStatus(file) == FileStatus.UNKNOWN) {
         result.add(file);
       }
       return true;
@@ -1319,8 +1311,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   private Set<VirtualFile> getUnversionedParents(@NotNull AbstractVcs vcs,
-                                                 @NotNull Collection<? extends VirtualFile> items,
-                                                 @NotNull Condition<? super FileStatus> condition) {
+                                                 @NotNull Collection<? extends VirtualFile> items) {
     if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
 
     HashSet<VirtualFile> result = ContainerUtil.newHashSet();
@@ -1328,7 +1319,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     for (VirtualFile item : items) {
       VirtualFile parent = item.getParent();
 
-      while (parent != null && condition.value(getStatus(parent))) {
+      while (parent != null && getStatus(parent) == FileStatus.UNKNOWN) {
         result.add(parent);
         parent = parent.getParent();
       }
