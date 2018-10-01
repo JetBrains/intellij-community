@@ -199,7 +199,6 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
             }
             else true
             // calculate result whether to continue waiting
-            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
             result = gradleWindowHasPath && isReimportButtonEnabled
           }
         }
@@ -211,7 +210,6 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
               val tree = treeTable().target.tree
               val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
               val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
-              logInfo("$currentTimeInHumanString: state of Build toolwindow: $state")
               syncState = state.contains("sync finished")
             }
           }
