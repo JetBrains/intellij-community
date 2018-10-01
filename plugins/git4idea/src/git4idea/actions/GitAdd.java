@@ -31,7 +31,7 @@ public class GitAdd extends ScheduleForAdditionAction {
   }
 
   @Override
-  protected boolean checkVirtualFiles(@NotNull AnActionEvent e) {
+  protected boolean canHaveUnversionedFiles(@NotNull AnActionEvent e) {
     return true;
   }
 }
