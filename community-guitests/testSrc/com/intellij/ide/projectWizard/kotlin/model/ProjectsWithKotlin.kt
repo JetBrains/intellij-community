@@ -621,7 +621,7 @@ fun KotlinGuiTestCase.dialogWithoutClosing(title: String? = null,
                                            ignoreCaseTitle: Boolean = false,
                                            timeout: Timeout = defaultTimeout,
                                            func: JDialogFixture.() -> Unit) {
-  val dialog = dialog(title, ignoreCaseTitle, timeout)
+  val dialog = dialog(title, ignoreCaseTitle, timeout = timeout)
   func(dialog)
 }
 

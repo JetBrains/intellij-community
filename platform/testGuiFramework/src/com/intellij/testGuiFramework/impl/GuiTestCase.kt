@@ -15,10 +15,7 @@ import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
-import com.intellij.testGuiFramework.util.Clipboard
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.ScreenshotTaker
-import com.intellij.testGuiFramework.util.Shortcut
+import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.AbstractComponentFixture
@@ -112,10 +109,16 @@ open class GuiTestCase {
    */
   fun dialog(title: String? = null,
              ignoreCaseTitle: Boolean = false,
+             predicate: FinderPredicate = Predicate.equality,
              timeout: Timeout = Timeouts.defaultTimeout,
              needToKeepDialog: Boolean = false,
              func: JDialogFixture.() -> Unit) {
-    val dialog = dialog(title, ignoreCaseTitle, timeout)
+    val dialog = dialog(
+      title = title,
+      ignoreCaseTitle = ignoreCaseTitle,
+      predicate = predicate,
+      timeout = timeout
+    )
     func(dialog)
     if (!needToKeepDialog) dialog.waitTillGone()
   }
@@ -322,7 +325,7 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
@@ -331,7 +334,7 @@ open class GuiTestCase {
       try {
         val dialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
-            if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
+            if (ignoreCaseTitle) predicate(it.title.toLowerCase(), title.toLowerCase()) else predicate(it.title, title)
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception(
             "Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")

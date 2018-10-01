@@ -195,7 +195,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, Timeouts.defaultTimeout)
+  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true)
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 
@@ -590,7 +590,12 @@ fun NewProjectDialogModel.selectSdk(sdk: String) {
 fun NewProjectDialogModel.checkDownloadingDialog(){
   GuiTestUtilKt.waitUntil("Wait when downloading dialog disappears"){
     val dialog = try{
-      guiTestCase.dialog(title = null, timeout = Timeouts.noTimeout, ignoreCaseTitle = true)
+      guiTestCase.dialog(
+        title = "Downloading",
+        timeout = Timeouts.noTimeout,
+        ignoreCaseTitle = true,
+        predicate = Predicate.startWith
+      )
     }
     catch (e: ComponentLookupException){
       null
