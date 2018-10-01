@@ -67,6 +67,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String INSTALL = "install";
   private static final String UNINSTALL = "uninstall";
   private static final String UNTAR = "untar";
+  protected String mySeparator = File.separator;
 
   @Nullable private volatile List<PyPackage> myPackagesCache = null;
   private final AtomicBoolean myUpdatingCache = new AtomicBoolean(false);
@@ -126,7 +127,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   protected void installManagement(@NotNull String name) throws ExecutionException {
     final String dirName = extractHelper(name + ".tar.gz");
     try {
-      final String fileName = dirName + name + File.separatorChar + "setup.py";
+      final String fileName = dirName + name +mySeparator + "setup.py";
       getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, true, dirName + name);
     }
     finally {
@@ -139,11 +140,17 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final String helperPath = getHelperPath(name);
     final ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
     final String result = getHelperResult(PACKAGING_TOOL, args, false, false, null);
-    String dirName = FileUtil.toSystemDependentName(result.trim());
-    if (!dirName.endsWith(File.separator)) {
-      dirName += File.separator;
+    String dirName = toSystemDependentName(result.trim());
+    if (!dirName.endsWith(mySeparator)) {
+      dirName += mySeparator;
     }
     return dirName;
+  }
+
+
+  @NotNull
+  protected String toSystemDependentName(@NotNull final String dirName) {
+    return FileUtil.toSystemDependentName(dirName);
   }
 
   protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
@@ -345,7 +352,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final String name = "virtualenv-" + (py26 ? VIRTUALENV_VERSION_26 : VIRTUALENV_VERSION);
       final String dirName = extractHelper(name + ".tar.gz");
       try {
-        final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
+        final String fileName = dirName + name + mySeparator + "virtualenv.py";
         getPythonProcessResult(fileName, args, false, true, dirName + name);
       }
       finally {
@@ -354,7 +361,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
 
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
-    final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
+    final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
     final String path = (binary != null) ? binary : binaryFallback;
 
     if (usePyVenv) {
@@ -463,7 +470,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  protected String getHelperPath(String helper) throws ExecutionException {
+  protected String getHelperPath(@NotNull final String helper) throws ExecutionException {
     return PythonHelpersLocator.getHelperPath(helper);
   }
 
