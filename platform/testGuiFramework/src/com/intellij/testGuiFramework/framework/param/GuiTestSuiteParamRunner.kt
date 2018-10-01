@@ -2,7 +2,6 @@
 package com.intellij.testGuiFramework.framework.param
 
 import com.intellij.testGuiFramework.framework.FirstStartWith
-import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.getIdeFromAnnotation
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestOptions

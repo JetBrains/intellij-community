@@ -15,10 +15,13 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val builder: RunnerBuilder, val optionalName: String? = null) : Suite(suiteClass, builder) {
+open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
   var isFirstStart: Boolean = true
+
+  @Volatile
+  var customName: String? = null
 
   protected val myIde: Ide = getIdeFromAnnotation(suiteClass)
   protected val UNDEFINED_FIRST_CLASS = "undefined"
@@ -30,14 +33,14 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val buil
   private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")!!
 
   private val testsFilter by lazy {
-    object: Filter() {
+    object : Filter() {
 
       val filteredClassNameSet: Set<String> by lazy {
         GuiTestOptions.filteredListOfTests.split(",").toSet()
       }
 
       override fun shouldRun(description: Description?): Boolean {
-        description?: return true
+        description ?: return true
         return filteredClassNameSet.contains(description.testClass.simpleName)
       }
 
@@ -57,16 +60,12 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val buil
     }
   }
 
-  protected open fun createGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
+  protected open fun createGuiTestLocalRunner(testClass: Class<*>, suiteClass: Class<*>, myIde: Ide): GuiTestLocalRunner {
     return GuiTestLocalRunner(testClass, suiteClass, myIde)
   }
 
   override fun getName(): String {
-    if (optionalName == null) {
-      return super.getName()
-    } else {
-      return optionalName
-    }
+    return customName ?: super.getName()
   }
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {

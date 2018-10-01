@@ -73,12 +73,7 @@ open class GuiTestCase {
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.root.canonicalFile)
-
-  @get:Rule
-  val testRootPath: TemporaryFolder by lazy {
-    TemporaryFolder()
-  }
+  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"

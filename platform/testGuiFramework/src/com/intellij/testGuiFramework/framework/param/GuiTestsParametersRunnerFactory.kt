@@ -12,7 +12,7 @@ class GuiTestsParametersRunnerFactory : ParametersRunnerFactory {
 
   override fun createRunnerForTestWithParameters(test: TestWithParameters?): Runner {
     test ?: throw Exception("Unable to build runner for a NULL test")
-    return GuiTestSuiteRunner(test.testClass.javaClass, createRunnerBuilder(test), "parameters: [${test.parameters[0]}]")
+    return GuiTestSuiteRunner(test.testClass.javaClass, createRunnerBuilder(test)).apply { customName = "parameters: [${test.parameters[0]}]" }
   }
 
   private fun createRunnerBuilder(test: TestWithParameters): CustomRunnerBuilder {
