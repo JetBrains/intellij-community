@@ -66,7 +66,7 @@ public class PySkeletonGenerator {
   public void finishSkeletonsGeneration() {
   }
 
-  public boolean exists(String name) {
+  public boolean exists(@NotNull final String name) {
     return new File(name).exists();
   }
 
@@ -190,7 +190,7 @@ public class PySkeletonGenerator {
     return commandLine;
   }
 
-  protected ProcessOutput getProcessOutput(String homePath, String[] commandLine, Map<String, String> extraEnv,
+  protected ProcessOutput getProcessOutput(String homePath, @NotNull String[] commandLine, Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
     final Map<String, String> env = extraEnv != null ? new HashMap<>(extraEnv) : new HashMap<>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);

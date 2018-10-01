@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,5 +23,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PositionConverterProvider {
   @Nullable
-  PyPositionConverter createPositionConverter(PyDebugProcess debugProcess);
+  PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess);
 }
