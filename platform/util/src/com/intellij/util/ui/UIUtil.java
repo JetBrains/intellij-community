@@ -88,6 +88,8 @@ public class UIUtil {
 
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
+  public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
+
   static {
     blockATKWrapper();
     // save the default JRE CSS and ..
@@ -1647,7 +1649,15 @@ public class UIUtil {
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
+    if (SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui")) {
+      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+      if (lookAndFeel instanceof UserDataHolder) {
+        Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
+        return value == null || !value.booleanValue();
+      }
+      return true;
+    }
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
