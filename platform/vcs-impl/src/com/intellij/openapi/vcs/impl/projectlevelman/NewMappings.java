@@ -387,7 +387,7 @@ public class NewMappings {
       }
 
       List<VcsDirectoryMapping> filteredMappings = map(filteredFiles, Functions.pairSecond());
-      if (defaultMapping != null) filteredMappings.add(defaultMapping);
+      if (defaultMapping != null) filteredMappings = append(filteredMappings, defaultMapping);
 
       if (filteredMappings.isEmpty()) {
         iterator.remove();
