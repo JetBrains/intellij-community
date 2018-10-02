@@ -21,9 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.util.CollectionsKt;
-import com.siyeh.ig.psiutils.CollectionUtils;
-import org.apache.commons.collections.ListUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +58,7 @@ public class CallChunkBlockBuilder {
       }
       return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
     }
+
     // Support for groovy style dot placement
     final ASTNode lastNode = subNodes.get(subNodes.size() - 1);
     if (lastNode.getElementType() == JavaTokenType.DOT) {
@@ -69,16 +67,20 @@ public class CallChunkBlockBuilder {
       if (!subNodes.isEmpty()) {
         subBlocks.add(create(subNodes, wrap, null));
       }
-      Block block = newJavaBlock(lastNode, mySettings, myJavaSettings, Indent.getNoneIndent(), Wrap.createWrap(WrapType.ALWAYS, true), strategy, myFormattingMode);
+      Block block =
+        newJavaBlock(lastNode, mySettings, myJavaSettings, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, true), strategy,
+                     myFormattingMode);
       subBlocks.add(block);
-      SyntheticCodeBlock syntheticCodeBlock = new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
-                                                         Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), Wrap.createWrap(WrapType.NONE, false));
-      return syntheticCodeBlock;
+      return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
+                                    Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
     }
     List<Block> blocks = createJavaBlocks(subNodes);
+
+    // Last line not contains '.', but needs to be wrapped
+    final Wrap finalWrap = myJavaSettings.PLACE_DOT_ON_NEXT_LINE ? null : wrap;
     return new SyntheticCodeBlock(blocks, alignment, mySettings, myJavaSettings,
                                   Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS),
-                                  null);
+                                  finalWrap);
   }
 
   @NotNull
