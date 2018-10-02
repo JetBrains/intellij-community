@@ -164,7 +164,7 @@ def method(Box<A> box) {
 '''
   }
 
-  void testPerformanceLike() {
+  void testOverloadedInClosure() {
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
@@ -172,7 +172,7 @@ foo(1) { println it }
 '''
   }
 
-  void testPerformanceLikeCS() {
+  void testOverloadedInClosureCS() {
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -188,7 +188,7 @@ def m() {
 '''
   }
 
-  void testPerformanceLikeCS2() {
+  void testOverloadedInClosureCS2() {
     myFixture.enableInspections(new MissingReturnInspection())
 
     testHighlighting '''
@@ -205,8 +205,7 @@ def m() {
   }
 
 
-  void testPerformanceLikeCS3() {
-
+  void testOverloadedInClosureCS3() {
     testHighlighting '''
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
