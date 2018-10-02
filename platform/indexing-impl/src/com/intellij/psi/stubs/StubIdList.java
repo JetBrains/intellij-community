@@ -23,18 +23,18 @@ public final class StubIdList {
   private final int myData;
   private final int[] myArray;
 
-  StubIdList() {
+  public StubIdList() {
     myData = -1;
     myArray = null;
   }
 
-  StubIdList(int value) {
+  public StubIdList(int value) {
     assert value >= 0;
     myData = value;
     myArray = null;
   }
 
-  StubIdList(@NotNull int[] array, int size) {
+  public StubIdList(@NotNull int[] array, int size) {
     myArray = array;
     myData = size;
   }

@@ -855,7 +855,7 @@ public class PluginManagerCore {
     return false;
   }
 
-  private static void resolveOptionalDescriptors(@NotNull String fileName,
+  public static void resolveOptionalDescriptors(@NotNull String fileName,
                                                 @NotNull IdeaPluginDescriptorImpl descriptor,
                                                 @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
