@@ -50,6 +50,7 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
 import java.awt.Point
+import java.io.Serializable
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
@@ -176,7 +177,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  class LibraryOrFramework(vararg val mainPath: String) {
+  class LibraryOrFramework(vararg val mainPath: String) : Serializable{
 
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
