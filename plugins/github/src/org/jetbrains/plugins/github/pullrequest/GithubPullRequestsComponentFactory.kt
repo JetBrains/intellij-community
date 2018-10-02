@@ -103,6 +103,12 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       }, preview)
     }
 
+    @CalledInAwt
+    fun refreshAllPullRequests() {
+      list.refresh()
+      dataLoader.invalidateAllData()
+    }
+
     //TODO: refresh in list
     @CalledInAwt
     fun refreshPullRequest(number: Long) {
@@ -118,7 +124,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
         GithubPullRequestKeys.API_REQUEST_EXECUTOR.`is`(dataId) -> requestExecutor
         GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
-        GithubPullRequestKeys.PULL_REQUESTS_LIST_COMPONENT.`is`(dataId) -> list
         GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> list.selectionModel.current
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
           list.selectionModel.current?.let(dataLoader::getDataProvider)

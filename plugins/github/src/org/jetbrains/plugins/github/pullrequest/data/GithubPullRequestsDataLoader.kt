@@ -46,12 +46,17 @@ class GithubPullRequestsDataLoader(private val project: Project,
   private val invalidationEventDispatcher = EventDispatcher.create(ProviderChangedListener::class.java)
 
   init {
-    LowMemoryWatcher.register(Runnable { cache.invalidateAll() }, this)
+    LowMemoryWatcher.register(Runnable { invalidateAllData() }, this)
   }
 
   @CalledInAwt
   fun invalidateData(number: Long) {
     cache.invalidate(number)
+  }
+
+  @CalledInAwt
+  fun invalidateAllData() {
+    cache.invalidateAll()
   }
 
   @CalledInAwt
