@@ -18,8 +18,12 @@ public class VcsLogUsageTriggerCollector extends ApplicationUsageTriggerCollecto
   public static void triggerUsage(@NotNull AnActionEvent e) {
     String text = e.getPresentation().getText();
     if (text != null) {
-      triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
+      triggerUsage(e, text);
     }
+  }
+
+  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull String text) {
+    triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
   }
 
   public static void triggerUsage(@NotNull String text) {

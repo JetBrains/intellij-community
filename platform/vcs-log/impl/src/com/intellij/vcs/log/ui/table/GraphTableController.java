@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
@@ -41,7 +40,6 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
-import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,11 +177,7 @@ public class GraphTableController {
       }
     }
     else {
-      balloonText = "Jump to <b>\"" +
-                    StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
-                    "\"</b> by " +
-                    VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    CommitPresentationUtil.formatDateTime(details.getAuthorTime());
+      balloonText = "Jump to " + CommitPresentationUtil.getShortSummary(details);
     }
     return balloonText;
   }
