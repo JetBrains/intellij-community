@@ -81,7 +81,8 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   }
 
   /**
-   * @return instance of {@link ByteArrayCharSequence} if the characters of supplied string can be packed to bytes; its {@code string} argument otherwise
+   * @return instance of {@link ByteArrayCharSequence} if the supplied string can be stored internally
+   * as a byte array of 8-bit code points (for more compact representation); its {@code string} argument otherwise
    */
   @NotNull
   public static CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
