@@ -83,9 +83,15 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
 
   // force reload KeePass Store if settings changed
   internal fun closeCurrentStoreIfKeePass() {
-    val store = currentProviderIfComputed
-    if (store is KeePassCredentialStore && !store.isMemoryOnly) {
+    val store = currentProviderIfComputed as? KeePassCredentialStore ?: return
+    if (!store.isMemoryOnly) {
       (_currentProvider as SynchronizedClearableLazy).drop()
+      try {
+        store.save()
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+      }
     }
   }
 
