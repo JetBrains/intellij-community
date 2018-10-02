@@ -373,8 +373,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         continue;
       }
 
-      int compare = annotationFQName.compareTo(curAnnotationName);
-      if (compare == 0) {
+      if (annotationFQName.equals(curAnnotationName)) {
         // found tag for same annotation, replacing
         itemAnnotation.delete();
         break;
