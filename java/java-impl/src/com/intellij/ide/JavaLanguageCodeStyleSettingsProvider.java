@@ -201,6 +201,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "PLACE_DOT_ON_NEXT_LINE",
+                                ApplicationBundle.message("checkbox.place.dot.on.next.line"),
+                                CodeStyleSettingsCustomizable.WRAPPING_CALL_CHAIN);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
