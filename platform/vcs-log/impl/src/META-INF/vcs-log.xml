@@ -59,6 +59,16 @@
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
+    <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent"
+            text="Go to Parent Row" description="Navigate to the parent row in the commit graph">
+      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X 10.5+" remove="true"/>
+    </action>
+    <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild"
+            text="Go to Child Row" description="Navigate to the child row in the commit graph">
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+" remove="true"/>
+    </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -176,6 +186,8 @@
       <reference ref="Vcs.Log.CompareRevisions"/>
       <separator/>
       <reference ref="Vcs.Log.GoToRef"/>
+      <reference ref="Vcs.Log.GoToParent"/>
+      <reference ref="Vcs.Log.GoToChild"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
       <reference ref="Vcs.Log.TextFilterSettings"/>
       <separator/>
