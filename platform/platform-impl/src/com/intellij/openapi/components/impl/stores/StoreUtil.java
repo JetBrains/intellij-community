@@ -2,7 +2,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -84,13 +83,7 @@ public final class StoreUtil {
       return spec;
     }
 
-    PluginId pluginId = PluginManagerCore.getPluginByClassName(componentClass.getName());
-    if (pluginId == null) {
-      throw new RuntimeException("No @State annotation found in " + componentClass);
-    }
-    else {
-      throw new PluginException("No @State annotation found in " + componentClass, pluginId);
-    }
+    throw PluginManagerCore.createPluginException("No @State annotation found in " + componentClass, null, componentClass);
   }
 
   @Nullable
