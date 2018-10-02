@@ -746,7 +746,7 @@ public class StringUtilTest {
 
   @Test
   public void testFirstLastDontConvertCharSequenceToString() {
-    CharSequence s = ByteArrayCharSequence.convertToBytesIfAsciiString("test");
+    CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
     assertTrue(s instanceof ByteArrayCharSequence);
     CharSequence first = StringUtil.first(s, 1, false);
     assertTrue(String.valueOf(first.getClass()), first instanceof CharSequenceSubSequence);

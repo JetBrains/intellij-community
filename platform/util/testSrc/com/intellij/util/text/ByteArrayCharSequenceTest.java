@@ -6,7 +6,7 @@ import junit.framework.TestCase;
 public class ByteArrayCharSequenceTest extends TestCase {
   public void testCharactersBetween7FAndFF() {
     String s = "Straße";
-    CharSequence strasse = ByteArrayCharSequence.convertToBytesIfAsciiString(s);
+    CharSequence strasse = ByteArrayCharSequence.convertToBytesIfPossible(s);
     assertTrue(strasse instanceof ByteArrayCharSequence);
     assertEquals(s, strasse.toString());
   }

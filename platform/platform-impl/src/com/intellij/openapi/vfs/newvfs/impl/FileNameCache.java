@@ -50,7 +50,7 @@ public class FileNameCache {
       FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
     }
 
-    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
+    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfPossible(name);
     IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<>(id, rawName);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
