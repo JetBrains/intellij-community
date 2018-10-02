@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
+import org.editorconfig.settings.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +174,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
       List<AnAction> actions = ContainerUtil.newArrayList();
       actions.add(
         DumbAwareAction.create(
-          "Show settings",
+          EditorConfigBundle.message("action.show.settings"),
 
           e -> ShowSettingsUtilImpl.showSettingsDialog(file.getProject(), "preferences.sourceCode", "EditorConfig")
         )
@@ -201,6 +202,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     Boolean adFlag = project.getUserData(PROJECT_ADVERTISEMENT_FLAG);
     if (adFlag != null && adFlag) return null;
     project.putUserData(PROJECT_ADVERTISEMENT_FLAG, true);
-    return "Current indent options are overridden by .editorconfig";
+    return EditorConfigBundle.message("advertisement.text");
   }
 }
