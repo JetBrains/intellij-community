@@ -9,6 +9,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +26,9 @@ import java.util.function.Supplier;
  * @author oleg
  */
 public class YAMLUtil {
+  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER =
+    new DefaultFileTypeSpecificInputFilter(YAMLLanguage.INSTANCE.getAssociatedFileType());
+
   private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
 
 
