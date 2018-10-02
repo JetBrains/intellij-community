@@ -31,7 +31,8 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
       expectedFacet = testParameters.expectedFacet,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
         artifact = testParameters.projectName,
-        framework = testParameters.project.frameworkName
+        framework = testParameters.project.frameworkName,
+        useKotlinDsl = testParameters.project.isKotlinDsl
       )
     )
   }
@@ -43,29 +44,14 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
       return listOf(
         TestParameters(
           projectName = "gradle_with_jvm",
-          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGProject,
+          project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
         ),
-//        TestParameters(
-//          projectName = "gradle_mpp_jvm",
-//          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
-//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
-//        ),
         TestParameters(
           projectName = "gradle_with_js",
-          project = kotlinLibs.getValue(KotlinKind.JS).gradleGProject,
+          project = kotlinProjects.getValue(Projects.GradleGProjectJs),
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        )//,
-//        TestParameters(
-//          projectName = "gradle_mpp_js",
-//          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
-//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-//        ),
-//        TestParameters(
-//          projectName = "gradle_mpp_common",
-//          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
-//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
-//        )
+        )
       )
     }
   }
@@ -75,7 +61,6 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
     project: ProjectProperties,
     expectedFacet: FacetStructure,
     gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
-    val extraTimeOut = 4000L
     createGradleProject(
       projectPath = projectFolder,
       gradleOptions = gradleOptions
@@ -85,7 +70,7 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = false
+      isKotlinDslUsed = gradleOptions.useKotlinDsl
     )
     gradleReimport()
     waitForGradleReimport(gradleOptions.artifact, waitForProject = true)

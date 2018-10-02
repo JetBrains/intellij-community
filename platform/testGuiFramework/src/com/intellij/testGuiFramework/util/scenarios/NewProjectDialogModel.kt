@@ -114,6 +114,13 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
     const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
     const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
+    const val itemKotlinMppMobileAndroidIos = "Kotlin (Mobile Android/iOS)"
+    const val itemKotlinMppMobileSharedLibrary = "Kotlin (Mobile Shared Library)"
+    const val itemKotlinJvm = "Kotlin/JVM"
+    const val itemKotlinJs = "Kotlin/JS"
+    const val itemKotlinNative = "Kotlin/Native"
+    const val itemGradleKotlinJvm = "Kotlin (Java)"
+    const val itemGradleKotlinJs = "Kotlin (JavaScript)"
   }
 
   enum class Groups(private val title: String) {

@@ -12,9 +12,8 @@ class CreateGradleProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @JvmName("gradle_cfg_jvm")
   fun createGradleAndConfigureKotlinJvmActualVersion() {
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JVM,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
         artifact = testMethod.methodName
@@ -26,9 +25,8 @@ class CreateGradleProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @JvmName("gradle_cfg_js")
   fun createGradleAndConfigureKotlinJsActualVersion() {
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JS,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JS]!!.gradleGProject,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJs),
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
         artifact = testMethod.methodName
