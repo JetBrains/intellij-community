@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
@@ -118,6 +119,13 @@ class WinExeInstallerBuilder {
       }
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
       generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
+
+      String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
+      if (jre32Dir != null) {
+        def generatorForJre32Dir = new NsisFileListGenerator()
+        generatorForJre32Dir.addDirectory(jre32Dir + "/jre32")
+        generatorForJre32Dir.generateUninstallerFile("\$INSTDIR\\jre32", new File(box, "nsiconf/un_jre32_win.nsh"))
+      }
     }
     catch (IOException e) {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
