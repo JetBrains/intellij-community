@@ -130,40 +130,39 @@ class ChainMethodCallsBlockBuilder {
   private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
+    List<ASTNode> current = new ArrayList<>();
     if (myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
-      List<ASTNode> current = new ArrayList<>();
       for (ASTNode node : nodes) {
-        if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
-          if (!current.isEmpty()) {
-            result.add(new ChainedCallChunk(current));
-          }
+        if (tryAddToResult(node, current, result)) {
           current = new ArrayList<>();
         }
         current.add(node);
-      }
-
-      if (!current.isEmpty()) {
-        result.add(new ChainedCallChunk(current));
       }
     } else {
-      List<ASTNode> current = new ArrayList<>();
       for (ASTNode node : nodes) {
         current.add(node);
-        if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
-          if (!current.isEmpty()) {
-            result.add(new ChainedCallChunk(current));
-          }
+        if (tryAddToResult(node, current, result)) {
           current = new ArrayList<>();
         }
       }
+    }
+    if (!current.isEmpty()) {
+      result.add(new ChainedCallChunk(current));
+    }
+    return result;
+  }
 
+  /**
+   * @return true if current list should be finished
+   */
+  private static boolean tryAddToResult(ASTNode node, List<ASTNode> current, List<ChainedCallChunk> result) {
+    if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
       if (!current.isEmpty()) {
         result.add(new ChainedCallChunk(current));
       }
+      return true;
     }
-
-    
-    return result;
+    return false;
   }
 
   private Alignment createCallChunkAlignment(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {

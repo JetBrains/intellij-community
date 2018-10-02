@@ -937,9 +937,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   }
 
   public void testDotPlacement() {
-    //getSettings().WRAP_LONG_LINES = true;
-    //getSettings().WRAP_COMMENTS = true;
-    //getSettings().RIGHT_MARGIN = 50;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().KEEP_LINE_BREAKS = false;
     getJavaSettings().PLACE_DOT_ON_NEXT_LINE = false;
 
 
@@ -962,17 +961,28 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "  }\n" +
       "}\n",
 
-      "public class Main {\n" +
-      "\n" +
-      "    /**\n" +
-      "     * {@link #authenticationCompleted(android.app.Activity,\n" +
-      "     * int, int, android.content.Intent)}\n" +
-      "     *\n" +
-      "     * @param args\n" +
-      "     */\n" +
-      "    public static void main(String[] args) {\n" +
+      "public class Chains {\n" +
+      "    static Chains get() {\n" +
+      "        return null;\n" +
       "    }\n" +
-      "}"
+      "\n  " +
+      "  Chains foo() {\n" +
+      "        return null;\n" +
+      "    }\n" +
+      "\n  " +
+      "  Chains bar() {\n" +
+      "        return null;\n" +
+      "    }\n" +
+      "\n  " +
+      "  public static void main(String[] args) {\n" +
+      "        get().\n" +
+      "                bar().\n" +
+      "                foo().\n" +
+      "                bar().\n" +
+      "                bar().\n" +
+      "                foo();\n" +
+      "    }\n" +
+      "}\n"
     );
   }
 }
