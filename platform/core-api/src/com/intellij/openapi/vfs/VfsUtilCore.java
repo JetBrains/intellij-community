@@ -60,7 +60,7 @@ public class VfsUtilCore {
   /**
    * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
    */
-  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<VirtualFile> roots) {
+  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<? extends VirtualFile> roots) {
     if (roots == null || roots.isEmpty()) return false;
 
     VirtualFile parent = file;
