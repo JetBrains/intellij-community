@@ -7,11 +7,12 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,9 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
         // At the "information" level only bare minimal set of elements are visited when the file is being edited.
         // If the caret is at the variable declaration the assignment expression can be not visited so we do the same check here.
-        if (isOnTheFly) visitLocation(variable);
+        if (isOnTheFly && isInformationLevel(variable)) {
+          visitLocation(variable);
+        }
       }
 
       public void visitLocation(@Nullable PsiElement location) {
@@ -55,7 +58,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
           JoinDeclarationAndAssignmentFix fix = new JoinDeclarationAndAssignmentFix();
 
           ProblemHighlightType highlightType = context.myIsUpdate ? INFORMATION : GENERIC_ERROR_OR_WARNING;
-          if (isOnTheFly && (context.myIsUpdate || InspectionProjectProfileManager.isInformationLevel(getShortName(), location))) {
+          if (isOnTheFly && (context.myIsUpdate || isInformationLevel(location))) {
             holder.registerProblem(location, message, highlightType, fix);
           }
           else if (location == assignment) {
@@ -63,35 +66,33 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
           }
         }
       }
+
+      private boolean isInformationLevel(@NotNull PsiElement element) {
+        return InspectionProjectProfileManager.isInformationLevel(getShortName(), element);
+      }
     };
   }
 
+  @Contract("null -> null")
   @Nullable
   private static Context getContext(@Nullable PsiElement element) {
     if (element != null) {
-      PsiElement parent = element.getParent();
-      if (parent != null) {
-        if (element instanceof PsiAssignmentExpression) {
-          PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
-          return getContext(findVariable(assignment), assignment);
-        }
-        if (parent instanceof PsiAssignmentExpression) {
-          PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
-          return getContext(findVariable(assignment), assignment);
-        }
-        if (element instanceof PsiLocalVariable) {
-          PsiLocalVariable variable = (PsiLocalVariable)element;
-          return getContext(variable, findAssignment(variable));
-        }
-        if (parent instanceof PsiLocalVariable) {
-          PsiLocalVariable variable = (PsiLocalVariable)parent;
-          return getContext(variable, findAssignment(variable));
-        }
+      if (!(element instanceof PsiAssignmentExpression) && !(element instanceof PsiLocalVariable)) {
+        element = element.getParent();
+      }
+      if (element instanceof PsiAssignmentExpression) {
+        PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
+        return getContext(findVariable(assignment), assignment);
+      }
+      if (element instanceof PsiLocalVariable) {
+        PsiLocalVariable variable = (PsiLocalVariable)element;
+        return getContext(variable, findAssignment(variable));
       }
     }
     return null;
   }
 
+  @Contract("null,_ -> null; _,null -> null")
   @Nullable
   private static Context getContext(@Nullable PsiLocalVariable variable, @Nullable PsiAssignmentExpression assignment) {
     if (variable != null && assignment != null) {
@@ -99,7 +100,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       PsiExpression rExpression = assignment.getRExpression();
       if (variableName != null && rExpression != null) {
         for (PsiLocalVariable aVar = variable; aVar != null; aVar = PsiTreeUtil.getNextSiblingOfType(aVar, PsiLocalVariable.class)) {
-          if (ReferencesSearch.search(aVar, new LocalSearchScope(rExpression), false).findFirst() != null) {
+          if (VariableAccessUtils.variableIsUsed(aVar, rExpression)) {
             return null;
           }
         }
@@ -111,7 +112,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
   @Nullable
   private static PsiLocalVariable findVariable(@NotNull PsiAssignmentExpression assignmentExpression) {
-    PsiExpression lExpression = assignmentExpression.getLExpression();
+    PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
     if (lExpression instanceof PsiReferenceExpression) {
       PsiReferenceExpression reference = (PsiReferenceExpression)lExpression;
       if (!reference.isQualified()) { // optimization: locals aren't qualified
@@ -135,7 +136,15 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     if (candidate instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)candidate).getExpression();
       if (expression instanceof PsiAssignmentExpression) {
-        return (PsiAssignmentExpression)expression;
+        PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+        PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
+        if (lExpression instanceof PsiReferenceExpression) {
+          PsiReferenceExpression reference = (PsiReferenceExpression)lExpression;
+          if (!reference.isQualified() && // optimization: locals aren't qualified
+              reference.isReferenceTo(variable)) {
+            return assignmentExpression;
+          }
+        }
       }
     }
     return null;
