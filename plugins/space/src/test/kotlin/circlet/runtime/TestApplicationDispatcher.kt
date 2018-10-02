@@ -5,7 +5,7 @@ import com.intellij.mock.*
 import com.intellij.openapi.application.*
 import junit.framework.*
 import junit.framework.TestCase.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import java.util.concurrent.*
 
 

@@ -2,10 +2,10 @@ package circlet.runtime
 
 import circlet.klogging.impl.*
 import com.intellij.openapi.application.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import runtime.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 class ApplicationDispatcher(private val application: Application) : Dispatcher {
     private val executor = Executors.newSingleThreadScheduledExecutor { runnable ->
@@ -54,24 +54,24 @@ private class ApplicationCoroutineContext(
         application.invokeLater(block)
     }
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val toResume = java.lang.Runnable {
             application.invokeLater {
                 with(continuation) { this@ApplicationCoroutineContext.resumeUndispatched(Unit) }
             }
         }
 
-        executor.schedule(toResume, time, unit)
+        executor.schedule(toResume, timeMillis, TimeUnit.MILLISECONDS)
     }
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
         val toResume = java.lang.Runnable {
             application.invokeLater {
                 block.run()
             }
         }
 
-        return DisposableFutureHandle(executor.schedule(toResume, time, unit))
+        return DisposableFutureHandle(executor.schedule(toResume, timeMillis, TimeUnit.MILLISECONDS))
     }
 }
 

@@ -11,8 +11,8 @@ import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.uiDesigner.core.*
 import klogging.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import runtime.async.*
 import runtime.reactive.*
 import runtime.utils.*
