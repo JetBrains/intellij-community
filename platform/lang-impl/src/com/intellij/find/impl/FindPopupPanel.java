@@ -173,10 +173,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           getContentPane().add(new JLabel(), BorderLayout.SOUTH);//remove hardcoded southSection
         }
 
-        @NotNull
         @Override
-        protected Action[] createActions() {
-          return new Action[0];
+        protected void doOKAction() {
+          processCtrlEnter();
         }
 
         @NotNull
@@ -307,6 +306,13 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       JRootPane rootPane = getRootPane();
       if (rootPane != null && myHelper.isReplaceState()) {
         rootPane.setDefaultButton(myReplaceSelectedButton);
+        rootPane.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed ENTER"), "openInFindWindow");
+        rootPane.getActionMap().put("openInFindWindow", new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            processCtrlEnter();
+          }
+        });
       }
     }
   }
@@ -601,15 +607,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
-    DumbAwareAction.create(e -> {
-      if (enterAsOK) {
-        navigateToSelectedUsage(null);
-      }
-      else {
-        myOkActionListener.actionPerformed(null);
-      }
-    }).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
-
+    DumbAwareAction.create(__ -> processCtrlEnter()).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
     myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
 
@@ -866,6 +864,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return c == myResultsPreviewTable ? mySearchComponent : super.getComponentAfter(container, c);
       }
     });
+  }
+
+  private void processCtrlEnter() {
+    if (Registry.is("ide.find.enter.as.ok", false)) {
+      navigateToSelectedUsage(null);
+    }
+    else {
+      myOkActionListener.actionPerformed(null);
+    }
   }
 
   private void onFileMaskChanged() {
