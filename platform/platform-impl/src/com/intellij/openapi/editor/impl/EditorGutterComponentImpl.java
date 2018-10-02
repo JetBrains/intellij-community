@@ -75,9 +75,6 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -174,13 +171,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       AccessibleGutterLine.installListeners(this);
     }
     else {
-      ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent e) {
-          if ((boolean)e.getNewValue()) {
-            AccessibleGutterLine.installListeners(EditorGutterComponentImpl.this);
-            ScreenReader.removePropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, this);
-          }
+      ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, editor.getDisposable(), e -> {
+        if ((boolean)e.getNewValue()) {
+          AccessibleGutterLine.installListeners(this);
         }
       });
     }

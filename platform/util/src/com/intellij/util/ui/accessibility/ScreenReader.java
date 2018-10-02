@@ -15,7 +15,8 @@
  */
 package com.intellij.util.ui.accessibility;
 
-import com.intellij.util.ui.JBUI;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
@@ -102,14 +103,15 @@ public class ScreenReader {
    * Adds property change listener. Supported properties:
    * {@link #SCREEN_READER_ACTIVE_PROPERTY}
    */
-  public static void addPropertyChangeListener(@NotNull String propertyName, @NotNull PropertyChangeListener listener) {
+  public static void addPropertyChangeListener(@NotNull final String propertyName,
+                                               @NotNull Disposable parent,
+                                               @NotNull final PropertyChangeListener listener) {
     PCS.addPropertyChangeListener(propertyName, listener);
-  }
-
-  /**
-   * Removes property change listener
-   */
-  public static void removePropertyChangeListener(@NotNull String propertyName, @NotNull PropertyChangeListener listener) {
-    PCS.removePropertyChangeListener(propertyName, listener);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        PCS.removePropertyChangeListener(propertyName, listener);
+      }
+    });
   }
 }
