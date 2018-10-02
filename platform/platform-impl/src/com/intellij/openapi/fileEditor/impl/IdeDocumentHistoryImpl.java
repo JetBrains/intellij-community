@@ -63,6 +63,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private boolean myBackInProgress;
   private boolean myForwardInProgress;
   private Object myLastGroupId;
+  private boolean myRegisteredBackPlaceInLastGroup;
 
   // change's navigation
   private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
@@ -201,20 +202,21 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   final void onCommandFinished(Object commandGroupId) {
-    if (myCommandStartPlace != null) {
-      if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
-        if (!myBackInProgress) {
-          if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) {
-            putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
-          }
-          if (!myForwardInProgress) {
-            myForwardPlaces.clear();
-          }
-        }
-        removeInvalidFilesFromStacks();
-      }
-    }
+    if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) myRegisteredBackPlaceInLastGroup = false;
     myLastGroupId = commandGroupId;
+
+    if (myCommandStartPlace != null && myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
+      if (!myBackInProgress) {
+        if (!myRegisteredBackPlaceInLastGroup) {
+          myRegisteredBackPlaceInLastGroup = true;
+          putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
+        }
+        if (!myForwardInProgress) {
+          myForwardPlaces.clear();
+        }
+      }
+      removeInvalidFilesFromStacks();
+    }
 
     if (myCurrentCommandHasChanges) {
       setCurrentChangePlace();
