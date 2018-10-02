@@ -208,7 +208,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       if (!myBackInProgress) {
         if (!myRegisteredBackPlaceInLastGroup) {
           myRegisteredBackPlaceInLastGroup = true;
-          putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
+          putLastOrMerge(myBackPlaces, myCommandStartPlace);
         }
         if (!myForwardInProgress) {
           myForwardPlaces.clear();
@@ -417,7 +417,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return removed;
   }
 
-  private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
+  private void gotoPlaceInfo(@NotNull PlaceInfo info) {
     final boolean wasActive = ToolWindowManager.getInstance(myProject).isEditorComponentActive();
     EditorWindow wnd = info.getWindow();
     FileEditorManagerEx editorManager = myFileEditorManager;
@@ -459,7 +459,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
   }
 
-  private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limitSizeLimit) {
+  private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next) {
     if (!list.isEmpty()) {
       PlaceInfo prev = list.getLast();
       if (isSame(prev, next)) {
@@ -468,7 +468,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     list.add(next);
-    if (list.size() > limitSizeLimit) {
+    if (list.size() > BACK_QUEUE_LIMIT) {
       list.removeFirst();
     }
   }
