@@ -16,7 +16,6 @@
 
 package com.intellij.find.actions;
 
-import com.intellij.ide.actions.Switcher;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -130,7 +129,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     switch(column) {
       case CURRENT_ASTERISK_COL:
-        if (isOriginUsage) panel.add(Switcher.createPaleLabel(" *"));
+        if (isOriginUsage) panel.add(new JLabel(" *"));
         break;
       case FILE_GROUP_COL:
         appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
