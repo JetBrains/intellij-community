@@ -37,6 +37,8 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   fun showError(message: String) {
     NOTIFICATION_MANAGER.notify(content = "$message\nIn-memory password storage will be used.", action = object: NotificationAction("Open Settings") {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        // to hide before Settings open, otherwise dialog and notification are shown at the same time
+        notification.expire()
         ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
       }
     })

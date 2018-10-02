@@ -29,6 +29,10 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     builder.noteRow(text, linkHandler)
   }
 
+  fun commentRow(text: String) {
+    builder.commentRow(text)
+  }
+
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(builder, ButtonGroup()).init()
   }

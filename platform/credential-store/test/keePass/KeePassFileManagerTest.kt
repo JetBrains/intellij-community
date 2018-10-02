@@ -174,7 +174,7 @@ private class TestKeePassFileManager(store: KeePassCredentialStore,
     }
   }
 
-  override fun requestOldAndNewKeys(contextComponent: Component?): Boolean {
+  override fun requestCurrentAndNewKeys(contextComponent: Component?): Boolean {
     doSetNewMasterPassword(oldMasterPasswordRequestAnswer!!.toCharArray(), masterPasswordRequestAnswer!!.toCharArray())
     return true
   }
