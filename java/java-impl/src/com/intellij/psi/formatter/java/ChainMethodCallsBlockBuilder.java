@@ -82,7 +82,11 @@ class ChainMethodCallsBlockBuilder {
         }
       }
       else {
-        wrap = null;
+        if (!myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
+          wrap = Wrap.createWrap(WrapType.ALWAYS, true);
+        } else {
+          wrap = null;
+        }
         chainedCallsAlignment = null;
       }
 
@@ -123,23 +127,41 @@ class ChainMethodCallsBlockBuilder {
   }
 
   @NotNull
-  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
+  private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
-    List<ASTNode> current = new ArrayList<>();
-    for (ASTNode node : nodes) {
-      if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
-        if (!current.isEmpty()) {
-          result.add(new ChainedCallChunk(current));
+    if (myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
+      List<ASTNode> current = new ArrayList<>();
+      for (ASTNode node : nodes) {
+        if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
+          if (!current.isEmpty()) {
+            result.add(new ChainedCallChunk(current));
+          }
+          current = new ArrayList<>();
         }
-        current = new ArrayList<>();
+        current.add(node);
       }
-      current.add(node);
+
+      if (!current.isEmpty()) {
+        result.add(new ChainedCallChunk(current));
+      }
+    } else {
+      List<ASTNode> current = new ArrayList<>();
+      for (ASTNode node : nodes) {
+        current.add(node);
+        if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
+          if (!current.isEmpty()) {
+            result.add(new ChainedCallChunk(current));
+          }
+          current = new ArrayList<>();
+        }
+      }
+
+      if (!current.isEmpty()) {
+        result.add(new ChainedCallChunk(current));
+      }
     }
-    
-    if (!current.isEmpty()) {
-      result.add(new ChainedCallChunk(current));
-    }
+
     
     return result;
   }
