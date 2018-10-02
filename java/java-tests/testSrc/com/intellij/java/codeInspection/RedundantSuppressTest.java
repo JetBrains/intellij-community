@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
+import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
       new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
+      new LocalInspectionToolWrapper(new RefusedBequestInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
       new GlobalInspectionToolWrapper(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection ()),
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};

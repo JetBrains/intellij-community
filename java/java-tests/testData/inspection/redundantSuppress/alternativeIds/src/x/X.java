@@ -10,3 +10,12 @@ class S {
 
 @SuppressWarnings("UnusedDeclaration")
 class Bar {}
+
+class NoSuperCall {
+    @SuppressWarnings("CloneDoesntCallSuperClone")
+    @Override
+    public Object clone() {
+        return new NoSuperCall();
+    }
+
+}

@@ -55,6 +55,7 @@ public abstract class InspectionElementsMerger {
   /**
    * @param id suppress id in code
    * @return new merged tool name
+   *         null if merger is not found
    */
   public static String getMergedToolName(String id) {
     for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
@@ -69,6 +70,6 @@ public abstract class InspectionElementsMerger {
         }
       }
     }
-    return id;
+    return null;
   }
 }

@@ -114,11 +114,14 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     InspectionToolWrapper[] toolWrappers = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
-        final String shortName = InspectionElementsMerger.getMergedToolName(iterator.next().trim());
+        String shortName = iterator.next().trim();
+        String mergedToolName = InspectionElementsMerger.getMergedToolName(shortName);
         for (InspectionToolWrapper toolWrapper : toolWrappers) {
+          String toolWrapperShortName = toolWrapper.getShortName();
           if (toolWrapper instanceof LocalInspectionToolWrapper &&
               (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName) ||
-               shortName.equals(((LocalInspectionToolWrapper)toolWrapper).getTool().getAlternativeID()))) {
+               shortName.equals(((LocalInspectionToolWrapper)toolWrapper).getTool().getAlternativeID()) ||
+               toolWrapperShortName.equals(mergedToolName))) {
             if (((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
               iterator.remove();
               break;
@@ -127,7 +130,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
               suppressedTools.put(toolWrapper, shortName);
             }
           }
-          else if (toolWrapper.getShortName().equals(shortName)) {
+          else if (toolWrapperShortName.equals(shortName) || toolWrapperShortName.equals(mergedToolName)) {
             //ignore global unused as it won't be checked anyway
             if (toolWrapper instanceof LocalInspectionToolWrapper ||
                 toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
