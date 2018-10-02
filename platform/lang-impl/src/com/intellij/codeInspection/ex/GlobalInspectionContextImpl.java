@@ -794,6 +794,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           if (!(problemDescriptor instanceof ProblemDescriptor)) {
             continue;
           }
+          if (SuppressionUtil.inspectionResultSuppressed(((ProblemDescriptor)problemDescriptor).getPsiElement(), toolWrapper.getTool())) {
+            continue;
+          }
           ProblemGroup problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
 
           InspectionToolWrapper targetWrapper = problemGroup == null ? toolWrapper : wrappersMap.get(problemGroup.getProblemName());

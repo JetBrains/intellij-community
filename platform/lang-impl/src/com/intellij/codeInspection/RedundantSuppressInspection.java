@@ -4,7 +4,10 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefFile;
+import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -15,7 +18,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -165,15 +167,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
           GlobalInspectionTool globalTool = global.getTool();
           //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
           if (globalTool.isGraphNeeded()) continue;
-          descriptors = new ArrayList<>();
-          globalContext.getRefManager().iterate(new RefVisitor() {
-            @Override public void visitElement(@NotNull RefEntity refEntity) {
-              CommonProblemDescriptor[] descriptors1 = global.getTool().checkElement(refEntity, scope, manager, globalContext, new ProblemDescriptionsProcessor() {});
-              if (descriptors1 != null) {
-                ContainerUtil.addAll(descriptors, descriptors1);
-              }
-            }
-          });
+          descriptors = new ArrayList<>(InspectionEngine.runInspectionOnFile(file, global, globalContext));
         }
         else {
           continue;

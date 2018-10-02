@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -44,6 +45,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
       new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
+      new GlobalInspectionToolWrapper(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection ()),
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
@@ -72,6 +74,10 @@ public class RedundantSuppressTest extends InspectionTestCase {
 
   public void testAlternativeIds() {
     doTest();
+  }
+
+  public void testAnnotator() {
+    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",false);
   }
 
   public void testIgnoreUnused() {
