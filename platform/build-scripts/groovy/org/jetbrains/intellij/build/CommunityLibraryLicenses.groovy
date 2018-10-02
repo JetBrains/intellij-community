@@ -254,6 +254,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "jgraphx", libraryName: "jgraphx", version: "3.4.1.3", license: "BSD",
                        url: "https://github.com/jgraph/jgraphx"),
+    new LibraryLicense(name: "Jing", libraryName: "jing", url: 'http://thaiopensource.com/relaxng/jing.html',
+                       license: "New BSD", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */
     new LibraryLicense(name: "jing-trang", libraryName: "jing-trang", url: 'https://github.com/relaxng/jing-trang',
                        additionalLibraryNames: ["jing.jar", "trang-core.jar"],
