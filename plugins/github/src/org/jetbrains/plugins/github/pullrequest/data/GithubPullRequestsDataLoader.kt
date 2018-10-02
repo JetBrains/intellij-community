@@ -86,9 +86,8 @@ class GithubPullRequestsDataLoader(private val project: Project,
 
       runPartialTask(branchFetchRequest, indicator) {
         val details = getOrHandle(detailsRequest)
-        if (!isCommitFetched(details.head.sha)) {
-          git.fetch(repository, remote, emptyList(), "refs/pull/${details.number}/head:").throwOnError()
-        }
+        git.fetch(repository, remote, emptyList(), "refs/pull/${details.number}/head:").throwOnError()
+        if (!isCommitFetched(details.base.sha)) throw IllegalStateException("Pull request base is not available after fetch")
         if (!isCommitFetched(details.head.sha)) throw IllegalStateException("Pull request head is not available after fetch")
         Couple.of(details.base.sha, details.head.sha)
       }
