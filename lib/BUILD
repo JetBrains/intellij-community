@@ -42,13 +42,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "pty4j-0.7.5",
-    jars = ["pty4j-0.7.5.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "microba",
     jars = ["microba.jar"],
     visibility = ["//visibility:public"],
@@ -58,13 +51,6 @@ java_import(
 java_import(
     name = "jayatana-1.2.4",
     jars = ["jayatana-1.2.4.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "purejavacomm",
-    jars = ["purejavacomm.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -93,13 +79,6 @@ java_import(
 java_import(
     name = "markdownj-core-0.4.2-SNAPSHOT",
     jars = ["markdownj-core-0.4.2-SNAPSHOT.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "jediterm-pty-2.10",
-    jars = ["jediterm-pty-2.10.jar"],
     visibility = ["//visibility:public"],
 )
 

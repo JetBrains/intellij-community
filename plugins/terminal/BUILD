@@ -6,6 +6,7 @@ iml_module(
     srcs = ["src"],
     bundle_data = glob(["resources/**"]),
     iml_files = ["intellij.terminal.iml"],
+    javacopts = ["-Xep:ReturnValueIgnored:WARN"],
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [

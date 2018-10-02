@@ -54,7 +54,6 @@ iml_module(
         "//tools/idea/RegExpSupport:intellij.regexp[module]",
         "//tools/idea/plugins/tasks/tasks-core/lib:json-path-0.8.0",
         "//tools/idea/plugins/tasks/tasks-core/lib:json-smart-1.1.1",
-        "//tools/idea/plugins/tasks/tasks-core/lib:commons-discovery-0.4",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
         "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
         "//tools/idea/.idea/libraries:markdownj",

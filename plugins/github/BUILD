@@ -46,5 +46,6 @@ iml_module(
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore[module]",
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
     ],
 )

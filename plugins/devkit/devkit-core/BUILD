@@ -18,7 +18,6 @@ iml_module(
         "//tools/idea/plugins/devkit/jps-plugin:intellij.devkit.jps",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
@@ -50,6 +49,7 @@ iml_module(
         "//tools/idea/plugins/gradle/java:intellij.gradle.java[module]",
         "//tools/idea/jvm/jvm-analysis-api:intellij.jvm.analysis[module]",
         "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/json:intellij.json[module]",
     ],
 )
 

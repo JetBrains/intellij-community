@@ -35,13 +35,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "activation-1.1",
-    jars = ["activation-1.1.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "commons-beanutils",
     jars = ["commons-beanutils.jar"],
     visibility = ["//visibility:public"],

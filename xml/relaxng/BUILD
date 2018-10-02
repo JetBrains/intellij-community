@@ -34,6 +34,6 @@ iml_module(
         "//tools/idea/xml/relaxng/lib:rngom-20051226-patched",
         "//prebuilts/tools/common/m2/repository/isorelax/isorelax/20030108:jar",
         "//tools/idea/xml/relaxng/lib:trang-core",
-        "//tools/idea/xml/relaxng/lib:jing",
+        "//prebuilts/tools/common/m2/repository/thaiopensource/jing/20030619:jar",
     ],
 )

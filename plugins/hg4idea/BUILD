@@ -7,10 +7,7 @@ iml_module(
     iml_files = ["intellij.vcs.hg.iml"],
     resources = ["resources"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
-    ],
+    test_runtime_deps = ["//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

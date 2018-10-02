@@ -21,7 +21,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/java/java-runtime:intellij.java.rt",
         "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea/jetCheck:intellij.tools.jetCheck",
+        "//tools/idea/.idea/libraries:jetCheck",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core",
     ],
     # do not sort: must match IML order
@@ -53,7 +53,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
-        "//tools/idea/jetCheck:intellij.tools.jetCheck[module]",
+        "//tools/idea/.idea/libraries:jetCheck",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module]",
     ],
 )

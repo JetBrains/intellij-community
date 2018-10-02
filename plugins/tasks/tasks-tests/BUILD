@@ -41,5 +41,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module, test]",
         "//tools/idea/.idea/libraries:http-client-3.1[test]",
         "//tools/idea/.idea/libraries:Mocks[test]",
+        "//tools/idea/.idea/libraries:http-client[test]",
     ],
 )

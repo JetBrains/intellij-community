@@ -5,7 +5,12 @@ iml_module(
     name = "intellij.platform.tests",
     iml_files = ["intellij.platform.tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    test_runtime_deps = ["//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+    ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -51,6 +56,7 @@ iml_module(
         "//tools/idea/.idea/libraries:miglayout-swing[test]",
         "//tools/idea/.idea/libraries:batik[test]",
         "//tools/idea/.idea/libraries:xmlgraphics-commons[test]",
+        "//tools/idea/plugins/configuration-script:intellij.configurationScript[module, test]",
         "//tools/base/common:studio.android.sdktools.common[module, test]",
         "//tools/base/testutils:studio.android.sdktools.testutils[module, test]",
         "//tools/idea/.idea/libraries:HdrHistogram[test]",

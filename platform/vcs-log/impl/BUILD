@@ -15,7 +15,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
         "//tools/idea/images:intellij.platform.images",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],

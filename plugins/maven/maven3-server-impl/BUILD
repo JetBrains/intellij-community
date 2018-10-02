@@ -8,7 +8,6 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
@@ -18,7 +17,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module]",
-        "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven/maven3-server-impl/lib/maven3/boot:plexus-classworlds-2.5.2",
         "//tools/idea/plugins/maven/maven3-server-impl/lib/maven3/lib:aether-api-1.0.2.v20150114",

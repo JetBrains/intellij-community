@@ -11,10 +11,3 @@ java_import(
     jars = ["trang-core.jar"],
     visibility = ["//visibility:public"],
 )
-
-# managed by go/iml_to_build
-java_import(
-    name = "jing",
-    jars = ["jing.jar"],
-    visibility = ["//visibility:public"],
-)

@@ -42,8 +42,8 @@ java_library(
 java_library(
     name = "equalsverifier",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.4.5:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.4.5:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.5.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.5.1:jar"],
 )
 
 # managed by go/iml_to_build
@@ -52,16 +52,16 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.8.10:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.8.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.19.0:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.8.15:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.8.15:jar",
+        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.21.0:jar",
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.6:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.8.10:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.8.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.19.0:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.8.15:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.8.15:jar",
+        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.21.0:jar",
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.6:jar",
     ],
 )
@@ -70,8 +70,8 @@ java_library(
 java_library(
     name = "gson",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.4:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.4:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.5:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.5:jar"],
 )
 
 # managed by go/iml_to_build
@@ -112,8 +112,8 @@ java_library(
 java_library(
     name = "commons-compress",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.16.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.16.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.17:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.17:jar"],
 )
 
 # managed by go/iml_to_build
@@ -132,17 +132,17 @@ java_library(
     exports = [
         "//prebuilts/tools/common/m2/repository/commons-codec/commons-codec/1.10:jar",
         "//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.5:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.5:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.6:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.6:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/m2/repository/commons-codec/commons-codec/1.10:jar",
         "//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.5:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.5:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.6:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.6:jar",
     ],
 )
 
@@ -150,8 +150,8 @@ java_library(
 java_library(
     name = "bouncy-castle-provider",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.59:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.59:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.60:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.60:jar"],
 )
 
 # managed by go/iml_to_build
@@ -222,8 +222,8 @@ java_library(
 java_library(
     name = "Guava",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/23.6-jre:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/23.6-jre:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/25.1-jre:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/25.1-jre:jar"],
 )
 
 # managed by go/iml_to_build
@@ -380,8 +380,8 @@ java_library(
 java_library(
     name = "xmlgraphics-commons",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.2:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.2:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.3:jar"],
 )
 
 # managed by go/iml_to_build
@@ -407,9 +407,9 @@ java_library(
     name = "Xerces",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.12.0:jar"],
     # do not sort: must match IML order
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.12.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -442,21 +442,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.27.Final:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.25.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.27.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.27.Final:jar",
     ],
 )
 
@@ -464,24 +464,24 @@ java_library(
 java_library(
     name = "netty-handler",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.25.Final:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.25.Final:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.27.Final:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.27.Final:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "proxy-vole",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/github/markusbernhardt/proxy-vole/1.0.4:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/markusbernhardt/proxy-vole/1.0.4:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/markusbernhardt/proxy-vole/1.0.5:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/markusbernhardt/proxy-vole/1.0.5:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "pty4j",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:pty4j-0.7.5"],
-    runtime_deps = ["//tools/idea/lib:pty4j-0.7.5"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.8.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.8.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -552,8 +552,8 @@ java_library(
 java_library(
     name = "assertJ",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.9.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.9.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.10.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.10.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -650,8 +650,8 @@ java_library(
 java_library(
     name = "winp",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.26:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.26:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.27:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.27:jar"],
 )
 
 # managed by go/iml_to_build
@@ -844,8 +844,8 @@ java_library(
 java_library(
     name = "purejavacomm",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:purejavacomm"],
-    runtime_deps = ["//tools/idea/lib:purejavacomm"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/purejavacomm/purejavacomm/1.0.2.RELEASE:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/purejavacomm/purejavacomm/1.0.2.RELEASE:jar"],
 )
 
 # managed by go/iml_to_build
@@ -942,24 +942,24 @@ java_library(
 java_library(
     name = "StreamEx",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.5:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.5:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.7:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.7:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "memoryfilesystem",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.2.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.2.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.2.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.2.2:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "snakeyaml",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.21:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.21:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.22:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.22:jar"],
 )
 
 # managed by go/iml_to_build
@@ -968,17 +968,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.8:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.8:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.8:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.10:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.8:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.8:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.8:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.10:jar",
     ],
 )
 
@@ -994,8 +994,8 @@ java_library(
 java_library(
     name = "jediterm-pty",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jediterm-pty-2.10"],
-    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.10"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/jediterm/jediterm-pty/2.12:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/jediterm/jediterm-pty/2.12:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1201,14 +1201,14 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.0:jar",
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.5:jar",
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.5:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.6:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.6:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.0:jar",
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.5:jar",
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.5:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.6:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.6:jar",
     ],
 )
 
@@ -1262,10 +1262,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "org.apache.httpcomponents_fluent-hc",
+    name = "fluent-hc",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.5:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.5:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.6:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1282,13 +1282,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark-util/0.32.22:jar",
-        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark/0.32.22:jar",
+        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark-util/0.34.16:jar",
+        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark/0.34.16:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark-util/0.32.22:jar",
-        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark/0.32.22:jar",
+        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark-util/0.34.16:jar",
+        "//prebuilts/tools/common/m2/repository/com/vladsch/flexmark/flexmark/0.34.16:jar",
     ],
 )
 
@@ -1334,18 +1334,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "delight-rhino-sandbox",
+    name = "delight-nashorn-sandbox",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-rhino-sandbox/0.0.6:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-rhino-sandbox/0.0.6:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "rhino",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.16:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.16:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1393,5 +1385,39 @@ java_library(
         "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.70-tests",
         "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.70-tests",
         "//prebuilts/tools/common/android-kotlin:tests-common-1.2.70-tests",
+    ],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "error-prone-annotations",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/errorprone/error_prone_annotations/2.3.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/errorprone/error_prone_annotations/2.3.1:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "jetCheck",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/jetbrains/jetCheck/0.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/jetbrains/jetCheck/0.1:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "maven-model",
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
     ],
 )

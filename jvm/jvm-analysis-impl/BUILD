@@ -18,5 +18,9 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
     ],
-    deps = ["//tools/idea/jvm/jvm-analysis-api:intellij.jvm.analysis[module]"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/jvm/jvm-analysis-api:intellij.jvm.analysis[module]",
+        "//tools/idea/java/openapi:intellij.java[module]",
+    ],
 )

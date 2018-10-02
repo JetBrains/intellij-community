@@ -39,10 +39,3 @@ java_import(
     jars = ["json-smart-1.1.1.jar"],
     visibility = ["//visibility:public"],
 )
-
-# managed by go/iml_to_build
-java_import(
-    name = "commons-discovery-0.4",
-    jars = ["commons-discovery-0.4.jar"],
-    visibility = ["//visibility:public"],
-)

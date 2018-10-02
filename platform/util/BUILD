@@ -69,7 +69,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jna[test]",
         "//tools/idea/platform/core-api:intellij.platform.core[module, test]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module, test]",
-        "//tools/idea/jetCheck:intellij.tools.jetCheck[module, test]",
+        "//tools/idea/.idea/libraries:jetCheck[test]",
         "//tools/idea/.idea/libraries:commons-compress",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",

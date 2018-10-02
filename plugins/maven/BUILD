@@ -66,7 +66,7 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
-        "//tools/idea/plugins/maven/lib:plexus-archiver-2.4.4",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-archiver/2.4.4:jar",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl[module]",
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module]",
@@ -74,6 +74,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/platform/util:intellij.platform.util.tests[module, test]",
         "//tools/idea:intellij.java.compiler.tests[module, test]",
+        "//tools/idea/plugins/maven/maven3-server-common:intellij.maven.server.m3.common[module, test]",
     ],
 )
 
@@ -86,7 +87,6 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
@@ -96,7 +96,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module]",
-        "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:plexus-utils-1.5.5",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:archetype-common-2.0-alpha-4-SNAPSHOT",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:maven-dependency-tree-1.2",
@@ -106,7 +105,6 @@ iml_module(
         "//tools/idea/lib:jaxb-api",
         "//tools/idea/lib:jaxb-impl",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:nexus-indexer-1.2.3",
-        "//tools/idea/plugins/maven/maven2-server-impl/lib:activation-1.1",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:commons-beanutils",
         "//tools/idea/plugins/maven:intellij.maven[module, test]",

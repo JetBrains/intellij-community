@@ -2,9 +2,10 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.statsCollector",
+    name = "intellij.configurationScript",
     srcs = ["src"],
-    iml_files = ["intellij.statsCollector.iml"],
+    iml_files = ["intellij.configurationScript.iml"],
+    package_prefixes = {"test": "com.intellij.configurationScript"},
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -18,12 +19,9 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
@@ -31,17 +29,15 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/json:intellij.json[module]",
+        "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
+        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
+        "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
-        "//tools/idea/.idea/libraries:http-client",
-        "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/.idea/libraries:gson",
-        "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
-        "//tools/idea/.idea/libraries:mockito[test]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea/plugins/stats-collector/features:intellij.statsCollector.features[module]",
-        "//tools/idea/plugins/stats-collector/log-events:intellij.statsCollector.logEvents[module]",
-        "//tools/idea/.idea/libraries:commons-codec",
-        "//tools/idea/.idea/libraries:fluent-hc",
+        "//tools/idea/.idea/libraries:snakeyaml",
+        "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
+        "//tools/idea/.idea/libraries:gson[test]",
     ],
 )

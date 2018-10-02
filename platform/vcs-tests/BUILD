@@ -6,10 +6,7 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.platform.vcs.tests.iml"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
-    ],
+    test_runtime_deps = ["//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -39,5 +36,6 @@ iml_module(
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.tests[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
+        "//tools/idea/platform/util:intellij.platform.util.tests[module, test]",
     ],
 )

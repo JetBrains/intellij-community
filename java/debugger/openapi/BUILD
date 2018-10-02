@@ -11,6 +11,7 @@ iml_module(
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     visibility = ["//visibility:public"],
+    exports = ["//tools/idea/platform/xdebugger-api:intellij.platform.debugger"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
@@ -31,5 +32,8 @@ iml_module(
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/resources-en:intellij.java.resources.en[module]",
         "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
+        "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
     ],
 )
