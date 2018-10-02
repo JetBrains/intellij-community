@@ -67,7 +67,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   // change's navigation
   private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
-  private int myStartIndex;
   private int myCurrentIndex;
   private PlaceInfo myCurrentChangePlace;
 
@@ -254,7 +253,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
           myChangePlaces.removeLast();
         }
       }
-      myCurrentIndex = myStartIndex + myChangePlaces.size();
+      myCurrentIndex = myChangePlaces.size();
     }
   }
 
@@ -263,11 +262,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       myChangePlaces.add(myCurrentChangePlace);
       if (myChangePlaces.size() > CHANGE_QUEUE_LIMIT) {
         myChangePlaces.removeFirst();
-        myStartIndex++;
       }
       myCurrentChangePlace = null;
     }
-    myCurrentIndex = myStartIndex + myChangePlaces.size();
+    myCurrentIndex = myChangePlaces.size();
   }
 
   @Override
@@ -298,7 +296,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     myLastGroupId = null;
 
-    myStartIndex = 0;
     myCurrentIndex = 0;
     myCurrentChangePlace = null;
     myCommandStartPlace = null;
@@ -368,9 +365,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Override
   public final void navigatePreviousChange() {
     removeInvalidFilesFromStacks();
-    if (myCurrentIndex == myStartIndex) return;
+    if (myCurrentIndex == 0) return;
     int index = myCurrentIndex - 1;
-    final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
+    final PlaceInfo info = myChangePlaces.get(index);
 
     executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
@@ -378,7 +375,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final boolean isNavigatePreviousChangeAvailable() {
-    return myCurrentIndex > myStartIndex;
+    return myCurrentIndex > 0;
   }
 
   void removeInvalidFilesFromStacks() {
@@ -386,16 +383,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     removeInvalidFilesFrom(myForwardPlaces);
     if (removeInvalidFilesFrom(myChangePlaces)) {
-      myCurrentIndex = myStartIndex + myChangePlaces.size();
+      myCurrentIndex = myChangePlaces.size();
     }
   }
 
   @Override
   public void navigateNextChange() {
     removeInvalidFilesFromStacks();
-    if (myCurrentIndex >= myStartIndex + myChangePlaces.size() - 1) return;
+    if (myCurrentIndex >= myChangePlaces.size() - 1) return;
     int index = myCurrentIndex + 1;
-    final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
+    final PlaceInfo info = myChangePlaces.get(index);
 
     executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
@@ -403,7 +400,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public boolean isNavigateNextChangeAvailable() {
-    return myCurrentIndex < myStartIndex + myChangePlaces.size() - 1;
+    return myCurrentIndex < myChangePlaces.size() - 1;
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
