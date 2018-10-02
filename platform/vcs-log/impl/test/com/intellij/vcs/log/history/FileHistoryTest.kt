@@ -205,7 +205,7 @@ class FileHistoryTest {
   }
 
   @Test
-  fun cyclicHistoryTest() {
+  fun historyWithCyclicRenames() {
     val aFile = LocalFilePath("a.txt", false)
     val bFile = LocalFilePath("b.txt", false)
     val fileNamesData = FileNamesDataBuilder(aFile)
@@ -232,7 +232,7 @@ class FileHistoryTest {
   }
 
   @Test
-  fun caseOnlyRename() {
+  fun historyWithCyclicCaseOnlyRenames() {
     val lowercasePath = LocalFilePath("file.txt", false)
     val uppercasePath = LocalFilePath("FILE.TXT", false)
     val mixedPath = LocalFilePath("FiLe.TxT", false)
