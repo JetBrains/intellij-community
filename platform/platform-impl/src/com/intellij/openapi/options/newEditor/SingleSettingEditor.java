@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -12,7 +13,12 @@ import java.util.Map;
  * @author Alexander Lobas
  */
 public class SingleSettingEditor extends ConfigurableEditor {
-  private final SimpleBanner myBanner = new SimpleBanner();
+  private final SimpleBanner myBanner = new SimpleBanner() {
+    @Override
+    Dimension getPreferredLeftPanelSize(Dimension size) {
+      return new Dimension(size.width, JBUI.scale(35));
+    }
+  };
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
 

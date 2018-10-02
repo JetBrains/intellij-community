@@ -120,8 +120,9 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     repaint();
   }
 
-  public int getBaseline() {
-    return views.isEmpty() ? 0 : views.get(0).getBaseline();
+  @Override
+  public int getBaseline(int width, int height) {
+    return views.isEmpty() ? -1 : views.get(0).getBaseline();
   }
 
   @Override
