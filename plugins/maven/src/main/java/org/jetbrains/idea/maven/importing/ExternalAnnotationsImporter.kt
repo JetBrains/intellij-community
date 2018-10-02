@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
@@ -23,7 +24,9 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean =
-    super.isApplicable(mavenProject) && Registry.`is`("external.system.import.resolve.annotations")
+    super.isApplicable(mavenProject)
+    && Registry.`is`("external.system.import.resolve.annotations")
+    && !ApplicationManager.getApplication().isUnitTestMode
 
   override fun processChangedModulesOnly(): Boolean = false
 

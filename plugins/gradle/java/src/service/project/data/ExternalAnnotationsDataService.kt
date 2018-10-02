@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project.data
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -27,7 +28,8 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
                                projectData: ProjectData?,
                                project: Project,
                                modelsProvider: IdeModelsProvider) {
-    if (!Registry.`is`("external.system.import.resolve.annotations")) {
+    if (!Registry.`is`("external.system.import.resolve.annotations")
+        || ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
 
