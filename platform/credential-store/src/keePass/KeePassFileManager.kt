@@ -124,7 +124,7 @@ internal open class KeePassFileManager(private val file: Path, private val maste
           }
         }
         catch (e: IncorrectMasterPasswordException) {
-          errors.add(ValidationInfo("Old password not correct.", currentPasswordField))
+          errors.add(ValidationInfo("The current password is incorrect.", currentPasswordField))
           new?.fill(0.toChar())
         }
       }
