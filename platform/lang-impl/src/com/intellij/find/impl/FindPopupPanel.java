@@ -154,8 +154,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     initComponents();
     initByModel();
-
-    ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
   }
 
   @Override
@@ -314,6 +312,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           }
         });
       }
+      ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
     }
   }
 
