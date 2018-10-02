@@ -7,3 +7,6 @@ class S {
     return "";
   }
 }
+
+@SuppressWarnings("UnusedDeclaration")
+class Bar {}

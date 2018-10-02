@@ -112,7 +112,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     InspectionToolWrapper[] toolWrappers = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
-        final String shortName = iterator.next().trim();
+        final String shortName = InspectionElementsMerger.getMergedToolName(iterator.next().trim());
         for (InspectionToolWrapper toolWrapper : toolWrappers) {
           if (toolWrapper instanceof LocalInspectionToolWrapper &&
               (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName) ||
