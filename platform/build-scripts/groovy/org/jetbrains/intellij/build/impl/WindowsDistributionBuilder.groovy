@@ -88,7 +88,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && !buildContext.isBundledJreModular()) {
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
       File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
         //prepare folder with jre x86 for win archive
@@ -106,7 +106,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
-    if (arch != null && customizer.buildZipWithBundledOracleJre) {
+    if (arch != null && customizer.buildZipWithBundledOracleJre &&
+        (arch != JvmArchitecture.x32 || buildContext.bundledJreManager.is32bitArchSupported())) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
         buildWinZip([oracleJrePath], "-oracle-win", winDistPath)
