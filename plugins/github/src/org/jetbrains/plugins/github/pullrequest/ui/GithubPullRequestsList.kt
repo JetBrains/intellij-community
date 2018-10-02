@@ -8,10 +8,7 @@ import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -23,6 +20,7 @@ import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Color
 import java.awt.Component
 import java.awt.FlowLayout
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
@@ -35,6 +33,7 @@ internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubA
 
   init {
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
+    addMouseListener(RightClickSelectionListener())
 
     val renderer = PullRequestsListCellRenderer()
     cellRenderer = renderer
@@ -129,6 +128,15 @@ internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubA
       }
 
       return this
+    }
+  }
+
+  private inner class RightClickSelectionListener : MouseAdapter() {
+    override fun mousePressed(e: MouseEvent) {
+      if (JBSwingUtilities.isRightMouseButton(e)) {
+        val row = locationToIndex(e.point)
+        if (row != -1) selectionModel.setSelectionInterval(row, row)
+      }
     }
   }
 }
