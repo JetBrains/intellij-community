@@ -1102,7 +1102,7 @@ public class UIUtil {
   }
 
   public static Color getLabelForeground() {
-    return UIManager.getColor("Label.foreground");
+    return JBColor.namedColor("Label.foreground", new JBColor(Gray._0, Gray.xBB));
   }
 
   public static Color getLabelDisabledForeground() {

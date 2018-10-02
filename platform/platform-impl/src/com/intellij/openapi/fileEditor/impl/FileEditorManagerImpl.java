@@ -52,7 +52,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -100,7 +99,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
-  private static final Color DEFAULT_FILE_COLOR = JBColor.namedColor("EditorTabs.active.foreground", UIUtil.getLabelForeground());
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
@@ -354,7 +352,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public Color getFileColor(@NotNull final VirtualFile file) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
-    if (statusColor == null) statusColor = DEFAULT_FILE_COLOR;
+    if (statusColor == null) statusColor = UIUtil.getLabelForeground();
     return statusColor;
   }
 

@@ -207,6 +207,13 @@ public class TabLabel extends JPanel implements Accessible {
           g.setClip(oldClip);
         }
       }
+
+      @Override
+      protected Color getActiveTextColor(Color attributesColor) {
+        return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
+          JBColor.namedColor("EditorTabs.active.foreground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
+      }
+
     };
     label.setOpaque(false);
     label.setBorder(null);
