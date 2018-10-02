@@ -35,6 +35,8 @@ import java.util.List;
  * @author tav
  */
 class AccessibleGutterLine extends JPanel {
+  private static boolean actionHandlersInstalled;
+
   private final EditorGutterComponentImpl myGutter;
   private AccessibleGutterElement mySelectedElement;
   // [tav] todo: soft-wrap doesn't work correctly
@@ -59,7 +61,10 @@ class AccessibleGutterLine extends JPanel {
     mySelectedElement.paint(g);
   }
 
-  public static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
+  private static void checkInstallActionHandlers() {
+    if (actionHandlersInstalled) return;
+    actionHandlersInstalled = true;
+
     installActionHandler(IdeActions.ACTION_EDITOR_ESCAPE, true, (line) -> line.escape(true));
     installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, false, (line) -> line.moveRight());
     installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, false, (line) -> line.moveLeft());
@@ -67,6 +72,10 @@ class AccessibleGutterLine extends JPanel {
     installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, true, (line) -> line.maybeLineChanged());
     installActionHandler(IdeActions.ACTION_EDITOR_ENTER, false, (line) -> {});
     installActionHandler("EditorShowGutterIconTooltip", false, (line) -> line.showTooltipIfPresent());
+  }
+
+  public static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
+    checkInstallActionHandlers();
 
     gutter.addFocusListener(new FocusAdapter() {
       @Override
