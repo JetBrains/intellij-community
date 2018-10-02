@@ -40,7 +40,7 @@ abstract public class TransferableList<T> implements Transferable {
     this(Arrays.asList(array));
   }
 
-  public TransferableList(List<T> list) {
+  public TransferableList(List<? extends T> list) {
     myList = Collections.unmodifiableList(list);
   }
 

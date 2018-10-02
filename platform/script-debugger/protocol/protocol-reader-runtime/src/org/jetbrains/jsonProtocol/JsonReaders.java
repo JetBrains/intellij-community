@@ -26,7 +26,7 @@ public final class JsonReaders {
   private JsonReaders() {
   }
 
-  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<T> valueFactory) {
+  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<? extends T> valueFactory) {
     return new MapFactory<>(valueFactory);
   }
 

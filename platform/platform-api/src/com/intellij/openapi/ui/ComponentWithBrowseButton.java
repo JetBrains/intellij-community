@@ -220,7 +220,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     private final String myTitle;
     private final String myDescription;
     protected ComponentWithBrowseButton<T> myTextComponent;
-    private final TextComponentAccessor<T> myAccessor;
+    private final TextComponentAccessor<? super T> myAccessor;
     private Project myProject;
     protected final FileChooserDescriptor myFileChooserDescriptor;
 
@@ -229,7 +229,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
                                       ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<T> accessor) {
+                                      TextComponentAccessor<? super T> accessor) {
       if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
         LOG.error("multiple selection not supported");
         fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {

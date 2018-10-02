@@ -11,13 +11,13 @@ import java.util.function.Function;
 
 public class PersistentSearchEverywhereContributorFilter<T> implements SearchEverywhereContributorFilter<T> {
 
-  private final ChooseByNameFilterConfiguration<T> myPersistentConfiguration;
+  private final ChooseByNameFilterConfiguration<? super T> myPersistentConfiguration;
   private final List<T> myElements;
   private final Function<? super T, String> myTextExtractor;
   private final Function<? super T, ? extends Icon> myIconExtractor;
 
   public PersistentSearchEverywhereContributorFilter(@NotNull List<T> elements,
-                                                     @NotNull ChooseByNameFilterConfiguration<T> configuration,
+                                                     @NotNull ChooseByNameFilterConfiguration<? super T> configuration,
                                                      Function<? super T, String> textExtractor,
                                                      Function<? super T, ? extends Icon> iconExtractor) {
     myElements = elements;

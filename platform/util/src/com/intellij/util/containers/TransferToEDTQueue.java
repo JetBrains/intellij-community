@@ -48,7 +48,7 @@ public class TransferToEDTQueue<T> {
    */
   private static final int DEFAULT_THRESHOLD = 30;
   private final String myName;
-  private final Processor<T> myProcessor;
+  private final Processor<? super T> myProcessor;
   private volatile boolean stopped;
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
@@ -85,7 +85,7 @@ public class TransferToEDTQueue<T> {
   }
 
   public TransferToEDTQueue(@NotNull @NonNls String name,
-                            @NotNull Processor<T> processor,
+                            @NotNull Processor<? super T> processor,
                             @NotNull Condition<?> shutUpCondition,
                             int maxUnitOfWorkThresholdMs) {
     myName = name;

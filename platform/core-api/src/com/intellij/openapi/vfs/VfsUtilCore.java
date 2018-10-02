@@ -716,7 +716,7 @@ public class VfsUtilCore {
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
     public DistinctVFilesRootsCollection() { }
 
-    public DistinctVFilesRootsCollection(Collection<VirtualFile> virtualFiles) {
+    public DistinctVFilesRootsCollection(Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
 

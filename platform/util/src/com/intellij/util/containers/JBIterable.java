@@ -851,7 +851,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Deprecated
   @NotNull
-  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+  public final JBIterable<E> sorted(@NotNull Comparator<? super E> comparator) {
     return sort(comparator);
   }
 

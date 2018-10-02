@@ -66,7 +66,7 @@ public class InvocationExprent extends Exprent {
   public InvocationExprent(int opcode,
                            LinkConstant cn,
                            List<PooledConstant> bootstrapArguments,
-                           ListStack<Exprent> stack,
+                           ListStack<? extends Exprent> stack,
                            Set<Integer> bytecodeOffsets) {
     this();
 

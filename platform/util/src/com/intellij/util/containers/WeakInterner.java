@@ -34,7 +34,7 @@ public class WeakInterner<T> {
   public WeakInterner() {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   }
-  public WeakInterner(@NotNull TObjectHashingStrategy<T> strategy) {
+  public WeakInterner(@NotNull TObjectHashingStrategy<? super T> strategy) {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap(strategy);
   }
 

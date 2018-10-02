@@ -68,7 +68,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     return model;
   }
 
-  public JBList(@NotNull Collection<E> items) {
+  public JBList(@NotNull Collection<? extends E> items) {
     this(createDefaultListModel(items));
   }
 

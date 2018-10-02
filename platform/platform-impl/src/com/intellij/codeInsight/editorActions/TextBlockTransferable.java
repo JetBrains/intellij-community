@@ -19,12 +19,12 @@ import java.io.StringReader;
 import java.util.*;
 
 public class TextBlockTransferable implements Transferable {
-  private final Collection<TextBlockTransferableData> myExtraData;
+  private final Collection<? extends TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;
   private final DataFlavor[] myTransferDataFlavors;
 
-  public TextBlockTransferable(@NotNull String text, @NotNull Collection<TextBlockTransferableData> extraData, @Nullable RawText rawText) {
+  public TextBlockTransferable(@NotNull String text, @NotNull Collection<? extends TextBlockTransferableData> extraData, @Nullable RawText rawText) {
     myText = cleanFromNullsIfNeeded(text);
     myExtraData = extraData;
     myRawText = rawText;

@@ -22,9 +22,9 @@ import java.util.function.Function;
  * @author peter
  */
 public abstract class CommentMacro extends MacroBase {
-  private final Function<Commenter, String> myCommenterFunction;
+  private final Function<? super Commenter, String> myCommenterFunction;
 
-  protected CommentMacro(String name, Function<Commenter, String> commenterFunction) {
+  protected CommentMacro(String name, Function<? super Commenter, String> commenterFunction) {
     super(name, name + "()");
     myCommenterFunction = commenterFunction;
   }

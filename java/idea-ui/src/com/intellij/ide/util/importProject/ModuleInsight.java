@@ -61,7 +61,7 @@ public abstract class ModuleInsight {
     setRoots(Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
   }
 
-  public final void setRoots(final List<File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
+  public final void setRoots(final List<? extends File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
     myModules = null;
     myLibraries = null;
 

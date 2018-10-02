@@ -75,8 +75,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 200;
 
-  private final List<SearchEverywhereContributor> myServiceContributors;
-  private final List<SearchEverywhereContributor> myShownContributors;
+  private final List<? extends SearchEverywhereContributor> myServiceContributors;
+  private final List<? extends SearchEverywhereContributor> myShownContributors;
   private final Map<String, SearchEverywhereContributorFilter<?>> myContributorFilters;
 
   private SearchListModel myListModel; //todo using in different threads? #UX-1
@@ -96,8 +96,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private ProgressIndicator mySearchProgressIndicator;
 
   public SearchEverywhereUI(Project project,
-                            List<SearchEverywhereContributor> serviceContributors,
-                            List<SearchEverywhereContributor> contributors,
+                            List<? extends SearchEverywhereContributor> serviceContributors,
+                            List<? extends SearchEverywhereContributor> contributors,
                             Map<String, SearchEverywhereContributorFilter<?>> filters) {
     super(project);
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();

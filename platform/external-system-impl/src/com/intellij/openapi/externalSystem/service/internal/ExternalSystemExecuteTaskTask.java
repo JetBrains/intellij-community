@@ -73,7 +73,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @Deprecated
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
-                                       @NotNull List<ExternalTaskPojo> tasksToExecute,
+                                       @NotNull List<? extends ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
                                        @Nullable String arguments,
                                        @Nullable String jvmAgentSetup) throws IllegalArgumentException {

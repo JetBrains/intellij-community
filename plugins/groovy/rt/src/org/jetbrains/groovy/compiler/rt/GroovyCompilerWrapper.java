@@ -45,10 +45,10 @@ public class GroovyCompilerWrapper {
     "A groovyc error occurred while trying to load one of the classes in project dependencies. " +
     "Please ensure its version is compatible with other jars (including Groovy ones) in the dependencies. " +
     "See the message and the stack trace below for reference\n\n";
-  private final List<CompilerMessage> collector;
+  private final List<? super CompilerMessage> collector;
   private boolean forStubs;
 
-  public GroovyCompilerWrapper(List<CompilerMessage> collector, boolean forStubs) {
+  public GroovyCompilerWrapper(List<? super CompilerMessage> collector, boolean forStubs) {
     this.collector = collector;
     this.forStubs = forStubs;
   }

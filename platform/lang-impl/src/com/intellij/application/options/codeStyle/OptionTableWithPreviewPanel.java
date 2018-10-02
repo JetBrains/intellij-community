@@ -506,7 +506,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private final Function<Integer,String> myDefaultValueRenderer;
+    @Nullable private final Function<? super Integer, String> myDefaultValueRenderer;
 
     IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -517,7 +517,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                      int minValue,
                      int maxValue,
                      int defaultValue,
-                     @Nullable Function<Integer,String> defaultValueRenderer) {
+                     @Nullable Function<? super Integer, String> defaultValueRenderer) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       myMinValue = minValue;
       myMaxValue = maxValue;

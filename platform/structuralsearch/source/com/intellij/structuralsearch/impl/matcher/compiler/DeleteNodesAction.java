@@ -6,9 +6,9 @@ import java.util.List;
 
 class DeleteNodesAction implements Runnable {
 
-  private final List<PsiElement> elements;
+  private final List<? extends PsiElement> elements;
 
-  DeleteNodesAction(List<PsiElement> _elements) {
+  DeleteNodesAction(List<? extends PsiElement> _elements) {
     elements = _elements;
   }
 

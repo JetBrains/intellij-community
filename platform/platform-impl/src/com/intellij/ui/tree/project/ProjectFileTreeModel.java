@@ -166,7 +166,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   private static final class Mapper implements BiFunction<VirtualFile, Object, FileNode> {
     private final HashMap<VirtualFile, FileNode> map = new HashMap<>();
 
-    Mapper(@NotNull List<FileNode> list) {
+    Mapper(@NotNull List<? extends FileNode> list) {
       list.forEach(node -> map.put(node.file, node));
     }
 

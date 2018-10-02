@@ -84,7 +84,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public volatile static boolean CREATE_VIEW_FORCE = false;
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
-  private final NotNullLazyValue<ContentManager> myContentManager;
+  private final NotNullLazyValue<? extends ContentManager> myContentManager;
   private volatile InspectionResultsView myView;
   private volatile String myOutputPath;
   private Content myContent;
@@ -95,7 +95,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private AnalysisUIOptions myUIOptions;
   private InspectionTreeState myTreeState;
 
-  public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
+  public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
     myUIOptions = AnalysisUIOptions.getInstance(project).copy();
     myContentManager = contentManager;

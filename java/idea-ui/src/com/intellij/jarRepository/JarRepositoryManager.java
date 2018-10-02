@@ -160,7 +160,7 @@ public class JarRepositoryManager {
   }
 
   @NotNull
-  protected static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props, Collection<OrderRoot> roots) {
+  protected static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props, Collection<? extends OrderRoot> roots) {
     return new NewLibraryConfiguration(
       RepositoryLibraryDescription.findDescription(props).getDisplayName(props.getVersion()),
       RepositoryLibraryType.getInstance(),

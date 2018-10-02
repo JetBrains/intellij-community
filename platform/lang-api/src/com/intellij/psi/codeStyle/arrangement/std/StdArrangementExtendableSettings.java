@@ -47,16 +47,16 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
     super();
   }
 
-  public StdArrangementExtendableSettings(@NotNull List<ArrangementGroupingRule> groupingRules,
-                                          @NotNull List<ArrangementSectionRule> sectionRules,
-                                          @NotNull Collection<StdArrangementRuleAliasToken> rulesAliases) {
+  public StdArrangementExtendableSettings(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
+                                          @NotNull List<? extends ArrangementSectionRule> sectionRules,
+                                          @NotNull Collection<? extends StdArrangementRuleAliasToken> rulesAliases) {
     super(groupingRules, sectionRules);
     myRulesAliases.addAll(rulesAliases);
   }
 
-  public static StdArrangementExtendableSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
+  public static StdArrangementExtendableSettings createByMatchRules(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
                                                                     @NotNull List<? extends StdArrangementMatchRule> matchRules,
-                                                                    @NotNull Collection<StdArrangementRuleAliasToken> rulesAliases) {
+                                                                    @NotNull Collection<? extends StdArrangementRuleAliasToken> rulesAliases) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (StdArrangementMatchRule rule : matchRules) {
       sectionRules.add(ArrangementSectionRule.create(rule));

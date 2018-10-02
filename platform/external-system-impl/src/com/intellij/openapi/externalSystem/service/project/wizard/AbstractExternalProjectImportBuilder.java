@@ -87,7 +87,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
-                                              @NotNull NotNullFactory<C> controlFactory,
+                                              @NotNull NotNullFactory<? extends C> controlFactory,
                                               @NotNull ProjectSystemId externalSystemId) {
     myProjectDataManager = projectDataManager;
     myControlValue = NotNullLazyValue.createValue(controlFactory);

@@ -30,9 +30,9 @@ import java.util.Collection;
  */
 public class TransformableJavaFileObject implements JavaFileObject {
   private final JavaFileObject myOriginal;
-  private final Collection<JavaSourceTransformer> myTransformers;
+  private final Collection<? extends JavaSourceTransformer> myTransformers;
 
-  public TransformableJavaFileObject(JavaFileObject original, Collection<JavaSourceTransformer> transformers) {
+  public TransformableJavaFileObject(JavaFileObject original, Collection<? extends JavaSourceTransformer> transformers) {
     myOriginal = original;
     myTransformers = transformers;
   }
