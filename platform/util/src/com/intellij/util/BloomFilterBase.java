@@ -15,6 +15,12 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.io.DataInputOutputUtil;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public class BloomFilterBase {
   private final int myHashFunctionCount;
   private final int myBitsCount;
@@ -56,5 +62,19 @@ public class BloomFilterBase {
     }
 
     return true;
+  }
+
+  protected BloomFilterBase(DataInput input) throws IOException {
+    myHashFunctionCount = DataInputOutputUtil.readINT(input);
+    myBitsCount = DataInputOutputUtil.readINT(input);
+    myElementsSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
+
+    for(int i = 0; i < myElementsSet.length; ++i) myElementsSet[i] = input.readLong();
+  }
+  
+  protected void save(DataOutput output) throws IOException {
+    DataInputOutputUtil.writeINT(output, myHashFunctionCount);
+    DataInputOutputUtil.writeINT(output, myBitsCount);
+    for(long l:myElementsSet) output.writeLong(l);
   }
 }
