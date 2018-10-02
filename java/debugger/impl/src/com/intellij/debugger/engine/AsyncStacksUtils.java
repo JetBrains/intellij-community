@@ -278,4 +278,17 @@ public class AsyncStacksUtils {
   public static int getMaxStackLength() {
     return Registry.intValue("debugger.async.stacks.max.depth", 500);
   }
+
+  public static class AgentAsyncStackTraceProvider implements AsyncStackTraceProvider {
+    @Nullable
+    @Override
+    public List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext) {
+      return getAgentRelatedStack(stackFrame, suspendContext);
+    }
+
+    @Override
+    public boolean isKeepCurrentFrame() {
+      return true;
+    }
+  }
 }
