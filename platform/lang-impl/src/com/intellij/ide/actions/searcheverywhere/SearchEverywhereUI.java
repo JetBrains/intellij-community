@@ -327,7 +327,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
           {
             String message = IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
-            icon = new TextIcon(message, JBColor.GRAY, null, 0);
+            Color color = JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground();
+            icon = new TextIcon(message, color, null, 0);
             icon.setFont(RelativeFont.SMALL.derive(getFont()));
           }
 

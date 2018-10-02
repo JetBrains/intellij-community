@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
@@ -119,7 +118,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   }
 
   public void init() {
-    withBackground(JBUI.CurrentTheme.BigPopup.dialogBackground());
+    withBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
 
     myResultsList = createList();
 
@@ -209,8 +208,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   private JLabel createHint() {
     String hint = getInitialHint();
     JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
-    hintLabel.setOpaque(false);
-    hintLabel.setForeground(JBColor.GRAY);
+    hintLabel.setForeground(JBUI.CurrentTheme.BigPopup.advertiserForeground());
+    hintLabel.setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground());
+    hintLabel.setOpaque(true);
     Dimension size = hintLabel.getPreferredSize();
     size.height = JBUI.scale(17);
     hintLabel.setPreferredSize(size);
