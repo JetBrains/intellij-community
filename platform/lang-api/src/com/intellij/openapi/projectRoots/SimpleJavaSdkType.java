@@ -75,6 +75,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return JdkUtil.checkForJdk(path);
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return suggestJavaSdkName(this, currentSdkName, sdkHome);
