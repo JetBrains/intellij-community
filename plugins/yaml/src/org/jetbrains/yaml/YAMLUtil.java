@@ -27,6 +27,7 @@ public class YAMLUtil {
   private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
 
 
+  @Deprecated
   @NotNull
   public static String getFullKey(final YAMLKeyValue yamlKeyValue) {
     String fullPath = getConfigFullName(yamlKeyValue);
