@@ -501,6 +501,33 @@ def m() {
 '''
   }
 
+  void 'test SOE on map literal'() {
+    testHighlighting '''
+static method(a) {}
+static method(a, b) {}
+def q 
+
+method(
+        foo: {
+            q.v = []
+        },
+        bar: 42
+)
+
+interface Foo {
+     getProp()
+}
+
+class A {
+    Foo foo
+}
+
+new A(foo: {
+    prop
+}) 
+'''
+  }
+
 //TODO: IDEA-194192
   void '_test call without reference with generics'() {
     testHighlighting '''
