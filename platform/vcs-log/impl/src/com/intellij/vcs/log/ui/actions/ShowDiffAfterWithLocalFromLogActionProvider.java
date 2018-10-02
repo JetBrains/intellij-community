@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -36,7 +37,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
 
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
-    return e.getData(VcsLogDataKeys.VCS_LOG) != null;
+    return e.getData(VcsLogDataKeys.VCS_LOG) != null && e.getData(ChangesBrowserBase.DATA_KEY) == null;
   }
 
   @Override
