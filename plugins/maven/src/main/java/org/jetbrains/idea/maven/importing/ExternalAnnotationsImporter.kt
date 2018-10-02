@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -15,6 +16,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
 
@@ -81,10 +83,18 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
         count++
         indicator.fraction = (count.toDouble() + 1) / totalSize
         indicator.text = "Looking for annotations for '${mavenArtifact.libraryName}'"
-        resolver.resolveAsync(project, library, "${mavenArtifact.groupId}:${mavenArtifact.artifactId}:${mavenArtifact.version}")
-          .blockingGet(1, TimeUnit.MINUTES)
+        val mavenId = "${mavenArtifact.groupId}:${mavenArtifact.artifactId}:${mavenArtifact.version}"
+        try {
+          resolver.resolveAsync(project, library, mavenId)
+            .blockingGet(1, TimeUnit.MINUTES)
+        } catch (e: TimeoutException) {
+          LOG.warn("Failed to resolve external annotations in time. Maven Id: '$mavenId'")
+        }
 
       }
     }
+  }
+  companion object {
+    val LOG = Logger.getInstance(ExternalAnnotationsImporter::class.java)
   }
 }
