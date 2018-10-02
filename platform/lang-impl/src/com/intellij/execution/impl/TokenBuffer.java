@@ -186,7 +186,7 @@ public class TokenBuffer {
 
   public static class TokenInfo {
     @NotNull
-    final ConsoleViewContentType contentType;
+    public final ConsoleViewContentType contentType;
     private final String text;
     private final HyperlinkInfo myHyperlinkInfo;
 
