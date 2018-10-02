@@ -52,7 +52,7 @@ class JarLoader extends Loader {
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private volatile Map<Resource.Attribute, String> myAttributes;
-  private volatile String myClassPathManifestAttribute; 
+  private volatile String myClassPathManifestAttribute;
   private static final String NULL_STRING = "<null>";
 
   JarLoader(URL url, int index, ClassPath configuration) throws IOException {
@@ -82,8 +82,9 @@ class JarLoader extends Loader {
     loadManifestAttributes();
     return myAttributes;
   }
-  
-  @Nullable String getClassPathManifestAttribute() {
+
+  @Nullable
+  String getClassPathManifestAttribute() {
     loadManifestAttributes();
     String manifestAttribute = myClassPathManifestAttribute;
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
@@ -140,6 +141,7 @@ class JarLoader extends Loader {
       }
     }
   }
+
   @Nullable
   private static Attributes loadManifestAttributes(@Nullable InputStream stream) {
     if (stream == null) return null;
@@ -160,15 +162,23 @@ class JarLoader extends Loader {
   public ClasspathCache.LoaderData buildData() throws IOException {
     ZipFile zipFile = getZipFile();
     try {
-      ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
+      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         String name = entry.getName();
-        loaderData.addResourceEntry(name);
-        loaderData.addNameEntry(name);
+
+        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+          loaderDataBuilder.addClassPackageFromName(name);
+        } else {
+          loaderDataBuilder.addResourcePackageFromName(name);
+        }
+
+        loaderDataBuilder.addPossiblyDuplicateNameEntry(name);
       }
-      return loaderData;
+
+      return loaderDataBuilder.build();
     }
     finally {
       releaseZipFile(zipFile);

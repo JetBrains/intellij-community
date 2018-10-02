@@ -30,6 +30,7 @@ import java.net.URL;
 abstract class Loader {
   private final URL myURL;
   private final int myIndex;
+  private ClasspathCache.NameFilter myLoadingFilter;
 
   Loader(URL url, int index) {
     myURL = url;
@@ -47,5 +48,14 @@ abstract class Loader {
 
   int getIndex() {
     return myIndex;
+  }
+
+  boolean containsName(String name, String shortName) {
+    ClasspathCache.NameFilter filter = myLoadingFilter;
+    return filter == null || filter.maybeContains(shortName);
+  }
+
+  void applyData(ClasspathCache.LoaderData loaderData) {
+    myLoadingFilter = loaderData.getNameFilter();
   }
 }
