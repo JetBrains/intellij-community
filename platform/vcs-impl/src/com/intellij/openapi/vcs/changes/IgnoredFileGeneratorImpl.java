@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -13,22 +13,22 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
 public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
   private static final Logger LOG = Logger.getInstance(IgnoredFileGeneratorImpl.class);
-
-  private static final String IGNORE_FILE_GENERATED_PROPERTY = "VCS_IGNOREFILE_GENERATED";
 
   private final Project myProject;
 
@@ -39,23 +39,25 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   @Override
-  public boolean generateFile(@NotNull AbstractVcs vcs) throws IOException {
-    if (!needGenerateIgnoreFile(myProject)) {
-      LOG.debug("Skip VCS ignore file generation");
-      return false;
-    }
-
+  public boolean generateFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException {
     IgnoredFileContentProvider ignoredFileContentProvider = findIgnoredFileContentProvider(vcs);
     if (ignoredFileContentProvider == null) {
       LOG.debug("Cannot find content provider for vcs " + vcs.getName());
       return false;
     }
 
+    String ignoreFileName = ignoredFileContentProvider.getFileName();
+
+    if (!needGenerateIgnoreFile(myProject, ignoreFileRoot)) {
+      LOG.debug("Skip VCS ignore file generation");
+      return false;
+    }
+
     synchronized (myWriteLock) {
-      File ignoreFile = getIgnoreFile(ignoredFileContentProvider.getFileName());
+      File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
       if (!ignoreFile.exists()) {
         String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
-        String ignoreFileContent = ignoredFileContentProvider.buildIgnoreFileContent(IgnoredFileProvider.IGNORE_FILE.getExtensions());
+        String ignoreFileContent = ignoredFileContentProvider.buildIgnoreFileContent(ignoreFileRoot, IgnoredFileProvider.IGNORE_FILE.getExtensions());
         FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName));
         LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
         notifyAboutIgnoreFileGeneration(ignoreFile);
@@ -74,16 +76,13 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   @NotNull
-  private File getIgnoreFile(@NotNull String fileName) {
-    @SystemIndependent String basePath = myProject.getBasePath();
-    assert basePath != null : "Doesn't support default projects";
-
-    return new File(basePath, fileName);
+  private static File getIgnoreFile(@NotNull VirtualFile ignoreFileRoot, @NotNull String ignoreFileName) {
+    File vcsRootFile = VfsUtilCore.virtualToIoFile(ignoreFileRoot);
+    return new File(vcsRootFile.getPath(), ignoreFileName);
   }
 
   private void notifyAboutIgnoreFileGeneration(@NotNull File ignoreFile) {
-    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue(IGNORE_FILE_GENERATED_PROPERTY, true);
+    IgnoredFileRootStore.getInstance(myProject).addRoot(ignoreFile.getParent());
     VcsNotifier.getInstance(myProject)
       .notifyMinorInfo("",
                        VcsBundle.message("ignored.file.generation.message", ignoreFile.getName()),
@@ -99,10 +98,47 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
                        }));
   }
 
-  private static boolean needGenerateIgnoreFile(@NotNull Project project) {
-    boolean wasGeneratedPreviously = PropertiesComponent.getInstance(project).getBoolean(IGNORE_FILE_GENERATED_PROPERTY, false);
-    LOG.debug("Ignore file generated previously " + wasGeneratedPreviously);
+  private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+    boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
+    if (wasGeneratedPreviously) {
+      LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
+    }
     boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation", true);
     return !wasGeneratedPreviously && needGenerateRegistryFlag;
+  }
+
+  @State(name = "IgnoredFileRootStore", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+  static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
+
+    static class State {
+      public Set<String> generatedRoots = ContainerUtil.newHashSet();
+    }
+
+    State myState;
+
+    static IgnoredFileRootStore getInstance(Project project) {
+      return ServiceManager.getService(project, IgnoredFileRootStore.class);
+    }
+
+    boolean containsRoot(@NotNull String root) {
+      return myState != null && myState.generatedRoots.contains(root);
+    }
+
+    void addRoot(@NotNull String root) {
+      if (myState != null) {
+        myState.generatedRoots.add(root);
+      }
+    }
+
+    @Nullable
+    @Override
+    public State getState() {
+      return myState;
+    }
+
+    @Override
+    public void loadState(@NotNull State state) {
+      myState = state;
+    }
   }
 }

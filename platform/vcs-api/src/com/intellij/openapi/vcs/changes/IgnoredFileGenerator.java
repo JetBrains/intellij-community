@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,5 +14,5 @@ import java.io.IOException;
  */
 public interface IgnoredFileGenerator {
 
-  boolean generateFile(@NotNull AbstractVcs vcs) throws IOException;
+  boolean generateFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException;
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
+import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitVcs
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import java.lang.System.lineSeparator
@@ -15,19 +16,19 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
   override fun getFileName() = GITIGNORE
 
-  override fun buildIgnoreFileContent(ignoredFileProviders: Array<IgnoredFileProvider>): String {
+  override fun buildIgnoreFileContent(ignoreFileRoot: VirtualFile, ignoredFileProviders: Array<IgnoredFileProvider>): String {
     val content = StringBuilder()
     for (i in ignoredFileProviders.indices) {
       val provider = ignoredFileProviders[i]
-      val translatedMasks = provider.getIgnoredFilesMasks(project)
-      if (translatedMasks.isEmpty()) continue
+      val ignoredFileMasks = provider.getIgnoredFilesMasks(project, ignoreFileRoot)
+      if (ignoredFileMasks.isEmpty()) continue
 
       val description = provider.masksGroupDescription
       if (description.isNotBlank()) {
         content.append(prependCommentHashCharacterIfNeeded(description))
         content.append(lineSeparator())
       }
-      content.append(translatedMasks.joinToString(lineSeparator()))
+      content.append(ignoredFileMasks.joinToString(lineSeparator()))
 
       if (i + 1 < ignoredFileProviders.size) {
         content.append(lineSeparator()).append(lineSeparator())

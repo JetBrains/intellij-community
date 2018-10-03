@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,5 +19,5 @@ public interface IgnoredFileContentProvider {
   String getFileName();
 
   @NotNull
-  String buildIgnoreFileContent(@NotNull IgnoredFileProvider[] ignoredFileProviders);
+  String buildIgnoreFileContent(@NotNull VirtualFile ignoreFileRoot, @NotNull IgnoredFileProvider[] ignoredFileProviders);
 }
