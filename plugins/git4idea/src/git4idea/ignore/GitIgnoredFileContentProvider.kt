@@ -122,6 +122,11 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     return true
   }
 
+  override fun buildUnignoreContent(ignorePattern: String) = StringBuilder().apply {
+    append(lineSeparator())
+    append("!$ignorePattern")
+  }.toString()
+
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"
 }
