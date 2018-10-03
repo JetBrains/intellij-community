@@ -7,7 +7,9 @@ import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
@@ -85,6 +87,19 @@ fun GuiTestCase.closeProject() {
 fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
+    val asyncIcon = try {
+      asyncProcessIcon(Timeouts.seconds02)
+    }
+    catch (ignored: WaitTimedOutError) {
+      // asyncIcon not found and it's OK, so no background process is going
+      null
+    }
+    try {
+      asyncIcon?.waitUntilStop(Timeouts.minutes10)
+    }
+    catch (e: WaitTimedOutError) {
+      throw WaitTimedOutError("Background process hadn't finished after ${Timeouts.minutes10.toPrintable()}")
+    }
   }
   robot().waitForIdle()
   Pause.pause(extraTimeOut)
