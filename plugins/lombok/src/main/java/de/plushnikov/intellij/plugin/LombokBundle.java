@@ -28,7 +28,4 @@ public class LombokBundle {
     return CommonBundle.message(BUNDLE, key, params);
   }
 
-  public static String messageOrDefault(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, String defaultValue, Object... params) {
-    return CommonBundle.messageOrDefault(BUNDLE, key, defaultValue, params);
-  }
 }
