@@ -5,5 +5,5 @@ import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 @RunWith(Suite::class)
-@Suite.SuiteClasses(KeePassCredentialStoreTest::class, KeePassFileManagerTest::class)
+@Suite.SuiteClasses(KeePassCredentialStoreTest::class, KeePassFileManagerTest::class, PasswordSafeKeePassTest::class)
 internal class KeePassTestSuite

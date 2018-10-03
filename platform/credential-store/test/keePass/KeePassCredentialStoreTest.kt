@@ -14,6 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Path
 import java.util.*
 
 // part of specific tests in the IcsCredentialTest
@@ -28,7 +29,7 @@ class KeePassCredentialStoreTest {
   @Test
   fun many() {
     val baseDir = tempDirManager.newPath()
-    var provider = KeePassCredentialStore(baseDirectory = baseDir)
+    var provider = createStore(baseDir)
 
     assertThat(baseDir).doesNotExist()
     for (i in 0..9) {
@@ -37,7 +38,7 @@ class KeePassCredentialStoreTest {
     }
 
     provider.save()
-    provider = KeePassCredentialStore(baseDirectory = baseDir)
+    provider = createStore(baseDir)
 
     provider.deleteFileStorage()
 
@@ -51,7 +52,7 @@ class KeePassCredentialStoreTest {
   @Test
   fun `custom db password`() {
     val baseDir = tempDirManager.newPath()
-    var provider = KeePassCredentialStore(baseDirectory = baseDir)
+    var provider = createStore(baseDir)
 
     assertThat(baseDir).doesNotExist()
     val credentialMap = THashMap<CredentialAttributes, Credentials>()
@@ -71,7 +72,7 @@ class KeePassCredentialStoreTest {
     assertThat(dbFile).exists()
     assertThat(masterPasswordFile).exists()
 
-    provider = KeePassCredentialStore(baseDirectory = baseDir)
+    provider = createStore(baseDir)
 
     fun check() {
       for ((attributes, credentials) in credentialMap) {
@@ -85,7 +86,7 @@ class KeePassCredentialStoreTest {
     masterPasswordFile.delete()
 
     assertThatThrownBy {
-      provider = KeePassCredentialStore(baseDirectory = baseDir)
+      provider = createStore(baseDir)
     }.isInstanceOf(IncorrectMasterPasswordException::class.java)
 
     assertThat(dbFile).exists()
@@ -97,7 +98,7 @@ class KeePassCredentialStoreTest {
     val serviceName = randomString()
 
     val baseDir = tempDirManager.newPath()
-    var provider = KeePassCredentialStore(baseDirectory = baseDir)
+    var provider = createStore(baseDir)
 
     assertThat(baseDir).doesNotExist()
     val fooAttributes = CredentialAttributes(serviceName, "foo")
@@ -129,7 +130,7 @@ class KeePassCredentialStoreTest {
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
 
-    provider = KeePassCredentialStore(baseDirectory = baseDir)
+    provider = createStore(baseDir)
 
     assertThat(provider.get(fooAttributes)).isNull()
     assertThat(provider.getPassword(amAttributes)).isEqualTo("pass2")
@@ -146,4 +147,10 @@ class KeePassCredentialStoreTest {
   }
 
   private fun randomString() = UUID.randomUUID().toString()
+}
+
+// avoid this constructor in production sources to avoid m
+@Suppress("TestFunctionName")
+internal fun createStore(baseDir: Path): KeePassCredentialStore {
+  return KeePassCredentialStore(dbFile = baseDir.resolve(DB_FILE_NAME), masterKeyFile = baseDir.resolve(MASTER_KEY_FILE_NAME))
 }
