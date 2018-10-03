@@ -90,8 +90,8 @@ open class GuiTestCase {
    * Context function: finds welcome frame and creates WelcomeFrameFixture instance as receiver object. Code block after it call methods on
    * the receiver object (WelcomeFrameFixture instance).
    */
-  open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func(guiTestRule.findWelcomeFrame())
+  open fun welcomeFrame(timeout: Timeout = Timeouts.minutes05, body: WelcomeFrameFixture.() -> Unit) {
+    body(guiTestRule.findWelcomeFrame(timeout))
   }
 
   /**
