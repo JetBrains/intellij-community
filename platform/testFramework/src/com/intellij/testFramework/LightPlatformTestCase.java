@@ -626,12 +626,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  @NotNull
-  @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyle.getSettings(getProject());
-  }
-
   protected static Document getDocument(@NotNull PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }

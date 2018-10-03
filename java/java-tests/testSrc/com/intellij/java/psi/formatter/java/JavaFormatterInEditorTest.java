@@ -38,7 +38,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
 
   public void testCaretPositionOnLongLineWrapping() {
     // Inspired by IDEA-70242
-    CommonCodeStyleSettings javaCommonSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaCommonSettings = getCurrentCodeStyleSettings(ourProject).getCommonSettings(JavaLanguage.INSTANCE);
     javaCommonSettings.WRAP_LONG_LINES = true;
     javaCommonSettings.RIGHT_MARGIN = 40;
     doTest(

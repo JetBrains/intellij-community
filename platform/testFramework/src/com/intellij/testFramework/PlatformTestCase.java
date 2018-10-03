@@ -183,7 +183,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyle.getSettings(getProject());
   }
