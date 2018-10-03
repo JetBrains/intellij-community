@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -373,12 +374,10 @@ public class AddImportHelper {
       return false;
     }
     final List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
-    for (PyImportElement element : existingImports) {
-      final QualifiedName qName = element.getImportedQName();
-      if (qName != null && name.equals(qName.toString())) {
-        if ((asName != null && asName.equals(element.getAsName())) || (asName == null && element.getAsName() == null)) {
-          return false;
-        }
+    for (PyImportElement existingImport : existingImports) {
+      final String existingName = Objects.toString(existingImport.getImportedQName(), "");
+      if (name.equals(existingName) && Comparing.equal(asName, existingImport.getAsName())) {
+        return false;
       }
     }
 
@@ -507,11 +506,11 @@ public class AddImportHelper {
       if (existingImport.isStarImport()) {
         continue;
       }
-      final QualifiedName qName = existingImport.getImportSourceQName();
-      if (qName != null && qName.toString().equals(from) && existingImport.getRelativeLevel() == 0) {
+      final String existingSource = Objects.toString(existingImport.getImportSourceQName(), "");
+      if (from.equals(existingSource) && existingImport.getRelativeLevel() == 0) {
         for (PyImportElement el : existingImport.getImportElements()) {
-          final QualifiedName importedQName = el.getImportedQName();
-          if (importedQName != null && StringUtil.equals(name, importedQName.toString()) && StringUtil.equals(asName, el.getAsName())) {
+          final String existingName = Objects.toString(el.getImportedQName(), "");
+          if (name.equals(existingName) && Comparing.equal(asName, el.getAsName())) {
             return false;
           }
         }
