@@ -664,6 +664,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     projectName = gradleOptions.artifact,
     expectedFacet = expectedFacet
   )
+  waitAMoment()
 }
 
 fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(

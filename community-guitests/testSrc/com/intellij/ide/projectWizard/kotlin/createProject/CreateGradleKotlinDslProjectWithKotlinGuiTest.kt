@@ -60,5 +60,6 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
      projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
        project, kotlinVersion, projectName, expectedFacet
      )
+     waitAMoment()
   }
 }

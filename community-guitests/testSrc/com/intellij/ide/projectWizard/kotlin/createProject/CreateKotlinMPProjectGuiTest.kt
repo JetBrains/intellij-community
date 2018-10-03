@@ -73,6 +73,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
         }
       }
     }
+    waitAMoment()
   }
 
   companion object {
