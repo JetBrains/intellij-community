@@ -94,7 +94,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
   }
 
   @Nullable
-  public static Couple<String> getBlockPrefixSuffixPair(@NotNull PsiElement comment) {
+  private static Couple<String> getBlockPrefixSuffixPair(@NotNull PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     if (commenter != null) {
       final String prefix = commenter.getBlockCommentPrefix();

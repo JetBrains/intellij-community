@@ -49,11 +49,11 @@ public class MyTestInjector {
   private final PsiManager myPsiManager;
 
   @TestOnly
-  public MyTestInjector(PsiManager psiManager) {
+  public MyTestInjector(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
   }
 
-  public void injectAll(Disposable parent) {
+  public void injectAll(@NotNull Disposable parent) {
     injectVariousStuffEverywhere(parent, myPsiManager);
 
     Project project = myPsiManager.getProject();
@@ -144,7 +144,7 @@ public class MyTestInjector {
     });
   }
 
-  private static void injectVariousStuffEverywhere(Disposable parent, final PsiManager psiManager) {
+  private static void injectVariousStuffEverywhere(@NotNull Disposable parent, final PsiManager psiManager) {
     final Language ql = Language.findLanguageByID("JPAQL");
     final Language js = Language.findLanguageByID("JavaScript 1.6");
     final Language html = Language.findLanguageByID("HTML");

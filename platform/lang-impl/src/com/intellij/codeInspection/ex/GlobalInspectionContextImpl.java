@@ -79,9 +79,8 @@ import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
-  //@TestOnly
   @SuppressWarnings("StaticNonFinalField")
-  public volatile static boolean CREATE_VIEW_FORCE = false;
+  public static volatile boolean CREATE_VIEW_FORCE;
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
@@ -729,9 +728,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return app.getInvokator().invokeLater(createView);
   }
 
-  private void appendPairedInspectionsForUnfairTools(@NotNull List<? super Tools> globalTools,
-                                                     @NotNull List<? super Tools> globalSimpleTools,
-                                                     @NotNull List<? super Tools> localTools) {
+  private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
+                                                     @NotNull List<Tools> globalSimpleTools,
+                                                     @NotNull List<Tools> localTools) {
     Tools[] larray = localTools.toArray(new Tools[0]);
     for (Tools tool : larray) {
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
