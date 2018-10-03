@@ -10,12 +10,21 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -25,11 +34,10 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
@@ -53,11 +61,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private boolean myIsAllowRunningInParallel = false;
   private String myFolderName;
   private boolean myChangingNameFromCode;
+  private VcsIgnoreManager myVcsIgnoreManager;
 
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
 
     myExecutor = executor;
+
+    myVcsIgnoreManager = ServiceManager.getService(getConfiguration().getProject(), VcsIgnoreManager.class);
 
     final Config configuration = getConfiguration();
     myDisplayName = getSettings().getName();
@@ -130,7 +141,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     setNameText(configuration.getName());
     super.reset();
     if (myComponent == null) {
-      myComponent = new MyValidatableComponent();
+      myComponent = new MyValidatableComponent(configuration.getConfiguration().getProject());
     }
     myComponent.doReset(configuration);
   }
@@ -325,10 +336,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JBCheckBox myIsAllowRunningInParallelCheckBox;
     private JPanel myValidationPanel;
     private JBScrollPane myJBScrollPane;
+    private JPanel myCbStoreProjectConfigurationPanel;
+    private final Project myProject;
+    private final ComponentValidator myCbStoreProjectConfigurationValidator;
 
     private Runnable myQuickFix = null;
 
-    MyValidatableComponent() {
+    MyValidatableComponent(@NotNull Project project) {
+      myProject = project;
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 
@@ -354,19 +369,64 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           updateWarning();
         }
       });
-      ActionListener actionListener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          setModified(true);
-          myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-          myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
-        }
-      };
-      myCbStoreProjectConfiguration.addActionListener(actionListener);
-      myIsAllowRunningInParallelCheckBox.addActionListener(actionListener);
-
+      myCbStoreProjectConfigurationValidator =
+        new ComponentValidator(getEditor()).withValidator(() -> getStoreProjectConfigurationValidationInfo())
+          .withHyperlinkListener(new HyperlinkListener() {
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+              if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                myVcsIgnoreManager.removeRunConfigurationFromVcsIgnore(getConfiguration().getName());
+                myCbStoreProjectConfigurationValidator.revalidate();
+              }
+            }
+          })
+          .installOn(myCbStoreProjectConfiguration);
+      myCbStoreProjectConfiguration.addActionListener(e -> {
+        setModified(true);
+        myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
+        myCbStoreProjectConfigurationValidator.revalidate();
+      });
+      myIsAllowRunningInParallelCheckBox.addActionListener(e -> {
+        setModified(true);
+        myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
+      });
       myJBScrollPane.setBorder(JBUI.Borders.empty());
       myJBScrollPane.setViewportBorder(JBUI.Borders.empty());
+
+      ComponentPanelBuilder componentPanelBuilder = new ComponentPanelBuilder(myCbStoreProjectConfiguration);
+      @SystemIndependent VirtualFile projectFile = myProject.getProjectFile();
+      if (projectFile != null) {
+        componentPanelBuilder.withTooltip(
+          ProjectKt.isDirectoryBased(myProject)
+          ? ExecutionBundle.message("run.configuration.share.hint", ".idea folder")
+          : ExecutionBundle.message("run.configuration.share.hint", projectFile.getName())
+        );
+      }
+      componentPanelBuilder.addToPanel(myCbStoreProjectConfigurationPanel,
+                                       new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
+                                                              GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                              JBUI.emptyInsets(), 0, 0));
+    }
+
+    @Nullable
+    private ValidationInfo getStoreProjectConfigurationValidationInfo() {
+      Project project = getConfiguration().getProject();
+      @SystemIndependent VirtualFile projectFile = project.getProjectFile();
+      if (projectFile == null) return null;
+      if (!myCbStoreProjectConfiguration.isSelected()) return null;
+
+      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+        String fileAddToVcs = ProjectKt.isDirectoryBased(project)
+                              ? Project.DIRECTORY_STORE_FOLDER + "/runConfigurations"
+                              : projectFile.getName();
+        return new ValidationInfo(ExecutionBundle.message("run.configuration.share.vcs.disabled", fileAddToVcs),
+                                  myCbStoreProjectConfiguration).asWarning();
+      }
+      else if (myVcsIgnoreManager.isRunConfigurationVcsIgnored(getConfiguration().getName())) {
+        return new ValidationInfo(ExecutionBundle.message("run.configuration.share.vcs.ignored", getConfiguration().getName()),
+                                  myCbStoreProjectConfiguration).asWarning();
+      }
+      return null;
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
@@ -375,6 +435,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myCbStoreProjectConfiguration.setEnabled(isManagedRunConfiguration);
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
+      myCbStoreProjectConfigurationValidator.revalidate();
 
       myIsAllowRunningInParallel = settings.getConfiguration().isAllowRunningInParallel();
       myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
