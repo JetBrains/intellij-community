@@ -15,11 +15,11 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.RadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
+import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import java.io.File
@@ -84,41 +84,39 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           passwordSafe.currentProvider = createPersistentCredentialStore()!!
         }
 
-        ProviderType.KEEPASS -> {
-          runAndHandleIncorrectMasterPasswordException {
-            if (!changeExistingKeepassStoreIfPossible(settings, passwordSafe, isMemoryOnly = false)) {
-              passwordSafe.currentProvider = createKeePassCredentialStoreUsingNewOptions()
-            }
-          }
-        }
-
+        ProviderType.KEEPASS -> createAndSaveKeePassDatabaseWithNewOptions(settings)
         else -> throw IllegalStateException("Unknown provider type: $providerType")
       }
     }
     else if (isKeepassFileLocationChanged(settings)) {
-      val newDbFile = getNewDbFile()
-      if (newDbFile != null) {
-        val currentProviderIfComputed = passwordSafe.currentProviderIfComputed as? KeePassCredentialStore
-        if (currentProviderIfComputed == null) {
-          runAndHandleIncorrectMasterPasswordException {
-            passwordSafe.currentProvider = createKeePassCredentialStoreUsingNewOptions()
-          }
-        }
-        else {
-          currentProviderIfComputed.dbFile = newDbFile
-        }
-        settings.keepassDb = newDbFile.toString()
-      }
+      createAndSaveKeePassDatabaseWithNewOptions(settings)
     }
 
     settings.providerType = providerType
   }
 
-  private fun createKeePassCredentialStoreUsingNewOptions(): KeePassCredentialStore {
-    return KeePassCredentialStore(dbFile = getNewDbFileOrError(), masterKeyFile = getDefaultMasterPasswordFile())
-  }
+  private fun createAndSaveKeePassDatabaseWithNewOptions(settings: PasswordSafeSettings) {
+    // todo should we respect existing in-memory KeePass database or not
+    closeCurrentStoreIfKeePass()
 
-  private fun getNewDbFileOrError() = getNewDbFile() ?: throw ConfigurationException("KeePass database path is empty")
+    val newDbFile = getNewDbFile() ?: throw ConfigurationException("KeePass database path is empty.")
+    if (newDbFile.isDirectory()) {
+      // we do not normalize as we do on file choose because if user decoded to type path manually,
+      // it should be valid path and better to avoid any magic here
+      throw ConfigurationException("KeePass database file is directory.")
+    }
+    if (!newDbFile.fileName.toString().endsWith(".kdbx")) {
+      throw ConfigurationException("KeePass database file should ends with \".kdbx\".")
+    }
+
+    settings.keepassDb = newDbFile.toString()
+    try {
+      KeePassCredentialStore(dbFile = newDbFile, masterKeyFile = getDefaultMasterPasswordFile()).save()
+    }
+    catch (e: IncorrectMasterPasswordException) {
+      throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
+    }
+  }
 
   private fun changeExistingKeepassStoreIfPossible(settings: PasswordSafeSettings, passwordSafe: PasswordSafeImpl, isMemoryOnly: Boolean): Boolean {
     if (settings.providerType != ProviderType.MEMORY_ONLY || settings.providerType != ProviderType.KEEPASS) {
@@ -164,53 +162,21 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           inKeePass()
           row("Database:") {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
-              it.name.endsWith(".kdbx")
+              it.isDirectory || it.name.endsWith(".kdbx")
             }
             keePassDbFile = textFieldWithBrowseButton("KeePass Database File",
                                                       fileChooserDescriptor = fileChooserDescriptor,
-                                                      fileChosen = ::normalizeSelectedFile,
+                                                      fileChosen = {
+                                                        when {
+                                                          it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
+                                                          else -> it.path
+                                                        }
+                                                      },
                                                       comment = if (SystemInfo.isWindows) null else "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
             gearButton(
-              object : DumbAwareAction("Clear") {
-                override fun actionPerformed(event: AnActionEvent) {
-                  if (!MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
-                    return
-                  }
-
-                  LOG.info("Passwords cleared", Error())
-                  createKeePassFileManager()?.clear()
-                }
-
-                override fun update(e: AnActionEvent) {
-                  e.presentation.isEnabled = getNewDbFile()?.exists() ?: false
-                }
-              },
-              object : DumbAwareAction("Import") {
-                override fun actionPerformed(event: AnActionEvent) {
-                  chooseFile(fileChooserDescriptor, event) {
-                    createKeePassFileManager()?.import(Paths.get(normalizeSelectedFile(it)), event)
-                    // force reload KeePass Store
-                    passwordSafe.closeCurrentProvider()
-                  }
-                }
-              },
-              object : DumbAwareAction("${if (MasterKeyFileStorage(getDefaultMasterPasswordFile()).isAutoGenerated()) "Set" else "Change"} Master Password") {
-                override fun actionPerformed(event: AnActionEvent) {
-                  // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
-                  if (createKeePassFileManager()?.askAndSetMasterKey(event) == true) {
-                    if (passwordSafe.settings.providerType == ProviderType.KEEPASS) {
-                      // force reload KeePass Store
-                      passwordSafe.closeCurrentProvider()
-                    }
-
-                    templatePresentation.text = "Change Master Password"
-                  }
-                }
-
-                override fun update(e: AnActionEvent) {
-                  e.presentation.isEnabled = getNewDbFileAsString() != null
-                }
-              }
+              ClearKeePassDatabaseAction(),
+              ImportKeePassDatabaseAction(),
+              ChangeKeePassDatabaseMasterPasswordAction()
             )
           }
         }
@@ -237,13 +203,57 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       else -> ProviderType.KEYCHAIN
     }
   }
+
+  private inner class ClearKeePassDatabaseAction : DumbAwareAction("Clear") {
+    override fun actionPerformed(event: AnActionEvent) {
+      if (!MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
+        return
+      }
+
+      closeCurrentStoreIfKeePass()
+
+      LOG.info("Passwords cleared", Error())
+      createKeePassFileManager()?.clear()
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = getNewDbFile()?.exists() ?: false
+    }
+  }
+
+  private inner class ImportKeePassDatabaseAction : DumbAwareAction("Import") {
+    override fun actionPerformed(event: AnActionEvent) {
+      closeCurrentStoreIfKeePass()
+
+      FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+        .withFileFilter {
+          !it.isDirectory && it.nameSequence.endsWith(".kdbx")
+        }
+        .chooseFile(event) {
+          createKeePassFileManager()?.import(Paths.get(it.path), event)
+        }
+    }
+  }
+
+  private inner class ChangeKeePassDatabaseMasterPasswordAction : DumbAwareAction("${if (MasterKeyFileStorage(getDefaultMasterPasswordFile()).isAutoGenerated()) "Set" else "Change"} Master Password") {
+    override fun actionPerformed(event: AnActionEvent) {
+      closeCurrentStoreIfKeePass()
+
+      // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
+      if (createKeePassFileManager()?.askAndSetMasterKey(event) == true) {
+        templatePresentation.text = "Change Master Password"
+      }
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = getNewDbFileAsString() != null
+    }
+  }
 }
 
-private fun normalizeSelectedFile(file: VirtualFile): String {
-  return when {
-    file.isDirectory -> file.path + File.separator + DB_FILE_NAME
-    else -> file.path
-  }
+// we must save and close opened KeePass database before any action that can modify KeePass database files
+private fun closeCurrentStoreIfKeePass() {
+  (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStoreIfKeePass()
 }
 
 enum class ProviderType {
@@ -252,13 +262,4 @@ enum class ProviderType {
   // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
   @Deprecated("")
   DO_NOT_STORE
-}
-
-private inline fun runAndHandleIncorrectMasterPasswordException(handler: () -> Unit) {
-  try {
-    handler()
-  }
-  catch (e: IncorrectMasterPasswordException) {
-    throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
-  }
 }

@@ -430,7 +430,8 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
   return null
 }
 
-internal val FILE_PATH_HASHING_STRATEGY = FilePathCaseSensitiveStrategy()
+@JvmField
+val FILE_PATH_HASHING_STRATEGY: TObjectHashingStrategy<FilePath> = FilePathCaseSensitiveStrategy()
 
 internal class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> {
   override fun equals(path1: FilePath?, path2: FilePath?): Boolean {

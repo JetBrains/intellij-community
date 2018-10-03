@@ -576,7 +576,7 @@ internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
-  val substitutor = store.storageManager.macroSubstitutor ?: return
+  val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
 
   val immutableMacros = substitutor.getUnknownMacros(componentName)
   if (immutableMacros.isEmpty()) {

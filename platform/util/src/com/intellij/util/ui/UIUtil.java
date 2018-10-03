@@ -1645,17 +1645,18 @@ public class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui");
+    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui") && !isCustomTheme();
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    if (SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui")) {
-      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-      if (lookAndFeel instanceof UserDataHolder) {
-        Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
-        return value == null || !value.booleanValue();
-      }
-      return true;
+    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui") && !isCustomTheme();
+  }
+
+  private static boolean isCustomTheme() {
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof UserDataHolder) {
+      Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
+      return value != null && value.booleanValue();
     }
     return false;
   }

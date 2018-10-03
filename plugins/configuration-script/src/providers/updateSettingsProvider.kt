@@ -2,12 +2,12 @@ package com.intellij.configurationScript.providers
 
 import com.intellij.configurationScript.ConfigurationFileManager
 import com.intellij.configurationScript.Keys
-import com.intellij.configurationScript.SynchronizedClearableLazy
 import com.intellij.configurationScript.readObject
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.ScalarNode
 

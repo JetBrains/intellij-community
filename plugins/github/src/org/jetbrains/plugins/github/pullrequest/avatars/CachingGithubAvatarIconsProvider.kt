@@ -9,7 +9,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import icons.GithubIcons
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
@@ -24,7 +24,7 @@ import javax.swing.Icon
  */
 internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubUserAvatarLoader,
                                                 private val imagesResizer: GithubImageResizer,
-                                                private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder,
+                                                private val requestExecutor: GithubApiRequestExecutor,
                                                 private val iconSize: JBValue,
                                                 private val component: Component) : Disposable {
 
@@ -55,7 +55,7 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
     return icons.getOrPut(user) {
       val icon = DelegatingIcon(defaultIcon)
       avatarsLoader
-        .requestAvatar(requestExecutorHolder.executor, user)
+        .requestAvatar(requestExecutor, user)
         .thenCompose<Image?> {
           if (it != null) imagesResizer.requestImageResize(it, iconSize, scaleContext)
           else CompletableFuture.completedFuture(null)
@@ -82,8 +82,8 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
   // helper to avoid passing all the services to clients
   class Factory(private val avatarsLoader: CachingGithubUserAvatarLoader,
                 private val imagesResizer: GithubImageResizer,
-                private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder) {
+                private val requestExecutor: GithubApiRequestExecutor) {
     fun create(iconSize: JBValue, component: Component) = CachingGithubAvatarIconsProvider(avatarsLoader, imagesResizer,
-                                                                                           requestExecutorHolder, iconSize, component)
+                                                                                           requestExecutor, iconSize, component)
   }
 }

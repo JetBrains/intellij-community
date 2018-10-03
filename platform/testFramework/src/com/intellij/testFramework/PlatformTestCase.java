@@ -12,7 +12,6 @@ import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -290,7 +289,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         hashCodes.add(System.identityHashCode(project));
       }
 
-      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
+      String dumpPath = FileUtil.getTempDirectory() + "/leakedProjects.hprof.zip";
       System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
       try {
         FileUtil.delete(new File(dumpPath));

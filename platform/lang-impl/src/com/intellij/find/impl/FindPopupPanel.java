@@ -154,8 +154,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     initComponents();
     initByModel();
-
-    ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
   }
 
   @Override
@@ -173,10 +171,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           getContentPane().add(new JLabel(), BorderLayout.SOUTH);//remove hardcoded southSection
         }
 
-        @NotNull
         @Override
-        protected Action[] createActions() {
-          return new Action[0];
+        protected void doOKAction() {
+          processCtrlEnter();
         }
 
         @NotNull
@@ -233,6 +230,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       WindowMoveListener windowListener = new WindowMoveListener(this);
       myTitlePanel.addMouseListener(windowListener);
       myTitlePanel.addMouseMotionListener(windowListener);
+      addMouseListener(windowListener);
+      addMouseMotionListener(windowListener);
       Dimension panelSize = getPreferredSize();
       Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY);
       if (!myCbPreserveCase.isVisible()) {
@@ -272,6 +271,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
       root.setWindowDecorationStyle(JRootPane.NONE);
+      root.setBorder(PopupBorder.Factory.create(true, true));
       UIUtil.markAsPossibleOwner((Dialog)w);
       w.setBackground(UIUtil.getPanelBackground());
       w.setMinimumSize(panelSize);
@@ -287,7 +287,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           if (oppositeWindow == w || oppositeWindow != null && oppositeWindow.getOwner() == w) {
             return;
           }
-          if (canBeClosed()) {
+          if (canBeClosed() || (!myIsPinned.get() && oppositeWindow != null)) {
             //closeImmediately();
             myDialog.doCancelAction();
           }
@@ -304,7 +304,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       JRootPane rootPane = getRootPane();
       if (rootPane != null && myHelper.isReplaceState()) {
         rootPane.setDefaultButton(myReplaceSelectedButton);
+        rootPane.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed ENTER"), "openInFindWindow");
+        rootPane.getActionMap().put("openInFindWindow", new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            processCtrlEnter();
+          }
+        });
       }
+      ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
     }
   }
 
@@ -312,7 +320,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     if (!myCanClose.get()) return false;
     if (myIsPinned.get()) return false;
     if (!ApplicationManager.getApplication().isActive()) return false;
-    //if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
     if (myFileMaskField.isPopupVisible()) {
       myFileMaskField.setPopupVisible(false);
       return false;
@@ -598,15 +606,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
-    DumbAwareAction.create(e -> {
-      if (enterAsOK) {
-        navigateToSelectedUsage(null);
-      }
-      else {
-        myOkActionListener.actionPerformed(null);
-      }
-    }).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
-
+    DumbAwareAction.create(__ -> processCtrlEnter()).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
     myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
 
@@ -863,6 +863,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return c == myResultsPreviewTable ? mySearchComponent : super.getComponentAfter(container, c);
       }
     });
+  }
+
+  private void processCtrlEnter() {
+    if (Registry.is("ide.find.enter.as.ok", false)) {
+      navigateToSelectedUsage(null);
+    }
+    else {
+      myOkActionListener.actionPerformed(null);
+    }
   }
 
   private void onFileMaskChanged() {

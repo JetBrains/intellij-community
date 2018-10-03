@@ -89,7 +89,8 @@ public class InvokeIntention extends ActionOnFile {
     assert editor != null;
 
     boolean containsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
-    boolean hasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
+    List<HighlightInfo> errors = highlightErrors(project, editor);
+    boolean hasErrors = !errors.isEmpty() || containsErrorElements;
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     assert file != null;
@@ -145,6 +146,7 @@ public class InvokeIntention extends ActionOnFile {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
                      "it should return false from 'startInWriteAction'";
         }
+        message += "\n  Debug info: containsErrorElements="+containsErrorElements + "; errors=" + errors;
         throw new AssertionError(message);
       }
 

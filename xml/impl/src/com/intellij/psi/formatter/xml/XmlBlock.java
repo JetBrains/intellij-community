@@ -270,10 +270,6 @@ public class XmlBlock extends AbstractXmlBlock {
       return createDefaultSpace(true, false);
     }
 
-    if (type1 == XmlElementType.XML_COMMENT) {
-      return createDefaultSpace(true, false);
-    }
-
     return createDefaultSpace(false, false);
   }
 

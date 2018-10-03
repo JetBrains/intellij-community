@@ -35,6 +35,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -287,7 +288,14 @@ public class PluginManagerConfigurableNew
       myCardPanel.select(Pair.create(descriptor, label != null && currentTab == UPDATES_TAB), true);
       myPluginsModel.detailPanel.backTabIndex = currentTab;
 
-      myTopController.setLeftComponent(backButton);
+      NonOpaquePanel buttonPanel = new NonOpaquePanel(backButton) {
+        @Override
+        public int getBaseline(int width, int height) {
+          return backButton.getBaseline(width, height);
+        }
+      };
+      buttonPanel.setBorder(JBUI.Borders.empty(0, 3));
+      myTopController.setLeftComponent(buttonPanel);
       myTabHeaderComponent.clearSelection();
     };
 

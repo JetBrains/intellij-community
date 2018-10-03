@@ -32,7 +32,7 @@ internal class InteractiveGithubHttpAuthDataProvider(private val project: Projec
     if (!dialog.isOK) return null
     val account = dialog.account
     val token = invokeAndWaitIfNeed(parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any()) {
-      authenticationManager.getOrRequestTokenForAccount(account, project, parentComponent)
+      authenticationManager.getTokenForAccount(account) ?: authenticationManager.requestNewToken(account, project, parentComponent)
     } ?: return null
     if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)
     return AuthData(GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)

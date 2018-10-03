@@ -1,11 +1,15 @@
-@file:Suppress("ClassName")
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.configurationScript
+package com.intellij.util.concurrency
 
+@Suppress("ClassName")
 private object UNINITIALIZED_VALUE
 
+/**
+ * Kotlin-friendly version of ClearableLazyValue
+ */
 @Suppress("LocalVariableName")
-internal class SynchronizedClearableLazy<out T>(private val initializer: () -> T) : Lazy<T> {
+class SynchronizedClearableLazy<out T>(private val initializer: () -> T) : Lazy<T> {
   @Volatile
   private var _value: Any? = UNINITIALIZED_VALUE
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -182,6 +183,12 @@ public class GroovyConsole {
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;
+        }
+
+        @NotNull
+        @Override
+        protected BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.BLOCKING;
         }
       };
     }

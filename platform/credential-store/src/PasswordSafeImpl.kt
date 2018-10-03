@@ -17,6 +17,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
@@ -62,14 +63,14 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
 }
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
-                                                 provider: CredentialStore? = null) : PasswordSafe(), SettingsSavingComponent {
+                                                 provider: CredentialStore? = null /* TestOnly */) : PasswordSafe(), SettingsSavingComponent {
   override var isRememberPasswordByDefault: Boolean
     get() = settings.state.isRememberPasswordByDefault
     set(value) {
       settings.state.isRememberPasswordByDefault = value
     }
 
-  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
+  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) SynchronizedClearableLazy { computeProvider(settings) } else lazyOf(provider)
 
   internal val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
@@ -80,8 +81,18 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
       _currentProvider = lazyOf(value)
     }
 
-  internal fun closeCurrentProvider() {
-    _currentProvider = lazy { computeProvider(settings) }
+  // force reload KeePass Store if settings changed
+  internal fun closeCurrentStoreIfKeePass() {
+    val store = currentProviderIfComputed as? KeePassCredentialStore ?: return
+    if (!store.isMemoryOnly) {
+      (_currentProvider as SynchronizedClearableLazy).drop()
+      try {
+        store.save()
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+      }
+    }
   }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
