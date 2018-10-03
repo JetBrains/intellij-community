@@ -35,18 +35,20 @@ import static java.util.Collections.unmodifiableList;
 public class StructureTreeModel extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
   private static final Logger LOG = Logger.getInstance(StructureTreeModel.class);
   private final Reference<Node> root = new Reference<>();
+  private final String description;
   private final Invoker invoker;
   private volatile AbstractTreeStructure structure;
   private volatile Comparator<? super Node> comparator;
 
-  private StructureTreeModel(boolean background) {
+  private StructureTreeModel(@NotNull String prefix, boolean background) {
+    description = format(prefix);
     invoker = background
               ? new Invoker.BackgroundThread(this)
               : new Invoker.EDT(this);
   }
 
   public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
-    this(true);
+    this(structure.toString(), true);
     this.structure = structure;
   }
 
@@ -537,15 +539,30 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
    * @deprecated do not use
    */
   @Deprecated
-  public final Node getRootImmediately() {
+  public final TreeNode getRootImmediately() {
     if (!root.isValid()) {
       root.set(getValidRoot());
     }
     return root.get();
   }
 
+  /**
+   * @return a descriptive name for the instance to help a tree identification
+   * @see Invoker#Invoker(String, Disposable)
+   */
+  @SuppressWarnings("JavadocReference")
   @Override
   public String toString() {
-    return String.valueOf(structure);
+    return description;
+  }
+
+  @NotNull
+  private static String format(@NotNull String prefix) {
+    for (StackTraceElement element : new Exception().getStackTrace()) {
+      if (!StructureTreeModel.class.getName().equals(element.getClassName())) {
+        return prefix + " @ " + element.getFileName() + " : " + element.getLineNumber();
+      }
+    }
+    return prefix;
   }
 }
