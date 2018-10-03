@@ -178,7 +178,7 @@ public class SimplifyExprentsHelper {
       }
 
       // expr++ and expr--
-      if (isIPPorIMM(current, next)) {
+      if (isIPPorIMM(current, next) || isIPPorIMM2(current, next)) {
         list.remove(index + 1);
         res = true;
         continue;
@@ -458,6 +458,48 @@ public class SimplifyExprentsHelper {
     return false;
   }
 
+  private static boolean isIPPorIMM2(Exprent first, Exprent second) {
+
+    if (first.type != Exprent.EXPRENT_ASSIGNMENT || second.type != Exprent.EXPRENT_ASSIGNMENT) {
+      return false;
+    }
+      
+    AssignmentExprent af = (AssignmentExprent)first;
+    AssignmentExprent as = (AssignmentExprent)second;
+    
+    if(as.getRight().type != Exprent.EXPRENT_FUNCTION) {
+      return false;
+    }
+    
+    FunctionExprent func = (FunctionExprent)as.getRight();
+    
+    if(func.getFuncType() != FunctionExprent.FUNCTION_ADD && func.getFuncType() != FunctionExprent.FUNCTION_SUB) {
+      return false;
+    }
+
+    Exprent econd = func.getLstOperands().get(0);
+    Exprent econst = func.getLstOperands().get(1);
+
+    if(econst.type != Exprent.EXPRENT_CONST && econd.type == Exprent.EXPRENT_CONST && func.getFuncType() == FunctionExprent.FUNCTION_ADD) {
+      econd = econst;
+      econst = func.getLstOperands().get(0);
+    }
+
+    if(econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
+      if(af.getLeft().equals(econd) && af.getRight().equals(as.getLeft()) && (af.getLeft().getExprentUse() & Exprent.MULTIPLE_USES) != 0) {
+        int type = func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_IPP : FunctionExprent.FUNCTION_IMM;
+        
+        FunctionExprent ret = new FunctionExprent(type, af.getRight(), func.bytecode);
+        ret.setImplicitType(VarType.VARTYPE_INT);
+        
+        af.setRight(ret);
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
   private static boolean isMonitorExit(Exprent first) {
     if (first.type == Exprent.EXPRENT_MONITOR) {
       MonitorExprent expr = (MonitorExprent)first;
