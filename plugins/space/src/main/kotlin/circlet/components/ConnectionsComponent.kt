@@ -26,7 +26,7 @@ class ConnectionsComponent : ApplicationComponent, LifetimedComponent by SimpleL
                 appLifetime = connectionLifetime,
                 server = url,
                 credentialsPersistence = IdeaPersistence.substorage("$url-"),
-                offlinePersistence = null,
+                offlinePersistence = Persistence.nothing,
                 offlinePersistenceConfiguration = CircletPersistenceConfiguration.storeNothing
             ),
             connectionLifetime
