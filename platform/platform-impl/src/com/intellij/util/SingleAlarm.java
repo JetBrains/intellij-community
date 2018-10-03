@@ -62,7 +62,7 @@ public class SingleAlarm extends Alarm {
   }
 
   public void request(boolean forceRun) {
-    if (isEmpty()) {
+    if (isEmpty() && !isDisposed()) {
       addRequest(forceRun ? 0 : delay);
     }
   }
