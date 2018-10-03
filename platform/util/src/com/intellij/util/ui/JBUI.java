@@ -1559,12 +1559,16 @@ public class JBUI {
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
-        return JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+        return Registry.is("toolwindow.active.tab.use.contrast.background")
+               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
+               : JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
       }
 
       @NotNull
       public static Color tabSelectedActiveBackground() {
-        return JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+        return Registry.is("toolwindow.active.tab.use.contrast.background")
+               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
+               : JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
       @NotNull
