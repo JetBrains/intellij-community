@@ -1608,7 +1608,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                 ? getGlobalOptions().getShowExcludedFiles()
                                 : getPaneOptionValue(myShowExcludedFiles, paneId, ourShowExcludedFilesDefaults);
 
-    if (showExcludedFiles == ourShowExcludedFilesDefaults) {
+    if (showExcludedFiles == ourShowExcludedFilesDefaults && EventQueue.isDispatchThread()) {
       AbstractProjectViewPane pane = getProjectViewPaneById(ProjectViewPane.ID);
       if (pane instanceof ProjectViewPane) {
         ProjectViewPane old = (ProjectViewPane)pane;
