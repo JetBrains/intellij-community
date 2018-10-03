@@ -108,7 +108,7 @@ public final class TreeUtil {
    * @return a list of objects which correspond to expanded paths under the specified root node
    */
   @NotNull
-  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper) {
+  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
     return collectVisibleRows(tree, tree::isExpanded, mapper);
   }
 
@@ -128,7 +128,7 @@ public final class TreeUtil {
    * @return a list of user objects of the specified type retrieved from all selected paths
    */
   @NotNull
-  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> type) {
+  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<? extends T> type) {
     return collectSelectedObjects(tree, path -> getLastUserObject(type, path));
   }
 
@@ -159,7 +159,7 @@ public final class TreeUtil {
    * @return a list of objects which correspond to expanded paths under the specified root node
    */
   @NotNull
-  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<TreePath, T> mapper) {
+  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<? super TreePath, ? extends T> mapper) {
     if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be expanded
     return collectVisibleRows(tree, path -> tree.isExpanded(path) && root.isDescendant(path), mapper);
   }
@@ -169,7 +169,7 @@ public final class TreeUtil {
    * @param tree JTree to apply expansion status to
    * @param paths to expand. See {@link #collectExpandedPaths(JTree, TreePath)}
    */
-  public static void restoreExpandedPaths(@NotNull final JTree tree, @NotNull final List<TreePath> paths){
+  public static void restoreExpandedPaths(@NotNull final JTree tree, @NotNull final List<? extends TreePath> paths){
     for(int i = paths.size() - 1; i >= 0; i--){
       tree.expandPath(paths.get(i));
     }
@@ -964,7 +964,7 @@ public final class TreeUtil {
    * @return a list of objects which correspond to all selected paths
    */
   @NotNull
-  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper) {
+  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
     return getSelection(tree, path -> isViewable(tree, path), mapper);
   }
 
@@ -995,13 +995,13 @@ public final class TreeUtil {
    * @return a list of objects which correspond to selected paths under the specified root node
    */
   @NotNull
-  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<TreePath, T> mapper) {
+  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<? super TreePath, ? extends T> mapper) {
     if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be selected
     return getSelection(tree, path -> isViewable(tree, path) && root.isDescendant(path), mapper);
   }
 
   @NotNull
-  private static <T> List<T> getSelection(@NotNull JTree tree, @NotNull Predicate<TreePath> filter, @NotNull Function<TreePath, T> mapper) {
+  private static <T> List<T> getSelection(@NotNull JTree tree, @NotNull Predicate<? super TreePath> filter, @NotNull Function<? super TreePath, ? extends T> mapper) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) return Collections.emptyList(); // nothing is selected
     return Stream.of(paths).filter(filter).map(mapper).filter(Objects::nonNull).collect(toList());
@@ -1305,7 +1305,7 @@ public final class TreeUtil {
 
   private static Promise<List<TreePath>> promiseMakeVisibleAll(@NotNull JTree tree,
                                                                @NotNull Stream<? extends TreeVisitor> visitors,
-                                                               @Nullable Consumer<List<TreePath>> consumer) {
+                                                               @Nullable Consumer<? super List<TreePath>> consumer) {
     AsyncPromise<List<TreePath>> promise = new AsyncPromise<>();
     List<Promise<TreePath>> promises = visitors
       .filter(Objects::nonNull)
@@ -1405,7 +1405,7 @@ public final class TreeUtil {
     return promiseMakeVisibleAll(tree, visitors, paths -> internalSelectPaths(tree, paths));
   }
 
-  private static void internalSelectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths) {
+  private static void internalSelectPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
     assert EventQueue.isDispatchThread();
     if (paths.isEmpty()) return;
     tree.setSelectionPaths(paths.toArray(new TreePath[0]));
@@ -1584,7 +1584,7 @@ public final class TreeUtil {
    * @param mapper   a function to convert a visible tree path to a corresponding object
    * @param consumer a visible path processor
    */
-  public static <T> void visitVisibleRows(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper, @NotNull Consumer<T> consumer) {
+  public static <T> void visitVisibleRows(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper, @NotNull Consumer<? super T> consumer) {
     visitVisibleRows(tree, path -> {
       T object = mapper.apply(path);
       if (object != null) consumer.accept(object);
@@ -1600,8 +1600,8 @@ public final class TreeUtil {
    */
   @NotNull
   private static <T> List<T> collectVisibleRows(@NotNull JTree tree,
-                                                @NotNull Predicate<TreePath> filter,
-                                                @NotNull Function<TreePath, T> mapper) {
+                                                @NotNull Predicate<? super TreePath> filter,
+                                                @NotNull Function<? super TreePath, ? extends T> mapper) {
     int count = tree.getRowCount();
     if (count == 0) return Collections.emptyList();
     List<T> list = new ArrayList<>(count);

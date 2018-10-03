@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework
 
+import com.intellij.testGuiFramework.framework.param.CustomRunnerBuilder
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.ide.Ide
@@ -14,10 +15,13 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-open class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilder) : Suite(suiteClass, builder) {
+open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
   var isFirstStart: Boolean = true
+
+  @Volatile
+  var customName: String? = null
 
   protected val myIde: Ide = getIdeFromAnnotation(suiteClass)
   protected val UNDEFINED_FIRST_CLASS = "undefined"
@@ -29,14 +33,14 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerB
   private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")!!
 
   private val testsFilter by lazy {
-    object: Filter() {
+    object : Filter() {
 
       val filteredClassNameSet: Set<String> by lazy {
         GuiTestOptions.filteredListOfTests.split(",").toSet()
       }
 
       override fun shouldRun(description: Description?): Boolean {
-        description?: return true
+        description ?: return true
         return filteredClassNameSet.contains(description.testClass.simpleName)
       }
 
@@ -56,21 +60,28 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerB
     }
   }
 
-  protected open fun createGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
+  protected open fun createGuiTestLocalRunner(testClass: Class<*>, suiteClass: Class<*>, myIde: Ide): GuiTestLocalRunner {
     return GuiTestLocalRunner(testClass, suiteClass, myIde)
   }
 
+  override fun getName(): String {
+    return customName ?: super.getName()
+  }
+
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
-    try {
-      //let's start IDE to complete installation, import configs and etc before running tests
-      if (isFirstStart) firstStart()
-      val testClass = runner.description.testClass
-      val guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
-      super.runChild(guiTestLocalRunner, notifier)
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-      notifier?.fireTestFailure(Failure(runner.description, e))
+    if (builder is CustomRunnerBuilder) super.runChild(runner, notifier)
+    else {
+      try {
+        //let's start IDE to complete installation, import configs and etc before running tests
+        if (isFirstStart) firstStart()
+        val testClass = runner.description.testClass
+        val guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
+        super.runChild(guiTestLocalRunner, notifier)
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+        notifier?.fireTestFailure(Failure(runner.description, e))
+      }
     }
   }
 

@@ -374,6 +374,7 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");

@@ -96,9 +96,9 @@ public class JsonFormattingTest extends JsonTestCase {
   public void testIndentForElements() { doTest();}
   public void testNoExtraNewLineByWrap() { doTest();}
 
-  public void _testHugeJsonFile() {
+  public void testHugeJsonFile() {
     // IDEA-195340 bad JSON kills IntelliJ
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, this::doTest).attempts(1).usesAllCPUCores().assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20000, this::doTest).attempts(1).usesAllCPUCores().assertTiming();
   }
 
   private void doTest() {

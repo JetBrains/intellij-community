@@ -439,8 +439,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
     if (maxValueWidth < 300) {
       myTable.getColumnModel().getColumn(1).setMinWidth(maxValueWidth);
-      myTable.getColumnModel().getColumn(1).setMaxWidth(2 * maxValueWidth);
     }
+    myTable.getColumnModel().getColumn(0).setMinWidth(metrics.stringWidth(myTable.getModel().getColumnName(0)) * 2);
     myTable.getColumnModel().getColumn(0).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
       public void acquireState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {

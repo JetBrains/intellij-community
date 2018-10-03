@@ -112,4 +112,19 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
+
+  /**
+   * Specifies JRE version to be bundled with distributions, 8 by default.
+   */
+  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+
+  /**
+   * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
+   */
+  String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+
+  /**
+   * Specifies prefix of JRE artifact to be bundled with distributions, JB JRE 8 prefix by default.
+   */
+  String bundledJrePrefix = System.getProperty("intellij.build.bundled.jre.prefix", "jbrex8")
 }

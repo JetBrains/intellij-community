@@ -36,6 +36,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
@@ -130,7 +132,6 @@
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
 
     <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="last"/>
-    <ignoredFileProvider implementation="com.intellij.configurationStore.vcs.StoreIgnoredFileProvider"/>
   </extensions>
 </idea-plugin>
 

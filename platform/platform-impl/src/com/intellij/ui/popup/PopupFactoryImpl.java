@@ -470,7 +470,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       for (int index : selectedIndices) {
         if (firstVisibleIndex <= index && index <= lastVisibleIndex) {
           Rectangle cellBounds = list.getCellBounds(index, index);
-          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height);
+          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1);
           break;
         }
       }

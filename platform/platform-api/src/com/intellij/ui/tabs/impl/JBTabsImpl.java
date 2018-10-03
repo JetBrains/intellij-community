@@ -3414,11 +3414,6 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
-    public int getAccessibleChildrenCount() {
-      return getTabCount();
-    }
-
-    @Override
     public Accessible getAccessibleChild(int i) {
       Accessible accessibleChild = super.getAccessibleChild(i);
       // Note: Unlike a JTabbedPane, JBTabsImpl has many more child types than just pages.

@@ -274,7 +274,7 @@ public class Utils {
     return result;
   }
 
-  private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath) {
+  private static void collectRelativePaths(File dir, LinkedHashSet<? super String> result, String parentPath) {
     File[] children = dir.listFiles();
     if (children == null) return;
 

@@ -17,8 +17,11 @@ package org.jetbrains.idea.maven.aether;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public enum ArtifactKind {
-  ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar");
+  ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar"),
+  ANNOTATIONS("annotations", "zip");
 
   private final String myClassifier;
   private final String myExtension;
@@ -36,5 +39,17 @@ public enum ArtifactKind {
   @NotNull
   public String getExtension() {
     return myExtension;
+  }
+
+  @NotNull
+  public static EnumSet<ArtifactKind> kindsOf(boolean sources, boolean javadoc) {
+    EnumSet<ArtifactKind> result = EnumSet.noneOf(ArtifactKind.class);
+    if (sources) {
+      result.add(SOURCES);
+    }
+    if (javadoc) {
+      result.add(JAVADOC);
+    }
+    return result;
   }
 }

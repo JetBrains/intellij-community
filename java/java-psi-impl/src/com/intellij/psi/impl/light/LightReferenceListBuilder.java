@@ -18,7 +18,6 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -74,7 +73,7 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
         myCachedRefs = PsiJavaCodeReferenceElement.EMPTY_ARRAY;
       }
       else {
-        myCachedRefs = ContainerUtil.toArray(myRefs, new PsiJavaCodeReferenceElement[myRefs.size()]);
+        myCachedRefs = myRefs.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
       }
     }
     return myCachedRefs;

@@ -414,13 +414,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
     get() {
-      return lock.read { 
+      return lock.read {
         selectedConfigurationId?.let { idToSettings.get(it) }
       }
     }
     set(value) {
       fun isTheSame() = value?.uniqueID == selectedConfigurationId
-      
+
       lock.read {
         if (isTheSame()) {
           return
@@ -431,10 +431,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (isTheSame()) {
           return
         }
-        
+
         selectedConfigurationId = value?.uniqueID
       }
-      
+
       eventPublisher.runConfigurationSelected()
     }
 
@@ -949,10 +949,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
     settings.isShared = value
     fireRunConfigurationChanged(settings)
-  }
-
-  override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
-    setBeforeRunTasks(configuration, tasks)
   }
 
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {

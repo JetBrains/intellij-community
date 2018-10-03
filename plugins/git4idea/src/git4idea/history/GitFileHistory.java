@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.commands.Git;
@@ -82,7 +83,7 @@ public class GitFileHistory {
   private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
-    myPath = GitHistoryUtils.getLastCommitName(myProject, path);
+    myPath = VcsUtil.getLastCommitPath(myProject, path);
     myStartingRevision = revision;
   }
 

@@ -49,9 +49,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static final Logger LOG = Logger.getInstance(BoundedWildcardInspection.class);
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_INSTANCE_METHODS = true;
   private JBCheckBox myReportInvariantClassesCB;
   private JPanel myPanel;
   private JBCheckBox myReportPrivateMethodsCB;
+  private JBCheckBox myReportInstanceMethodsCB;
 
   @Override
   @NotNull
@@ -73,6 +75,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         }
         if (!REPORT_PRIVATE_METHODS && candidate.method.hasModifierProperty(PsiModifier.PRIVATE)) {
           return; // somebody hates his precious private methods highlighted
+        }
+        if (!REPORT_INSTANCE_METHODS && !candidate.method.hasModifierProperty(PsiModifier.STATIC)) {
+          return; // somebody don't want to report instance methods highlighted because they can be already overridden
         }
         Project project = holder.getProject();
         boolean canBeSuper = canChangeTo(project, candidate, false);
@@ -461,6 +466,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   public JComponent createOptionsPanel() {
     myReportInvariantClassesCB.setSelected(REPORT_INVARIANT_CLASSES);
     myReportPrivateMethodsCB.setSelected(REPORT_PRIVATE_METHODS);
+    myReportInstanceMethodsCB.setSelected(REPORT_INSTANCE_METHODS);
     return myPanel;
   }
 
@@ -469,5 +475,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     super.readSettings(node);
     myReportInvariantClassesCB.addItemListener(__ -> REPORT_INVARIANT_CLASSES = myReportInvariantClassesCB.isSelected());
     myReportPrivateMethodsCB.addItemListener(__ -> REPORT_PRIVATE_METHODS = myReportPrivateMethodsCB.isSelected());
+    myReportInstanceMethodsCB.addItemListener(__ -> REPORT_INSTANCE_METHODS = myReportInstanceMethodsCB.isSelected());
   }
 }

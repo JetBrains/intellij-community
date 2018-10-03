@@ -107,7 +107,6 @@ public class GrMapTypeImpl extends GrMapType {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
 
     GrMapTypeImpl type = (GrMapTypeImpl)o;
 

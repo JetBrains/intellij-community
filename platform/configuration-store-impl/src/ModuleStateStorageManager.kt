@@ -77,7 +77,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
                                   fileSpec: String,
                                   rootElementName: String?,
                                   roamingType: RoamingType,
-                                  pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                                  pathMacroManager: PathMacroSubstitutor? = null,
                                   provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
     // use VFS to load module file because it is refreshed and loaded into VFS in any case
     override fun loadLocalData(): Element? {

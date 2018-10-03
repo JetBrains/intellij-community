@@ -33,6 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -1336,7 +1337,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   private static class FsRoot extends VirtualDirectoryImpl {
     private final String myName;
-    private final String myPathBeforeSlash;
+    private final String myPathWithOneSlash;
 
     private FsRoot(int id,
                    @NotNull VfsData.Segment segment,
@@ -1349,7 +1350,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (!looksCanonical(pathBeforeSlash)) {
         throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
       }
-      myPathBeforeSlash = pathBeforeSlash;
+      myPathWithOneSlash = pathBeforeSlash + '/';
     }
 
     @NotNull
@@ -1361,8 +1362,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     @NotNull
     @Override
     protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-      char[] chars = new char[pathLength + myPathBeforeSlash.length()];
-      position[0] = copyString(chars, position[0], myPathBeforeSlash);
+      int myLength = myPathWithOneSlash.length() - 1;
+      char[] chars = new char[pathLength + myLength];
+      CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);
+      position[0] += myLength;
       return chars;
     }
 
@@ -1379,7 +1382,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     @NotNull
     @Override
     public String getPath() {
-      return myPathBeforeSlash + '/';
+      return myPathWithOneSlash;
     }
 
     @NotNull

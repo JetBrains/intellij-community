@@ -896,7 +896,7 @@ public class CreateFromUsageUtils {
     return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess) {
     addClassesWithMember(memberName, file, possibleClassNames, method, staticAccess, true);
   }

@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
@@ -47,7 +47,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER));

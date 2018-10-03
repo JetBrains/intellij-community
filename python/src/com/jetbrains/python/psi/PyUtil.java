@@ -43,12 +43,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
@@ -1914,14 +1916,16 @@ public class PyUtil {
     private final TextRange myContentRange;
 
     public StringNodeInfo(@NotNull ASTNode node) {
-      if (!PyTokenTypes.STRING_NODES.contains(node.getElementType())) {
-        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + node.getElementType() + " was given");
+      final IElementType nodeType = node.getElementType();
+      // TODO Migrate to newer PyStringElement API
+      if (!PyTokenTypes.STRING_NODES.contains(nodeType) && nodeType != PyElementTypes.FSTRING_NODE) {
+        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + nodeType + " was given");
       }
       myNode = node;
       final String nodeText = node.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
       myPrefix = nodeText.substring(0, prefixLength);
-      myContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+      myContentRange = PyStringLiteralUtil.getContentRange(nodeText);
       myQuote = nodeText.substring(prefixLength, myContentRange.getStartOffset());
     }
 

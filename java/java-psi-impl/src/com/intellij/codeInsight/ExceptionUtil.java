@@ -53,7 +53,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiClassType> filterOutUncheckedExceptions(@NotNull List<PsiClassType> exceptions) {
+  private static List<PsiClassType> filterOutUncheckedExceptions(@NotNull List<? extends PsiClassType> exceptions) {
     List<PsiClassType> array = ContainerUtil.newArrayList();
     for (PsiClassType exception : exceptions) {
       if (!isUncheckedException(exception)) array.add(exception);
@@ -66,13 +66,16 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       @Override
-      public void visitElement(PsiElement element) {
-        PsiElement parent = element.getParent();
-        // do not process any anonymous class children except its getArgumentList()
-        if (parent instanceof PsiAnonymousClass && !(element instanceof PsiExpressionList)) {
-          return;
+      public void visitElement(PsiElement psiElement) {
+        if (psiElement != element) {
+          PsiElement parent = psiElement.getParent();
+          // do not process any anonymous class children except its getArgumentList()
+          //if the visitor was not called from inside anonymous class
+          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
+            return;
+          }
         }
-        super.visitElement(element);
+        super.visitElement(psiElement);
       }
 
       @Override
@@ -212,7 +215,7 @@ public class ExceptionUtil {
     return result;
   }
 
-  private static void addExceptions(@NotNull List<PsiClassType> array, @NotNull Collection<PsiClassType> exceptions) {
+  private static void addExceptions(@NotNull List<PsiClassType> array, @NotNull Collection<? extends PsiClassType> exceptions) {
     for (PsiClassType exception : exceptions) {
       addException(array, exception);
     }
@@ -502,7 +505,7 @@ public class ExceptionUtil {
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
   }
 
-  public static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
+  public static void retainExceptions(List<PsiClassType> ex, List<? extends PsiClassType> thrownEx) {
     final List<PsiClassType> replacement = new ArrayList<>();
     for (Iterator<PsiClassType> iterator = ex.iterator(); iterator.hasNext(); ) {
       PsiClassType classType = iterator.next();
@@ -901,7 +904,7 @@ public class ExceptionUtil {
     return false;
   }
 
-  public static void sortExceptionsByHierarchy(@NotNull List<PsiClassType> exceptions) {
+  public static void sortExceptionsByHierarchy(@NotNull List<? extends PsiClassType> exceptions) {
     if (exceptions.size() <= 1) return;
     sortExceptionsByHierarchy(exceptions.subList(1, exceptions.size()));
     for (int i=0; i<exceptions.size()-1;i++) {

@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +13,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.util.ui.UIUtil.uiChildren;
 
 /**
  * @author Alexander Lobas
@@ -33,6 +32,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   private final FocusListener myFocusListener;
 
   private final ShortcutSet mySelectAllKeys;
+  private final ShortcutSet myDeleteKeys;
   private boolean myAllSelected;
   private boolean myMixSelection;
 
@@ -117,6 +117,7 @@ public class MultiSelectionEventHandler extends EventHandler {
     };
 
     mySelectAllKeys = getShortcuts(IdeActions.ACTION_SELECT_ALL);
+    myDeleteKeys = getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
 
     myKeyListener = new KeyAdapter() {
       @Override
@@ -129,6 +130,9 @@ public class MultiSelectionEventHandler extends EventHandler {
           event.consume();
           selectAll();
           return;
+        }
+        if (check(shortcut, myDeleteKeys)) {
+          code = DELETE_CODE;
         }
 
         if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
@@ -163,7 +167,7 @@ public class MultiSelectionEventHandler extends EventHandler {
           int pageCount = myContainer.getVisibleRect().height / myLayout.myLineHeight;
           moveOrResizeSelection(code == KeyEvent.VK_PAGE_UP, !event.isShiftDown(), pageCount);
         }
-        else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == KeyEvent.VK_BACK_SPACE) {
+        else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == DELETE_CODE) {
           assert mySelectionLength != 0;
           CellPluginComponent component = myComponents.get(mySelectionIndex);
           if (component.getSelection() != SelectionType.SELECTION) {
@@ -187,23 +191,6 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
       }
     };
-  }
-
-  @Nullable
-  private static ShortcutSet getShortcuts(@NotNull String id) {
-    AnAction action = ActionManager.getInstance().getAction(id);
-    return action == null ? null : action.getShortcutSet();
-  }
-
-  private static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
-    if (set != null) {
-      for (Shortcut test : set.getShortcuts()) {
-        if (test.isKeyboard() && shortcut.startsWith(test)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Override
@@ -462,7 +449,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   @Override
   public void addAll(@NotNull Component component) {
     add(component);
-    for (Component child : uiChildren(component)) {
+    for (Component child : UIUtil.uiChildren(component)) {
       addAll(child);
     }
   }

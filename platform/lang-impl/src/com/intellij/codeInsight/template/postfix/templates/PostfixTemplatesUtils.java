@@ -107,7 +107,7 @@ public abstract class PostfixTemplatesUtils {
 
   @NotNull
   public static <T extends PostfixTemplateExpressionCondition> Set<T> readExternalConditions(@NotNull Element template,
-                                                                                             @NotNull Function<Element, T> conditionFactory) {
+                                                                                             @NotNull Function<? super Element, ? extends T> conditionFactory) {
     Element conditionsElement = template.getChild(CONDITIONS_TAG);
     if (conditionsElement != null) {
       Set<T> conditions = new LinkedHashSet<>();

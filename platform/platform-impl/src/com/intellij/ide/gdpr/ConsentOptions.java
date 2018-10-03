@@ -227,7 +227,7 @@ public final class ConsentOptions {
     return false;
   }
 
-  private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<? extends ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final ConfirmedConsent current = base.get(update.consentId);
@@ -242,7 +242,7 @@ public final class ConsentOptions {
     return changes;
   }
 
-  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, Collection<? extends ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);

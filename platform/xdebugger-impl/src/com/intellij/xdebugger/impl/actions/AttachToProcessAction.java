@@ -171,7 +171,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<AttachToProcessItem> getRecentItems(@NotNull List<AttachToProcessItem> currentItems,
+  private static List<AttachToProcessItem> getRecentItems(@NotNull List<? extends AttachToProcessItem> currentItems,
                                                           @NotNull XAttachHost host,
                                                           @NotNull Project project,
                                                           @NotNull UserDataHolder dataHolder) {
@@ -236,9 +236,9 @@ public class AttachToProcessAction extends AnAction {
   @NotNull
   static List<AttachToProcessItem> doCollectAttachProcessItems(@NotNull final Project project,
                                                                @NotNull XAttachHost host,
-                                                               @NotNull List<ProcessInfo> processInfos,
+                                                               @NotNull List<? extends ProcessInfo> processInfos,
                                                                @NotNull ProgressIndicator indicator,
-                                                               @NotNull List<XAttachDebuggerProvider> providers) {
+                                                               @NotNull List<? extends XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
     List<AttachToProcessItem> currentItems = ContainerUtil.newArrayList();

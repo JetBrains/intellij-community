@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -63,7 +64,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     }
     final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
-      VcsLogUtil.triggerUsage(e);
+      VcsLogUsageTriggerCollector.triggerUsage(e);
 
       String singleBranchName = VcsLogUtil.getSingleFilteredBranch(ui.getFilterUi().getFilters(), ui.getDataPack().getRefs());
       if (singleBranchName == null) {

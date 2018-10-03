@@ -13,8 +13,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -27,7 +26,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -40,10 +38,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.WeakInterner;
@@ -255,7 +250,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           PsiElement element = descriptor.getPsiElement();
           if (element != null) {
             Document thisDocument = documentManager.getDocument(getFile());
-            createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument, new LocalInspectionToolWrapper(localTool), severity, descriptor, element);
+            createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument, 
+                                          new LocalInspectionToolWrapper(localTool), severity, descriptor, element, false);
           }
         }
       }
@@ -273,13 +269,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final List<InspectionContext> init = new ArrayList<>();
     List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedLanguageIds.entrySet());
 
-    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor =
-      pair -> {
+    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = pair ->
+      AstLoadingFilter.disallowTreeLoading(() -> {
         LocalInspectionToolWrapper toolWrapper = pair.getKey();
         Set<String> dialectIdsSpecifiedForTool = pair.getValue();
         runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
         return true;
-      };
+      });
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
     if (!result) throw new ProcessCanceledException();
     return init;
@@ -332,7 +328,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       context -> {
         ProgressManager.checkCanceled();
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool);
+        AstLoadingFilter.disallowTreeLoading(
+          () -> InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool)
+        );
         advanceProgress(1);
         context.tool.getTool().inspectionFinished(session, context.holder);
 
@@ -433,7 +431,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
       infos.clear();
-      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
+      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement,
+                                    myIgnoreSuppressed);
       for (HighlightInfo info : infos) {
         final EditorColorsScheme colorsScheme = getColorsScheme();
         UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
@@ -491,7 +490,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             ProgressManager.checkCanceled();
             PsiElement element = descriptor.getPsiElement();
             if (element != null) {
-              createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
+              createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element,
+                                            myIgnoreSuppressed);
             }
           }
         }
@@ -507,9 +507,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull HighlightSeverity severity,
                                              @NotNull ProblemDescriptor descriptor,
-                                             @NotNull PsiElement element) {
+                                             @NotNull PsiElement element, boolean ignoreSuppressed) {
     LocalInspectionTool tool = toolWrapper.getTool();
-    if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) {
+    if (ignoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) {
       mySuppressedElements.computeIfAbsent(toolWrapper.getID(), shortName -> new HashSet<>()).add(element);
       return;
     }
@@ -543,23 +543,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile context = getTopLevelFileInBaseLanguage(element);
     PsiFile myContext = getTopLevelFileInBaseLanguage(getFile());
     if (context != getFile()) {
-      ClassLoader toolClassLoader = tool.getClass().getClassLoader();
-      PluginId pluginId = null;
-      if (toolClassLoader instanceof PluginClassLoader) {
-        pluginId = ((PluginClassLoader)toolClassLoader).getPluginId();
-      }
       String errorMessage = "Reported element " + element +
                        " is not from the file '" + file +
                        "' the inspection '" + toolWrapper +
                        "' (" + tool.getClass() +
                        ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
                        context + "\nInspection invoked for file: " + myContext + "\n";
-      if (pluginId == null) {
-        LOG.error(errorMessage);
-      }
-      else {
-        LOG.error(new PluginException(errorMessage, pluginId));
-      }
+      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, tool.getClass()));
     }
     boolean isInjected = file != getFile();
     if (!isInjected) {

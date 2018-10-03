@@ -18,7 +18,7 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -225,7 +225,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (myProject.isDisposed() || myInitialRefreshScheduled) return;
 
       myInitialRefreshScheduled = true;
-      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject)).markRootsForRefresh();
+      ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
       if (!app.isCommandLine()) {
@@ -343,7 +343,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivities(@NotNull List<Runnable> activities) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities) {
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }

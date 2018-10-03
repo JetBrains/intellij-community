@@ -413,8 +413,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NotNull
   static ChainIterable<String> describeClass(@NotNull PyClass cls,
-                                             @NotNull Function<String, String> escapedNameMapper,
-                                             @NotNull Function<String, String> escaper,
+                                             @NotNull Function<? super String, String> escapedNameMapper,
+                                             @NotNull Function<? super String, String> escaper,
                                              boolean link,
                                              boolean linkAncestors,
                                              @NotNull TypeEvalContext context) {
@@ -448,7 +448,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NotNull
   private static String describeSuperClass(@NotNull PyExpression expression,
-                                           @NotNull Function<String, String> escaper,
+                                           @NotNull Function<? super String, String> escaper,
                                            boolean link,
                                            @NotNull TypeEvalContext context) {
     if (link) {

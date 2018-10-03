@@ -424,7 +424,7 @@ public class MvcModuleStructureUtil {
   }
 
   @Nullable
-  private static Library extractNonModuleLibraries(List<Library> result,
+  private static Library extractNonModuleLibraries(List<? super Library> result,
                                                    ModuleRootManager rootManager,
                                                    boolean providedOnly,
                                                    String userLibraryName) {

@@ -68,7 +68,7 @@ public abstract class PsiAugmentProvider {
   //<editor-fold desc="API and the inner kitchen.">
 
   @NotNull
-  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type) {
     List<Psi> result = ContainerUtil.newSmartList();
 
     forEach(element.getProject(), provider -> {

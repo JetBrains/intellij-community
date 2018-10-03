@@ -197,6 +197,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        private void visitReferenceExpression(UExpression node) {
+                         UElement uastParent = node.getUastParent();
+                         if (uastParent instanceof UQualifiedReferenceExpression && ((UQualifiedReferenceExpression)uastParent).getSelector() == node) {
+                           return;
+                         }
                          PsiElement psiResolved = null;
                          if (node instanceof UResolvable) {
                            psiResolved = ((UResolvable)node).resolve();
@@ -296,7 +300,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                                           final UDeclaration from,
                                                           boolean defaultConstructorOnly) {
                          if (psiClass != null) {
-                           RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass.getNavigationElement());
+                           RefClassImpl refClass = ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;

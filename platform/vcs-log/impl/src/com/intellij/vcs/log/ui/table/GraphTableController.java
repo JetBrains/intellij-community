@@ -35,12 +35,12 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,18 +224,18 @@ public class GraphTableController {
 
   private void performRootColumnAction() {
     if (myColorManager.isMultipleRoots() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
-      VcsLogUtil.triggerUsage("RootColumnClick");
+      VcsLogUsageTriggerCollector.triggerUsage("RootColumnClick");
       myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }
   }
 
   private static void triggerElementClick(@NotNull PrintElement printElement) {
     if (printElement instanceof NodePrintElement) {
-      VcsLogUtil.triggerUsage("GraphNodeClick");
+      VcsLogUsageTriggerCollector.triggerUsage("GraphNodeClick");
     }
     else if (printElement instanceof EdgePrintElement) {
       if (((EdgePrintElement)printElement).hasArrow()) {
-        VcsLogUtil.triggerUsage("GraphArrowClick");
+        VcsLogUsageTriggerCollector.triggerUsage("GraphArrowClick");
       }
     }
   }

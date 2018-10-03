@@ -121,7 +121,7 @@ public class MigrationMapSet {
   private static File getMapDirectory() {
     File dir = new File(PathManager.getConfigPath() + File.separator + "migration");
 
-    if (!dir.exists() && !dir.mkdir()) {
+    if (!dir.exists() && !dir.mkdirs()) {
       LOG.error("cannot create directory: " + dir.getAbsolutePath());
       return null;
     }

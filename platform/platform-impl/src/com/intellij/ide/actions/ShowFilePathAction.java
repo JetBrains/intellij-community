@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
@@ -324,7 +325,13 @@ public class ShowFilePathAction extends DumbAwareAction {
     PooledThreadExecutor.INSTANCE.submit(() -> {
       try {
         LOG.debug(cmd.toString());
-        ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+        new CapturingProcessHandler(cmd) {
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.BLOCKING;
+          }
+        }.runProcess().checkSuccess(LOG);
       }
       catch (Exception e) {
         LOG.warn(e);

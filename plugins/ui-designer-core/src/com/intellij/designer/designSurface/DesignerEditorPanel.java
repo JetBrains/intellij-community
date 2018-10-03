@@ -601,7 +601,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return getSelectionState(mySurfaceArea.getSelection());
   }
 
-  protected static int[][] getSelectionState(List<RadComponent> selection) {
+  protected static int[][] getSelectionState(List<? extends RadComponent> selection) {
     int[][] selectionState = new int[selection.size()][];
 
     for (int i = 0; i < selectionState.length; i++) {
@@ -662,7 +662,7 @@ public abstract class DesignerEditorPanel extends JPanel
     mySelectionState = null;
   }
 
-  protected static void pathToComponent(List<RadComponent> components, RadComponent component, int[] path, int index) {
+  protected static void pathToComponent(List<? super RadComponent> components, RadComponent component, int[] path, int index) {
     if (index == path.length) {
       components.add(component);
     }

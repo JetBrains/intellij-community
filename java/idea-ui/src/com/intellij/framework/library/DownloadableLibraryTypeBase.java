@@ -16,6 +16,7 @@
 package com.intellij.framework.library;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.net.URL;
@@ -28,7 +29,7 @@ public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryTyp
   protected DownloadableLibraryTypeBase(@NotNull String libraryCategoryName,
                                         @NotNull String libraryTypeId,
                                         @NotNull String groupId,
-                                        @NotNull Icon icon,
+                                        @Nullable Icon icon,
                                         @NotNull URL... localUrls) {
     super(libraryCategoryName, libraryTypeId, groupId, icon, localUrls);
   }

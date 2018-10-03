@@ -64,7 +64,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
   }
 
   @Nullable
-  private static HgRepository chooseRepository(@NotNull List<HgRepository> repositories) {
+  private static HgRepository chooseRepository(@NotNull List<? extends HgRepository> repositories) {
     assert !repositories.isEmpty();
     return repositories.size() > 1 ? null : repositories.get(0);
   }

@@ -53,11 +53,11 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
     return getVcsName().equals(activeVcs.getName());
   }
 
-  protected static void addSeparator(@NotNull final List<AnAction> actions) {
+  protected static void addSeparator(@NotNull final List<? super AnAction> actions) {
     actions.add(new Separator());
   }
 
-  protected static void add(String actionName, ActionManager manager, List<AnAction> actions) {
+  protected static void add(String actionName, ActionManager manager, List<? super AnAction> actions) {
     final AnAction action = manager.getAction(actionName);
     assert action != null : "Can not find action " + actionName;
     actions.add(action);

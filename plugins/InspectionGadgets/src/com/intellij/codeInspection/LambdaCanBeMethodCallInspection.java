@@ -17,6 +17,9 @@ import org.jetbrains.annotations.NotNull;
 public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher PREDICATE_TEST = CallMatcher.instanceCall(
     CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterTypes("T");
+  private static final CallMatcher MATCHER_FIND = CallMatcher.instanceCall("java.util.regex.Matcher", "find").parameterCount(0);
+  private static final CallMatcher MATCHER_MATCHES = CallMatcher.instanceCall("java.util.regex.Matcher", "matches").parameterCount(0);
+  private static final CallMatcher PATTERN_MATCHER = CallMatcher.instanceCall("java.util.regex.Pattern", "matcher").parameterCount(1);
 
   @NotNull
   @Override
@@ -24,6 +27,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
     if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
+    boolean java11 = PsiUtil.isLanguageLevel11OrHigher(holder.getFile());
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
@@ -82,23 +86,16 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
       }
 
       private void handlePatternAsPredicate(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {
-        if (MethodCallUtils.isCallToMethod(call, "java.util.regex.Matcher", PsiType.BOOLEAN, "find")) {
-          PsiExpression matcher = call.getMethodExpression().getQualifierExpression();
-          if (matcher instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression matcherCall = (PsiMethodCallExpression)matcher;
-            if (MethodCallUtils.isCallToMethod(matcherCall, "java.util.regex.Pattern", null, "matcher",
-                                               new PsiType[]{null})) {
-              PsiExpression[] matcherArgs = matcherCall.getArgumentList().getExpressions();
-              if (matcherArgs.length == 1 && ExpressionUtils.isReferenceTo(matcherArgs[0], parameter)) {
-                PsiExpression pattern = matcherCall.getMethodExpression().getQualifierExpression();
-                if (pattern != null && LambdaCanBeMethodReferenceInspection.checkQualifier(pattern)) {
-                  registerProblem(lambda, "Pattern.asPredicate()",
-                                  ParenthesesUtils.getText(pattern, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".asPredicate()");
-                }
-              }
-            }
-          }
-        }
+        if (!MATCHER_FIND.test(call) && (!java11 || !MATCHER_MATCHES.test(call))) return;
+        PsiMethodCallExpression matcherCall = MethodCallUtils.getQualifierMethodCall(call);
+        if (!PATTERN_MATCHER.test(matcherCall)) return;
+        PsiExpression matcherArg = matcherCall.getArgumentList().getExpressions()[0];
+        if (!ExpressionUtils.isReferenceTo(matcherArg, parameter)) return;
+        PsiExpression pattern = matcherCall.getMethodExpression().getQualifierExpression();
+        if (pattern == null || !LambdaCanBeMethodReferenceInspection.checkQualifier(pattern)) return;
+        String methodName = "find".equalsIgnoreCase(call.getMethodExpression().getReferenceName()) ? "asPredicate" : "asMatchPredicate";
+        registerProblem(lambda, "Pattern." + methodName + "()",
+                        ParenthesesUtils.getText(pattern, ParenthesesUtils.POSTFIX_PRECEDENCE) + "." + methodName + "()");
       }
 
       private void handlePredicateIsEqual(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {

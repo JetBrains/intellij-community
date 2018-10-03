@@ -42,11 +42,11 @@ import java.util.List;
 * @author nik
 */
 class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
-  private final List<VirtualFile> myVirtualFiles;
+  private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
   private final Project myProject;
 
-  MultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> virtualFiles, int lineNumber, @NotNull Project project) {
+  MultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> virtualFiles, int lineNumber, @NotNull Project project) {
     myVirtualFiles = virtualFiles;
     myLineNumber = lineNumber;
     myProject = project;

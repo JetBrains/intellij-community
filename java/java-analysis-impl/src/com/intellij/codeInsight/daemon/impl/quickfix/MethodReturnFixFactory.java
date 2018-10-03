@@ -47,7 +47,7 @@ public class MethodReturnFixFactory extends ArgumentFixerActionFactory {
     PsiReferenceExpression ref = call.getMethodExpression();
     // Do not suggest to change return type if the same method is used several times in this argument list
     // In this case it's unlikely that compilation error will be fixed, and can be confusing
-    if (!ReferencesSearch.search(method, new LocalSearchScope(list)).forEach(r -> r == ref)) return null;
+    if (ReferencesSearch.search(method, new LocalSearchScope(list)).anyMatch(r -> r != ref)) return null;
     return QuickFixFactory.getInstance().createMethodReturnFix(method, toType, true);
   }
 }

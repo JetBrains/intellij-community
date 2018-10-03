@@ -63,7 +63,6 @@ class CommunityStandaloneJpsBuilder {
         jar("maven-jps-plugin.jar") { module("intellij.maven.jps") }
         jar("aether-dependency-resolver.jar") { module("intellij.java.aetherDependencyResolver") }
         jar("gradle-jps-plugin.jar") { module("intellij.gradle.jps") }
-        moduleLibrary("intellij.maven.jps", "plexus-utils-2.0.6.jar")
 
         jar("eclipse-jps-plugin.jar") {
           module("intellij.eclipse.common")
@@ -74,7 +73,7 @@ class CommunityStandaloneJpsBuilder {
 
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-          "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava",
+          "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
           "jetbrains-annotations-java5"
         ].each {
           projectLibrary(it)

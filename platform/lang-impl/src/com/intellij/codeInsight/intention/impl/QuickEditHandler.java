@@ -144,6 +144,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     else {
       myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
     }
+    Disposer.register(this, myEditChangesHandler);
     initGuardedBlocks(shreds);
   }
 

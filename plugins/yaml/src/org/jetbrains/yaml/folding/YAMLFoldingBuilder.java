@@ -35,7 +35,7 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     collectDescriptors(root, descriptors);
   }
 
-  private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<FoldingDescriptor> descriptors) {
+  private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<? super FoldingDescriptor> descriptors) {
     TextRange nodeTextRange = element.getTextRange();
     if (nodeTextRange.getLength() < 2) {
       return;

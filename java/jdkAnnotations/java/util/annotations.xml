@@ -1508,6 +1508,7 @@
   </item>
   <item name='java.util.List boolean add(E)'>
     <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;true&quot;"/>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
@@ -1816,6 +1817,9 @@
       <val name="value" val="&quot;!null -&gt; !null&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
+  </item>
+  <item name='java.util.Properties void store(java.io.OutputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Queue E element()'>
     <annotation name='org.jetbrains.annotations.Contract'>

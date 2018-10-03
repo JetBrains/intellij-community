@@ -42,6 +42,7 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.util.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 9;
+  private static final int VERSION = 10;
   private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -628,14 +629,14 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
 
     private void showIndexingNotification(long time) {
-      VcsLogUtil.triggerUsage("IndexingTooLongNotification");
+      VcsLogUsageTriggerCollector.triggerUsage("IndexingTooLongNotification");
       Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
                                                                  "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
                                                                  "Indexing was taking too long (" +
                                                                  StopWatch.formatTime(time - time % 1000) +
                                                                  ")", NotificationType.WARNING, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
-        VcsLogUtil.triggerUsage("ResumeIndexingClick");
+        VcsLogUsageTriggerCollector.triggerUsage("ResumeIndexingClick");
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
           myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());

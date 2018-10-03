@@ -153,9 +153,6 @@ public abstract class SearchResultPanel {
 
   private void removeGroup() {
     if (myGroup.ui != null) {
-      for (CellPluginComponent component : myGroup.ui.plugins) {
-        component.close();
-      }
       myPanel.removeGroup(myGroup);
       fullRepaint();
     }

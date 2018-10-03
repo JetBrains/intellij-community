@@ -261,7 +261,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(@NotNull PsiClass aClass,
-                                                                              @NotNull Collection<PsiMethodMember> candidates,
+                                                                              @NotNull Collection<? extends PsiMethodMember> candidates,
                                                                               boolean toCopyJavaDoc,
                                                                               boolean toInsertAtOverride)
     throws IncorrectOperationException {
@@ -284,7 +284,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<PsiMethod> methods) {
+  public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<? extends PsiMethod> methods) {
     return ContainerUtil.map2List(methods, s -> createGenerationInfo(s));
   }
 
@@ -535,7 +535,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         }
       }
       else {
-        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, (Collection<PsiMethodMember>)candidates, copyJavadoc, insertOverrideWherePossible);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertOverrideWherePossible);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
       }
 

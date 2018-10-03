@@ -210,11 +210,16 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return builder.toString()
   }
 
-  fun copyFrom(state: BaseState) {
-    LOG.assertTrue(state.properties.size == properties.size)
+  @JvmOverloads
+  fun copyFrom(state: BaseState, isMustBeTheSameType: Boolean = true) {
+    val propertyCount = state.properties.size
+    if (isMustBeTheSameType) {
+      LOG.assertTrue(propertyCount == properties.size)
+    }
+
     var changed = false
-    for ((index, property) in properties.withIndex()) {
-      val otherProperty = state.properties.get(index)
+    for ((index, otherProperty) in state.properties.withIndex()) {
+      val property = properties.get(index)
       LOG.assertTrue(otherProperty.name == property.name)
       if (property.setValue(otherProperty)) {
         changed = true

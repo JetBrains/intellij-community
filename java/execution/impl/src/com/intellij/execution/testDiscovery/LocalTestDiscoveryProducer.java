@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
@@ -36,8 +36,8 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) throws IOException {
-    throw new UnsupportedOperationException();
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) {
+    return Collections.emptyList();
   }
 
   @Override

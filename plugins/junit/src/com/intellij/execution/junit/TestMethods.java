@@ -44,11 +44,11 @@ import java.util.Collection;
 public class TestMethods extends TestMethod {
   private static final Logger LOG = Logger.getInstance(TestMethods.class);
 
-  private final Collection<AbstractTestProxy> myFailedTests;
+  private final Collection<? extends AbstractTestProxy> myFailedTests;
 
   public TestMethods(@NotNull JUnitConfiguration configuration,
                      @NotNull ExecutionEnvironment environment,
-                     @NotNull Collection<AbstractTestProxy> failedTests) {
+                     @NotNull Collection<? extends AbstractTestProxy> failedTests) {
     super(configuration, environment);
 
     myFailedTests = failedTests;

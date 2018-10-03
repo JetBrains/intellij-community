@@ -604,9 +604,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   private class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
     private final AsyncState state = new AsyncState();
     private final StringBuilder updated = new StringBuilder();
-    private final List<StubIndexExtension<?, ?>> myExtensions;
+    private final List<? extends StubIndexExtension<?, ?>> myExtensions;
 
-    StubIndexInitialization(@NotNull List<StubIndexExtension<?, ?>> extensions) {
+    StubIndexInitialization(@NotNull List<? extends StubIndexExtension<?, ?>> extensions) {
       myExtensions = extensions;
     }
 

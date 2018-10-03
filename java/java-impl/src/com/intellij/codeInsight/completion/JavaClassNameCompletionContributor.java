@@ -97,7 +97,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   public static void addAllClasses(@NotNull CompletionParameters parameters,
                                    final boolean filterByScope,
                                    @NotNull final PrefixMatcher matcher,
-                                   @NotNull final Consumer<LookupElement> consumer) {
+                                   @NotNull final Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
     if (JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement)) {

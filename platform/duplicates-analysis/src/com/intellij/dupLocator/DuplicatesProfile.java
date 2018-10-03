@@ -85,7 +85,7 @@ public abstract class DuplicatesProfile {
   }
 
   @Nullable
-  public static DuplicatesProfile findProfileForLanguage(List<DuplicatesProfile> profiles, @NotNull Language language) {
+  public static DuplicatesProfile findProfileForLanguage(List<? extends DuplicatesProfile> profiles, @NotNull Language language) {
     for (DuplicatesProfile profile : profiles) {
       if (profile.isMyLanguage(language)) {
         return profile;

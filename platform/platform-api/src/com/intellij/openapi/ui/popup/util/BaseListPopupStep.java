@@ -55,7 +55,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     init(aTitle, aValues, icons);
   }
 
-  public BaseListPopupStep(@Nullable String title, @NotNull List<? extends T> values, List<Icon> icons) {
+  public BaseListPopupStep(@Nullable String title, @NotNull List<? extends T> values, List<? extends Icon> icons) {
     init(title, values, icons);
   }
 

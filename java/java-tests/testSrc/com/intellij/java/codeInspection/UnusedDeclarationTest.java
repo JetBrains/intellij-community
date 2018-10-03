@@ -238,4 +238,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testTypeParameterUsed() {
     doTest();
   }
+
+  public void testMethodCallQualifiedWithSuper() {
+    doTest();
+  }
 }

@@ -74,6 +74,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
+  @NotNull
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
 
   /**

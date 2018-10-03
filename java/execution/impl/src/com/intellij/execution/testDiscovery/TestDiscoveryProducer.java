@@ -67,12 +67,12 @@ public interface TestDiscoveryProducer {
   }
 
   @NotNull
-  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) throws IOException;
+  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) throws IOException;
 
-  //TODO use it [Dmitry Batkovich]
-  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<String> testFqns, @NotNull Consumer<? super String> pathsConsumer) throws IOException {
+  // testFqn - className.methodName
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<String> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
     for (TestDiscoveryProducer extension : EP.getExtensions()) {
-      for (String path : extension.getAffectedFilePaths(project, testFqns)) {
+      for (String path : extension.getAffectedFilePaths(project, testFqns, frameworkId)) {
         pathsConsumer.consume(path);
       }
     }

@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipException;
 
 /**
@@ -439,11 +436,25 @@ public class JBZipFile implements Closeable {
 
   public void gc() throws IOException {
     if (myOutputStream != null) {
-      myOutputStream.finish();
       myOutputStream = null;
+
+      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<JBZipEntry, byte[]>();
+      for (JBZipEntry entry : entries) {
+        existingEntries.put(entry, entry.getData());
+      }
+
       currentCfdOffset = 0;
+      nameMap.clear();
+      entries.clear();
+      for (Map.Entry<JBZipEntry, byte[]> entry : existingEntries.entrySet()) {
+        JBZipEntry zipEntry = getOrCreateEntry(entry.getKey().getName());
+        zipEntry.setComment(entry.getKey().getComment());
+        zipEntry.setExtra(entry.getKey().getExtra());
+        zipEntry.setMethod(entry.getKey().getMethod());
+        zipEntry.setTime(entry.getKey().getTime());
+        zipEntry.setData(entry.getValue());
+      }
     }
-    getOutputStream().finish();
   }
 
   JBZipOutputStream getOutputStream() throws IOException {

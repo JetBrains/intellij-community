@@ -41,6 +41,7 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -148,8 +149,10 @@ public class TestPackage extends TestObject {
     return false;
   }
 
+  @NotNull
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
-    return getPackage(data).getQualifiedName();
+    PsiPackage aPackage = getPackage(data);
+    return aPackage != null ? aPackage.getQualifiedName() : "";
   }
 
   protected void collectClassesRecursively(TestClassFilter classFilter,

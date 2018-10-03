@@ -28,7 +28,7 @@ import java.util.Set;
 
 public abstract class AbstractJavaMemberCallerChooser<M extends PsiMember> extends CallerChooserBase<M> {
 
-  public AbstractJavaMemberCallerChooser(M member, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, Consumer<Set<M>> callback) {
+  public AbstractJavaMemberCallerChooser(M member, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, Consumer<? super Set<M>> callback) {
     super(member, project, title, previousTree, "dummy." + StdFileTypes.JAVA.getDefaultExtension(), callback);
   }
 

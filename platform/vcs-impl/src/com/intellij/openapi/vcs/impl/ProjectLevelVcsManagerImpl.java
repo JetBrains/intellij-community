@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -68,6 +69,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
@@ -267,6 +270,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return null;
     }
     return AllVcses.getInstance(myProject).getByName(vcsName);
+  }
+
+  /**
+   * Common {@link #getVcsFor(VirtualFile)} method uses {@link DefaultVcsRootPolicy#getMatchContext(VirtualFile)} if default mapping is
+   * present. Some implementations, like {@link ModuleDefaultVcsRootPolicy}, rely on indices state, which could be critical for some code
+   * flows. For instance, when processing {@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)} events. In such
+   * cases, we could explicitly specify context (i.e. {@link Module}) to get correct result.
+   */
+  AbstractVcs<?> getVcsFor(@NotNull VirtualFile file, @Nullable Object matchContext) {
+    VcsDirectoryMapping mapping = myMappings.getMappingFor(file, matchContext);
+    String vcsName = mapping != null ? nullize(mapping.getVcs()) : null;
+
+    return vcsName != null ? AllVcses.getInstance(myProject).getByName(vcsName) : null;
   }
 
   @Override

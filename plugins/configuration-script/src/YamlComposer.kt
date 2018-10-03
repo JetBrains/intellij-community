@@ -22,15 +22,14 @@ internal class LightweightComposer(private val parser: Parser) {
   // Drop the DOCUMENT-START event.
   // Compose the root node.
   // Drop the DOCUMENT-END event.
-  val node: Node
-    get() {
-      parser.event
-      val node = composeNode(null)
-      parser.event
-      anchors.clear()
-      recursiveNodes.clear()
-      return node
-    }
+  private fun readNode(): Node {
+    parser.event
+    val node = composeNode(null)
+    parser.event
+    anchors.clear()
+    recursiveNodes.clear()
+    return node
+  }
 
   /**
    * Reads a document from a source that contains only one document.
@@ -50,7 +49,7 @@ internal class LightweightComposer(private val parser: Parser) {
     parser.event
     var document: Node? = null
     if (!parser.checkEvent(Event.ID.StreamEnd)) {
-      document = node
+      document = readNode()
     }
     if (!parser.checkEvent(Event.ID.StreamEnd)) {
       val event = parser.event

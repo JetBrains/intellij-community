@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
@@ -359,6 +360,26 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
 
         return LocalQuickFix.EMPTY_ARRAY;
       });
+    }
+
+    @Override
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
+      if (PsiUtil.isLanguageLevel8OrHigher(expression) && PsiPolyExpressionUtil.isPolyExpression(expression)) {
+        PsiType targetType = expression.getType();
+        if (targetType == null) return;
+        processConditionalPart(targetType, expression.getThenExpression());
+        processConditionalPart(targetType, expression.getElseExpression());
+      }
+    }
+
+    private void processConditionalPart(PsiType targetType, PsiExpression thenExpression) {
+      if (thenExpression != null) {
+        PsiType thenType = thenExpression.getType();
+        if (thenType != null) {
+          checkRawToGenericsAssignment(thenExpression, thenExpression, targetType, thenType, () -> myOnTheFly ? myGenerifyFixes : LocalQuickFix.EMPTY_ARRAY);
+        }
+      }
     }
 
     @Override

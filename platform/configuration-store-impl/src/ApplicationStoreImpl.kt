@@ -4,8 +4,8 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -43,7 +43,7 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? =
     if (component is NamedJDOMExternalizable) "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}" else DEFAULT_STORAGE_SPEC
 
-  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? =
+  override fun getMacroSubstitutor(fileSpec: String): PathMacroSubstitutor? =
     if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean

@@ -170,8 +170,8 @@ public class FileNestingBuilder {
   }
 
   private static <T> void updateInfoIfEdgeComplete(@NotNull final MultiMap<T, T> parentToChildren,
-                                                   @NotNull final Set<T> allChildNodes,
-                                                   @NotNull final Edge<T> edge) {
+                                                   @NotNull final Set<? super T> allChildNodes,
+                                                   @NotNull final Edge<? extends T> edge) {
     if (edge.from != null && edge.to != null) { // if edge complete
       allChildNodes.add(edge.to);
       parentToChildren.remove(edge.to); // nodes that appear as a child shouldn't be a parent of another edge, corresponding edges removed

@@ -1,13 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +31,10 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     List<AnAction> actions = getActions(e.getDataContext());
     if (actions == null) return;
 
+    String title = getTemplatePresentation().getText();
     DefaultActionGroup group = new DefaultActionGroup(actions);
     ListPopup popup = JBPopupFactory.getInstance().
-      createActionGroupPopup("Annotation Operations", group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);
+      createActionGroupPopup(title, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);
     popup.showInBestPositionFor(e.getDataContext());
   }
 
@@ -42,6 +48,13 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
 
     int line = editor.getCaretModel().getLogicalPosition().line;
     List<AnAction> actions = presentation.getActions(line);
+
+    FileAnnotation fileAnnotation = AnnotateToggleAction.getFileAnnotation(editor);
+    if (fileAnnotation != null) {
+      int annotationLine = presentation.getAnnotationLine(line);
+      actions = ContainerUtil.prepend(actions, new ShowAffectedFilesAction(fileAnnotation, annotationLine));
+    }
+
     return ContainerUtil.nullize(actions);
   }
 
@@ -58,6 +71,39 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
 
       List<AnAction> actions = getActions(e.getDataContext());
       return actions != null ? actions.toArray(AnAction.EMPTY_ARRAY) : AnAction.EMPTY_ARRAY;
+    }
+  }
+
+  private static class ShowAffectedFilesAction extends DumbAwareAction {
+    private final FileAnnotation myFileAnnotation;
+    private final int myLine;
+
+    private final FileAnnotation.RevisionChangesProvider myChangesProvider;
+    private final VcsRevisionNumber myRevisionNumber;
+    private final VirtualFile myFile;
+
+    private ShowAffectedFilesAction(@NotNull FileAnnotation fileAnnotation, int line) {
+      super("Show Affected Files", null, AllIcons.Actions.ListChanges);
+      myFileAnnotation = fileAnnotation;
+      myLine = line;
+
+      myChangesProvider = fileAnnotation.getRevisionsChangesProvider();
+      myRevisionNumber = fileAnnotation.getLineRevisionNumber(myLine);
+      myFile = fileAnnotation.getFile();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean visible = myChangesProvider != null && myFile != null;
+      e.getPresentation().setVisible(visible);
+      e.getPresentation().setEnabled(visible && myRevisionNumber != null);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, myFile, () -> {
+        return myChangesProvider.getChangesIn(myLine);
+      });
     }
   }
 }

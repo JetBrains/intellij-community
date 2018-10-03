@@ -68,6 +68,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
@@ -86,6 +87,7 @@ import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
+  private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
 
   private Consumer<VcsException> myCustomHandler = null;
 
@@ -575,21 +577,40 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
+    loadAndShowCommittedChangesDetails(project, revision, virtualFile, () -> {
+      return getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
+    });
+  }
+
+  public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
+                                                        @NotNull VcsRevisionNumber revision,
+                                                        @NotNull VirtualFile virtualFile,
+                                                        @NotNull CommittedChangeListProvider changelistProvider) {
     final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
                                                                            revision, virtualFile.getPath());
 
-    if (lock.isLocked()) return;
+    if (lock.isLocked()) {
+      for (Window window : Window.getWindows()) {
+        Object windowLock = UIUtil.getWindowClientProperty(window, CHANGES_DETAILS_WINDOW_KEY);
+        if (windowLock != null && lock.equals(windowLock)) {
+          UIUtil.toFront(window);
+          break;
+        }
+      }
+      return;
+    }
     lock.lock();
 
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject);
+    ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
     dlg.setTitle(title);
 
+    UIUtil.putWindowClientProperty(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
     Disposer.register(dlg.getDisposable(), () -> lock.unlock());
 
     dlg.loadChangesInBackground(() -> {
       try {
-        Pair<CommittedChangeList, FilePath> pair = getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
+        Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
         if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(virtualFile, revision));
 
         CommittedChangeList changeList = pair.getFirst();
@@ -739,5 +760,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @TestOnly
   public static void setCustomExceptionHandler(Project project, Consumer<VcsException> customHandler) {
     ((AbstractVcsHelperImpl)getInstance(project)).myCustomHandler = customHandler;
+  }
+
+  public interface CommittedChangeListProvider {
+    @Nullable
+    Pair<? extends CommittedChangeList, FilePath> loadChangelist() throws VcsException;
   }
 }

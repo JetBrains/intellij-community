@@ -88,7 +88,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
       File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
         //prepare folder with jre x86 for win archive
@@ -106,7 +106,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
-    if (arch != null && customizer.buildZipWithBundledOracleJre) {
+    if (arch != null && customizer.buildZipWithBundledOracleJre &&
+        (arch != JvmArchitecture.x32 || buildContext.bundledJreManager.is32bitArchSupported())) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
         buildWinZip([oracleJrePath], "-oracle-win", winDistPath)
@@ -230,6 +231,7 @@ IDS_VM_OPTIONS=$vmOptions
   }
 
   private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+    zipNameSuffix += buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
@@ -253,6 +255,6 @@ IDS_VM_OPTIONS=$vmOptions
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
     def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
+      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

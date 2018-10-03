@@ -241,7 +241,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return panel;
   }
 
-  public static enum ShareTarget {
+  public enum ShareTarget {
     useSelected,
     useProjectName,
     trunkUnderProjectName

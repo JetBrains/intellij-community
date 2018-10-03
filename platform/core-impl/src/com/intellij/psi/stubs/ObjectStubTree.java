@@ -60,7 +60,7 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   @NotNull
-  Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
+  public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
     StubIndexSink sink = new StubIndexSink();
     final List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {

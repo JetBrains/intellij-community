@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public interface ExtensionPoint<T> {
   @NotNull
@@ -25,6 +26,9 @@ public interface ExtensionPoint<T> {
 
   @NotNull
   List<T> getExtensionList();
+
+  @NotNull
+  Stream<T> extensions();
 
   boolean hasAnyExtensions();
 

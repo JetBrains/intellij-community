@@ -26,12 +26,38 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
   protected abstract val disposables: Set<Disposable>
   protected abstract val dispatcher: CoroutineDispatcher
 
+  /**
+   * An expirable job serves as a proxy between the set of disposables and each individual coroutine job
+   * that must be cancelled once any of the disposables is expired.
+   * The expirable job does not have children or a parent. Unlike the regular parent-children job relation,
+   * having coroutine jobs attached to the expirable job doesn't imply waiting of any kind, neither does
+   * coroutine cancellation affect the expirable job state.
+   *
+   * Introducing the expirable job primarily has performance considerations
+   * (single lock-free Job.invokeOnCompletion vs. multiple synchronized Disposer.register calls per each launched coroutine)
+   * and simplicity (using homogeneous Job API to setup coroutine cancellation).
+   */
   private val myExpirableJob = Job()  // initialized once in createExpirableJobContinuationInterceptor()
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
     val exceptionHandler = CoroutineExceptionHandler(::handleUncaughtException)
     val delegateDispatcherChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }
     val coroutineName = CoroutineName("${javaClass.simpleName}(${delegateDispatcherChain.asIterable().reversed().joinToString("::")})")
     exceptionHandler + coroutineName + createExpirableJobContinuationInterceptor()
+  }
+
+  private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
+    val expirableJob = myExpirableJob
+    val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
+
+    return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+      /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
+      override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+        expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
+        return wrappedDispatcher.interceptContinuation(continuation)
+      }
+    }.also { interceptor ->
+      initializeExpirableJob(expirableJob, disposables, interceptor)
+    }
   }
 
   override fun coroutineDispatchingContext(): CoroutineContext = myCoroutineDispatchingContext
@@ -51,48 +77,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     val disposables = disposables + parentDisposable
     @Suppress("UNCHECKED_CAST")
     return if (disposables == this.disposables) this as E else cloneWith(disposables, dispatcher)
-  }
-
-  private fun createExpirableJobContinuationInterceptor(): ContinuationInterceptor {
-    val expirableJob = myExpirableJob
-    val wrappedDispatcher = RescheduleAttemptLimitAwareDispatcher(dispatcher)
-
-    return object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
-      /** Invoked once on each newly launched coroutine when dispatching it for the first time. */
-      override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
-        expirableJob.cancelJobOnCompletion(continuation.context[Job]!!)
-        return wrappedDispatcher.interceptContinuation(continuation)
-      }
-    }.also { interceptor ->
-      initializeExpirableJob(expirableJob, disposables, interceptor)
-    }
-  }
-
-  /**
-   * The expirable job serves as a proxy between the set of disposables and each individual coroutine job
-   * that must be cancelled once any of the disposables is expired.
-   * The expirable job does not have children or a parent. Unlike the regular parent-children job relation,
-   * having coroutine jobs attached to the expirable job doesn't imply waiting of any kind, neither does
-   * coroutine cancellation affect the expirable job state.
-   *
-   * Introducing the expirable job has performance considerations (single lock-free Job.invokeOnCompletion vs.
-   * multiple synchronized Disposer.register calls per each launched coroutine).
-   */
-  private fun initializeExpirableJob(job: Job, disposables: Set<Disposable>, referent: Any) {
-    if (disposables.isNotEmpty() && job.isActive) {
-      // Technically, this creates a leak through the Disposer tree...
-      disposables.forEach { disposable ->
-        disposable.cancelJobOnDisposal(job)
-      }
-      // ... which is mitigated by creating a PhantomReference to the interceptor instance,
-      // which unregisters the job from the tree once the corresponding instance is GC'ed.
-      val reference = RunnableReference(referent) {
-        job.cancel()  // unregister from the Disposer tree
-      }
-      job.invokeOnCompletion { reference.clear() }  // essentially to hold a hard ref to the Reference instance
-    }
-
-    RunnableReference.reapCollectedRefs()
   }
 
   // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
@@ -356,7 +340,24 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       }
     }
 
-    internal class RunnableReference(referent: Any, private val finalizer: () -> Unit) : PhantomReference<Any>(referent, myRefQueue) {
+    internal fun initializeExpirableJob(job: Job, disposables: Collection<Disposable>, referent: Any) {
+      if (disposables.isNotEmpty() && job.isActive) {
+        // Technically, this creates a leak through the Disposer tree...
+        disposables.forEach { disposable ->
+          disposable.cancelJobOnDisposal(job)
+        }
+        // ... which is mitigated by creating a PhantomReference to the interceptor instance,
+        // which unregisters the job from the tree once the corresponding instance is GC'ed.
+        val reference = RunnableReference(referent) {
+          job.cancel()  // unregister from the Disposer tree
+        }
+        job.invokeOnCompletion { reference.clear() }  // essentially to hold a hard ref to the Reference instance
+      }
+
+      RunnableReference.reapCollectedRefs()
+    }
+
+    private class RunnableReference(referent: Any, private val finalizer: () -> Unit) : PhantomReference<Any>(referent, myRefQueue) {
       companion object {
         private val myRefQueue = ReferenceQueue<Any>()
 

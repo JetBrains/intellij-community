@@ -229,6 +229,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         if (refSuperMethod != null) {
           addSuperMethod(refSuperMethod);
           refSuperMethod.markExtended(this);
+        } else {
+          setLibraryOverride(true);
         }
       }
       else {

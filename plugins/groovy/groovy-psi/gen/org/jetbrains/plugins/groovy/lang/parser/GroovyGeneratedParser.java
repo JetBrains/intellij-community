@@ -5451,50 +5451,32 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '.' attribute_dot? | '?.' attribute_dot? | '*.'
+  // ('.' | '?.' | '*.') attribute_dot?
   static boolean reference_dot(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "reference_dot")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = reference_dot_0(b, l + 1);
-    if (!r) r = reference_dot_1(b, l + 1);
-    if (!r) r = consumeTokenFast(b, T_SPREAD_DOT);
+    r = r && reference_dot_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '.' attribute_dot?
+  // '.' | '?.' | '*.'
   private static boolean reference_dot_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "reference_dot_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenFast(b, T_DOT);
-    r = r && reference_dot_0_1(b, l + 1);
+    if (!r) r = consumeTokenFast(b, T_SAFE_DOT);
+    if (!r) r = consumeTokenFast(b, T_SPREAD_DOT);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // attribute_dot?
-  private static boolean reference_dot_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "reference_dot_0_1")) return false;
-    attribute_dot(b, l + 1);
-    return true;
-  }
-
-  // '?.' attribute_dot?
   private static boolean reference_dot_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "reference_dot_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenFast(b, T_SAFE_DOT);
-    r = r && reference_dot_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // attribute_dot?
-  private static boolean reference_dot_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "reference_dot_1_1")) return false;
     attribute_dot(b, l + 1);
     return true;
   }

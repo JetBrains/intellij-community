@@ -52,7 +52,7 @@ public class ColorSettingsUtil {
     return true;
   }
 
-  private static void addInspectionSeverityAttributes(List<AttributesDescriptor> descriptors) {
+  private static void addInspectionSeverityAttributes(List<? super AttributesDescriptor> descriptors) {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol"), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol"), CodeInsightColors.DEPRECATED_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.marked.for.removal.symbol"), CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES));

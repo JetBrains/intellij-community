@@ -184,7 +184,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
         if (!(declared instanceof PsiLocalVariable)) continue;
 
 
-        boolean contained = ReferencesSearch.search(declared, scope).forEach(ref -> ref.getElement().getTextOffset() <= endOffset);
+        boolean contained = ReferencesSearch.search(declared, scope).allMatch(ref -> ref.getElement().getTextOffset() <= endOffset);
 
         if (!contained) {
           PsiLocalVariable var = (PsiLocalVariable)declared;

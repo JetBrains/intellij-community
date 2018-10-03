@@ -92,7 +92,7 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     return files.size() > 1;
   }
 
-  public static String createMessage(@NotNull final Collection<VirtualFile> schemaFiles,
+  public static String createMessage(@NotNull final Collection<? extends VirtualFile> schemaFiles,
                                      @NotNull JsonSchemaService jsonSchemaService,
                                      @NotNull String separator,
                                      @NotNull String prefix,

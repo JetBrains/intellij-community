@@ -186,7 +186,7 @@ public class IncrementalSearchHandler {
     data.hint = hint;
     editor.putUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY, data);
 
-    if (hintData.label.getText().length() > 0) {
+    if (!hintData.label.getText().isEmpty()) {
       updatePosition(editor, hintData, true, false);
     }
   }
@@ -195,8 +195,8 @@ public class IncrementalSearchHandler {
     final int len = pattern.length();
 
     for(int i=0;i<len;++i) {
-      switch(pattern.charAt(i)) {
-        case '*': return true;
+      if (pattern.charAt(i) == '*') {
+        return true;
       }
     }
 
@@ -388,7 +388,7 @@ public class IncrementalSearchHandler {
         LightweightHint hint = data.hint;
         PerHintSearchData hintData = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         String text = hintData.label.getText();
-        if (text.length() > 0){
+        if (!text.isEmpty()){
           text = text.substring(0, text.length() - 1);
         }
         hintData.label.setText(text);

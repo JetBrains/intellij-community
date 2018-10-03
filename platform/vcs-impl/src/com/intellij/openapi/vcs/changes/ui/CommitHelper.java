@@ -167,7 +167,7 @@ public class CommitHelper {
     }
   }
 
-  static boolean hasOnlyWarnings(@NotNull List<VcsException> exceptions) {
+  static boolean hasOnlyWarnings(@NotNull List<? extends VcsException> exceptions) {
     return exceptions.stream().allMatch(VcsException::isWarning);
   }
 
@@ -357,9 +357,13 @@ public class CommitHelper {
     private void updateChangelistAfterRefresh() {
       if (!(myChangeList instanceof LocalChangeList)) return;
 
-      ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-      LocalChangeList localList = clManager.findChangeList(myChangeList.getName());
+      ChangeListManagerEx clManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+      String listName = myChangeList.getName();
+
+      LocalChangeList localList = clManager.findChangeList(listName);
       if (localList == null) return;
+
+      clManager.editChangeListData(listName, null);
 
       if (!localList.isDefault()) {
         clManager.scheduleAutomaticEmptyChangeListDeletion(localList);
@@ -442,7 +446,7 @@ public class CommitHelper {
   @CalledInAwt
   public static void moveToFailedList(@NotNull ChangeList changeList,
                                       @NotNull String commitMessage,
-                                      @NotNull List<Change> failedChanges,
+                                      @NotNull List<? extends Change> failedChanges,
                                       @NotNull String newChangelistName,
                                       @NotNull Project project) {
     // No need to move since we'll get exactly the same changelist.
@@ -485,7 +489,7 @@ public class CommitHelper {
   }
 
   @NotNull
-  static List<VcsException> collectErrors(@NotNull List<VcsException> exceptions) {
+  static List<VcsException> collectErrors(@NotNull List<? extends VcsException> exceptions) {
     return filter(exceptions, e -> !e.isWarning());
   }
 }

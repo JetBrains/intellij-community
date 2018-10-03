@@ -94,7 +94,7 @@ public class JavaFindUsagesHelper {
 
   public static boolean processElementUsages(@NotNull final PsiElement element,
                                              @NotNull final FindUsagesOptions options,
-                                             @NotNull final Processor<UsageInfo> processor) {
+                                             @NotNull final Processor<? super UsageInfo> processor) {
     if (options instanceof JavaVariableFindUsagesOptions) {
       final JavaVariableFindUsagesOptions varOptions = (JavaVariableFindUsagesOptions) options;
       if (varOptions.isReadAccess || varOptions.isWriteAccess){

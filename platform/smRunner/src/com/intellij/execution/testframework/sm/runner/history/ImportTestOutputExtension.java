@@ -29,7 +29,7 @@ public interface ImportTestOutputExtension {
   DefaultHandler createHandler(final Reader reader, GeneralTestEventsProcessor processor) throws IOException;
 
   @NotNull
-  static DefaultHandler findHandler(final Supplier<Reader> readerSupplier, GeneralTestEventsProcessor processor) {
+  static DefaultHandler findHandler(final Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) {
     for (ImportTestOutputExtension extension : EP_NAME.getExtensionList()) {
       Reader reader = readerSupplier.get();
       if (reader == null) continue;

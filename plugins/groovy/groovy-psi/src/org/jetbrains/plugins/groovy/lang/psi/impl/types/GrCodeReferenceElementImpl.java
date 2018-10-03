@@ -39,6 +39,22 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     super(node);
   }
 
+  private volatile String myCachedTextSkipWhiteSpaceAndComments;
+
+  @Override
+  public void subtreeChanged() {
+    myCachedTextSkipWhiteSpaceAndComments = null;
+    super.subtreeChanged();
+  }
+
+  private String getTextSkipWhiteSpaceAndComments() {
+    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+    if (whiteSpaceAndComments == null) {
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
+    }
+    return whiteSpaceAndComments;
+  }  
+  
   @Override
   public PsiReference getReference() {
     return this;

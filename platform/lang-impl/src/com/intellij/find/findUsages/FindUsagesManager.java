@@ -385,7 +385,7 @@ public class FindUsagesManager {
   }
 
   @NotNull
-  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<PsiElement> elementsToSearch,
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<? extends PsiElement> elementsToSearch,
                                                                        @NotNull final FindUsagesOptions findUsagesOptions) {
     final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
                                                                           element -> convertToUsageTarget(element, findUsagesOptions));

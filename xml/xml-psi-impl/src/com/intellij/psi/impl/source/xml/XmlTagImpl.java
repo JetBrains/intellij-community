@@ -73,10 +73,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
         tag.fillSubTags(result);
 
-        final int s = result.size();
-        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
-        return Result
-          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
+        XmlTag[] tags = result.toArray(EMPTY);
+        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
       }
     };
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
@@ -199,7 +197,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       Collections.addAll(refs, ReferenceProvidersRegistry.getReferencesFromProviders(this, hints));
     }
 
-    return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
+    return refs.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   private static boolean childContainsOffset(PsiElement child, int offsetInTag) {
@@ -629,12 +627,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         return true;
       }
     });
-    if (result.isEmpty()) {
-      return XmlAttribute.EMPTY_ARRAY;
-    }
-    else {
-      return ContainerUtil.toArray(result, new XmlAttribute[result.size()]);
-    }
+    return result.toArray(XmlAttribute.EMPTY_ARRAY);
   }
 
   protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
@@ -727,7 +720,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         result.add(subTag);
       }
     }
-    return ContainerUtil.toArray(result, new XmlTag[result.size()]);
+    return result.toArray(XmlTag.EMPTY);
   }
 
   @Override

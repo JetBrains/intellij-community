@@ -2,16 +2,19 @@
 package org.jetbrains.plugins.github.api
 
 import com.google.gson.JsonParseException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
@@ -21,22 +24,45 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
+import java.util.*
 import java.util.function.Supplier
 
 /**
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
  */
 sealed class GithubApiRequestExecutor {
+
+  protected val authDataChangedEventDispatcher = EventDispatcher.create(AuthDataChangeListener::class.java)
+
+  @CalledInBackground
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
   @TestOnly
+  @CalledInBackground
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
+  fun addListener(listener: AuthDataChangeListener, disposable: Disposable) =
+    authDataChangedEventDispatcher.addListener(listener, disposable)
+
+  fun addListener(disposable: Disposable, listener: () -> Unit) =
+    authDataChangedEventDispatcher.addListener(object : AuthDataChangeListener {
+      override fun authDataChanged() {
+        listener()
+      }
+    }, disposable)
+
   class WithTokenAuth internal constructor(githubSettings: GithubSettings,
-                                           private val token: String,
+                                           token: String,
                                            private val useProxy: Boolean) : Base(githubSettings) {
+    @Volatile
+    internal var token: String = token
+      set(value) {
+        field = value
+        authDataChangedEventDispatcher.multicaster.authDataChanged()
+      }
+
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
       indicator.checkCanceled()
@@ -116,6 +142,7 @@ sealed class GithubApiRequestExecutor {
       return when (request) {
         is GithubApiRequest.Get -> HttpRequests.request(request.url)
         is GithubApiRequest.Post -> HttpRequests.post(request.url, request.bodyMimeType)
+        is GithubApiRequest.Put -> HttpRequests.put(request.url, request.bodyMimeType)
         is GithubApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GithubApiRequest.Head -> HttpRequests.head(request.url)
         is GithubApiRequest.Delete -> HttpRequests.delete(request.url)
@@ -216,5 +243,9 @@ sealed class GithubApiRequestExecutor {
     private val LOG = logger<GithubApiRequestExecutor>()
 
     private const val OTP_HEADER_NAME = "X-GitHub-OTP"
+  }
+
+  interface AuthDataChangeListener : EventListener {
+    fun authDataChanged()
   }
 }

@@ -36,7 +36,7 @@ public class ModuleFilesBuildTaskImpl extends ModuleBuildTaskImpl implements Mod
     myFiles = files;
   }
 
-  public ModuleFilesBuildTaskImpl(Module module, boolean isIncrementalBuild, Collection<VirtualFile> files) {
+  public ModuleFilesBuildTaskImpl(Module module, boolean isIncrementalBuild, Collection<? extends VirtualFile> files) {
     this(module, isIncrementalBuild, ArrayUtil.toObjectArray(files, VirtualFile.class));
   }
 

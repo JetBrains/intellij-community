@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.lang.properties.IProperty;
@@ -86,7 +86,6 @@ public class GriffonDefaultImportContributor implements GrImportContributor {
         VirtualFile vFile = file.getOriginalFile().getVirtualFile();
 
         assert vFile != null;
-        assert module != null;
         if (models != null && VfsUtilCore.isAncestor(models, vFile, true)) {
           result.addAll(getDefaultImports(module).first);
         }

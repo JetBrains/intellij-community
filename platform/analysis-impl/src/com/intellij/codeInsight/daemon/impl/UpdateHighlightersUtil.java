@@ -107,7 +107,7 @@ public class UpdateHighlightersUtil {
                                              @NotNull Document document,
                                              int startOffset,
                                              int endOffset,
-                                             @NotNull Collection<HighlightInfo> highlights,
+                                             @NotNull Collection<? extends HighlightInfo> highlights,
                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              int group) {
     TextRange range = new TextRange(startOffset, endOffset);

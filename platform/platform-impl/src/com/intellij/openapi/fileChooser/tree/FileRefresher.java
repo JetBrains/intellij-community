@@ -43,7 +43,7 @@ public class FileRefresher implements Disposable {
   private final ScheduledExecutorService executor = EdtExecutorService.getScheduledExecutorInstance();
   private final boolean recursive;
   private final long delay;
-  private final NotNullProducer<ModalityState> producer;
+  private final NotNullProducer<? extends ModalityState> producer;
   private final ArrayList<Object> watchers = new ArrayList<>();
   private final ArrayList<VirtualFile> files = new ArrayList<>();
   private final AtomicBoolean scheduled = new AtomicBoolean();
@@ -58,7 +58,7 @@ public class FileRefresher implements Disposable {
    * @param producer  a provider for modality state that can be invoked on background thread
    * @throws IllegalArgumentException if the specified delay is not positive
    */
-  public FileRefresher(boolean recursive, long delay, @NotNull NotNullProducer<ModalityState> producer) {
+  public FileRefresher(boolean recursive, long delay, @NotNull NotNullProducer<? extends ModalityState> producer) {
     if (delay <= 0) throw new IllegalArgumentException("delay");
     this.recursive = recursive;
     this.delay = delay;

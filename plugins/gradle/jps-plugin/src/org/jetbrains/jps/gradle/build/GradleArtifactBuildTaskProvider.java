@@ -45,12 +45,10 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
   @Nullable
   private static JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
-    switch (buildPhase) {
-      case PRE_PROCESSING:
-        return JpsGradleExtensionService.getArtifactExtension(artifact);
-      default:
-        return null;
+    if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING) {
+      return JpsGradleExtensionService.getArtifactExtension(artifact);
     }
+    return null;
   }
 
   private abstract static class GradleGenerationBuildTask extends BuildTask {

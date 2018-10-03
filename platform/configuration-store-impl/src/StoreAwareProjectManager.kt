@@ -18,6 +18,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
@@ -107,7 +108,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
           return
         }
 
-        if (event.requestor is StateStorage.SaveSession || event.requestor is StateStorage || event.requestor is ProjectManagerImpl) {
+        if (event.requestor is StateStorage.SaveSession || event.requestor is StateStorage || event.requestor is ProjectManagerEx) {
           return
         }
 

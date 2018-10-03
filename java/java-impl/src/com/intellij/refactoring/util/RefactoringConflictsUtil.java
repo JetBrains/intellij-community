@@ -36,19 +36,19 @@ import java.util.function.Consumer;
 public class RefactoringConflictsUtil {
   private RefactoringConflictsUtil() { }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
                                                    @NotNull PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility) {
     analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null);
   }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
                                                    @Nullable PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility,
                                                    @NotNull PsiElement context,
-                                                   @Nullable Set<PsiMethod> abstractMethods) {
+                                                   @Nullable Set<? extends PsiMethod> abstractMethods) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
@@ -124,8 +124,8 @@ public class RefactoringConflictsUtil {
 
   public static void checkUsedElements(PsiMember member,
                                      PsiElement scope,
-                                     @NotNull Set<PsiMember> membersToMove,
-                                     @Nullable Set<PsiMethod> abstractMethods,
+                                     @NotNull Set<? extends PsiMember> membersToMove,
+                                     @Nullable Set<? extends PsiMethod> abstractMethods,
                                      @Nullable PsiClass targetClass,
                                      @NotNull PsiElement context,
                                      MultiMap<PsiElement, String> conflicts) {
@@ -134,8 +134,8 @@ public class RefactoringConflictsUtil {
 
   public static void checkUsedElements(PsiMember member,
                                        PsiElement scope,
-                                       @NotNull Set<PsiMember> membersToMove,
-                                       @Nullable Set<PsiMethod> abstractMethods,
+                                       @NotNull Set<? extends PsiMember> membersToMove,
+                                       @Nullable Set<? extends PsiMethod> abstractMethods,
                                        @Nullable PsiClass targetClass,
                                        PsiClass accessClass,
                                        @NotNull PsiElement context,

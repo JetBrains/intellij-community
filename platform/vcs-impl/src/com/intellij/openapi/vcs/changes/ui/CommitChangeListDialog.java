@@ -136,7 +136,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myLastSelectedListName;
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<Change> changes,
+                                      @NotNull Collection<? extends Change> changes,
                                       @Nullable LocalChangeList initialSelection,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
@@ -144,7 +144,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<Change> changes,
+                                      @NotNull Collection<? extends Change> changes,
                                       @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialSelection,
                                       @Nullable CommitExecutor executor,
@@ -167,7 +167,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
    * @return true if user agreed to commit, false if he pressed "Cancel".
    */
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<Change> changes,
+                                      @NotNull Collection<? extends Change> changes,
                                       @Nullable LocalChangeList initialSelection,
                                       @NotNull List<CommitExecutor> executors,
                                       boolean showVcsCommit,
@@ -240,7 +240,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     List<CommitExecutor> result = newArrayList();
     for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
       result.addAll(vcs.getCommitExecutors());

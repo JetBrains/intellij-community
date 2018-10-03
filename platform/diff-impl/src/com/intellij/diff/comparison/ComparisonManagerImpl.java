@@ -336,12 +336,12 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<MergeRange> conflicts) {
+  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts) {
     return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
   }
 
   @NotNull
-  public static List<MergeWordFragment> convertIntoMergeWordFragments(@NotNull List<MergeRange> conflicts) {
+  public static List<MergeWordFragment> convertIntoMergeWordFragments(@NotNull List<? extends MergeRange> conflicts) {
     return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
   }
 
@@ -576,7 +576,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  public static BitSet collectIgnoredRanges(@NotNull List<TextRange> ignoredRanges) {
+  public static BitSet collectIgnoredRanges(@NotNull List<? extends TextRange> ignoredRanges) {
     BitSet set = new BitSet();
     for (TextRange range : ignoredRanges) {
       set.set(range.getStartOffset(), range.getEndOffset());

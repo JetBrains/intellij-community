@@ -64,78 +64,69 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         final int length = s.length();
         assert length > 0;
 
-        boolean escaped = false;
-        for (int idx = 0; idx < length; idx++) {
-            final char ch = s.charAt(idx);
-            if (!escaped) {
-                if (ch == '\\') {
-                    escaped = true;
-                } else {
-                    return ch;
-                }
-            } else {
-                switch (ch) {
-                    case 'n':
-                        return '\n';
-                    case 'r':
-                        return '\r';
-                    case 't':
-                        return '\t';
-                    case 'a':
-                        return '\u0007';
-                    case 'e':
-                        return '\u001b';
-                    case 'f':
-                        return '\f';
-                    case 'b':
-                        return '\b';
-                    case 'c':
-                        return (char)(ch ^ 64);
-                    case 'N':
-                        if (length < idx + 3 || s.charAt(idx + 1) != '{' || s.charAt(length - 1) != '}') {
-                            return -1;
-                        }
-                        final int codePoint = UnicodeCharacterNames.getCodePoint(s.substring(idx + 2, length - 1));
-                        if (codePoint == -1) {
-                            return -1;
-                        }
-                        return codePoint;
-                    case 'x':
-                      if (length <= idx + 1) return -1;
-                      if (s.charAt(idx + 1) == '{') {
-                        final char c = s.charAt(length - 1);
-                        return (c != '}') ? -1 : parseNumber(s, idx + 2, 16);
-                      }
-                      if (length == 3) {
-                          return parseNumber(s, idx + 1, 16);
-                      }
-                      return length == 4 ? parseNumber(s, idx + 1, 16) : -1;
-                    case 'u':
-                        if (length <= idx + 1) return -1;
-                        if (length > idx + 1 && s.charAt(idx + 1) == '{') {
-                            final char c = s.charAt(length - 1);
-                            return (c != '}') ? -1 : parseNumber(s, idx + 2, 16);
-                        }
-                        if (length != 6) {
-                            return ch;
-                        }
-                        return parseNumber(s, idx + 1, 16);
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                        return parseNumber(s, idx, 8);
-                    default:
-                        return ch;
-                }
-            }
+        int codePoint = s.codePointAt(0);
+        if (codePoint != '\\') {
+            return codePoint;
         }
-
-        return -1;
+        codePoint = s.codePointAt(1);
+        switch (codePoint) {
+            case 'n':
+                return '\n';
+            case 'r':
+                return '\r';
+            case 't':
+                return '\t';
+            case 'a':
+                return '\u0007';
+            case 'e':
+                return '\u001b';
+            case 'f':
+                return '\f';
+            case 'b':
+                return '\b';
+            case 'c':
+                return (char)(codePoint ^ 64);
+            case 'N':
+                if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
+                    return -1;
+                }
+                final int value = UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
+                if (value == -1) {
+                    return -1;
+                }
+                return value;
+            case 'x':
+                if (length <= 2) return -1;
+                if (s.charAt(2) == '{') {
+                    final char c = s.charAt(length - 1);
+                    return (c != '}') ? -1 : parseNumber(s, 3, 16);
+                }
+                if (length == 3) {
+                    return parseNumber(s, 2, 16);
+                }
+                return length == 4 ? parseNumber(s, 2, 16) : -1;
+            case 'u':
+                if (length <= 2) return -1;
+                if (s.charAt(2) == '{') {
+                    final char c = s.charAt(length - 1);
+                    return (c != '}') ? -1 : parseNumber(s, 3, 16);
+                }
+                if (length != 6) {
+                    return -1;
+                }
+                return parseNumber(s, 2, 16);
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+                return parseNumber(s, 1, 8);
+            default:
+                return codePoint;
+        }
     }
 
     private static int parseNumber(String s, int offset, int radix) {

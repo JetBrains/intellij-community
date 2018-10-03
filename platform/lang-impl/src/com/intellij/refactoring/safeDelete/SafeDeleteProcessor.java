@@ -148,7 +148,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return usage -> !(usage instanceof PsiFile) && isInside(usage, elements);
   }
 
-  public static void findGenericElementUsages(@NotNull PsiElement element, List<UsageInfo> usages, PsiElement[] allElementsToDelete, SearchScope scope) {
+  public static void findGenericElementUsages(@NotNull PsiElement element, List<? super UsageInfo> usages, PsiElement[] allElementsToDelete, SearchScope scope) {
     ReferencesSearch.search(element, scope).forEach(reference -> {
       final PsiElement refElement = reference.getElement();
       if (!isInside(refElement, allElementsToDelete)) {
@@ -158,7 +158,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  public static void findGenericElementUsages(final PsiElement element, final List<UsageInfo> usages, final PsiElement[] allElementsToDelete) {
+  public static void findGenericElementUsages(final PsiElement element, final List<? super UsageInfo> usages, final PsiElement[] allElementsToDelete) {
     findGenericElementUsages(element, usages, allElementsToDelete, element.getUseScope());
   }
 
@@ -426,8 +426,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
 
   public static void addNonCodeUsages(final PsiElement element,
-                                      List<UsageInfo> usages,
-                                      @Nullable final Condition<PsiElement> insideElements,
+                                      List<? super UsageInfo> usages,
+                                      @Nullable final Condition<? super PsiElement> insideElements,
                                       boolean searchNonJava,
                                       boolean searchInCommentsAndStrings) {
     UsageInfoFactory nonCodeUsageFactory = new UsageInfoFactory() {

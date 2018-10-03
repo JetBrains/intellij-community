@@ -30,7 +30,7 @@ public class IdeaTextPatchBuilder {
   }
 
   public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(@NotNull Project project,
-                                                                         @NotNull List<Change> changes) throws VcsException {
+                                                                         @NotNull List<? extends Change> changes) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
     Map<VcsRoot, List<Change>> byRoots =
       groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
@@ -77,7 +77,7 @@ public class IdeaTextPatchBuilder {
   }
 
   @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
+  public static List<FilePatch> buildPatch(final Project project, final Collection<? extends Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes));

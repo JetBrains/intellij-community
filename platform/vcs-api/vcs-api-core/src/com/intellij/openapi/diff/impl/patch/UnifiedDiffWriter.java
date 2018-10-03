@@ -31,7 +31,7 @@ public class UnifiedDiffWriter {
   private UnifiedDiffWriter() {
   }
 
-  public static void write(@Nullable Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+  public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
                            @Nullable final CommitContext commitContext) throws IOException {
     final PatchEP[] extensions = getPatchExtensions(project);
     write(project, patches, writer, lineSeparator, extensions, commitContext);
@@ -42,14 +42,14 @@ public class UnifiedDiffWriter {
     return project == null ? new PatchEP[0] : PatchEP.EP_NAME.getExtensions(project);
   }
 
-  public static void write(@Nullable Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+  public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
                            final PatchEP[] extensions, final CommitContext commitContext) throws IOException {
     write(project, project == null ? null : project.getBasePath(), patches, writer, lineSeparator, extensions, commitContext);
   }
 
   public static void write(@Nullable Project project,
                            @Nullable String basePath,
-                           Collection<FilePatch> patches,
+                           Collection<? extends FilePatch> patches,
                            Writer writer,
                            final String lineSeparator,
                            @NotNull final PatchEP[] extensions,

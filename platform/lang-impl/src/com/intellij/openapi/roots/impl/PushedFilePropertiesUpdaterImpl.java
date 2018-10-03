@@ -209,14 +209,14 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     }
   }
 
-  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher, T moduleValue) {
+  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<? extends T> pusher, T moduleValue) {
     final T value = pusher.getImmediateValue(project, dir);
     if (value != null) return value;
     if (moduleValue != null) return moduleValue;
     return findPusherValuesFromParent(project, dir, pusher);
   }
 
-  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
+  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<? extends T> pusher) {
     final T userValue = dir.getUserData(pusher.getFileDataKey());
     if (userValue != null) return userValue;
     final T value = pusher.getImmediateValue(project, dir);
@@ -224,7 +224,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     return findPusherValuesFromParent(project, dir, pusher);
   }
 
-  private static <T> T findPusherValuesFromParent(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
+  private static <T> T findPusherValuesFromParent(Project project, VirtualFile dir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = dir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) return findPusherValuesUpwards(project, parent, pusher);
     T projectValue = pusher.getImmediateValue(project, null);
@@ -263,7 +263,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     invokeConcurrentlyIfPossible(tasks);
   }
 
-  public static void invokeConcurrentlyIfPossible(final List<Runnable> tasks) {
+  public static void invokeConcurrentlyIfPossible(final List<? extends Runnable> tasks) {
     if (tasks.size() == 1 ||
         ApplicationManager.getApplication().isWriteAccessAllowed()) {
       for(Runnable r:tasks) r.run();

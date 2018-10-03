@@ -62,6 +62,7 @@ public abstract class Location<E extends PsiElement> {
   }
 
   /** @deprecated trivial; use {@link #getAncestors} and {@link com.intellij.util.containers.ContainerUtil#getFirstItem(Collection)} */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval
   public <T extends PsiElement> Location<T> getAncestorOrSelf(Class<T> ancestorClass) {
     Iterator<Location<T>> ancestors = getAncestors(ancestorClass, false);

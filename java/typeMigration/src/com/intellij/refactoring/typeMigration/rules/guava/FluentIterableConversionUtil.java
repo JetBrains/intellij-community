@@ -212,7 +212,7 @@ public class FluentIterableConversionUtil {
     }
 
     private static boolean determineType(PsiExpression retValue,
-                                         List<Pair<PsiExpression, Boolean>> iterableReturnValues,
+                                         List<? super Pair<PsiExpression, Boolean>> iterableReturnValues,
                                          PsiClass iterable,
                                          PsiClass collection) {
       if (retValue == null) return false;

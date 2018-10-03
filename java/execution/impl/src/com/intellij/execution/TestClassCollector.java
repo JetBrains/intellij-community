@@ -49,7 +49,7 @@ public class TestClassCollector {
   public static String[] collectClassFQNames(String packageName,
                                              @Nullable Path rootPath,
                                              JavaTestConfigurationBase configuration,
-                                             Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
+                                             Function<? super ClassLoader, ? extends Predicate<Class<?>>> predicateProducer) {
     Module module = configuration.getConfigurationModule().getModule();
     ClassLoader classLoader = createUsersClassLoader(configuration);
     Set<String> classes = new HashSet<>();

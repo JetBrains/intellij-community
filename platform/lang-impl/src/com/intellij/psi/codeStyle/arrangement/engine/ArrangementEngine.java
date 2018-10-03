@@ -238,8 +238,8 @@ public class ArrangementEngine {
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
-  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<ArrangementSectionRule> sectionRules,
+  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
+                                                             @NotNull List<? extends ArrangementSectionRule> sectionRules,
                                                              @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                                                              @Nullable Map<E, ArrangementSectionRule> entryToSection)
   {

@@ -52,7 +52,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   }
 
   @NotNull
-  private static TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<IndexPatternOccurrence> occurrences) {
+  private static TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<? extends IndexPatternOccurrence> occurrences) {
     List<TodoItem> items = new ArrayList<>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();

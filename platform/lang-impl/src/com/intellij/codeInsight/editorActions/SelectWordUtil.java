@@ -46,18 +46,18 @@ public class SelectWordUtil {
 
   public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = ch -> Character.isJavaIdentifierPart(ch);
 
-  public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
+  public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<? super TextRange> ranges) {
     addWordSelection(camel, editorText, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
   }
 
-  public static void addWordOrLexemeSelection(boolean camel, @NotNull Editor editor, int cursorOffset, @NotNull List<TextRange> ranges) {
+  public static void addWordOrLexemeSelection(boolean camel, @NotNull Editor editor, int cursorOffset, @NotNull List<? super TextRange> ranges) {
     addWordOrLexemeSelection(camel, editor, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
   }
 
   public static void addWordSelection(boolean camel,
                                       CharSequence editorText,
                                       int cursorOffset,
-                                      @NotNull List<TextRange> ranges,
+                                      @NotNull List<? super TextRange> ranges,
                                       CharCondition isWordPartCondition) {
     TextRange camelRange = camel ? getCamelSelectionRange(editorText, cursorOffset, isWordPartCondition) : null;
     if (camelRange != null) {
@@ -73,7 +73,7 @@ public class SelectWordUtil {
   public static void addWordOrLexemeSelection(boolean camel,
                                               @NotNull Editor editor,
                                               int cursorOffset,
-                                              @NotNull List<TextRange> ranges,
+                                              @NotNull List<? super TextRange> ranges,
                                               CharCondition isWordPartCondition) {
     TextRange camelRange = camel ? getCamelSelectionRange(editor.getDocument().getImmutableCharSequence(),
                                                           cursorOffset, isWordPartCondition) : null;
@@ -266,7 +266,7 @@ public class SelectWordUtil {
                                                     TextRange literalTextRange,
                                                     int cursorOffset,
                                                     Lexer lexer,
-                                                    List<TextRange> result) {
+                                                    List<? super TextRange> result) {
     lexer.start(editorText, literalTextRange.getStartOffset(), literalTextRange.getEndOffset());
 
     while (lexer.getTokenType() != null) {

@@ -120,7 +120,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             dlg.show();
             if (dlg.getExitCode() == OK_EXIT_CODE) {
               String className = dlg.getClassName();
-              if (className.length() == 0) return;
+              if (className.isEmpty()) return;
               final Class aClass;
               try {
                 aClass = Class.forName(className, true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
@@ -192,23 +192,18 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     return mySplitter;
   }
 
+  private static int getInheritanceLevel(Class aClass) {
+    int level = 0;
+    while (aClass.getSuperclass() != null) {
+      level++;
+      aClass = aClass.getSuperclass();
+    }
+    return level;
+  }
+
   private void fillClassTree() {
     List<Class> configuredClasses = myManager.getConfiguredClasses(myProject);
-    Collections.sort(configuredClasses, new Comparator<Class>() {
-      @Override
-      public int compare(final Class o1, final Class o2) {
-        return getInheritanceLevel(o1) - getInheritanceLevel(o2);
-      }
-
-      private int getInheritanceLevel(Class aClass) {
-        int level = 0;
-        while (aClass.getSuperclass() != null) {
-          level++;
-          aClass = aClass.getSuperclass();
-        }
-        return level;
-      }
-    });
+    Collections.sort(configuredClasses, Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -254,22 +249,18 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case 0:
-          return mySelectedProperties.get(rowIndex).getName();
-        default:
-          return mySelectedProperties.get(rowIndex).getValueClass();
+      if (columnIndex == 0) {
+        return mySelectedProperties.get(rowIndex).getName();
       }
+      return mySelectedProperties.get(rowIndex).getValueClass();
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case 0:
-          return UIDesignerBundle.message("client.properties.name");
-        default:
-          return UIDesignerBundle.message("client.properties.class");
+      if (column == 0) {
+        return UIDesignerBundle.message("client.properties.name");
       }
+      return UIDesignerBundle.message("client.properties.class");
     }
   }
 }

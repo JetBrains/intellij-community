@@ -9,6 +9,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -42,10 +43,17 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   public void update(@NotNull final AnActionEvent event) {
     if (TypeDeclarationProvider.EP_NAME.getExtensionList().size() == 0) {
       event.getPresentation().setVisible(false);
+      return;
     }
-    else {
-      super.update(event);
+    for (TypeDeclarationProvider provider : TypeDeclarationProvider.EP_NAME.getExtensionList()) {
+      String text = provider.getActionText(event.getDataContext());
+      if (text != null) {
+        Presentation presentation = event.getPresentation();
+        presentation.setText(text);
+        break;
+      }
     }
+    super.update(event);
   }
 
   @Override

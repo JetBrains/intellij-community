@@ -58,7 +58,7 @@ public class NavigationGutterIconBuilder<T> {
     ContainerUtil::createMaybeSingletonList;
 
   private final Icon myIcon;
-  private final NotNullFunction<T, Collection<? extends PsiElement>> myConverter;
+  private final NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> myConverter;
 
   protected NotNullLazyValue<Collection<T>> myTargets;
   private boolean myLazy;
@@ -69,7 +69,7 @@ public class NavigationGutterIconBuilder<T> {
   private GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer> myCellRenderer;
   private NullableFunction<T, String> myNamer = ElementPresentationManager.namer();
-  private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
+  private final NotNullFunction<? super T, ? extends Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
   public static final NotNullFunction<DomElement, Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
     o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
   public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
@@ -81,13 +81,13 @@ public class NavigationGutterIconBuilder<T> {
   protected static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
     dom -> Collections.singletonList(new GotoRelatedItem(dom, "XML"));
 
-  protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
+  protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     this(icon, converter, null);
   }
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon,
-                                        @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
-                                        @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+                                        @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter,
+                                        @Nullable final NotNullFunction<? super T, ? extends Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     myIcon = icon;
     myConverter = converter;
     myGotoRelatedItemProvider = gotoRelatedItemProvider;
@@ -100,14 +100,14 @@ public class NavigationGutterIconBuilder<T> {
 
   @NotNull
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
-                                                          @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
+                                                          @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     return create(icon, converter, null);
   }
 
   @NotNull
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
-                                                          @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
-                                                          @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+                                                          @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter,
+                                                          @Nullable final NotNullFunction<? super T, ? extends Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     return new NavigationGutterIconBuilder<>(icon, converter, gotoRelatedItemProvider);
   }
 
@@ -204,7 +204,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   private static <T> NotNullLazyValue<Collection<? extends GotoRelatedItem>> createGotoTargetsThunk(boolean lazy,
-                                                                                                    final NotNullFunction<? super T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider,
+                                                                                                    final NotNullFunction<? super T, ? extends Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider,
                                                                                                     final Factory<? extends Collection<T>> factory) {
     if (gotoRelatedItemProvider == null) {
       return NotNullLazyValue.createConstantValue(Collections.emptyList());

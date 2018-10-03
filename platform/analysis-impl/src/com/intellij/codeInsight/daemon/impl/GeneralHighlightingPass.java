@@ -47,6 +47,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -376,8 +377,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (!myRestrictRange.contains(info)) continue;
         List<? super HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile)
                                      ? insideResult : outsideResult;
-        // have to filter out already obtained highlights
-        if (!result.add(info)) continue;
+        result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
           if (!forceHighlightParents) {
@@ -424,12 +424,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final int POST_UPDATE_ALL = 5;
 
+  private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
+
+  @TestOnly
+  static boolean isRestartPending() {
+    return RESTART_REQUESTS.get() > 0;
+  }
+
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
+    RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
     Application application = ApplicationManager.getApplication();
     int delay = application.isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      RESTART_REQUESTS.decrementAndGet();
       if (!project.isDisposed()) {
         DaemonCodeAnalyzer.getInstance(project).restart();
       }
