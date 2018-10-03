@@ -8,6 +8,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CommandMerger;
+import com.intellij.openapi.command.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -200,6 +202,21 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return createPlaceInfo(selectedEditorWithProvider.getFileEditor(), selectedEditorWithProvider.getProvider());
   }
 
+  @Nullable
+  private static PlaceInfo getPlaceInfoFromFocus() {
+    FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+    if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
+      VirtualFile file = fileEditor.getFile();
+      if (file != null) {
+        return new PlaceInfo(file,
+                             fileEditor.getState(FileEditorStateLevel.NAVIGATION),
+                             TextEditorProvider.getInstance().getEditorTypeId(),
+                             null);
+      }
+    }
+    return null;
+  }
+
   final void onCommandFinished(Object commandGroupId) {
     if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) myRegisteredBackPlaceInLastGroup = false;
     myLastGroupId = commandGroupId;
@@ -237,24 +254,34 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private void setCurrentChangePlace() {
-    final PlaceInfo placeInfo = getCurrentPlaceInfo();
+    boolean fromFocus = false;
+    PlaceInfo placeInfo = getCurrentPlaceInfo();
+    if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
+      placeInfo = null;
+    }
+    if (placeInfo == null) {
+      placeInfo = getPlaceInfoFromFocus();
+      fromFocus = true;
+    }
+    if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
+      placeInfo = null;
+    }
     if (placeInfo == null) {
       return;
     }
 
-    final VirtualFile file = placeInfo.getFile();
-    if (myChangedFilesInCurrentCommand.contains(file)) {
-      myRecentlyChangedFiles.register(file);
+    myRecentlyChangedFiles.register(placeInfo.getFile());
 
-      myCurrentChangePlace = placeInfo;
-      if (!myChangePlaces.isEmpty()) {
-        final PlaceInfo lastInfo = myChangePlaces.getLast();
-        if (isSame(placeInfo, lastInfo)) {
-          myChangePlaces.removeLast();
-        }
+    myCurrentChangePlace = placeInfo;
+    if (!myChangePlaces.isEmpty()) {
+      final PlaceInfo lastInfo = myChangePlaces.getLast();
+      if (isSame(placeInfo, lastInfo)) {
+        myChangePlaces.removeLast();
       }
-      myCurrentIndex = myChangePlaces.size();
     }
+    myCurrentIndex = myChangePlaces.size();
+
+    if (fromFocus) pushCurrentChangePlace();
   }
 
   private void pushCurrentChangePlace() {

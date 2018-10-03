@@ -10,7 +10,7 @@ import java.awt.*;
 /**
  * @author max
  */
-class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
+public class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   @Override
   public FileEditor getCurrentEditor() {
     // [kirillk] this is a hack, since much of editor-related code was written long before
