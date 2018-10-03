@@ -8,7 +8,6 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CommandMerger;
-import com.intellij.openapi.command.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
