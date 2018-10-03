@@ -114,15 +114,17 @@ class BuildUtils {
         if (jb instanceof JBOptionButton) {
           final JBOptionButton ob = (JBOptionButton)jb;
           final Action[] opts = ob.getOptions();
-          for (Action a : opts) {
-            if (a == null)
-              continue;
-            final AnAction anAct = _createAnAction(a, ob, true);
-            if (anAct == null)
-              continue;
+          if (opts != null) {
+            for (Action a : opts) {
+              if (a == null)
+                continue;
+              final AnAction anAct = _createAnAction(a, ob, true);
+              if (anAct == null)
+                continue;
 
-            // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
-            tbb = out.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(ob).setPriority(--prio[0]);
+              // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
+              tbb = out.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(ob).setPriority(--prio[0]);
+            }
           }
         }
 
