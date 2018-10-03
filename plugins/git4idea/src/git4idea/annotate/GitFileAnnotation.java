@@ -52,6 +52,7 @@ import java.util.*;
 public class GitFileAnnotation extends FileAnnotation {
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
+  @NotNull private final FilePath myFilePath;
   @NotNull private final GitVcs myVcs;
   @Nullable private final VcsRevisionNumber myBaseRevision;
 
@@ -88,6 +89,7 @@ public class GitFileAnnotation extends FileAnnotation {
     super(project);
     myProject = project;
     myFile = file;
+    myFilePath = VcsUtil.getFilePath(file);
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
@@ -110,7 +112,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public String getAnnotatedContent() {
     try {
-      ContentRevision revision = GitContentRevision.createRevision(myFile, myBaseRevision, myProject);
+      ContentRevision revision = GitContentRevision.createRevision(myFilePath, myBaseRevision, myProject, null);
       return revision.getContent();
     }
     catch (VcsException e) {
@@ -156,7 +158,7 @@ public class GitFileAnnotation extends FileAnnotation {
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
     String path = null;
-    if (!VcsUtil.getFilePath(myFile).equals(lineInfo.myFilePath)) {
+    if (!myFilePath.equals(lineInfo.myFilePath)) {
       path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
     }
 
@@ -371,7 +373,7 @@ public class GitFileAnnotation extends FileAnnotation {
       @Override
       public VcsFileRevision getLastRevision() {
         if (myBaseRevision instanceof GitRevisionNumber) {
-          return new GitFileRevision(myProject, VcsUtil.getFilePath(myFile), (GitRevisionNumber)myBaseRevision);
+          return new GitFileRevision(myProject, myFilePath, (GitRevisionNumber)myBaseRevision);
         }
         else {
           return ContainerUtil.getFirstItem(getRevisions());
