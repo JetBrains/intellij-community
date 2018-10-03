@@ -3,7 +3,6 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -124,13 +123,6 @@ public class PsiTreeUtil {
     if (element1 == element2) return element1;
     PsiFile file1 = element1.getContainingFile();
     PsiFile file2 = element2.getContainingFile();
-    if (file1 != null && file2 != null) {
-      InjectedLanguageManager ilm = InjectedLanguageManager.getInstance(file1.getProject());
-      if (ilm.isInjectedFragment(file1) != ilm.isInjectedFragment(file2)) {
-        // injected and non-injected files have no common ancestor
-        return null;
-      }
-    }
 
     PsiElement topLevel = file1 == file2 ? file1 : null;
 
