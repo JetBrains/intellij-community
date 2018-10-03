@@ -202,6 +202,12 @@ class MacDmgBuilder {
     String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
     sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
               + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\" $helpFileName$jreFileNameArgument", "signapp.log")
+    ftpAction("list", true, null, 3, null, "$artifactsPath/list.txt") {
+      ant.fileset(dir: artifactsPath) {
+        include(name: "*")
+      }
+    }
+    buildContext.notifyArtifactBuilt(new File(artifactsPath, "list.txt").absolutePath)
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.sit")
@@ -214,39 +220,80 @@ class MacDmgBuilder {
 
   private void sshExec(String command, String logFileName) {
     try {
-      ant.sshexec(
-        host: this.macHostProperties.host,
-        username: this.macHostProperties.userName,
-        password: this.macHostProperties.password,
-        trust: "yes",
-        command: "set -eo pipefail;$command 2>&1 | tee $remoteDir/$logFileName"
-      )
+      try {
+        ant.sshexec(
+          host: this.macHostProperties.host,
+          username: this.macHostProperties.userName,
+          password: this.macHostProperties.password,
+          trust: "yes",
+          command: "set -eo pipefail; $command 2>&1 | tee $remoteDir/$logFileName"
+        )
+      }
+      finally {
+        downloadLogFile(logFileName)
+      }
     }
     catch (BuildException e) {
-      buildContext.messages.info("SSH command failed, retrieving log file")
-      ftpAction("get", true, null, 3) {
-        ant.fileset(dir: artifactsPath) {
-          include(name: logFileName)
-        }
-      }
-      buildContext.notifyArtifactBuilt(new File(artifactsPath, logFileName).absolutePath)
-      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
+      buildContext.messages.error("SSH command failed: ${e.message}", e)
     }
   }
 
-  def ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, String overrideRemoteDir = null, Closure filesets) {
+  def downloadLogFile(String logFileName) {
+    buildContext.messages.info("Retrieving log file")
+    ftpAction("get", true, null, 3) {
+      ant.fileset(dir: artifactsPath) {
+        include(name: logFileName)
+      }
+    }
+    buildContext.messages.info("The log is available in $logFileName")
+    buildContext.notifyArtifactBuilt(new File(artifactsPath, logFileName).absolutePath)
+  }
+
+  static void main(String[] args) {
+    println "Hello?"
+    def ant = new AntBuilder()
+    String pwd = System.getProperty("macbuilderPwd")
+    String bnr = System.getProperty("macbuildNr")
+    ftpActionRun(ant, "macbuilder-esxi.labs.intellij.net", "builduser", pwd, "get", "intellij-builds/$bnr") {
+      ant.fileset(dir: ".") {
+        include(name: "signapp.log")
+      }
+    }
+  }
+
+  void ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, String overrideRemoteDir = null, String listing = null, Closure filesets) {
+    buildContext.messages.info("-- FTP $action: the remote dir = '$remoteDir' ")
+    String theRemoteDir = overrideRemoteDir ?: remoteDir
+    ftpActionRun(ant, this.macHostProperties.host, this.macHostProperties.userName, this.macHostProperties.password, action, theRemoteDir, binary, chmod, retriesAllowed, listing, filesets)
+  }
+
+  private static void ftpActionRun(AntBuilder ant,
+                                   String server,
+                                   String user,
+                                   String password,
+                                   String action,
+                                   String remoteDir,
+                                   boolean binary = true,
+                                   String chmod = null,
+                                   int retriesAllowed = 0,
+                                   String listing = null,
+                                   Closure filesets) {
     Map<String, String> args = [
-      server        : this.macHostProperties.host,
-      userid        : this.macHostProperties.userName,
-      password      : this.macHostProperties.password,
+      server        : server,
+      userid        : user,
+      password      : password,
       action        : action,
-      remotedir     : overrideRemoteDir ?: remoteDir,
+      remotedir     : remoteDir,
       binary        : binary ? "yes" : "no",
       passive       : "yes",
+      verbose       : "yes",
       retriesallowed: "$retriesAllowed"
     ]
     if (chmod != null) {
       args["chmod"] = chmod
+    }
+    if (listing != null) {
+      args["listing"] = listing
     }
     ant.ftp(args, filesets)
   }
