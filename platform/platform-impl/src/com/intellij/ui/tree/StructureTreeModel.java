@@ -184,6 +184,39 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   /**
+   * Expands a node in the specified tree.
+   *
+   * @param element  an element of the internal tree structure
+   * @param tree     a tree, which nodes should be expanded
+   * @param consumer a path consumer called on EDT if path is found and expanded
+   */
+  public final void expand(@NotNull Object element, @NotNull JTree tree, @NotNull Consumer<? super TreePath> consumer) {
+    promiseVisitor(element).onSuccess(visitor -> TreeUtil.expand(tree, visitor, consumer));
+  }
+
+  /**
+   * Makes visible a node in the specified tree.
+   *
+   * @param element  an element of the internal tree structure
+   * @param tree     a tree, which nodes should be made visible
+   * @param consumer a path consumer called on EDT if path is found and made visible
+   */
+  public final void makeVisible(@NotNull Object element, @NotNull JTree tree, @NotNull Consumer<? super TreePath> consumer) {
+    promiseVisitor(element).onSuccess(visitor -> TreeUtil.makeVisible(tree, visitor, consumer));
+  }
+
+  /**
+   * Selects a node in the specified tree.
+   *
+   * @param element  an element of the internal tree structure
+   * @param tree     a tree, which nodes should be selected
+   * @param consumer a path consumer called on EDT if path is found and selected
+   */
+  public final void select(@NotNull Object element, @NotNull JTree tree, @NotNull Consumer<? super TreePath> consumer) {
+    promiseVisitor(element).onSuccess(visitor -> TreeUtil.select(tree, visitor, consumer));
+  }
+
+  /**
    * Promises to create default visitor to find the specified element.
    *
    * @param element an element of the internal tree structure

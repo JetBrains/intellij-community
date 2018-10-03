@@ -9,11 +9,8 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
-import javax.swing.tree.TreePath;
+import javax.swing.JTree;
 
 public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
   private final JTree myTree;
@@ -81,15 +78,15 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   public void expand(AbstractTestProxy test) {
-    getTreeModel().promiseVisitor(test).onSuccess(visitor -> TreeUtil.promiseExpand(getTree(), visitor));
+    getTreeModel().expand(test, getTree(), path -> {
+    });
   }
 
   public void select(Object proxy, Runnable onDone) {
     if (!(proxy instanceof AbstractTestProxy)) return;
     mySelectionAlarm.cancelAllRequests();
-    mySelectionAlarm.addRequest(() -> getTreeModel().promiseVisitor(proxy).onSuccess(visitor -> {
-      Promise<TreePath> promise = TreeUtil.promiseSelect(getTree(), visitor);
-      if (onDone != null) promise.onSuccess(path -> onDone.run());
+    mySelectionAlarm.addRequest(() -> getTreeModel().select(proxy, getTree(), path -> {
+      if (onDone != null) onDone.run();
     }), 50);
   }
 
