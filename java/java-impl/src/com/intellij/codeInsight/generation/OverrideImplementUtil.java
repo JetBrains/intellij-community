@@ -535,7 +535,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         }
       }
       else {
-        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, (Collection<PsiMethodMember>)candidates, copyJavadoc, insertOverrideWherePossible);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertOverrideWherePossible);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
       }
 
