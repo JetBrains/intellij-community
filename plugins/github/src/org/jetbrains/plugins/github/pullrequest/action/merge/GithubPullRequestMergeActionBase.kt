@@ -15,8 +15,8 @@ import org.jetbrains.plugins.github.util.GithubNotifications
 abstract class GithubPullRequestMergeActionBase(text: String) : DumbAwareAction(text) {
   override fun update(e: AnActionEvent) {
     //TODO: project-level switch
-    val permissions = e.getRequiredData(GithubPullRequestKeys.REPO_DETAILS).permissions
-    e.presentation.isEnabledAndVisible = (permissions.isPush || permissions.isAdmin) && isEnabled(e)
+    val permissions = e.getData(GithubPullRequestKeys.REPO_DETAILS)?.permissions
+    e.presentation.isEnabledAndVisible = permissions != null && (permissions.isPush || permissions.isAdmin) && isEnabled(e)
   }
 
   private fun isEnabled(e: AnActionEvent): Boolean {
