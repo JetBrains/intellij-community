@@ -15,13 +15,11 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -50,12 +48,9 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1026,181 +1021,7 @@ public class RefactoringUtil {
    */
   @Nullable
   public static <T extends PsiExpression> T ensureCodeBlock(@NotNull T expression) {
-    PsiElement parent = getParentStatement(expression, false);
-    if (parent == null) {
-      parent = PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiClass.class);
-      if (parent == null) return null;
-    }
-
-    PsiPolyadicExpression andChain = findSurroundingConjunction(expression);
-    PsiExpression operand = null;
-    if (andChain != null) {
-      operand = StreamEx.of(andChain.getOperands()).findFirst(op -> PsiTreeUtil.isAncestor(op, expression, false))
-        .orElseThrow(AssertionError::new);
-    }
-
-    PsiElement grandParent = parent.getParent();
-    if (andChain == null &&
-        parent instanceof PsiStatement &&
-        !(parent instanceof PsiWhileStatement) &&
-        grandParent instanceof PsiCodeBlock) {
-      if (!(parent instanceof PsiForStatement) ||
-          !PsiTreeUtil.isAncestor(((PsiForStatement)parent).getInitialization(), expression, true) ||
-          !hasNameCollision(((PsiForStatement)parent).getInitialization(), grandParent)) {
-        return expression;
-      }
-    }
-    Object marker = new Object();
-    PsiTreeUtil.mark(expression, marker);
-    PsiElement copy = parent.copy();
-    PsiElement newParent;
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
-    if (parent instanceof PsiExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)grandParent;
-      String replacement = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda)) ? "{a;}" : "{return a;}";
-      PsiElement block = parent.replace(factory.createCodeBlockFromText(replacement, lambda));
-      newParent = LambdaUtil.extractSingleExpressionFromBody(block).replace(copy);
-    }
-    else if (parent instanceof PsiField) {
-      PsiField field = (PsiField)parent;
-      PsiClassInitializer initializer =
-        ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(field), PsiClassInitializer.class);
-      boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-      if (initializer == null || initializer.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
-        initializer = factory.createClassInitializer();
-        if (isStatic) {
-          Objects.requireNonNull(initializer.getModifierList()).setModifierProperty(PsiModifier.STATIC, true);
-        }
-        initializer = (PsiClassInitializer)field.getParent().addAfter(initializer, field);
-      }
-      PsiCodeBlock body = initializer.getBody();
-      // There are at least two children: open and close brace
-      // we will insert an initializer after the first brace and any whitespace which follow it
-      PsiElement anchor = PsiTreeUtil.skipWhitespacesForward(body.getFirstChild());
-      assert anchor != null;
-      anchor = anchor.getPrevSibling();
-      assert anchor != null;
-
-      PsiExpressionStatement assignment =
-        (PsiExpressionStatement)factory.createStatementFromText(field.getName() + "=null;", initializer);
-      assignment = (PsiExpressionStatement)body.addAfter(assignment, anchor);
-      PsiExpression fieldInitializer = ((PsiField)copy).getInitializer();
-      if (fieldInitializer instanceof PsiArrayInitializerExpression) {
-        PsiType fieldType = field.getType();
-        if (fieldType instanceof PsiArrayType) {
-          fieldInitializer = createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)fieldInitializer, fieldType);
-        }
-      }
-      PsiExpression rExpression = ((PsiAssignmentExpression)assignment.getExpression()).getRExpression();
-      assert fieldInitializer != null;
-      assert rExpression != null;
-      rExpression.replace(fieldInitializer);
-      Objects.requireNonNull(field.getInitializer()).delete();
-      newParent = assignment;
-    }
-    else if (parent instanceof PsiIfStatement && andChain != null) {
-      newParent = splitIf((PsiIfStatement)parent, andChain, operand);
-    }
-    else if (parent instanceof PsiWhileStatement) {
-      newParent = extractWhileCondition((PsiWhileStatement)parent, andChain, operand);
-    } else {
-      PsiBlockStatement blockStatement = (PsiBlockStatement)parent.replace(factory.createStatementFromText("{}", parent));
-      newParent = blockStatement.getCodeBlock().add(copy);
-    }
-    //noinspection unchecked
-    return (T)PsiTreeUtil.releaseMark(newParent, marker);
-  }
-
-  private static PsiElement extractWhileCondition(PsiWhileStatement whileStatement, PsiPolyadicExpression andChain, PsiExpression operand) {
-    PsiExpression oldCondition = Objects.requireNonNull(whileStatement.getCondition());
-    PsiStatement body = whileStatement.getBody();
-    PsiBlockStatement blockBody;
-    Project project = whileStatement.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    if (body == null) {
-      PsiWhileStatement newWhileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", whileStatement);
-      blockBody = (PsiBlockStatement)Objects.requireNonNull(newWhileStatement.getBody());
-      whileStatement = (PsiWhileStatement)whileStatement.replace(newWhileStatement);
-    }
-    else if (body instanceof PsiBlockStatement) {
-      blockBody = (PsiBlockStatement)body;
-    }
-    else {
-      PsiBlockStatement newBody = BlockUtils.createBlockStatement(project);
-      newBody.add(body);
-      blockBody = (PsiBlockStatement)body.replace(newBody);
-    }
-    PsiExpression lOperands;
-    PsiExpression rOperands;
-    if (andChain != null) {
-      lOperands = SplitConditionUtil.getLOperands(andChain, andChain.getTokenBeforeOperand(operand));
-      rOperands = getRightOperands(andChain, operand);
-    }
-    else {
-      lOperands = factory.createExpressionFromText("true", whileStatement);
-      rOperands = oldCondition;
-    }
-    PsiCodeBlock codeBlock = blockBody.getCodeBlock();
-    PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText("if(!true) break;", whileStatement);
-    ifStatement = (PsiIfStatement)codeBlock.addAfter(ifStatement, codeBlock.getLBrace());
-    PsiPrefixExpression negation = (PsiPrefixExpression)Objects.requireNonNull(ifStatement.getCondition());
-    PsiElement newParent = Objects.requireNonNull(negation.getOperand()).replace(rOperands);
-    Objects.requireNonNull(whileStatement.getCondition()).replace(lOperands);
-    return newParent;
-  }
-
-  private static PsiElement splitIf(PsiIfStatement outerIf, PsiPolyadicExpression andChain, PsiExpression operand) {
-    PsiExpression lOperands = SplitConditionUtil.getLOperands(andChain, andChain.getTokenBeforeOperand(operand));
-    PsiExpression rOperands = getRightOperands(andChain, operand);
-    Project project = outerIf.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiBlockStatement newThenBranch = (PsiBlockStatement)factory.createStatementFromText("{if(true);}", outerIf);
-    PsiStatement thenBranch = Objects.requireNonNull(outerIf.getThenBranch());
-    Objects.requireNonNull(((PsiIfStatement)newThenBranch.getCodeBlock().getStatements()[0]).getThenBranch()).replace(thenBranch);
-    newThenBranch = (PsiBlockStatement)thenBranch.replace(newThenBranch);
-    PsiIfStatement innerIf =
-      (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(newThenBranch.getCodeBlock().getStatements()[0]);
-    PsiElement newParent = Objects.requireNonNull(innerIf.getCondition()).replace(rOperands);
-    andChain.replace(lOperands);
-    return newParent;
-  }
-
-  private static PsiExpression getRightOperands(PsiPolyadicExpression andChain, PsiExpression operand) {
-    PsiExpression rOperands;
-    if (operand == ArrayUtil.getLastElement(andChain.getOperands())) {
-      rOperands = operand;
-    }
-    else {
-      rOperands = SplitConditionUtil.getROperands(andChain, andChain.getTokenBeforeOperand(operand));
-      // To preserve mark
-      ((PsiPolyadicExpression)rOperands).getOperands()[0].replace(operand);
-    }
-    return rOperands;
-  }
-
-  @Nullable
-  private static PsiPolyadicExpression findSurroundingConjunction(@NotNull PsiExpression expression) {
-    PsiExpression current = expression;
-    PsiPolyadicExpression andChain;
-    do {
-      current = andChain = PsiTreeUtil.getParentOfType(current, PsiPolyadicExpression.class, true,
-                                                       PsiStatement.class, PsiLambdaExpression.class);
-    }
-    while (andChain != null && (andChain.getOperationTokenType() != JavaTokenType.ANDAND ||
-                                PsiTreeUtil.isAncestor(andChain.getOperands()[0], expression, false)));
-    return andChain;
-  }
-
-  private static boolean hasNameCollision(PsiElement declaration, PsiElement context) {
-    if (declaration instanceof PsiDeclarationStatement) {
-      PsiResolveHelper helper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
-      return StreamEx.of(((PsiDeclarationStatement)declaration).getDeclaredElements())
-            .select(PsiLocalVariable.class)
-            .map(PsiLocalVariable::getName)
-            .nonNull()
-            .anyMatch(name -> helper.resolveReferencedVariable(name, context) != null);
-    }
-    return false;
+    return EnsureCodeBlockImpl.ensureCodeBlock(expression);
   }
 
   public interface ImplicitConstructorUsageVisitor {
@@ -1216,7 +1037,7 @@ public class RefactoringUtil {
   }
 
   /**
-   * Returns subset of {@code graph.getVertices()} that is a tranistive closure (by <code>graph.getTargets()<code>)
+   * Returns subset of {@code graph.getVertices()} that is a transitive closure (by <code>graph.getTargets()<code>)
    * of the following property: initialRelation.value() of vertex or {@code graph.getTargets(vertex)} is true.
    * <p/>
    * Note that {@code graph.getTargets()} is not neccesrily a subset of {@code graph.getVertex()}
@@ -1418,7 +1239,7 @@ public class RefactoringUtil {
 
   public static boolean canCreateInSourceRoot(final String sourceRootPackage, final String targetQName) {
     if (sourceRootPackage == null || !targetQName.startsWith(sourceRootPackage)) return false;
-    if (sourceRootPackage.length() == 0 || targetQName.length() == sourceRootPackage.length()) return true;
+    if (sourceRootPackage.isEmpty() || targetQName.length() == sourceRootPackage.length()) return true;
     return targetQName.charAt(sourceRootPackage.length()) == '.';
   }
 

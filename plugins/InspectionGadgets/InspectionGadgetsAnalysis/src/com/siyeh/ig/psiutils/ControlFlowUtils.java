@@ -927,7 +927,8 @@ public class ControlFlowUtils {
           // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
           // except some special cases
           return (polyParent instanceof PsiIfStatement && ((PsiIfStatement)polyParent).getElseBranch() == null) ||
-                 (polyParent instanceof PsiWhileStatement);
+                 (polyParent instanceof PsiWhileStatement) || (polyParent instanceof PsiReturnStatement) ||
+                 (polyParent instanceof PsiLambdaExpression);
         }
         else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
           // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
