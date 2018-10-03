@@ -27,13 +27,13 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.9.4</version>
+    <version>1.10.5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>http://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-launcher</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <name>Apache Ant Launcher</name>
   <build>
     <plugins>
@@ -44,7 +44,6 @@
           <includes>
             <include>org/apache/tools/ant/launch/*.java</include>
           </includes>
-
         </configuration>
       </plugin>
     </plugins>
