@@ -14,12 +14,6 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.java</depends>
 
-  <application-components>
-    <component>
-      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginApplicationComponent</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>de.plushnikov.intellij.plugin.LombokPluginUpdateProjectComponent</implementation-class>

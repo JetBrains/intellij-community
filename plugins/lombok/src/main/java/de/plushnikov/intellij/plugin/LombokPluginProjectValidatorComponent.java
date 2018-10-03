@@ -2,12 +2,7 @@ package de.plushnikov.intellij.plugin;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.options.AnnotationProcessorsConfigurable;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,11 +27,8 @@ import java.util.regex.Pattern;
  */
 public class LombokPluginProjectValidatorComponent extends AbstractProjectComponent {
 
-  private Project project;
-
   public LombokPluginProjectValidatorComponent(Project project) {
     super(project);
-    this.project = project;
   }
 
   @NotNull
@@ -48,7 +40,7 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
   @Override
   public void projectOpened() {
     // If plugin is not enabled - no point to continue
-    if (!ProjectSettings.isLombokEnabledInProject(project)) {
+    if (!ProjectSettings.isLombokEnabledInProject(myProject)) {
       return;
     }
 
@@ -58,45 +50,45 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
     }
 
     // Lombok dependency check
-    boolean hasLombokLibrary = hasLombokLibrary(project);
+    boolean hasLombokLibrary = hasLombokLibrary(myProject);
 
     // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
-    if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
+    if (!hasLombokLibrary && ProjectSettings.isEnabled(myProject, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
       Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
-        LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
+        LombokBundle.message("config.warn.dependency.missing.message", myProject.getName()),
         NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
 
-      Notifications.Bus.notify(notification, project);
+      Notifications.Bus.notify(notification, myProject);
     }
 
     // If dependency is present and out of date notification setting is enabled (defaults to disabled)
-    if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
-      final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    if (hasLombokLibrary && ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
+      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       for (Module module : moduleManager.getModules()) {
         String lombokVersion = parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
         if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
           Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
-            LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
+            LombokBundle.message("config.warn.dependency.outdated.message", myProject.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
             NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
 
-          Notifications.Bus.notify(notification, project);
+          Notifications.Bus.notify(notification, myProject);
         }
       }
     }
 
     // Annotation Processing check
-    boolean annotationProcessorsEnabled = hasAnnotationProcessorsEnabled(project);
+    boolean annotationProcessorsEnabled = hasAnnotationProcessorsEnabled(myProject);
     if (hasLombokLibrary && !annotationProcessorsEnabled) {
 
-      String annotationProcessorsConfigName = new AnnotationProcessorsConfigurable(project).getDisplayName();
+      String annotationProcessorsConfigName = new AnnotationProcessorsConfigurable(myProject).getDisplayName();
 
       Notification notification = group.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
-        LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
+        LombokBundle.message("config.warn.annotation-processing.disabled.message", myProject.getName()),
         NotificationType.ERROR,
-        new SettingsOpeningListener(project, annotationProcessorsConfigName));
+        new SettingsOpeningListener(myProject, annotationProcessorsConfigName));
 
-      Notifications.Bus.notify(notification, project);
+      Notifications.Bus.notify(notification, myProject);
     }
   }
 
