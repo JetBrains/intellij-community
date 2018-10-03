@@ -11,6 +11,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.jetty.*
+import runtime.*
 import runtime.reactive.*
 import runtime.utils.*
 import runtime.utils.LifetimedValue
@@ -25,7 +26,8 @@ class ConnectionsComponent : ApplicationComponent, LifetimedComponent by SimpleL
                 appLifetime = connectionLifetime,
                 server = url,
                 credentialsPersistence = IdeaPersistence.substorage("$url-"),
-                offlinePersistence = null
+                offlinePersistence = null,
+                offlinePersistenceConfiguration = PersistenceConfiguration.nothing
             ),
             connectionLifetime
         )
