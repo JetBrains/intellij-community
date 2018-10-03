@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
@@ -71,16 +70,15 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
     add(splitter, BorderLayout.CENTER);
     add(myDescriptionLabel, BorderLayout.NORTH);
 
-    setChangeList(createChangeList(Collections.emptyList()), null);
+    setChangeList(createChangeList(Collections.emptyList()));
     setDescription(null);
   }
 
-  public void setChangeList(@NotNull CommittedChangeList changeList, @Nullable VirtualFile toSelect) {
+  public void setChangeList(@NotNull CommittedChangeList changeList) {
     myChangeList = changeList;
     myChanges = changeList.getChanges();
 
     myChangesBrowser.setChangesToDisplay(myChanges);
-    if (toSelect != null) myChangesBrowser.getViewer().selectFile(toSelect);
 
     myCommitMessageArea.setText(IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, changeList.getComment().trim()));
     myCommitMessageArea.setCaretPosition(0);
