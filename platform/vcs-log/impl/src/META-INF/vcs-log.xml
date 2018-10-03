@@ -63,11 +63,13 @@
             text="Go to Parent Row" description="Navigate to the parent row in the commit graph">
       <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X 10.5+" remove="true"/>
+      <keyboard-shortcut first-keystroke="alt DOWN" keymap="Mac OS X 10.5+"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild"
             text="Go to Child Row" description="Navigate to the child row in the commit graph">
       <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+" remove="true"/>
+      <keyboard-shortcut first-keystroke="alt UP" keymap="Mac OS X 10.5+"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">

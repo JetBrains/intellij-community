@@ -118,8 +118,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta CLOSE_BRACKET", "Diff.NextChange", "NextTab"},
     { "shift meta OPEN_BRACKET",  "Diff.PrevChange", "PreviousTab"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
-    { "alt DOWN",                 "EditorUnSelectWord", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown"},
-    { "alt UP",                   "EditorSelectWord", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp"},
+    { "alt DOWN",                 "EditorUnSelectWord", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown", "Vcs.Log.GoToParent"},
+    { "alt UP",                   "EditorSelectWord", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp", "Vcs.Log.GoToChild"},
     { "ctrl m",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     });
     put("Mac OS X", new String[][] {
@@ -292,8 +292,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "F3",                       "GotoDeclaration", "EditSource"},
     { "F5",                       "StepInto", "UML.ApplyCurrentLayout"},
-    { "alt DOWN",                 "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown"},
-    { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp"},
+    { "alt DOWN",                 "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown", "Vcs.Log.GoToParent"},
+    { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp", "Vcs.Log.GoToChild"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
     { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
     { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
