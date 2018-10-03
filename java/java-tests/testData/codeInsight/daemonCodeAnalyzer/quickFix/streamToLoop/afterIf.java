@@ -34,7 +34,7 @@ public class Main {
             }
         }
         if (b) {
-          System.out.println("Ok!");
+            System.out.println("Ok!");
         }
     }
     if(list.size() > 2 || list.stream().filter(x -> x != null).anyMatch(x -> x.startsWith("x"))) { // not supported
