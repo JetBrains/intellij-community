@@ -326,7 +326,8 @@ public class GitFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  public boolean isBaseRevisionChanged(VcsRevisionNumber number) {
+  public boolean isBaseRevisionChanged(@NotNull VcsRevisionNumber number) {
+    if (!myFile.isInLocalFileSystem()) return false;
     final VcsRevisionNumber currentCurrentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
     return myBaseRevision != null && ! myBaseRevision.equals(currentCurrentRevision);
   }
