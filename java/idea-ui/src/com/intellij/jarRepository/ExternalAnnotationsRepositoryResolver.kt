@@ -30,7 +30,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
   override fun resolve(project: Project, library: Library, mavenId: String?): Library {
     val mavenLibDescriptor = extractDescriptor(mavenId, library) ?: return library
     val roots = JarRepositoryManager
-      .loadDependenciesModal(project,
+      .loadDependenciesSync(project,
                              mavenLibDescriptor,
                              setOf(ArtifactKind.ANNOTATIONS),
                              null,

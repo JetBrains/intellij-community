@@ -255,6 +255,18 @@ public class JarRepositoryManager {
     );
   }
 
+  @Nullable
+  public static List<OrderRoot> loadDependenciesSync(@NotNull Project project,
+                                                               JpsMavenRepositoryLibraryDescriptor desc,
+                                                               final Set<ArtifactKind> artifactKinds,
+                                                               @Nullable List<RemoteRepositoryDescription> repos,
+                                                               @Nullable String copyTo) {
+    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
+    return submitSyncJob(
+      project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
+    );
+  }
+
   @NotNull
   protected static Collection<RemoteRepositoryDescription> addDefaultsIfEmpty(@NotNull Project project,
                                                                               @Nullable Collection<RemoteRepositoryDescription> repositories) {
@@ -390,7 +402,18 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
+  private static <T> T submitSyncJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job) {
+    try {
+      ourTasksInProgress.incrementAndGet();
+      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+      return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
+    } finally {
+      ourTasksInProgress.decrementAndGet();
+    }
+  }
+
+  @Nullable
+  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job) {
     final Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
