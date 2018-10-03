@@ -43,13 +43,8 @@ public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCa
   public void testLadderOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
 
   public void testNewlineInBlock() {
-    final boolean previous = getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
     getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    try {
-      doTest("if");
-    } finally {
-      getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = previous;
-    }
+    doTest("if");
   }
 
   @Override
