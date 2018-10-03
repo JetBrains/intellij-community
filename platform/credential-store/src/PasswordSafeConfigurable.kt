@@ -7,6 +7,7 @@ import com.intellij.credentialStore.keePass.MasterKeyFileStorage
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
+import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
@@ -34,8 +35,6 @@ internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettin
 
   override fun createUi() = PasswordSafeConfigurableUi()
 }
-
-internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
 
 internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
   private val inKeychain = RadioButton("In native Keychain")
@@ -74,11 +73,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     if (settings.providerType != providerType) {
       @Suppress("NON_EXHAUSTIVE_WHEN")
       when (providerType) {
-        ProviderType.MEMORY_ONLY -> {
-          if (!changeExistingKeepassStoreIfPossible(settings, passwordSafe, isMemoryOnly = true)) {
-            passwordSafe.currentProvider = createInMemoryKeePassCredentialStore()
-          }
-        }
+        ProviderType.MEMORY_ONLY -> closeCurrentStoreIfKeePass()
 
         ProviderType.KEYCHAIN -> {
           passwordSafe.currentProvider = createPersistentCredentialStore()!!
@@ -96,7 +91,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   private fun createAndSaveKeePassDatabaseWithNewOptions(settings: PasswordSafeSettings) {
-    // todo should we respect existing in-memory KeePass database or not
+    // existing in-memory KeePass database is not used, the same as if switched to KEYCHAIN
+    // for KeePass not clear - should we append in-memory credentials to existing database or not
+    // (and if database doesn't exist, should we append or not), so, wait first user request (prefer to keep implementation simple)
     closeCurrentStoreIfKeePass()
 
     val newDbFile = getNewDbFile() ?: throw ConfigurationException("KeePass database path is empty.")
@@ -118,26 +115,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
   }
 
-  private fun changeExistingKeepassStoreIfPossible(settings: PasswordSafeSettings, passwordSafe: PasswordSafeImpl, isMemoryOnly: Boolean): Boolean {
-    if (settings.providerType != ProviderType.MEMORY_ONLY || settings.providerType != ProviderType.KEEPASS) {
-      return false
-    }
-
-    // must be used only currentProviderIfComputed - no need to compute because it is unsafe operation (incorrect operation and so)
-    // if provider not yet computed, we will create a new one in a safe manner (PasswordSafe manager cannot handle correctly - no access to pending master password, cannot throw exceptions)
-    val provider = passwordSafe.currentProviderIfComputed as? KeePassCredentialStore ?: return false
-    provider.isMemoryOnly = isMemoryOnly
-    if (isMemoryOnly) {
-      provider.deleteFileStorage()
-    }
-    else {
-      getNewDbFile()?.let {
-        provider.dbFile = it
-      }
-    }
-    return true
-  }
-
   private fun getNewDbFile() = getNewDbFileAsString()?.let { Paths.get(it) }
 
   private fun getNewDbFileAsString() = keePassDbFile.text.trim().nullize()
@@ -147,7 +124,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   override fun getComponent(): JPanel {
-    val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     return panel {
       row { label("Save passwords:") }
 
@@ -182,11 +158,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         row {
-          val comment = when {
-            passwordSafe.settings.providerType == ProviderType.KEEPASS -> "Existing KeePass file will be removed."
-            else -> null
-          }
-          rememberPasswordsUntilClosing(comment = comment)
+          rememberPasswordsUntilClosing()
         }
       }
     }
@@ -254,12 +226,4 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 // we must save and close opened KeePass database before any action that can modify KeePass database files
 private fun closeCurrentStoreIfKeePass() {
   (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStoreIfKeePass()
-}
-
-enum class ProviderType {
-  MEMORY_ONLY, KEYCHAIN, KEEPASS,
-
-  // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
-  @Deprecated("")
-  DO_NOT_STORE
 }

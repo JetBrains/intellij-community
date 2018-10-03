@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
@@ -71,4 +72,12 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
     var keepassDb by string()
     var isRememberPasswordByDefault by property(true)
   }
+}
+
+enum class ProviderType {
+  MEMORY_ONLY, KEYCHAIN, KEEPASS,
+
+  // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
+  @Deprecated("")
+  DO_NOT_STORE
 }

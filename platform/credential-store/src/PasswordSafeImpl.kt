@@ -24,6 +24,8 @@ import org.jetbrains.concurrency.runAsync
 import java.nio.file.Path
 import java.nio.file.Paths
 
+internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
+
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
     return createInMemoryKeePassCredentialStore()

@@ -1152,15 +1152,20 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private final SESearcher.Listener mySearchListener = new SESearcher.Listener() {
     @Override
     public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
+      int index = myResultsList.getSelectedIndex();
       Map<SearchEverywhereContributor<?>, List<SESearcher.ElementInfo>> map =
         list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
 
       map.forEach((key, lst) -> myListModel.addElements(lst, key));
+      if (index == 0 || index == -1) {
+        myResultsList.setSelectedIndex(0);
+      }
     }
 
     @Override
     public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
       list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
+      ScrollingUtil.ensureSelectionExists(myResultsList);
     }
 
     @Override
