@@ -147,7 +147,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   boolean myForceRightFreePaintersAreaShown;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
-  private @Nullable AccessibleGutterLine myAccessibleGutterLine;
+  @Nullable private AccessibleGutterLine myAccessibleGutterLine;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -184,7 +184,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor;
   }
 
-  @SuppressWarnings("ConstantConditions")
   private void installDnD() {
     DnDSupport.createBuilder(this)
       .setBeanProvider(info -> {
@@ -1013,7 +1012,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return (int) (getEditorScaleFactor() * width);
   }
 
-  void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
+  void processIconsRow(int line, @NotNull List<? extends GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
@@ -1488,7 +1487,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     x = convertX(x);
     for (DisplayedFoldingAnchor anchor : displayedAnchors) {
       Rectangle r = rectangleByFoldOffset(anchor.visualLine, anchorWidth, anchorX);
-      if (r.x < x && x <= (r.x + r.width) && r.y < y && y <= (r.y + r.height)) return anchor.foldRegion;
+      if (r.x < x && x <= r.x + r.width && r.y < y && y <= r.y + r.height) return anchor.foldRegion;
     }
 
     return null;
