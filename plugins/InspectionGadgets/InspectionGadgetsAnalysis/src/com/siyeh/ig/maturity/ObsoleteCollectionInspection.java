@@ -142,13 +142,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     private boolean checkReferences(PsiNamedElement namedElement) {
       final PsiFile containingFile = namedElement.getContainingFile();
       if (!isOnTheFly() || isCheapToSearchInFile(namedElement)) {
-        return !ReferencesSearch.search(namedElement, GlobalSearchScope.fileScope(containingFile)).forEach(ref -> {
-          final PsiElement element = ref.getElement();
-          if (isRequiredObsoleteCollectionElement(element)) {
-            return false;
-          }
-          return true;
-        });
+        return ReferencesSearch.search(namedElement, GlobalSearchScope.fileScope(containingFile))
+          .anyMatch(ref -> isRequiredObsoleteCollectionElement(ref.getElement()));
       }
       return true;
     }

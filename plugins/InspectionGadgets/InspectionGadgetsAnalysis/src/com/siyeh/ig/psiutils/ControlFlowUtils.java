@@ -679,11 +679,10 @@ public class ControlFlowUtils {
             .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
             .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
           if (hasLoopVarCheck) {
-            boolean notWritten = ReferencesSearch.search(variable).forEach(ref -> {
+            return ReferencesSearch.search(variable).allMatch(ref -> {
               PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
               return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
             });
-            if (notWritten) return true;
           }
         }
       }

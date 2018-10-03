@@ -250,7 +250,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
             ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length == 1) {
           PsiElement scope = PsiTreeUtil.getParentOfType(expressionStatement, PsiMember.class, PsiStatement.class, PsiLambdaExpression.class);
           if (scope != null &&
-              ReferencesSearch.search(variable).forEach((PsiReference ref) -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
+              ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
             PsiDeclarationStatement newDeclaration =
               JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiType.INT, null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);

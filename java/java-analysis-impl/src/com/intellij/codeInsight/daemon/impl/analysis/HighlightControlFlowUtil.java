@@ -729,7 +729,7 @@ public class HighlightControlFlowUtil {
         }
         effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
         if (effectivelyFinal) {
-          return ReferencesSearch.search(variable).forEach(ref -> {
+          return ReferencesSearch.search(variable).allMatch(ref -> {
             PsiElement element = ref.getElement();
             if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
               return !ControlFlowUtil.isVariableAssignedInLoop((PsiReferenceExpression)element, variable);

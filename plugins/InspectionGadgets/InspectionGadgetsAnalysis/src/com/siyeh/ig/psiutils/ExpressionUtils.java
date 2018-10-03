@@ -1045,7 +1045,7 @@ public class ExpressionUtils {
       PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
       if (variable != null) {
         PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
+        if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
           return initializer;
         }
       }

@@ -26,7 +26,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -190,8 +189,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           return PsiTreeUtil.getParentOfType(lambda, PsiMember.class, PsiLambdaExpression.class) == loopBound;
         };
       }
-      return ReferencesSearch.search(variable).forEach((Processor<PsiReference>)reference -> referenceBoundPredicate.test(reference)) &&
-             FinalUtils.canBeFinal(variable);
+      return ReferencesSearch.search(variable).allMatch(referenceBoundPredicate) && FinalUtils.canBeFinal(variable);
     }
 
     String generateTerminal(CommentTracker ct) {
