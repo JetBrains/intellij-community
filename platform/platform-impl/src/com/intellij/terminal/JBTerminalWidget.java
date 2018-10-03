@@ -15,6 +15,7 @@
  */
 package com.intellij.terminal;
 
+import com.google.common.base.Predicate;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
@@ -51,9 +52,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
-
   private final Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
+  private JBTerminalWidgetListener myListener;
 
   public JBTerminalWidget(Project project,
                           JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -75,10 +76,18 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     Disposer.register(parent, this);
 
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      for (Filter filter: eachProvider.getDefaultFilters(project)) {
+      for (Filter filter : eachProvider.getDefaultFilters(project)) {
         addMessageFilter(project, filter);
       }
     }
+  }
+
+  public JBTerminalWidgetListener getListener() {
+    return myListener;
+  }
+
+  public void setListener(JBTerminalWidgetListener listener) {
+    myListener = listener;
   }
 
   @Override
@@ -129,6 +138,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = super.getActions();
+    actions.add(new TerminalAction("New Session", mySettingsProvider.getNewSessionKeyStrokes(), input -> {
+      myListener.onNewSession();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
@@ -146,6 +159,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   @Override
   public void dispose() {
+    System.out.println("Log");
   }
 
   @Override
