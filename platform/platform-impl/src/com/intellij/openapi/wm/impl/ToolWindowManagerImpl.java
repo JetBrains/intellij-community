@@ -40,10 +40,7 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
@@ -123,7 +120,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     waiting, pressed, released, hold
   }
 
-  private final Alarm myUpdateHeadersAlarm = new Alarm();
+  private final SingleAlarm myUpdateHeadersAlarm = new SingleAlarm(() -> updateToolWindowHeaders(), 50, this);
   private final CommandProcessor myCommandProcessor = new CommandProcessor();
 
   public ToolWindowManagerImpl(final Project project,
@@ -142,17 +139,23 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     }, project);
 
-    MessageBusConnection busConnection = project.getMessageBus().connect();
-
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
 
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        if (project == myProject) {
-          //noinspection TestOnlyProblems
-          init();
+        if (project != myProject) {
+          return;
         }
+
+        //noinspection TestOnlyProblems
+        init();
+
+        PropertyChangeListener focusListener = it -> myUpdateHeadersAlarm.request();
+        KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener);
+        Disposer.register(ToolWindowManagerImpl.this, () -> keyboardFocusManager.removePropertyChangeListener(focusListener));
       }
 
       @Override
@@ -178,15 +181,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         });
       }
     });
-
-    PropertyChangeListener focusListener = it -> {
-      if ("focusOwner".equals(it.getPropertyName())) {
-        myUpdateHeadersAlarm.cancelAllRequests();
-        myUpdateHeadersAlarm.addRequest(this::updateToolWindowHeaders, 50);
-      }
-    };
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(focusListener);
-    Disposer.register(this, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(focusListener));
 
     Predicate<AWTEvent> predicate = event ->
       event.getID() == FocusEvent.FOCUS_LOST
@@ -422,7 +416,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     LOG.assertTrue(myFrame != null);
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
-    Disposer.register(myProject, myToolWindowsPane);
+    Disposer.register(this, myToolWindowsPane);
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
     ((IdeRootPane)myFrame.getRootPane()).updateToolbar();
@@ -435,7 +429,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         resetHoldState();
       }
       return false;
-    }, myProject);
+    }, this);
 
     UIUtil.putClientProperty(
       myToolWindowsPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
