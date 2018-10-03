@@ -196,9 +196,9 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   }
 
   @NotNull
-  public static PsiElementListCellRenderer.ItemMatchers convertToFileItemMatchers(PsiElementListCellRenderer.ItemMatchers defaultMatchers,
-                                                                            @NotNull PsiFileSystemItem value,
-                                                                            GotoFileModel model) {
+  public static PsiElementListCellRenderer.ItemMatchers convertToFileItemMatchers(@NotNull PsiElementListCellRenderer.ItemMatchers defaultMatchers,
+                                                                                  @NotNull PsiFileSystemItem value,
+                                                                                  @NotNull GotoFileModel model) {
     String shortName = model.getElementName(value);
     String fullName = model.getFullName(value);
     if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {

@@ -35,7 +35,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
 
   public FileSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
     super(project, context);
-    myModelForRenderer = new GotoFileModel(project);
+    myModelForRenderer = project == null ? null : new GotoFileModel(project);
   }
 
   @NotNull
@@ -67,7 +67,9 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
       @Override
       protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
-        if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
+        if (!(value instanceof PsiFileSystemItem) || myModelForRenderer == null) {
+          return defaultMatchers;
+        }
 
         return GotoFileModel.convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, myModelForRenderer);
       }
