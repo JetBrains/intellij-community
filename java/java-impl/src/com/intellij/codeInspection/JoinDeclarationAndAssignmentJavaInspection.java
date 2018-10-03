@@ -5,17 +5,24 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
@@ -57,12 +64,12 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
           String message = InspectionsBundle.message("inspection.join.declaration.and.assignment.message", context.myName);
           JoinDeclarationAndAssignmentFix fix = new JoinDeclarationAndAssignmentFix();
 
-          ProblemHighlightType highlightType = context.myIsUpdate ? INFORMATION : GENERIC_ERROR_OR_WARNING;
           if (isOnTheFly && (context.myIsUpdate || isInformationLevel(location))) {
+            ProblemHighlightType highlightType = context.myIsUpdate ? INFORMATION : GENERIC_ERROR_OR_WARNING;
             holder.registerProblem(location, message, highlightType, fix);
           }
-          else if (location == assignment) {
-            holder.registerProblem(assignment.getLExpression(), message, highlightType, fix);
+          else if (location == assignment && !context.myIsUpdate) {
+            holder.registerProblem(assignment.getLExpression(), message, fix);
           }
         }
       }
@@ -131,19 +138,18 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
   @Nullable
   private static PsiAssignmentExpression findAssignment(@NotNull PsiVariable variable) {
-    PsiDeclarationStatement statement = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
-    PsiElement candidate = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+    return findNextAssignment(variable.getParent(), variable);
+  }
+
+  @Nullable
+  private static PsiAssignmentExpression findNextAssignment(@Nullable PsiElement element, @NotNull PsiVariable variable) {
+    PsiElement candidate = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
     if (candidate instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)candidate).getExpression();
       if (expression instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-        PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-        if (lExpression instanceof PsiReferenceExpression) {
-          PsiReferenceExpression reference = (PsiReferenceExpression)lExpression;
-          if (!reference.isQualified() && // optimization: locals aren't qualified
-              reference.isReferenceTo(variable)) {
-            return assignmentExpression;
-          }
+        if (ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable)) {
+          return assignmentExpression;
         }
       }
     }
@@ -176,13 +182,80 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         }
 
         if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
-        WriteAction.run(() -> {
-          PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(variable, assignmentExpression);
-          if (initializerExpression != null) {
-            variable.setInitializer(initializerExpression);
-            new CommentTracker().deleteAndRestoreComments(assignmentExpression);
-          }
-        });
+        WriteAction.run(() -> applyFixImpl(context));
+      }
+    }
+
+    public void applyFixImpl(@NotNull Context context) {
+      PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
+      PsiElement elementToReplace = context.myAssignment.getParent();
+      if (initializerExpression != null && elementToReplace != null) {
+        List<String> commentTexts = collectCommentTexts(elementToReplace);
+        List<String> reverseTrailingCommentTexts = collectReverseTrailingCommentTexts(elementToReplace);
+
+        PsiElement declaration = replaceWithDeclaration(context, elementToReplace, initializerExpression);
+        restoreComments(commentTexts, reverseTrailingCommentTexts, declaration);
+
+        new CommentTracker().deleteAndRestoreComments(context.myVariable);
+      }
+    }
+
+    @NotNull
+    private static PsiElement replaceWithDeclaration(@NotNull Context context,
+                                                     @NotNull PsiElement elementToReplace,
+                                                     @NotNull PsiExpression initializerExpression) {
+      Project project = elementToReplace.getProject();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiAnnotation[] annotations = context.myVariable.getAnnotations();
+      String text = (annotations.length != 0 ? StringUtil.join(annotations, PsiElement::getText, " ") + " " : "") +
+                    context.myVariable.getTypeElement().getText() + " " + context.myName + "=" + initializerExpression.getText() + ";";
+      PsiStatement statement = factory.createStatementFromText(text, context.myAssignment);
+      PsiElement replaced = elementToReplace.replace(statement);
+      return CodeStyleManager.getInstance(project).reformat(replaced);
+    }
+
+    @NotNull
+    public List<String> collectCommentTexts(@NotNull PsiElement element) {
+      return ContainerUtil.map(PsiTreeUtil.collectElementsOfType(element, PsiComment.class), PsiElement::getText);
+    }
+
+    @NotNull
+    private static List<String> collectReverseTrailingCommentTexts(@NotNull PsiElement element) {
+      List<String> result = new ArrayList<>();
+      PsiElement child = element.getLastChild();
+      while (child instanceof PsiComment ||
+             child instanceof PsiWhiteSpace ||
+             child instanceof PsiJavaToken && JavaTokenType.SEMICOLON.equals(((PsiJavaToken)child).getTokenType())) {
+        if (child instanceof PsiComment) {
+          result.add(child.getText());
+        }
+        child = child.getPrevSibling();
+      }
+      return result;
+    }
+
+    private void restoreComments(@NotNull List<String> commentTexts,
+                                 @NotNull List<String> reverseTrailingCommentTexts,
+                                 @NotNull PsiElement target) {
+      if (commentTexts.isEmpty()) return;
+
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(target.getProject());
+      List<String> newCommentTexts = collectCommentTexts(target);
+      PsiElement parent = target.getParent();
+
+      for (String commentText : commentTexts) {
+        if (!newCommentTexts.contains(commentText) && !reverseTrailingCommentTexts.contains(commentText)) {
+          PsiComment comment = factory.createCommentFromText(commentText, target);
+          parent.addBefore(comment, target);
+        }
+      }
+
+      if (reverseTrailingCommentTexts.isEmpty()) return;
+      for (String commentText : reverseTrailingCommentTexts) {
+        if (!newCommentTexts.contains(commentText)) {
+          PsiComment comment = factory.createCommentFromText(commentText, target);
+          parent.addAfter(comment, target); // adding immediately after the target restores the original order
+        }
       }
     }
   }
@@ -197,7 +270,8 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       myAssignment = assignment;
       myVariable = variable;
       myName = name;
-      myIsUpdate = !JavaTokenType.EQ.equals(myAssignment.getOperationTokenType());
+      myIsUpdate = !JavaTokenType.EQ.equals(myAssignment.getOperationTokenType()) ||
+                   findNextAssignment(myAssignment.getParent(), myVariable) != null;
     }
   }
 }
