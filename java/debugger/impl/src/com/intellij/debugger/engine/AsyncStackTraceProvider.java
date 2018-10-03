@@ -11,10 +11,8 @@ import java.util.List;
  * @author egor
  */
 public interface AsyncStackTraceProvider {
-  ExtensionPointName<AsyncStackTraceProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.asyncStackTraceProvider");
+  ExtensionPointName<AsyncStackTraceProvider> EP = ExtensionPointName.create("com.intellij.debugger.asyncStackTraceProvider");
 
   @Nullable
   List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext);
-
-  boolean isKeepCurrentFrame();
 }

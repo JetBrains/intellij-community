@@ -305,10 +305,5 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       }
       return null;
     }
-
-    @Override
-    public boolean isKeepCurrentFrame() {
-      return false;
-    }
   }
 }

@@ -216,16 +216,15 @@ public class JavaExecutionStack extends XExecutionStack {
 
         List<StackFrameItem> relatedStack = null;
         if (frame instanceof JavaStackFrame) {
-          for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP_NAME.getExtensionList()) {
+          for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
             relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)frame), suspendContext);
             if (relatedStack != null) {
-              if (asyncStackTraceProvider.isKeepCurrentFrame()) {
-                break;
-              }
               appendRelatedStack(relatedStack);
               return;
             }
           }
+          // append agent stack after the next frame
+          relatedStack = AsyncStacksUtils.getAgentRelatedStack((JavaStackFrame)frame, suspendContext);
         }
 
         myDebugProcess.getManagerThread().schedule(
