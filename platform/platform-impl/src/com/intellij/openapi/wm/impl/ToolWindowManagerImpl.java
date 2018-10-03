@@ -146,24 +146,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
 
-    // Android Studio: upstream bug IDEA-197106
-    PropertyChangeListener focusListener = it -> {
-      if ("focusOwner".equals(it.getPropertyName())) {
-        myUpdateHeadersAlarm.cancelAllRequests();
-        myUpdateHeadersAlarm.addRequest(this::updateToolWindowHeaders, 50);
-      }
-    };
-    KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         if (project == myProject) {
-          // Android Studio: upstream bug IDEA-197106
-          // We can only refresh the tool windows after the project has been init'ed (where state restoration happens).
-          keyboardFocusManager.addPropertyChangeListener(focusListener);
-          Disposer.register(ToolWindowManagerImpl.this, () -> keyboardFocusManager.removePropertyChangeListener(focusListener));
-
           //noinspection TestOnlyProblems
           init();
         }
@@ -193,7 +179,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     });
 
-    /* Android Studio: IDEA-197106
     PropertyChangeListener focusListener = it -> {
       if ("focusOwner".equals(it.getPropertyName())) {
         myUpdateHeadersAlarm.cancelAllRequests();
@@ -202,7 +187,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     };
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(focusListener);
     Disposer.register(this, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(focusListener));
-    Android Studio: IDEA-197106 */
 
     Predicate<AWTEvent> predicate = event ->
       event.getID() == FocusEvent.FOCUS_LOST
