@@ -72,7 +72,12 @@ public class FindUIHelper implements Disposable {
   }
 
   private static boolean showAsPopup() {
-    return Registry.is("ide.find.as.popup") && SystemInfo.isJetBrainsJvm;
+    boolean usePopup = Registry.is("ide.find.as.popup") && SystemInfo.isJetBrainsJvm;
+    if (SystemInfo.isLinux) {
+      // Workaround for gnome-shell crash on ubuntu 18.04.1
+      usePopup = usePopup && !"ubuntu:GNOME".equals(System.getenv("XDG_CURRENT_DESKTOP"));
+    }
+    return usePopup;
   }
 
   private void registerAction(String actionName, boolean replace, JComponent component, FindUI ui) {
