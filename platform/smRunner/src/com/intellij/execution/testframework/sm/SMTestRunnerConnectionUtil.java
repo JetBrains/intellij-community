@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -75,7 +76,8 @@ public class SMTestRunnerConnectionUtil {
   @NotNull
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                                   @NotNull ProcessHandler processHandler,
-                                                                  @NotNull TestConsoleProperties consoleProperties) throws ExecutionException {
+                                                                  @NotNull TestConsoleProperties consoleProperties)
+    throws ExecutionException {
     BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties);
     console.attachToProcess(processHandler);
     return console;
@@ -173,10 +175,12 @@ public class SMTestRunnerConnectionUtil {
       // events processor
       GeneralTestEventsProcessor eventsProcessor;
       if (idBasedTestTree) {
-        eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
+        eventsProcessor =
+          new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
       }
       else {
-        eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
+        eventsProcessor =
+          new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
       }
 
       if (locator != null) {
@@ -199,13 +203,13 @@ public class SMTestRunnerConnectionUtil {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
-        outputConsumer.finishTesting();
+        ApplicationManager.getApplication().invokeAndWait(() -> outputConsumer.finishTesting());
         Disposer.dispose(outputConsumer);
       }
 
       @Override
       public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
-        outputConsumer.process(event.getText(), outputType);
+        ApplicationManager.getApplication().invokeAndWait(() -> outputConsumer.process(event.getText(), outputType));
       }
     });
   }
@@ -219,7 +223,10 @@ public class SMTestRunnerConnectionUtil {
 
     @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public List<Location> getLocation(@NotNull String protocol,
+                                      @NotNull String path,
+                                      @NotNull Project project,
+                                      @NotNull GlobalSearchScope scope) {
       return getLocation(protocol, path, null, project, scope);
     }
 
@@ -254,7 +261,9 @@ public class SMTestRunnerConnectionUtil {
     }
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
+  /**
+   * @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17)
+   */
   @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
@@ -264,7 +273,9 @@ public class SMTestRunnerConnectionUtil {
     return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, locator, false, null);
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
+  /**
+   * @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17)
+   */
   @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
@@ -279,7 +290,9 @@ public class SMTestRunnerConnectionUtil {
     return consoleView;
   }
 
-  /** @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 17) */
+  /**
+   * @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 17)
+   */
   @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
@@ -325,7 +338,10 @@ public class SMTestRunnerConnectionUtil {
 
     @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public List<Location> getLocation(@NotNull String protocol,
+                                      @NotNull String path,
+                                      @NotNull Project project,
+                                      @NotNull GlobalSearchScope scope) {
       boolean isDumbMode = DumbService.isDumb(project);
 
       if (myPrimaryLocator != null && (!isDumbMode || DumbService.isDumbAware(myPrimaryLocator))) {
