@@ -21,11 +21,13 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import one.util.streamex.StreamEx;
@@ -261,18 +263,19 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
       //do not allow further for idea process
       if (!pid.equals(OSProcessUtil.getApplicationPid())) {
+        Properties systemProperties = vm.getSystemProperties();
+
         // prefer sa-jdwp attach if available
-        if (SAJDWPRemoteConnection.isAvailable()) {
-          return new LocalAttachInfo(command, pid);
+        // sa pid attach if sa-jdi.jar is available
+        LocalAttachInfo info = SAJDWPLocalAttachInfo.create(systemProperties, command, pid);
+        if (info != null) {
+          return info;
         }
 
         // sa pid attach if sa-jdi.jar is available
-        if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
-          Properties systemProperties = vm.getSystemProperties();
-          File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
-          if (saJdiJar.exists()) {
-            return new SAPIDLocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
-          }
+        info = SAPIDLocalAttachInfo.create(systemProperties, command, pid);
+        if (info != null) {
+          return info;
         }
       }
     }
@@ -336,13 +339,57 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       mySAJarPath = SAJarPath;
     }
 
+    @Nullable
+    static SAPIDLocalAttachInfo create(Properties systemProperties, String aClass, String pid) throws IOException {
+      File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
+      if (saJdiJar.exists()) {
+        return new SAPIDLocalAttachInfo(aClass, pid, saJdiJar.getCanonicalPath());
+      }
+      return null;
+    }
+
     @Override
     RemoteConnection createConnection() {
       return new SAPidRemoteConnection(myPid, mySAJarPath);
     }
+
+    @Override
+    String getDebuggerName() {
+      return "Read Only Java Debugger";
+    }
   }
 
-  static class LocalAttachInfo {
+  static class SAJDWPLocalAttachInfo extends LocalAttachInfo {
+    private final List<String> myCommands;
+
+    SAJDWPLocalAttachInfo(String aClass, String pid, List<String> commands) {
+      super(aClass, pid);
+      myCommands = commands;
+    }
+
+    @Nullable
+    static LocalAttachInfo create(Properties systemProperties, String aClass, String pid) {
+      try {
+        List<String> commands = SaJdwp.getServerProcessCommand(systemProperties, pid, "0", false, PathUtil.getJarPathForClass(SaJdwp.class));
+        return new SAJDWPLocalAttachInfo(aClass, pid, commands);
+      }
+      catch (Exception ignored) {
+      }
+      return null;
+    }
+
+    @Override
+    RemoteConnection createConnection() {
+      return new SAJDWPRemoteConnection(myPid, myCommands);
+    }
+
+    @Override
+    String getDebuggerName() {
+      return "Read Only Java Debugger";
+    }
+  }
+
+  static abstract class LocalAttachInfo {
     final String myClass;
     final String myPid;
 
@@ -351,17 +398,13 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       myPid = pid;
     }
 
-    RemoteConnection createConnection() {
-      return new SAJDWPRemoteConnection(myPid);
-    }
+    abstract RemoteConnection createConnection();
 
     String getSessionName() {
       return "pid " + myPid;
     }
 
-    String getDebuggerName() {
-      return "Read Only Java Debugger";
-    }
+    abstract String getDebuggerName();
 
     String getProcessDisplayText(String text) {
       return text;
