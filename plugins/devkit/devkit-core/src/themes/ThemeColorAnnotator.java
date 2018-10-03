@@ -103,7 +103,8 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
           if (currentColor == null) return;
 
           boolean withAlpha = isRgbaColorHex(myColorHex);
-          Color newColor = ColorChooser.chooseColor(editor.getComponent(),
+          Color newColor = ColorChooser.chooseColor(editor.getProject(),
+                                                    editor.getComponent(),
                                                     DevKitBundle.message("theme.choose.color.dialog.title"),
                                                     currentColor,
                                                     withAlpha);
