@@ -118,9 +118,10 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
         String mergedToolName = InspectionElementsMerger.getMergedToolName(shortName);
         for (InspectionToolWrapper toolWrapper : toolWrappers) {
           String toolWrapperShortName = toolWrapper.getShortName();
+          String alternativeID = toolWrapper.getTool().getAlternativeID();
           if (toolWrapper instanceof LocalInspectionToolWrapper &&
               (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName) ||
-               shortName.equals(((LocalInspectionToolWrapper)toolWrapper).getTool().getAlternativeID()) ||
+               shortName.equals(alternativeID) ||
                toolWrapperShortName.equals(mergedToolName))) {
             if (((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
               iterator.remove();
@@ -130,7 +131,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
               suppressedTools.put(toolWrapper, shortName);
             }
           }
-          else if (toolWrapperShortName.equals(shortName) || toolWrapperShortName.equals(mergedToolName)) {
+          else if (toolWrapperShortName.equals(shortName) || toolWrapperShortName.equals(mergedToolName) || shortName.equals(alternativeID)) {
             //ignore global unused as it won't be checked anyway
             if (toolWrapper instanceof LocalInspectionToolWrapper ||
                 toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
