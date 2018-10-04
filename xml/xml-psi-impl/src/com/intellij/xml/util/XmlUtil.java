@@ -1413,6 +1413,26 @@ public class XmlUtil {
     return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);
   }
 
+  @Nullable
+  public static PsiElement findPreviousComment(final PsiElement element) {
+    PsiElement curElement = element;
+
+    while(curElement!=null && !(curElement instanceof XmlComment)) {
+      curElement = curElement.getPrevSibling();
+      if (curElement instanceof XmlText && StringUtil.isEmptyOrSpaces(curElement.getText())) {
+        continue;
+      }
+      if (!(curElement instanceof PsiWhiteSpace) &&
+          !(curElement instanceof XmlProlog) &&
+          !(curElement instanceof XmlComment)
+         ) {
+        curElement = null; // finding comment fails, we found another similar declaration
+        break;
+      }
+    }
+    return curElement;
+  }
+
   public interface DuplicationInfoProvider<T extends PsiElement> {
     @Nullable
     String getName(@NotNull T t);

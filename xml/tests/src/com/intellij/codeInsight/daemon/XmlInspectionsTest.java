@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlDeprecatedElementInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -70,6 +71,11 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
   public void testRequiredFixedAttribute() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.testHighlighting("def.xml", "def.xsd");
+  }
+
+  public void testDeprecations() {
+    myFixture.enableInspections(new XmlDeprecatedElementInspection());
+    myFixture.testHighlighting("deprecated.xml", "deprecated.xsd");
   }
 
   @Override

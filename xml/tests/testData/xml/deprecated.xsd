@@ -1,0 +1,12 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="test.deprecated" elementFormDefault="qualified">
+    <element name="root">
+        <complexType>
+            <sequence>
+                <!-- deprecated -->
+                <element name="deprecated"/>
+            </sequence>
+            <!-- deprecated -->
+            <attribute name="deprecated"/>
+        </complexType>
+    </element>
+</schema>
