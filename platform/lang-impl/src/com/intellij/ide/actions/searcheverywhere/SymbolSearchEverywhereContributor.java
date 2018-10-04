@@ -54,8 +54,9 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return false;
   }
 
+  @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(Project project) {
+  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
     return new GotoSymbolModel2(project);
   }
 

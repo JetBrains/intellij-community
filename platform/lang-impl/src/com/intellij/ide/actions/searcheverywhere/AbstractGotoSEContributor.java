@@ -102,8 +102,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     }, progressIndicator);
   }
 
-  //todo param is unnecessary #UX-1
-  protected abstract FilteringGotoByModel<F> createModel(Project project);
+  @NotNull
+  protected abstract FilteringGotoByModel<F> createModel(@NotNull Project project);
 
   @NotNull
   @Override
