@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.TabInfo
@@ -20,9 +19,11 @@ class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase()
     tabInfo.setObject(file)
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
     val fileEditor = FileEditorManager.getInstance(e.project!!).openFile(file, true).first()
-//    Disposer.register(fileEditor, terminalWidget)
-    val contentManager = activeToolWindow.getContentManager()
-    contentManager.removeContent(selectedContent, false)
+
+    terminalWidget.moveDisposable(fileEditor)
+
+    activeToolWindow.contentManager.removeContent(selectedContent, true)
+
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
   }
 }
