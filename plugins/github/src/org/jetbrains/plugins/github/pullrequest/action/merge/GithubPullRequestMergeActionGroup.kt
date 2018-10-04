@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 
 class GithubPullRequestMergeActionGroup : DefaultActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
-    val permissions = e.getRequiredData(GithubPullRequestKeys.REPO_DETAILS).permissions
-    e.presentation.isVisible = (permissions.isPush || permissions.isAdmin)
+    val permissions = e.getData(GithubPullRequestKeys.REPO_DETAILS)?.permissions
+    e.presentation.isVisible = permissions != null && (permissions.isPush || permissions.isAdmin)
   }
 }
