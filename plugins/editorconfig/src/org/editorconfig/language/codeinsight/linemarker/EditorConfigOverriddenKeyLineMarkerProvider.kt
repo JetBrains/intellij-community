@@ -34,7 +34,7 @@ class EditorConfigOverriddenKeyLineMarkerProvider : LineMarkerProvider {
         Pass.LINE_MARKERS,
         createTooltipProvider(children),
         createNavigationHandler(children, element),
-        GutterIconRenderer.Alignment.CENTER
+        GutterIconRenderer.Alignment.RIGHT
       )
 
       result.add(marker)

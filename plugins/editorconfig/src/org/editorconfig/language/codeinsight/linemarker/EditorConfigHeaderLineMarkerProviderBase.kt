@@ -37,7 +37,7 @@ abstract class EditorConfigHeaderLineMarkerProviderBase : LineMarkerProvider {
         Pass.LINE_MARKERS,
         createTooltipProvider(matchingHeaders),
         createNavigationHandler(matchingHeaders),
-        GutterIconRenderer.Alignment.CENTER
+        GutterIconRenderer.Alignment.RIGHT
       )
     }.forEach { result += it }
   }

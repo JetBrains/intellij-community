@@ -20,5 +20,5 @@ class EditorConfigOverridingHeaderFinder : EditorConfigHeaderLineMarkerProviderB
   override val findUsagesTitleKey = "message.header.overriding.find-usages-title"
   override val tooltipKeySingular = "message.header.overriding.element"
   override val tooltipKeyPlural = "message.header.overriding.multiple"
-  override val icon: Icon = AllIcons.General.OverridingMethod
+  override val icon: Icon = AllIcons.Gutter.OverridingMethod
 }
