@@ -47,7 +47,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       val text = getActionText(ui.table.model.getCommitMetadata(row))
       object : DumbAwareAction(text, "Navigate to $text", null) {
         override fun actionPerformed(e: AnActionEvent) {
-          VcsLogUsageTriggerCollector.triggerUsage(e, "Go to ${if (parent) "Parent" else "Child"} Row.Select from Popup")
+          VcsLogUsageTriggerCollector.triggerUsage(e, "Go to ${if (parent) "Parent" else "Child"} Commit.Select from Popup")
           ui.jumpToRow(row)
         }
       }
