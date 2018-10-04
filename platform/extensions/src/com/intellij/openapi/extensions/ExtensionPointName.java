@@ -74,4 +74,13 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
     return ContainerUtil.findInstance(getExtensionList(), instanceOf);
   }
+
+  @NotNull
+  public <V extends T> V getExtension(@NotNull Class<V> instanceOf) {
+    V result = findExtension(instanceOf);
+    if (result == null) {
+      throw new IllegalArgumentException("could not find extension implementation " + instanceOf);
+    }
+    return result;
+  }
 }
