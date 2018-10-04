@@ -102,7 +102,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
-    return ModuleUtilCore.findModuleForPsiElement(psiClass);
+    return ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile());
   }
 
   @Nullable

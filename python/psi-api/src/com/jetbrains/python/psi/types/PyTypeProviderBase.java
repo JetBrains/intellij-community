@@ -37,7 +37,6 @@ public class PyTypeProviderBase implements PyTypeProvider {
     .map(pyClass -> PyPsiFacade.getInstance(pyClass.getProject()).createClassType(pyClass, false))
     .orElse(null);
 
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = FactoryMap.create(key -> new ReturnTypeDescriptor());
 
   @Nullable

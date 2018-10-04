@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.credentialStore.createSecureRandom
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.io.CipherInputStream
 import org.bouncycastle.crypto.io.CipherOutputStream
@@ -26,7 +27,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.security.MessageDigest
-import java.security.SecureRandom
 import java.util.*
 
 /**
@@ -78,7 +78,7 @@ internal class KdbxHeader {
   var headerHash: ByteArray? = null
 
   init {
-    val random = SecureRandom()
+    val random = createSecureRandom()
     masterSeed = random.generateSeed(32)
     transformSeed = random.generateSeed(32)
     encryptionIv = random.generateSeed(16)

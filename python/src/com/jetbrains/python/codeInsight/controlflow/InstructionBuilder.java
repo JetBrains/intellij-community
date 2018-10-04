@@ -33,7 +33,7 @@ public class InstructionBuilder {
 
   @NotNull
   public static List<Instruction> buildInstructions(@NotNull ControlFlowBuilder builder,
-                                                    @NotNull List<PyTypeAssertionEvaluator.Assertion> assertions) {
+                                                    @NotNull List<? extends PyTypeAssertionEvaluator.Assertion> assertions) {
     final List<Instruction> result = Lists.newArrayList();
     for (PyTypeAssertionEvaluator.Assertion def : assertions) {
       final PyReferenceExpression e = def.getElement();

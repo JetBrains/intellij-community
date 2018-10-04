@@ -46,7 +46,6 @@ public abstract class JavaProjectModelModifier {
    * {@code null} otherwise
    */
   @Nullable
-  @SuppressWarnings("deprecation")
   public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     throw new UnsupportedOperationException("#addModuleDependency(Module, Module, DependencyScope) called on " + this);
   }
@@ -61,7 +60,6 @@ public abstract class JavaProjectModelModifier {
    * {@code null} otherwise
    */
   @Nullable
-  @SuppressWarnings("deprecation")
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     throw new UnsupportedOperationException("#addLibraryDependency(Module, Library, DependencyScope) called on " + this);
   }

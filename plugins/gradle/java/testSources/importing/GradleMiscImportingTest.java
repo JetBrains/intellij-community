@@ -38,7 +38,6 @@ import static com.intellij.util.containers.ContainerUtil.list;
  * @author Vladislav.Soroka
  * @since 10/27/2015
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleMiscImportingTest extends GradleImportingTestCase {
 
   /**

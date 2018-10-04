@@ -322,7 +322,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     getOrCreateDispatcher(type).addListener(listener, parentDisposable);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable) {
     myProject.getMessageBus().connect(parentDisposable).subscribe(XBreakpointListener.TOPIC, listener);

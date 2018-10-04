@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -95,7 +94,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), getSettings(file));
     }
     else {
-      for (PostFormatProcessor postFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
+      for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
         result = postFormatProcessor.processElement(result, getSettings(file));
       }
     }
@@ -105,7 +104,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   private static void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange) {
     if (!getSettings(file).FORMATTER_TAGS_ENABLED) {
       TextRange currentRange = textRange;
-      for (final PostFormatProcessor myPostFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
+      for (final PostFormatProcessor myPostFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
         currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings(file));
       }
     }
@@ -235,7 +234,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       caretKeeper.restoreCaretPosition();
     }
     if (editor instanceof EditorEx && isFullReformat) {
-      //noinspection deprecation
       CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }
@@ -865,7 +863,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     int delta = 0;
     for (TextRange enabledRange : enabledRanges) {
       enabledRange = enabledRange.shiftRight(delta);
-      for (PostFormatProcessor processor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
+      for (PostFormatProcessor processor : PostFormatProcessor.EP_NAME.getExtensionList()) {
         TextRange processedRange = processor.processText(file, enabledRange, settings);
         delta += processedRange.getLength() - enabledRange.getLength();
       }

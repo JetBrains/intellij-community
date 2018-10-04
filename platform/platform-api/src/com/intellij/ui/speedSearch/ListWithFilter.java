@@ -41,10 +41,12 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return null;
   }
 
-  public static <T> ListWithFilter<T> wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer) {
+  @NotNull
+  public static <T> ListWithFilter<T> wrap(@NotNull JList<? extends T> list, @NotNull JScrollPane scrollPane, @Nullable Function<? super T, String> namer) {
     return wrap(list, scrollPane, namer, false);
   }
 
+  @NotNull
   public static <T> ListWithFilter<T> wrap(@NotNull JList<? extends T> list, @NotNull JScrollPane scrollPane, @Nullable Function<? super T, String> namer,
                                     boolean highlightAllOccurrences) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences);

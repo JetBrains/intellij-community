@@ -29,7 +29,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -90,8 +89,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
@@ -419,8 +418,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       content.putUserData(ID_KEY, id);
       content.putUserData(SUB_ID_KEY, subId);
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      content.setIcon(subId != null ? newPane.getPresentableSubIdIcon(subId) : newPane.getIcon());
-      content.setPopupIcon(subId != null ? AllIcons.General.Bullet : newPane.getIcon());
+      Icon icon = subId != null ? newPane.getPresentableSubIdIcon(subId) : newPane.getIcon();
+      content.setIcon(icon);
+      content.setPopupIcon(icon);
       content.setPreferredFocusedComponent(() -> {
         final AbstractProjectViewPane current = getCurrentProjectViewPane();
         return current != null ? current.getComponentToFocus() : null;
@@ -514,7 +514,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private void ensurePanesLoaded() {
     if (myExtensionsLoaded) return;
     myExtensionsLoaded = true;
-    AbstractProjectViewPane[] extensions = Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, myProject);
+    AbstractProjectViewPane[] extensions = AbstractProjectViewPane.EP_NAME.getExtensions(myProject);
     Arrays.sort(extensions, PANE_WEIGHT_COMPARATOR);
     for(AbstractProjectViewPane pane: extensions) {
       if (myUninitializedPaneState.containsKey(pane.getId())) {
@@ -1392,7 +1392,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void readPaneState(@NotNull Element panesElement) {
-    @SuppressWarnings("unchecked")
     final List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
 
     for (Element paneElement : paneElements) {
@@ -1608,7 +1607,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                 ? getGlobalOptions().getShowExcludedFiles()
                                 : getPaneOptionValue(myShowExcludedFiles, paneId, ourShowExcludedFilesDefaults);
 
-    if (showExcludedFiles == ourShowExcludedFilesDefaults) {
+    if (showExcludedFiles == ourShowExcludedFilesDefaults && EventQueue.isDispatchThread()) {
       AbstractProjectViewPane pane = getProjectViewPaneById(ProjectViewPane.ID);
       if (pane instanceof ProjectViewPane) {
         ProjectViewPane old = (ProjectViewPane)pane;
@@ -2088,7 +2087,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
       super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
-      getTemplatePresentation().setHoveredIcon(AllIcons.General.LocateHover);
     }
 
     @Override

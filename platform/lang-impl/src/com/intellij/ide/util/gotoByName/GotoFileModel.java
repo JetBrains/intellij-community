@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -10,11 +10,9 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +39,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   private final int myMaxSize;
 
   public GotoFileModel(@NotNull Project project) {
-    super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
+    super(project, ChooseByNameContributor.FILE_EP_NAME.getExtensionList());
     myMaxSize = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
 
@@ -52,7 +50,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @NotNull
   @Override
   public ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
-    for (GotoFileCustomizer customizer : Extensions.getExtensions(GotoFileCustomizer.EP_NAME)) {
+    for (GotoFileCustomizer customizer : GotoFileCustomizer.EP_NAME.getExtensionList()) {
       GotoFileItemProvider provider = customizer.createItemProvider(myProject, context, this);
       if (provider != null) return provider;
     }
@@ -133,20 +131,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
 
-        String shortName = getElementName(value);
-        String fullName = getFullName(value);
-        if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
-          String sanitized = GotoFileItemProvider.getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), GotoFileModel.this);
-          for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
-            MinusculeMatcher nameMatcher = NameUtil.buildMatcher("*" + sanitized.substring(i), NameUtil.MatchingCaseSensitivity.NONE);
-            if (nameMatcher.matches(shortName)) {
-              String locationPattern = FileUtil.toSystemDependentName(StringUtil.trimEnd(sanitized.substring(0, i), "/"));
-              return new ItemMatchers(nameMatcher, GotoFileItemProvider.getQualifiedNameMatcher(locationPattern));
-            }
-          }
-        }
-
-        return defaultMatchers;
+        return convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, GotoFileModel.this);
       }
     };
   }
@@ -208,5 +193,26 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @Override
   public int compare(Object o1, Object o2) {
     return 0;
+  }
+
+  @NotNull
+  public static PsiElementListCellRenderer.ItemMatchers convertToFileItemMatchers(@NotNull PsiElementListCellRenderer.ItemMatchers defaultMatchers,
+                                                                                  @NotNull PsiFileSystemItem value,
+                                                                                  @NotNull GotoFileModel model) {
+    String shortName = model.getElementName(value);
+    String fullName = model.getFullName(value);
+    if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
+      String sanitized = GotoFileItemProvider
+        .getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), model);
+      for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
+        MinusculeMatcher nameMatcher = NameUtil.buildMatcher("*" + sanitized.substring(i), NameUtil.MatchingCaseSensitivity.NONE);
+        if (nameMatcher.matches(shortName)) {
+          String locationPattern = FileUtil.toSystemDependentName(StringUtil.trimEnd(sanitized.substring(0, i), "/"));
+          return new PsiElementListCellRenderer.ItemMatchers(nameMatcher, GotoFileItemProvider.getQualifiedNameMatcher(locationPattern));
+        }
+      }
+    }
+
+    return defaultMatchers;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,7 +6,6 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
@@ -69,7 +54,7 @@ public class PatchWriter {
                             @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
     final String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
     UnifiedDiffWriter
-      .write(project, basePath, patches, writer, lineSeparator, Extensions.getExtensions(PatchEP.EP_NAME, project), commitContext);
+      .write(project, basePath, patches, writer, lineSeparator, PatchEP.EP_NAME.getExtensions(project), commitContext);
     if (includeBinaries) {
       BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
     }
@@ -85,7 +70,7 @@ public class PatchWriter {
   }
 
   @NotNull
-  public static VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     File commonAncestor = ChangesUtil.findCommonAncestor(changes);
     boolean multiVcs = ChangesUtil.getAffectedVcses(changes, project).size() != 1;
     if (multiVcs || commonAncestor == null) return project.getBaseDir();

@@ -98,7 +98,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   @Override
   public PsiType substitute(PsiType type) {
     if (type == null) {
-      //noinspection ConstantConditions
       return null;
     }
     PsiUtil.ensureValidType(type);

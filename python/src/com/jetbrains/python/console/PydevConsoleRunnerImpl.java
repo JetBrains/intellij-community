@@ -418,7 +418,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public static int getRemotePortFromProcess(@NotNull Process process) throws ExecutionException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
+    Scanner s = new Scanner(process.getInputStream());
     return readInt(s, process);
   }
 

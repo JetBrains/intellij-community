@@ -480,6 +480,15 @@ public class ChangeListWorker {
     return oldComment;
   }
 
+  public boolean editData(@NotNull String name, @Nullable ChangeListData newData) {
+    final ListData list = getDataByName(name);
+    if (list == null) return false;
+
+    list.data = newData;
+
+    return true;
+  }
+
 
   @NotNull
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String description, @Nullable String id,
@@ -1093,7 +1102,7 @@ public class ChangeListWorker {
           myWorker.myIdx.changeAdded(newChange, vcs);
 
           ListData list = myWorker.removeChangeMapping(oldChange);
-          myWorker.putChangeMapping(newChange, myWorker.notNullList(list));
+          if (list != null) myWorker.putChangeMapping(newChange, list);
         }
       }
     }
@@ -1112,9 +1121,13 @@ public class ChangeListWorker {
       }
 
       ListData list = myWorker.getDataByName(name);
-      if (list == null) return;
-
-      addChangeToList(list, change, vcs);
+      if (list != null) {
+        addChangeToList(list, change, vcs);
+      }
+      else {
+        LOG.error(String.format("Changelist not found: vcs - %s", vcs == null ? null : vcs.getName()));
+        addChangeToCorrespondingList(change, vcs);
+      }
     }
 
     public void addChangeToCorrespondingList(@NotNull Change change, AbstractVcs vcs) {

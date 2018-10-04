@@ -20,11 +20,11 @@ import java.util.Collection;
  */
 public class IgnoreClassFix extends InspectionGadgetsFix implements LowPriorityAction {
 
-  final Collection<String> myIgnoredClasses;
+  final Collection<? super String> myIgnoredClasses;
   final String myQualifiedName;
   private final String myFixName;
 
-  public IgnoreClassFix(String qualifiedName, Collection<String> ignoredClasses, String fixName) {
+  public IgnoreClassFix(String qualifiedName, Collection<? super String> ignoredClasses, String fixName) {
     myIgnoredClasses = ignoredClasses;
     myQualifiedName = qualifiedName;
     myFixName = fixName;

@@ -52,7 +52,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         return;
       }
       final String text = buildReplacementText(pattern);
-      //noinspection DialogTitleCapitalization
       myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
     }
 

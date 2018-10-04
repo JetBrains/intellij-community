@@ -16,4 +16,9 @@ class Foo {
       System.out.println("true!");
     }
   }
+
+  void equalZeroesBoxed() {
+    Double posz = +0.0, negz = -0.0;
+    System.out.println(<warning descr="Result of 'posz.equals(negz)' is always 'false'">posz.equals(negz)</warning>);
+  }
 }

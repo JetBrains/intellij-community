@@ -19,7 +19,6 @@ package com.intellij.psi.stubsHierarchy.impl;
  * @author peter
  */
 class IncompleteHierarchyException extends Exception {
-  @SuppressWarnings("ThrowableInstanceNeverThrown")
   public static final IncompleteHierarchyException INSTANCE = new IncompleteHierarchyException();
 
   private IncompleteHierarchyException() {

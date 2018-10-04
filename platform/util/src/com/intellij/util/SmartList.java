@@ -222,7 +222,6 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
-  @SuppressWarnings("override")
   public void sort(Comparator<? super E> comparator) {
     if (mySize >= 2) {
       Arrays.sort((E[])myElem, 0, mySize, comparator);

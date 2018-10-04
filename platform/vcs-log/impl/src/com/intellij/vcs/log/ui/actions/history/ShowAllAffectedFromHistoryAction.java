@@ -20,12 +20,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAction {
+import java.util.List;
+
+public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAction<VcsFullCommitDetails> {
+
+  @NotNull
+  @Override
+  protected List<VcsFullCommitDetails> getSelection(@NotNull FileHistoryUi ui) {
+    return ui.getVcsLog().getSelectedDetails();
+  }
+
+  @NotNull
+  @Override
+  protected DataGetter<VcsFullCommitDetails> getDetailsGetter(@NotNull FileHistoryUi ui) {
+    return ui.getLogData().getCommitDetailsGetter();
+  }
 
   @Override
   protected void performAction(@NotNull Project project,

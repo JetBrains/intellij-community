@@ -45,7 +45,6 @@ public class CompilerPaths {
    * @return a root directory where generated files for various compilers are stored
    */
   public static File getGeneratedDataDirectory(Project project) {
-    //noinspection HardCodedStringLiteral
     return new File(getCompilerSystemDirectory(project), ".generated");
   }
 
@@ -53,7 +52,6 @@ public class CompilerPaths {
    * @return a root directory where compiler caches for the given project are stored
    */
   public static File getCacheStoreDirectory(final Project project) {
-    //noinspection HardCodedStringLiteral
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 

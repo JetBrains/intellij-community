@@ -758,8 +758,22 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       try {
         final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject());
         applyEditorTo(configurationCopy);
-        classFilter = TestClassFilter
-          .create(SourceScope.modulesWithDependencies(configurationCopy.getModules()), configurationCopy.getConfigurationModule().getModule());
+        SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
+        GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
+        if (JUnitUtil.isJUnit5(globalSearchScope, getProject())) {
+          return new ClassFilter.ClassFilterWithScope() {
+            @Override
+            public GlobalSearchScope getScope() {
+              return globalSearchScope;
+            }
+
+            @Override
+            public boolean isAccepted(PsiClass aClass) {
+              return JUnitUtil.isJUnit5TestClass(aClass,true);
+            }
+          };
+        }
+        classFilter = TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule());
       }
       catch (JUnitUtil.NoJUnitException e) {
         throw NoFilterException.noJUnitInModule(module);

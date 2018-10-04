@@ -187,8 +187,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Nullable
     @Override
-    public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
-      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataName)) {
+    public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
         AbstractTreeNode single = JBIterable.from(selected).single();
         if (single instanceof MyRootNode) {
           VirtualFile file = ((MyRootNode)single).getVirtualFile();
@@ -202,12 +202,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyTreeStructure extends ProjectTreeStructure {
 
-    MyTreeStructure(final Project project) {
+    MyTreeStructure(@NotNull Project project) {
       super(project, ID);
     }
 
     @Override
-    protected AbstractTreeNode createRoot(Project project, ViewSettings settings) {
+    protected AbstractTreeNode createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
       return createRootNode(project, settings);
     }
 
@@ -258,7 +258,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
 
-    MyRootNode(Project project, RootType type, ViewSettings settings) {
+    MyRootNode(Project project, @NotNull RootType type, ViewSettings settings) {
       super(project, type, settings);
     }
 

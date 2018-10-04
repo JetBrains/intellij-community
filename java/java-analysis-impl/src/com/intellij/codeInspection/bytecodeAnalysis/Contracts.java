@@ -25,9 +25,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 abstract class ContractAnalysis extends Analysis<Result> {
-
-  static final ResultUtil resultUtil =
-    new ResultUtil(new ELattice<>(Value.Bot, Value.Top));
+  static final ResultUtil resultUtil = new ResultUtil(new ELattice<>(Value.Bot, Value.Top));
 
   final private State[] pending;
   final InOutInterpreter interpreter;
@@ -53,7 +51,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
   }
 
   static Result checkLimit(Result result) throws AnalyzerException {
-    if(result instanceof Pending) {
+    if (result instanceof Pending) {
       int size = Arrays.stream(((Pending)result).delta).mapToInt(prod -> prod.ids.length).sum();
       if (size > Analysis.EQUATION_SIZE_LIMIT) {
         throw new AnalyzerException(null, "Equation size is too big");
@@ -337,7 +335,7 @@ class InThrowAnalysis extends ContractAnalysis {
         case FRETURN:
         case DRETURN:
           BasicValue value = frame.pop();
-          if(!(value instanceof NthParamValue) && value != NullValue && value != TrueValue && value != FalseValue ||
+          if (!(value instanceof NthParamValue) && value != NullValue && value != TrueValue && value != FalseValue ||
              myReturnValue != null && !myReturnValue.equals(value)) {
             myHasNonTrivialReturn = true;
           } else {
@@ -376,7 +374,7 @@ class InOutInterpreter extends BasicInterpreter {
     super(Opcodes.API_VERSION);
     this.insns = insns;
     this.resultOrigins = resultOrigins;
-    if(direction instanceof ParamValueBasedDirection) {
+    if (direction instanceof ParamValueBasedDirection) {
       this.direction = (ParamValueBasedDirection)direction;
       this.nullAnalysis = this.direction.inValue == Value.Null;
     } else {
@@ -545,7 +543,7 @@ class InOutInterpreter extends BasicInterpreter {
           break;
         case INVOKEDYNAMIC:
           InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
-          if(LambdaIndy.from(indy) != null || ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
+          if (LambdaIndy.from(indy) != null || ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
             // indy producing lambda or string concatenation is never null
             return new NotNullValue(Type.getReturnType(indy.desc));
           }

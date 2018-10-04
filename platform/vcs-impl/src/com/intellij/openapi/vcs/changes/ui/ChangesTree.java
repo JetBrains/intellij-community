@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -112,8 +111,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     myGroupingSupport = installGroupingSupport();
 
-    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
-    setEmptyText(emptyText);
+    setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
   }
@@ -584,7 +582,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
-        @SuppressWarnings("unchecked")
         State state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setState(state);
 
@@ -641,7 +638,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
       DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
-      //noinspection SuspiciousMethodCalls
       if (changesSet.contains(mutableNode.getUserObject())) {
         treeSelection.add(new TreePath(mutableNode.getPath()));
       }

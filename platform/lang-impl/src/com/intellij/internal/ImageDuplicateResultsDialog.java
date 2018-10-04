@@ -17,6 +17,7 @@ package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PropertyName;
 import com.intellij.openapi.actionSystem.*;
@@ -55,19 +56,19 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseOfObsoleteCollectionType")
 public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
   private final Tree myTree;
+  private final TreeSpeedSearch mySpeedSearch;
   private final ResourceModules myResourceModules = new ResourceModules();
 
 
@@ -80,7 +81,9 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     setModal(false);
     myTree = new Tree(new MyRootNode());
     myTree.setRootVisible(true);
-    myTree.setCellRenderer(new MyCellRenderer());
+    MyCellRenderer renderer = new MyCellRenderer();
+    myTree.setCellRenderer(renderer);
+    mySpeedSearch = new TreeSpeedSearch(myTree, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
     init();
     TreeUtil.expandAll(myTree);
     setTitle("Image Duplicates");
@@ -277,7 +280,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   private static class MyDuplicatesNode extends DefaultMutableTreeNode {
 
-    MyDuplicatesNode(DefaultMutableTreeNode node, Set<VirtualFile> files) {
+    MyDuplicatesNode(DefaultMutableTreeNode node, Set<? extends VirtualFile> files) {
       super(files);
       setParent(node);
       children = files.stream().map(file -> new MyFileNode(this, file)).collect(Collectors.toCollection(Vector::new));
@@ -315,9 +318,9 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
         final Module module = ModuleUtil.findModuleForFile(file, myProject);
         if (module != null) {
           setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
-          append("[" + module.getName() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground()));
+          SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), "[" + module.getName() + "] ", SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground(), UIUtil.getTreeBackground(), this);
         }
-        append(getRelativePathToProject(myProject, file));
+        SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), getRelativePathToProject(myProject, file), SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground(), UIUtil.getTreeBackground(), this);
       }
       else if (value instanceof MyDuplicatesNode) {
         final Set<VirtualFile> files = ((MyDuplicatesNode)value).getUserObject();

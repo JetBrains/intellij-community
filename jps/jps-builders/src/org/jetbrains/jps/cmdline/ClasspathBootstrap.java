@@ -89,7 +89,7 @@ public class ClasspathBootstrap {
     return ContainerUtil.newArrayList(cp);
   }
 
-  public static void appendJavaCompilerClasspath(Collection<String> cp, boolean includeEcj) {
+  public static void appendJavaCompilerClasspath(Collection<? super String> cp, boolean includeEcj) {
     final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
     if (optimizedFileManagerClass != null) {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager

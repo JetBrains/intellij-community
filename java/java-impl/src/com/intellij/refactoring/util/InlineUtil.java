@@ -16,6 +16,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -171,7 +172,7 @@ public class InlineUtil {
     operand.replace(expr);
     expr = (PsiTypeCastExpression)expr.replace(cast);
     if (RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)expr)) {
-      return RedundantCastUtil.removeCast((PsiTypeCastExpression)expr);
+      return RemoveRedundantCastUtil.removeCast((PsiTypeCastExpression)expr);
     }
 
     return expr;

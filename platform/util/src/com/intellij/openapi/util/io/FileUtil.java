@@ -45,7 +45,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
   static {
     if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
@@ -235,7 +235,6 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return loadTextAndClose(new InputStreamReader(stream));
   }
 
@@ -321,7 +320,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static Future<Void> asyncDelete(@NotNull Collection<File> files) {
+  public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
       final File tempFile = renameToTempFileOrDelete(file);
@@ -1020,7 +1019,7 @@ public class FileUtil extends FileUtilRt {
     return false;
   }
 
-  public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<File> outFiles) {
+  public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<? super File> outFiles) {
     collectMatchedFiles(root, root, pattern, outFiles);
   }
 
@@ -1270,7 +1269,7 @@ public class FileUtil extends FileUtilRt {
     }
   });
 
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
   }
 
@@ -1278,8 +1277,8 @@ public class FileUtil extends FileUtilRt {
    * @see FileUtil#fileTraverser(File)
    */
   @Deprecated
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
-                                                @Nullable final Processor<File> directoryFilter) {
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,
+                                                @Nullable final Processor<? super File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();
     queue.add(root);
     while (!queue.isEmpty()) {

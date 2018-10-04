@@ -24,7 +24,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +88,7 @@ public class GroovyMarkerTypes {
         Collections.addAll(superMethods, method.findSuperMethods(false));
       }
       if (superMethods.isEmpty()) return;
-      final PsiMethod[] supers = ContainerUtil.toArray(superMethods, new PsiMethod[superMethods.size()]);
+      final PsiMethod[] supers = superMethods.toArray(PsiMethod.EMPTY_ARRAY);
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(supers);
       PsiElementListNavigator.openTargets(e, supers, 
                                           DaemonBundle.message("navigation.title.super.method", field.getName()),

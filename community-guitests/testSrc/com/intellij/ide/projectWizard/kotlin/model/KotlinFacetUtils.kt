@@ -1,8 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import java.io.Serializable
+
 enum class TargetPlatform(private val stringValue: String) {
-  JVM16("JVM 1.6"), JVM18("JVM 1.8"), JavaScript("JavaScript"), Common("Common (experimental)")
+  JVM16("JVM 1.6"),
+  JVM18("JVM 1.8"),
+  JavaScript("JavaScript"),
+  Common("Common (experimental)"),
+  Native ("Native")
   ;
 
   companion object {
@@ -44,12 +50,12 @@ data class FacetStructure(
   val cmdParameters: String = "-version",
   val jvmOptions: FacetStructureJVM? = null,
   val jsOptions: FacetStructureJS? = null
-)
+) : Serializable
 
 data class FacetStructureJVM(
     val templateClasses: String = "",
     val templatesClassPath: String = ""
-)
+) : Serializable
 
 enum class FacetJSEmbeddingSourceCode(private val stringValue: String) {
   Never("Never"),
@@ -87,4 +93,4 @@ data class FacetStructureJS(
   val copyLibraryRuntimeFiles: Boolean = true,
   val destinationDirectory: String = "lib",
   val moduleKind: FacetJSModuleKind = FacetJSModuleKind.Plain
-)
+) : Serializable

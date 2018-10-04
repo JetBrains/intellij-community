@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.opassign;
 
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
@@ -27,7 +27,7 @@ public class ReplaceWithOperatorAssignmentIntentionTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.assignment.with.operator.assignment.intention.name", "+");
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "+=");
   }
 
   @Override

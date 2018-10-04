@@ -38,7 +38,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -119,7 +118,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     setForceShowAsPopup(true);
     setCancelOnClickOutside(false);
     setResizable(true);
-    AbstractPopup.suppressMacCornerFor(getComponent());
 
     myProject = project;
     myEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
@@ -1167,6 +1165,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void setPrefixChangeListener(PrefixChangeListener listener) {
     myPrefixChangeListeners.add(listener);
+  }
+
+  public void addPrefixChangeListener(PrefixChangeListener listener, Disposable parentDisposable) {
+    ContainerUtil.add(listener, myPrefixChangeListeners, parentDisposable);
   }
 
   FontPreferences getFontPreferences() {

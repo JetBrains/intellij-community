@@ -89,7 +89,6 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
   @NotNull
   public static InspectionToolWrapper wrapTool(@NotNull InspectionProfileEntry profileEntry) {
     if (profileEntry instanceof LocalInspectionTool) {
-      //noinspection TestOnlyProblems
       return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
     }
     if (profileEntry instanceof GlobalInspectionTool) {
@@ -98,7 +97,7 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
     throw new RuntimeException("unknown inspection class: " + profileEntry + "; "+profileEntry.getClass());
   }
 
-  private static void registerTools(@NotNull Collection<InspectionToolProvider> providers,
+  private static void registerTools(@NotNull Collection<? extends InspectionToolProvider> providers,
                                     @NotNull List<Supplier<InspectionToolWrapper>> factories) {
     for (InspectionToolProvider provider : providers) {
       //noinspection unchecked

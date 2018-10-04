@@ -11,9 +11,9 @@ class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   @JvmName("java_with_jvm")
   fun createJavaWithKotlinJvmProject() {
     createJavaProject(projectFolder,
-                      setOf(NewProjectDialogModel.LibraryOrFramework(kotlinLibs[KotlinKind.JVM]!!.javaProject.frameworkName)))
+                      setOf(NewProjectDialogModel.LibraryOrFramework(kotlinProjects.getValue(Projects.JavaProject).frameworkName)))
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JVM,
+      project = kotlinProjects.getValue(Projects.JavaProject),
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version
     )
   }

@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +120,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
       if (refElement.isFinal()) return null;
       if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) return null;
 
-      final PsiMember psiMember = (PsiMember)refElement.getElement();
+      final PsiMember psiMember = ObjectUtils.tryCast(refElement.getPsiElement(), PsiMember.class);
       if (psiMember == null || !CanBeFinalHandler.allowToBeFinal(psiMember)) return null;
 
       PsiIdentifier psiIdentifier = null;
@@ -166,26 +167,20 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
           @Override public void visitMethod(@NotNull final RefMethod refMethod) {
             if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
                 !(refMethod instanceof RefImplicitConstructor)) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
-                @Override
-                public boolean process(PsiMethod derivedMethod) {
-                  ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                  problemsProcessor.ignoreElement(refMethod);
-                  return false;
-                }
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+                ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                problemsProcessor.ignoreElement(refMethod);
+                return false;
               });
             }
           }
 
           @Override public void visitClass(@NotNull final RefClass refClass) {
             if (!refClass.isAnonymous()) {
-              globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
-                @Override
-                public boolean process(PsiClass inheritor) {
-                  ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                  problemsProcessor.ignoreElement(refClass);
-                  return false;
-                }
+              globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
+                ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                problemsProcessor.ignoreElement(refClass);
+                return false;
               });
             }
           }

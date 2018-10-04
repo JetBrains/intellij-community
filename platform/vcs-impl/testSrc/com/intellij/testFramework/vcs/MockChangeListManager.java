@@ -398,6 +398,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isInUpdate() {
     throw new UnsupportedOperationException();
   }

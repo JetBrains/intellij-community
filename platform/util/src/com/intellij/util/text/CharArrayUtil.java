@@ -490,7 +490,7 @@ public class CharArrayUtil {
     if (lastTextFound < result.size()) {
       result = result.subList(0, lastTextFound);
     }
-    return result.toArray(new TextRange[0]);
+    return result.toArray(TextRange.EMPTY_ARRAY);
   }
 
   public static boolean containLineBreaks(@NotNull CharSequence seq) {
@@ -527,7 +527,6 @@ public class CharArrayUtil {
   @NotNull
   public static Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return chars == null ? new CharSequenceReader(text.toString()) : new UnsyncCharArrayReader(chars, 0, text.length());
   }
 

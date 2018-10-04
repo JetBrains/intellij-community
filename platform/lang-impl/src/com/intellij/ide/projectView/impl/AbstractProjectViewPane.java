@@ -50,7 +50,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -578,7 +581,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (path != null) {
         Object component = path.getLastPathComponent();
         if (component instanceof DefaultMutableTreeNode) {
-          //noinspection deprecation
           return getSelectedDirectoriesInAmbiguousCase(((DefaultMutableTreeNode)component).getUserObject());
         }
         return getSelectedDirectoriesInAmbiguousCase(component);
@@ -794,7 +796,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @TestOnly
   @Deprecated
   @NotNull
-  public Promise<TreePath> promisePathToElement(Object element) {
+  public Promise<TreePath> promisePathToElement(@NotNull Object element) {
     AbstractTreeBuilder builder = getTreeBuilder();
     if (builder != null) {
       DefaultMutableTreeNode node = builder.getNodeForElement(element);
@@ -816,7 +818,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
-  public static TreeVisitor createVisitor(Object object) {
+  public static TreeVisitor createVisitor(@NotNull Object object) {
     if (object instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)object;
       object = node.getValue();

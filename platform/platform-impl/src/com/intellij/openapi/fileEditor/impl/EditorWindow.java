@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -611,7 +610,7 @@ public class EditorWindow {
   }
 
   /**
-   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab, 
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
   public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
@@ -779,7 +778,7 @@ public class EditorWindow {
           final VirtualFile file = selectedEditor.getFile();
 
           if (virtualFile == null) {
-            for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+            for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
               VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
 
               if (associatedFile != null) {
@@ -1236,11 +1235,11 @@ public class EditorWindow {
 
   public void clear() {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-    
+
     FileEditorManagerImpl manager = getManager();
-    FileEditorManagerListener.Before beforePublisher = 
+    FileEditorManagerListener.Before beforePublisher =
       manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
-    FileEditorManagerListener afterPublisher = 
+    FileEditorManagerListener afterPublisher =
       manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
     for (EditorWithProviderComposite composite : getEditors()) {
       VirtualFile file = composite.getFile();

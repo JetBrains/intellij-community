@@ -17,14 +17,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 
 class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
-  private final Project myProject;
+  @NotNull private final Project myProject;
+  @NotNull private final GitAuthenticationGate myAuthenticationGate;
   private final boolean myIgnoreAuthenticationRequest;
   private final boolean myDoNotRememberPasswords;
 
   @Nullable private String myLastAskedKeyPath = null;
 
-  GitNativeSshGuiAuthenticator(Project project, boolean isIgnoreAuthenticationRequest, boolean doNotRememberPasswords) {
+  GitNativeSshGuiAuthenticator(@NotNull Project project,
+                               @NotNull GitAuthenticationGate authenticationGate,
+                               boolean isIgnoreAuthenticationRequest,
+                               boolean doNotRememberPasswords) {
     myProject = project;
+    myAuthenticationGate = authenticationGate;
     myIgnoreAuthenticationRequest = isIgnoreAuthenticationRequest;
     myDoNotRememberPasswords = doNotRememberPasswords;
   }
@@ -32,10 +37,12 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @Nullable
   @Override
   public String handleInput(@NotNull String description) {
-    if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
-    if (isConfirmation(description)) return askConfirmationInput(description);
+    return myAuthenticationGate.waitAndCompute(() -> {
+      if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
+      if (isConfirmation(description)) return askConfirmationInput(description);
 
-    return askGenericInput(description);
+      return askGenericInput(description);
+    });
   }
 
 

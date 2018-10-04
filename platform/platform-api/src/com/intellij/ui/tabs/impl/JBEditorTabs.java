@@ -43,9 +43,7 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter(this);
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
-
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -167,7 +165,7 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected JBEditorTabsPainter getPainter() {
-    return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
+    return myDefaultPainter;
   }
 
   @Override

@@ -33,10 +33,10 @@ public class TemplateProjectSettingsGroup extends DefaultActionGroup {
 
     Presentation presentation = getTemplatePresentation();
     presentation.setText("Project Defaults");
-    presentation.setIcon(AllIcons.General.TemplateProjectSettings);
+    presentation.setIcon(AllIcons.General.Settings);
 
-    add(withTextAndIcon(new TemplateProjectPropertiesAction(), "Settings", AllIcons.General.TemplateProjectSettings));
-    add(withTextAndIcon(new TemplateProjectStructureAction(), "Project Structure", AllIcons.General.TemplateProjectStructure));
+    add(withTextAndIcon(new TemplateProjectPropertiesAction(), "Settings", AllIcons.General.Settings));
+    add(withTextAndIcon(new TemplateProjectStructureAction(), "Project Structure", AllIcons.General.ProjectStructure));
     add(withTextAndIcon(new EditRunConfigurationsAction(), "Run Configurations", AllIcons.ToolbarDecorator.Import));
   }
 

@@ -56,7 +56,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
   private final boolean myForceHttps;
-  private final Collection<PluginDownloader> myUpdatedPlugins;
+  private final Collection<? extends PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
   private final boolean myWriteProtected;
@@ -68,8 +68,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @Nullable UpdateChain patches,
                    boolean enableLink,
                    boolean forceHttps,
-                   @Nullable Collection<PluginDownloader> updatedPlugins,
-                   @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
+                   @Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                   @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;

@@ -99,7 +99,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
 
   private class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
 
-    @SuppressWarnings("IfStatementWithIdenticalBranches")
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);

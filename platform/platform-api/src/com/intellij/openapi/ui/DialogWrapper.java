@@ -28,8 +28,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -1297,14 +1295,14 @@ public abstract class DialogWrapper {
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
+    if (!isVisualPaddingCompensatedOnComponentLevel) {
+      southSection.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+    }
     root.add(southSection, BorderLayout.SOUTH);
 
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
-      if (!isVisualPaddingCompensatedOnComponentLevel) {
-        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
-      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 
@@ -1958,7 +1956,7 @@ public abstract class DialogWrapper {
       SwingUtilities.invokeLater(clearErrorRunnable);
     }
 
-    List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
+    List<ValidationInfo> corrected = ContainerUtil.filter(myInfo, vi -> !info.contains(vi));
     if (Registry.is("ide.inplace.validation.tooltip")) {
       corrected.stream().filter(vi -> vi.component != null).
         map(vi -> ComponentValidator.getInstance(vi.component)).
@@ -1981,7 +1979,8 @@ public abstract class DialogWrapper {
 
         SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
       });
-    } else if (!myInfo.isEmpty()) {
+    }
+    else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
           myErrorText.appendError(vi.message);

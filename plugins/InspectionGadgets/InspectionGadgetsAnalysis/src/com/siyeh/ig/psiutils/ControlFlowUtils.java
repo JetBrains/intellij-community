@@ -679,11 +679,10 @@ public class ControlFlowUtils {
             .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
             .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
           if (hasLoopVarCheck) {
-            boolean notWritten = ReferencesSearch.search(variable).forEach(ref -> {
+            return ReferencesSearch.search(variable).allMatch(ref -> {
               PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
               return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
             });
-            if (notWritten) return true;
           }
         }
       }
@@ -922,7 +921,15 @@ public class ControlFlowUtils {
       if (checkExecuted && parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         IElementType type = polyadicExpression.getOperationTokenType();
-        if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != cur) {
+        if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
+          PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
+          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
+          // except some special cases
+          return (polyParent instanceof PsiIfStatement && ((PsiIfStatement)polyParent).getElseBranch() == null) ||
+                 (polyParent instanceof PsiWhileStatement) || (polyParent instanceof PsiReturnStatement) ||
+                 (polyParent instanceof PsiLambdaExpression);
+        }
+        else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
           // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
           return false;
         }
@@ -945,6 +952,7 @@ public class ControlFlowUtils {
         return false;
       }
     }
+    if (parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == cur) return true;
     if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();
@@ -1022,16 +1030,16 @@ public class ControlFlowUtils {
    * Returns true if given element is an empty statement
    *
    * @param element element to check
-   * @param ignoreComments if true, empty statement containing comments is still considered empty
+   * @param commentIsContent if true, empty statement containing comments is not considered empty
    * @param emptyBlocks if true, empty block (or nested empty block like {@code {{}}}) is considered an empty statement
    * @return true if given element is an empty statement
    */
-  public static boolean isEmpty(PsiElement element, boolean ignoreComments, boolean emptyBlocks) {
-    if (!ignoreComments && element instanceof PsiComment) {
+  public static boolean isEmpty(PsiElement element, boolean commentIsContent, boolean emptyBlocks) {
+    if (!commentIsContent && element instanceof PsiComment) {
       return true;
     }
     else if (element instanceof PsiEmptyStatement) {
-      return !ignoreComments ||
+      return !commentIsContent ||
              PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
              !(PsiTreeUtil.skipWhitespacesBackward(element) instanceof PsiComment);
     }
@@ -1040,7 +1048,7 @@ public class ControlFlowUtils {
     }
     else if (element instanceof PsiBlockStatement) {
       final PsiBlockStatement block = (PsiBlockStatement)element;
-      return isEmpty(block.getCodeBlock(), ignoreComments, emptyBlocks);
+      return isEmpty(block.getCodeBlock(), commentIsContent, emptyBlocks);
     }
     else if (emptyBlocks && element instanceof PsiCodeBlock) {
       final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
@@ -1050,7 +1058,7 @@ public class ControlFlowUtils {
       }
       for (int i = 1; i < children.length - 1; i++) {
         final PsiElement child = children[i];
-        if (!isEmpty(child, ignoreComments, true)) {
+        if (!isEmpty(child, commentIsContent, true)) {
           return false;
         }
       }

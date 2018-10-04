@@ -107,7 +107,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     mySdkList = new JBList<>();
-    //noinspection unchecked
     mySdkList.setCellRenderer(new PySdkListCellRenderer(myModificators));
     mySdkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new ListSpeedSearch<>(mySdkList);

@@ -9,18 +9,18 @@ class CreateKotlinProjectGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("pure_kotlin_jvm")
   fun createKotlinJvmProject() {
-    createKotlinProject(projectFolder, KotlinKind.JVM)
+    createKotlinProject(projectFolder, kotlinProjects.getValue(Projects.KotlinProjectJvm))
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JVM,
+      project = kotlinProjects.getValue(Projects.KotlinProjectJvm),
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 
   @Test
   @JvmName("pure_kotlin_js")
   fun createKotlinJsProject() {
-    createKotlinProject(projectFolder, KotlinKind.JS)
+    createKotlinProject(projectFolder, kotlinProjects.getValue(Projects.KotlinProjectJs))
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JS,
+      project = kotlinProjects.getValue(Projects.KotlinProjectJs),
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 

@@ -17,6 +17,7 @@ package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.MasterDetails;
@@ -37,8 +38,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,14 +84,14 @@ public class SearchUtil {
     }
   }
 
-  private static void processComponent(Configurable configurable, Set<OptionDescription> configurableOptions, JComponent component) {
+  private static void processComponent(Configurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
       processUILabel(configurable.getDisplayName(), configurableOptions, null);
       processComponent(component, configurableOptions, null);
     }
   }
 
-  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path) {
+  private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path) {
     if (component instanceof SkipSelfSearchComponent) return;
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
@@ -197,8 +198,8 @@ public class SearchUtil {
 
   public static Runnable lightOptions(SearchableConfigurable configurable, JComponent component, String option, GlassPanel glassPanel) {
     return () -> {
-      if (!traverseComponentsTree(configurable, glassPanel, component, option, true)) {
-        traverseComponentsTree(configurable, glassPanel, component, option, false);
+      if (!traverseComponentsTree(configurable, component, option, true)) {
+        traverseComponentsTree(configurable, component, option, false);
       }
     };
   }
@@ -233,7 +234,6 @@ public class SearchUtil {
   }
 
   private static boolean traverseComponentsTree(SearchableConfigurable configurable,
-                                                GlassPanel glassPanel,
                                                 JComponent rootComponent,
                                                 String option,
                                                 boolean force) {
@@ -246,14 +246,14 @@ public class SearchUtil {
     if (label != null) {
       if (isComponentHighlighted(label, option, force, configurable)) {
         highlight = true;
-        glassPanel.addSpotlight(rootComponent);
+        highlightComponent(rootComponent, option);
       }
     }
     else if (rootComponent instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
       if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
         highlight = true;
-        glassPanel.addSpotlight(rootComponent);
+        highlightComponent(rootComponent, option);
       }
     }
     else if (rootComponent instanceof JTabbedPane) {
@@ -263,7 +263,7 @@ public class SearchUtil {
         final int index = getSelection(path, tabbedPane);
         if (index > -1 && index < tabbedPane.getTabCount()) {
           if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
-            glassPanel.addSpotlight((JComponent)tabbedPane.getTabComponentAt(index));
+            highlightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
           }
         }
       }
@@ -274,7 +274,7 @@ public class SearchUtil {
       if (path != null) {
         final int index = getSelection(path, tabbedPaneWrapper);
         if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
-          glassPanel.addSpotlight((JComponent)tabbedPaneWrapper.getTabComponentAt(index));
+          highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
         }
       }
     }
@@ -282,7 +282,7 @@ public class SearchUtil {
     final Component[] components = rootComponent.getComponents();
     for (Component component : components) {
       if (component instanceof JComponent) {
-        final boolean innerHighlight = traverseComponentsTree(configurable, glassPanel, (JComponent)component, option, force);
+        final boolean innerHighlight = traverseComponentsTree(configurable, (JComponent)component, option, force);
 
         if (!highlight && !innerHighlight) {
           final Border border = rootComponent.getBorder();
@@ -290,7 +290,7 @@ public class SearchUtil {
             final String title = ((TitledBorder)border).getTitle();
             if (isComponentHighlighted(title, option, force, configurable)) {
               highlight = true;
-              glassPanel.addSpotlight(rootComponent);
+              highlightComponent(rootComponent, option);
               rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
             }
           }
@@ -303,6 +303,10 @@ public class SearchUtil {
       }
     }
     return highlight;
+  }
+
+  private static void highlightComponent(@NotNull JComponent rootComponent, @NotNull String searchString) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighligtingListener.TOPIC).highlight(rootComponent, searchString);
   }
 
   public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {

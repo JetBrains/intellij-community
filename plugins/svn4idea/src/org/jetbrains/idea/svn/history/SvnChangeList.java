@@ -222,9 +222,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         final FilePath source = addedChange.getAfterRevision().getFile();
         deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null, path);
         ((ExternallyRenamedChange) deletedChange).setCopied(false);
-        //noinspection ConstantConditions
         //addedChange.setRenamedOrMovedTarget(deletedChange.getBeforeRevision().getFile());
-        //noinspection ConstantConditions
         ((ExternallyRenamedChange) deletedChange).setRenamedOrMovedTarget(source);
       } else {
         deletedChange = new Change(myListsHolder.createDeletedItemRevision(path, true), null);

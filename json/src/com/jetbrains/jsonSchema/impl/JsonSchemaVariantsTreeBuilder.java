@@ -27,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,7 @@ public class JsonSchemaVariantsTreeBuilder {
           steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
         }
         catch (NumberFormatException e) {
-          steps.add(Step.createPropertyStep(s));
+          steps.add(Step.createPropertyStep(JsonPointerUtil.unescapeJsonPointerPart(s)));
         }
       }
     }
@@ -307,7 +308,10 @@ public class JsonSchemaVariantsTreeBuilder {
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
     List<JsonSchemaObject> list = ContainerUtil.newArrayListWithCapacity(group.size());
     for (JsonSchemaObject s: group) {
-      list.add(merge(object, s, s));
+      JsonSchemaObject schemaObject = merge(object, s, s);
+      if (schemaObject.isValidByExclusion()) {
+        list.add(schemaObject);
+      }
     }
     return list;
   }
@@ -368,6 +372,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
+  @NotNull
   public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
                                        @NotNull JsonSchemaObject other,
                                        @NotNull JsonSchemaObject pointTo) {

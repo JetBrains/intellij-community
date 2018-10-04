@@ -435,7 +435,7 @@ public class DebuggerUIUtil {
     return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
   }
 
-  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<String> errorConsumer) {
+  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<? super String> errorConsumer) {
     XDebuggerTree tree = valueNode.getTree();
     Project project = tree.getProject();
     XValueModifier modifier = valueNode.getValueContainer().getModifier();

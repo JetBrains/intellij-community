@@ -22,12 +22,12 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
-  private final List<IdeaPluginDescriptor> myAllPlugins;
+  private final List<? extends IdeaPluginDescriptor> myAllPlugins;
   private final Set<String> mySkippedPlugins = new HashSet<>();
 
   private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
-  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<IdeaPluginDescriptor> allPlugins) {
+  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<? extends IdeaPluginDescriptor> allPlugins) {
     super(project);
     myProject = project;
     Arrays.sort(plugins, (o1, o2) -> o1.getPluginName().compareToIgnoreCase(o2.getPluginName()));

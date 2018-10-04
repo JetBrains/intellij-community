@@ -166,11 +166,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   protected abstract OSProcessHandler createProcessHandler(final Process process);
 
-  public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
+  public static void registerActionShortcuts(final List<? extends AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
-      if (action.getShortcutSet() != null) {
-        action.registerCustomShortcutSet(action.getShortcutSet(), component);
-      }
+      action.registerCustomShortcutSet(action.getShortcutSet(), component);
     }
   }
 

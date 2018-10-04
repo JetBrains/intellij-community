@@ -395,7 +395,6 @@ public class EditorSearchSession implements SearchSession,
 
       if (myFindModel.isRegularExpressions()) {
         try {
-          //noinspection ResultOfMethodCallIgnored
           Pattern.compile(text);
         }
         catch (Exception e) {

@@ -16,13 +16,12 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenWithKotlinJvm() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JVM
     val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName,
-      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName,
+      archetype = kotlinProjects.getValue(Projects.MavenProjectJvm).frameworkName,
       kotlinVersion = kotlinVersion)
     waitAMoment(extraTimeOut)
     mavenReimport()
@@ -55,13 +54,12 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenWithKotlinJs() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JS
     val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName,
-      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName,
+      archetype = kotlinProjects.getValue(Projects.MavenProjectJs).frameworkName,
       kotlinVersion = kotlinVersion)
     waitAMoment(extraTimeOut)
     mavenReimport()
@@ -82,7 +80,7 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       projectStructureDialogModel.checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
+        expectedJars = kotlinProjects.getValue(Projects.MavenProjectJs).jars.getJars(kotlinVersion)
       )
       projectStructureDialogModel.checkFacetInOneModule(
         expectedFacet,

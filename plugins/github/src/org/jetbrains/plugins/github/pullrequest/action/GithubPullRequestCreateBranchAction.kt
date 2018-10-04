@@ -13,8 +13,6 @@ import git4idea.branch.GitBranchUiHandlerImpl
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchWorker
 import git4idea.commands.Git
-import org.jetbrains.plugins.github.api.data.GithubPullRequest
-import java.util.concurrent.Future
 
 class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Branch...",
                                                             "Checkout synthetic pull request branch",
@@ -22,17 +20,17 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val pullRequest = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
-    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null
+    val dataProvider = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER)
+    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null && dataProvider != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val pullRequest = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
     val repository = e.getRequiredData(GithubPullRequestKeys.REPOSITORY)
-    val detailsLoader = e.getRequiredData(GithubPullRequestKeys.PULL_REQUESTS_DETAILS_LOADER)
     val repositoryList = listOf(repository)
 
-    val detailsFuture = detailsLoader.detailsFuture ?: return
+    val hashesFuture = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER).branchFetchRequest
     val options = GitBranchUtil.getNewBranchNameFromUser(project, repositoryList,
                                                          "Checkout New Branch From Pull Request #${pullRequest.number}",
                                                          "pull/${pullRequest.number}") ?: return
@@ -43,7 +41,8 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = getHeadSha(indicator, detailsFuture) ?: return
+          val sha = hashesFuture.get().second
+
           indicator.text = "Creating branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
@@ -64,7 +63,8 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = getHeadSha(indicator, detailsFuture) ?: return
+          val sha = hashesFuture.get().second
+
           indicator.text = "Checking out branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .createBranch(options.name, mapOf(repository to sha))
@@ -79,10 +79,5 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
         }
       }.queue()
     }
-  }
-
-  private fun getHeadSha(indicator: ProgressIndicator, detailsFuture: Future<GithubPullRequest>): String? {
-    indicator.text = "Loading pull request details"
-    return detailsFuture.get().head.sha
   }
 }

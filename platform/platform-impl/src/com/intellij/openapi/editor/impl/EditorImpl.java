@@ -36,10 +36,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
-import com.intellij.openapi.editor.markup.GutterDraggableObject;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -377,65 +374,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myMarkupModelListener = new MarkupModelListener() {
-      private boolean areRenderersInvolved(@NotNull RangeHighlighterEx highlighter) {
-        return highlighter.getCustomRenderer() != null ||
-               highlighter.getGutterIconRenderer() != null ||
-               highlighter.getLineMarkerRenderer() != null ||
-               highlighter.getLineSeparatorRenderer() != null;
-      }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter),
-                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+        onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
+                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter),
-                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+        onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
+                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
-        if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
-
-        if (renderersChanged) {
-          updateGutterSize();
-        }
-
-        boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
-        if (myDocumentChangeInProgress) {
-          // postpone repaint request, as folding model can be in inconsistent state and so coordinate
-          // conversions might give incorrect results
-          myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
-          return;
-        }
-
-        int textLength = myDocument.getTextLength();
-
-        int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
-        int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
-
-        int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
-        int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-        if (start != end && fontStyleOrColorChanged) {
-          myView.invalidateRange(start, end);
-        }
-        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
-          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        }
-
-        // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-        if (errorStripeNeedsRepaint) {
-          if (myFoldingModel.isInBatchFoldingOperation()) {
-            myErrorStripeNeedsRepaint = true;
-          }
-          else {
-            myMarkupModel.repaint(start, end);
-          }
-        }
-
-        updateCaretCursor();
+        onHighlighterChanged(highlighter, renderersChanged, fontStyleOrColorChanged);
       }
     };
 
@@ -450,6 +403,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
+    myInlayModel.addListener(myFoldingModel, myCaretModel);
     myInlayModel.addListener(myCaretModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
@@ -554,9 +508,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.addListener(new InlayModel.SimpleAdapter() {
       @Override
       public void onUpdated(@NotNull Inlay inlay) {
-        if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
-        validateSize();
-        repaint(inlay.getOffset(), inlay.getOffset(), false);
+        onInlayUpdated(inlay);
       }
     }, myCaretModel);
 
@@ -588,6 +540,76 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+  }
+
+  private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
+    if (highlighter.getGutterIconRenderer() != null) return true;
+    LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+    if (lineMarkerRenderer == null) return false;
+    LineMarkerRendererEx.Position position = EditorGutterComponentImpl.getLineMarkerPosition(lineMarkerRenderer);
+    return position == LineMarkerRendererEx.Position.LEFT && !myGutterComponent.myForceLeftFreePaintersAreaShown ||
+           position == LineMarkerRendererEx.Position.RIGHT && !myGutterComponent.myForceRightFreePaintersAreaShown;
+  }
+
+  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter, boolean canImpactGutterSize, boolean fontStyleOrColorChanged) {
+    if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
+
+    if (canImpactGutterSize) {
+      updateGutterSize();
+    }
+
+    boolean errorStripeNeedsRepaint = highlighter.getErrorStripeMarkColor() != null;
+    if (myDocumentChangeInProgress) {
+      // postpone repaint request, as folding model can be in inconsistent state and so coordinate
+      // conversions might give incorrect results
+      myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
+      return;
+    }
+
+    int textLength = myDocument.getTextLength();
+
+    int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
+    int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
+
+    if (getGutterComponentEx().getCurrentAccessibleLine() != null &&
+        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
+    {
+      escapeGutterAccessibleLine(start, end);
+    }
+    int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
+    int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
+    if (start != end && fontStyleOrColorChanged) {
+      myView.invalidateRange(start, end);
+    }
+    if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+      repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+    }
+
+    // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
+    if (errorStripeNeedsRepaint) {
+      if (myFoldingModel.isInBatchFoldingOperation()) {
+        myErrorStripeNeedsRepaint = true;
+      }
+      else {
+        myMarkupModel.repaint(start, end);
+      }
+    }
+
+    updateCaretCursor();
+  }
+
+  private void onInlayUpdated(@NotNull Inlay inlay) {
+    if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+    validateSize();
+    int offset = inlay.getOffset();
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+      repaint(offset, offset, false);
+    }
+    else {
+      int visualLine = offsetToVisualLine(offset);
+      int y = visualLineToY(visualLine) - EditorUtil.getTotalInlaysHeight(myInlayModel.getBlockElementsForVisualLine(visualLine, true));
+      repaintToScreenBottomStartingFrom(y);
+    }
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
@@ -947,9 +969,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    if (myProject == null || !myProject.isDisposed()) {
-      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
-    }
+    CodeStyleSettingsManager.removeListener(myProject, this);
 
     if (myBulkUpdateListener != null) {
       ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
@@ -1313,7 +1333,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myIsColumnMode;
   }
 
-  public int yToVisibleLine(int y) {
+  @Override
+  public int yToVisualLine(int y) {
     return myView.yToVisualLine(y);
   }
 
@@ -1383,10 +1404,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
 
+  private int logicalToVisualLine(int logicalLine) {
+    return logicalLine < myDocument.getLineCount() ? offsetToVisualLine(myDocument.getLineStartOffset(logicalLine)) :
+           logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line;
+  }
+
   private int logicalLineToY(int line) {
-    int visualLine = line < myDocument.getLineCount() ? offsetToVisualLine(myDocument.getLineStartOffset(line)) :
-                     logicalToVisualPosition(new LogicalPosition(line, 0)).line;
-    return visibleLineToY(visualLine);
+    int visualLine = logicalToVisualLine(line);
+    return visualLineToY(visualLine);
   }
 
   @Override
@@ -1423,7 +1448,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.findNearestDirectionBoundary(offset, lookForward);
   }
 
-  public int visibleLineToY(int line) {
+  @Override
+  public int visualLineToY(int line) {
     return myView.visualLineToY(line);
   }
 
@@ -1449,9 +1475,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset and
     // it does occupy particular amount of visual space that may be necessary to repaint.
     if (startOffset <= endOffset) {
-      int startLine = myDocument.getLineNumber(startOffset);
-      int endLine = myDocument.getLineNumber(endOffset);
-      repaintLines(startLine, endLine);
+      int startLine = myView.offsetToVisualLine(startOffset, false);
+      int endLine = myView.offsetToVisualLine(endOffset, true);
+      doRepaint(startLine, endLine);
     }
   }
 
@@ -1460,12 +1486,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void repaintToScreenBottom(int startLine) {
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
+    repaintToScreenBottomStartingFrom(yStartLine);
+  }
+
+  private void repaintToScreenBottomStartingFrom(int y) {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yEndLine = visibleArea.y + visibleArea.height;
 
-    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
-    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleArea.x, y, visibleArea.x + visibleArea.width, yEndLine - y);
+    myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), yEndLine - y);
     ((EditorMarkupModelImpl)getMarkupModel()).repaint(-1, -1);
   }
 
@@ -1478,15 +1508,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void repaintLines(int startLine, int endLine) {
     if (!isShowing()) return;
 
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    int yStartLine = logicalLineToY(startLine);
-    int endVisLine = myDocument.getTextLength() <= 0
+    int startVisualLine = logicalToVisualLine(startLine);
+    int endVisualLine = myDocument.getTextLength() <= 0
                      ? 0
                      : offsetToVisualLine(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine)));
-    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + 2;
+    doRepaint(startVisualLine, endVisualLine);
+  }
 
-    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
-    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
+  /**
+   * Repaints visual lines in provided range (inclusive on both ends)
+   */
+  private void doRepaint(int startVisualLine, int endVisualLine) {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    int yStart = visualLineToY(startVisualLine);
+    int height = visualLineToY(endVisualLine) + getLineHeight() + 2 - yStart;
+    myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
+    myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
   }
 
   private void bulkUpdateStarted() {
@@ -1553,6 +1590,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
+    if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
+      escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
+    }
+
     validateSize();
 
     int startLine = offsetToLogicalLine(e.getOffset());
@@ -1580,6 +1621,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
+    }
+  }
+
+  private void escapeGutterAccessibleLine(int offsetStart, int offsetEnd) {
+    int startVisLine = offsetToVisualLine(offsetStart);
+    int endVisLine = offsetToVisualLine(offsetEnd);
+    int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
+    if (startVisLine <= line && endVisLine >= line) {
+      getGutterComponentEx().escapeCurrentAccessibleLine();
     }
   }
 
@@ -2140,8 +2190,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = 0;
     }
     int visualLineCount = getVisibleLineCount();
-    if (yToVisibleLine(y) >= visualLineCount) {
-      y = visibleLineToY(Math.max(0, visualLineCount - 1));
+    if (yToVisualLine(y) >= visualLineCount) {
+      y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
@@ -3885,7 +3935,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                     selectWordAtCaret(false);
                     break;
                   }
-                  //noinspection fallthrough
                 case 4:
                   mySelectionModel.selectLineAtCaret();
                   setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
@@ -3978,7 +4027,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endSelectionOffset = getSelectionModel().getSelectionEnd();
     int endVisLine = offsetToVisualLine(endSelectionOffset - 1);
 
-    int clickVisLine = yToVisibleLine(e.getPoint().y);
+    int clickVisLine = yToVisualLine(e.getPoint().y);
 
     if (clickVisLine < startVisLine) {
       // Expand selection at backward direction.
@@ -4572,7 +4621,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String contextMenuGroupId = myContextMenuGroupId;
       Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
       if (inlay != null) {
-        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId();
+        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
         if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
       }
       AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(contextMenuGroupId);

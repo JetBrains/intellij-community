@@ -5,6 +5,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 /**
  * @author nik
@@ -128,14 +130,22 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
+    def suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
+    String javaExecutablePath
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
       extraBins += "jre64/bin/*"
+      javaExecutablePath = "jre64/bin/java"
     }
+    else {
+      javaExecutablePath = null
+    }
+    def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
+    generateProductJson(productJsonDir, javaExecutablePath)
+    paths += productJsonDir
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar $description")
@@ -169,8 +179,15 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Building Linux tar.gz $description")
       buildContext.ant.gzip(src: tarPath, zipfile: gzPath)
       buildContext.ant.delete(file: tarPath)
+      new ProductInfoValidator(buildContext).checkInArchive(gzPath, tarRoot)
       buildContext.notifyArtifactBuilt(gzPath)
     }
+  }
+
+  private void generateProductJson(String targetDir, String javaExecutablePath) {
+    def scriptName = buildContext.productProperties.baseFileName
+    new ProductInfoGenerator(buildContext)
+      .generateProductJson(targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
   }
 
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
@@ -184,6 +201,15 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux .snap package") {
       buildContext.messages.progress("Preparing files")
 
+      String unixSnapDistPath = "$buildContext.paths.buildOutputRoot/dist.unix.snap"
+      buildContext.ant.copy(todir: unixSnapDistPath) {
+        fileset(dir: unixDistPath) {
+          exclude(name: "bin/fsnotifier")
+          exclude(name: "bin/fsnotifier-arm")
+          exclude(name: "bin/libyjpagent-linux.so")
+        }
+      }
+
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/${customizer.snapName}.desktop") {
@@ -192,7 +218,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
           filter(token: "SCRIPT", value: customizer.snapName)
           filter(token: "COMMENT", value: buildContext.applicationInfo.motto)
-          filter(token: "WM_CLASS", value: getFrameClass())
+          filter(token: "WM_CLASS", value: getFrameClass(buildContext))
         }
       }
 
@@ -211,16 +237,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      buildContext.ant.delete(quiet: true) {
-        fileset(dir: "${unixDistPath}/bin") {
-          include(name: "fsnotifier")
-          include(name: "fsnotifier-arm")
-          include(name: "libyjpagent-linux.so")
-        }
-      }
-
       buildContext.ant.chmod(perm: "755") {
-        fileset(dir: unixDistPath) {
+        fileset(dir: unixSnapDistPath) {
           include(name: "bin/*.sh")
           include(name: "bin/*.py")
           include(name: "bin/fsnotifier*")
@@ -230,6 +248,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "jre64/bin/*")
         }
       }
+      generateProductJson(unixSnapDistPath, "jre64/bin/java")
+      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")
       buildContext.messages.progress("Building package")
@@ -243,7 +263,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
         arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
-        arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
+        arg(value: "--volume=${unixSnapDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
         arg(value: buildContext.options.snapDockerImage)
@@ -259,7 +279,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   // keep in sync with AppUIUtil#getFrameClass
-  private String getFrameClass() {
+  static String getFrameClass(BuildContext buildContext) {
     String name = buildContext.applicationInfo.productNameWithEdition
       .toLowerCase(Locale.US)
       .replace(' ', '-')

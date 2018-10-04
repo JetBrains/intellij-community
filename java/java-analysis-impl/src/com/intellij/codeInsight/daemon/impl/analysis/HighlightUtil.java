@@ -609,7 +609,6 @@ public class HighlightUtil extends HighlightUtilBase {
         ((declarationScope = ((PsiParameter)variable).getDeclarationScope()) instanceof PsiCatchSection ||
          declarationScope instanceof PsiForeachStatement ||
          declarationScope instanceof PsiLambdaExpression)) {
-      @SuppressWarnings("unchecked")
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         @Override
@@ -796,7 +795,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
+  public static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
     if (incompatible != null) {
@@ -808,6 +807,21 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
+  }
+
+  /**
+   * Checks if the supplied modifier list contains incompatible modifiers (e.g. public and private).
+   *
+   * @param modifierList a {@link PsiModifierList} to check
+   * @return true if the supplied modifier list contains incompatible modifiers
+   */
+  public static boolean isIllegalModifierCombination(@NotNull PsiModifierList modifierList) {
+    for (PsiElement child : modifierList.getChildren()) {
+      if (child instanceof PsiKeyword && getIncompatibleModifier(child.getText(), modifierList) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Contract("null -> null")
@@ -1021,27 +1035,15 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (value != null) {
-        if (!StringUtil.endsWithChar(text, '\'')) {
-          String message = JavaErrorMessages.message("unclosed.char.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-      }
-      else {
+      if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) {
           return null;
         }
-        if (StringUtil.endsWithChar(text, '\'')) {
-          if (text.length() == 1) {
-            String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-          }
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
+        if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
+          String message = JavaErrorMessages.message("unclosed.char.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+        text = text.substring(1, text.length() - 1);
 
         StringBuilder chars = new StringBuilder();
         boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);

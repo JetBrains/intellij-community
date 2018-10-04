@@ -76,8 +76,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -374,6 +376,7 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
@@ -492,7 +495,6 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         (notification, event) -> {

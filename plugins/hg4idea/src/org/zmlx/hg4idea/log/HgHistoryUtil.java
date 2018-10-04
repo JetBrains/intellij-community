@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -152,21 +153,21 @@ public class HgHistoryUtil {
       parentsHashes.add(factory.createHash(parent.getChangeset()));
     }
 
-    List<HgCommit.HgFileStatusInfo> firstParentChanges = new ArrayList<>();
+    List<VcsFileStatusInfo> firstParentChanges = new ArrayList<>();
     for (String file : revision.getModifiedFiles()) {
-      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.MODIFICATION, file, null));
+      firstParentChanges.add(new VcsFileStatusInfo(Change.Type.MODIFICATION, file, null));
     }
     for (String file : revision.getAddedFiles()) {
-      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.NEW, file, null));
+      firstParentChanges.add(new VcsFileStatusInfo(Change.Type.NEW, file, null));
     }
     for (String file : revision.getDeletedFiles()) {
-      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.DELETED, file, null));
+      firstParentChanges.add(new VcsFileStatusInfo(Change.Type.DELETED, file, null));
     }
     for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
-      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.MOVED, copiedFile.getKey(), copiedFile.getValue()));
+      firstParentChanges.add(new VcsFileStatusInfo(Change.Type.MOVED, copiedFile.getKey(), copiedFile.getValue()));
     }
 
-    List<List<HgCommit.HgFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
+    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
     reportedChanges.add(firstParentChanges);
 
     for (int index = 1; index < parents.size(); index++) {
@@ -185,7 +186,7 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  private static List<HgCommit.HgFileStatusInfo> convertHgChanges(@NotNull Set<HgChange> changes) {
+  private static List<VcsFileStatusInfo> convertHgChanges(@NotNull Set<HgChange> changes) {
     Set<String> deleted = ContainerUtil.newHashSet();
     Set<String> copied = ContainerUtil.newHashSet();
 
@@ -199,7 +200,7 @@ public class HgHistoryUtil {
       }
     }
 
-    List<HgCommit.HgFileStatusInfo> result = ContainerUtil.newArrayList();
+    List<VcsFileStatusInfo> result = ContainerUtil.newArrayList();
     for (HgChange change : changes) {
       Change.Type type = getType(change.getStatus());
       LOG.assertTrue(type != null, "Unsupported status for change " + change);
@@ -228,7 +229,7 @@ public class HgHistoryUtil {
           secondPath = null;
           break;
       }
-      result.add(new HgCommit.HgFileStatusInfo(type, notNull(firstPath), secondPath));
+      result.add(new VcsFileStatusInfo(type, notNull(firstPath), secondPath));
     }
     return result;
   }
@@ -305,14 +306,14 @@ public class HgHistoryUtil {
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter) {
     return getCommitRecords(project, result, converter, false);
   }
 
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter, boolean silent) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter, boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
@@ -383,7 +384,7 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params) {
+                                                   @NotNull final Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {

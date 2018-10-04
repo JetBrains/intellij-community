@@ -1,6 +1,9 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -8,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -18,7 +22,10 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -50,11 +57,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
@@ -78,6 +88,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
   @NotNull private final VcsLogChangeProcessor myPreviewDiff;
+
+  @NotNull private final History myHistory = new History(new MyPlaceNavigator());
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
@@ -156,6 +168,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
+
+    myGraphTable.getSelectionModel().addListSelectionListener((e) -> {
+      if (!myHistory.isNavigatingNow()) {
+        myHistory.pushQueryPlace();
+      }
+    });
   }
 
   /**
@@ -248,16 +266,25 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myUiProperties;
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      Collection<VirtualFile> roots = chooseNotNull(getSelectedRoots(), VcsLogUtil.getVisibleRoots(myUi));
+      Collection<VirtualFile> roots = getSelectedRoots();
       return toVirtualFileArray(roots);
+    }
+    else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
+      Collection<VirtualFile> roots = getSelectedRoots();
+      if (roots.size() != 1) return null;
+      return myUi.getLogData().getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
+    }
+    else if (History.KEY.is(dataId)) {
+      return myHistory;
     }
     return null;
   }
 
-  @Nullable
-  private Set<VirtualFile> getSelectedRoots() {
+  @NotNull
+  private Collection<VirtualFile> getSelectedRoots() {
+    if (myUi.getLogData().getRoots().size() == 1) return myUi.getLogData().getRoots();
     int[] selectedRows = myGraphTable.getSelectedRows();
-    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return VcsLogUtil.getVisibleRoots(myUi);
     return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
   }
 
@@ -360,6 +387,51 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
+    }
+  }
+
+  private class MyPlaceNavigator implements Place.Navigator {
+    private static final String PLACE_KEY = "Vcs.Log.MainFrame.History.PlaceKey";
+
+    @Override
+    public final void queryPlace(@NotNull Place place) {
+      List<CommitId> commits = myLog.getSelectedCommits();
+      if (commits.size() > 0) {
+        place.putPath(PLACE_KEY, commits.get(0));
+      }
+    }
+
+    @Override
+    public final ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+      if (place == null) return ActionCallback.DONE;
+
+      Object value = place.getPath(PLACE_KEY);
+      if (!(value instanceof CommitId)) return ActionCallback.REJECTED;
+
+      CommitId commitId = (CommitId)value;
+      ActionCallback callback = new ActionCallback();
+
+      ListenableFuture<Boolean> future = myUi.jumpToCommit(commitId.getHash(), commitId.getRoot());
+
+      Futures.addCallback(future, new FutureCallback<Boolean>() {
+        @Override
+        public void onSuccess(Boolean success) {
+          if (success) {
+            if (requestFocus) myGraphTable.requestFocusInWindow();
+            callback.setDone();
+          }
+          else {
+            callback.setRejected();
+          }
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+          callback.setRejected();
+        }
+      }, EdtExecutorService.getInstance());
+
+      return callback;
     }
   }
 }

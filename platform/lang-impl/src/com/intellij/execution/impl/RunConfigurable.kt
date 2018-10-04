@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditorConfigurable
@@ -545,7 +544,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
   override fun createComponent(): JComponent? {
-    for (each in Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT, project)) {
+    for (each in RunConfigurationsSettings.EXTENSION_POINT.getExtensions(project)) {
       val configurable = each.createConfigurable()
       additionalSettings.add(Pair.create(configurable, configurable.createComponent()))
     }
@@ -967,7 +966,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     val suggestedName = suggestName(configuration)
     val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
     configuration.name = name
-    (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
+    (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
     return createNewConfiguration(settings, node, selectedNode)
   }
@@ -1178,7 +1177,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val factory = settings.factory
         @Suppress("UNCHECKED_CAST", "DEPRECATION")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
-        (settings.configuration as? RunConfigurationBase)?.onConfigurationCopied()
+        (settings.configuration as? ConfigurationCreationListener)?.onConfigurationCopied()
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)
@@ -1193,7 +1192,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     override fun update(e: AnActionEvent) {
       val configuration = selectedConfiguration
-      e.presentation.isEnabled = configuration != null && configuration.configuration !is UnknownRunConfiguration
+      e.presentation.isEnabled = configuration != null && configuration.configuration.type.isManaged
     }
   }
 

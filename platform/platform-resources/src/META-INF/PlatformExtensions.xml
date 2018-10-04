@@ -43,6 +43,8 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
+    <applicationService serviceInterface="com.intellij.ide.ui.ProductIcons"
+                        serviceImplementation="com.intellij.ide.impl.ui.ProductsIconsImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
                         serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
@@ -405,12 +407,14 @@
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
 
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.DisabledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ActionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ActionFromContextMenuUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ToolWindowUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector"/>
@@ -572,5 +576,7 @@
     <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
       <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
     </experimentalFeature>
+
+    <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
   </extensions>
 </idea-plugin>

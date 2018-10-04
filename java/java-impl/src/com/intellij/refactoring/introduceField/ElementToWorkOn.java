@@ -83,7 +83,7 @@ public class ElementToWorkOn {
     return myExpression == null;
   }
 
-  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final String refactoringName, final String helpId, final Project project, final ElementsProcessor<ElementToWorkOn> processor) {
+  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final String refactoringName, final String helpId, final Project project, final ElementsProcessor<? super ElementToWorkOn> processor) {
     PsiLocalVariable localVar = null;
     PsiExpression expr = null;
 

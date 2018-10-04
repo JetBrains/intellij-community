@@ -35,8 +35,6 @@ public class CreateConstructorParameterFromFieldTest extends LightQuickFixParame
     }
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createConstructorParameterFromField";

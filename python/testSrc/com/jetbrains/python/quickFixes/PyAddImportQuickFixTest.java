@@ -129,6 +129,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileNegativeTest("Import 'pytest'");
   }
 
+  // PY-20100
+  public void testAlwaysSplitFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import 'mod.bar()'");
+  }
+
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
     doMultiFileAutoImportTest(hintPrefix, null);
   }

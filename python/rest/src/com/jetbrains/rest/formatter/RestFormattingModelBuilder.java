@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : ktisha
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class RestFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
 
   @Override

@@ -44,6 +44,7 @@ import java.util.*;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
+import static git4idea.fetch.GitFetchSupport.fetchSupport;
 import static git4idea.util.GitUIUtil.*;
 
 /**
@@ -60,7 +61,7 @@ public class GitUpdateProcess {
   @NotNull private final ChangeListManager myChangeListManager;
 
   @NotNull private final List<GitRepository> myRepositories;
-  @NotNull private final Map<GitRepository, GitSubmodule> mySubmodules;
+  @NotNull private final Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
@@ -87,11 +88,17 @@ public class GitUpdateProcess {
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
 
-    mySubmodules = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : myRepositories) {
-      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-      if (submodule != null) {
-        mySubmodules.put(repository, submodule);
+      repository.update();
+    }
+
+    mySubmodulesInDetachedHead = ContainerUtil.newLinkedHashMap();
+    for (GitRepository repository : myRepositories) {
+      if (!repository.isOnBranch()) {
+        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+        if (submodule != null) {
+          mySubmodulesInDetachedHead.put(repository, submodule);
+        }
       }
     }
   }
@@ -115,10 +122,6 @@ public class GitUpdateProcess {
     LOG.info("update started|" + updateMethod);
     String oldText = myProgressIndicator.getText();
     myProgressIndicator.setText("Updating...");
-
-    for (GitRepository repository : myRepositories) {
-      repository.update();
-    }
 
     // check if update is possible
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
@@ -285,8 +288,8 @@ public class GitUpdateProcess {
       }
     }
 
-    for (GitRepository repository : mySubmodules.keySet()) {
-      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodules.get(repository).getParent(), repository,
+    for (GitRepository repository : mySubmodulesInDetachedHead.keySet()) {
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodulesInDetachedHead.get(repository).getParent(), repository,
                                                    myProgressIndicator, myUpdatedFiles);
       updaters.put(repository, updater);
     }
@@ -311,7 +314,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify(@NotNull Collection<GitRepository> repositories) {
-    return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(repositories, "Update failed", false);
+    return fetchSupport(myProject).fetch(repositories).showNotificationIfFailed("Update failed");
   }
 
   /**
@@ -326,8 +329,8 @@ public class GitUpdateProcess {
     Map<GitRepository, GitLocalBranch> currentBranches = ContainerUtil.newLinkedHashMap();
     List<GitRepository> detachedHeads = ContainerUtil.newArrayList();
     for (GitRepository repository : myRepositories) {
-      if (mySubmodules.containsKey(repository)) {
-        LOG.debug("Repository " + repository + " is a submodule, not checking its tracked branch");
+      if (mySubmodulesInDetachedHead.containsKey(repository)) {
+        LOG.debug("Repository " + repository + " is a submodule in detached HEAD state, not checking its tracked branch");
         continue;
       }
 

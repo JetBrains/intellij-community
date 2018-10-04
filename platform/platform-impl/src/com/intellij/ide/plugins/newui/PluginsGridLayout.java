@@ -19,6 +19,7 @@ public class PluginsGridLayout extends AbstractLayoutManager {
   private final int myMiddleHOffset = JBUI.scale(1);
 
   private final Dimension myCellSize = new Dimension();
+  private final ComponentCache myCache = new ComponentCache();
 
   @Override
   public Dimension preferredLayoutSize(@NotNull Container parent) {
@@ -81,6 +82,10 @@ public class PluginsGridLayout extends AbstractLayoutManager {
   }
 
   private void calculateCellSize(@NotNull Container parent) {
+    if (myCache.isCached(parent)) {
+      return;
+    }
+
     myCellSize.width = 0;
     myCellSize.height = 0;
 

@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import java.util.List;
 import java.util.Set;
@@ -81,7 +81,7 @@ public class GdkMethodUtil {
                                                final PsiScopeProcessor processor,
                                                @NotNull final ResolveState state,
                                                @NotNull final PsiClass categoryClass) {
-    for (final PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+    for (final PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
       final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(each, null, ClassHint.RESOLVE_KINDS_METHOD) {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
@@ -144,7 +144,7 @@ public class GdkMethodUtil {
         final GrReferenceExpression qualifier = result.second;
         final PsiClass mixin = result.third;
 
-        for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+        for (PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
           if (!mixin.processDeclarations(new MixinMemberContributor.MixinProcessor(each, subjectType, qualifier), state, null, place)) {
             return false;
           }

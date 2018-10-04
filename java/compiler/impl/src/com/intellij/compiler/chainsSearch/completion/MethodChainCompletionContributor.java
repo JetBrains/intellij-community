@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +63,11 @@ public class MethodChainCompletionContributor extends CompletionContributor {
           result = JavaCompletionSorting.addJavaSorting(parameters, result);
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
           if (!UNIT_TEST_MODE && !alreadySuggested.isEmpty()) {
-            elementsFoundByMethodsChainsSearch = elementsFoundByMethodsChainsSearch.stream().filter(lookupElement -> {
-              PsiElement psi = lookupElement.getPsiElement();
-              return !(psi instanceof PsiMethod) || !alreadySuggested.contains(psi);
-            }).collect(Collectors.toList());
+            elementsFoundByMethodsChainsSearch =
+              ContainerUtil.filter(elementsFoundByMethodsChainsSearch, lookupElement -> {
+                PsiElement psi = lookupElement.getPsiElement();
+                return !(psi instanceof PsiMethod) || !alreadySuggested.contains(psi);
+              });
           }
           result.addAllElements(elementsFoundByMethodsChainsSearch);
         }

@@ -48,7 +48,6 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
                                         @Nullable DeploymentSourceType sourceType) {
     DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
     RunManager runManager = RunManager.getInstance(myProject);
-    @SuppressWarnings("unchecked")
     ConfigurationFactory factory = configurationType.getFactoryForType(sourceType);
     RunnerAndConfigurationSettings settings = runManager.createConfiguration(configurationType.getDisplayName(), factory);
     DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();

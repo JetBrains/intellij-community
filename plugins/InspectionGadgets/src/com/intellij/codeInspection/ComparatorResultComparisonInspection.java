@@ -99,7 +99,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.with", getReplacement());
+      return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
 
     @NotNull

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.WriteExternalException;
@@ -65,7 +64,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
       if (refMethod.isEntry()) return null;
 
       if (!refMethod.isReturnValueUsed()) {
-        final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+        final PsiMethod psiMethod = (PsiMethod)refMethod.getUastElement().getJavaPsi();
         if (psiMethod == null) return null;
         if (IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(psiMethod)) return null;
 
@@ -73,7 +72,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
         if (refMethod.isExternalOverride() && !isNative) return null;
         if (RefUtil.isImplicitRead(psiMethod)) return null;
         if (canIgnoreReturnValue(psiMethod)) return null;
-        return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative)};
+        return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative, false)};
       }
     }
 
@@ -164,11 +163,11 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   static ProblemDescriptor createProblemDescriptor(@NotNull PsiMethod psiMethod,
                                                    @NotNull InspectionManager manager,
                                                    @Nullable ProblemDescriptionsProcessor processor,
-                                                   boolean isNative) {
+                                                   boolean isNative, boolean isOnTheFly) {
     return manager.createProblemDescriptor(psiMethod.getNameIdentifier(),
                                            InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
                                            isNative ? null : new MakeVoidQuickFix(processor),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           false);
+                                           isOnTheFly);
   }
 }

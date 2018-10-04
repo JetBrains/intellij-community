@@ -45,8 +45,12 @@ public abstract class DiffElement<T> {
   @NotNull
   public abstract String getName();
 
-  public String getPresentablePath() {
+  public String getPresentableName() {
     return getName();
+  }
+
+  public String getPresentablePath() {
+    return getPresentableName();
   }
 
   public abstract long getSize();

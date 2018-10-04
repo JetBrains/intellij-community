@@ -32,7 +32,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
+public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -96,6 +96,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     return getModifiableModel(new RootConfigurationAccessor());
   }
 
+  @Override
   @NotNull
   public ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();

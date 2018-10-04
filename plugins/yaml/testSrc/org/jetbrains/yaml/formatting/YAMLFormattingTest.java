@@ -20,7 +20,6 @@ import java.util.function.Consumer;
  * Answer files: {source}.{answerName}.txt
  * Source files: {source}.yml
  */
-@SuppressWarnings("DefaultAnnotationParam")
 public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {

@@ -468,7 +468,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
       String relativePath = FileUtil.getRelativePath(myWorkingDir, filePath, '/');
       if (relativePath != null) {
-        String nodeId = group.hashCode() + myWorkingDir;
+        String nodeId = groupNodeId + myWorkingDir;
         ExecutionNode workingDirNode = getOrCreateMessagesNode(messageEvent, nodeId, messagesGroupNode, myWorkingDir, null, false,
                                                                () -> AllIcons.Nodes.Module, null, nodesMap, myProject);
         parentsPath = myWorkingDir;
@@ -482,7 +482,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         relativePath = FileUtil.getRelativePath(parentsPath, sourceRootForFile.getPath(), '/');
         if (relativePath != null) {
           parentsPath += ("/" + relativePath);
-          String contentRootNodeId = group.hashCode() + sourceRootForFile.getPath();
+          String contentRootNodeId = groupNodeId + sourceRootForFile.getPath();
           fileParentNode = getOrCreateMessagesNode(messageEvent, contentRootNodeId, fileParentNode, relativePath, null, false,
                                                    () -> ProjectFileIndex.SERVICE.getInstance(myProject).isInTestSourceContent(ioFile)
                                                          ? AllIcons.Modules.TestRoot
@@ -490,7 +490,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
 
-      String fileNodeId = group.hashCode() + filePath;
+      String fileNodeId = groupNodeId + filePath;
       relativePath = StringUtil.isEmpty(parentsPath) ? filePath : FileUtil.getRelativePath(parentsPath, filePath, '/');
       parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, fileParentNode, relativePath, null, false,
                                            () -> {
@@ -522,7 +522,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                        String nodeName,
                                                        String nodeTitle,
                                                        boolean autoExpandNode,
-                                                       @Nullable Supplier<Icon> iconProvider,
+                                                       @Nullable Supplier<? extends Icon> iconProvider,
                                                        @Nullable Navigatable navigatable,
                                                        Map<Object, ExecutionNode> nodesMap,
                                                        Project project) {

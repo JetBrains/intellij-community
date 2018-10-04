@@ -23,14 +23,10 @@ import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The whole arrangement idea is to allow to change file entries order according to the user-provided rules.
@@ -58,7 +54,6 @@ public class MemberOrderService {
    *                  given 'context' element if given member should be the first child
    *                  {@code null} otherwise
    */
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public PsiElement getAnchor(@NotNull PsiElement member, @NotNull CommonCodeStyleSettings settings, @NotNull PsiElement context) {
     Language language = context.getLanguage();

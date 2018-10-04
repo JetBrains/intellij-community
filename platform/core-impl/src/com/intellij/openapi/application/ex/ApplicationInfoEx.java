@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
@@ -40,17 +41,37 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getAboutImageUrl();
 
+  /**
+   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
+   */
+  @Deprecated
   public abstract String getIconUrl();
 
   public abstract String getSmallIconUrl();
 
+  /**
+   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
+   */
+  @Deprecated
+  @Nullable
   public abstract String getBigIconUrl();
+
+  /**
+   * Return path to an svg file containing icon of the current version of the product. The path is a relative path inside the product's JAR
+   * files. It may return special icon for EAP builds.
+   */
+  @Nullable
+  public abstract String getApplicationSvgIconUrl();
+
+  /**
+   * Return an svg file containing icon of the current version of the product. It may return special icon for EAP builds.
+   */
+  @Nullable
+  public abstract File getApplicationSvgIconFile();
 
   public abstract String getToolWindowIconUrl();
 
   public abstract String getWelcomeScreenLogoUrl();
-
-  public abstract String getEditorBackgroundImageUrl();
 
   /**
    * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
@@ -71,9 +92,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSupportUrl();
 
-  public abstract String getEAPFeedbackUrl();
+  public abstract String getYoutrackUrl();
 
-  public abstract String getReleaseFeedbackUrl();
+  public abstract String getFeedbackUrl();
 
   public abstract String getPluginManagerUrl();
 

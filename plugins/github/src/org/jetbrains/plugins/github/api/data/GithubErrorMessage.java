@@ -17,26 +17,31 @@ package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubErrorMessage {
-  private String message;
+  @Mandatory private String message;
   private List<Error> errors;
 
-  @RestModel
-  public static class Error {
-    private String resource;
-    private String field;
-    private String code;
-    private String message;
+  @NotNull
+  public String getMessage() {
+    return message;
   }
 
-  @Nullable
-  public String getMessage() {
+  @NotNull
+  public List<Error> getErrors() {
+    if (errors == null) return Collections.emptyList();
+    return errors;
+  }
+
+  @NotNull
+  public String getPresentableError() {
     if (errors == null) {
       return message;
     }
@@ -47,6 +52,34 @@ public class GithubErrorMessage {
         s.append(String.format("<br/>[%s; %s]%s: %s", e.resource, e.field, e.code, e.message));
       }
       return s.toString();
+    }
+  }
+
+  @RestModel
+  public static class Error {
+    @Mandatory private String resource;
+    private String field;
+    @Mandatory private String code;
+    private String message;
+
+    @NotNull
+    public String getResource() {
+      return resource;
+    }
+
+    @Nullable
+    public String getField() {
+      return field;
+    }
+
+    @NotNull
+    public String getCode() {
+      return code;
+    }
+
+    @Nullable
+    public String getMessage() {
+      return message;
     }
   }
 

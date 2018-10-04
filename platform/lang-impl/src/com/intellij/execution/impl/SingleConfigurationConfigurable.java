@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -61,7 +60,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myDisplayName = getSettings().getName();
     myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
 
-    myBrokenConfiguration = configuration instanceof UnknownRunConfiguration;
+    myBrokenConfiguration = !configuration.getType().isManaged();
     setFolderName(getSettings().getFolderName());
 
     setNameText(configuration.getName());
@@ -144,7 +143,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public final JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
-    DataManager.registerDataProvider(result, new MyDataProvider());
+    DataManager.registerDataProvider(result, dataId -> {
+      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return getEditor();
+      }
+      return null;
+    });
     return result;
   }
 
@@ -359,14 +363,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
-      boolean isUnknownRunConfiguration = settings.getConfiguration() instanceof UnknownRunConfiguration;
+      boolean isManagedRunConfiguration = settings.getConfiguration().getType().isManaged();
       myStoreProjectConfiguration = settings.isShared();
-      myCbStoreProjectConfiguration.setEnabled(!isUnknownRunConfiguration);
+      myCbStoreProjectConfiguration.setEnabled(isManagedRunConfiguration);
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
       myIsAllowRunningInParallel = settings.getConfiguration().isAllowRunningInParallel();
-      myIsAllowRunningInParallelCheckBox.setEnabled(!isUnknownRunConfiguration);
+      myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
       myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
       myIsAllowRunningInParallelCheckBox.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
@@ -412,18 +416,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     @NonNls
     private String generateWarningLabelText(final ValidationResult configurationException) {
       return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
-    }
-  }
-
-  private class MyDataProvider implements DataProvider {
-
-    @Nullable
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return getEditor();
-      }
-      return null;
     }
   }
 }

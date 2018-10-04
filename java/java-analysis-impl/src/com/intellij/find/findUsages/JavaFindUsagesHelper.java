@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -95,7 +94,7 @@ public class JavaFindUsagesHelper {
 
   public static boolean processElementUsages(@NotNull final PsiElement element,
                                              @NotNull final FindUsagesOptions options,
-                                             @NotNull final Processor<UsageInfo> processor) {
+                                             @NotNull final Processor<? super UsageInfo> processor) {
     if (options instanceof JavaVariableFindUsagesOptions) {
       final JavaVariableFindUsagesOptions varOptions = (JavaVariableFindUsagesOptions) options;
       if (varOptions.isReadAccess || varOptions.isWriteAccess){
@@ -202,7 +201,7 @@ public class JavaFindUsagesHelper {
   private static boolean addAliasingUsages(@NotNull PomTarget pomTarget,
                                            @NotNull final FindUsagesOptions options,
                                            @NotNull final Processor<? super UsageInfo> processor) {
-    for (AliasingPsiTargetMapper aliasingPsiTargetMapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
+    for (AliasingPsiTargetMapper aliasingPsiTargetMapper : AliasingPsiTargetMapper.EP_NAME.getExtensionList()) {
       for (final AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
         boolean success = ReferencesSearch
           .search(new ReferencesSearch.SearchParameters(ReadAction.compute(() -> PomService.convertToPsi(psiTarget)), options.searchScope, false, options.fastTrack))

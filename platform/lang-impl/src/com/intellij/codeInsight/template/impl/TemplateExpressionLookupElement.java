@@ -2,16 +2,12 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.OffsetMap;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -35,8 +31,9 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
                                                          PsiFile psiFile,
                                                          List<? extends LookupElement> elements,
                                                          Editor editor, final char completionChar) {
-    final OffsetMap offsetMap = new OffsetMap(editor.getDocument());
-    final InsertionContext context = new InsertionContext(offsetMap, completionChar, elements.toArray(LookupElement.EMPTY_ARRAY), psiFile, editor, false);
+    OffsetMap offsetMap = new OffsetMap(editor.getDocument());
+    InsertionContext context = new InsertionContext(offsetMap, completionChar, elements.toArray(LookupElement.EMPTY_ARRAY), psiFile, editor,
+                                                    InsertionContext.shouldAddCompletionChar(completionChar));
     context.setTailOffset(editor.getCaretModel().getOffset());
     offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());
@@ -45,8 +42,13 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
   }
 
   void handleTemplateInsert(List<? extends LookupElement> elements, final char completionChar) {
-    final InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor(), completionChar);
-    WriteAction.run(() -> doHandleInsert(context));
+    InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor(), completionChar);
+    WriteAction.run(() -> {
+      doHandleInsert(context);
+      if (context.shouldAddCompletionChar()) {
+        CodeCompletionHandlerBase.addCompletionChar(context, this);
+      }
+    });
     Disposer.dispose(context.getOffsetMap());
 
     if (handleCompletionChar(context) && !myState.isFinished()) {
@@ -77,7 +79,6 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
 
   private static boolean handleCompletionChar(InsertionContext context) {
     if (context.getCompletionChar() == '.') {
-      WriteAction.run(() -> EditorModificationUtil.insertStringAtCaret(context.getEditor(), "."));
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
       return false;
     }

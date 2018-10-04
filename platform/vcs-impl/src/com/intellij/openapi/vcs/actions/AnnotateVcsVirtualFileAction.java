@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
@@ -37,6 +36,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
@@ -64,8 +64,10 @@ public class AnnotateVcsVirtualFileAction {
     AnnotationData data = extractData(project, file);
     if (data == null) return false;
 
-    AnnotationProvider provider = data.vcs.getAnnotationProvider();
-    return provider instanceof AnnotationProviderEx;
+    AnnotationProviderEx provider = ObjectUtils.tryCast(data.vcs.getAnnotationProvider(), AnnotationProviderEx.class);
+    if (provider == null) return false;
+
+    return provider.isAnnotationValid(data.filePath, data.revisionNumber);
   }
 
   private static boolean isSuspended(@NotNull AnActionEvent e) {
@@ -141,7 +143,7 @@ public class AnnotateVcsVirtualFileAction {
         }
 
         if (!fileAnnotationRef.isNull()) {
-          AnnotateToggleAction.doAnnotate(editor, project, null, fileAnnotationRef.get(), data.vcs);
+          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), data.vcs);
         }
       }
     };

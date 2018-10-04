@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,7 +39,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   extends BaseInspection {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls private static final Map<String, String> s_conversionMap =
     new HashMap<>(7);
@@ -106,9 +106,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   public InspectionGadgetsFix buildFix(Object... infos) {
     final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
     if (replacementExpression == null) return null;
-    final String name = InspectionGadgetsBundle.message(
-      "unnecessary.temporary.on.conversion.from.string.fix.name",
-      replacementExpression);
+    final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacementExpression);
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
@@ -130,7 +128,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override
@@ -151,7 +149,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
     /**
-     * @noinspection StaticCollection
      */
     @NonNls private static final Map<String, String> s_basicTypeMap = new HashMap<>(7);
 

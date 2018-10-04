@@ -59,7 +59,7 @@
     <g fill="white" font-family="sans-serif" transform="translate(0,25)" stroke="white">
       <rect x="0" width="360" height="285" y="0" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g fill="silver" font-family="sans-serif" transform="translate(0,25)" stroke="silver">
+    <g fill="rgb(50,50,50)" font-family="sans-serif" transform="translate(0,25)" stroke="rgb(50,50,50)">
       <rect x="0" width="1" height="285" y="0" clip-path="url(#2)" stroke="none"/>
       <rect x="0" width="360" height="1" y="0" clip-path="url(#2)" stroke="none"/>
       <rect x="359" width="1" height="285" y="0" clip-path="url(#2)" stroke="none"/>

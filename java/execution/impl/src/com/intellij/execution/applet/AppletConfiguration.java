@@ -20,7 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +31,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 
-public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements SingleClassConfiguration, RefactoringListenerProvider,
-                                                                                                         PersistentStateComponent<Element> {
+public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, AppletConfigurationOptions>
+  implements SingleClassConfiguration, RefactoringListenerProvider, PersistentStateComponent<AppletConfigurationOptions> {
   public AppletConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(new JavaRunConfigurationModule(project, false), factory);
   }
 
+  @NotNull
   @Override
   public AppletConfigurationOptions getOptions() {
     return (AppletConfigurationOptions)super.getOptions();
@@ -117,13 +117,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getOptions().getMainClassName());
-  }
-
-  @Override
-  public Element getState() {
-    Element element = new Element("state");
-    super.writeExternal(element);
-    return element;
   }
 
   @Override

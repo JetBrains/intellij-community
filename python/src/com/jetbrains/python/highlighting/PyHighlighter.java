@@ -10,6 +10,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.lexer.PyFStringLiteralLexer;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -46,6 +47,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE),
       PyTokenTypes.TRIPLE_QUOTED_UNICODE
+    );
+    ret.registerLayer(
+      new PyFStringLiteralLexer(), 
+      PyTokenTypes.FSTRING_TEXT
     );
 
     return ret;
@@ -104,6 +109,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
+  
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_BRACES = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_BRACES", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_COLON = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_COLON", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_TYPE_CONVERSION = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_TYPE_CONVERSION", VALID_STRING_ESCAPE);
 
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
@@ -123,6 +132,15 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(PyTokenTypes.TRIPLE_QUOTED_STRING, PY_BYTE_STRING);
     keys.put(PyTokenTypes.SINGLE_QUOTED_UNICODE, PY_UNICODE_STRING);
     keys.put(PyTokenTypes.TRIPLE_QUOTED_UNICODE, PY_UNICODE_STRING);
+
+    keys.put(PyTokenTypes.FSTRING_START, PY_UNICODE_STRING);
+    keys.put(PyTokenTypes.FSTRING_END, PY_UNICODE_STRING);
+    keys.put(PyTokenTypes.FSTRING_TEXT, PY_UNICODE_STRING);
+    
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION, PY_FSTRING_FRAGMENT_TYPE_CONVERSION);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START, PY_FSTRING_FRAGMENT_COLON);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_START, PY_FSTRING_FRAGMENT_BRACES);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_END, PY_FSTRING_FRAGMENT_BRACES);
 
     keys.put(PyTokenTypes.DOCSTRING, PY_DOC_COMMENT);
 

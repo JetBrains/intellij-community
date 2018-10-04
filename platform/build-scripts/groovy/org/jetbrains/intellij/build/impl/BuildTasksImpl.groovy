@@ -78,7 +78,7 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.notifyArtifactBuilt(targetFilePath)
     }
   }
-  
+
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
@@ -122,7 +122,7 @@ class BuildTasksImpl extends BuildTasks {
     buildContext.ant.mkdir(dir: tempDir)
     String systemPath = "$tempDir/system"
     String configPath = "$tempDir/config"
-  
+
     def ideClasspath = new LinkedHashSet<String>()
     modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(it), false) }
 
@@ -224,8 +224,22 @@ idea.fatal.error.notification=disabled
         }
       }
 
+      if (buildContext.applicationInfo.svgRelativePath != null) {
+        buildContext.ant.copy(file: findBrandingResource(buildContext.applicationInfo.svgRelativePath), tofile: "$buildContext.paths.distAll/bin/${buildContext.productProperties.baseFileName}.svg")
+      }
+
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  private File findBrandingResource(String relativePath) {
+    def inModule = buildContext.findFileInModuleSources(buildContext.productProperties.applicationInfoModule, relativePath)
+    if (inModule != null) return inModule
+    def inResources = buildContext.productProperties.brandingResourcePaths.collect { new File(it, relativePath) }.find { it.exists() }
+    if (inResources == null) {
+      buildContext.messages.error("Cannot find '$relativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+    }
+    return inResources
   }
 
   private void copyLogXml() {
@@ -286,7 +300,7 @@ idea.fatal.error.notification=disabled
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>() 
+          pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
             def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
             pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
@@ -340,7 +354,14 @@ idea.fatal.error.notification=disabled
         scramble()
       }
       logFreeDiskSpace("before downloading JREs")
-      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
+      String[] args = [
+        'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+      ]
+      if (buildContext.options.bundledJreBuild != null) {
+        args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+      }
+      buildContext.gradle.run('Setting up JetBrains JREs', args)
       logFreeDiskSpace("after downloading JREs")
       layoutShared()
 

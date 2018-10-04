@@ -17,7 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.ex.EditorEx;

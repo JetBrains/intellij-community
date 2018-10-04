@@ -97,7 +97,6 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
           catch (final IOException e1) {
             application.invokeLater(() -> {
-              //noinspection DialogTitleCapitalization
               Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e1.getMessage(), "Reload List of Packages");
               LOG.info("Error updating list of repository packages", e1);
               myPackages.setPaintBusy(false);

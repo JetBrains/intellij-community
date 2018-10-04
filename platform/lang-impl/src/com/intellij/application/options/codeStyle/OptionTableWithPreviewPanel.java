@@ -54,14 +54,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 /**
  * @author max
  */
-@SuppressWarnings("Duplicates")
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 
@@ -506,7 +505,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private final Function<Integer,String> myDefaultValueRenderer;
+    @Nullable private final Function<? super Integer, String> myDefaultValueRenderer;
 
     IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -517,7 +516,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                      int minValue,
                      int maxValue,
                      int defaultValue,
-                     @Nullable Function<Integer,String> defaultValueRenderer) {
+                     @Nullable Function<? super Integer, String> defaultValueRenderer) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       myMinValue = minValue;
       myMaxValue = maxValue;
@@ -976,7 +975,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return options;
   }
 
-  private static void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+  private static void collectOptions(Set<? super String> optionNames, final List<? extends Option> optionList) {
     for (Option option : optionList) {
       if (option.groupName != null) {
         optionNames.add(option.groupName);

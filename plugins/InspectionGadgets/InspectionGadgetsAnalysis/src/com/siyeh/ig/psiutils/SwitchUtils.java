@@ -81,9 +81,6 @@ public class SwitchUtils {
       }
       final PsiStatement elseBranch = statement.getElseBranch();
       if (!(elseBranch instanceof PsiIfStatement)) {
-        if (elseBranch != null) {
-          branchCount++;
-        }
         if (branchCount < minimumBranches) {
           return null;
         }

@@ -97,7 +97,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] realloc(@NotNull T[] array, final int newSize, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] realloc(@NotNull T[] array, final int newSize, @NotNull ArrayFactory<? extends T> factory) {
     final int oldSize = array.length;
     if (oldSize == newSize) {
       return array;
@@ -229,7 +229,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] mergeCollections(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] mergeCollections(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<? extends T> factory) {
     T[] res = factory.create(c1.size() + c2.size());
 
     int i = 0;
@@ -247,7 +247,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull ArrayFactory<? extends T> factory) {
     if (a1.length == 0) {
       return a2;
     }
@@ -308,8 +308,8 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> T[] mergeArrayAndCollection(@NotNull T[] array,
-                                                @NotNull Collection<T> collection,
-                                                @NotNull final ArrayFactory<T> factory) {
+                                                @NotNull Collection<? extends T> collection,
+                                                @NotNull final ArrayFactory<? extends T> factory) {
     if (collection.isEmpty()) {
       return array;
     }
@@ -366,7 +366,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] prepend(final T element, @NotNull final T[] src, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] prepend(final T element, @NotNull final T[] src, @NotNull ArrayFactory<? extends T> factory) {
     int length = src.length;
     T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 1, length);
@@ -712,7 +712,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull T[] objects, T object, @NotNull Equality<T> comparator) {
+  public static <T> int indexOf(@NotNull T[] objects, T object, @NotNull Equality<? super T> comparator) {
     for (int i = 0; i < objects.length; i++) {
       if (comparator.equals(objects[i], object)) return i;
     }
@@ -835,8 +835,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
-    @SuppressWarnings("unchecked") final E[] array = createArray(sample.getClass().getComponentType(), count);
-    return array;
+    return createArray(sample.getClass().getComponentType(), count);
   }
 
   @Nullable

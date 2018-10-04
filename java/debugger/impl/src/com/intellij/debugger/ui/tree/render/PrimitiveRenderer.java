@@ -52,7 +52,6 @@ public class PrimitiveRenderer extends NodeRendererImpl {
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     if (value == null) {
-      //noinspection HardCodedStringLiteral
       return "null";
     }
     else if (value instanceof PrimitiveValue) {

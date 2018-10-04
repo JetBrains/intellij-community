@@ -46,18 +46,18 @@ public class QueueProcessor<T> {
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(@NotNull Consumer<T> processor) {
+  public QueueProcessor(@NotNull Consumer<? super T> processor) {
     this(processor, Conditions.alwaysFalse());
   }
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition) {
+  public QueueProcessor(@NotNull Consumer<? super T> processor, @NotNull Condition<?> deathCondition) {
     this(processor, deathCondition, true);
   }
 
-  public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
+  public QueueProcessor(@NotNull Consumer<? super T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
     this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
   }
 

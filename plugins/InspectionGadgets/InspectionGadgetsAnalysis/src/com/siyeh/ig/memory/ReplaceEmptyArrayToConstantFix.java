@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,7 +34,7 @@ public class ReplaceEmptyArrayToConstantFix extends InspectionGadgetsFix {
 
   public ReplaceEmptyArrayToConstantFix(PsiClass aClass, PsiField field) {
     myText = aClass.getQualifiedName() + "." + field.getName();
-    myName = InspectionGadgetsBundle.message("replace.with", aClass.getName() + "." + field.getName());
+    myName = CommonQuickFixBundle.message("fix.replace.with.x", aClass.getName() + "." + field.getName());
   }
 
   @Nls

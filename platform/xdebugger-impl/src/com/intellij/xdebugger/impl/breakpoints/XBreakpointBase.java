@@ -519,6 +519,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       return XBreakpointBase.this.getIcon();
     }
 
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      // [tav] todo: add "hit" state
+      return "icon: " + getType().getTitle() + (getCondition() != null ? " conditional" : "") + (!isEnabled() ? " disabled" : "");
+    }
+
     @Override
     @Nullable
     public AnAction getClickAction() {

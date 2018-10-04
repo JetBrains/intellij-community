@@ -59,9 +59,9 @@ import java.util.Map;
  */
 public class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.ChunkExtractor");
-  public static final int MAX_LINE_LENGTH_TO_SHOW = 200;
-  public static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
-  public static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
+  static final int MAX_LINE_LENGTH_TO_SHOW = 200;
+  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
+  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
 
   private final EditorColorsScheme myColorsScheme;
 
@@ -94,8 +94,8 @@ public class ChunkExtractor {
     }
   });
 
-  @NotNull 
-  public static TextChunk[] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
+  @NotNull
+  static TextChunk[] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
     return getExtractor(file).extractChunks(usageAdapter, file);
   }
 
@@ -117,7 +117,7 @@ public class ChunkExtractor {
     myDocumentStamp = -1;
   }
 
-  public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
+  public static int getStartOffset(final List<? extends RangeMarker> rangeMarkers) {
     LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {

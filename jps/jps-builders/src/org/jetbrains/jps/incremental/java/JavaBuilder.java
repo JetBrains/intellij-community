@@ -590,12 +590,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    if (compilerSdkVersion <= 11) {
-      // java versions from 9 till 11 are definitely known to support source/target 1.6 and later (IDEA-197550)
-      return chunkLanguageLevel < 6;
-    }
-    // Default: compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
-    return Math.abs(compilerSdkVersion - chunkLanguageLevel) > 3;
+    // compiler version is 9+ here, so:
+    //  - java 5 and older are not supported for sure
+    //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
+    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > 5;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -856,7 +854,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   /**
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
-  public static boolean addAnnotationProcessingOptions(List<String> options, @Nullable AnnotationProcessingConfiguration profile) {
+  public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
     if (profile == null || !profile.isEnabled()) {
       options.add("-proc:none");
       return false;

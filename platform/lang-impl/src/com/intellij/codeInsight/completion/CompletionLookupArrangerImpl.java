@@ -47,7 +47,6 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
 
   @Nullable private CompletionLocation myLocation;
   private final CompletionProcessEx myProcess;
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
@@ -134,7 +133,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     element.putUserData(mySorterKey, sorter);
   }
 
-  private static boolean haveSameWeights(List<Pair<LookupElement, Object>> pairs) {
+  private static boolean haveSameWeights(List<? extends Pair<LookupElement, Object>> pairs) {
     if (pairs.isEmpty()) return true;
 
     for (int i = 1; i < pairs.size(); i++) {
@@ -319,7 +318,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     return new Pair<>(listModel, toSelect);
   }
 
-  private static void addDummyItems(int count, List<LookupElement> listModel) {
+  private static void addDummyItems(int count, List<? super LookupElement> listModel) {
     EmptyLookupItem dummy = new EmptyLookupItem("loading...", true);
     for (int i = count; i > 0; i--) {
       listModel.add(dummy);
@@ -356,8 +355,8 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   }
 
   private static void ensureItemAdded(Set<LookupElement> items,
-                                      LinkedHashSet<LookupElement> model,
-                                      Iterator<LookupElement> byRelevance, @Nullable final LookupElement item) {
+                                      LinkedHashSet<? super LookupElement> model,
+                                      Iterator<? extends LookupElement> byRelevance, @Nullable final LookupElement item) {
     if (item != null && items.contains(item) && !model.contains(item)) {
       addSomeItems(model, byRelevance, lastAdded -> lastAdded == item);
     }
@@ -385,7 +384,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
   }
 
-  private static void addCurrentlySelectedItemToTop(LookupElementListPresenter lookup, Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private static void addCurrentlySelectedItemToTop(LookupElementListPresenter lookup, Set<LookupElement> items, LinkedHashSet<? super LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
       if (items.contains(lastSelection)) {
@@ -394,7 +393,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     }
   }
 
-  private static void addSomeItems(LinkedHashSet<LookupElement> model, Iterator<LookupElement> iterator, Condition<LookupElement> stopWhen) {
+  private static void addSomeItems(LinkedHashSet<? super LookupElement> model, Iterator<? extends LookupElement> iterator, Condition<? super LookupElement> stopWhen) {
     while (iterator.hasNext()) {
       LookupElement item = iterator.next();
       model.add(item);

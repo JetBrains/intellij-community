@@ -495,7 +495,7 @@ public class CodeCompletionHandlerBase {
                            idEndOffset, indicator.getOffsetMap());
     }
     if (context.shouldAddCompletionChar()) {
-      WriteAction.run(() -> addCompletionChar(context, item, editor, completionChar));
+      WriteAction.run(() -> addCompletionChar(context, item));
     }
     checkPsiTextConcistency(indicator);
 
@@ -615,11 +615,13 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
-  private static void addCompletionChar(WatchingInsertionContext context,
-                                        LookupElement item,
-                                        Editor editor, char completionChar) {
+  public static void addCompletionChar(InsertionContext context, LookupElement item) {
     if (!context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET)) {
-      LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
+      String message = "tailOffset<0 after inserting " + item + " of " + item.getClass();
+      if (context instanceof WatchingInsertionContext) {
+        message += "; invalidated at: " + ((WatchingInsertionContext)context).invalidateTrace + "\n--------";
+      }
+      LOG.info(message);
     }
     else if (!CompletionAssertions.isEditorValid(context.getEditor())) {
       LOG.info("Injected editor invalidated " + context.getEditor());
@@ -628,16 +630,16 @@ public class CodeCompletionHandlerBase {
       context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
     }
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      Language language = PsiUtilBase.getLanguageInEditor(editor, context.getFile().getProject());
+      Language language = PsiUtilBase.getLanguageInEditor(context.getEditor(), context.getFile().getProject());
       if (language != null) {
         for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.allForLanguage(language)) {
-          if (processor.processAfterCompletion(editor, context.getFile())) break;
+          if (processor.processAfterCompletion(context.getEditor(), context.getFile())) break;
         }
       }
     }
     else {
-      DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
-      EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+      DataContext dataContext = DataManager.getInstance().getDataContext(context.getEditor().getContentComponent());
+      EditorActionManager.getInstance().getTypedAction().getHandler().execute(context.getEditor(), context.getCompletionChar(), dataContext);
     }
   }
 

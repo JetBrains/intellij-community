@@ -8,7 +8,6 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -58,8 +57,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
-    ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for (ProjectOpenProcessor processor : processors) {
+    for (ProjectOpenProcessor processor : EXTENSION_POINT_NAME.getExtensionList()) {
       if (processor instanceof PlatformProjectOpenProcessor) {
         return (PlatformProjectOpenProcessor)processor;
       }
@@ -165,17 +163,19 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK && !isReopen) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, false, "Open Project");
-        if (!dialog.showAndGet()) {
+      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+
+        final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
+
+        if (exitCode == -1) {
           return null;
         }
-        if (dialog.isReplace()) {
+        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
           if (!ProjectUtil.closeAndDispose(projectToClose)) {
             return null;
           }
         }
-        else if (dialog.isAttach()) {
+        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
           if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
             return null;
           }
@@ -265,7 +265,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }
@@ -277,7 +277,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
       }

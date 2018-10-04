@@ -9,8 +9,8 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.LazyUtil;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import icons.TestngIcons;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class TestNGConfigurationType extends SimpleConfigurationType {
   public TestNGConfigurationType() {
-    super("TestNG", "TestNG", null, LazyUtil.create(() -> TestngIcons.TestNG));
+    super("TestNG", "TestNG", null, NotNullLazyValue.createValue(() -> TestngIcons.TestNG));
   }
 
   @NotNull

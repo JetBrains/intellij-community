@@ -1,0 +1,1 @@
+s = f'{"\N{LATIN SMALL LETTER A}"}'

@@ -164,7 +164,6 @@ public class LightProjectDescriptor {
     }
   }
 
-  @SuppressWarnings("NullableProblems")
   protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) { }
 
   public interface SetupHandler {

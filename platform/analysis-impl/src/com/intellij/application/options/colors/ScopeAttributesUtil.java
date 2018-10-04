@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ConcurrentMap;
 
 public class ScopeAttributesUtil {
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentMap<String, TextAttributesKey> ourCache =
     ConcurrentFactoryMap.createMap(scope -> TextAttributesKey.find("SCOPE_KEY_" + scope));
   @NotNull

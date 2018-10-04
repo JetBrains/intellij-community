@@ -63,7 +63,7 @@ public final class LanguageConsoleBuilder {
   private String processInputStateKey;
 
   // todo to be removed
-  public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
+  public LanguageConsoleBuilder(@NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
   }
 
@@ -110,7 +110,7 @@ public final class LanguageConsoleBuilder {
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
   public static AnAction registerExecuteAction(@NotNull LanguageConsoleView console,
-                                               @NotNull final Consumer<String> executeActionHandler,
+                                               @NotNull final Consumer<? super String> executeActionHandler,
                                                @NotNull String historyType,
                                                @Nullable String historyPersistenceId,
                                                @Nullable Condition<LanguageConsoleView> enabledCondition) {

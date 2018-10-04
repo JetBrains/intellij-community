@@ -51,7 +51,6 @@ public class JavaSimpleGetterProvider implements SimplePropertyGetterProvider {
 
     final PsiReferenceExpression reference = (PsiReferenceExpression)value;
     final PsiExpression qualifier = reference.getQualifierExpression();
-    //noinspection HardCodedStringLiteral
     if(qualifier != null && !"this".equals(qualifier.getText())) {
       return false;
     }

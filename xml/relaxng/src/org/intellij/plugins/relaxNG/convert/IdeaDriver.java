@@ -61,7 +61,6 @@ public class IdeaDriver {
     myProject = project;
   }
 
-  @SuppressWarnings({ "ThrowableInstanceNeverThrown" })
   public void convert(SchemaType inputType, IdeaErrorHandler errorHandler, VirtualFile... inputFiles) {
     if (inputFiles.length == 0) {
       throw new IllegalArgumentException();

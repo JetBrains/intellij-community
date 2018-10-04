@@ -28,10 +28,6 @@ public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
     JavaCodeStyleSettings.getInstance(getProject()).FIELD_NAME_PREFIX = "my";
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createFieldFromParameter";

@@ -62,10 +62,8 @@ public class SshSessionConnection implements IConnection {
     SshLogger.debug("opening session");
     mySession = mySessionProvider.compute();
     // wrapper created, inspection is inapplicable
-    //noinspection IOResourceOpenedButNotSafelyClosed
     myInputStream = new MyInputStreamWrapper(myActivityMonitor, mySession.getStdout());
     // wrapper created, inspection is inapplicable
-    //noinspection IOResourceOpenedButNotSafelyClosed
     myOutputStream = new MyOutputStreamWrapper(myActivityMonitor, mySession.getStdin());
     myErrorStreamGobbler = new StreamGobbler(mySession.getStderr());
     myState = LifeStages.CREATED;

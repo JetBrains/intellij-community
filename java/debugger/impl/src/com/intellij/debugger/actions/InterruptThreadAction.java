@@ -28,7 +28,6 @@ public class InterruptThreadAction extends DebuggerAction{
       return;
     }
 
-    //noinspection ConstantConditions
     final List<ThreadReferenceProxyImpl> threadsToInterrupt = new ArrayList<>();
     for (final DebuggerTreeNodeImpl debuggerTreeNode : nodes) {
       final NodeDescriptorImpl descriptor = debuggerTreeNode.getDescriptor();

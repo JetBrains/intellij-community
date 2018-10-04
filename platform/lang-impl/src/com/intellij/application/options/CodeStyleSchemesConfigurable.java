@@ -26,7 +26,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,7 +198,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       }
     }
 
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(null);
   }
 

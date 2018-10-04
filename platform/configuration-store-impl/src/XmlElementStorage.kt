@@ -2,9 +2,9 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -27,14 +27,14 @@ import java.nio.file.Path
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
-                                                       private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                                       private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
   val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
 
   protected abstract fun loadLocalData(): Element?
 
-  override final fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? = storageData.getState(componentName, archive)
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? = storageData.getState(componentName, archive)
 
   override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
@@ -396,7 +396,7 @@ internal fun DataWriter?.writeTo(file: Path, lineSeparator: String = LineSeparat
 }
 
 internal abstract class StringDataWriter : DataWriter {
-  override final fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
+  final override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
     output.bufferedWriter().use {
       write(it, lineSeparator, filter)
     }

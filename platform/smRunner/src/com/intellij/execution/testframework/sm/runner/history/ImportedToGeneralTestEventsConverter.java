@@ -75,7 +75,7 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
     }
   }
 
-  public static void parseTestResults(Supplier<Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
+  public static void parseTestResults(Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
     parseTestResults(readerSupplier.get(), ImportTestOutputExtension.findHandler(readerSupplier, processor));
   }
 

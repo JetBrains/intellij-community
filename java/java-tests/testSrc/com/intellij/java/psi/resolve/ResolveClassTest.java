@@ -266,7 +266,6 @@ public class ResolveClassTest extends ResolveTestCase {
     assertEquals("Inner", assertInstanceOf(ref.resolve(), PsiClass.class).getName());
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   private void configureDependency() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();

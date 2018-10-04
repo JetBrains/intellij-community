@@ -96,7 +96,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
     start(facade);
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "unchecked", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
   protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
     throws RemoteException
@@ -152,7 +152,6 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
     }, (int)myTtlMs.get(), TimeUnit.MILLISECONDS);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static class LineAwarePrintStream extends PrintStream {
     private LineAwarePrintStream(@NotNull final PrintStream delegate) {
       super(new OutputStream() {

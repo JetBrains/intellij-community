@@ -1800,6 +1800,8 @@ class Bar {{
 
   void testMethodReferenceCallContext() { doTest('\n') }
 
+  void testDestroyingCompletedClassDeclaration() { doTest('\n') }
+
   void testResourceParentInResourceList() {
     configureByTestName()
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]

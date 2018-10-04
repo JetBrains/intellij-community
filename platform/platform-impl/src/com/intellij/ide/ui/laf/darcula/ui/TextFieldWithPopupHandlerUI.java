@@ -45,7 +45,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final String POPUP = "JTextField.Search.FindPopup";
   private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
-  @SuppressWarnings("UseDPIAwareInsets")
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;

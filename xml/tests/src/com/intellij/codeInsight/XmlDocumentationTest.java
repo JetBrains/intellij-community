@@ -132,7 +132,6 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   public class DocumentationTestContext {
     final DocumentationProvider documentationProvider;
     final PsiElement originalElement;

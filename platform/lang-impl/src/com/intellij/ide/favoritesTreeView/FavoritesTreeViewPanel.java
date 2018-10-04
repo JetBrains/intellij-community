@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -27,7 +25,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -356,7 +353,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       return ((SmartPsiElementPointer)element).getElement();
     }
     else if (element != null) {
-      for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+      for (FavoriteNodeProvider provider : FavoriteNodeProvider.EP_NAME.getExtensions(myProject)) {
         PsiElement psiElement = provider.getPsiElement(element);
         if (psiElement != null) {
           return psiElement;
@@ -664,7 +661,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       if (myBuilder == null) return null;
       final Object[] selectedNodeElements = getSelectedNodeElements();
       if (selectedNodeElements.length != 1) return null;
-      for (FavoriteNodeProvider nodeProvider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+      for (FavoriteNodeProvider nodeProvider : FavoriteNodeProvider.EP_NAME.getExtensions(myProject)) {
         final PsiElement psiElement = nodeProvider.getPsiElement(selectedNodeElements[0]);
         if (psiElement instanceof PsiDirectory) {
           return new PsiDirectory[]{(PsiDirectory)psiElement};

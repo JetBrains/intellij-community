@@ -55,7 +55,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponentWithMod
       return null;
     }
 
-    @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"}) final String sdk_home = state.getSdkHome();
+    final String sdk_home = state.getSdkHome();
     if (StringUtil.isEmpty(sdk_home)) {
       return null;
     }

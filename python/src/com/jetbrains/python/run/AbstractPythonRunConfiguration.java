@@ -41,7 +41,7 @@ import java.util.Map;
  * @author Leonid Shalupov
  */
 public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration<T>> extends AbstractRunConfiguration
-  implements AbstractPythonRunConfigurationParams, CommandLinePatcher {
+  implements AbstractPythonRunConfigurationParams, CommandLinePatcher, RunProfileWithCompileBeforeLaunchOption {
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
@@ -124,8 +124,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), runConfigurationEditor);
 
     // tabs provided by extensions:
-    //noinspection unchecked
-    PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, group);
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
@@ -147,7 +146,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   private void checkExtensions() throws RuntimeConfigurationException {
     try {
-      PythonRunConfigurationExtensionsManager.getInstance().validateConfiguration(this, false);
+      PythonRunConfigurationExtensionsManager.Companion.getInstance().validateConfiguration(this, false);
     }
     catch (RuntimeConfigurationException e) {
       throw e;
@@ -239,7 +238,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
-    PythonRunConfigurationExtensionsManager.getInstance().readExternal(this, element);
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().readExternal(this, element);
   }
 
   protected void readEnvs(Element element) {
@@ -265,7 +264,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
 
     // extension settings:
-    PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().writeExternal(this, element);
 
     PathMappingSettings.writeExternal(element, getMappingSettings());
   }
@@ -416,7 +415,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  public boolean excludeCompileBeforeLaunchOption() {
+  public boolean isExcludeCompileBeforeLaunchOption() {
     final Module module = getModule();
     return module == null || ModuleType.get(module) instanceof PythonModuleTypeBase;
   }
@@ -464,7 +463,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  public boolean isCompileBeforeLaunchAddedByDefault() {
+  public boolean isBuildBeforeLaunchAddedByDefault() {
     return false;
   }
 

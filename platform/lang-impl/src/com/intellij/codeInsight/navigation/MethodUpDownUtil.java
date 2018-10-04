@@ -8,7 +8,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.LanguageStructureViewBuilder;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,7 +22,7 @@ public class MethodUpDownUtil {
   }
 
   public static int[] getNavigationOffsets(PsiFile file, final int caretOffset) {
-    for(MethodNavigationOffsetProvider provider: Extensions.getExtensions(MethodNavigationOffsetProvider.EP_NAME)) {
+    for(MethodNavigationOffsetProvider provider: MethodNavigationOffsetProvider.EP_NAME.getExtensionList()) {
       final int[] offsets = provider.getMethodNavigationOffsets(file, caretOffset);
       if (offsets != null && offsets.length > 0) {
         return offsets;
@@ -35,7 +34,7 @@ public class MethodUpDownUtil {
     return offsetsFromElements(array);
   }
 
-  public static int[] offsetsFromElements(final Collection<PsiElement> array) {
+  public static int[] offsetsFromElements(final Collection<? extends PsiElement> array) {
     TIntArrayList offsets = new TIntArrayList(array.size());
     for (PsiElement element : array) {
       int offset = element.getTextOffset();

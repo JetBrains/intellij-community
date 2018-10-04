@@ -122,13 +122,11 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
         final File ioFile = file.getIOFile();
         if (ioFile.exists()) {
           if (!ioFile.delete()) {
-            //noinspection ThrowableInstanceNeverThrown
             exceptions.add(new VcsException("Unable to delete file: " + file));
           }
         }
       }
       catch (Exception e) {
-        //noinspection ThrowableInstanceNeverThrown
         exceptions.add(new VcsException("Unable to delete file: " + file, e));
       }
     }
@@ -189,7 +187,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @throws VcsException if there is a problem with running git
    */
   private void unindex(final VirtualFile root, final List<FilePath> files, boolean toUnversioned) throws VcsException {
-    GitFileUtils.delete(myProject, root, files, "--cached", "-f");
+    GitFileUtils.deletePaths(myProject, root, files, "--cached", "-f");
 
     if (toUnversioned) {
       final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);

@@ -8,7 +8,6 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -88,8 +87,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     initImportsByDefault();
 
     if (loadExtensions) {
-      final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
-      for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
+      for (final CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
         addCustomSettings(provider.createCustomSettings(this));
       }
       for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
@@ -341,7 +339,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   /** @deprecated Use JavaCodeStyleSettings.USE_FQ_CLASS_NAMES */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES;
 
@@ -350,22 +347,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 
   /** @deprecated Use JavaCodeStyleSettings.USE_SINGLE_CLASS_IMPORTS */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
 
   /** @deprecated Use JavaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean INSERT_INNER_CLASS_IMPORTS;
 
   /** @deprecated Use JavaCodeStyleSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
 
   /** @deprecated Use JavaCodeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
@@ -904,8 +897,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   }
 
   private static IndentOptions getDefaultIndentOptions(FileType fileType) {
-    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-    for (final FileTypeIndentOptionsProvider provider : providers) {
+    for (final FileTypeIndentOptionsProvider provider : FileTypeIndentOptionsProvider.EP_NAME.getExtensionList()) {
       if (provider.getFileType().equals(fileType)) {
         return getFileTypeIndentOptions(provider);
       }
@@ -1004,7 +996,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
         }
       }
 
-      for (FileIndentOptionsProvider provider : Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME)) {
+      for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
         if (!isFullReformat || provider.useOnFullReformat()) {
           IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
@@ -1196,8 +1188,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   private void loadAdditionalIndentOptions() {
     synchronized (myAdditionalIndentOptions) {
       myLoadedAdditionalIndentOptions = true;
-      final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-      for (final FileTypeIndentOptionsProvider provider : providers) {
+      for (final FileTypeIndentOptionsProvider provider : FileTypeIndentOptionsProvider.EP_NAME.getExtensionList()) {
         if (!myAdditionalIndentOptions.containsKey(provider.getFileType())) {
           registerAdditionalIndentOptions(provider.getFileType(), getFileTypeIndentOptions(provider));
         }

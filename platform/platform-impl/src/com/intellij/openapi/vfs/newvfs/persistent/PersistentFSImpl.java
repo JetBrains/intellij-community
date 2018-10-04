@@ -33,6 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -574,7 +575,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       storeContentToStorage(fileLength, file, readOnly, bytes, bytes.length);
       return nativeStream;
     }
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)fileLength);
     return new ReplicatorInputStream(nativeStream, cache) {
       @Override
@@ -713,7 +713,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
         String newName = vme.getFile().getName();
         path2 = vme.getNewParent().getPath() + "/" + newName;
       }
-      if (path2 != null && !path2.equals(path) && checkIfConflictingEvent(path2, files, middleDirs)) {
+      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingEvent(path2, files, middleDirs)) {
         break;
       }
     }
@@ -753,6 +753,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
                                @NotNull Set<? super String> files,
                                @NotNull Set<? super String> middleDirs) {
     int endIndex = groupByPath(events, startIndex, files, middleDirs);
+    assert endIndex > startIndex : events.get(startIndex) +"; files: "+files+"; middleDirs: "+middleDirs;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
@@ -867,8 +868,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
     int startIndex = 0;
     List<Runnable> applyEvents = new ArrayList<>(events.size());
-    Set<String> files = new THashSet<>(events.size());
-    Set<String> middleDirs = new THashSet<>(events.size());
+    Set<String> files = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> middleDirs = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
     while (startIndex != events.size()) {
       applyEvents.clear();
       List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);
@@ -1335,7 +1336,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   private static class FsRoot extends VirtualDirectoryImpl {
     private final String myName;
-    private final String myPathBeforeSlash;
+    private final String myPathWithOneSlash;
 
     private FsRoot(int id,
                    @NotNull VfsData.Segment segment,
@@ -1348,7 +1349,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (!looksCanonical(pathBeforeSlash)) {
         throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
       }
-      myPathBeforeSlash = pathBeforeSlash;
+      myPathWithOneSlash = pathBeforeSlash + '/';
     }
 
     @NotNull
@@ -1360,8 +1361,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     @NotNull
     @Override
     protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-      char[] chars = new char[pathLength + myPathBeforeSlash.length()];
-      position[0] = copyString(chars, position[0], myPathBeforeSlash);
+      int myLength = myPathWithOneSlash.length() - 1;
+      char[] chars = new char[pathLength + myLength];
+      CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);
+      position[0] += myLength;
       return chars;
     }
 
@@ -1378,7 +1381,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     @NotNull
     @Override
     public String getPath() {
-      return myPathBeforeSlash + '/';
+      return myPathWithOneSlash;
     }
 
     @NotNull

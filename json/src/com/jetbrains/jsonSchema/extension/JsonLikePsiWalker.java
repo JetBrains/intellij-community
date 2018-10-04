@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -14,7 +13,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +52,7 @@ public interface JsonLikePsiWalker {
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
 
-    return Arrays.stream(Extensions.getExtensions(JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME))
+    return JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME.getExtensionList().stream()
       .filter(extension -> extension.handles(element))
       .findFirst()
       .map(extension -> extension.create(schemaObject))

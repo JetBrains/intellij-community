@@ -136,7 +136,7 @@ public class VcsTestUtil {
     }
   }
 
-  public static <T> void assertEqualCollections(@NotNull String message, @NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+  public static <T> void assertEqualCollections(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     if (!StringUtil.isEmptyOrSpaces(message) && !message.endsWith(":") && !message.endsWith(": ")) {
       message += ": ";
     }

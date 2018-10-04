@@ -459,7 +459,7 @@ public class PyDocstringGenerator {
     DocStringUpdater updater = null;
     if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
       final String prefix = myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":";
-      //noinspection unchecked,ConstantConditions
+      // noinspection ConstantConditions
       updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), prefix, myDocStringIndent);
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {

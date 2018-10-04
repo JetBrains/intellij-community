@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,7 +77,7 @@ public class Utils{
    */
   public static void expandActionGroup(boolean isInModalContext,
                                        @NotNull ActionGroup group,
-                                       List<AnAction> list,
+                                       List<? super AnAction> list,
                                        PresentationFactory presentationFactory,
                                        @NotNull DataContext context,
                                        String place,
@@ -93,7 +92,7 @@ public class Utils{
    */
   private static void expandActionGroup(boolean isInModalContext,
                                         @NotNull ActionGroup group,
-                                        List<AnAction> list,
+                                        List<? super AnAction> list,
                                         PresentationFactory presentationFactory,
                                         DataContext context,
                                         @NotNull String place,
@@ -110,7 +109,7 @@ public class Utils{
    */
   public static void expandActionGroup(boolean isInModalContext,
                                        @NotNull ActionGroup group,
-                                       List<AnAction> list,
+                                       List<? super AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
                                        @NotNull String place,
@@ -148,7 +147,7 @@ public class Utils{
       AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0, isContextMenuAction, isToolbarAction);
       e1.setInjectedContext(child.isInInjectedContext());
 
-      if (transparentOnly && child.isTransparentUpdate() || !transparentOnly) {
+      if (!transparentOnly || child.isTransparentUpdate()) {
         if (!doUpdate(isInModalContext, child, e1, presentation)) continue;
       }
 
@@ -230,7 +229,6 @@ public class Utils{
                                               String place,
                                               boolean checkVisible,
                                               boolean checkEnabled) {
-    //noinspection InstanceofIncompatibleInterface
     if (group instanceof AlwaysVisibleActionGroup) {
       return true;
     }
@@ -324,14 +322,6 @@ public class Utils{
               if (myMenu != null) {
                 myMenu.paint(g);
               } else {
-                if (SystemInfo.isMac) {
-                  Graphics2D g2 = (Graphics2D)g.create();
-                  g2.setStroke(new BasicStroke(2));
-                  g2.setColor(UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
-                  double y = (double)getHeight() / 2;
-                  g2.draw(new Line2D.Double(0, y, getWidth(), y));
-                  return;
-                }
                 super.paintComponent(g);
               }
             }

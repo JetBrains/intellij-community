@@ -56,7 +56,6 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
   @NotNull
   @Override
   public String getText() {
-    //noinspection DialogTitleCapitalization
     return FAMILY_NAME;
   }
 

@@ -117,7 +117,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
     if (myWindow != null) {
       if (myMouseInputListener == null) {
-        //noinspection UseDPIAwareInsets
         myMouseInputListener = new WindowResizeListener(parent, JBUI.insets(11), null) {
           @Override
           protected Insets getResizeOffset(Component view) {

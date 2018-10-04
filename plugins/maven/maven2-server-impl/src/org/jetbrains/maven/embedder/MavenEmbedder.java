@@ -485,7 +485,7 @@ public class MavenEmbedder {
 
   private void releaseResolverThreadExecutor() {
     ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-    @SuppressWarnings({"unchecked"}) FieldAccessor pool = new FieldAccessor(DefaultArtifactResolver.class, resolver, "resolveArtifactPool");
+    FieldAccessor pool = new FieldAccessor(DefaultArtifactResolver.class, resolver, "resolveArtifactPool");
     try {
       final Object threadPool = pool.getField(); // an instance of a hidden copy of ThreadPoolExecutor
       threadPool.getClass().getMethod("shutdown").invoke(threadPool);

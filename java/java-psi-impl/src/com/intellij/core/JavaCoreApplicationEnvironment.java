@@ -94,7 +94,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExtension(SuperMethodsSearch.EP_NAME, new MethodSuperSearcher());
   }
 
-  @SuppressWarnings("MethodMayBeStatic") // overridden in upsource
+  // overridden in upsource
   protected CoreJavaDirectoryService createJavaDirectoryService() {
     return new CoreJavaDirectoryService();
   }

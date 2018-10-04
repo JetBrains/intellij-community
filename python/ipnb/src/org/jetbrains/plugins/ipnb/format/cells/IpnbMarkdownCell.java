@@ -10,7 +10,7 @@ public class IpnbMarkdownCell extends IpnbEditableCell {
     super(source, metadata);
   }
 
-  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntCallSuperClone"})
   @Override
   public Object clone() {
     return new IpnbMarkdownCell(getSource(), getMetadata());

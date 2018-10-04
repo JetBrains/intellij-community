@@ -148,7 +148,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<Function<TextAttributesKey, Boolean>> filters,
+  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<? extends Function<TextAttributesKey, Boolean>> filters,
                                                    TextAttributesKey key) {
     for (Function<TextAttributesKey, Boolean> filter : filters) {
       if (filter.apply(key)) return true;
@@ -173,7 +173,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isColorKeyAccepted(@NotNull Collection<Predicate<ColorKey>> filters, @NotNull ColorKey key) {
+  private static boolean isColorKeyAccepted(@NotNull Collection<? extends Predicate<ColorKey>> filters, @NotNull ColorKey key) {
     for (Predicate<ColorKey> filter : filters) {
       if (!filter.test(key)) return false;
     }

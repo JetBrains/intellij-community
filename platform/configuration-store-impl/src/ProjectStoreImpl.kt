@@ -49,23 +49,23 @@ internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FIL
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
 // cannot be `internal`, used in Upsource
-abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreWithExtraComponents(), IProjectStore {
+abstract class ProjectStoreBase(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme: StorageScheme = StorageScheme.DEFAULT
 
-  override final var loadPolicy: StateLoadPolicy = StateLoadPolicy.LOAD
+  final override var loadPolicy: StateLoadPolicy = StateLoadPolicy.LOAD
 
-  override final fun isOptimiseTestLoadSpeed(): Boolean = loadPolicy != StateLoadPolicy.LOAD
+  final override fun isOptimiseTestLoadSpeed(): Boolean = loadPolicy != StateLoadPolicy.LOAD
 
-  override final fun getStorageScheme(): StorageScheme = scheme
+  final override fun getStorageScheme(): StorageScheme = scheme
 
-  override abstract val storageManager: StateStorageManagerImpl
+  abstract override val storageManager: StateStorageManagerImpl
 
   protected val isDirectoryBased: Boolean
     get() = scheme == StorageScheme.DIRECTORY_BASED
 
-  override final fun setOptimiseTestLoadSpeed(value: Boolean) {
+  final override fun setOptimiseTestLoadSpeed(value: Boolean) {
     // we don't load default state in tests as app store does because
     // 1) we should not do it
     // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
@@ -79,13 +79,13 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
    */
   override fun getProjectConfigDir(): String? = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
 
-  override final fun getWorkspaceFilePath(): String = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
+  final override fun getWorkspaceFilePath(): String = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
-  override final fun clearStorages() {
+  final override fun clearStorages() {
     storageManager.clearStorages()
   }
 
-  override final fun loadProjectFromTemplate(defaultProject: Project) {
+  final override fun loadProjectFromTemplate(defaultProject: Project) {
     defaultProject.save()
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
@@ -102,7 +102,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
   }
 
-  override final fun getProjectBasePath(): String {
+  final override fun getProjectBasePath(): String {
     if (isDirectoryBased) {
       val path = PathUtilRt.getParentPath(storageManager.expandMacro(PROJECT_CONFIG_DIR))
       if (Registry.`is`("store.basedir.parent.detection", true) && PathUtilRt.getFileName(path).startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
@@ -246,14 +246,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   override fun getDirectoryStorePathOrBase(): String = PathUtilRt.getParentPath(projectFilePath)
 }
 
-private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
+private open class ProjectStoreImpl(project: Project, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
 
   init {
     assert(!project.isDefault)
   }
 
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+  final override fun getPathMacroManagerForDefaults() = pathMacroManager
 
   override val storageManager = ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), project)
 
@@ -366,7 +366,7 @@ private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles:
 
 private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = Array(readonlyFiles.size) { readonlyFiles[it].file }
 
-private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {
     super.beforeSave(readonlyFiles)
 

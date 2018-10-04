@@ -64,7 +64,7 @@ public abstract class ClosureCompleter {
                                             int offset,
                                             PsiSubstitutor substitutor,
                                             PsiMethod method,
-                                            final List<ClosureParameterInfo> parameters) {
+                                            final List<? extends ClosureParameterInfo> parameters) {
     document.insertString(offset, "{\n}");
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     final GrClosableBlock closure =
@@ -75,7 +75,7 @@ public abstract class ClosureCompleter {
     return true;
   }
 
-  public static void runTemplate(List<ClosureParameterInfo> parameters,
+  public static void runTemplate(List<? extends ClosureParameterInfo> parameters,
                                  GrClosableBlock block,
                                  PsiSubstitutor substitutor,
                                  PsiMethod method, final Project project,

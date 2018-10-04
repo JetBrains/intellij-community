@@ -66,7 +66,7 @@ public class PatchFileCreator {
   }
 
   public static void revert(PreparationResult preparationResult,
-                            List<PatchAction> actionsToRevert,
+                            List<? extends PatchAction> actionsToRevert,
                             File backupDir,
                             UpdaterUI ui) throws IOException {
     preparationResult.patch.revert(actionsToRevert, backupDir, preparationResult.toDir, ui);

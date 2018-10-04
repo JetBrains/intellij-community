@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
@@ -14,11 +15,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,9 +31,11 @@ import java.util.stream.Stream;
  * @author Konstantin Bulenkov
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<FileType> {
+  private final GotoFileModel myModelForRenderer;
 
-  public FileSearchEverywhereContributor(Project project) {
-    super(project);
+  public FileSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
+    myModelForRenderer = project == null ? null : new GotoFileModel(project);
   }
 
   @NotNull
@@ -50,10 +56,22 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
 
   @Override
   protected FilteringGotoByModel<FileType> createModel(Project project) {
-    return new GotoFileModel(project){
+    return new GotoFileModel(project);
+  }
+
+  @NotNull
+  @Override
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+    return new SERenderer(list){
+      @NotNull
       @Override
-      public boolean isSlashlessMatchingEnabled() {
-        return false;
+      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+        ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
+        if (!(value instanceof PsiFileSystemItem) || myModelForRenderer == null) {
+          return defaultMatchers;
+        }
+
+        return GotoFileModel.convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, myModelForRenderer);
       }
     };
   }
@@ -89,7 +107,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     @NotNull
     @Override
     public SearchEverywhereContributor<FileType> createContributor(AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent.getProject());
+      return new FileSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable

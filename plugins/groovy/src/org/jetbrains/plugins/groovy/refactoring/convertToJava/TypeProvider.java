@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import java.util.HashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -35,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -46,7 +46,6 @@ public class TypeProvider {
   public TypeProvider() {
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public PsiType getReturnType(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
@@ -62,7 +61,6 @@ public class TypeProvider {
     return TypesUtil.getJavaLangObject(method);
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public PsiType getVarType(@NotNull PsiVariable variable) {
     if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);

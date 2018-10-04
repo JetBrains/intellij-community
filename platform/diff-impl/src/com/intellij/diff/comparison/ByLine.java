@@ -71,8 +71,8 @@ public class ByLine {
   //
 
   @NotNull
-  static FairDiffIterable doCompare(@NotNull List<Line> lines1,
-                                    @NotNull List<Line> lines2,
+  static FairDiffIterable doCompare(@NotNull List<? extends Line> lines1,
+                                    @NotNull List<? extends Line> lines2,
                                     @NotNull ComparisonPolicy policy,
                                     @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
@@ -96,9 +96,9 @@ public class ByLine {
    * @param keepIgnoredChanges if true, blocks of "ignored" changes will not be actually ignored (but will not be included into "conflict" blocks)
    */
   @NotNull
-  static List<MergeRange> doCompare(@NotNull List<Line> lines1,
-                                    @NotNull List<Line> lines2,
-                                    @NotNull List<Line> lines3,
+  static List<MergeRange> doCompare(@NotNull List<? extends Line> lines1,
+                                    @NotNull List<? extends Line> lines2,
+                                    @NotNull List<? extends Line> lines3,
                                     @NotNull ComparisonPolicy policy,
                                     @NotNull ProgressIndicator indicator,
                                     boolean keepIgnoredChanges) {
@@ -126,9 +126,9 @@ public class ByLine {
     }
   }
 
-  private static boolean equalsDefaultPolicy(@NotNull List<Line> lines1,
-                                             @NotNull List<Line> lines2,
-                                             @NotNull List<Line> lines3,
+  private static boolean equalsDefaultPolicy(@NotNull List<? extends Line> lines1,
+                                             @NotNull List<? extends Line> lines2,
+                                             @NotNull List<? extends Line> lines3,
                                              int index1, int index2, int index3) {
     CharSequence content1 = lines1.get(index1).getContent();
     CharSequence content2 = lines2.get(index2).getContent();
@@ -137,8 +137,8 @@ public class ByLine {
   }
 
   @NotNull
-  private static FairDiffIterable correctChangesSecondStep(@NotNull final List<Line> lines1,
-                                                           @NotNull final List<Line> lines2,
+  private static FairDiffIterable correctChangesSecondStep(@NotNull final List<? extends Line> lines1,
+                                                           @NotNull final List<? extends Line> lines2,
                                                            @NotNull final FairDiffIterable changes) {
     /*
      * We want to fix invalid matching here:
@@ -271,8 +271,8 @@ public class ByLine {
   @NotNull
   private static int[] getBestMatchingAlignment(@NotNull final TIntArrayList subLines1,
                                                 @NotNull final TIntArrayList subLines2,
-                                                @NotNull final List<Line> lines1,
-                                                @NotNull final List<Line> lines2) {
+                                                @NotNull final List<? extends Line> lines1,
+                                                @NotNull final List<? extends Line> lines2) {
     assert subLines1.size() < subLines2.size();
     final int size = subLines1.size();
 
@@ -321,8 +321,8 @@ public class ByLine {
   }
 
   @NotNull
-  private static FairDiffIterable optimizeLineChunks(@NotNull List<Line> lines1,
-                                                     @NotNull List<Line> lines2,
+  private static FairDiffIterable optimizeLineChunks(@NotNull List<? extends Line> lines1,
+                                                     @NotNull List<? extends Line> lines2,
                                                      @NotNull FairDiffIterable iterable,
                                                      @NotNull ProgressIndicator indicator) {
     return new ChunkOptimizer.LineChunkOptimizer(lines1, lines2, iterable, indicator).build();
@@ -334,8 +334,8 @@ public class ByLine {
    *  - correct changes (compare all lines gaps between matched chunks)
    */
   @NotNull
-  private static FairDiffIterable compareSmart(@NotNull List<Line> lines1,
-                                               @NotNull List<Line> lines2,
+  private static FairDiffIterable compareSmart(@NotNull List<? extends Line> lines1,
+                                               @NotNull List<? extends Line> lines2,
                                                @NotNull ProgressIndicator indicator) {
     int threshold = ComparisonUtil.getUnimportantLineCharCount();
     if (threshold == 0) return diff(lines1, lines2, indicator);
@@ -348,7 +348,7 @@ public class ByLine {
   }
 
   @NotNull
-  private static Pair<List<Line>, TIntArrayList> getBigLines(@NotNull List<Line> lines, int threshold) {
+  private static Pair<List<Line>, TIntArrayList> getBigLines(@NotNull List<? extends Line> lines, int threshold) {
     List<Line> bigLines = new ArrayList<>(lines.size());
     TIntArrayList indexes = new TIntArrayList(lines.size());
 
@@ -363,8 +363,8 @@ public class ByLine {
   }
 
   @NotNull
-  private static FairDiffIterable expandRanges(@NotNull List<Line> lines1,
-                                               @NotNull List<Line> lines2,
+  private static FairDiffIterable expandRanges(@NotNull List<? extends Line> lines1,
+                                               @NotNull List<? extends Line> lines2,
                                                @NotNull FairDiffIterable iterable) {
     List<Range> changes = new ArrayList<>();
 
@@ -386,7 +386,7 @@ public class ByLine {
   }
 
   @NotNull
-  private static List<Line> convertMode(@NotNull List<Line> original, @NotNull ComparisonPolicy policy) {
+  private static List<Line> convertMode(@NotNull List<? extends Line> original, @NotNull ComparisonPolicy policy) {
     List<Line> result = new ArrayList<>(original.size());
     for (Line line : original) {
       Line newLine = line.myPolicy != policy

@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongIterator;
@@ -45,12 +46,20 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     return true;
   }
 
-  boolean addUnordered(int firstIndex, int secondIndex) {
+  void addUnordered(int firstIndex, int secondIndex) {
     if (!myData.contains(createPair(firstIndex, secondIndex, true)) &&
         !myData.contains(createPair(secondIndex, firstIndex, true))) {
       myData.add(createPair(firstIndex, secondIndex, false));
     }
-    return true;
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    if (o instanceof DistinctPair) {
+      DistinctPair dp = (DistinctPair)o;
+      return myData.remove(createPair(dp.myFirst, dp.mySecond, dp.myOrdered));
+    }
+    return false;
   }
 
   @Override
@@ -138,14 +147,53 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     return true;
   }
 
+  public void splitClass(int index, int[] splitIndices) {
+    TLongArrayList toAdd = new TLongArrayList();
+    for(TLongIterator iterator = myData.iterator(); iterator.hasNext(); ) {
+      DistinctPair pair = decode(iterator.next());
+      if (pair.myFirst == index) {
+        for (int splitIndex : splitIndices) {
+          toAdd.add(createPair(splitIndex, pair.mySecond, pair.isOrdered()));
+        }
+        iterator.remove();
+      } else if (pair.mySecond == index) {
+        for (int splitIndex : splitIndices) {
+          toAdd.add(createPair(pair.myFirst, splitIndex, pair.isOrdered()));
+        }
+        iterator.remove();
+      }
+    }
+    myData.addAll(toAdd.toNativeArray());
+  }
+
   public boolean areDistinctUnordered(int c1Index, int c2Index) {
     return myData.contains(createPair(c1Index, c2Index, false));
+  }
+
+  @Nullable
+  DfaRelationValue.RelationType getRelation(int c1Index, int c2Index) {
+    if (areDistinctUnordered(c1Index, c2Index)) {
+      return DfaRelationValue.RelationType.NE;
+    }
+    if (myData.contains(createPair(c1Index, c2Index, true))) {
+      return DfaRelationValue.RelationType.LT;
+    }
+    if (myData.contains(createPair(c2Index, c1Index, true))) {
+      return DfaRelationValue.RelationType.GT;
+    }
+    return null;
   }
 
   private DistinctPair decode(long encoded) {
     boolean ordered = encoded < 0;
     encoded = Math.abs(encoded);
     return new DistinctPair(low(encoded), high(encoded), ordered, myState.getEqClasses());
+  }
+
+  public void dropOrder(DistinctPair pair) {
+    if (remove(pair)) {
+      addUnordered(pair.myFirst, pair.mySecond);
+    }
   }
 
   private static long createPair(int low, int high, boolean ordered) {
@@ -181,9 +229,17 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myList.get(myFirst);
     }
 
+    public int getFirstIndex() {
+      return myFirst;
+    }
+
     @NotNull
     public EqClass getSecond() {
       return myList.get(mySecond);
+    }
+
+    public int getSecondIndex() {
+      return mySecond;
     }
 
     public void check() {

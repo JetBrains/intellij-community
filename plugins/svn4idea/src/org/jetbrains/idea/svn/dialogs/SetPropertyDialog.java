@@ -216,7 +216,6 @@ public class SetPropertyDialog extends DialogWrapper {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void fillProperties(final Collection<String> names) {
     names.add(SvnPropertyKeys.SVN_EOL_STYLE);
     names.add(SvnPropertyKeys.SVN_KEYWORDS);

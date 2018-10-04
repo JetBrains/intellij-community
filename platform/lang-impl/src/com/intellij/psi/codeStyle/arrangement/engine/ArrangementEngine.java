@@ -36,8 +36,9 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.CustomArrangementOrderToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.util.containers.*;
-import java.util.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntArrayList;
@@ -103,7 +104,7 @@ public class ArrangementEngine {
     myCodeChanged = false;
 
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null) {
+    if (document == null || !document.isWritable()) {
       return;
     }
 
@@ -145,7 +146,6 @@ public class ArrangementEngine {
     });
   }
 
-  @SuppressWarnings("unchecked")
   private <E extends ArrangementEntry> void doArrange(Context<E> context) {
     // The general idea is to process entries bottom-up where every processed group belongs to the same parent. We may not bother
     // with entries text ranges then. We use a list and a stack for achieving that than.
@@ -204,7 +204,6 @@ public class ArrangementEngine {
     //      stack: [0, 2, 2]
     //    --------------------------
     //      arrange 'Entry1 Entry2'
-
     Stack<StackEntry> stack = new Stack<>();
     List<ArrangementEntryWrapper<E>> entries = new ArrayList<>(context.wrappers);
     stack.push(new StackEntry(0, context.wrappers.size()));
@@ -237,10 +236,9 @@ public class ArrangementEngine {
    * @param entryToSection     mapping from arrangement entry to the parent section
    * @return                   arranged list of the given rules
    */
-  @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
-  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<ArrangementSectionRule> sectionRules,
+  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
+                                                             @NotNull List<? extends ArrangementSectionRule> sectionRules,
                                                              @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                                                              @Nullable Map<E, ArrangementSectionRule> entryToSection)
   {
@@ -790,7 +788,6 @@ public class ArrangementEngine {
       }
     }
 
-    @SuppressWarnings("AssignmentToForLoopParameter")
     @Override
     public void replace(@NotNull ArrangementEntryWrapper<E> newWrapper,
                         @NotNull ArrangementEntryWrapper<E> oldWrapper,

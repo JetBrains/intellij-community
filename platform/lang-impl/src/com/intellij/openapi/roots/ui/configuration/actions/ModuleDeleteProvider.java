@@ -118,14 +118,14 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,
-                                  @NotNull Collection<ModifiableRootModel> otherModuleRootModels,
+                                  @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                   @NotNull final ModifiableModuleModel moduleModel) {
     removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
     moduleModel.disposeModule(moduleToRemove);
   }
 
   private static void removeDependenciesOnModules(@NotNull Set<String> moduleNamesToRemove,
-                                                  @NotNull Collection<ModifiableRootModel> otherModuleRootModels) {
+                                                  @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels) {
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
       for (final OrderEntry orderEntry : orderEntries) {

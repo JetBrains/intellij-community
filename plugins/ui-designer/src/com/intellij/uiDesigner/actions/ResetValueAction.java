@@ -35,7 +35,6 @@ public class ResetValueAction extends AbstractGuiEditorAction {
       if (propertyInspector.isEditing()) {
         propertyInspector.stopEditing();
       }
-      //noinspection unchecked
       for(RadComponent component: selection) {
         //noinspection unchecked
         if (property.isModified(component)) {
@@ -57,7 +56,6 @@ public class ResetValueAction extends AbstractGuiEditorAction {
     PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();
-      //noinspection unchecked
       e.getPresentation().setEnabled(selectedProperty != null &&
                                      selection.size() > 0 &&
                                      inspector.isModifiedForSelection(selectedProperty));

@@ -78,7 +78,6 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
 
-  @SuppressWarnings("unchecked")
   protected boolean isIgnoredNode(@NotNull AnActionEvent e) {
     ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
     return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();

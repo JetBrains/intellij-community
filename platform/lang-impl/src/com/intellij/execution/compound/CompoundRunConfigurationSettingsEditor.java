@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunConfigurationSelector;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
@@ -54,7 +55,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
 
   private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
-    List<BeforeRunTask<?>> tasks = myRunManager.getBeforeRunTasks(candidate);
+    List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask task : tasks) {
       if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
         RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
@@ -66,7 +67,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       }
     }
     if (candidate instanceof CompoundRunConfiguration) {
-      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets().keySet()) {
+      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets(myRunManager).keySet()) {
         if (!canBeAdded(configuration, root)) {
           return false;
         }
@@ -78,7 +79,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @Override
   protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
-    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets()));
+    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets(myRunManager)));
     mySnapshot = compoundRunConfiguration;
   }
 
@@ -109,7 +110,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
         List<RunConfiguration> configurations = new ArrayList<>();
         for (RunnerAndConfigurationSettings settings : myRunManager.getAllSettings()) {
           RunConfiguration configuration = settings.getConfiguration();
-          if (!mySnapshot.getConfigurationsWithTargets().keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
+          if (!mySnapshot.getConfigurationsWithTargets(myRunManager).keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
             configurations.add(configuration);
           }
         }

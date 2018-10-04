@@ -27,12 +27,12 @@ public abstract class KeyCollectionBasedForwardIndex<Key, Value> extends MapBase
   }
 
   @Override
-  protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, Collection<Key> keys) throws IOException {
+  protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, Collection<Key> keys) {
     return new CollectionInputDataDiffBuilder<Key, Value>(inputId, keys);
   }
 
   @Override
-  protected Collection<Key> convertToMapValueType(int inputId, Map<Key, Value> map) throws IOException {
+  protected Collection<Key> convertToMapValueType(int inputId, Map<Key, Value> map) {
     return map.keySet();
   }
 }

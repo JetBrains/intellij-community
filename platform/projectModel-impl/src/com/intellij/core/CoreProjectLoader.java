@@ -24,6 +24,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryStateSplitter;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,7 +80,7 @@ public class CoreProjectLoader {
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
       Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
-      Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
+      Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }
 

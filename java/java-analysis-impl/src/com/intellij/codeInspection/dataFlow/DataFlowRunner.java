@@ -36,6 +36,7 @@ import java.util.function.Consumer;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
+  private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
@@ -43,6 +44,7 @@ public class DataFlowRunner {
   private final DfaValueFactory myValueFactory;
   private boolean myInlining = true;
   private boolean myCancelled = false;
+  private boolean myWasForciblyMerged = false;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
@@ -157,6 +159,7 @@ public class DataFlowRunner {
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myNestedClosures.clear();
+      myWasForciblyMerged = false;
 
       Set<Instruction> joinInstructions = getJoinInstructions();
 
@@ -205,6 +208,21 @@ public class DataFlowRunner {
             if (containsState(processed, instructionState)) {
               continue;
             }
+            if (processed.size() > MERGING_BACK_BRANCHES_THRESHOLD) {
+              DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
+              Object key = curState.getMergeabilityKey();
+              myWasForciblyMerged = true;
+              DfaMemoryStateImpl mergedState =
+                StreamEx.of(processed).select(DfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
+                  .foldLeft(curState, (s1, s2) -> {
+                    s1.merge(s2);
+                    return s1;
+                  });
+              instructionState = new DfaInstructionState(instruction, mergedState);
+              if (containsState(processed, instructionState)) {
+                continue;
+              }
+            }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
               LOG.trace("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX;
@@ -252,6 +270,7 @@ public class DataFlowRunner {
       }
 
       LOG.trace("Analysis ok");
+      myWasForciblyMerged |= queue.wasForciblyMerged();
       return RunnerResult.OK;
     }
     catch (ProcessCanceledException ex) {
@@ -261,6 +280,10 @@ public class DataFlowRunner {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  boolean wasForciblyMerged() {
+    return myWasForciblyMerged;
   }
 
   @NotNull
@@ -359,7 +382,7 @@ public class DataFlowRunner {
     DfaValueFactory factory = var.getFactory();
     if (var.getSource() instanceof DfaExpressionFactory.ThisSource) {
       PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
-      DfaValue value = factory.createTypeValue(var.getVariableType(), Nullability.NOT_NULL);
+      DfaValue value = factory.createTypeValue(var.getType(), Nullability.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
         // as fields may not contribute to the visible state

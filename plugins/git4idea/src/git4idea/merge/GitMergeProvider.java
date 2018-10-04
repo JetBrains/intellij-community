@@ -452,7 +452,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
-      GitFileUtils.addFiles(myProject, GitUtil.getGitRoot(file), file);
+      GitFileUtils.addFilesForce(myProject, GitUtil.getGitRoot(file), Collections.singletonList(file));
     }
     catch (VcsException e) {
       LOG.error("Confirming conflict resolution failed", e);
@@ -646,7 +646,7 @@ public class GitMergeProvider implements MergeProvider2 {
         }
 
         try {
-          GitFileUtils.addFiles(myProject, root, toAdd);
+          GitFileUtils.addFilesForce(myProject, root, toAdd);
           GitFileUtils.deleteFiles(myProject, root, toDelete);
         }
         catch (VcsException e) {

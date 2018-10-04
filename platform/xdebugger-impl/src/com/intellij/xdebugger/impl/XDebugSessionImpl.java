@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -581,7 +582,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
     myTopFramePosition = null;
-    myActiveNonLineBreakpoint = null;
+    clearActiveNonLineBreakpoint();
     updateExecutionPosition();
   }
 
@@ -592,6 +593,10 @@ public class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = isTopFrameSelected();
 
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
+
+      if (Registry.is("debugger.show.values.between.lines")) {
+        XDebuggerInlayUtil.setupValuePlaceholders(this, false);
+      }
     }
   }
 
@@ -858,7 +863,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
-    myActiveNonLineBreakpoint = null;
+    clearActiveNonLineBreakpoint();
     positionReachedInternal(suspendContext, attract);
   }
 
@@ -915,6 +920,9 @@ public class XDebugSessionImpl implements XDebugSession {
         }
 
         clearPausedData();
+        if (Registry.is("debugger.show.values.between.lines")) {
+          XDebuggerInlayUtil.setupValuePlaceholders(this, true);
+        }
 
         if (myValueMarkers != null) {
           myValueMarkers.clear();
@@ -991,7 +999,7 @@ public class XDebugSessionImpl implements XDebugSession {
     @Override
     public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
       if (getActiveNonLineBreakpoint() == breakpoint) {
-        myActiveNonLineBreakpoint = null;
+        clearActiveNonLineBreakpoint();
       }
       processRemove(breakpoint);
     }
@@ -1013,6 +1021,10 @@ public class XDebugSessionImpl implements XDebugSession {
       processRemove(breakpoint);
       processAdd(breakpoint);
     }
+  }
+
+  public void clearActiveNonLineBreakpoint() {
+    myActiveNonLineBreakpoint = null;
   }
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {

@@ -45,13 +45,13 @@ public final class TodoPackageNode extends PackageElementNode {
   @Nullable private final String myPresentationName;
 
   public TodoPackageNode(@NotNull Project project,
-                         PackageElement element,
+                         @NotNull PackageElement element,
                          TodoTreeBuilder builder) {
     this(project, element, builder,null);
   }
 
   public TodoPackageNode(@NotNull Project project,
-                         PackageElement element,
+                         @NotNull PackageElement element,
                          TodoTreeBuilder builder,
                          @Nullable String name) {
     super(project, element, ViewSettings.DEFAULT);

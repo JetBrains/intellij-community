@@ -6,9 +6,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -16,6 +16,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+
+import static com.intellij.psi.util.PsiPrecedenceUtil.EQUALITY_PRECEDENCE;
+import static com.intellij.psi.util.PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE;
 
 public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECTS_EQUALS = CallMatcher.staticCall(
@@ -31,7 +34,11 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         if (!OBJECTS_EQUALS.test(call)) return;
-        PsiExpression arg1 = call.getArgumentList().getExpressions()[0];
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        PsiExpression arg1 = args[0];
+        PsiExpression arg2 = args[1];
+        PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+        if (processPrimitives(nameElement, arg1, arg2)) return;
         PsiClass argClass = PsiUtil.resolveClassInClassTypeOnly(arg1.getType());
         if (argClass == null) return;
         if (NullabilityUtil.getExpressionNullability(arg1, true) == Nullability.NOT_NULL) {
@@ -45,20 +52,36 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
               return;
             }
           }
-          PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message"),
-                                 new ReplaceWithEqualsFix());
+          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message", "equals()"),
+                                 new ReplaceWithEqualsFix(false));
         }
+      }
+
+      private boolean processPrimitives(PsiElement nameElement, PsiExpression arg1, PsiExpression arg2) {
+        PsiType type1 = arg1.getType();
+        PsiType type2 = arg2.getType();
+        if (type1 instanceof PsiPrimitiveType && type1.equals(type2) && !TypeConversionUtil.isFloatOrDoubleType(type1)) {
+          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message", "=="),
+                                 new ReplaceWithEqualsFix(true));
+          return true;
+        }
+        return false;
       }
     };
   }
 
   private static class ReplaceWithEqualsFix implements LocalQuickFix {
+    final boolean myEquality;
+
+    private ReplaceWithEqualsFix(boolean equality) {
+      myEquality = equality;
+    }
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.objects.equals.can.be.simplified.fix.name");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "Objects.equals()", myEquality ? "==" : "equals()");
     }
 
     @Override
@@ -68,7 +91,13 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 2) return;
       CommentTracker ct = new CommentTracker();
-      String replacement = ct.text(args[0], PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) + ".equals(" + ct.text(args[1]) + ")";
+      String replacement;
+      if (myEquality) {
+        replacement = ct.text(args[0], EQUALITY_PRECEDENCE) + "==" + ct.text(args[1], EQUALITY_PRECEDENCE);
+      }
+      else {
+        replacement = ct.text(args[0], METHOD_CALL_PRECEDENCE) + ".equals(" + ct.text(args[1]) + ")";
+      }
       ct.replaceAndRestoreComments(call, replacement);
     }
   }

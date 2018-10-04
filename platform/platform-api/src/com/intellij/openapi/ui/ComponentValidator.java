@@ -121,6 +121,8 @@ public class ComponentValidator {
   private void reset() {
     if (validationInfo != null && validationInfo.component != null) {
       validationInfo.component.putClientProperty("JComponent.outline", null);
+      validationInfo.component.revalidate();
+      validationInfo.component.repaint();
     }
 
     hidePopup();
@@ -143,6 +145,8 @@ public class ComponentValidator {
       if (newInfo) {
         if (validationInfo.component != null) {
           validationInfo.component.putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
+          validationInfo.component.revalidate();
+          validationInfo.component.repaint();
         }
 
         if (StringUtil.isNotEmpty(validationInfo.message)) {

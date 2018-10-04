@@ -89,7 +89,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
   public static ChangeDiffRequestChain createDiffRequestChain(@Nullable Project project,
                                                               @NotNull Label before,
                                                               @NotNull Label after,
-                                                              @NotNull Iterable<Pair<FilePath, FileStatus>> iterable,
+                                                              @NotNull Iterable<? extends Pair<FilePath, FileStatus>> iterable,
                                                               @Nullable FilePath selectedPath) {
     List<MyDiffRequestProducer> requests = new ArrayList<>();
     int selected = -1;

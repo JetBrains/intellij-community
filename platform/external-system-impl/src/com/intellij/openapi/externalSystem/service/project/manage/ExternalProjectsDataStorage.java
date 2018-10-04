@@ -156,7 +156,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   public synchronized void saveAndWait() throws Exception {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
     save();
-    myAlarm.waitForAllExecuted(1, TimeUnit.SECONDS);
+    myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
@@ -303,7 +303,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static DataNode<ProjectData> convert(@NotNull ProjectSystemId systemId,
                                                @NotNull ExternalProjectPojo rootProject,
-                                               @NotNull Collection<ExternalProjectPojo> childProjects) {
+                                               @NotNull Collection<? extends ExternalProjectPojo> childProjects) {
     ProjectData projectData = new ProjectData(systemId, rootProject.getName(), rootProject.getPath(), rootProject.getPath());
     DataNode<ProjectData> projectDataNode = new DataNode<>(PROJECT, projectData, null);
 
@@ -376,7 +376,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   @NotNull
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
-    @SuppressWarnings("unchecked") final Path configurationFile = getProjectConfigurationFile(project);
+    final Path configurationFile = getProjectConfigurationFile(project);
     if (!Files.isRegularFile(configurationFile)) return projects;
 
     DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
@@ -389,7 +389,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       ObjectInputStream os = new ObjectInputStream(in);
       try {
         for (int i = 0; i < size; i++) {
-          //noinspection unchecked
           InternalExternalProjectInfo projectDataDataNode = (InternalExternalProjectInfo)os.readObject();
           projects.add(projectDataDataNode);
         }

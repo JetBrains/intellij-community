@@ -38,7 +38,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -113,7 +112,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
@@ -215,6 +213,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * if there is a pending write action.
    */
   @Override
+  @Deprecated
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();
@@ -230,7 +229,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
-    final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
+    final ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
     if (manager == null) {
       saveSettings(true);
     }
@@ -1011,12 +1010,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable JComponent parentComponent,
                                             @Nullable String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
-    Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
+    return runWriteActionWithClass(action.getClass(), ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInSwingThread(() -> action.consume(indicator));
       return !indicator.isCanceled();
+    });
+  }
+
+  private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
+    startWrite(clazz);
+    try {
+      return computable.compute();
     }
     finally {
       endWrite(clazz);
@@ -1030,8 +1034,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                               @Nullable String cancelText,
                                                               @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
+    return runWriteActionWithClass(clazz, ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInBackground(() -> {
         assert myWriteActionThread == null;
@@ -1043,10 +1046,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       return !indicator.isCanceled();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    });
   }
 
   @Override
@@ -1064,25 +1064,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public <T> T runWriteAction(@NotNull final Computable<T> computation) {
     Class<? extends Computable> clazz = computation.getClass();
-    startWrite(clazz);
-    try {
-      return computation.compute();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    return runWriteActionWithClass(clazz, () -> computation.compute());
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     Class<? extends ThrowableComputable> clazz = computation.getClass();
-    startWrite(clazz);
-    try {
-      return computation.compute();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    return runWriteActionWithClass(clazz, computation);
   }
 
   @Override
@@ -1226,7 +1214,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      ActionPauses.WRITE.started("write action ("+clazz+")");
+      ActionPauses.WRITE.started();
     }
     myWriteActionPending = true;
     try {

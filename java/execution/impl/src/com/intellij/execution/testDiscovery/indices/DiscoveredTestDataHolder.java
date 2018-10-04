@@ -27,25 +27,29 @@ public final class DiscoveredTestDataHolder {
   private static final Logger LOG = Logger.getInstance(DiscoveredTestDataHolder.class);
 
   private final DiscoveredTestsIndex myDiscoveredTestsIndex;
+  private final TestFilesIndex myTestFilesIndex;
   private final TestModuleIndex myTestModuleIndex;
 
   private final PersistentStringEnumerator myClassEnumerator;
   private final PersistentStringEnumerator myMethodEnumerator;
+  private final PersistentStringEnumerator myPathEnumerator;
   private final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
   private final PersistentObjectSeq myConstructedDataFiles = new PersistentObjectSeq();
 
   private boolean myDisposed;
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  static final int VERSION = 9;
+  static final int VERSION = 10;
 
   public DiscoveredTestDataHolder(@NotNull Path basePath) {
     final Path versionFile = getVersionFile(basePath);
     PathKt.createDirectories(basePath);
     final File discoveredTestsIndexFile = basePath.resolve("discoveredTests.index").toFile();
+    final File testFilesIndexFile = basePath.resolve("testFiles.index").toFile();
 
     final File classNameEnumeratorFile = basePath.resolve("className.enum").toFile();
     final File methodNameEnumeratorFile = basePath.resolve("methodName.enum").toFile();
+    final File pathEnumeratorFile = basePath.resolve("path.enum").toFile();
     final File testNameEnumeratorFile = basePath.resolve("testName.enum").toFile();
 
     try {
@@ -59,9 +63,11 @@ public final class DiscoveredTestDataHolder {
       }
 
       DiscoveredTestsIndex discoveredTestsIndex;
+      TestFilesIndex testFilesIndex;
       TestModuleIndex testModuleIndex;
       PersistentStringEnumerator classNameEnumerator;
       PersistentStringEnumerator methodEnumerator;
+      PersistentStringEnumerator pathEnumerator;
       PersistentEnumeratorDelegate<TestId> testEnumerator;
 
       int iterations = 0;
@@ -73,6 +79,9 @@ public final class DiscoveredTestDataHolder {
           discoveredTestsIndex = new DiscoveredTestsIndex(discoveredTestsIndexFile);
           myConstructedDataFiles.add(discoveredTestsIndex);
 
+          testFilesIndex = new TestFilesIndex(testFilesIndexFile);
+          myConstructedDataFiles.add(testFilesIndex);
+
           testModuleIndex = new TestModuleIndex(basePath,  myConstructedDataFiles);
 
           classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile, true);
@@ -80,6 +89,9 @@ public final class DiscoveredTestDataHolder {
 
           methodEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile, true);
           myConstructedDataFiles.add(methodEnumerator);
+
+          pathEnumerator = new PersistentStringEnumerator(pathEnumeratorFile, true);
+          myConstructedDataFiles.add(pathEnumerator);
 
           testEnumerator = new PersistentEnumeratorDelegate<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
           myConstructedDataFiles.add(testEnumerator);
@@ -102,9 +114,11 @@ public final class DiscoveredTestDataHolder {
       }
 
       myDiscoveredTestsIndex = discoveredTestsIndex;
+      myTestFilesIndex = testFilesIndex;
       myTestModuleIndex = testModuleIndex;
       myClassEnumerator = classNameEnumerator;
       myMethodEnumerator = methodEnumerator;
+      myPathEnumerator = pathEnumerator;
       myTestEnumerator = testEnumerator;
 
       LowMemoryWatcher.register(() -> myConstructedDataFiles.flush(), myDisposable);
@@ -113,7 +127,6 @@ public final class DiscoveredTestDataHolder {
       throw new RuntimeException(ex);
     }
   }
-
 
   private static void writeVersion(@NotNull Path versionFile) throws IOException {
     try (final DataOutputStream versionOut = new DataOutputStream(PathKt.outputStream(versionFile))) {
@@ -170,6 +183,7 @@ public final class DiscoveredTestDataHolder {
   public void updateTestData(@NotNull String testClassName,
                              @NotNull String testMethodName,
                              @NotNull MultiMap<String, String> usedMethods,
+                             @NotNull String[] usedFiles,
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
 
@@ -182,8 +196,33 @@ public final class DiscoveredTestDataHolder {
         methodIds.add(myMethodEnumerator.enumerate(methodName));
       }
     }
-    myDiscoveredTestsIndex.update(testNameId, new DiscoveredTestsIndex.UsedMethods(result)).compute();
+
+    Map<Integer, Void> usedVirtualFileIds = new HashMap<>();
+    for (String file : usedFiles) {
+      int fileId = myPathEnumerator.enumerate(file);
+      usedVirtualFileIds.put(fileId, null);
+    }
+
+    UsedSources usedSources = new UsedSources(result, usedVirtualFileIds);
+    myDiscoveredTestsIndex.update(testNameId, usedSources).compute();
+    myTestFilesIndex.update(testNameId, usedSources).compute();
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
+  }
+
+  @NotNull
+  public MultiMap<String, String> getTestsByFile(@NotNull String relativePath, byte frameworkId) throws IOException {
+    int fileId = myPathEnumerator.tryEnumerate(relativePath);
+    if (fileId == 0) return MultiMap.empty();
+    try {
+      MultiMap<String, String> result = new MultiMap<>();
+      IOException[] exception = {null};
+      myTestFilesIndex.getData(fileId).forEach((testId, v) -> consumeDiscoveredTest(testId, frameworkId, result, exception));
+      if (exception[0] != null) throw exception[0];
+      return result;
+    }
+    catch (StorageException e) {
+      throw new IOException(e);
+    }
   }
 
   @NotNull

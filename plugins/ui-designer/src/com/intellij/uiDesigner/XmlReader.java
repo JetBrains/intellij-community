@@ -221,7 +221,6 @@ public final class XmlReader {
 
     if (component instanceof RadContainer) {
       final RadContainer container = (RadContainer)component;
-      //noinspection ConstantConditions
       final LwContainer lwContainer = (LwContainer)lwComponent;
 
       copyBorder(container, lwContainer);
@@ -234,7 +233,6 @@ public final class XmlReader {
 
     if (component instanceof RadRootContainer) {
       final RadRootContainer radRootContainer = (RadRootContainer)component;
-      //noinspection ConstantConditions
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());

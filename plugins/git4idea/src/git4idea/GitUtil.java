@@ -35,6 +35,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
@@ -183,7 +184,7 @@ public class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Collection<VirtualFile> virtualFiles) throws VcsException {
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Collection<? extends VirtualFile> virtualFiles) throws VcsException {
     return sortFilesByGitRoot(virtualFiles, false);
   }
 
@@ -195,7 +196,7 @@ public class GitUtil {
    * @return sorted files
    * @throws VcsException if non git files are passed when {@code ignoreNonGit} is false
    */
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(Collection<VirtualFile> virtualFiles, boolean ignoreNonGit)
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(Collection<? extends VirtualFile> virtualFiles, boolean ignoreNonGit)
     throws VcsException {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<>();
     for (VirtualFile file : virtualFiles) {
@@ -227,7 +228,7 @@ public class GitUtil {
    * @return the map from root to the files under the root
    * @throws VcsException if non git files are passed
    */
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(final Collection<FilePath> files) throws VcsException {
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(final Collection<? extends FilePath> files) throws VcsException {
     return sortFilePathsByGitRoot(files, false);
   }
 
@@ -240,7 +241,7 @@ public class GitUtil {
    * @throws VcsException if non git files are passed when {@code ignoreNonGit} is false
    */
   @NotNull
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Collection<FilePath> files, boolean ignoreNonGit)
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Collection<? extends FilePath> files, boolean ignoreNonGit)
     throws VcsException {
     Map<VirtualFile, List<FilePath>> rc = new HashMap<>();
     for (FilePath p : files) {
@@ -299,7 +300,7 @@ public class GitUtil {
    * @param roots git content roots
    * @return a content root
    */
-  public static Set<VirtualFile> gitRootsForPaths(final Collection<VirtualFile> roots) {
+  public static Set<VirtualFile> gitRootsForPaths(final Collection<? extends VirtualFile> roots) {
     HashSet<VirtualFile> rc = new HashSet<>();
     for (VirtualFile root : roots) {
       VirtualFile gitRoot = getGitRootOrNull(VcsUtil.getFilePath(root));
@@ -460,7 +461,7 @@ public class GitUtil {
    * @param filePaths the context paths
    * @return a set of git roots
    */
-  public static Set<VirtualFile> gitRoots(final Collection<FilePath> filePaths) {
+  public static Set<VirtualFile> gitRoots(final Collection<? extends FilePath> filePaths) {
     return filePaths.stream().map(GitUtil::getGitRootOrNull).filter(Objects::nonNull).collect(Collectors.toSet());
   }
 
@@ -487,8 +488,8 @@ public class GitUtil {
 
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
-                                              final Consumer<GitHandler> parametersSpecifier,
-                                              final Consumer<GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
+                                              final Consumer<? super GitHandler> parametersSpecifier,
+                                              final Consumer<? super GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
@@ -522,7 +523,7 @@ public class GitUtil {
 
   public static List<GitCommittedChangeList> getLocalCommittedChanges(final Project project,
                                                                    final VirtualFile root,
-                                                                   final Consumer<GitHandler> parametersSpecifier)
+                                                                   final Consumer<? super GitHandler> parametersSpecifier)
     throws VcsException {
     final List<GitCommittedChangeList> rc = new ArrayList<>();
 
@@ -674,13 +675,13 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
+  public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
   }
 
   @NotNull
   public static Collection<GitRepository> getRepositoriesFromRoots(@NotNull GitRepositoryManager repositoryManager,
-                                                                   @NotNull Collection<VirtualFile> roots) {
+                                                                   @NotNull Collection<? extends VirtualFile> roots) {
     Collection<GitRepository> repositories = new ArrayList<>(roots.size());
     for (VirtualFile root : roots) {
       GitRepository repo = repositoryManager.getRepositoryForRoot(root);
@@ -788,7 +789,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootsIgnoringOthers(@NotNull Collection<VirtualFile> files) {
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootsIgnoringOthers(@NotNull Collection<? extends VirtualFile> files) {
     try {
       return sortFilesByGitRoot(files, true);
     }
@@ -906,7 +907,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static String joinToHtml(@NotNull Collection<GitRepository> repositories) {
+  public static String joinToHtml(@NotNull Collection<? extends GitRepository> repositories) {
     return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), "<br/>");
   }
 
@@ -916,17 +917,17 @@ public class GitUtil {
   }
 
   @NotNull
-  public static String mention(@NotNull Collection<GitRepository> repositories) {
+  public static String mention(@NotNull Collection<? extends GitRepository> repositories) {
     return mention(repositories, -1);
   }
 
   @NotNull
-  public static String mention(@NotNull Collection<GitRepository> repositories, int limit) {
+  public static String mention(@NotNull Collection<? extends GitRepository> repositories, int limit) {
     if (repositories.isEmpty()) return "";
     return " in " + joinShortNames(repositories, limit);
   }
 
-  public static void updateRepositories(@NotNull Collection<GitRepository> repositories) {
+  public static void updateRepositories(@NotNull Collection<? extends GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       repository.update();
     }
@@ -956,7 +957,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static String getLogString(@NotNull String root, @NotNull Collection<Change> changes) {
+  public static String getLogString(@NotNull String root, @NotNull Collection<? extends Change> changes) {
     return getLogString(root, changes, ChangesUtil::getBeforePath, ChangesUtil::getAfterPath);
   }
 
@@ -1046,5 +1047,9 @@ public class GitUtil {
     if (content == null) return false;
     String pathToDir = parsePathToRepository(content);
     return findRealRepositoryDir(rootDir, pathToDir) != null;
+  }
+
+  public static void generateGitignoreFileIfNeeded(@NotNull Project project){
+    VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project));
   }
 }

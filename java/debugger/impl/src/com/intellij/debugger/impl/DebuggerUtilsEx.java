@@ -188,7 +188,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static Set<String> myCharOrIntegers;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
@@ -233,7 +232,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
 
-  public static boolean isFiltered(@NotNull String qName, List<ClassFilter> classFilters) {
+  public static boolean isFiltered(@NotNull String qName, List<? extends ClassFilter> classFilters) {
     if (qName.indexOf('[') != -1) {
       return false; //is array
     }
@@ -245,7 +244,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
-  public static ClassFilter[] readFilters(List<Element> children) {
+  public static ClassFilter[] readFilters(List<? extends Element> children) {
     if (ContainerUtil.isEmpty(children)) {
       return ClassFilter.EMPTY_ARRAY;
     }
@@ -281,13 +280,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return f2.equals(f1);
   }
 
-  private static boolean elementListsEqual(List<Element> l1, List<Element> l2) {
+  private static boolean elementListsEqual(List<? extends Element> l1, List<? extends Element> l2) {
     if (l1 == null) return l2 == null;
     if (l2 == null) return false;
 
     if (l1.size() != l2.size()) return false;
 
-    Iterator<Element> i1 = l1.iterator();
+    Iterator<? extends Element> i1 = l1.iterator();
 
     for (Element aL2 : l2) {
       Element elem1 = i1.next();
@@ -297,13 +296,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return true;
   }
 
-  private static boolean attributeListsEqual(List<Attribute> l1, List<Attribute> l2) {
+  private static boolean attributeListsEqual(List<? extends Attribute> l1, List<? extends Attribute> l2) {
     if (l1 == null) return l2 == null;
     if (l2 == null) return false;
 
     if (l1.size() != l2.size()) return false;
 
-    Iterator<Attribute> i1 = l1.iterator();
+    Iterator<? extends Attribute> i1 = l1.iterator();
 
     for (Attribute aL2 : l2) {
       Attribute attr1 = i1.next();
@@ -331,7 +330,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return true;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean externalizableEqual(JDOMExternalizable e1, JDOMExternalizable e2) {
     Element root1 = new Element("root");
     Element root2 = new Element("root");
@@ -630,7 +628,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static String getSourceName(Location location, Function<Throwable, String> defaultName) {
+  public static String getSourceName(Location location, Function<? super Throwable, String> defaultName) {
     try {
       return location.sourceName();
     }

@@ -33,7 +33,7 @@ public class Stack<T> extends ArrayList<T> {
     super(initialCapacity);
   }
 
-  public Stack(@NotNull Collection<T> init) {
+  public Stack(@NotNull Collection<? extends T> init) {
     super(init);
   }
 

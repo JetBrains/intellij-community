@@ -1,5 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.configuration;
 
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -52,9 +54,9 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   final String username = getUsername();
     final String url = "";
     final String accountName = createAccountName(username, url, projectPathHash);
-    final String newStylePassword = PasswordSafe.getInstance().getPassword(IpnbSettings.class, accountName);
-    
-   return StringUtil.notNullize(newStylePassword == null ? PasswordSafe.getInstance().getPassword(IpnbSettings.class, username) : newStylePassword);
+    final String newStylePassword = PasswordSafe.getInstance().getPassword(CredentialAttributesKt.CredentialAttributes(IpnbSettings.class, accountName));
+
+   return StringUtil.notNullize(newStylePassword == null ? PasswordSafe.getInstance().getPassword(CredentialAttributesKt.CredentialAttributes(IpnbSettings.class, username)) : newStylePassword);
   }
 
   @Transient

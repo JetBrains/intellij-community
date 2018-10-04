@@ -142,6 +142,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element applet { applet.inner.phrasing & applet.attrs }
 	applet.attrs =
 		(	common.attrs
+		&	applet.attrs.alt?
 		&	applet.attrs.archive?
 		&	applet.attrs.code
 		&	applet.attrs.codebase?
@@ -149,6 +150,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	applet.attrs.height
 		&	applet.attrs.width
 		)
+		applet.attrs.alt =
+			attribute alt {
+				string
+			}
 		applet.attrs.archive =
 			attribute archive {
 				common.data.uri #FIXME *comma* separated URI list (*grumble*)

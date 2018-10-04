@@ -27,12 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
   private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
-  private static final String REPEAT_ANNOTATIONS_ITEM = "CLASS";
+  private static final String REPEAT_ANNOTATIONS_ITEM = "ANNO";
   private static final String DO_NOT_IMPORT_INNER = "DO_NOT_IMPORT_INNER";
   private static final String DO_NOT_IMPORT_INNER_ITEM = "CLASS";
   private static final String COLLECTION_ITEM_ATTRIBUTE = "name";
@@ -413,6 +414,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       Element child = parentElement.getChild(getTagName());
       if (child == null) {
         child = new Element(getTagName());
+        parentElement.addContent(child);
       }
       Element element = new Element(collectionName);
       for (String item : collection) {
@@ -420,5 +422,19 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       }
       child.addContent(element);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<String> getKnownTagNames() {
+    return Arrays.asList(getTagName(), REPEAT_ANNOTATIONS, DO_NOT_IMPORT_INNER);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!super.equals(obj)) return false;
+    JavaCodeStyleSettings otherSettings = (JavaCodeStyleSettings)obj;
+    if (!myRepeatAnnotations.equals(otherSettings.getRepeatAnnotations())) return false;
+    return myDoNotImportInner.equals(otherSettings.getDoNotImportInner());
   }
 }

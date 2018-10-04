@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathMacros;
@@ -21,6 +22,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,12 +42,12 @@ import com.intellij.util.io.FileTreePrinterKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.cmdline.LogSetup;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.junit.Assert;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -66,7 +68,7 @@ public class CompilerTester {
     this(module.getProject(), Collections.singletonList(module), null);
   }
 
-  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<Module> modules) throws Exception {
+  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<? extends Module> modules) throws Exception {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
@@ -221,6 +223,7 @@ public class CompilerTester {
           }
         }
       }
+      enableDebugLogging();
       runnable.consume(callback);
     });
 
@@ -232,6 +235,7 @@ public class CompilerTester {
       }
     }
 
+    printBuildLog();
     callback.throwException();
 
     if (!((CompilerManagerImpl)CompilerManager.getInstance(getProject())).waitForExternalJavacToTerminate(1, TimeUnit.MINUTES)) {
@@ -239,6 +243,45 @@ public class CompilerTester {
     }
 
     return callback.getMessages();
+  }
+
+  public static void printBuildLog() {
+    File logDirectory = BuildManager.getBuildLogDirectory();
+    File[] files = logDirectory.listFiles(file -> file.getName().endsWith(".log"));
+    if (files == null || files.length == 0) {
+      LOG.debug("No *.log files in " + logDirectory + " after build");
+      return;
+    }
+
+    Arrays.sort(files, Comparator.comparing(File::getName));
+    for (File file : files) {
+      LOG.debug(file.getName() + ":");
+      try {
+        List<String> lines = FileUtil.loadLines(file);
+        for (String line : lines) {
+          LOG.debug(line);
+        }
+      }
+      catch (IOException e) {
+        LOG.debug("Failed to load contents: " + e.getMessage());
+      }
+    }
+  }
+
+  public static void enableDebugLogging() throws IOException {
+    File logDirectory = BuildManager.getBuildLogDirectory();
+    FileUtil.delete(logDirectory);
+    FileUtil.createDirectory(logDirectory);
+    Properties properties = new Properties();
+    try (InputStream config = LogSetup.readDefaultLogConfig()) {
+      properties.load(config);
+    }
+
+    properties.setProperty("log4j.rootLogger", "debug, file");
+    File logFile = new File(logDirectory, LogSetup.LOG_CONFIG_FILE_NAME);
+    try (OutputStream output = new BufferedOutputStream(new FileOutputStream(logFile))) {
+      properties.store(output, null);
+    }
   }
 
   private static void refreshVfs(String path) {

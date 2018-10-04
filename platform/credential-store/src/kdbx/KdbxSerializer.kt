@@ -71,7 +71,6 @@ internal object KdbxSerializer {
 
   /**
    * Provides an [OutputStream] to be encoded and encrypted in KDBX format
-
    * @param credentials  credentials for encryption of the stream
    * @param kdbxHeader   a KDBX header to control the formatting and encryption operation
    * @param outputStream output stream to contain the KDBX formatted output
@@ -95,27 +94,29 @@ private fun checkStartBytes(kdbxHeader: KdbxHeader, decryptedInputStream: InputS
   val startBytes = ByteArray(32)
   LittleEndianDataInputStream(decryptedInputStream).readFully(startBytes)
   if (!Arrays.equals(startBytes, kdbxHeader.streamStartBytes)) {
-    throw IllegalStateException("Inconsistent stream bytes")
+    throw IncorrectMasterPasswordException()
   }
 }
 
-private val SIG1 = 0x9AA2D903.toInt()
-private val SIG2 = 0xB54BFB67.toInt()
-private val FILE_VERSION_CRITICAL_MASK = 0xFFFF0000.toInt()
-private val FILE_VERSION_32 = 0x00030001
+internal class IncorrectMasterPasswordException(val isFileMissed: Boolean = false) : RuntimeException()
+
+private const val SIG1 = 0x9AA2D903.toInt()
+private const val SIG2 = 0xB54BFB67.toInt()
+private const val FILE_VERSION_CRITICAL_MASK = 0xFFFF0000.toInt()
+private const val FILE_VERSION_32 = 0x00030001
 
 private object HeaderType {
-  internal val END: Byte = 0
-  internal val COMMENT: Byte = 1
-  internal val CIPHER_ID: Byte = 2
-  internal val COMPRESSION_FLAGS: Byte = 3
-  internal val MASTER_SEED: Byte = 4
-  internal val TRANSFORM_SEED: Byte = 5
-  internal val TRANSFORM_ROUNDS: Byte = 6
-  internal val ENCRYPTION_IV: Byte = 7
-  internal val PROTECTED_STREAM_KEY: Byte = 8
-  internal val STREAM_START_BYTES: Byte = 9
-  internal val INNER_RANDOM_STREAM_ID: Byte = 10
+  internal const val END: Byte = 0
+  internal const val COMMENT: Byte = 1
+  internal const val CIPHER_ID: Byte = 2
+  internal const val COMPRESSION_FLAGS: Byte = 3
+  internal const val MASTER_SEED: Byte = 4
+  internal const val TRANSFORM_SEED: Byte = 5
+  internal const val TRANSFORM_ROUNDS: Byte = 6
+  internal const val ENCRYPTION_IV: Byte = 7
+  internal const val PROTECTED_STREAM_KEY: Byte = 8
+  internal const val STREAM_START_BYTES: Byte = 9
+  internal const val INNER_RANDOM_STREAM_ID: Byte = 10
 }
 
 private fun verifyMagicNumber(input: LittleEndianDataInputStream): Boolean {

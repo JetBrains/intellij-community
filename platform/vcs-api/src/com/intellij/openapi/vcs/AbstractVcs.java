@@ -463,8 +463,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @NotNull
-  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
+  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    FilterDescendantVirtualFileConvertible<S> convertible =
+      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance());
+    convertible.doFilter(in);
     return in;
   }
 

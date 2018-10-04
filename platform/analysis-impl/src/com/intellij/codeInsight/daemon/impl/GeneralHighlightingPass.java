@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -48,6 +47,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +97,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @NotNull
   private PsiFile getFile() {
-    //noinspection ConstantConditions
     return myFile;
   }
 
@@ -113,7 +112,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @NotNull
   private HighlightVisitor[] cloneHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
-    HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
+    HighlightVisitor[] highlightVisitors = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(myProject);
     if (oldCount != 0) {
       HighlightVisitor[] clones = new HighlightVisitor[highlightVisitors.length];
       for (int i = 0; i < highlightVisitors.length; i++) {
@@ -144,7 +143,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       LOG.error("No visitors registered. list=" +
                 list +
                 "; all visitors are:" +
-                Arrays.asList(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject)));
+                Arrays.asList(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(myProject)));
     }
 
     return visitors.toArray(new HighlightVisitor[0]);
@@ -377,8 +376,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (!myRestrictRange.contains(info)) continue;
         List<? super HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile)
                                      ? insideResult : outsideResult;
-        // have to filter out already obtained highlights
-        if (!result.add(info)) continue;
+        result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
           if (!forceHighlightParents) {
@@ -425,12 +423,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final int POST_UPDATE_ALL = 5;
 
+  private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
+
+  @TestOnly
+  static boolean isRestartPending() {
+    return RESTART_REQUESTS.get() > 0;
+  }
+
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
+    RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
     Application application = ApplicationManager.getApplication();
     int delay = application.isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      RESTART_REQUESTS.decrementAndGet();
       if (!project.isDisposed()) {
         DaemonCodeAnalyzer.getInstance(project).restart();
       }
@@ -440,7 +447,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private boolean forceHighlightParents() {
     boolean forceHighlightParents = false;
-    for(HighlightRangeExtension extension: Extensions.getExtensions(HighlightRangeExtension.EP_NAME)) {
+    for(HighlightRangeExtension extension: HighlightRangeExtension.EP_NAME.getExtensionList()) {
       if (extension.isForceHighlightParents(getFile())) {
         forceHighlightParents = true;
         break;

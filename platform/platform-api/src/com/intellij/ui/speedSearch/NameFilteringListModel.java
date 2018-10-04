@@ -45,7 +45,7 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     this(list, namer, filter, () -> speedSearch.getFilter());
   }
 
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, final SpeedSearchSupply speedSearch) {
+  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, final SpeedSearchSupply speedSearch) {
     this(list, namer, filter, () -> {
       final String prefix = speedSearch.getEnteredPrefix();
       return prefix == null ? "" : prefix;

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 
 import java.io.File;
@@ -966,6 +966,47 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "  \"type\": \"project\",\n" +
                 "  \"name\": \"asd\",\n" +
                 "  \"description\": \"asdasdqwdqw\"\n" +
+                "}");
+  }
+
+  public void testJsonPointerEscapes() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"q~q/q\": {\n" +
+           "      \"type\": \"string\"\n" +
+           "    },\n" +
+           "    \"a\": {\n" +
+           "      \"$ref\": \"#/properties/q~0q~1q\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"a\": <warning>1</warning>\n" +
+                "}");
+  }
+
+  public void testOneOfMultipleBranches() throws Exception {
+    doTest("{\n" +
+           "\t\"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "\n" +
+           "\t\"type\": \"object\",\n" +
+           "\t\"oneOf\": [\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"string\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t},\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"number\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t}\n" +
+           "\t]\n" +
+           "}", "{\n" +
+                "  \"startTime\": <warning descr=\"Type is not allowed. Expected one of: number, string.\">null</warning>\n" +
                 "}");
   }
 }

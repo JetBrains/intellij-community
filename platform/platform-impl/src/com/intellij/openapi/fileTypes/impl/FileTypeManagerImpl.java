@@ -15,7 +15,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
@@ -251,7 +250,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     });
 
-    //noinspection SpellCheckingInspection
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
     // this should be done BEFORE reading state
@@ -650,7 +648,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private volatile FileAttribute autoDetectedAttribute;
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
   // returns three bits value for AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK and AUTO_DETECT_WAS_RUN_MASK bits
-  private byte readFlagsFromCache(@NotNull VirtualFile file) {
+  protected byte readFlagsFromCache(@NotNull VirtualFile file) {
     boolean wasAutoDetectRun = false;
     byte status = 0;
     try (DataInputStream stream = autoDetectedAttribute.readAttribute(file)) {
@@ -667,7 +665,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // store auto-detection flags to the persistent FS file attributes
   // writes AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK bits only
-  private void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
+  protected void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
     try (DataOutputStream stream = autoDetectedAttribute.writeAttribute(file)) {
       stream.writeByte(flags & (AUTO_DETECTED_AS_TEXT_MASK | AUTO_DETECTED_AS_BINARY_MASK));
     }
@@ -823,11 +821,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return LoadTextUtil.processTextFromBinaryPresentationOrNull(bytes, length,
                                                                 file, true, true,
                                                                 PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
-        FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
+        List<FileTypeDetector> detectors = FileTypeDetector.EP_NAME.getExtensionList();
         if (toLog()) {
           log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + length +
               "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
-              ", detectors=" + Arrays.toString(detectors));
+              ", detectors=" + detectors);
         }
         FileType detected = null;
         ByteSequence firstBytes = new ByteArraySequence(bytes, 0, length);

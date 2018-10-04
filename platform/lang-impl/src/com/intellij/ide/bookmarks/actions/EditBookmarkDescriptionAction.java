@@ -32,10 +32,10 @@ import javax.swing.*;
 
 class EditBookmarkDescriptionAction extends DumbAwareAction {
   private final Project myProject;
-  private final JList<BookmarkItem> myList;
+  private final JList<? extends BookmarkItem> myList;
   private JBPopup myPopup;
 
-  EditBookmarkDescriptionAction(Project project, JList<BookmarkItem> list) {
+  EditBookmarkDescriptionAction(Project project, JList<? extends BookmarkItem> list) {
     super(IdeBundle.message("action.bookmark.edit.description"), IdeBundle.message("action.bookmark.edit.description.description"), AllIcons.Actions.Edit);
     setEnabledInModalContext(true);
     myProject = project;

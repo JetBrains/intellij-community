@@ -31,7 +31,6 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 12/22/10 12:02 PM
  */
-@SuppressWarnings({"MethodMayBeStatic"})
 public class BulkChangesMerger {
 
   public static final BulkChangesMerger INSTANCE = new BulkChangesMerger();
@@ -215,7 +214,6 @@ public class BulkChangesMerger {
      * 
      * @return      {@code true} if the first change in a group is found; {@code false} otherwise
      */
-    @SuppressWarnings({"ForLoopThatDoesntUseLoopVariable"})
     public boolean startGroup() {
       // Define first change that increases or reduces text length.
       for (boolean first = true; myDiff == 0 && myChangeGroupStartIndex < myChanges.size(); myChangeGroupStartIndex++, first = false) {

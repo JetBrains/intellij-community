@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -23,7 +24,6 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -142,12 +142,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           try {
             final EventSet eventSet = eventQueue.remove();
 
-            getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
-              @Override
-              public Priority getPriority() {
-                return Priority.HIGH;
-              }
-
+            getManagerThread().invokeAndWait(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
               @Override
               protected void action() {
                 int processed = 0;
@@ -353,7 +348,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         .map(factory -> factory.fun(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
-      Stream.of(Extensions.getExtensions(PositionManagerFactory.EP_NAME, getProject()))
+      Stream.of(PositionManagerFactory.EP_NAME.getExtensions(getProject()))
         .map(factory -> factory.createPositionManager(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
@@ -393,30 +388,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void trackClassRedefinitions() {
-    getManagerThread().invoke(new DebuggerCommandImpl() {
-      @Override
-      public Priority getPriority() {
-        return Priority.HIGH;
-      }
-
-      @Override
-      protected void action() {
-        InstrumentationTracker.track(DebugProcessEvents.this);
-      }
-    });
+    getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> InstrumentationTracker.track(this));
   }
-  private void createStackCapturingBreakpoints() {
-    getManagerThread().invoke(new DebuggerCommandImpl() {
-      @Override
-      public Priority getPriority() {
-        return Priority.HIGH;
-      }
 
-      @Override
-      protected void action() {
-        StackCapturingLineBreakpoint.deleteAll(DebugProcessEvents.this);
-        StackCapturingLineBreakpoint.createAll(DebugProcessEvents.this);
-      }
+  private void createStackCapturingBreakpoints() {
+    getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> {
+      StackCapturingLineBreakpoint.deleteAll(this);
+      StackCapturingLineBreakpoint.createAll(this);
     });
   }
 
@@ -446,9 +424,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Class prepared: " + event.referenceType().name());
     }
-    suspendContext.getDebugProcess().getRequestsManager().processClassPrepared(event);
-
-    getSuspendManager().voteResume(suspendContext);
+    try {
+      suspendContext.getDebugProcess().getRequestsManager().processClassPrepared(event);
+    }
+    finally {
+      getSuspendManager().voteResume(suspendContext);
+    }
   }
 
   private void processStepEvent(SuspendContextImpl suspendContext, StepEvent event) {
@@ -456,7 +437,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
-    //noinspection HardCodedStringLiteral
     RequestHint hint = getRequestHint(event);
 
     deleteStepRequests(event.thread());
@@ -486,9 +466,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
     else {
       showStatusText("");
-      if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.disable();
-      }
+      stopWatchingMethodReturn();
       getSuspendManager().voteSuspend(suspendContext);
       if (hint != null) {
         final MethodFilter methodFilter = hint.getMethodFilter();
@@ -592,9 +570,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           suspendManager.voteResume(suspendContext);
         }
         else {
-          if (myReturnValueWatcher != null) {
-            myReturnValueWatcher.disable();
-          }
+          stopWatchingMethodReturn();
           //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
           //  // there could be explicit resume as a result of call to voteSuspend()
           //  // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_

@@ -63,6 +63,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -86,7 +87,6 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
 
 public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
@@ -639,7 +639,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     ListCellRenderer modelRenderer = myModel.getListCellRenderer();
     //noinspection unchecked
-    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> disableTreeLoading(
+    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> AstLoadingFilter.disallowTreeLoading(
       () -> modelRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     ));
     myList.setVisibleRowCount(16);
@@ -1139,7 +1139,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public void calcData(final DataKey key, @NotNull final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (LangDataKeys.POSITION_ADJUSTER_POPUP.equals(key)) {
         if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
           sink.put(key, myDropdownPopup);

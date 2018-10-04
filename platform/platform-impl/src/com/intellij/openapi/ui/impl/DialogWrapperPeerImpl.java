@@ -902,6 +902,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
         putClientProperty("DIALOG_ROOT_PANE", true);
+        setBorder(UIManager.getBorder("Window.border"));
       }
 
       @NotNull

@@ -746,7 +746,7 @@ public class Messages {
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
                                               Icon icon,
-                                              @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+                                              @Nullable final PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     return MessagesService.getInstance()
       .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
                                      exitFunc);
@@ -1288,8 +1288,8 @@ public class Messages {
   public static void showTextAreaDialog(final JTextField textField,
                                         @Nls(capitalization = Nls.Capitalization.Title) final String title,
                                         @NonNls final String dimensionServiceKey,
-                                        final Function<String, List<String>> parser,
-                                        final Function<List<String>, String> lineJoiner) {
+                                        final Function<? super String, ? extends List<String>> parser,
+                                        final Function<? super List<String>, String> lineJoiner) {
     MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
   }
 

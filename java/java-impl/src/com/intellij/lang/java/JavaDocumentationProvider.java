@@ -173,7 +173,6 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String generateClassInfo(PsiClass aClass) {
     StringBuilder buffer = new StringBuilder();
 

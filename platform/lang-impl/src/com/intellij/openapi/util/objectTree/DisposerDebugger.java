@@ -298,12 +298,13 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   }
 
 
+  private static final ObjectNode ROOT = new ObjectNode(Disposer.getTree(), null, new Object(), -1);
   private static class DisposerStructure extends AbstractTreeStructureBase {
     private final DisposerNode myRoot;
 
     private DisposerStructure(DisposerTree tree) {
       super(null);
-      myRoot = new DisposerNode(tree, null);
+      myRoot = new DisposerNode(tree, ROOT);
     }
 
     @Override
@@ -311,6 +312,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       return null;
     }
 
+    @NotNull
     @Override
     public Object getRootElement() {
       return myRoot;
@@ -329,7 +331,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   private static class DisposerNode extends AbstractTreeNode<ObjectNode> {
     private final DisposerTree myTree;
 
-    private DisposerNode(DisposerTree tree, ObjectNode value) {
+    private DisposerNode(DisposerTree tree, @NotNull ObjectNode value) {
       super(null, value);
       myTree = tree;
     }
@@ -338,7 +340,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     @NotNull
     public Collection<? extends AbstractTreeNode> getChildren() {
       final ObjectNode value = getValue();
-      if (value != null) {
+      if (value != ROOT) {
         final Collection subnodes = value.getChildren();
         final ArrayList<DisposerNode> children = new ArrayList<>(subnodes.size());
         for (Object subnode : subnodes) {

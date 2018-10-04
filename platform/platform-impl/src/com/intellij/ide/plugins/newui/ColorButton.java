@@ -2,9 +2,12 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBOptionButton;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -13,7 +16,6 @@ import java.awt.*;
 public class ColorButton extends JButton {
   @SuppressWarnings("UseJBColor")
   protected static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
-  @SuppressWarnings("UseJBColor")
   protected static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
   protected static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
   @SuppressWarnings("UseJBColor")
@@ -45,5 +47,24 @@ public class ColorButton extends JButton {
 
   protected final void setFocusedBorderColor(@NotNull Color color) {
     putClientProperty("JButton.focusedBorderColor", color);
+  }
+
+  public static void setWidth72(@NotNull JButton button) {
+    setWidth(button, 72);
+  }
+
+  public static void setWidth(@NotNull JButton button, int noScaleWidth) {
+    int width = JBUI.scale(noScaleWidth);
+    if (button instanceof JBOptionButton && button.getComponentCount() == 2) {
+      width += button.getComponent(1).getPreferredSize().width;
+    }
+    else {
+      Border border = button.getBorder();
+      if (border != null) {
+        Insets insets = border.getBorderInsets(button);
+        width += insets.left + insets.right;
+      }
+    }
+    button.setPreferredSize(new Dimension(width, button.getPreferredSize().height));
   }
 }

@@ -97,4 +97,12 @@ public class SameParameterValueTest extends InspectionTestCase {
       myTool.minimalUsageCount = previous;
     }
   }
+
+  public void testField() {
+    doTest(getTestDir(), myTool, false, true);
+  }
+
+  public void testOverrideGroovy() {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }

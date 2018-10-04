@@ -448,8 +448,14 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element, () ->
-      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null, false),
+    PsiModifierListOwner realElement;
+    if (element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner) {
+      realElement = (PsiModifierListOwner)element.getNavigationElement();
+    } else {
+      realElement = element;
+    }
+    return CachedValuesManager.getCachedValue(realElement, () ->
+      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 

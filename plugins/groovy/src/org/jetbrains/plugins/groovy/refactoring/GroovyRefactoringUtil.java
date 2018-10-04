@@ -93,7 +93,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc, Comparator<PsiElement> comparator, boolean goIntoInner) {
+  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<? super PsiElement> acc, Comparator<? super PsiElement> comparator, boolean goIntoInner) {
     if (scope.equals(expr)) {
       acc.add(expr);
       return;
@@ -274,7 +274,7 @@ public abstract class GroovyRefactoringUtil {
     return !vector.isEmpty();
   }
 
-  private static void addBreakStatements(PsiElement element, ArrayList<GrBreakStatement> vector) {
+  private static void addBreakStatements(PsiElement element, ArrayList<? super GrBreakStatement> vector) {
     if (element instanceof GrBreakStatement) {
       vector.add(((GrBreakStatement) element));
     } else if (!(element instanceof GrLoopStatement ||
@@ -292,7 +292,7 @@ public abstract class GroovyRefactoringUtil {
     return !vector.isEmpty();
   }
 
-  private static void addContinueStatements(PsiElement element, ArrayList<GrContinueStatement> vector) {
+  private static void addContinueStatements(PsiElement element, ArrayList<? super GrContinueStatement> vector) {
     if (element instanceof GrContinueStatement) {
       vector.add(((GrContinueStatement) element));
     } else if (!(element instanceof GrLoopStatement || element instanceof GrClosableBlock)) {
@@ -571,7 +571,7 @@ public abstract class GroovyRefactoringUtil {
     }
     GrStatement result = blockStatement.getBlock().addStatementBefore(toAdd, null);
     if (result instanceof GrReturnStatement) {
-      //noinspection ConstantConditions,unchecked
+      // noinspection unchecked
       statement = (Type)((GrReturnStatement)result).getReturnValue();
     }
     else {
@@ -642,7 +642,7 @@ public abstract class GroovyRefactoringUtil {
     return psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor);
   }
 
-  public static void collectTypeParameters(final Set<PsiTypeParameter> used, @NotNull final GroovyPsiElement element) {
+  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, @NotNull final GroovyPsiElement element) {
     element.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement reference) {

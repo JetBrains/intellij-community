@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Java Compatibility" level="project" />
   </component>
 </module>

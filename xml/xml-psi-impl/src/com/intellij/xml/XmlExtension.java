@@ -4,7 +4,6 @@ package com.intellij.xml;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
@@ -40,14 +39,14 @@ public abstract class XmlExtension {
 
     @NotNull
     String getPostfix();
-    
+
     default boolean showAutoPopup() {
       return true;
     }
   }
 
   private static XmlExtension calcExtension(PsiFile file) {
-    for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
+    for (XmlExtension extension : EP_NAME.getExtensionList()) {
       if (extension.isAvailable(file)) {
         return extension;
       }
@@ -55,7 +54,6 @@ public abstract class XmlExtension {
     return DefaultXmlExtension.DEFAULT_EXTENSION;
   }
 
-  @SuppressWarnings("ConstantConditions")
   public static XmlExtension getExtensionByElement(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) {
@@ -125,7 +123,7 @@ public abstract class XmlExtension {
 
   @Nullable
   public XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
-    return element.getNSDescriptor(namespace, strict);  
+    return element.getNSDescriptor(namespace, strict);
   }
 
   @Nullable

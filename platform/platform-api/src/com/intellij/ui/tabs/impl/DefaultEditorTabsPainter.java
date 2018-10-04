@@ -15,17 +15,11 @@
  */
 package com.intellij.ui.tabs.impl;
 
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.util.ui.UIUtil;
-
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseJBColor")
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   public DefaultEditorTabsPainter(JBEditorTabs tabs) {
@@ -64,17 +58,17 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return myTabs.hasUnderlineSelection() ? new JBColor(Gray._255, Gray.x4B) : UIUtil.CONTRAST_BORDER_COLOR;
+    return BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {
     if (myDefaultTabColor != null) {
       return myDefaultTabColor;
     }
-    return Color.WHITE;
+    return DEFAULT_TAB_COLOR;
   }
 
   protected Color getInactiveMaskColor() {
-    return ColorUtil.withAlpha(new Color(0x262626), .2);
+    return INACTIVE_MASK_COLOR;
   }
 }

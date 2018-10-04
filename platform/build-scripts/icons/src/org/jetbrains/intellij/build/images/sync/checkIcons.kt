@@ -260,5 +260,5 @@ private fun modifiedByDev(
 
 private fun latestChangeTime(obj: GitObject?) =
   latestChangeTime(obj!!.file, obj.repo).also {
-    if (it <= 0) throw IllegalStateException(obj.toString())
+    if (it <= 0) error(obj.toString())
   }

@@ -31,7 +31,6 @@ public class JVMNameUtil {
   public static final String CONSTRUCTOR_NAME = "<init>";
 
   @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getPrimitiveSignature(String typeName) {
     if(PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
       return "Z";
@@ -312,7 +311,6 @@ public class JVMNameUtil {
   }
 
   @NotNull
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static JVMName getJVMSignature(@Nullable PsiMethod method, boolean constructor, @Nullable PsiClass declaringClass) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -23,7 +9,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -68,7 +53,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
   public PushedFilePropertiesUpdaterImpl(final Project project) {
     myProject = project;
-    myPushers = Extensions.getExtensions(FilePropertyPusher.EP_NAME);
+    myPushers = FilePropertyPusher.EP_NAME.getExtensions();
     myFilePushers = ContainerUtil.findAllAsArray(myPushers, pusher -> !pusher.pushDirectoriesOnly());
 
     StartupManager.getInstance(project).registerPreStartupActivity(
@@ -224,14 +209,14 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     }
   }
 
-  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher, T moduleValue) {
+  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<? extends T> pusher, T moduleValue) {
     final T value = pusher.getImmediateValue(project, dir);
     if (value != null) return value;
     if (moduleValue != null) return moduleValue;
     return findPusherValuesFromParent(project, dir, pusher);
   }
 
-  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
+  private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<? extends T> pusher) {
     final T userValue = dir.getUserData(pusher.getFileDataKey());
     if (userValue != null) return userValue;
     final T value = pusher.getImmediateValue(project, dir);
@@ -239,7 +224,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     return findPusherValuesFromParent(project, dir, pusher);
   }
 
-  private static <T> T findPusherValuesFromParent(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
+  private static <T> T findPusherValuesFromParent(Project project, VirtualFile dir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = dir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) return findPusherValuesUpwards(project, parent, pusher);
     T projectValue = pusher.getImmediateValue(project, null);
@@ -278,7 +263,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     invokeConcurrentlyIfPossible(tasks);
   }
 
-  public static void invokeConcurrentlyIfPossible(final List<Runnable> tasks) {
+  public static void invokeConcurrentlyIfPossible(final List<? extends Runnable> tasks) {
     if (tasks.size() == 1 ||
         ApplicationManager.getApplication().isWriteAccessAllowed()) {
       for(Runnable r:tasks) r.run();
@@ -286,7 +271,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     }
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    
+
     final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
     List<Future<?>> results = ContainerUtil.newArrayList();
     if (tasks.size() > 1) {

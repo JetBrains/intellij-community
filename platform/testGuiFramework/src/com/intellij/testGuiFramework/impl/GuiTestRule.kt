@@ -20,12 +20,11 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.IdeTestApplication.getFailedTestVideoDirPath
+import com.intellij.testGuiFramework.framework.GuiTestPaths.failedTestVideoDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
-import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.screenRecorderJarDirPath
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
@@ -43,10 +42,7 @@ import org.jdom.xpath.XPath
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.AssumptionViolatedException
-import org.junit.rules.ExternalResource
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
-import org.junit.rules.Timeout
+import org.junit.rules.*
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
 import org.junit.runners.model.Statement
@@ -60,14 +56,12 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
-class GuiTestRule : TestRule {
+class GuiTestRule(private val projectsFolder: File) : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
-  private var myProjectPath: File? = null
-    set
   private var myTestName: String = "undefined"
   private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
@@ -106,7 +100,7 @@ class GuiTestRule : TestRule {
       return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)
         .constructors
         .singleOrNull { it.parameterCount == 3 }
-        ?.newInstance(Duration.ofMinutes(videoDuration), getFailedTestVideoDirPath().absolutePath, testsToRecord) as TestRule?
+        ?.newInstance(Duration.ofMinutes(videoDuration), failedTestVideoDirPath.absolutePath, testsToRecord) as TestRule?
     }
     catch (e: Exception) {
       return null
@@ -156,7 +150,7 @@ class GuiTestRule : TestRule {
     }
 
     fun setUp() {
-      GuiTestUtil.setUpDefaultProjectCreationLocationPath()
+      GuiTestUtil.setUpDefaultProjectCreationLocationPath(projectsFolder)
       GeneralSettings.getInstance().isShowTipsOnStartup = false
       currentTestDateStart = Date()
     }
@@ -172,22 +166,13 @@ class GuiTestRule : TestRule {
     }
 
     private fun tearDownProject() {
-      if (myProjectPath != null) {
-        val ideFrameFixture = IdeFrameFixture.find(robot(), myProjectPath, null)
-        if (ideFrameFixture.target().isShowing) {
-          ideFrameFixture.closeProject()
-        }
-        FileUtilRt.delete(myProjectPath!!)
+      try {
+        val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, Timeouts.seconds02)
+        if (ideFrameFixture.target().isShowing)
+            ideFrameFixture.closeProject()
       }
-      else {
-        try {
-          val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, 2)
-          if (ideFrameFixture.target().isShowing)
-              ideFrameFixture.closeProject()
-        }
-        catch (e: ComponentLookupException) {
-          // do nothing because ideFixture is already closed
-        }
+      catch (e: ComponentLookupException) {
+        // do nothing because ideFixture is already closed
       }
     }
 
@@ -302,8 +287,8 @@ class GuiTestRule : TestRule {
     }
   }
 
-  fun findWelcomeFrame(): WelcomeFrameFixture {
-    return WelcomeFrameFixture.find(robot())
+  fun findWelcomeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.minutes05): WelcomeFrameFixture {
+    return WelcomeFrameFixture.find(robot(), timeout)
   }
 
   fun findNewProjectWizard(): NewProjectWizardFixture {
@@ -437,7 +422,7 @@ class GuiTestRule : TestRule {
   }
 
   private fun getTestProjectDirPath(projectDirName: String): File {
-    return File(GuiTestOptions.projectDirPath, projectDirName)
+    return File(projectsFolder, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {
@@ -474,13 +459,13 @@ class GuiTestRule : TestRule {
     }
   }
 
-  fun findIdeFrame(projectPath: File): IdeFrameFixture {
-    return IdeFrameFixture.find(robot(), projectPath, null)
+  fun findIdeFrame(projectPath: File, timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+    return IdeFrameFixture.find(robot(), projectPath, null, timeout)
   }
 
 
-  fun findIdeFrame(): IdeFrameFixture {
-    return IdeFrameFixture.find(robot(), null, null)
+  fun findIdeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+    return IdeFrameFixture.find(robot(), null, null, timeout)
   }
 
   fun getTestName(): String {

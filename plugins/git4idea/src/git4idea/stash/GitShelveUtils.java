@@ -129,7 +129,6 @@ public class GitShelveUtils {
       return shelve;
     }
     catch (IOException e) {
-      //noinspection ThrowableInstanceNeverThrown
       exceptions.add(new VcsException("Shelving changes failed: " + description, e));
       return null;
     }

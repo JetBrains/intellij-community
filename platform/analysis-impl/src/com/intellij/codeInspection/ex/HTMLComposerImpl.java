@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -23,7 +9,6 @@ import com.intellij.codeInspection.lang.HTMLComposerExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -60,7 +45,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   protected HTMLComposerImpl() {
     myListStack = new int[5];
     myListStackTop = -1;
-    for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
+    for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
       final HTMLComposerExtension extension = factory.createHTMLComposerExtension(this);
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
@@ -102,7 +87,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Nullable
   private HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
-    final PsiElement element = refElement.getElement();
+    final PsiElement element = refElement.getPsiElement();
     return element != null ? myLanguageExtensions.get(element.getLanguage()) : null;
   }
 
@@ -113,7 +98,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     } else {
       refElement.accept(new RefVisitor() {
         @Override public void visitFile(@NotNull RefFile file) {
-          final PsiFile psiFile = file.getElement();
+          final PsiFile psiFile = file.getPsiElement();
           if (psiFile != null) {
             buf.append(B_OPENING);
             buf.append(psiFile.getName());
@@ -200,7 +185,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
       buf.append("\">");
       String refElementName = refElement.getName();
-      final PsiElement element = refElement.getElement();
+      final PsiElement element = refElement.getPsiElement();
       if (element != null) {
         VirtualFile file = PsiUtilCore.getVirtualFile(element);
         if (file != null) {

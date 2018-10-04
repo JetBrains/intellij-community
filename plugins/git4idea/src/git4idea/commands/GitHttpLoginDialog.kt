@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -9,39 +10,25 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.layout.*
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI.PanelFactory.grid
-import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
-import javax.swing.JTextArea
 
 
 class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
-                                                   url: String,
+                                                   private val url: String,
                                                    rememberPassword: Boolean = true,
                                                    username: String? = null,
                                                    editableUsername: Boolean = true) : DialogWrapper(project, true) {
-  private val descriptionLabel = JTextArea().apply {
-    font = UIUtil.getLabelFont()
-    text = "Enter credentials for $url"
-    lineWrap = true
-    wrapStyleWord = true
-    isEditable = false
-    isFocusable = false
-    isOpaque = false
-    border = null
-    margin = JBUI.emptyInsets()
-  }
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
-  private val rememberCheckbox: JBCheckBox = JBCheckBox("Remember", rememberPassword)
-  private val additionalProvidersButton: JBOptionButton = JBOptionButton(null, null).apply { isVisible = false }
+  private val rememberCheckbox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), rememberPassword)
+  private val additionalProvidersButton = JBOptionButton(null, null).apply { isVisible = false }
 
   var externalAuthData: AuthData? = null
     private set
@@ -52,24 +39,26 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     init()
   }
 
-  override fun createCenterPanel(): BorderLayoutPanel = JBUI.Panels
-    .simplePanel(0, UIUtil.DEFAULT_VGAP)
-    .addToCenter(grid()
-                   .add(panel(usernameField).withLabel("Username:"))
-                   .add(panel(passwordField).withLabel("Password:"))
-                   .add(panel(rememberCheckbox))
-                   .createPanel())
-    .addToTop(descriptionLabel)
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      noteRow("Enter credentials for $url.")
+      row("Username:") { usernameField() }
+      row("Password:") { passwordField() }
+      row {
+        rememberCheckbox()
+      }
+    }
+  }
 
   override fun doValidateAll(): List<ValidationInfo> {
-    return listOfNotNull(if (usernameField.text.isBlank()) ValidationInfo("Username cannot be empty", usernameField) else null,
+    return listOfNotNull(if (username.isBlank()) ValidationInfo("Username cannot be empty", usernameField) else null,
                          if (passwordField.password.isEmpty()) ValidationInfo("Password cannot be empty", passwordField) else null)
   }
 
   override fun createSouthAdditionalPanel(): Wrapper = Wrapper(additionalProvidersButton)
     .apply { border = JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP) }
 
-  override fun getPreferredFocusedComponent(): JComponent = if (usernameField.text.isBlank()) usernameField else passwordField
+  override fun getPreferredFocusedComponent(): JComponent = if (username.isBlank()) usernameField else passwordField
 
   fun setInteractiveDataProviders(providers: Map<String, InteractiveGitHttpAuthDataProvider>) {
     if (providers.isEmpty()) return

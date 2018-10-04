@@ -101,7 +101,6 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     myInnerPanel = new JPanel(new CardLayout());
     myInnerPanel.add(ScrollPaneFactory.createScrollPane(myTable), TREE);
     if (getEmptyPaneText() != null) {
-      //noinspection HardCodedStringLiteral
       myEmptyPane = new EmptyPane(XmlStringUtil.wrapInHtml(getEmptyPaneText()));
       final JComponent emptyPanel = myEmptyPane.getComponent();
       myInnerPanel.add(emptyPanel, EMPTY_PANE);
@@ -226,7 +225,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (PlatformDataKeys.HELP_ID.equals(key)) {
       sink.put(PlatformDataKeys.HELP_ID, getHelpId());
     }
@@ -328,7 +327,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
   }
 
-  protected static enum ToolbarPosition {
+  protected enum ToolbarPosition {
     TOP(BorderLayout.NORTH),
     LEFT(BorderLayout.WEST),
     RIGHT(BorderLayout.EAST),
@@ -336,7 +335,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
     private final String myPosition;
 
-    private ToolbarPosition(final String position) {
+    ToolbarPosition(final String position) {
       myPosition = position;
     }
 

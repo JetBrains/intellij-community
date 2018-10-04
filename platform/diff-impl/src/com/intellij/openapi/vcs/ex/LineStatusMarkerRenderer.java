@@ -158,10 +158,9 @@ public abstract class LineStatusMarkerRenderer {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return emptyList();
 
-    EditorImpl editorImpl = (EditorImpl)editor;
     int lineHeight = editor.getLineHeight();
-    int visibleLineCount = editorImpl.getVisibleLineCount();
-    boolean lastLineSelected = editorImpl.yToVisibleLine(y) == visibleLineCount - 1;
+    int visibleLineCount = ((EditorImpl)editor).getVisibleLineCount();
+    boolean lastLineSelected = editor.yToVisualLine(y) == visibleLineCount - 1;
     int triangleGap = lineHeight / 3;
 
     Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
@@ -175,8 +174,8 @@ public abstract class LineStatusMarkerRenderer {
       int line1 = firstChange.line1;
       int line2 = lastChange.line2;
 
-      int startY = editorImpl.visibleLineToY(line1);
-      int endY = editorImpl.visibleLineToY(line2);
+      int startY = editor.visualLineToY(line1);
+      int endY = editor.visualLineToY(line2);
 
       // "empty" range for deleted block
       if (firstChange.line1 == firstChange.line2) {
@@ -249,6 +248,49 @@ public abstract class LineStatusMarkerRenderer {
   // Gutter painting
   //
 
+  private Rectangle calcBounds(Editor editor, int lineNum, Rectangle bounds) {
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges == null) return null;
+
+    List<ChangesBlock> blocks = createMerger(editor).run(ranges, bounds);
+    if (blocks.isEmpty()) return null;
+
+    int visibleLineCount = ((EditorImpl)editor).getVisibleLineCount();
+    boolean lastLineSelected = lineNum == visibleLineCount - 1;
+
+    ChangesBlock lineBlock = null;
+    for (ChangesBlock block : blocks) {
+      ChangedLines firstChange = block.changes.get(0);
+      ChangedLines lastChange = block.changes.get(block.changes.size() - 1);
+
+      int line1 = firstChange.line1;
+      int line2 = lastChange.line2;
+
+      int endLine = line1 == line2 ? line2 + 1 : line2;
+      if (line1 <= lineNum && endLine > lineNum) {
+        lineBlock = block;
+        break;
+      }
+      if (lastLineSelected && line2 == visibleLineCount) {
+        // special handling for deletion at the end of file
+        lineBlock = block;
+        break;
+      }
+      if (line1 > lineNum) break;
+    }
+
+    if (lineBlock == null) return null;
+
+    List<ChangedLines> changes = lineBlock.changes;
+    int startLine = changes.get(0).line1;
+    int endLine = changes.get(changes.size() - 1).line2;
+
+    IntPair area = getGutterArea(editor);
+    int y = editor.visualLineToY(startLine);
+    int endY = editor.visualLineToY(endLine);
+    return new Rectangle(area.val1, y, area.val2 - area.val1, endY - y);
+  }
+
   protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return;
@@ -277,8 +319,8 @@ public abstract class LineStatusMarkerRenderer {
     final int x = area.val1;
     final int endX = area.val2;
 
-    final int y = editorImpl.visibleLineToY(line1);
-    final int endY = editorImpl.visibleLineToY(line2);
+    final int y = editorImpl.visualLineToY(line1);
+    final int endY = editorImpl.visualLineToY(line2);
 
 
     if (framingBorder > 0) {
@@ -292,8 +334,8 @@ public abstract class LineStatusMarkerRenderer {
     for (ChangedLines change: block) {
       if (change.line1 != change.line2 &&
           !change.isIgnored) {
-        int start = editorImpl.visibleLineToY(change.line1);
-        int end = editorImpl.visibleLineToY(change.line2);
+        int start = editorImpl.visualLineToY(change.line1);
+        int end = editorImpl.visualLineToY(change.line2);
 
         Color gutterColor = getGutterColor(change.type, editor);
         paintRect(g, gutterColor, null, x, start, endX, end);
@@ -304,8 +346,8 @@ public abstract class LineStatusMarkerRenderer {
       for (ChangedLines change: block) {
         if (change.line1 != change.line2 &&
             change.isIgnored) {
-          int start = editorImpl.visibleLineToY(change.line1);
-          int end = editorImpl.visibleLineToY(change.line2);
+          int start = editorImpl.visualLineToY(change.line1);
+          int end = editorImpl.visualLineToY(change.line2);
 
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
           paintRect(g, null, ignoredBorderColor, x, start, endX, end);
@@ -318,7 +360,7 @@ public abstract class LineStatusMarkerRenderer {
 
     for (ChangedLines change: block) {
       if (change.line1 == change.line2) {
-        int start = editorImpl.visibleLineToY(change.line1);
+        int start = editorImpl.visualLineToY(change.line1);
 
         if (!change.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
@@ -685,6 +727,18 @@ public abstract class LineStatusMarkerRenderer {
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       LineStatusMarkerRenderer.this.doAction(editor, e);
+    }
+
+    @Nullable
+    @Override
+    public Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
+      return LineStatusMarkerRenderer.this.calcBounds(editor, lineNum, preferredBounds);
+    }
+
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "VCS marker: changed line";
     }
   }
 }

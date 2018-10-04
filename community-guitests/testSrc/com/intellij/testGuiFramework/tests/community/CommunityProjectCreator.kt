@@ -55,7 +55,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
 
   private fun GuiTestCase.checkFileAlreadyExistsDialog() {
     try {
-      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, Timeouts.seconds01)
+      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, timeout = Timeouts.seconds01)
       dialogFixture.button("Yes").click()
     } catch (cle: ComponentLookupException) { /*do nothing here */ }
   }

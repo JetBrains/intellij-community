@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -115,8 +114,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
                                 @NotNull PsiDocumentManager psiDocumentManager,
-                                @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
-                                @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
+                                @NotNull final NamedScopeManager namedScopeManager,
+                                @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
@@ -596,11 +595,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public synchronized boolean isRunning() {
     return !myUpdateProgress.isCanceled();
   }
-  
+
   @TestOnly
   public boolean isRunningOrPending() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return isRunning() || !myUpdateRunnableFuture.isDone();
+    return isRunning() || !myUpdateRunnableFuture.isDone() || GeneralHighlightingPass.isRestartPending();
   }
 
   // return true if the progress really was canceled
@@ -877,7 +876,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
-    for (ReferenceImporter importer : Extensions.getExtensions(ReferenceImporter.EP_NAME)) {
+    for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
       if (importer.autoImportReferenceAtCursor(editor, file)) break;
     }
   }

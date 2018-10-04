@@ -31,7 +31,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
 
   @Override
   @NotNull
-  @SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
+  @SuppressWarnings({"RawUseOfParameterizedType"})
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     Collection<AbstractTreeNode> l = children;
     int i = 0;
@@ -58,7 +58,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
     private final FileAssociationsManager myInstance;
     private final XsltConfig myConfig;
 
-    XsltFileNode(Project project, PsiFile psiFile, ViewSettings viewSettings) {
+    XsltFileNode(Project project, @NotNull PsiFile psiFile, ViewSettings viewSettings) {
       super(project, psiFile, viewSettings);
       myInstance = FileAssociationsManager.getInstance(myProject);
       myConfig = XsltConfig.getInstance();

@@ -176,7 +176,6 @@ public class GradleResourceCompilerConfigurationGenerator {
   private Map<String, GradleModuleResourceConfiguration> generateAffectedGradleModulesConfiguration(@NotNull CompileContext context) {
     final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = ContainerUtil.newTroveMap();
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
     final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.create(
       gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath1)));
 

@@ -9,40 +9,40 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
 
-public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
+public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint, MultiProcessor {
 
   protected final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
@@ -55,8 +55,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   protected final List<GrResolverProcessor<? extends GroovyResolveResult>> myAccessorProcessors;
   protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
-  protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
 
+  private boolean myCheckValidMethods = false;
   private boolean myStopExecutingMethods = false;
 
   GroovyResolverProcessor(@NotNull GrReferenceExpression ref,
@@ -83,14 +83,15 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     if (!isPropertyResolve() || !isPropertyName(myName)) {
       return Collections.emptyList();
     }
+    final Lazy<PsiType> receiverType = LazyKt.lazy(() -> getTopLevelQualifierType());
     if (myIsLValue) {
-      return Collections.singletonList(
-        new PropertyProcessor(getTopLevelQualifierType(), myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
+      return singletonList(
+        new PropertyProcessor(receiverType, myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
       );
     }
     return ContainerUtil.newArrayList(
-      new PropertyProcessor(getTopLevelQualifierType(), myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
-      new PropertyProcessor(getTopLevelQualifierType(), myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
+      new PropertyProcessor(receiverType, myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
+      new PropertyProcessor(receiverType, myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
     );
   }
 
@@ -108,16 +109,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     return myAcceptableKinds.contains(GroovyResolveKind.PROPERTY);
   }
 
-  public static List<PsiScopeProcessor> allProcessors(PsiScopeProcessor processor) {
-    if (processor instanceof GroovyResolverProcessor && !((GroovyResolverProcessor)processor).myStopExecutingMethods) {
-      List<GrResolverProcessor<? extends GroovyResolveResult>> accessors = ((GroovyResolverProcessor)processor).myAccessorProcessors;
-      if (!accessors.isEmpty()) {
-        return ContainerUtil.concat(Collections.singletonList(processor), accessors);
-      }
-    }
-    return Collections.singletonList(processor);
-  }
-
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (!(element instanceof PsiNamedElement)) return true;
@@ -133,6 +124,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (myStopExecutingMethods) {
         return true;
       }
+      if (myCheckValidMethods) {
+        myCheckValidMethods = false;
+        if (!valid(myCandidates.get(GroovyResolveKind.METHOD)).isEmpty()) {
+          myStopExecutingMethods = true;
+          return true;
+        }
+      }
     }
     else {
       if (!myCandidates.get(kind).isEmpty()) {
@@ -140,100 +138,21 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       }
     }
 
-    final PsiElement resolveContext = state.get(ClassHint.RESOLVE_CONTEXT);
-
-    final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-    final boolean isAccessible = isAccessible(myRef, namedElement);
-    final boolean isStaticsOK = isStaticsOK(myRef, namedElement, resolveContext, false);
-
     final GroovyResolveResult candidate;
-
     if (kind == GroovyResolveKind.METHOD) {
-      final PsiMethod method = (PsiMethod)namedElement;
-
-
-      MethodCandidate methodCandidate = buildMethodCandidate(state, method);
-      GroovyInferenceSession session = new GroovyInferenceSessionBuilder(myRef, methodCandidate).build();
-      PsiSubstitutor applicabilitySubst = session.inferSubst();
-
-      candidate = new GroovyMethodResultImpl(
-        method, resolveContext, spreadState,
-        applicabilitySubst,
-        () -> {
-          GroovyInferenceSession inferenceSession =
-            new GroovyInferenceSessionBuilder(myRef, methodCandidate).addReturnConstraint().resolveMode(false).startFromTop(true).build();
-          PsiSubstitutor substitutor = inferenceSession.inferSubst(myRef);
-          return substitutor;
-        },
-        methodCandidate,
-        false,
-        isAccessible, isStaticsOK, methodCandidate.isApplicable(applicabilitySubst)
-      );
+      candidate = new MethodResolveResult((PsiMethod)namedElement, myRef, state);
     }
     else {
-      final PsiSubstitutor substitutor = getSubstitutor(state);
-      candidate = new GroovyResolveResultImpl(
-        namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, false, true
-      );
+      candidate = new BaseGroovyResolveResult<>(namedElement, myRef, state);
     }
 
-    (candidate.isValidResult() ? myCandidates : myInapplicableCandidates).putValue(kind, candidate);
+    myCandidates.putValue(kind, candidate);
 
-    if (candidate.isValidResult() && kind == GroovyResolveKind.VARIABLE) {
+    if (kind == GroovyResolveKind.VARIABLE && candidate.isValidResult()) {
       myStopExecutingMethods = true;
     }
 
     return true;
-  }
-
-
-  private MethodCandidate buildMethodCandidate(@NotNull ResolveState state, PsiMethod method) {
-    final PsiSubstitutor substitutor = getSubstitutor(state);
-    final PsiSubstitutor siteSubstitutor = updateSubst(myRef.getTypeArguments(), method.getTypeParameters(), substitutor);
-    GrExpression qualifierExpression = myRef.getQualifierExpression();
-    Argument qualifierConstraint = buildQualifier(state, qualifierExpression);
-    List<Argument> argumentConstraints = buildArguments(myRef);
-
-    if (method instanceof GrGdkMethod) {
-      ArrayList<Argument> arguments = new ArrayList<>();
-      arguments.add(0, qualifierConstraint);
-      arguments.addAll(argumentConstraints);
-      return new MethodCandidate(((GrGdkMethod)method).getStaticMethod(), siteSubstitutor, null, arguments, myRef);
-    }
-
-    return new MethodCandidate(method, siteSubstitutor, qualifierConstraint, argumentConstraints, myRef);
-  }
-
-  @NotNull
-  private Argument buildQualifier(@NotNull ResolveState state, GrExpression qualifierExpression) {
-    final PsiType resolvedThis = state.get(ClassHint.THIS_TYPE);
-    final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-
-    if (qualifierExpression != null && spreadState == null) {
-      return new Argument(null, qualifierExpression);
-    }
-
-    PsiType type = PsiImplUtil.getQualifierType(myRef);
-    if (spreadState != null && type != null) {
-      type = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
-    }
-
-    return new Argument(resolvedThis != null ? resolvedThis : type, null);
-  }
-
-
-
-
-  @NotNull
-  private static PsiSubstitutor updateSubst(@NotNull PsiType[] arguments,
-                                            @NotNull PsiTypeParameter[] parameters,
-                                            @NotNull PsiSubstitutor substitutor) {
-    if (arguments.length != parameters.length) return substitutor;
-    for (int i = 0; i < arguments.length; i++) {
-      substitutor.put(parameters[i], arguments[i]);
-    }
-
-    return substitutor;
   }
 
   @SuppressWarnings("unchecked")
@@ -248,8 +167,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @Override
   public void handleEvent(@NotNull Event event, @Nullable Object associated) {
-    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && !myCandidates.get(GroovyResolveKind.METHOD).isEmpty()) {
-      myStopExecutingMethods = true;
+    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event) {
+      myCheckValidMethods = true;
     }
   }
 
@@ -282,6 +201,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @NotNull
+  @Override
+  public Collection<? extends PsiScopeProcessor> getProcessors() {
+    return myStopExecutingMethods ? singletonList(this)
+                                  : concat(singletonList(this), myAccessorProcessors);
+  }
+  
+  @NotNull
   public abstract List<GroovyResolveResult> getCandidates();
 
   public final GroovyResolveResult[] getCandidatesArray() {
@@ -302,9 +228,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     if (element instanceof PsiMethod) {
       return GroovyResolveKind.METHOD;
     }
-    else if (element instanceof PsiEnumConstant) {
-      return GroovyResolveKind.ENUM_CONST;
-    }
     else if (element instanceof PsiField) {
       return GroovyResolveKind.FIELD;
     }
@@ -320,27 +243,20 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @NotNull
-  protected List<GroovyResolveResult> getCandidates(@NotNull GroovyResolveKind... kinds) {
-    return getCandidates(true, kinds);
+  protected List<GroovyResolveResult> getAllCandidates(@NotNull GroovyResolveKind kind) {
+    if (kind == GroovyResolveKind.PROPERTY) {
+      final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
+      myAccessorProcessors.forEach(it -> results.addAll(it.getResults()));
+      return results;
+    }
+    else {
+      return new SmartList<>(myCandidates.get(kind));
+    }
   }
 
   @NotNull
-  protected List<GroovyResolveResult> getCandidates(boolean applicable, @NotNull GroovyResolveKind... kinds) {
-    MultiMap<GroovyResolveKind, GroovyResolveResult> map = applicable ? myCandidates : myInapplicableCandidates;
-    final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
-    for (GroovyResolveKind kind : kinds) {
-      if (kind == GroovyResolveKind.PROPERTY) {
-        myAccessorProcessors.forEach(
-          it -> it.getResults().stream().filter(
-            result -> applicable == result.isValidResult()
-          ).forEach(results::add)
-        );
-      }
-      else {
-        results.addAll(map.get(kind));
-      }
-    }
-    return results;
+  protected List<GroovyResolveResult> getCandidates(@NotNull GroovyResolveKind kind) {
+    return singleOrValid(getAllCandidates(kind));
   }
 
   @NotNull

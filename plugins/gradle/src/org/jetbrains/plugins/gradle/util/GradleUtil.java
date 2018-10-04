@@ -76,7 +76,6 @@ public class GradleUtil {
     return FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static boolean isGradleDefaultWrapperFilesExist(@Nullable String gradleProjectPath) {
     return getWrapperConfiguration(gradleProjectPath) != null;
   }

@@ -216,7 +216,6 @@ public class IdeaApplication {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static void initLAF() {
     try {
       Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");

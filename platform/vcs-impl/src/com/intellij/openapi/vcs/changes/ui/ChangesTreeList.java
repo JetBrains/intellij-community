@@ -27,6 +27,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
+/**
+ * @deprecated Use {@link ChangesTree} or {@link ChangesTreeImpl}
+ */
 public abstract class ChangesTreeList<T> extends ChangesTree {
   @NotNull private final List<T> myRawChanges = new ArrayList<>();
 

@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class ConsoleUpdaterUI implements UpdaterUI {
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {

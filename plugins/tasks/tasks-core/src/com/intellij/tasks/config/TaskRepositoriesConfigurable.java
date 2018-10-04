@@ -61,7 +61,6 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private final Consumer<TaskRepository> myChangeListener;
   private int count;
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository->
       Integer.toString(count++)
 

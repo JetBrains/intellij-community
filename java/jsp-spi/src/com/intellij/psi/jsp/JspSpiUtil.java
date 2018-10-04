@@ -153,11 +153,11 @@ public abstract class JspSpiUtil {
     return urls;
   }
 
-  public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer) {
+  public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<? super VirtualFile> consumer) {
     processClassPathItems(virtualFile, module, consumer, true);
   }
 
-  public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer,
+  public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<? super VirtualFile> consumer,
                                            boolean includeModuleOutput) {
     if (isJarFile(virtualFile)){
       consumer.consume(virtualFile);
@@ -181,7 +181,7 @@ public abstract class JspSpiUtil {
     }
   }
 
-  private static void addUrl(List<URL> urls, VirtualFile file) {
+  private static void addUrl(List<? super URL> urls, VirtualFile file) {
     if (file == null || !file.isValid()) return;
     final URL url = getUrl(file);
     if (url != null) {

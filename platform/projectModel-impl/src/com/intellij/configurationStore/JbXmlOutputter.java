@@ -70,7 +70,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
 
-@SuppressWarnings("Duplicates")
 public final class JbXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 

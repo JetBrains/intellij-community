@@ -56,7 +56,6 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean selected = UISettings.getInstance().getPresentationMode();
-    //noinspection ConditionalExpressionWithIdenticalBranches
     e.getPresentation().setText(selected ? ActionsBundle.message("action.TogglePresentationMode.exit")
                                          : ActionsBundle.message("action.TogglePresentationMode.enter"));
   }

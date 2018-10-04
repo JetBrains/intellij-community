@@ -158,10 +158,10 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (key == CommonDataKeys.PSI_ELEMENT) {
       final Collection<M> memberInfos = getSelectedMemberInfos();
-      if (memberInfos.size() > 0) {
+      if (!memberInfos.isEmpty()) {
         sink.put(CommonDataKeys.PSI_ELEMENT, memberInfos.iterator().next().getMember());
       }
     }
@@ -376,23 +376,17 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       final int modelColumn = myTable.convertColumnIndexToModel(column);
       final M memberInfo = myTable.myMemberInfos.get(row);
       setToolTipText(myTable.myMemberInfoModel.getTooltipText(memberInfo));
-      switch (modelColumn) {
-        case DISPLAY_NAME_COLUMN:
-          {
-            Icon memberIcon = myTable.getMemberIcon(memberInfo, 0);
-            Icon overrideIcon = myTable.getOverrideIcon(memberInfo);
-
-            RowIcon icon = new RowIcon(3);
-            icon.setIcon(memberIcon, MEMBER_ICON_POSITION);
-            myTable.setVisibilityIcon(memberInfo, icon);
-            icon.setIcon(overrideIcon, OVERRIDE_ICON_POSITION);
-            setIcon(icon);
-            break;
-          }
-        default:
-          {
-            setIcon(null);
-          }
+      if (modelColumn == DISPLAY_NAME_COLUMN) {
+        Icon memberIcon = myTable.getMemberIcon(memberInfo, 0);
+        Icon overrideIcon = myTable.getOverrideIcon(memberInfo);
+        RowIcon icon = new RowIcon(3);
+        icon.setIcon(memberIcon, MEMBER_ICON_POSITION);
+        myTable.setVisibilityIcon(memberInfo, icon);
+        icon.setIcon(overrideIcon, OVERRIDE_ICON_POSITION);
+        setIcon(icon);
+      }
+      else {
+        setIcon(null);
       }
       setIconOpaque(false);
       setOpaque(false);

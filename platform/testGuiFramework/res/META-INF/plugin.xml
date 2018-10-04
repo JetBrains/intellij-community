@@ -1,17 +1,20 @@
 <idea-plugin>
 
   <id>com.intellij.testGuiFramework</id>
-  <name>TestGuiFramework</name>
+  <name>Test GUI Framework</name>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.lang</depends>
+  <description>This plugin helps testing IDEA and other plugins via GUI.</description>
+
+  <idea-version since-build="173"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint name="guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
-    <extensionPoint name="generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
+    <extensionPoint qualifiedName="com.intellij.guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
+    <extensionPoint qualifiedName="com.intellij.generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
   </extensionPoints>
 
   <actions>

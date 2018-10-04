@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBRadioButton;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -37,8 +38,11 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   private JBCheckBox mySortImports;
   private JBCheckBox mySortNamesInFromImports;
   private JBCheckBox mySortImportsByTypeFirst;
-  private JBCheckBox myJoinFromImportsWithSameSource;
   private JPanel myRootPanel;
+  private JBCheckBox mySortCaseInsensitively;
+  private JBRadioButton myDoNothingWithFromImports;
+  private JBRadioButton myJoinFromImportsWithSameSource;
+  private JBRadioButton myAlwaysSplitFromImports;
 
   public PyImportsCodeStylePanel(@NotNull CodeStyleSettings settings) {
     super(PythonLanguage.getInstance(), null, settings);
@@ -48,6 +52,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
       final boolean sortingEnabled = mySortImports.isSelected();
       mySortNamesInFromImports.setEnabled(sortingEnabled);
       mySortImportsByTypeFirst.setEnabled(sortingEnabled);
+      mySortCaseInsensitively.setEnabled(sortingEnabled);
     });
   }
 
@@ -87,6 +92,8 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = mySortNamesInFromImports.isSelected();
     pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = mySortImportsByTypeFirst.isSelected();
     pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = myJoinFromImportsWithSameSource.isSelected();
+    pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = myAlwaysSplitFromImports.isSelected();
+    pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = mySortCaseInsensitively.isSelected();
   }
 
   @Override
@@ -96,7 +103,9 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     return mySortImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS ||
            mySortNamesInFromImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS ||
            mySortImportsByTypeFirst.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST ||
-           myJoinFromImportsWithSameSource.isSelected() != pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE;
+           myJoinFromImportsWithSameSource.isSelected() != pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE ||
+           myAlwaysSplitFromImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS ||
+           mySortCaseInsensitively.isSelected() != pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER;
   }
 
   @Nullable
@@ -114,6 +123,16 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     mySortNamesInFromImports.setEnabled(mySortImports.isSelected());
     mySortImportsByTypeFirst.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST);
     mySortImportsByTypeFirst.setEnabled(mySortImports.isSelected());
-    myJoinFromImportsWithSameSource.setSelected(pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE);
+    mySortCaseInsensitively.setSelected(pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER);
+    
+    if (pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE) {
+      myJoinFromImportsWithSameSource.setSelected(true);  
+    }
+    else if (pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS) {
+      myAlwaysSplitFromImports.setSelected(true);
+    }
+    else {
+      myDoNothingWithFromImports.setSelected(true);
+    }
   }
 }

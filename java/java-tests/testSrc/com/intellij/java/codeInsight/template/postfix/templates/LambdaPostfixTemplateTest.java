@@ -38,7 +38,6 @@ public class LambdaPostfixTemplateTest extends PostfixTemplateTestCase {
       myDefaultLanguageLevel = null;
     }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }

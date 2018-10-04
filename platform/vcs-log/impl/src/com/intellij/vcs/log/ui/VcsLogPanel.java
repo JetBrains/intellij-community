@@ -63,7 +63,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     else if (VCS_LOG_UI.is(dataId)) {
       return myUi;
     }
-    else if (VCS_LOG_DATA_PROVIDER.is(dataId)) {
+    else if (VCS_LOG_DATA_PROVIDER.is(dataId) || VcsLogInternalDataKeys.LOG_DATA.is(dataId)) {
       return myManager.getDataManager();
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {

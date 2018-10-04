@@ -52,8 +52,11 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,6 +105,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     else if (element instanceof Vendor) {
       annotateVendor((Vendor)element, holder);
+    }
+    else if (element instanceof ProductDescriptor) {
+      annotateProductDescriptor((ProductDescriptor)element, holder);
     }
     else if (element instanceof IdeaVersion) {
       annotateIdeaVersion((IdeaVersion)element, holder);
@@ -474,6 +480,23 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     checkTemplateText(vendor.getEmail(), "support@yourcompany.com", holder);
     checkMaxLength(vendor.getEmail(), 255, holder);
+  }
+
+  private static void annotateProductDescriptor(ProductDescriptor productDescriptor, DomElementAnnotationHolder holder) {
+    checkMaxLength(productDescriptor.getCode(), 15, holder);
+
+    String releaseDate = productDescriptor.getReleaseDate().getValue();
+    if (releaseDate == null) return;
+
+    try {
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
+      dateFormat.setLenient(false);
+      dateFormat.parse(releaseDate);
+    }
+    catch (ParseException e) {
+      holder.createProblem(productDescriptor.getReleaseDate(),
+                           DevKitBundle.message("inspections.plugin.xml.product.descriptor.invalid.date"));
+    }
   }
 
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {

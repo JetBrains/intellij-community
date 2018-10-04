@@ -165,9 +165,8 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       if (myMethods.contains(instruction.getTargetMethod())) {
         DfaValue qualifier = memState.peek();
-        DfaMemoryState copy = memState.createCopy();
         // Methods like "getCause" and "getMessage" return "null" for our test exception
-        if (!copy.applyCondition(runner.getFactory().createCondition(qualifier, RelationType.NE, myExceptionVar))) {
+        if (memState.areEqual(qualifier, myExceptionVar)) {
           memState.pop();
           memState.push(runner.getFactory().getConstFactory().getNull());
           return nextInstruction(instruction, runner, memState);

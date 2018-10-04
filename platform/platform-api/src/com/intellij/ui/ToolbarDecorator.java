@@ -31,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -496,7 +496,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     if (panel != null) {
       return panel.getAnActionButton(type);
     }
-    //noinspection ConstantConditions
     return null;
   }
 

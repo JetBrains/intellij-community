@@ -24,7 +24,6 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
     return ServiceManager.getService(GradleSystemSettings.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public GradleSystemSettings.MyState getState() {

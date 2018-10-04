@@ -76,7 +76,6 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
       catch (IOException e) {
-        //noinspection ThrowableInstanceNeverThrown
         if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
           LOG.error("Problem reading stream", e);
         }
@@ -131,7 +130,6 @@ public class GitBinaryHandler extends GitHandler {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {
-            //noinspection ThrowableResultOfMethodCallIgnored
             if (myException.get() != null) {
               message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
             }
@@ -145,7 +143,6 @@ public class GitBinaryHandler extends GitHandler {
             }
           }
           if (message != null) {
-            //noinspection ThrowableInstanceNeverThrown
             VcsException e = myException.getAndSet(new VcsException(message));
             if (e != null) {
               LOG.warn("Dropping previous exception: ", e);
@@ -156,7 +153,6 @@ public class GitBinaryHandler extends GitHandler {
 
       @Override
       public void startFailed(@NotNull Throwable exception) {
-        //noinspection ThrowableInstanceNeverThrown
         VcsException e = myException.getAndSet(new VcsException("Start failed: " + exception.getMessage(), exception));
         if (e != null) {
           LOG.warn("Dropping previous exception: ", e);
@@ -173,7 +169,6 @@ public class GitBinaryHandler extends GitHandler {
     catch (IOException e) {
       throw new VcsException(e.getMessage(), e);
     }
-    //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();
     }

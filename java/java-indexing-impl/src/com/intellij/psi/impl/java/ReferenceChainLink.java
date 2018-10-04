@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -114,7 +113,7 @@ public class ReferenceChainLink {
       return null;
     }
 
-    return candidates.stream().filter(candidate -> canBeAccessible(placeFile, candidate)).collect(Collectors.toList());
+    return ContainerUtil.filter(candidates, candidate -> canBeAccessible(placeFile, candidate));
   }
 
   private static boolean canBeAccessible(VirtualFile placeFile, PsiMember member) {

@@ -45,7 +45,7 @@ class DocumentationBuilderKit {
     return new ChainIterable<>("<" + tag + ">").add(content).addItem("</" + tag + ">");
   }
 
-  static ChainIterable<String> wrapInTag(String tag, List<Pair<String, String>> attributes, Iterable<String> content) {
+  static ChainIterable<String> wrapInTag(String tag, List<? extends Pair<String, String>> attributes, Iterable<String> content) {
     if (attributes.size() == 0) {
       return wrapInTag(tag, content);
     } else {

@@ -38,14 +38,14 @@ public abstract class IndentationParser implements PsiParser {
   private final IElementType myBlockElementType;
   @NotNull
   private final IElementType myDocumentType;
-  private final List<IElementType> myContainerTypes;
+  private final List<? extends IElementType> myContainerTypes;
 
   public IndentationParser(
     @NotNull IElementType documentType,
     @NotNull final IElementType blockElementType,
     @NotNull final IElementType eolTokenType,
     @NotNull final IElementType indentTokenType,
-    final List<IElementType> containerTypes)
+    final List<? extends IElementType> containerTypes)
   {
     myDocumentType = documentType;
     myBlockElementType = blockElementType;

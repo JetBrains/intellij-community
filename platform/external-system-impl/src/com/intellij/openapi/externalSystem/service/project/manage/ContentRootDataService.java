@@ -40,11 +40,10 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -143,7 +142,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                 @NotNull final Collection<DataNode<ContentRootData>> data,
+                                 @NotNull final Collection<? extends DataNode<ContentRootData>> data,
                                  @NotNull final Module module, boolean forceDirectoriesCreation) {
     logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
@@ -287,10 +286,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     }
 
     if (!createEmptyContentRootDirectories && !generated) {
-      final Ref<VirtualFile> ref = Ref.create();
-      ExternalSystemApiUtil.doWriteAction(() -> ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getPath())));
-      final VirtualFile sourceFolderFile = ref.get();
-      if (sourceFolderFile == null || !sourceFolderFile.isValid()) {
+      if (!FileUtil.exists(root.getPath())) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
         }
@@ -312,7 +308,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         properties.setForGeneratedSources(true);
       }
     }
-    if(createEmptyContentRootDirectories) {
+    if(createEmptyContentRootDirectories && !FileUtil.exists(root.getPath())) {
       ExternalSystemApiUtil.doWriteAction(() -> {
         try {
           VfsUtil.createDirectoryIfMissing(root.getPath());

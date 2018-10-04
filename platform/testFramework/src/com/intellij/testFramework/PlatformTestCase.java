@@ -12,7 +12,6 @@ import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,10 +29,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -186,7 +183,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyle.getSettings(getProject());
   }
@@ -292,7 +289,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         hashCodes.add(System.identityHashCode(project));
       }
 
-      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
+      String dumpPath = FileUtil.getTempDirectory() + "/leakedProjects.hprof.zip";
       System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
       try {
         FileUtil.delete(new File(dumpPath));
@@ -435,10 +432,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    final ProjectManager projectManager = ProjectManager.getInstance();
+    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     assert projectManager != null : "The ProjectManager is not initialized yet";
-    ProjectManagerImpl projectManagerImpl = (ProjectManagerImpl)projectManager;
-    if (projectManagerImpl.isDefaultProjectInitialized()) {
+    if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
@@ -570,12 +566,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose) {
     RunAll runAll = new RunAll();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    if (projectManager instanceof ProjectManagerImpl) {
-      for (Project project : projectManager.closeTestProject(projectToClose)) {
-        runAll = runAll
-          .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
-          .append(() -> ((ProjectManagerImpl)projectManager).forceCloseProject(project, true));
-      }
+    for (Project project : projectManager.closeTestProject(projectToClose)) {
+      runAll = runAll
+        .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
+        .append(() -> projectManager.forceCloseProject(project, true));
     }
     runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();
   }

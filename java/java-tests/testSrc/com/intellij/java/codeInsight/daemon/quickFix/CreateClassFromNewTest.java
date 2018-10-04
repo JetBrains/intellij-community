@@ -29,10 +29,6 @@ public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
     CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_CLASS_LBRACE = true;
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createClassFromNew";

@@ -215,8 +215,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.configureByFile(getTestName(false) + ".xml")
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['bar', 'goo']
-    assert myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') }
+    assertSameElements(myFixture.lookupElementStrings, 'bar', 'goo')
+    assertNotNull(toString(myFixture.lookup.advertisements),
+                  myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') })
   }
 
   @SuppressWarnings("ComponentNotRegistered")
@@ -226,8 +227,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package another.goo; public class AnotherAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.configureByFile(getTestName(false) + ".xml")
     myFixture.complete(CompletionType.SMART)
-    assert myFixture.lookupElementStrings == ['foo.bar.BarAction', 'foo.goo.GooAction']
-    assert !myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') }
+    assertSameElements(myFixture.lookupElementStrings, ['foo.bar.BarAction', 'foo.goo.GooAction'])
+    assertNull(toString(myFixture.lookup.advertisements),
+                  myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') })
   }
 
   void testExtensionsSpecifyDefaultExtensionNs() {
@@ -270,8 +272,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
     def presentation = new LookupElementPresentation()
     element.renderElement(presentation)
-    assert presentation.itemText == lookupString
-    assert presentation.typeText == typeText
+    assertEquals(lookupString, presentation.itemText)
+    assertEquals(typeText, presentation.typeText)
   }
 
   private void configureLanguageAttributeTest() {
@@ -323,7 +325,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
-    myFixture.enableInspections(PluginXmlDomInspection.class)
     myFixture.configureByFile("pluginWithBigNumberInUntilBuild_before.xml")
     myFixture.launchAction(myFixture.findSingleIntention("Change 'until-build'"))
     myFixture.checkResultByFile("pluginWithBigNumberInUntilBuild_after.xml")
@@ -350,7 +351,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testSpecifyJetBrainsAsVendorQuickFix() {
-    myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
     try {
       myFixture.configureByFile("pluginWithoutVendor_before.xml")
@@ -407,7 +407,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void testHighlightingInIdeaProject(String path) {
-    myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
     try {
       myFixture.testHighlighting(path)
@@ -437,7 +436,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureByFile(getTestName(true) + ".xml")
     final PsiElement element =
       TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED)
-    assert element != null
+    assertNotNull(element)
     assertEquals("Extension Point", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE))
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE))
   }
@@ -536,5 +535,13 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testPluginWithSinceBuildGreaterThanUntilBuild() {
     myFixture.testHighlighting("pluginWithSinceBuildGreaterThanUntilBuild.xml")
+  }
+
+  void testProductDescriptor() {
+    myFixture.testHighlighting("productDescriptorInvalid.xml")
+  }
+
+  void testProductDescriptorInvalid() {
+    myFixture.testHighlighting("productDescriptorInvalid.xml")
   }
 }

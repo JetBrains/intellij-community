@@ -33,24 +33,19 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
     return new MacIntelliJProgressBarUI();
   }
 
-  @Override protected Color getRemainderColor() {
-    return Gray.xD4;
-  }
-
-  @SuppressWarnings("UseJBColor")
   @Override
   protected Color getFinishedColor() {
-    return UIUtil.isGraphite() ? new Color(0x989a9e) : new Color(0x0089fc);
+    //noinspection UseJBColor
+    return UIUtil.isGraphite() ? new Color(0x989a9e) : super.getFinishedColor();
   }
 
-  @SuppressWarnings("UseJBColor")
   @Override
   protected Color getStartColor() {
-    return UIUtil.isGraphite() ? Gray.xD4 : new Color(0x86c4ff);
+    return UIUtil.isGraphite() ? Gray.xD4 : super.getStartColor();
   }
 
   @Override
   protected Color getEndColor() {
-    return getFinishedColor();
+    return UIUtil.isGraphite() ? getFinishedColor() : super.getEndColor();
   }
 }

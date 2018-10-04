@@ -42,4 +42,8 @@ public abstract class BaseInjectedFileChangesHandler implements InjectedFileChan
 
     return false;
   }
+
+  @Override
+  public void dispose() {
+  }
 }

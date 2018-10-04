@@ -65,7 +65,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author dsl
@@ -159,10 +158,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
 
       if (!selectionModel.hasSelection()) {
-        final List<PsiExpression> expressions = collectExpressions(file, editor, offset)
-          .stream()
-          .filter(expression -> RefactoringUtil.getParentStatement(expression, false) != null)
-          .collect(Collectors.toList());
+        final List<PsiExpression> expressions = ContainerUtil
+          .filter(collectExpressions(file, editor, offset), expression -> RefactoringUtil.getParentStatement(expression, false) != null);
         if (expressions.isEmpty()) {
           selectionModel.selectLineAtCaret();
         } else if (!isChooserNeeded(expressions)) {
@@ -188,7 +185,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  public static boolean isChooserNeeded(List<PsiExpression> exprs) {
+  public static boolean isChooserNeeded(List<? extends PsiExpression> exprs) {
     if (exprs.size() == 1) {
       final PsiExpression expression = exprs.get(0);
       return expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null;
@@ -207,7 +204,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
            isPreferStatements();
   }
 
-  public static int preferredSelection(PsiElement[] statementsInRange, List<PsiExpression> expressions) {
+  public static int preferredSelection(PsiElement[] statementsInRange, List<? extends PsiExpression> expressions) {
     int selection;
     if (statementsInRange.length == 1 &&
         statementsInRange[0] instanceof PsiExpressionStatement &&

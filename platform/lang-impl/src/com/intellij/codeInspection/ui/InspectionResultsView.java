@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -30,6 +29,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -64,8 +65,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
@@ -99,7 +100,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -301,7 +301,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     add(westPanel, BorderLayout.WEST);
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private JComponent createRightActionsToolbar() {
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
@@ -389,7 +388,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Nullable
   private static Navigatable getOpenFileDescriptor(final RefElement refElement) {
-    PsiElement psiElement = refElement.getElement();
+    PsiElement psiElement = refElement.getPsiElement();
     if (psiElement == null) return null;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return null;
@@ -536,8 +535,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement &&
         selectedEntity.isValid() &&
-        !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
-      PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
+        !(((RefElement)selectedEntity).getPsiElement() instanceof PsiDirectory)) {
+      PsiElement selectedElement = ((RefElement)selectedEntity).getPsiElement();
       if (problemCount == 1) {
         CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
         if (descriptors.length != 0) {
@@ -628,10 +627,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myInspectionProfile;
   }
 
-  @ReviseWhenPortedToJDK("9")
   void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    // redundant cast to fix compilation under jdk9
-    myTreeUpdater.submit((Runnable)() -> ReadAction.run(() -> {
+    updateTree(() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (myTreeStructureUpdateLock) {
@@ -684,7 +681,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (app.isUnitTestMode()) {
       buildAction.run();
     } else {
-      myTreeUpdater.execute(buildAction);
+      updateTree(buildAction);
     }
   }
 
@@ -721,7 +718,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public void addTools(Collection<? extends Tools> tools) {
-    myTreeUpdater.submit(() -> addToolsSynchronously(tools));
+    updateTree(() -> addToolsSynchronously(tools));
   }
 
   private void addToolsSynchronously(Collection<? extends Tools> tools) {
@@ -782,12 +779,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (selectedNode instanceof RefElementNode) {
       final RefElementNode refElementNode = (RefElementNode)selectedNode;
       RefEntity refElement = refElementNode.getElement();
-      if (refElement == null) return null;
+      if (refElement == null || !refElement.isValid()) return null;
       final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
 
       if (!item.isValid()) return null;
 
-      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getElement() : null;
+      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
       if (psiElement == null) return null;
 
       final CommonProblemDescriptor problem = refElementNode.getDescriptor();
@@ -872,7 +869,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<>();
     for (RefEntity refElement : refElements) {
-      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         psiElements.add(psiElement);
       }
@@ -975,6 +972,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
     }
   }
+
+  private void updateTree(@NotNull Runnable action) {
+    myTreeUpdater.execute(() -> ProgressManager.getInstance().runProcess(action, new EmptyProgressIndicator()));
+  }
+
 
   @TestOnly
   public void dispatchTreeUpdate() throws Exception {

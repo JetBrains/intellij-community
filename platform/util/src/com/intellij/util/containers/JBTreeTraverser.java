@@ -31,7 +31,7 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
     return new JBTreeTraverser<T>(Functions.compose(treeStructure, Functions.<T>wrapArray()));
   }
 
-  public JBTreeTraverser(Function<T, ? extends Iterable<? extends T>> treeStructure) {
+  public JBTreeTraverser(Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
     super(null, treeStructure);
   }
 

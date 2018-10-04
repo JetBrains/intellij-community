@@ -193,14 +193,14 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull FindModel findModel,
                                 @Nullable final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
-                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull final Processor<? super UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
     findUsages(findModel, project, consumer, processPresentation);
   }
 
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
-                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull final Processor<? super UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
     findUsages(findModel, project, processPresentation, Collections.emptySet(), consumer);
   }
@@ -522,7 +522,7 @@ public class FindInProjectUtil {
     }
 
     @Override
-    public void calcData(DataKey key, DataSink sink) {
+    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
       if (UsageView.USAGE_SCOPE.equals(key)) {
         SearchScope scope = getScopeFromModel(myProject, myFindModel);
         sink.put(UsageView.USAGE_SCOPE, scope);

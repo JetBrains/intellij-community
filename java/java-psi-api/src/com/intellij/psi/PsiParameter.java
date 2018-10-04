@@ -60,7 +60,7 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
   @Override
   PsiType getType();
 
-  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
+  // binary compatibility
   @NotNull
   @Override
   default PsiAnnotation[] getAnnotations() {

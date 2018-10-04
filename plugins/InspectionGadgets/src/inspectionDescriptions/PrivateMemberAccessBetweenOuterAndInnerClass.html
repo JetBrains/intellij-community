@@ -12,8 +12,10 @@ another class. To enable access from an inner class to private members of a
 containing class or the other way around javac creates a package-private
 synthetic accessor method. Less use of memory and greater performance may be achieved by making the
 member package-private, thus allowing direct access without the creation of a synthetic accessor method.
-<!-- tooltip end -->
 <p>
-
+This inspection does not report anything if language level is set to Java 11 or higher
+as thanks to nest-based access control (JEP 181), accessor methods are not generated anymore.
+</p>
+<!-- tooltip end -->
 </body>
 </html>

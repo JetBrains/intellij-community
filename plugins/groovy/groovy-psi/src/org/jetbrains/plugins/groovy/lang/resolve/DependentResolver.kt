@@ -31,7 +31,8 @@ abstract class DependentResolver<T : GroovyReference> : GroovyResolver<T> {
 
   private fun resolveDependencies(ref: T, incomplete: Boolean): MutableCollection<Any>? {
     if (ref in resolvingDependencies.get()) return null
-    return collectDependencies(ref)?.mapNotNullTo(mutableListOf()) {
+    val dependencies = collectDependencies(ref)
+    return dependencies?.mapNotNullTo(mutableListOf()) {
       if (ref === it) return@mapNotNullTo null
       try {
         resolvingDependencies.get().add(it)

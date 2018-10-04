@@ -13,6 +13,7 @@ import com.intellij.testGuiFramework.util.Predicate
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
 import javax.swing.JTree
@@ -175,7 +176,32 @@ import javax.swing.tree.TreePath
    * @param extendedValue if true return full text for each path item
    * */
   fun TreePath.getPathStrings(jTree: JTree, extendedValue: Boolean = false): List<String> {
+    if(jTree.hasValidModel().not())
+      throw ComponentLookupException("Model or root of a tree is null")
+
     val cellReader = ExtendedJTreeCellReader()
-    val pathStrings = this.path.map { cellReader.valueAtExtended(jTree, it, extendedValue) ?: throw Exception("Unable to read value (value is null) for a tree")}
-    return if (pathStrings.first().isEmpty() || !jTree.isRootVisible) pathStrings.drop(1) else pathStrings
+    val pathStrings = if (path.first()?.toString()?.isEmpty() != false || !jTree.isRootVisible) path.drop(1) else path.asList()
+    return pathStrings.asSequence().map {
+      cellReader.valueAtExtended(jTree, it, extendedValue)  ?: throw ComponentLookupException("Unable to read value (value is null) for a tree")
+    }.filter { it.isNotEmpty() }.toList()
   }
+
+
+  fun JTree.printModel(parent: Any, indent: Int = 0) {
+    val indentS = "----"
+    for (it in 0 until model.getChildCount(parent)) {
+      val node = model.getChild(parent, it)
+      println("${indentS.repeat(indent)}$node")
+      if(model.isLeaf(node).not())
+        printModel(node, indent + 1)
+    }
+  }
+
+  fun JTree.printModel() {
+    if (hasValidModel()) {
+      GuiTestUtilKt.runOnEdt { printModel(model.root) }
+    }
+    else println("*** model or root is NULL ***")
+  }
+
+  fun JTree.hasValidModel(): Boolean = GuiTestUtilKt.computeOnEdt { model?.root != null } == true

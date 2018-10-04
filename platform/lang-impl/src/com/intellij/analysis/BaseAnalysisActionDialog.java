@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   public BaseAnalysisActionDialog(@NotNull String title,
                                    @NotNull String analysisNoon,
                                    @NotNull Project project,
-                                   @NotNull List<ModelScopeItem> items,
+                                   @NotNull List<? extends ModelScopeItem> items,
                                    @NotNull AnalysisUIOptions options,
                                    final boolean rememberScope,
                                    final boolean showInspectTestSource) {
@@ -176,8 +177,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private void preselectButton() {
     if (myRememberScope) {
       int type = myOptions.SCOPE_TYPE;
-      List<ModelScopeItemView> preselectedScopes = myViewItems.stream()
-        .filter(x -> x.scopeId == type).collect(Collectors.toList());
+      List<ModelScopeItemView> preselectedScopes = ContainerUtil.filter(myViewItems, x -> x.scopeId == type);
 
       if (preselectedScopes.size() >= 1) {
         LOG.assertTrue(preselectedScopes.size() == 1, "preselectedScopes.size() == 1");

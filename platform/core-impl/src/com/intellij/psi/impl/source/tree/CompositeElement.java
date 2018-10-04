@@ -739,7 +739,6 @@ public class CompositeElement extends TreeElement {
       return parserDefinition.createElement(this);
     }
 
-    //noinspection ConstantConditions
     return null;
   }
 

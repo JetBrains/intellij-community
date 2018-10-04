@@ -61,7 +61,7 @@ import static com.intellij.execution.util.ProgramParametersUtil.configureConfigu
 /**
  * @author peter
  */
-public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
+public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 
   private String vmParams;
@@ -255,7 +255,6 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return null;
   }
 
-  @SuppressWarnings("Duplicates")
   @Nullable
   private static String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();

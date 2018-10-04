@@ -1,0 +1,4 @@
+{
+  "a": <warning descr="Type is not allowed. Expected: string.">6</warning>,
+  <warning descr="Property 'b' is not allowed">"b": "a"</warning>
+}

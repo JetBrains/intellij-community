@@ -72,7 +72,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     Set<IdeaPlugin> result = ContainerUtil.newHashSet();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
-    //noinspection NullableProblems
     result.addAll(byId.get(null));
     return result;
   }
@@ -130,7 +129,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  public static With findWithElement(List<With> elements, PsiField field) {
+  public static With findWithElement(List<? extends With> elements, PsiField field) {
     for (With element : elements) {
       if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
         return element;

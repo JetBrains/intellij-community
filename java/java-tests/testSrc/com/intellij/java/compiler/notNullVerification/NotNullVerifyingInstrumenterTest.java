@@ -122,8 +122,7 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnumConstructor() throws Exception {
     Class testClass = prepareTest();
-    Object field = testClass.getField("Value");
-    assertNotNull(field);
+    assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
@@ -134,7 +133,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), NullPointerException.class);
       assertEquals("Argument 1 for @NotNull parameter of CustomExceptionType.foo must not be null", e.getCause().getMessage());
     }
@@ -143,8 +141,7 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnumConstructorSecondParam() throws Exception {
     Class testClass = prepareTest();
-    Object field = testClass.getField("Value");
-    assertNotNull(field);
+    assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
@@ -167,7 +164,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), IllegalArgumentException.class);
       String trace = ExceptionUtil.getThrowableText(e.getCause());
       assertEquals("Exception should happen in real, non-bridge method: " + trace,
@@ -201,7 +197,7 @@ public class NotNullVerifyingInstrumenterTest {
     Object instance = test.newInstance();
     verifyCallThrowsException("@FooAnno method TypeUseOnlyAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseOnlyAnnotations.foo2 must not be null", instance, test.getMethod("foo2", String.class), (String)null);
-    test.getMethod("foo3", List.class).invoke(instance, (List)null);
+    test.getMethod("foo3", List.class).invoke(instance, new Object[]{null});
   }
 
   @Test
@@ -233,8 +229,10 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnclosingClass() throws Exception {
     Class<?> testClass = prepareTest();
-    Object obj = testClass.getMethod("main").invoke(null);
-    assertEquals(testClass, obj.getClass().getEnclosingClass());
+    Object obj1 = testClass.getMethod("fromStatic").invoke(null);
+    assertEquals(testClass, obj1.getClass().getEnclosingClass());
+    Object obj2 = testClass.getMethod("fromInstance").invoke(testClass.newInstance());
+    assertEquals(testClass, obj2.getClass().getEnclosingClass());
   }
 
   @Test
@@ -272,7 +270,7 @@ public class NotNullVerifyingInstrumenterTest {
     return prepareTest(false, AnnotationUtil.NOT_NULL);
   }
 
-  private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnos) throws IOException {
+  private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
     String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
     String baseClassName = PlatformTestUtil.getTestName(testName.getMethodName(), false);
     String javaPath = (base + baseClassName) + ".java";
@@ -298,7 +296,7 @@ public class NotNullVerifyingInstrumenterTest {
 
         FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnos);
+        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
 
         byte[] instrumented = writer.toByteArray();
         String className = FileUtil.getNameWithoutExtension(fileName);

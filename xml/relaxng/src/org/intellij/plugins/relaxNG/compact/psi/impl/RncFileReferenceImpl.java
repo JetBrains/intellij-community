@@ -41,7 +41,6 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
 
   @NotNull
   @Override
-  @SuppressWarnings({ "SSBasedInspection" })
   public PsiReference[] getReferences() {
     final ASTNode literal = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (literal == null) return PsiReference.EMPTY_ARRAY;

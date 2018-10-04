@@ -57,9 +57,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
@@ -91,7 +90,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private final List<RunDashboardGrouper> myGroupers;
+  private final List<? extends RunDashboardGrouper> myGroupers;
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final ContentManager myContentManager;
@@ -103,7 +102,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final DefaultActionGroup myDashboardContentActions = new DefaultActionGroup();
   private final Map<Content, List<AnAction>> myContentActions = new WeakHashMap<>();
 
-  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<RunDashboardGrouper> groupers) {
+  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<? extends RunDashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -270,9 +269,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentActionGroup.addSeparator();
 
     if (actions != null) {
-      myContentActionGroup.addAll(actions.stream()
-                                    .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
-                                    .collect(Collectors.toList()));
+      myContentActionGroup.addAll(
+        ContainerUtil.filter(actions, action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction)));
     }
   }
 
@@ -435,7 +433,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     treeGroup.addSeparator();
     List<RunDashboardGrouper> groupers =
-      myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).collect(Collectors.toList());
+      ContainerUtil.filter(myGroupers, grouper -> !grouper.getRule().isAlwaysEnabled());
     if (!groupers.isEmpty()) {
       treeGroup.add(new GroupByActionGroup(groupers));
     }
@@ -541,7 +539,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
-    GroupByActionGroup(List<RunDashboardGrouper> groupers) {
+    GroupByActionGroup(List<? extends RunDashboardGrouper> groupers) {
       super(ExecutionBundle.message("run.dashboard.group.by.action.name"), true);
       getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
 

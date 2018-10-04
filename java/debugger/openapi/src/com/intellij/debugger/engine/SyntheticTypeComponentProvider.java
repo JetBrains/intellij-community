@@ -25,4 +25,9 @@ public interface SyntheticTypeComponentProvider {
   ExtensionPointName<SyntheticTypeComponentProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.syntheticProvider");
 
   boolean isSynthetic(TypeComponent typeComponent);
+
+  //override this method to prevent other providers treating type component as synthetic
+  default boolean isNotSynthetic(TypeComponent typeComponent) {
+    return false;
+  }
 }

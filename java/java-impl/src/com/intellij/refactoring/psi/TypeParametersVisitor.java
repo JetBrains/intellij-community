@@ -21,9 +21,9 @@ import java.util.Set;
 
 @SuppressWarnings({"AssignmentToCollectionOrArrayFieldFromParameter"})
 public class TypeParametersVisitor extends JavaRecursiveElementWalkingVisitor {
-   private final Set<PsiTypeParameter> params;
+   private final Set<? super PsiTypeParameter> params;
 
-   public TypeParametersVisitor(Set<PsiTypeParameter> params) {
+   public TypeParametersVisitor(Set<? super PsiTypeParameter> params) {
        super();
        this.params = params;
    }

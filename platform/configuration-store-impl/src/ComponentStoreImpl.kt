@@ -79,7 +79,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
-  override abstract val storageManager: StateStorageManager
+  abstract override val storageManager: StateStorageManager
 
   internal fun getComponents(): Map<String, ComponentInfo> {
     return components
@@ -128,7 +128,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override final fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  final override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val errors: MutableList<Throwable> = SmartList<Throwable>()
 
     beforeSaveComponents(errors)
@@ -464,13 +464,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  override final fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     runBatchUpdate(messageBus) {
       reinitComponents(componentNames)
     }
   }
 
-  override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
+  final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
@@ -576,7 +576,7 @@ internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
-  val substitutor = store.storageManager.macroSubstitutor ?: return
+  val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
 
   val immutableMacros = substitutor.getUnknownMacros(componentName)
   if (immutableMacros.isEmpty()) {

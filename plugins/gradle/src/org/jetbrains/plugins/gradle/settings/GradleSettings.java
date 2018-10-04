@@ -53,7 +53,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public GradleSettings.MyState getState() {

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>NullTest.java</file>
-    <line>6</line>
-    <description>Dereference of 't' will produce NullPointerException</description>
-  </problem>
-</problems>
-

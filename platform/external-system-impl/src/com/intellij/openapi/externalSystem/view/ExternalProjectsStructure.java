@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -41,24 +40,25 @@ import java.util.Map;
  */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
+  private final SimpleTree myTree;
   private ExternalProjectsView myExternalProjectsView;
-  private final SimpleTreeBuilder myTreeBuilder;
+  private SimpleTreeBuilder myTreeBuilder;
   private RootNode myRoot;
 
   private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<>();
 
   public ExternalProjectsStructure(Project project, SimpleTree tree) {
     myProject = project;
-
+    myTree = tree;
     configureTree(tree);
-
-    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
-    Disposer.register(myProject, myTreeBuilder);
   }
 
   public void init(ExternalProjectsView externalProjectsView) {
     myExternalProjectsView = externalProjectsView;
     myRoot = new RootNode();
+
+    myTreeBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), this, null);
+    Disposer.register(myProject, myTreeBuilder);
     myTreeBuilder.initRoot();
     myTreeBuilder.expand(myRoot, null);
   }
@@ -68,7 +68,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   }
 
   public void updateFrom(SimpleNode node) {
-    myTreeBuilder.addSubtreeToUpdateByElement(node);
+    if (node != null) {
+      myTreeBuilder.addSubtreeToUpdateByElement(node);
+    }
   }
 
   public void updateUpTo(SimpleNode node) {
@@ -79,6 +81,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -215,7 +218,6 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   private ExternalSystemNode findNodeFor(String projectPath) {
     return myNodeMapping.get(projectPath);
   }

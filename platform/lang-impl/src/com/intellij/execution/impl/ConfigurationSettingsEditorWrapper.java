@@ -9,15 +9,14 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,6 +31,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myWholePanel;
 
   private JPanel myBeforeLaunchContainer;
+  private JBCheckBox myIsAllowRunningInParallelCheckBox;
   private final BeforeRunStepsPanel myBeforeRunStepsPanel;
 
   private final ConfigurationSettingsEditor myEditor;
@@ -74,6 +74,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     myBeforeRunStepsPanel.doReset(settings);
     myBeforeLaunchContainer.setVisible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
+
+    myIsAllowRunningInParallelCheckBox.setSelected(settings.getConfiguration().isAllowRunningInParallel());
+    myIsAllowRunningInParallelCheckBox.setVisible(settings.isTemplate() && settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
   }
 
   @Override
@@ -81,7 +84,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   protected JComponent createEditor() {
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myWholePanel, new MyDataProvider());
+    DataManager.registerDataProvider(myWholePanel, dataId -> {
+      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return this;
+      }
+      return null;
+    });
     return myWholePanel;
   }
 
@@ -94,37 +102,39 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
-    doApply(settings, false);
+    doApply((RunnerAndConfigurationSettingsImpl)settings, false);
   }
 
   @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
-    doApply(result, true);
+    doApply((RunnerAndConfigurationSettingsImpl)result, true);
     return result;
   }
 
-  private void doApply(@NotNull RunnerAndConfigurationSettings settings, boolean isSnapshot) {
+  private void doApply(@NotNull RunnerAndConfigurationSettingsImpl settings, boolean isSnapshot) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = ((RunnerAndConfigurationSettingsImpl)settings).getManager();
 
     List<BeforeRunTask<?>> tasks = ContainerUtil.copyList(myBeforeRunStepsPanel.getTasks());
+    RunnerAndConfigurationSettings settingsToApply = null;
     if (isSnapshot) {
       runConfiguration.setBeforeRunTasks(tasks);
     }
     else {
+      RunManagerImpl runManager = settings.getManager();
       runManager.setBeforeRunTasks(runConfiguration, tasks);
+      settingsToApply = runManager.getSettings(runConfiguration);
     }
 
-    RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
-    if (runManagerSettings != null) {
-      runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
-      runManagerSettings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
+    if (settingsToApply == null) {
+      settingsToApply = settings;
     }
-    else {
-      settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
-      settings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
+
+    settingsToApply.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+    settingsToApply.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
+    if (myIsAllowRunningInParallelCheckBox.isVisible()) {
+      settings.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallelCheckBox.isSelected());
     }
   }
 
@@ -148,16 +158,5 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void titleChanged(@NotNull String title) {
     myDecorator.setTitle(title);
-  }
-
-  private class MyDataProvider implements DataProvider {
-    @Nullable
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return ConfigurationSettingsEditorWrapper.this;
-      }
-      return null;
-    }
   }
 }

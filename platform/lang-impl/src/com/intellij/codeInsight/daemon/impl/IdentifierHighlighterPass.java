@@ -182,7 +182,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {
-    final Couple<Collection<TextRange>> usages = AstLoadingFilter.disableTreeLoading(
+    final Couple<Collection<TextRange>> usages = AstLoadingFilter.disallowTreeLoading(
       () -> getHighlightUsages(target, myFile, true),
       () -> "Currently highlighted file: \n" +
             "psi file: " + myFile + ";\n" +

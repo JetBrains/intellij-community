@@ -70,7 +70,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   protected static boolean canPutAtElement(@NotNull final VirtualFile file,
                                            final int line,
                                            @NotNull Project project,
-                                           @NotNull PairFunction<PsiElement, Document, Boolean> processor) {
+                                           @NotNull PairFunction<? super PsiElement, ? super Document, Boolean> processor) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     // JSPX supports jvm debugging, but not in XHTML files
     if (psiFile == null || psiFile.getViewProvider().getFileType() == StdFileTypes.XHTML) {

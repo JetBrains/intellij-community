@@ -25,15 +25,9 @@ import java.util.*;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public PackageElementNode(@NotNull Project project,
-                            final PackageElement value,
+                            @NotNull PackageElement value,
                             final ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public PackageElementNode(@NotNull Project project,
-                            final Object value,
-                            final ViewSettings viewSettings) {
-    this(project, (PackageElement)value, viewSettings);
   }
 
   @Override
@@ -55,9 +49,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (module == null) {
       return ModuleUtilCore.projectContainsFile(getProject(), file, isLibraryElement());
     }
-    else {
-      return ModuleUtilCore.moduleContainsFile(module, file, isLibraryElement());
-    }
+    return ModuleUtilCore.moduleContainsFile(module, file, isLibraryElement());
   }
 
   private boolean isLibraryElement() {
@@ -120,14 +112,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       return;
     }
 
-    PsiPackage parentPackage;
     Object parentValue = getParentValue();
-    if (parentValue instanceof PackageElement) {
-      parentPackage = ((PackageElement)parentValue).getPackage();
-    }
-    else {
-      parentPackage = null;
-    }
+    PsiPackage parentPackage = parentValue instanceof PackageElement ? ((PackageElement)parentValue).getPackage() : null;
     String qName = aPackage.getQualifiedName();
     String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
     presentation.setPresentableText(name);

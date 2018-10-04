@@ -82,8 +82,7 @@ public class EnvironmentUtil {
     }
   }
 
-  private EnvironmentUtil() {
-  }
+  private EnvironmentUtil() { }
 
   public static boolean isEnvironmentReady() {
     return ourEnvGetter.isDone();
@@ -141,6 +140,24 @@ public class EnvironmentUtil {
     }
     return array;
   }
+
+  /**
+   * Validates environment variable's names and values in accordance to
+   * {@code ProcessEnvironment#validateVariable} ({@code ProcessEnvironment#validateName} on Windows)
+   * and {@code ProcessEnvironment#validateValue} methods.
+   *
+   * @see <a href="http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap08.html">Environment Variables in Unix</a>
+   * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
+   */
+  public static void validate(String name, String value) throws IllegalArgumentException {
+    if (name == null || name.isEmpty() || name.indexOf('\0') != -1 || name.indexOf('=', SystemInfo.isWindows ? 1 : 0) != -1) {
+      throw new IllegalArgumentException("Illegal environment variable name: " + name);
+    }
+    if (value == null || value.indexOf('\0') != -1) {
+      throw new IllegalArgumentException("Illegal environment variable value: " + value);
+    }
+  }
+
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";

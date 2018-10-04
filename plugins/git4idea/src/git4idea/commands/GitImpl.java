@@ -51,7 +51,6 @@ import static java.util.Collections.*;
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
@@ -526,8 +525,20 @@ public class GitImpl extends GitImplBase {
                                 @NotNull final GitRemote remote,
                                 @NotNull final List<GitLineHandlerListener> listeners,
                                 final String... params) {
+    return fetch(repository, remote, listeners, null, params);
+  }
+
+  @NotNull
+  public GitCommandResult fetch(@NotNull final GitRepository repository,
+                                @NotNull final GitRemote remote,
+                                @NotNull final List<GitLineHandlerListener> listeners,
+                                @Nullable GitAuthenticationGate authenticationGate,
+                                final String... params) {
     return runCommand(() -> {
-      final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+      GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+      if (authenticationGate != null) {
+        h.setAuthenticationGate(authenticationGate);
+      }
       h.setSilent(false);
       h.setStdoutSuppressed(false);
       h.setUrls(remote.getUrls());

@@ -64,7 +64,6 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
     return (PsiJavaFileStub)parent;
   }
 
-  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   public abstract PsiT createPsi(@NotNull ASTNode node);
 
   @NotNull

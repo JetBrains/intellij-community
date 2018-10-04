@@ -419,7 +419,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
   }
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static class LogInfo {
     private final VcsLogStorage myStorage;
     private final Map<VirtualFile, CompressedRefs> myRefs = ContainerUtil.newHashMap();

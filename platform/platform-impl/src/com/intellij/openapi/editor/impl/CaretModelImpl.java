@@ -269,7 +269,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor);
-    caret.moveToVisualPosition(pos, false);
+    caret.doMoveToVisualPosition(pos, false);
     if (addCaret(caret, makePrimary)) {
       return caret;
     }
@@ -577,20 +577,30 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onAdded(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
-    int offset = inlay.getOffset();
-    for (CaretImpl caret : myCarets) {
-      caret.onInlayAdded(offset);
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+      int offset = inlay.getOffset();
+      for (CaretImpl caret : myCarets) {
+        caret.onInlayAdded(offset);
+      }
+    }
+    else {
+      updateVisualPosition();
     }
   }
 
   @Override
   public void onRemoved(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
-    doWithCaretMerging(() -> {
-      for (CaretImpl caret : myCarets) {
-        caret.onInlayRemoved(inlay.getOffset(), ((InlayImpl)inlay).getOrder());
-      }
-    });
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+      doWithCaretMerging(() -> {
+        for (CaretImpl caret : myCarets) {
+          caret.onInlayRemoved(inlay.getOffset(), ((InlayImpl)inlay).getOrder());
+        }
+      });
+    }
+    else {
+      updateVisualPosition();
+    }
   }
 
   @Override

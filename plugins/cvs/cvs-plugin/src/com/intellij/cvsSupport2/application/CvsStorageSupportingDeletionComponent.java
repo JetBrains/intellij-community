@@ -205,7 +205,6 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
   }
 
   private static File getStorageRoot() {
-    //noinspection HardCodedStringLiteral
     return new File(PathManager.getSystemPath(), "CVS-TO-DELETE");
   }
 

@@ -134,7 +134,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   @Nullable
   private LookupElement addExpectedType(final PsiType type,
                                         final CompletionParameters parameters) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type, parameters.getPosition())) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.getName() == null) return null;
@@ -227,7 +227,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
   public static void processInheritors(final CompletionParameters parameters,
                                        Collection<? extends PsiClassType> expectedClassTypes,
-                                       final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
+                                       final PrefixMatcher matcher, final Consumer<? super PsiType> consumer) {
     final PsiElement context = parameters.getPosition();
     GlobalSearchScope scope = context.getResolveScope();
     expectedClassTypes = ContainerUtil.mapNotNull(expectedClassTypes, type -> 
@@ -245,7 +245,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   private static boolean processMostProbableInheritors(PsiFile contextFile,
                                                        PsiElement context,
                                                        Collection<? extends PsiClassType> expectedClassTypes,
-                                                       Consumer<PsiType> consumer) {
+                                                       Consumer<? super PsiType> consumer) {
     for (final PsiClassType type : expectedClassTypes) {
       consumer.consume(type);
 

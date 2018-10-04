@@ -112,7 +112,6 @@ public class GradleExecutionErrorHandler {
       }
       rootCause = cause;
     }
-    //noinspection ConstantConditions
     return Pair.create(rootCause, location);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
+import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +45,9 @@ public class RedundantSuppressTest extends InspectionTestCase {
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
       new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
+      new LocalInspectionToolWrapper(new RefusedBequestInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
+      new GlobalInspectionToolWrapper(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection ()),
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
@@ -63,7 +67,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testModuleInfo() {
-    doTest();
+    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",false);
   }
 
   public void testDefaultFile() {
@@ -72,6 +76,10 @@ public class RedundantSuppressTest extends InspectionTestCase {
 
   public void testAlternativeIds() {
     doTest();
+  }
+
+  public void testAnnotator() {
+    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",false);
   }
 
   public void testIgnoreUnused() {

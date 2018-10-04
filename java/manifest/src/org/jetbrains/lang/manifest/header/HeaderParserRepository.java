@@ -25,7 +25,6 @@
 package org.jetbrains.lang.manifest.header;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,7 +51,7 @@ public class HeaderParserRepository {
     @Override
     protected Map<String, HeaderParser> compute() {
       Map<String, HeaderParser> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-      for (HeaderParserProvider provider : Extensions.getExtensions(HeaderParserProvider.EP_NAME)) {
+      for (HeaderParserProvider provider : HeaderParserProvider.EP_NAME.getExtensionList()) {
         map.putAll(provider.getHeaderParsers());
       }
       return map;

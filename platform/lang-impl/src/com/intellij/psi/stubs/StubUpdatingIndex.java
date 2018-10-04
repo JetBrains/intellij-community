@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,8 +43,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
 import java.io.DataOutputStream;
+import java.io.*;
 import java.util.*;
 
 /*
@@ -75,7 +76,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   protected static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
+    FileType fileType = SubstitutedFileType.substituteFileType(file, file.getFileType(), ProjectUtil.guessProjectForFile(file));
     if (fileType instanceof LanguageFileType) {
       final Language l = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
@@ -533,7 +534,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final SerializationManagerEx serializationManager = SerializationManagerEx.getInstanceEx();
       if (serializationManager.isNameStorageCorrupted()) {
         serializationManager.repairNameStorage();
-        //noinspection ThrowFromFinallyBlock
         throw new StorageException("NameStorage for stubs serialization has been corrupted");
       }
     }

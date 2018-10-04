@@ -113,6 +113,12 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   @Override
   public void apply() throws ConfigurationException {
+    if (myChangelistNameFormat.getText().trim().isEmpty()) {
+      throw new ConfigurationException("Change list name format should not be empty");
+    }
+    if (myBranchNameFormat.getText().trim().isEmpty()) {
+      throw new ConfigurationException("Branch name format should not be empty");
+    }
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
     TaskManager manager = TaskManager.getManager(myProject);

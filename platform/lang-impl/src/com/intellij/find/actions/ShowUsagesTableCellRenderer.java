@@ -16,10 +16,8 @@
 
 package com.intellij.find.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.search.SearchScope;
@@ -36,7 +34,6 @@ import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -51,9 +48,6 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
-* @author cdr
-*/
 class ShowUsagesTableCellRenderer implements TableCellRenderer {
   private final UsageViewImpl myUsageView;
   @NotNull private final AtomicInteger myOutOfScopeUsages;
@@ -65,12 +59,13 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     mySearchScope = searchScope;
   }
 
-  private static final int FILE_GROUP_COL = 0;
-  private static final int LINE_NUMBER_COL = 1;
-  private static final int USAGE_TEXT_COL = 2;
+  private static final int CURRENT_ASTERISK_COL = 0;
+  private static final int FILE_GROUP_COL = 1;
+  private static final int LINE_NUMBER_COL = 2;
+  private static final int USAGE_TEXT_COL = 3;
   @Override
   public Component getTableCellRendererComponent(JTable list, Object value, boolean isSelected, boolean hasFocus, int row,
-                                                 @MagicConstant(intValues = {FILE_GROUP_COL, LINE_NUMBER_COL, USAGE_TEXT_COL}) int column) {
+                                                 @MagicConstant(intValues = {CURRENT_ASTERISK_COL, FILE_GROUP_COL, LINE_NUMBER_COL, USAGE_TEXT_COL}) int column) {
     UsageNode usageNode = value instanceof UsageNode ? (UsageNode)value : null;
     Usage usage = usageNode == null ? null : usageNode.getUsage();
 
@@ -85,14 +80,14 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       textChunks.append(ObjectUtils.notNull(value, "").toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
-    if (usage == ShowUsagesAction.MORE_USAGES_SEPARATOR) {
+    if (usage == ShowUsagesTable.MORE_USAGES_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
       textChunks.append("more usages", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
-    if (usage == ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+    if (usage == ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
       textChunks.append(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -106,7 +101,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       @Override
       public void layoutContainer(Container container) {
         super.layoutContainer(container);
-        for (Component component: container.getComponents()) { // align inner components
+        for (Component component : container.getComponents()) { // align inner components
           Rectangle b = component.getBounds();
           Insets insets = container.getInsets();
           component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
@@ -128,21 +123,28 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setBackground(rowBackground);
     panel.setForeground(rowForeground);
 
-    if (column == FILE_GROUP_COL) {
-      appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
-    }
-    else {
-      SimpleColoredComponent textChunks = new SimpleColoredComponent();
-      UsagePresentation presentation = usage.getPresentation();
-      TextChunk[] text = presentation.getText();
+    SimpleColoredComponent textChunks = new SimpleColoredComponent();
+    UsagePresentation presentation = usage.getPresentation();
+    TextChunk[] text = presentation.getText();
 
-      if (column == LINE_NUMBER_COL) {
+    switch(column) {
+      case CURRENT_ASTERISK_COL:
+        if (isOriginUsage) panel.add(new JLabel(" *"));
+        break;
+      case FILE_GROUP_COL:
+        appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
+        break;
+      case LINE_NUMBER_COL:
         if (text.length != 0) {
           TextChunk chunk = text[0];
           textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, chunk));
         }
-      }
-      else if (column == USAGE_TEXT_COL) {
+        SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
+
+        panel.add(textChunks);
+        break;
+
+      case USAGE_TEXT_COL:
         Icon icon = presentation.getIcon();
         textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
         textChunks.append("").appendTextPadding(JBUI.scale(16 + 5));
@@ -150,28 +152,26 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
           TextChunk chunk = text[i];
           textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, chunk));
         }
-      }
-      else {
-        assert false : column;
-      }
-      SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
+        SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
-      panel.add(textChunks);
+        panel.add(textChunks);
 
-      if (isOriginUsage && column == USAGE_TEXT_COL) {
-        SimpleColoredComponent origin = new SimpleColoredComponent();
-        origin.setIconTextGap(JBUI.scale(5)); // for this particular icon it looks better
+        if (isOriginUsage) {
+          SimpleColoredComponent origin = new SimpleColoredComponent();
+          origin.setIconTextGap(JBUI.scale(5)); // for this particular icon it looks better
 
-        Icon arrowLeftIcon = ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(AllIcons.General.ArrowLeft));
-        origin.setIcon(isSelected ? slightlyDifferentColor(arrowLeftIcon) : arrowLeftIcon);
-        // use attributes of "line number" to show "Current" word
-        SimpleTextAttributes attributes =
-          text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :
-          getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, text[0]);
-        origin.append("Current", attributes);
-        origin.appendTextPadding(JBUI.scale(45));
-        panel.add(origin, BorderLayout.EAST);
-      }
+          // use attributes of "line number" to show "Current" word
+          SimpleTextAttributes attributes =
+            text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :
+            getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, text[0]);
+          origin.append("| Current", attributes);
+          origin.appendTextPadding(JBUI.scale(45));
+          panel.add(origin, BorderLayout.EAST);
+        }
+        break;
+
+      default:
+        throw new IllegalStateException("unknown column: " + column);
     }
 
     return panel;
@@ -182,11 +182,6 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return EditorColorsManager.getInstance().isDarkEditor() ?
            ColorUtil.brighter(back, 3) : // dunno, under the dark theme the "brighter,1" doesn't look bright enough so we use 3
            ColorUtil.hackBrightness(back, 1, 1/1.05f); // Olga insisted on very-pale almost invisible gray. oh well
-  }
-
-  @NotNull
-  private static Icon slightlyDifferentColor(@NotNull Icon icon) {
-    return EditorColorsManager.getInstance().isDarkEditor() ? IconUtil.brighter(icon, 3) : IconUtil.darker(icon, 8);
   }
 
   @NotNull

@@ -186,7 +186,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean addSubtreeToUpdateByElement(Object element) {
+    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
       if (element instanceof PsiDirectory && !myProject.isDisposed()) {
         final PsiDirectory dir = (PsiDirectory)element;
         final ProjectTreeStructure treeStructure = (ProjectTreeStructure)myTreeStructure;
@@ -220,7 +220,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+    protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
       return new ProjectViewProjectNode(project, settings);
     }
 
@@ -235,7 +235,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean isToBuildChildrenInBackground(Object element) {
+    public boolean isToBuildChildrenInBackground(@NotNull Object element) {
       return Registry.is("ide.projectView.ProjectViewPaneTreeStructure.BuildChildrenInBackground");
     }
   }

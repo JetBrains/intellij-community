@@ -48,10 +48,6 @@ public class ComparatorResultComparisonInspectionTest extends LightInspectionTes
       return new LocalInspectionTool[]{new ComparatorResultComparisonInspection()};
     }
 
-    public void test() {
-      doAllTests();
-    }
-
     @Override
     protected String getBasePath() {
       return TEST_DATA_DIR;

@@ -126,7 +126,6 @@ public class PyCharmEduInitialConfigurator {
   }
 
   /**
-   * @noinspection UnusedParameters
    */
   public PyCharmEduInitialConfigurator(MessageBus bus,
                                        CodeInsightSettings codeInsightSettings,
@@ -306,7 +305,7 @@ public class PyCharmEduInitialConfigurator {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
     rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
-    for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
+    for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensionList()) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
           || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {
         rootArea.getExtensionPoint(ToolWindowEP.EP_NAME).unregisterExtension(ep);
@@ -316,20 +315,20 @@ public class PyCharmEduInitialConfigurator {
     rootArea.getExtensionPoint(DirectoryProjectConfigurator.EP_NAME).unregisterExtension(PlatformProjectViewOpener.class);
 
     // unregister unrelated tips
-    for (TipAndTrickBean tip : Extensions.getExtensions(TipAndTrickBean.EP_NAME)) {
+    for (TipAndTrickBean tip : TipAndTrickBean.EP_NAME.getExtensionList()) {
       if (UNRELATED_TIPS.contains(tip.fileName)) {
         rootArea.getExtensionPoint(TipAndTrickBean.EP_NAME).unregisterExtension(tip);
       }
     }
 
-    for (IntentionActionBean ep : Extensions.getExtensions(IntentionManager.EP_INTENTION_ACTIONS)) {
+    for (IntentionActionBean ep : IntentionManager.EP_INTENTION_ACTIONS.getExtensionList()) {
       if ("org.intellij.lang.regexp.intention.CheckRegExpIntentionAction".equals(ep.className)) {
         rootArea.getExtensionPoint(IntentionManager.EP_INTENTION_ACTIONS).unregisterExtension(ep);
       }
     }
 
     final ExtensionPoint<ProjectAttachProcessor> point = Extensions.getRootArea().getExtensionPoint(ProjectAttachProcessor.EP_NAME);
-    for (ProjectAttachProcessor attachProcessor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+    for (ProjectAttachProcessor attachProcessor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
       point.unregisterExtension(attachProcessor);
     }
   }
@@ -341,14 +340,14 @@ public class PyCharmEduInitialConfigurator {
 
     ExtensionsArea projectArea = Extensions.getArea(project);
 
-    for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
+    for (SelectInTarget target : SelectInTarget.EP_NAME.getExtensions(project)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(target.getToolWindowId()) ||
           ToolWindowId.STRUCTURE_VIEW.equals(target.getToolWindowId())) {
         projectArea.getExtensionPoint(SelectInTarget.EP_NAME).unregisterExtension(target);
       }
     }
 
-    for (AbstractProjectViewPane pane : Extensions.getExtensions(AbstractProjectViewPane.EP_NAME, project)) {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensions(project)) {
       if (pane.getId().equals(ScopeViewPane.ID)) {
         Disposer.dispose(pane);
         projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);

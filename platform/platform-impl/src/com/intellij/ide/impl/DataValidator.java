@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -51,7 +50,7 @@ public abstract class DataValidator<T> {
   private static <T> DataValidator<T> getValidator(@NotNull String dataId) {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
-      for (KeyedLazyInstanceEP<DataValidator> ep : Extensions.getExtensions(EP_NAME)) {
+      for (KeyedLazyInstanceEP<DataValidator> ep : EP_NAME.getExtensionList()) {
         ourValidators.put(ep.key, ep.getInstance());
       }
     }

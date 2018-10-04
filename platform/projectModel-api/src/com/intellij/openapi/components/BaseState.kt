@@ -4,7 +4,6 @@ package com.intellij.openapi.components
 import com.intellij.configurationStore.properties.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
@@ -21,7 +20,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
-  private val properties: MutableList<StoredProperty<Any>> = SmartList()
+  // do not use SmartList because most objects have more than 1 property
+  private val properties: MutableList<StoredProperty<Any>> = ArrayList()
 
   @Volatile
   @Transient
@@ -32,7 +32,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     properties.add(p as StoredProperty<Any>)
   }
 
-  protected fun <T> property(): StoredPropertyBase<T?> {
+  protected fun <T : BaseState> property(): StoredPropertyBase<T?> {
     val result = ObjectStoredProperty<T?>(null)
     addProperty(result)
     return result
@@ -79,18 +79,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  /**
-   * Enum is an immutable, so, it is safe to use it as default value.
-   */
+  // Enum is an immutable, so, it is safe to use it as default value.
   protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
     addProperty(result)
     return result
   }
 
-  /**
-   * `null` is always normalized to null.
-   */
   protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
     return doEnum(defaultValue, T::class.java)
   }
@@ -125,7 +120,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Empty string is always normalized to null.
    */
-  protected fun property(defaultValue: String?): StoredPropertyBase<String?> = string(defaultValue)
+  protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
@@ -215,11 +210,16 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return builder.toString()
   }
 
-  fun copyFrom(state: BaseState) {
-    LOG.assertTrue(state.properties.size == properties.size)
+  @JvmOverloads
+  fun copyFrom(state: BaseState, isMustBeTheSameType: Boolean = true) {
+    val propertyCount = state.properties.size
+    if (isMustBeTheSameType) {
+      LOG.assertTrue(propertyCount == properties.size)
+    }
+
     var changed = false
-    for ((index, property) in properties.withIndex()) {
-      val otherProperty = state.properties.get(index)
+    for ((index, otherProperty) in state.properties.withIndex()) {
+      val property = properties.get(index)
       LOG.assertTrue(otherProperty.name == property.name)
       if (property.setValue(otherProperty)) {
         changed = true

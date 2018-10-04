@@ -883,7 +883,7 @@
         <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Cross"/>
       </group>
       <group id="Runner.View.Popup">
-        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.Actions.Minimize"/>
+        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.General.HideToolWindow"/>
         <separator/>
         <reference ref="Runner.View.Close.Group"/>
         <separator/>
@@ -908,6 +908,11 @@
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
 
+    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"
+            text="Annotated Line Operations">
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </action>
+
     <group id="Vcs.Operations.Popup">
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
         <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
@@ -928,6 +933,8 @@
         <reference id="Start.Use.Vcs"/>
         <reference id="Vcs.Checkout"/>
       </group>
+      <separator/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true"/>
       <separator text="Local History"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>
@@ -1174,6 +1181,11 @@
     </action>
     <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
+    </action>
+
+    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction"
+            text="Show control flow" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

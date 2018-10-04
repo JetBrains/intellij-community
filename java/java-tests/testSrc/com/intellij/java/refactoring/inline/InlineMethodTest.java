@@ -110,13 +110,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testChainingConstructor() { doTest(); }
 
   public void testChainingConstructor1() {
-    BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-    try {
-      doTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest());
   }
 
   public void testNestedCall() { doTest(); }

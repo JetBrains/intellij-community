@@ -96,7 +96,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
       }
     }
-    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
+    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/, myKeyDescriptor) {
       @Override
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {

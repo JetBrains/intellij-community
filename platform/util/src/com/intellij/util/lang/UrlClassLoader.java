@@ -93,6 +93,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources;
     private boolean myErrorOnMissingJar = true;
+    private boolean myLazyClassloadingCaches;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
 
@@ -101,18 +102,30 @@ public class UrlClassLoader extends ClassLoader {
     public Builder urls(List<URL> urls) { myURLs = urls; return this; }
     public Builder urls(URL... urls) { myURLs = Arrays.asList(urls); return this; }
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
+    
+    /**
+     * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
+     * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
+     * Thus, the option is recommended when jars are not modified or process that uses this option is transient
+     */
     public Builder allowLock() { myLockJars = true; return this; }
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
+    
+    /** 
+     * Build backward index of packages / class or resource names that allows to avoid IO during classloading 
+     */
     public Builder useCache() { myUseCache = true; return this; }
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
 
-    // Instruction for FileLoader to save list of files / packages under its root and use this information instead of walking filesystem for
-    // speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
-    // FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
-    // such information upon appearing new file for output root.
-    // N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
-    // logical error since code is prepared for that and disk access is performed upon class / resource loading.
-    // See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
+    /**
+     * FileLoader will save list of files / packages under its root and use this information instead of walking filesystem for
+     * speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
+     * FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
+     * such information upon appearing new file for output root.
+     * N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
+     * logical error since code is prepared for that and disk access is performed upon class / resource loading.
+     * See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
+     */
     public Builder usePersistentClasspathIndexForLocalClassDirectories() {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
@@ -139,6 +152,13 @@ public class UrlClassLoader extends ClassLoader {
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
+    
+    /**
+     * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading. 
+     * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less 
+     * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
+     */  
+    public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
@@ -156,7 +176,8 @@ public class UrlClassLoader extends ClassLoader {
   @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
-           .usePersistentClasspathIndexForLocalClassDirectories());
+           .usePersistentClasspathIndexForLocalClassDirectories()
+           .useLazyClassloadingCaches(SystemProperties.getBooleanProperty("idea.lazy.classloading.caches", false)));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -176,7 +197,7 @@ public class UrlClassLoader extends ClassLoader {
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                                 builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar);
+                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -197,7 +218,7 @@ public class UrlClassLoader extends ClassLoader {
    * @deprecated Adding additional urls to classloader at runtime could lead to hard-to-debug errors
    * <b>Note:</b> Used via reflection because of classLoaders incompatibility
    */
-  @SuppressWarnings({"unused", "deprecation", "DeprecatedIsStillUsed"})
+  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
   @Deprecated
   public void addURL(URL url) {
     getClassPath().addURL(url);
@@ -342,7 +363,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @SuppressWarnings({"unused", "override"})
+  @SuppressWarnings({"unused"})
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;

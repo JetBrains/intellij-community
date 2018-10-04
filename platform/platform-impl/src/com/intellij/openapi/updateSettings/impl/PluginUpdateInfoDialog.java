@@ -20,10 +20,10 @@ import java.util.Set;
  * @author pti
  */
 class PluginUpdateInfoDialog extends AbstractUpdateDialog {
-  private final Collection<PluginDownloader> myUploadedPlugins;
+  private final Collection<? extends PluginDownloader> myUploadedPlugins;
   private final boolean myPlatformUpdate;
 
-  PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
+  PluginUpdateInfoDialog(Collection<? extends PluginDownloader> uploadedPlugins, boolean enableLink) {
     super(enableLink);
     myUploadedPlugins = uploadedPlugins;
     myPlatformUpdate = false;
@@ -33,7 +33,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   /**
    * Used from {@link UpdateInfoDialog} when both platform and plugin updates are available.
    */
-  PluginUpdateInfoDialog(@NotNull Collection<PluginDownloader> updatePlugins) {
+  PluginUpdateInfoDialog(@NotNull Collection<? extends PluginDownloader> updatePlugins) {
     super(false);
     myUploadedPlugins = updatePlugins;
     myPlatformUpdate = true;

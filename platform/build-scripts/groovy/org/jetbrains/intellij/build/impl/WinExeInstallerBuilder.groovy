@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
@@ -73,14 +74,15 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath) {
+  void buildInstaller(String winDistPath, String additionalDirectoryToInclude) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
     }
 
     String communityHome = buildContext.paths.communityHome
-    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) +
+                         buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.progress("Building Windows installer $outFileName")
 
     def box = "$buildContext.paths.temp/winInstaller"
@@ -110,12 +112,22 @@ class WinExeInstallerBuilder {
       def generator = new NsisFileListGenerator()
       generator.addDirectory(buildContext.paths.distAll)
       generator.addDirectory(winDistPath, ["**/idea.properties", "**/*.vmoptions"])
+      generator.addDirectory(additionalDirectoryToInclude)
 
       if (bundleJre) {
         generator.addDirectory(jreDirectoryPath)
       }
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
       generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
+
+      if (buildContext.bundledJreManager.is32bitArchSupported()) {
+        String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
+        if (jre32Dir != null) {
+          def generatorForJre32Dir = new NsisFileListGenerator()
+          generatorForJre32Dir.addDirectory(jre32Dir + "/jre32")
+          generatorForJre32Dir.generateUninstallerFile("\$INSTDIR\\jre32", new File(box, "nsiconf/un_jre32_win.nsh"))
+        }
+      }
     }
     catch (IOException e) {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")

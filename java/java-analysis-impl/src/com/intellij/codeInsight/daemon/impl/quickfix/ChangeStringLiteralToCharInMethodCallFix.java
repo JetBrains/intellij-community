@@ -126,7 +126,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals,
+  private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
                                       @NotNull final HighlightInfo info) {
     for (PsiLiteralExpression literal : literals) {

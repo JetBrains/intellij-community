@@ -22,7 +22,6 @@ import com.intellij.application.options.codeStyle.WrappingAndBracesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -183,7 +182,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    */
   protected final void createTab(CodeStyleSettingsProvider provider) {
     if (provider.hasSettingsPage()) return;
-    Configurable configurable = provider.createSettingsPage(getCurrentSettings(), getSettings());
+    Configurable configurable = provider.createConfigurable(getCurrentSettings(), getSettings());
     addTab(configurable);
   }
 
@@ -310,7 +309,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void fillLanguages(JComponent parentMenu) {
       Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
-      @SuppressWarnings("UnnecessaryFullyQualifiedName")
       java.util.List<JMenuItem> langItems = new ArrayList<>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
@@ -556,7 +554,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-      //noinspection NullableProblems
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
     }
 

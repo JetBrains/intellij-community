@@ -61,8 +61,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
@@ -72,7 +72,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "SSBasedInspection"})
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = Gray._135;
@@ -298,7 +298,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings({"ManualArrayToCollectionCopy", "ConstantConditions"})
+    @SuppressWarnings({"ConstantConditions"})
     SwitcherPanel(@NotNull final Project project, @NotNull String title, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
@@ -459,20 +459,11 @@ public class Switcher extends AnAction implements DumbAware {
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
         JPanel myPanel = new JPanel(new BorderLayout());
-        JLabel myLabel = new JLabel() {
-          @Override
-          protected void paintComponent(@NotNull Graphics g) {
-            GraphicsConfig config = new GraphicsConfig(g);
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-            super.paintComponent(g);
-            config.restore();
-          }
-        };
+        JLabel myLabel = createPaleLabel("* ");
 
         {
           myPanel.setOpaque(false);
           myPanel.setBackground(UIUtil.getListBackground());
-          myLabel.setText("* ");
         }
 
         @NotNull
@@ -744,7 +735,7 @@ public class Switcher extends AnAction implements DumbAware {
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
-      if (ctrl && isAutoHide()) {
+      if ((ctrl && isAutoHide()) || e.getKeyCode() == VK_ENTER) {
         navigate(e);
       }
     }
@@ -1248,5 +1239,18 @@ public class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
+  }
+
+  @NotNull
+  public static JLabel createPaleLabel(@NotNull String text) {
+    return new JLabel(text) {
+      @Override
+      protected void paintComponent(@NotNull Graphics g) {
+        GraphicsConfig config = new GraphicsConfig(g);
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        super.paintComponent(g);
+        config.restore();
+      }
+    };
   }
 }

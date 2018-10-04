@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
@@ -69,7 +68,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public int getAllAccepted() {
     int result = REFERENCED_ELEMENT_ACCEPTED | ELEMENT_NAME_ACCEPTED | LOOKUP_ITEM_ACCEPTED;
-    for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
+    for (TargetElementUtilExtender each : TargetElementUtilExtender.EP_NAME.getExtensionList()) {
       result |= each.getAllAdditionalFlags();
     }
     return result;
@@ -78,7 +77,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public int getDefinitionSearchFlags() {
     int result = getAllAccepted();
-    for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
+    for (TargetElementUtilExtender each : TargetElementUtilExtender.EP_NAME.getExtensionList()) {
       result |= each.getAdditionalDefinitionSearchFlags();
     }
     return result;
@@ -87,7 +86,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public int getReferenceSearchFlags() {
     int result = getAllAccepted();
-    for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
+    for (TargetElementUtilExtender each : TargetElementUtilExtender.EP_NAME.getExtensionList()) {
       result |= each.getAdditionalReferenceSearchFlags();
     }
     return result;
@@ -345,7 +344,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private static PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
+  private static PsiElement getReferenceOrReferencedElement(@NotNull PsiFile file, @NotNull Editor editor, int flags, int offset) {
     PsiElement result = doGetReferenceOrReferencedElement(editor, flags, offset);
     PsiElement languageElement = file.findElementAt(offset);
     Language language = languageElement != null ? languageElement.getLanguage() : file.getLanguage();
@@ -357,7 +356,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private static PsiElement doGetReferenceOrReferencedElement(Editor editor, int flags, int offset) {
+  private static PsiElement doGetReferenceOrReferencedElement(@NotNull Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
 

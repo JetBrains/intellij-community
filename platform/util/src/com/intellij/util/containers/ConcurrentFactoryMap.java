@@ -172,7 +172,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   @NotNull
-  public static <T, V> ConcurrentMap<T, V> createMap(@NotNull final Function<T, V> computeValue) {
+  public static <T, V> ConcurrentMap<T, V> createMap(@NotNull final Function<? super T, ? extends V> computeValue) {
     //noinspection deprecation
     return new ConcurrentFactoryMap<T, V>() {
       @Nullable
@@ -183,7 +183,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     };
   }
   @NotNull
-  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull final Function<K, V> computeValue, @NotNull final Producer<ConcurrentMap<K,V>> mapCreator) {
+  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends ConcurrentMap<K, V>> mapCreator) {
     //noinspection deprecation
     return new ConcurrentFactoryMap<K, V>() {
       @Nullable
@@ -204,7 +204,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * @return Concurrent factory map with weak keys, strong values
    */
   @NotNull
-  public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<T, V> compute) {
+  public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<? super T, ? extends V> compute) {
     return createMap(compute, new Producer<ConcurrentMap<T, V>>() {
       @Override
       public ConcurrentMap<T, V> produce() {return ContainerUtil.createConcurrentWeakMap();}
@@ -215,7 +215,6 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * needed for compatibility in case of moronic subclassing
    * TODO to remove in IDEA 2018
    */
-  @SuppressWarnings("override")
   @Deprecated
   public V getOrDefault(Object key, V defaultValue) {
       V v;

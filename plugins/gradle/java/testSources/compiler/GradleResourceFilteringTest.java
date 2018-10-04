@@ -7,7 +7,6 @@ import org.junit.Test;
  * @author Vladislav.Soroka
  * @since 7/21/2014
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleResourceFilteringTest extends GradleCompilingTestCase {
 
   @Test

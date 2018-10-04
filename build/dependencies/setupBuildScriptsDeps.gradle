@@ -3,10 +3,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 repositories {
-  mavenCentral()
   maven { url "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies" }
-  maven { url "https://jetbrains.bintray.com/test-discovery" }
-  jcenter()
+  maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/test-discovery" }
+  maven { url "https://cache-redirector.jetbrains.com/jcenter.bintray.com" }
 }
 
 configurations {
@@ -15,6 +14,7 @@ configurations {
 }
 
 List<String> projectLibraries = [
+  "jetbrains-annotations-java5",
   "Groovy",
   "cli-parser",
   "protobuf",
@@ -35,7 +35,8 @@ List<String> projectLibraries = [
   "jna",
   "jgoodies-forms",
   "http-client",
-  "maven-model"
+  "maven-model",
+  "gson"
 ]
 
 dependencies {

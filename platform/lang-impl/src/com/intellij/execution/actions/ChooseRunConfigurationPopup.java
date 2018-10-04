@@ -1013,7 +1013,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     return result.toArray(new ItemWrapper[0]);
   }
 
-  private static void populateWithDynamicRunners(final List<ItemWrapper> result,
+  private static void populateWithDynamicRunners(final List<? super ItemWrapper> result,
                                                  Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
                                                  final Project project, final RunManager manager,
                                                  final RunnerAndConfigurationSettings selectedConfiguration) {

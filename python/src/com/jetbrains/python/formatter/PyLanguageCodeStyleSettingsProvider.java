@@ -167,7 +167,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     commonSettings.KEEP_BLANK_LINES_IN_CODE = 1;
   }
 
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
                                                          "    dict = {1:'a', 2:'b', 3:'c'}\n" +
                                                          "    x = dict[1]\n" +
@@ -181,7 +180,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                          "def no_params():\n" +
                                                          "    return globals()";
 
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
                                                              "class C(object):\n" +
                                                              "    import sys\n" +
@@ -189,7 +187,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                              "    def foo(self):\n" +
                                                              "        import platform\n" +
                                                              "        print(platform.processor())";
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
                                                       "\n" +
                                                       "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
@@ -218,7 +215,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                       "\n" +
                                                       "try: pass\n" +
                                                       "finally: pass\n";
-  @SuppressWarnings("FieldCanBeLocal")
   private static final String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
                                                         "    print 'bar'\n\n" +
                                                         "def long_function_name(\n" +

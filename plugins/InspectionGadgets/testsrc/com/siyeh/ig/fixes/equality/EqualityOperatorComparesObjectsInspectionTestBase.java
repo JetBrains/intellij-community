@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.fixes.equality;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.bugs.ObjectEqualityInspection;
+import com.siyeh.ig.fixes.EqualityToEqualsFix;
 
 /**
  * @author Bas Leijdekkers
@@ -27,12 +27,12 @@ public abstract class EqualityOperatorComparesObjectsInspectionTestBase extends 
   public void testEnumComparison() { assertQuickfixNotAvailable(); }
   public void testNullComparison() { assertQuickfixNotAvailable(); }
   public void testPrimitiveComparison() { assertQuickfixNotAvailable(); }
-  public void testSimpleObjectComparison() { doTest(InspectionGadgetsBundle.message("equality.to.equals.quickfix")); }
-  public void testNegatedObjectComparison() { doTest(InspectionGadgetsBundle.message("inequality.to.not.equals.quickfix")); }
+  public void testSimpleObjectComparison() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testNegatedObjectComparison() { doTest(EqualityToEqualsFix.getFixName(true)); }
   public void testCompareThisInEqualsMethod() { assertQuickfixNotAvailable(); }
   public void testCompareSameQualifiedThisInEqualsMethod() { assertQuickfixNotAvailable(); }
-  public void testCompareOtherQualifiedThisInEqualsMethod() { doTest(InspectionGadgetsBundle.message("equality.to.equals.quickfix")); }
-  public void testCompareFieldInEqualsMethod() { doTest(InspectionGadgetsBundle.message("equality.to.equals.quickfix")); }
+  public void testCompareOtherQualifiedThisInEqualsMethod() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testCompareFieldInEqualsMethod() { doTest(EqualityToEqualsFix.getFixName(false)); }
 
   @Override
   protected void setUp() throws Exception {
