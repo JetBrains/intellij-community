@@ -187,12 +187,11 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         // if there are invalid chars, adjust the range
         int charsDecodedSuccessfully = outChars.length() - before;
         int startOffsetInHost = textEscaper.getOffsetInHost(0, info.registeredRangeInsideHost);
-        assert startOffsetInHost <= relevantRange.getEndOffset() : textEscaper.getClass() +" .getOffsetInHost(0) = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+        assert relevantRange.containsOffset(startOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(0) = "+startOffsetInHost+" while its relevantRange="+relevantRange;
         int endOffsetInHost = textEscaper.getOffsetInHost(charsDecodedSuccessfully, info.registeredRangeInsideHost);
-        assert endOffsetInHost <= relevantRange.getEndOffset() : textEscaper.getClass() +" .getOffsetInHost(" + charsDecodedSuccessfully +
+        assert relevantRange.containsOffset(endOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(" + charsDecodedSuccessfully +
                                                                  ") = "+startOffsetInHost+" while its relevantRange="+relevantRange;
-        ProperTextRange successfulHostRange = new ProperTextRange(Math.max(relevantRange.getStartOffset(), startOffsetInHost),
-                                                    Math.max(relevantRange.getStartOffset(), endOffsetInHost));
+        ProperTextRange successfulHostRange = new ProperTextRange(startOffsetInHost, endOffsetInHost);
         relevantRange = relevantRange.intersection(successfulHostRange);
       }
     }
