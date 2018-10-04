@@ -16,6 +16,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
+import com.intellij.openapi.util.io.FileUtil
+import groovy.xml.XmlUtil
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -187,6 +189,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
+      File icoFilesDirectory = new File(buildContext.paths.temp, "win-launcher-ico")
+      File appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
 IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
@@ -208,7 +212,7 @@ IDS_VM_OPTIONS=$vmOptions
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
-        arg(value: patchedApplicationInfo.absolutePath)
+        arg(value: appInfoForLauncher.absolutePath)
         arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
         arg(value: launcherPropertiesPath)
         arg(value: outputPath)
@@ -225,9 +229,32 @@ IDS_VM_OPTIONS=$vmOptions
           buildContext.productProperties.brandingResourcePaths.each {
             pathelement(location: it)
           }
+          pathelement(location: icoFilesDirectory.absolutePath)
         }
       }
     }
+  }
+
+  /**
+   * Generates ApplicationInfo.xml file for launcher generator which contains link to proper *.ico file.
+   * //todo[nik] pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
+   */
+  File generateApplicationInfoForLauncher(File applicationInfoFile, File icoFilesDirectory) {
+    FileUtil.createDirectory(icoFilesDirectory)
+    if (icoPath == null) {
+      return applicationInfoFile
+    }
+
+    def icoFile = new File(icoPath)
+    buildContext.ant.copy(file: icoPath, todir: icoFilesDirectory.absolutePath)
+    def root = new XmlParser().parse(applicationInfoFile)
+    def iconNode = root.icon.first()
+    iconNode.@ico = icoFile.name
+    def patchedFile = new File(buildContext.paths.temp, "win-launcher-application-info.xml")
+    patchedFile.withWriter {
+      XmlUtil.serialize(root, it)
+    }
+    return patchedFile
   }
 
   private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
