@@ -118,16 +118,13 @@ class WinExeInstallerBuilder {
         generator.addDirectory(jreDirectoryPath)
       }
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
-      generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
-
       if (buildContext.bundledJreManager.is32bitArchSupported()) {
         String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
         if (jre32Dir != null) {
-          def generatorForJre32Dir = new NsisFileListGenerator()
-          generatorForJre32Dir.addDirectory(jre32Dir + "/jre32")
-          generatorForJre32Dir.generateUninstallerFile("\$INSTDIR\\jre32", new File(box, "nsiconf/un_jre32_win.nsh"))
+          generator.addDirectory(jre32Dir)
         }
       }
+      generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
     }
     catch (IOException e) {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")

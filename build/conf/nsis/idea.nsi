@@ -1593,7 +1593,6 @@ skip_delete_settings:
     Delete "$INSTDIR\jre32\bin\server\classes.jsa"
     StrCpy $0 "$INSTDIR\jre32\lib\applet"
     Call un.DeleteDirIfEmpty
-    !include "un_jre32_win.nsh"
 no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR"
