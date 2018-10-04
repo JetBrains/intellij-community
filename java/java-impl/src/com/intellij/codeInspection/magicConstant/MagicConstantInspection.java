@@ -7,7 +7,6 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -17,7 +16,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -769,18 +767,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), LanguageSlicing.getProvider(argument).createRootUsage(argument, params));
 
-    ProgressIndicator indicator = new ProgressIndicatorBase();
-    indicator.start();
-
-    Ref<Collection<? extends AbstractTreeNode>> nodesRef = Ref.create();
-    try {
-      ProgressManager.getInstance().executeProcessUnderProgress(() -> nodesRef.set(rootNode.getChildren().iterator().next().getChildren()), indicator);
-    }
-    finally {
-      indicator.stop();
-    }
-
-    Collection<? extends AbstractTreeNode> children = nodesRef.get();
+    Collection<? extends AbstractTreeNode> children = ProgressManager.getInstance().runProcess(() -> rootNode.getChildren().iterator().next().getChildren(), new ProgressIndicatorBase());
     for (AbstractTreeNode child : children) {
       SliceUsage usage = (SliceUsage)child.getValue();
       PsiElement element = usage != null ? usage.getElement() : null;
