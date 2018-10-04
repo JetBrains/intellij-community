@@ -50,7 +50,7 @@ public class PsiCopyPasteManager {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (myRecentData != null && (myRecentData.isValid() || myRecentData.getProject() == project)) {
+        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {
           myRecentData = null;
         }
 
