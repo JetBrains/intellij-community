@@ -67,7 +67,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun takeScreenshot(e: Throwable) {
+  fun takeScreenshot(e: Throwable) {
     ScreenshotOnFailure.takeScreenshot("FirstStartFailed", e)
   }
 
@@ -91,7 +91,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
 
   // In case we found WelcomeFrame we don't need to make completeInstallation.
-  private fun completeFirstStart() {
+  open fun completeFirstStart() {
     findWelcomeFrame()?.close() ?: let {
       completeInstallation()
       acceptAgreement()
@@ -108,9 +108,9 @@ abstract class FirstStart(val ideType: IdeType) {
     && frame.isEnabled
   }
 
-  private fun Frame.close() = myRobot.close(this)
+  fun Frame.close() = myRobot.close(this)
 
-  private fun findWelcomeFrame(seconds: Int = 5): Frame? {
+  fun findWelcomeFrame(seconds: Int = 5): Frame? {
     LOG.info("Waiting for a Welcome Frame")
     silentWaitUntil("Welcome Frame to show up", seconds) {
       Frame.getFrames().any { checkIsWelcomeFrame(it) }
@@ -132,7 +132,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun acceptAgreement() {
+  open fun acceptAgreement() {
     if (!needToShowAgreement()) return
     with(myRobot) {
       try {
@@ -158,7 +158,7 @@ abstract class FirstStart(val ideType: IdeType) {
     myRobot.rotateMouseWheel(amount)
   }
 
-  private fun completeInstallation() {
+  open fun completeInstallation() {
     if (!needToShowCompleteInstallation()) return
     with(myRobot) {
       val title = "Complete Installation"
@@ -171,7 +171,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun acceptDataSharing() {
+  open fun acceptDataSharing() {
     with(myRobot) {
       LOG.info("Accepting Data Sharing")
       val title = "Data Sharing"
@@ -187,7 +187,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun customizeIde(ideName: String = ideType.name) {
+  open fun customizeIde(ideName: String = ideType.name) {
     if (!needToShowCustomizeWizard()) return
     with(myRobot) {
       val title = "Customize $ideName"
@@ -199,7 +199,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private fun evaluateLicense(ideName: String, robot: Robot) {
+  open fun evaluateLicense(ideName: String, robot: Robot) {
     with(robot) {
       val licenseActivationFrameTitle = "$ideName License Activation"
       LOG.info("Waiting for '$licenseActivationFrameTitle' dialog")

@@ -133,8 +133,8 @@ object GuiTestLocalLauncher {
     return startIde(ide = ide, ideaStartTest = ProcessBuilder().inheritIO().command(args))
   }
 
-  fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), firstStartClassName: String = "undefined") {
-    val args = createArgsForFirstStart(ide = ide, firstStartClassName = firstStartClassName)
+  fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), firstStartClassName: String = "undefined", additionalJvmOptions: List<Pair<String, String>> = emptyList()) {
+    val args = createArgsForFirstStart(ide = ide, firstStartClassName = firstStartClassName, additionalJvmOptions = additionalJvmOptions)
     return startIdeAndWait(ide = ide, args = args)
   }
 
@@ -200,13 +200,14 @@ object GuiTestLocalLauncher {
                                   testClassNames = testClassNames,
                                   additionalJvmOptions = additionalJvmOptions)
 
-  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String> = createArgsBase(
+  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0, additionalJvmOptions: List<Pair<String, String>> = emptyList()): List<String> = createArgsBase(
     ide = ide,
     mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
     firstStartClassName = firstStartClassName,
     commandName = null,
     port = port,
-    testClassNames = emptyList())
+    testClassNames = emptyList(),
+    additionalJvmOptions = additionalJvmOptions)
 
   /**
    * customVmOptions should contain a full VM options formatted items like: customVmOptions = listOf("-Dapple.laf.useScreenMenuBar=true", "-Dide.mac.file.chooser.native=false").

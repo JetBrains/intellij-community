@@ -30,11 +30,8 @@ object IdeControl {
     return currentIdeProcess ?: throw Exception("Current IDE processStdIn is not initialised or already been killed")
   }
 
-  private var isServerInitialised: Boolean = false
-
   private val myServer: JUnitServer
     get() {
-      isServerInitialised = true
       return JUnitServerHolder.getServer()
     }
 
@@ -58,7 +55,7 @@ object IdeControl {
   fun closeIde() {
     sendCloseIdeSignal()
     IdeControl.killIdeProcess()
-    if (isServerInitialised) myServer.stopServer()
+    myServer.stopServer()
   }
 
   fun restartIde(ide: Ide, additionalJvmOptions: List<Pair<String, String>> = emptyList(), runIde: RunIdeFun) {
@@ -88,6 +85,7 @@ object IdeControl {
   }
 
   private fun sendCloseIdeSignal() {
+    if (!myServer.isStarted()) return
     myServer.send(TransportMessage(MessageType.CLOSE_IDE))
     IdeControl.waitForCurrentProcess(2, TimeUnit.MINUTES)
   }

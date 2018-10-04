@@ -44,6 +44,7 @@ class ScreenshotOnFailure: TestWatcher() {
         val file = getOrCreateScreenshotFile(screenshotName)
         if (t is ComponentLookupException) LOG.error("${getHierarchy()} \n caused by:", t)
         myScreenshotTaker.safeTakeScreenshotAndSave(file)
+        println("Screenshot saved to $file")
         LOG.info("Screenshot: $file")
       }
       catch (e: Exception) {
